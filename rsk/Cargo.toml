@@ -1,0 +1,87 @@
+[package]
+name = "rsk"
+version = "0.5.1"
+edition = "2024"
+authors = ["Matthew Campion"]
+description = "Rust Skill Kernel - High-performance computation kernel for Claude Code skills"
+documentation = "https://docs.rs/rsk"
+readme = "README.md"
+license = "MIT"
+keywords = ["claude", "skills", "kernel", "algorithms", "validation"]
+categories = ["algorithms", "text-processing", "command-line-utilities"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+# Alternative YAML parser (MIT/Apache-2.0, actively maintained)
+yaml-rust2 = { version = "0.10", optional = true }
+toml = "0.9"
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+sha2 = "0.10"
+syn = { workspace = true }
+quote = { workspace = true }
+proc-macro2 = { workspace = true }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "6.0"
+polars = { workspace = true }
+clap = { version = "4.5.54", features = ["derive"] }
+regex = "1.12.2"
+uuid = { version = "1.0", features = ["v4"] }
+dashmap = { workspace = true }
+tokio = { version = "1.0", features = ["full"] }
+walkdir = "2.5"
+
+# Scientific Computing
+statrs = { workspace = true }
+uom = { workspace = true }
+faer = { workspace = true }
+scilib = { workspace = true }
+num = { workspace = true }
+
+# Compression
+flate2 = "1.0"
+base64 = "0.22"
+
+# Tier 4: Optimization capabilities
+phf = { version = "0.11", features = ["macros"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+
+# PyO3 for Python bindings (optional, enabled via feature)
+pyo3 = { version = "0.27", features = ["extension-module"], optional = true }
+
+# RustForge pipeline DSL (optional, enabled via feature)
+forge-spec = { path = "../rust-forge/crates/forge-spec", optional = true }
+
+[features]
+default = []
+python = ["pyo3"]
+forge = ["forge-spec"]
+
+[dev-dependencies]
+tempfile = "3.15"
+criterion = { version = "0.6", features = ["html_reports"] }
+assert_cmd = "2.0"
+predicates = "3.1"
+
+[[bench]]
+name = "execution_engine"
+harness = false
+
+[[bench]]
+name = "yaml_parsers"
+harness = false
+
+[[bench]]
+name = "levenshtein"
+harness = false
+
+[[bench]]
+name = "math"
+harness = false
+
+[lib]
+name = "rsk"
+crate-type = ["rlib", "cdylib"]

@@ -1,0 +1,52 @@
+{
+  "config": {
+    "iterations": 5,
+    "skill_count": 100
+  },
+  "benchmarks": {
+    "python_yaml": {
+      "operation": "frontmatter_parse",
+      "iterations": 500,
+      "total_ms": 477.6845510023122,
+      "avg_ms": 95.53691020046244,
+      "min_ms": 94.08744300162653,
+      "max_ms": 96.98989699973026,
+      "backend": "python_yaml"
+    },
+    "rsk_cli": {
+      "operation": "frontmatter_parse",
+      "iterations": 500,
+      "total_ms": 918.1323989978409,
+      "avg_ms": 183.6264797995682,
+      "min_ms": 177.67568199997186,
+      "max_ms": 188.5117479978362,
+      "backend": "rsk_cli"
+    },
+    "rsk_bridge": {
+      "operation": "frontmatter_parse",
+      "iterations": 500,
+      "total_ms": 961.9179289948079,
+      "avg_ms": 192.38358579896158,
+      "min_ms": 189.6918949969404,
+      "max_ms": 196.50763100071345,
+      "backend": "rsk_bridge_rust"
+    },
+    "rsk_pyo3": {
+      "operation": "frontmatter_parse",
+      "iterations": 500,
+      "total_ms": 40.21145200022147,
+      "avg_ms": 8.042290400044294,
+      "min_ms": 6.89379200048279,
+      "max_ms": 11.428361998696346,
+      "backend": "rsk_pyo3"
+    }
+  },
+  "workload_analysis": {
+    "skill_count": 100,
+    "yaml_parsing_total_ms": 91.43676300664083,
+    "yaml_parsing_avg_ms": 0.9143676300664083,
+    "other_operations_ms": 7.376101020781789,
+    "yaml_percentage": 92.53528263411658,
+    "bottleneck": true
+  }
+}

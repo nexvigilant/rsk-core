@@ -1,0 +1,153 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#f97316', 'primaryTextColor': '#fff', 'primaryBorderColor': '#ea580c', 'lineColor': '#6b7280', 'secondaryColor': '#1f2937', 'tertiaryColor': '#374151'}}}%%
+
+%% RSK Skill Ecosystem - Data Flow Sequence Diagram
+%% 4 Swim Lanes: User Interaction, Skill Framework, Bridge Layer, Rust Kernel
+
+sequenceDiagram
+    autonumber
+
+    %% Participants (4 swim lanes)
+    participant U as 👤 User<br/>(Claude Code CLI)
+    participant S as 📦 Skill Framework<br/>(KSB Layer)
+    participant B as 🐍 Python Bridge<br/>(rsk_bridge.py)
+    participant R as ⚙️ Rust Kernel<br/>(RSK v0.5.0)
+
+    %% ═══════════════════════════════════════════════════════════════════
+    %% SWIM LANE 1: USER INTERACTION (Blue)
+    %% User initiates skill execution
+    %% ═══════════════════════════════════════════════════════════════════
+
+    rect rgb(59, 130, 246, 0.2)
+        Note over U,S: 🔵 USER INTERACTION LANE
+
+        U->>+S: /skill-name or natural language trigger
+        Note right of U: e.g., "/commit", "run tests",<br/>"find similar strings"
+
+        S->>S: Route request via pattern matching
+        Note right of S: SKILL.md TRIGGERS section<br/>determines skill to invoke
+    end
+
+    %% ═══════════════════════════════════════════════════════════════════
+    %% SWIM LANE 2: SKILL FRAMEWORK (Purple)
+    %% Skill loading and SMST validation
+    %% ═══════════════════════════════════════════════════════════════════
+
+    rect rgb(168, 85, 247, 0.2)
+        Note over S,B: 🟣 SKILL FRAMEWORK LANE
+
+        S->>S: Load SKILL.md specification
+        S->>S: Validate SMST components
+        Note right of S: INPUTS, OUTPUTS, STATE,<br/>INVARIANTS, FAILURE_MODES
+
+        alt Compliance Check Required
+            S->>B: query_taxonomy("compliance", level)
+            B-->>S: Compliance requirements
+        end
+
+        S->>S: Extract execution parameters
+        Note right of S: Parse PARAMETERS section<br/>with defaults
+    end
+
+    %% ═══════════════════════════════════════════════════════════════════
+    %% SWIM LANE 3: BRIDGE LAYER (Red/Green)
+    %% Python-Rust interop decision
+    %% ═══════════════════════════════════════════════════════════════════
+
+    rect rgb(239, 68, 68, 0.2)
+        Note over B,R: 🔴 BRIDGE LAYER LANE
+
+        S->>+B: Call rsk_bridge function
+        Note right of S: e.g., levenshtein(),<br/>parse_yaml_file()
+
+        B->>B: Check _USE_RUST flag
+        Note right of B: Set at import time<br/>based on PyO3 availability
+
+        alt PyO3 Available (11-70x speedup)
+            rect rgb(34, 197, 94, 0.2)
+                B->>+R: Direct PyO3 call (_rsk.function())
+                Note right of B: Zero-copy data transfer<br/>via maturin wheel
+                R-->>-B: TypedDict result
+            end
+        else CLI Fallback
+            rect rgb(234, 179, 8, 0.2)
+                B->>R: subprocess.run(["rsk", ...])
+                Note right of B: ~50ms overhead<br/>for process spawn
+                R-->>B: JSON stdout
+                B->>B: Parse JSON to TypedDict
+            end
+        else Python Native Fallback
+            rect rgb(239, 68, 68, 0.3)
+                B->>B: Execute pure Python implementation
+                Note right of B: Always available<br/>Baseline performance
+            end
+        end
+
+        B-->>-S: Unified TypedDict result
+    end
+
+    %% ═══════════════════════════════════════════════════════════════════
+    %% SWIM LANE 4: RUST KERNEL (Green)
+    %% High-performance computation
+    %% ═══════════════════════════════════════════════════════════════════
+
+    rect rgb(34, 197, 94, 0.2)
+        Note over R: 🟢 RUST KERNEL LANE
+
+        Note right of R: 14 Modules Available:<br/>• levenshtein (69x)<br/>• graph (DAG)<br/>• yaml_processor (29x)<br/>• taxonomy (O(1))<br/>• text_processor (15x)<br/>• code_generator<br/>• execution_engine<br/>• state_manager<br/>• compression<br/>• crypto (20x)<br/>• telemetry<br/>• math
+
+        alt Graph Operation
+            R->>R: topological_sort() or level_parallelization()
+            Note right of R: Kahn's algorithm O(V+E)<br/>Detect cycles, compute levels
+        else String Similarity
+            R->>R: levenshtein() or fuzzy_search()
+            Note right of R: Wagner-Fischer O(mn)<br/>Space-optimized DP
+        else YAML Processing
+            R->>R: parse_yaml_string() or parse_frontmatter()
+            Note right of R: serde_yaml parsing<br/>With validation
+        else Taxonomy Lookup
+            R->>R: query_taxonomy() via PHF
+            Note right of R: Compile-time perfect hash<br/>O(1) guaranteed
+        else Checkpoint Operation
+            R->>R: checkpoint_save/load/list()
+            Note right of R: JSON file persistence<br/>~/.claude/.checkpoints/
+        end
+    end
+
+    %% ═══════════════════════════════════════════════════════════════════
+    %% RETURN PATH
+    %% ═══════════════════════════════════════════════════════════════════
+
+    rect rgb(59, 130, 246, 0.2)
+        Note over U,S: 🔵 RETURN TO USER
+
+        S->>S: Format output per OUTPUTS section
+        S->>S: Apply INVARIANTS.POST validation
+        S-->>-U: Skill result
+
+        alt Telemetry Enabled
+            S-)B: Log execution metrics (async)
+            B-)R: telemetry_span() / telemetry_event()
+        end
+    end
+
+    %% ═══════════════════════════════════════════════════════════════════
+    %% CHECKPOINT RECOVERY FLOW (Optional)
+    %% ═══════════════════════════════════════════════════════════════════
+
+    rect rgb(168, 85, 247, 0.1)
+        Note over U,R: 💾 CHECKPOINT RECOVERY (if needed)
+
+        U->>S: Resume paused execution
+        S->>B: checkpoint_find_resumable()
+        B->>R: List paused/failed contexts
+        R-->>B: [ExecutionContext, ...]
+        B-->>S: Resumable contexts
+        S->>U: Present options to user
+
+        U->>S: Select context to resume
+        S->>B: checkpoint_load(context_id)
+        B->>R: Read JSON checkpoint
+        R-->>B: ExecutionContext state
+        B-->>S: Restored context
+        S->>S: Resume from last completed step
+    end

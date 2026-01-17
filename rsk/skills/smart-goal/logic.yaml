@@ -1,0 +1,67 @@
+start: validate_input
+nodes:
+  validate_input:
+    type: condition
+    variable: goal_text
+    operator: is_not_null
+    true_next: check_specificity
+    false_next: fail_empty
+
+  check_specificity:
+    type: condition
+    variable: goal_text
+    operator: matches
+    value: "(?i)(specific|target|deadline|metric)"
+    true_next: check_measurability
+    false_next: fail_vague
+
+  check_measurability:
+    type: condition
+    variable: goal_text
+    operator: matches
+    value: "(?i)(\\d+|%|count|rate|ratio)"
+    true_next: check_achievability
+    false_next: fail_unmeasurable
+
+  check_achievability:
+    type: condition
+    variable: resources_available
+    operator: eq
+    value: true
+    true_next: pass
+    false_next: fail_resources
+
+  pass:
+    type: return
+    value:
+      status: "valid"
+      score: 100
+      message: "Goal is SMART compliant"
+
+  fail_empty:
+    type: return
+    value:
+      status: "invalid"
+      score: 0
+      message: "Goal text is missing"
+
+  fail_vague:
+    type: return
+    value:
+      status: "invalid"
+      score: 25
+      message: "Goal lacks specificity"
+
+  fail_unmeasurable:
+    type: return
+    value:
+      status: "invalid"
+      score: 50
+      message: "Goal is not measurable (missing numbers/metrics)"
+
+  fail_resources:
+    type: return
+    value:
+      status: "invalid"
+      score: 75
+      message: "Goal is not achievable with current resources"

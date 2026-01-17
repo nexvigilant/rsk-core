@@ -1,0 +1,101 @@
+[workspace]
+resolver = "2"
+members = [
+    "rsk",
+    "rust-forge/crates/*"
+]
+exclude = ["rust-forge/fuzz"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+authors = ["Matthew Campion"]
+license = "MIT"
+repository = "https://github.com/nexvigilant/rust-forge"
+rust-version = "1.85"
+
+[workspace.dependencies]
+dashmap = "6.1"
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.9"
+
+# Error handling
+thiserror = "2.0"
+anyhow = "1.0"
+
+# Async runtime (LTS version - supported until Sept 2026)
+tokio = { version = "1.47", features = ["full"] }
+
+# Logging/tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# CLI
+clap = { version = "4.5", features = ["derive"] }
+
+# Code generation
+quote = "1.0"
+syn = { version = "2.0", features = ["full", "parsing", "printing"] }
+proc-macro2 = "1.0"
+
+# Data processing (2026 verified versions)
+polars = { version = "0.51", features = ["lazy", "parquet", "json", "temporal"] }
+
+# ML/Embeddings (2026 verified versions)
+candle-core = "0.8"
+candle-nn = "0.8"
+candle-transformers = "0.8"
+tokenizers = "0.21"
+hf-hub = "0.4"
+safetensors = "0.4"
+
+# Vector database
+qdrant-client = "1.13"
+
+# HTTP client
+reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
+
+# AWS S3
+aws-sdk-s3 = "1.120"
+aws-config = "1.6"
+
+# SQL databases
+sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "mysql", "sqlite"] }
+
+# Testing
+proptest = "1.5"
+tempfile = "3.14"
+pretty_assertions = "1.4"
+
+# Scientific Computing (2026 verified)
+statrs = "0.18"
+uom = "0.37"
+faer = { version = "0.19" }
+scilib = "0.1"
+num = "0.4"
+
+# Async utilities
+async-trait = "0.1"
+
+# Internal crates (Paths adjusted for new root)
+forge-spec = { path = "rust-forge/crates/forge-spec" }
+forge-runtime = { path = "rust-forge/crates/forge-runtime" }
+forge-codegen = { path = "rust-forge/crates/forge-codegen" }
+
+# RSK - Rust Skills Kernel
+rsk = { path = "rsk" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

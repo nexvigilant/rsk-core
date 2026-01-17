@@ -1,0 +1,36 @@
+Category,Service,Purpose,Pricing,Free Tier,Rate Limit,Criticality,Fallback,Status,API Endpoint,Auth Method,Notes
+Rust Crate,serde,Serialization/deserialization framework,Free (MIT),Unlimited,N/A,CRITICAL,None required,ACTIVE,crates.io,None,Foundation for all data types
+Rust Crate,serde_json,JSON parsing and serialization,Free (MIT),Unlimited,N/A,CRITICAL,Manual parsing,ACTIVE,crates.io,None,Used by all PyO3 returns
+Rust Crate,serde_yaml,YAML parsing,Free (MIT),Unlimited,N/A,HIGH,yaml-rust2 optional,ACTIVE,crates.io,None,Deprecated but stable
+Rust Crate,pyo3,Python-Rust FFI bindings,Free (MIT),Unlimited,N/A,CRITICAL,CLI subprocess,ACTIVE,crates.io,None,Requires python feature flag
+Rust Crate,polars,DataFrame operations,Free (MIT),Unlimited,N/A,MEDIUM,pandas fallback,ACTIVE,crates.io,None,Used for batch processing
+Rust Crate,regex,Regular expression engine,Free (MIT),Unlimited,N/A,HIGH,Python re module,ACTIVE,crates.io,None,Text pattern matching
+Rust Crate,sha2,SHA-256 cryptographic hashing,Free (MIT),Unlimited,N/A,MEDIUM,hashlib,ACTIVE,crates.io,None,Content hashing
+Rust Crate,flate2,Gzip compression/decompression,Free (MIT),Unlimited,N/A,MEDIUM,Python zlib,ACTIVE,crates.io,None,Context compression
+Rust Crate,phf,Perfect hash function tables,Free (MIT),Unlimited,N/A,HIGH,HashMap fallback,ACTIVE,crates.io,None,O(1) taxonomy lookups
+Rust Crate,clap,CLI argument parsing,Free (MIT),Unlimited,N/A,HIGH,Manual parsing,ACTIVE,crates.io,None,derive feature enabled
+Rust Crate,anyhow,Ergonomic error handling,Free (MIT),Unlimited,N/A,HIGH,thiserror alone,ACTIVE,crates.io,None,For application errors
+Rust Crate,thiserror,Error type derivation,Free (MIT),Unlimited,N/A,HIGH,Manual impl,ACTIVE,crates.io,None,For library errors
+Rust Crate,chrono,Date/time handling,Free (MIT),Unlimited,N/A,MEDIUM,std::time,ACTIVE,crates.io,None,Timestamp serialization
+Rust Crate,tracing,Structured logging,Free (MIT),Unlimited,N/A,MEDIUM,println fallback,ACTIVE,crates.io,None,Telemetry foundation
+Rust Crate,tracing-subscriber,Tracing output formatting,Free (MIT),Unlimited,N/A,MEDIUM,None,ACTIVE,crates.io,None,JSON and env-filter features
+Rust Crate,base64,Base64 encoding/decoding,Free (MIT),Unlimited,N/A,LOW,Python base64,ACTIVE,crates.io,None,Compressed data encoding
+Rust Crate,dirs,Platform-specific directories,Free (MIT),Unlimited,N/A,MEDIUM,Manual paths,ACTIVE,crates.io,None,~/.claude path discovery
+Rust Crate,toml,TOML parsing,Free (MIT),Unlimited,N/A,MEDIUM,Python tomllib,ACTIVE,crates.io,None,Cargo.toml parsing
+Rust Crate,yaml-rust2,Alternative YAML parser,Free (MIT),Unlimited,N/A,LOW,serde_yaml,OPTIONAL,crates.io,None,Optional feature flag
+Rust Crate,criterion,Benchmarking framework,Free (MIT),Unlimited,N/A,LOW,None,DEV ONLY,crates.io,None,HTML reports enabled
+Rust Crate,tempfile,Temporary file handling,Free (MIT),Unlimited,N/A,LOW,None,DEV ONLY,crates.io,None,Test fixtures
+Build Tool,rustc,Rust compiler,Free,Unlimited,N/A,CRITICAL,None,REQUIRED,rustup.rs,None,1.85+ for edition 2024
+Build Tool,cargo,Rust package manager,Free,Unlimited,N/A,CRITICAL,None,REQUIRED,rustup.rs,None,Workspace management
+Build Tool,maturin,PyO3 wheel builder,Free (MIT),Unlimited,N/A,CRITICAL,setuptools-rust,REQUIRED,PyPI,None,v1.8+ recommended
+Build Tool,python,Python interpreter,Free,Unlimited,N/A,CRITICAL,None,REQUIRED,python.org,None,3.12+ required
+Python Stdlib,pathlib,Path manipulation,Free,Unlimited,N/A,CRITICAL,os.path,BUILTIN,N/A,None,Core path handling
+Python Stdlib,typing,Type hints,Free,Unlimited,N/A,HIGH,None,BUILTIN,N/A,None,TypedDict definitions
+Python Stdlib,json,JSON handling,Free,Unlimited,N/A,CRITICAL,None,BUILTIN,N/A,None,All data interchange
+Python Stdlib,hashlib,Cryptographic hashing,Free,Unlimited,N/A,MEDIUM,None,BUILTIN,N/A,None,Fallback for sha256
+Python Stdlib,subprocess,Process spawning,Free,Unlimited,N/A,HIGH,None,BUILTIN,N/A,None,CLI fallback path
+Python Stdlib,sys,System parameters,Free,Unlimited,N/A,HIGH,None,BUILTIN,N/A,None,Path manipulation
+Python Package,PyYAML,YAML parsing,Free (MIT),Unlimited,N/A,HIGH,serde_yaml,FALLBACK,PyPI,None,Python fallback path
+Infrastructure,~/.claude/.venv,Python virtualenv,Free,Unlimited,N/A,HIGH,System Python,LOCAL,N/A,None,RSK wheel installed here
+Infrastructure,~/.claude/.checkpoints,Checkpoint storage,Free,Unlimited,N/A,MEDIUM,Memory only,LOCAL,N/A,None,JSON file persistence
+Infrastructure,~/.claude/skills,Skill directory,Free,Unlimited,N/A,CRITICAL,None,LOCAL,N/A,None,229 skill definitions

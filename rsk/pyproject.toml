@@ -1,0 +1,34 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "rsk"
+version = "0.5.0"
+description = "Rust Skill Kernel - High-performance Python bindings for Claude Code skills"
+authors = [{ name = "Matthew Campion" }]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Libraries",
+]
+keywords = ["rust", "skills", "claude", "kernel", "performance"]
+
+[project.urls]
+Homepage = "https://github.com/matthewcampion/claude-code"
+Documentation = "https://docs.rs/rsk"
+
+[tool.maturin]
+features = ["python"]
+python-source = "python"
+module-name = "rsk.rsk"

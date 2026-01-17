@@ -1,0 +1,2036 @@
+{
+  "skills": {
+    "uv-orchestrator": {
+      "name": "uv-orchestrator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/uv-orchestrator/SKILL.md"
+    },
+    "recurrence-tracker": {
+      "name": "recurrence-tracker",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/recurrence-tracker/SKILL.md"
+    },
+    "is-prime": {
+      "name": "is-prime",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "DeterministicLogic",
+      "logic_path": "/home/matthew/.claude/skills/is-prime/logic.yaml",
+      "skill_md_path": "/home/matthew/.claude/skills/is-prime/SKILL.md"
+    },
+    "learning-maturity-assessor": {
+      "name": "learning-maturity-assessor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/learning-maturity-assessor/SKILL.md"
+    },
+    "stderr-logger": {
+      "name": "stderr-logger",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/stderr-logger/SKILL.md"
+    },
+    "test-case-generator": {
+      "name": "test-case-generator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/test-case-generator/SKILL.md"
+    },
+    "skill-audit": {
+      "name": "skill-audit",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-audit/SKILL.md"
+    },
+    "domain-translator": {
+      "name": "domain-translator",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/domain-translator/SKILL.md"
+    },
+    "language-to-spec": {
+      "name": "language-to-spec",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/language-to-spec/SKILL.md"
+    },
+    "proceed": {
+      "name": "proceed",
+      "version": "3.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/proceed/SKILL.md"
+    },
+    "ralph-loop": {
+      "name": "ralph-loop",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/ralph-loop/SKILL.md"
+    },
+    "project-healthcheck": {
+      "name": "project-healthcheck",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/project-healthcheck/SKILL.md"
+    },
+    "homeostasis-agent": {
+      "name": "homeostasis-agent",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/homeostasis-agent/SKILL.md"
+    },
+    "skill-typo-fixer": {
+      "name": "skill-typo-fixer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-typo-fixer/SKILL.md"
+    },
+    "improvement-prioritizer": {
+      "name": "improvement-prioritizer",
+      "version": "1.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/improvement-prioritizer/SKILL.md"
+    },
+    "pre-commit": {
+      "name": "pre-commit",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pre-commit/SKILL.md"
+    },
+    "checkpoint": {
+      "name": "checkpoint",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/checkpoint/SKILL.md"
+    },
+    "doc-structure-auditor": {
+      "name": "doc-structure-auditor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/doc-structure-auditor/SKILL.md"
+    },
+    "spis": {
+      "name": "spis",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/spis/SKILL.md"
+    },
+    "progress-tracker": {
+      "name": "progress-tracker",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/progress-tracker/SKILL.md"
+    },
+    "nextflow-development": {
+      "name": "nextflow-development",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/nextflow-development/SKILL.md"
+    },
+    "security-scan": {
+      "name": "security-scan",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/security-scan/SKILL.md"
+    },
+    "level-parallelization": {
+      "name": "level-parallelization",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/level-parallelization/SKILL.md"
+    },
+    "skill-improver": {
+      "name": "skill-improver",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-improver/SKILL.md"
+    },
+    "tech-debt-auditor": {
+      "name": "tech-debt-auditor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/tech-debt-auditor/SKILL.md"
+    },
+    "learning-extractor": {
+      "name": "learning-extractor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/learning-extractor/SKILL.md"
+    },
+    "log-inspector": {
+      "name": "log-inspector",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/log-inspector/SKILL.md"
+    },
+    "decision-tree-auditor": {
+      "name": "decision-tree-auditor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/decision-tree-auditor/SKILL.md"
+    },
+    "statement-classifier": {
+      "name": "statement-classifier",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/statement-classifier/SKILL.md"
+    },
+    "aux-skill-validate-py": {
+      "name": "aux-skill-validate-py",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/skill-validator-py/SKILL.md"
+    },
+    "compressed-audit": {
+      "name": "compressed-audit",
+      "version": "2.2.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/compressed-audit/SKILL.md"
+    },
+    "knowledge-graph-builder": {
+      "name": "knowledge-graph-builder",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/knowledge-graph-builder/SKILL.md"
+    },
+    "design-token-migration": {
+      "name": "design-token-migration",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/design-token-migration/SKILL.md"
+    },
+    "script-identifier": {
+      "name": "script-identifier",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/script-identifier/SKILL.md"
+    },
+    "cm": {
+      "name": "cm",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/cm/SKILL.md"
+    },
+    "cicd-generator": {
+      "name": "cicd-generator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/cicd-generator/SKILL.md"
+    },
+    "test-selector": {
+      "name": "test-selector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/test-selector/SKILL.md"
+    },
+    "schemathesis": {
+      "name": "schemathesis",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/schemathesis/SKILL.md"
+    },
+    "strategy-engine": {
+      "name": "strategy-engine",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "Hybrid",
+      "logic_path": "/home/matthew/.claude/skills/strategy-engine/logic.yaml",
+      "skill_md_path": "/home/matthew/.claude/skills/strategy-engine/SKILL.md"
+    },
+    "confidence-calibrator": {
+      "name": "confidence-calibrator",
+      "version": "1.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/confidence-calibrator/SKILL.md"
+    },
+    "schema-sync": {
+      "name": "schema-sync",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/schema-sync/SKILL.md"
+    },
+    "hook-factory": {
+      "name": "hook-factory",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/hook-factory/SKILL.md"
+    },
+    "machine-validator": {
+      "name": "machine-validator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/machine-validator/SKILL.md"
+    },
+    "construct-validator": {
+      "name": "construct-validator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/construct-validator/SKILL.md"
+    },
+    "pv-pack-orchestrator": {
+      "name": "pv-pack-orchestrator",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-pack-orchestrator/SKILL.md"
+    },
+    "scientific-problem-selection": {
+      "name": "scientific-problem-selection",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/scientific-problem-selection/SKILL.md"
+    },
+    "semantic-amplification": {
+      "name": "semantic-amplification",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/semantic-amplification/SKILL.md"
+    },
+    "pv-system-architect": {
+      "name": "pv-system-architect",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-system-architect/SKILL.md"
+    },
+    "proceed-smart": {
+      "name": "proceed-smart",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/proceed-smart/SKILL.md"
+    },
+    "architecture-generator": {
+      "name": "architecture-generator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/architecture-generator/SKILL.md"
+    },
+    "feedback-system-designer": {
+      "name": "feedback-system-designer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/feedback-system-designer/SKILL.md"
+    },
+    "guardrail-designer": {
+      "name": "guardrail-designer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/guardrail-designer/SKILL.md"
+    },
+    "claude-toolkit": {
+      "name": "claude-toolkit",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/claude-toolkit/SKILL.md"
+    },
+    "theoretical-test-executor": {
+      "name": "theoretical-test-executor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/theoretical-test-executor/SKILL.md"
+    },
+    "cookiecutter-cruft": {
+      "name": "cookiecutter-cruft",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/cookiecutter-cruft/SKILL.md"
+    },
+    "scvi-tools": {
+      "name": "scvi-tools",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/scvi-tools/SKILL.md"
+    },
+    "preflight-clarify": {
+      "name": "preflight-clarify",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/preflight-clarify/SKILL.md"
+    },
+    "typer": {
+      "name": "typer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/typer/SKILL.md"
+    },
+    "tech-compare": {
+      "name": "tech-compare",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/tech-compare/SKILL.md"
+    },
+    "beartype": {
+      "name": "beartype",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/beartype/SKILL.md"
+    },
+    "pattern-detector": {
+      "name": "pattern-detector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pattern-detector/SKILL.md"
+    },
+    "mustache-migrate": {
+      "name": "mustache-migrate",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/mustache-migrate/SKILL.md"
+    },
+    "behavior-compare": {
+      "name": "behavior-compare",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/behavior-compare/SKILL.md"
+    },
+    "polars": {
+      "name": "polars",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/polars/SKILL.md"
+    },
+    "user-researcher": {
+      "name": "user-researcher",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/user-researcher/SKILL.md"
+    },
+    "session-state-analyzer": {
+      "name": "session-state-analyzer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/session-state-analyzer/SKILL.md"
+    },
+    "pv-signal-detector": {
+      "name": "pv-signal-detector",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-signal-detector/SKILL.md"
+    },
+    "algorithm-candidate-detector": {
+      "name": "algorithm-candidate-detector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/algorithm-candidate-detector/SKILL.md"
+    },
+    "trivy": {
+      "name": "trivy",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/trivy/SKILL.md"
+    },
+    "qa-toolkit": {
+      "name": "qa-toolkit",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/qa-toolkit/SKILL.md"
+    },
+    "pv-test-case-generator": {
+      "name": "pv-test-case-generator",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-test-case-generator/SKILL.md"
+    },
+    "smart-goal-mathematics": {
+      "name": "smart-goal-mathematics",
+      "version": "1.0.1",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/smart-goal-mathematics/SKILL.md"
+    },
+    "agent-orchestrator": {
+      "name": "agent-orchestrator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/agent-orchestrator/SKILL.md"
+    },
+    "best-practices": {
+      "name": "best-practices",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/best-practices/SKILL.md"
+    },
+    "dev-docs-system": {
+      "name": "dev-docs-system",
+      "version": "0.1.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/dev-toolkit/modules/dev-docs-system/SKILL.md"
+    },
+    "rust-test-framework": {
+      "name": "rust-test-framework",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/rust-test-framework/SKILL.md"
+    },
+    "dev-docs": {
+      "name": "dev-docs",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/dev-docs/SKILL.md"
+    },
+    "requirements-analyst": {
+      "name": "requirements-analyst",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/requirements-analyst/SKILL.md"
+    },
+    "instrument-data-to-allotrope": {
+      "name": "instrument-data-to-allotrope",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/instrument-data-to-allotrope/SKILL.md"
+    },
+    "topological-sort": {
+      "name": "topological-sort",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "RustIntrinsic",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/topological-sort/SKILL.md"
+    },
+    "smst-test-generator": {
+      "name": "smst-test-generator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/smst-test-generator/SKILL.md"
+    },
+    "claude-config-validator": {
+      "name": "claude-config-validator",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/claude-config-validator/SKILL.md"
+    },
+    "god-component-detector": {
+      "name": "god-component-detector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/god-component-detector/SKILL.md"
+    },
+    "dijkstra": {
+      "name": "dijkstra",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/dijkstra/SKILL.md"
+    },
+    "kmp-search": {
+      "name": "kmp-search",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/kmp-search/SKILL.md"
+    },
+    "nv-observe": {
+      "name": "nv-observe",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/nv-observe/SKILL.md"
+    },
+    "market-researcher": {
+      "name": "market-researcher",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/market-researcher/SKILL.md"
+    },
+    "dag-mathematics": {
+      "name": "dag-mathematics",
+      "version": "1.0.1",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/dag-mathematics/SKILL.md"
+    },
+    "testing-ecosystem": {
+      "name": "testing-ecosystem",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/testing-ecosystem/SKILL.md"
+    },
+    "retro-prompt": {
+      "name": "retro-prompt",
+      "version": "1.2.1",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/retro-prompt/SKILL.md"
+    },
+    "memray": {
+      "name": "memray",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/memray/SKILL.md"
+    },
+    "academy": {
+      "name": "academy",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/academy/SKILL.md"
+    },
+    "capability-analyzer": {
+      "name": "capability-analyzer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/capability-analyzer/SKILL.md"
+    },
+    "build-or-wrap": {
+      "name": "build-or-wrap",
+      "version": "1.0.1",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/build-or-wrap/SKILL.md"
+    },
+    "epic-optimizer": {
+      "name": "epic-optimizer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/epic-optimizer/SKILL.md"
+    },
+    "architecture-validator": {
+      "name": "architecture-validator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/architecture-validator/SKILL.md"
+    },
+    "semgrep": {
+      "name": "semgrep",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/semgrep/SKILL.md"
+    },
+    "dependency-injector": {
+      "name": "dependency-injector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/dependency-injector/SKILL.md"
+    },
+    "stakeholder-mapper": {
+      "name": "stakeholder-mapper",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/stakeholder-mapper/SKILL.md"
+    },
+    "dsc-gram-engine": {
+      "name": "dsc-gram-engine",
+      "version": "1.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/grammar-engine/SKILL.md"
+    },
+    "improvement-engine": {
+      "name": "improvement-engine",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/improvement-engine/SKILL.md"
+    },
+    "scalene": {
+      "name": "scalene",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/scalene/SKILL.md"
+    },
+    "claude-code-workflow-architect": {
+      "name": "claude-code-workflow-architect",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/claude-code-workflow-architect/SKILL.md"
+    },
+    "integration-assessor": {
+      "name": "integration-assessor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/integration-assessor/SKILL.md"
+    },
+    "lexicon-builder": {
+      "name": "lexicon-builder",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/lexicon-builder/SKILL.md"
+    },
+    "automation-first-policy": {
+      "name": "automation-first-policy",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/automation-first-policy/SKILL.md"
+    },
+    "validation-intensity-selector": {
+      "name": "validation-intensity-selector",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/validation-intensity-selector/SKILL.md"
+    },
+    "skill-arg-validator": {
+      "name": "skill-arg-validator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-arg-validator/SKILL.md"
+    },
+    "signal-screen": {
+      "name": "signal-screen",
+      "version": "1.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/signal-screen/SKILL.md"
+    },
+    "api-documenter": {
+      "name": "api-documenter",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/api-documenter/SKILL.md"
+    },
+    "agent-daemon": {
+      "name": "agent-daemon",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/agent-daemon/SKILL.md"
+    },
+    "skill-new": {
+      "name": "skill-new",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-new/SKILL.md"
+    },
+    "pattern-crystallizer": {
+      "name": "pattern-crystallizer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pattern-crystallizer/SKILL.md"
+    },
+    "": {
+      "name": "",
+      "version": "0.1.0",
+      "smst_score": 0.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/cypress-fixer/SKILL.md"
+    },
+    "dsc-spec-validate": {
+      "name": "dsc-spec-validate",
+      "version": "1.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/coherence-checker/SKILL.md"
+    },
+    "dev-sop-generator": {
+      "name": "dev-sop-generator",
+      "version": "0.1.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/dev-toolkit/modules/dev-sop-generator/SKILL.md"
+    },
+    "hypothesis": {
+      "name": "hypothesis",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/hypothesis/SKILL.md"
+    },
+    "codebase-analyzer": {
+      "name": "codebase-analyzer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/codebase-analyzer/SKILL.md"
+    },
+    "skill-agent-creator": {
+      "name": "skill-agent-creator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-agent-creator/SKILL.md"
+    },
+    "science": {
+      "name": "science",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/science/SKILL.md"
+    },
+    "dataflow": {
+      "name": "dataflow",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/dataflow/SKILL.md"
+    },
+    "guardian-composer": {
+      "name": "guardian-composer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/guardian-composer/SKILL.md"
+    },
+    "handoff-generator": {
+      "name": "handoff-generator",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/handoff-generator/SKILL.md"
+    },
+    "compliance-upgrader": {
+      "name": "compliance-upgrader",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/compliance-upgrader/SKILL.md"
+    },
+    "yes-no": {
+      "name": "yes-no",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/yes-no/SKILL.md"
+    },
+    "guardian-toolkit": {
+      "name": "guardian-toolkit",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/guardian-toolkit/SKILL.md"
+    },
+    "chain-skills": {
+      "name": "chain-skills",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/chain-skills/SKILL.md"
+    },
+    "dependency-mapper": {
+      "name": "dependency-mapper",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/dependency-mapper/SKILL.md"
+    },
+    "knowledge-retriever": {
+      "name": "knowledge-retriever",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/knowledge-retriever/SKILL.md"
+    },
+    "aux-skill-audit": {
+      "name": "aux-skill-audit",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/aux-skill-audit/SKILL.md"
+    },
+    "cli-scaffolder": {
+      "name": "cli-scaffolder",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/cli-scaffolder/SKILL.md"
+    },
+    "maintenance": {
+      "name": "maintenance",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/maintenance/SKILL.md"
+    },
+    "boundary-detector": {
+      "name": "boundary-detector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/boundary-detector/SKILL.md"
+    },
+    "skill-factory": {
+      "name": "skill-factory",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-factory/SKILL.md"
+    },
+    "pv-terminology-validator": {
+      "name": "pv-terminology-validator",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-terminology-validator/SKILL.md"
+    },
+    "pydeps": {
+      "name": "pydeps",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pydeps/SKILL.md"
+    },
+    "cycle-detection": {
+      "name": "cycle-detection",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/cycle-detection/SKILL.md"
+    },
+    "algorithms": {
+      "name": "algorithms",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/algorithms/SKILL.md"
+    },
+    "handle-error": {
+      "name": "handle-error",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/handle-error/SKILL.md"
+    },
+    "pv-data-pipeline-architect": {
+      "name": "pv-data-pipeline-architect",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-data-pipeline-architect/SKILL.md"
+    },
+    "env-auditor": {
+      "name": "env-auditor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/env-auditor/SKILL.md"
+    },
+    "doc-lookup": {
+      "name": "doc-lookup",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/doc-lookup/SKILL.md"
+    },
+    "scaffold-package": {
+      "name": "scaffold-package",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/scaffold-package/SKILL.md"
+    },
+    "vulture": {
+      "name": "vulture",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/vulture/SKILL.md"
+    },
+    "tech-decisions": {
+      "name": "tech-decisions",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/tech-decisions/SKILL.md"
+    },
+    "document-reviewer": {
+      "name": "document-reviewer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/document-reviewer/SKILL.md"
+    },
+    "domain-discovery": {
+      "name": "domain-discovery",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/domain-discovery/SKILL.md"
+    },
+    "capture-context": {
+      "name": "capture-context",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/capture-context/SKILL.md"
+    },
+    "aux-out-fix": {
+      "name": "aux-out-fix",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/aux-out-fix/SKILL.md"
+    },
+    "token-audit": {
+      "name": "token-audit",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/token-audit/SKILL.md"
+    },
+    "clinical-trial-protocol-skill": {
+      "name": "clinical-trial-protocol-skill",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/clinical-trial-protocol-skill/SKILL.md"
+    },
+    "root-cause": {
+      "name": "root-cause",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/root-cause/SKILL.md"
+    },
+    "hook-health": {
+      "name": "hook-health",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/hook-health/SKILL.md"
+    },
+    "technical-evaluator": {
+      "name": "technical-evaluator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/technical-evaluator/SKILL.md"
+    },
+    "assert-precondition": {
+      "name": "assert-precondition",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/assert-precondition/SKILL.md"
+    },
+    "pv-api-designer": {
+      "name": "pv-api-designer",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-api-designer/SKILL.md"
+    },
+    "mermaid-chart": {
+      "name": "mermaid-chart",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/mermaid-chart/SKILL.md"
+    },
+    "smart-goal": {
+      "name": "smart-goal",
+      "version": "2.2.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/smart-goal/SKILL.md"
+    },
+    "skill-upgrader": {
+      "name": "skill-upgrader",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-upgrader/SKILL.md"
+    },
+    "content-hasher": {
+      "name": "content-hasher",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/content-hasher/SKILL.md"
+    },
+    "pact": {
+      "name": "pact",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pact/SKILL.md"
+    },
+    "file-organization-auditor": {
+      "name": "file-organization-auditor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/file-organization-auditor/SKILL.md"
+    },
+    "polyfactory": {
+      "name": "polyfactory",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/polyfactory/SKILL.md"
+    },
+    "pv-toolkit": {
+      "name": "pv-toolkit",
+      "version": "2.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-toolkit/SKILL.md"
+    },
+    "management-system-scaffolder": {
+      "name": "management-system-scaffolder",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/management-system-scaffolder/SKILL.md"
+    },
+    "pv-data-model-generator": {
+      "name": "pv-data-model-generator",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-data-model-generator/SKILL.md"
+    },
+    "claude-agent-sdk-setup": {
+      "name": "claude-agent-sdk-setup",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/claude-agent-sdk-setup/SKILL.md"
+    },
+    "skill-health-check": {
+      "name": "skill-health-check",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-health-check/SKILL.md"
+    },
+    "aux-skill-validate": {
+      "name": "aux-skill-validate",
+      "version": "2.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/aux-skill-validate/SKILL.md"
+    },
+    "sha256": {
+      "name": "sha256",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "RustIntrinsic",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/sha256/SKILL.md"
+    },
+    "intent-to-spec": {
+      "name": "intent-to-spec",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/intent-to-spec/SKILL.md"
+    },
+    "lifecycle-assessor": {
+      "name": "lifecycle-assessor",
+      "version": "1.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/lifecycle-assessor/SKILL.md"
+    },
+    "nox": {
+      "name": "nox",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/nox/SKILL.md"
+    },
+    "aux-skill-stats": {
+      "name": "aux-skill-stats",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/aux-skill-stats/SKILL.md"
+    },
+    "guardian-automation": {
+      "name": "guardian-automation",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/guardian-automation/SKILL.md"
+    },
+    "mutmut": {
+      "name": "mutmut",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/mutmut/SKILL.md"
+    },
+    "chinese-remainder": {
+      "name": "chinese-remainder",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/chinese-remainder/SKILL.md"
+    },
+    "decompose-task": {
+      "name": "decompose-task",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/decompose-task/SKILL.md"
+    },
+    "universal-validator": {
+      "name": "universal-validator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/universal-validator/SKILL.md"
+    },
+    "sentinel": {
+      "name": "sentinel",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/sentinel/SKILL.md"
+    },
+    "frontend-absurdity-audit": {
+      "name": "frontend-absurdity-audit",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/frontend-absurdity-audit/SKILL.md"
+    },
+    "aux-skill-lint": {
+      "name": "aux-skill-lint",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/aux-skill-lint/SKILL.md"
+    },
+    "icf-mathematics": {
+      "name": "icf-mathematics",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/icf-mathematics/SKILL.md"
+    },
+    "duckdb": {
+      "name": "duckdb",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/duckdb/SKILL.md"
+    },
+    "fact-check": {
+      "name": "fact-check",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/fact-check/SKILL.md"
+    },
+    "goal-metrics-framework": {
+      "name": "goal-metrics-framework",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/goal-metrics-framework/SKILL.md"
+    },
+    "adoption-tracker": {
+      "name": "adoption-tracker",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/adoption-tracker/SKILL.md"
+    },
+    "binary-search": {
+      "name": "binary-search",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/binary-search/SKILL.md"
+    },
+    "dev-environment-auditor": {
+      "name": "dev-environment-auditor",
+      "version": "0.1.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/dev-toolkit/modules/dev-environment-auditor/SKILL.md"
+    },
+    "research": {
+      "name": "research",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/research/SKILL.md"
+    },
+    "prop-drilling-detector": {
+      "name": "prop-drilling-detector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/prop-drilling-detector/SKILL.md"
+    },
+    "stark": {
+      "name": "stark",
+      "version": "2.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/stark/SKILL.md"
+    },
+    "prompt-library": {
+      "name": "prompt-library",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/prompt-library/SKILL.md"
+    },
+    "failure-sentinel": {
+      "name": "failure-sentinel",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/failure-sentinel/SKILL.md"
+    },
+    "pandera": {
+      "name": "pandera",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pandera/SKILL.md"
+    },
+    "foundation-mathematics": {
+      "name": "foundation-mathematics",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/foundation-mathematics/SKILL.md"
+    },
+    "skill-compiler": {
+      "name": "skill-compiler",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-compiler/SKILL.md"
+    },
+    "rich": {
+      "name": "rich",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/rich/SKILL.md"
+    },
+    "import-linter": {
+      "name": "import-linter",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/import-linter/SKILL.md"
+    },
+    "gcd-lcm": {
+      "name": "gcd-lcm",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/gcd-lcm/SKILL.md"
+    },
+    "microservice-extractor": {
+      "name": "microservice-extractor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/microservice-extractor/SKILL.md"
+    },
+    "epistemic-rigor": {
+      "name": "epistemic-rigor",
+      "version": "1.2.1",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/epistemic-rigor/SKILL.md"
+    },
+    "machine-thinking": {
+      "name": "machine-thinking",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/machine-thinking/SKILL.md"
+    },
+    "luhn-validate": {
+      "name": "luhn-validate",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/luhn-validate/SKILL.md"
+    },
+    "levenshtein": {
+      "name": "levenshtein",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "RustIntrinsic",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/levenshtein/SKILL.md"
+    },
+    "iterate-systems": {
+      "name": "iterate-systems",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/iterate-systems/SKILL.md"
+    },
+    "aux-skill-create": {
+      "name": "aux-skill-create",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/aux-skill-create/SKILL.md"
+    },
+    "unknown": {
+      "name": "unknown",
+      "version": "1.0.0",
+      "smst_score": 0.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.templates/gold-standard/SKILL.md"
+    },
+    "aux-skill-check": {
+      "name": "aux-skill-check",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/aux-skill-check/SKILL.md"
+    },
+    "pipeline-monitor": {
+      "name": "pipeline-monitor",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pipeline-monitor/SKILL.md"
+    },
+    "ontological-mapper": {
+      "name": "ontological-mapper",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/ontological-mapper/SKILL.md"
+    },
+    "security-stack": {
+      "name": "security-stack",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/security-stack/SKILL.md"
+    },
+    "rustforge": {
+      "name": "rustforge",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/rustforge/SKILL.md"
+    },
+    "code-analysis": {
+      "name": "code-analysis",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/code-analysis/SKILL.md"
+    },
+    "skill-lint": {
+      "name": "skill-lint",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-lint/SKILL.md"
+    },
+    "smst-generator": {
+      "name": "smst-generator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/smst-generator/SKILL.md"
+    },
+    "skill-navigator": {
+      "name": "skill-navigator",
+      "version": "2.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-navigator/SKILL.md"
+    },
+    "anti-pattern-detector": {
+      "name": "anti-pattern-detector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/anti-pattern-detector/SKILL.md"
+    },
+    "pytest-cov": {
+      "name": "pytest-cov",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pytest-cov/SKILL.md"
+    },
+    "tool-blindspot-detector": {
+      "name": "tool-blindspot-detector",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/tool-blindspot-detector/SKILL.md"
+    },
+    "composition-failure-detector": {
+      "name": "composition-failure-detector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/composition-failure-detector/SKILL.md"
+    },
+    "guardian-workspace-analyzer": {
+      "name": "guardian-workspace-analyzer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/guardian-workspace-analyzer/SKILL.md"
+    },
+    "text-compression": {
+      "name": "text-compression",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/text-compression/SKILL.md"
+    },
+    "project-machine": {
+      "name": "project-machine",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/project-machine/SKILL.md"
+    },
+    "pattern-matcher": {
+      "name": "pattern-matcher",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pattern-matcher/SKILL.md"
+    },
+    "sop-generator": {
+      "name": "sop-generator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/sop-generator/SKILL.md"
+    },
+    "coverage-improver": {
+      "name": "coverage-improver",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/coverage-improver/SKILL.md"
+    },
+    "domain-distance-calculator": {
+      "name": "domain-distance-calculator",
+      "version": "1.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/domain-distance-calculator/SKILL.md"
+    },
+    "single-cell-rna-qc": {
+      "name": "single-cell-rna-qc",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/single-cell-rna-qc/SKILL.md"
+    },
+    "pv-performance-optimizer": {
+      "name": "pv-performance-optimizer",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-performance-optimizer/SKILL.md"
+    },
+    "diagrams": {
+      "name": "diagrams",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/diagrams/SKILL.md"
+    },
+    "failure-analyzer": {
+      "name": "failure-analyzer",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/failure-analyzer/SKILL.md"
+    },
+    "ralphy-engine": {
+      "name": "ralphy-engine",
+      "version": "1.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/ralphy-engine/SKILL.md"
+    },
+    "agent-validator": {
+      "name": "agent-validator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/agent-validator/SKILL.md"
+    },
+    "vocab-pipeline": {
+      "name": "vocab-pipeline",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/vocab-pipeline/SKILL.md"
+    },
+    "critical-path": {
+      "name": "critical-path",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/critical-path/SKILL.md"
+    },
+    "algorithm-architect": {
+      "name": "algorithm-architect",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/algorithm-architect/SKILL.md"
+    },
+    "grammar-engine": {
+      "name": "grammar-engine",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/grammar-engine/SKILL.md"
+    },
+    "aux-skill-upgrade": {
+      "name": "aux-skill-upgrade",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/aux-skill-upgrade/SKILL.md"
+    },
+    "primitive-extractor": {
+      "name": "primitive-extractor",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/primitive-extractor/SKILL.md"
+    },
+    "abstraction-astronautics-detector": {
+      "name": "abstraction-astronautics-detector",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/abstraction-astronautics-detector/SKILL.md"
+    },
+    "skill-from-source": {
+      "name": "skill-from-source",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-from-source/SKILL.md"
+    },
+    "knowledge-capturer": {
+      "name": "knowledge-capturer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/knowledge-capturer/SKILL.md"
+    },
+    "dev-toolkit": {
+      "name": "dev-toolkit",
+      "version": "2.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/dev-toolkit/SKILL.md"
+    },
+    "output-standardize": {
+      "name": "output-standardize",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/output-standardize/SKILL.md"
+    },
+    "agent-researcher": {
+      "name": "agent-researcher",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/agent-researcher/SKILL.md"
+    },
+    "smst-validator": {
+      "name": "smst-validator",
+      "version": "2.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/smst-validator/SKILL.md"
+    },
+    "skill-metrics": {
+      "name": "skill-metrics",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/skill-metrics/SKILL.md"
+    },
+    "test-coverage-analyzer": {
+      "name": "test-coverage-analyzer",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/test-coverage-analyzer/SKILL.md"
+    },
+    "improvement-dashboard": {
+      "name": "improvement-dashboard",
+      "version": "1.0.0",
+      "smst_score": 10.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/.archived/improvement-dashboard/SKILL.md"
+    },
+    "pv-data-anonymizer": {
+      "name": "pv-data-anonymizer",
+      "version": "0.1.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/pv-data-anonymizer/SKILL.md"
+    },
+    "deployment-orchestrator": {
+      "name": "deployment-orchestrator",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/deployment-orchestrator/SKILL.md"
+    },
+    "project-planning": {
+      "name": "project-planning",
+      "version": "1.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/project-planning/SKILL.md"
+    },
+    "test-harness": {
+      "name": "test-harness",
+      "version": "2.0.0",
+      "smst_score": 100.0,
+      "strategy": "PureLlm",
+      "logic_path": null,
+      "skill_md_path": "/home/matthew/.claude/skills/test-harness/SKILL.md"
+    }
+  }
+}
