@@ -20,6 +20,8 @@ toml = "0.9"
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 sha2 = "0.10"
+# Type-level arithmetic for ToV compile-time constraint verification
+typenum = "1.17"
 syn = { workspace = true }
 quote = { workspace = true }
 proc-macro2 = { workspace = true }
@@ -53,12 +55,13 @@ tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
 pyo3 = { version = "0.27", features = ["extension-module"], optional = true }
 
 # RustForge pipeline DSL (optional, enabled via feature)
-forge-spec = { path = "../rust-forge/crates/forge-spec", optional = true }
+# NOTE: forge-spec not yet available - uncomment when rust-forge is populated
+# forge-spec = { path = "../rust-forge/crates/forge-spec", optional = true }
 
 [features]
 default = []
 python = ["pyo3"]
-forge = ["forge-spec"]
+# forge = ["forge-spec"]
 
 [dev-dependencies]
 tempfile = "3.15"

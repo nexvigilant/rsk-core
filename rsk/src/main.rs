@@ -1,24 +1,21 @@
 use clap::{Parser, Subcommand};
+use rsk::CheckpointManager;
+use rsk::{
+    DecisionContext, ExecutionResult, RoutingEngine, RoutingRequest, RoutingStrategy,
+    SkillRegistry, Value,
+};
+use rsk::{EffortSize, ExecutionModule, build_execution_plan, detect_resource_conflicts};
 use rsk::{
     SkillGraph, SkillNode, calculate_variance, fuzzy_search, levenshtein, sha256_hash,
     sha256_verify,
 };
+use rsk::{TelemetryConfig, get_telemetry_status};
 use rsk::{
     analyze_decision_tree, extract_taxonomy_schema, parse_toml, parse_yaml, parse_yaml_frontmatter,
     validate_schema,
 };
 use rsk::{generate_test_scaffold, generate_validation_rules};
 use rsk::{list_taxonomy, query_taxonomy};
-use rsk::{get_telemetry_status, TelemetryConfig};
-use rsk::{
-    ExecutionModule, EffortSize, build_execution_plan, detect_resource_conflicts,
-};
-use rsk::{
-    RoutingEngine, RoutingRequest, RoutingStrategy,
-    SkillRegistry, DecisionContext,
-    Value, ExecutionResult,
-};
-use rsk::CheckpointManager;
 use serde_json::json;
 use std::collections::HashMap;
 use std::fs;
@@ -146,10 +143,10 @@ enum Commands {
     },
     /// Skill routing operations (find next skills)
     /// Start the in-memory state server
-    Server { 
+    Server {
         /// Path to Unix domain socket
         #[arg(short, long)]
-        socket: Option<String> 
+        socket: Option<String>,
     },
     Route {
         #[command(subcommand)]
@@ -184,6 +181,66 @@ enum Commands {
     Forge {
         #[command(subcommand)]
         action: ForgeAction,
+    },
+    /// File organization hooks (validation, staleness, blindspot checks)
+    Hooks {
+        #[command(subcommand)]
+        action: HooksAction,
+    },
+    /// Theory of Vigilance (ToV) operations
+    Tov {
+        #[command(subcommand)]
+        action: TovAction,
+    },
+    /// Guardian-AV algorithmovigilance operations
+    Guardian {
+        #[command(subcommand)]
+        action: GuardianAction,
+    },
+}
+
+#[derive(Subcommand)]
+enum GuardianAction {
+    /// Calculate context risk score
+    Risk {
+        /// Stakes level: low, moderate, high, critical
+        #[arg(short, long)]
+        stakes: String,
+        /// Expertise level: low, moderate, high, unknown
+        #[arg(short, long)]
+        expertise: String,
+        /// Checkability level: low, moderate, high, unfalsifiable
+        #[arg(short, long)]
+        checkability: String,
+        /// Output treatment: draft, reviewed, direct_use, published
+        #[arg(short, long, default_value = "direct_use")]
+        output: String,
+    },
+    /// Create a minimal IAIR report
+    Report {
+        /// Incident category code (e.g., CL-CONFAB)
+        #[arg(short, long)]
+        category: String,
+        /// Domain of the incident
+        #[arg(short, long)]
+        domain: String,
+        /// Stakes level
+        #[arg(short, long, default_value = "moderate")]
+        stakes: String,
+        /// Severity (0.0-1.0)
+        #[arg(long, default_value = "0.0")]
+        severity: f64,
+    },
+    /// Show all incident categories
+    Categories,
+    /// Recommend risk minimization level
+    Minimize {
+        /// Risk score (0.0-1.0)
+        #[arg(short, long)]
+        risk: f64,
+        /// Number of similar incidents
+        #[arg(short, long, default_value = "0")]
+        incidents: usize,
     },
 }
 
@@ -631,6 +688,125 @@ enum ForgeAction {
     Sinks,
 }
 
+#[derive(Subcommand)]
+enum HooksAction {
+    /// Validate file placement against organization policies
+    Validate {
+        /// Path to file to validate
+        path: String,
+        /// Output format: text, json
+        #[arg(short, long, default_value = "text")]
+        format: String,
+    },
+    /// Check if a file is stale
+    Staleness {
+        /// Path to file to check
+        path: String,
+        /// Output format: text, json
+        #[arg(short, long, default_value = "text")]
+        format: String,
+    },
+    /// Get the category of a file
+    Categorize {
+        /// Path to file
+        path: String,
+    },
+    /// Scan directory for policy violations and stale files
+    Scan {
+        /// Directory to scan (default: current directory)
+        #[arg(default_value = ".")]
+        path: String,
+        /// Maximum depth to scan
+        #[arg(short, long, default_value = "3")]
+        depth: usize,
+        /// Output format: text, json
+        #[arg(short, long, default_value = "text")]
+        format: String,
+    },
+    /// Show current policy configuration
+    Policy,
+    /// Generate a blindspot check reminder for a file
+    Blindspot {
+        /// Path to file
+        path: String,
+        /// Output format: text, json
+        #[arg(short, long, default_value = "text")]
+        format: String,
+    },
+    /// Generate blindspot check for subagent completion
+    SubagentReview {
+        /// Subagent type (e.g., Plan, Explore, Bash)
+        #[arg(short = 't', long)]
+        agent_type: String,
+        /// Task description
+        description: String,
+    },
+    /// Output schema version for compatibility checks
+    SchemaVersion,
+}
+
+#[derive(Subcommand)]
+enum TovAction {
+    /// Classify a harm event into one of 8 types (A-H)
+    Classify {
+        /// Multiplicity: single or multiple
+        #[arg(short, long)]
+        mult: String,
+        /// Temporal profile: acute or chronic
+        #[arg(short, long)]
+        temp: String,
+        /// Determinism: deterministic or stochastic
+        #[arg(short, long)]
+        det: String,
+    },
+    /// Calculate attenuation analysis for propagation probabilities
+    Attenuation {
+        /// Comma-separated propagation probabilities (each in (0,1))
+        #[arg(short, long)]
+        probs: String,
+    },
+    /// Calculate protective depth for a target probability
+    ProtectiveDepth {
+        /// Target probability threshold
+        #[arg(short, long)]
+        target: f64,
+        /// Attenuation rate alpha
+        #[arg(short, long)]
+        alpha: f64,
+    },
+    /// Determine ACA case (Four-Case Logic Engine)
+    Aca {
+        /// Algorithm correctness: correct or wrong
+        #[arg(short, long)]
+        correctness: String,
+        /// Clinician response: followed or overrode
+        #[arg(short, long)]
+        response: String,
+        /// Clinical outcome: good or harm
+        #[arg(short, long)]
+        outcome: String,
+    },
+    /// Calculate KHS_AI score
+    Khs {
+        /// Latency stability score (0-100)
+        #[arg(short, long)]
+        latency: u8,
+        /// Accuracy stability score (0-100)
+        #[arg(short, long)]
+        accuracy: u8,
+        /// Resource efficiency score (0-100)
+        #[arg(short, long)]
+        resource: u8,
+        /// Drift score (0-100)
+        #[arg(short, long)]
+        drift: u8,
+    },
+    /// Show all harm types with their characteristics
+    HarmTypes,
+    /// Show all conservation laws
+    ConservationLaws,
+}
+
 fn load_graph(input: &str) -> Result<SkillGraph, Box<dyn std::error::Error>> {
     let content = if input.ends_with(".json") {
         fs::read_to_string(input)?
@@ -666,13 +842,15 @@ fn main() {
             path,
             threshold,
             format,
-            export_jsonschema, verbose,
+            export_jsonschema,
+            verbose,
         }
         | Commands::Validate {
             path,
             threshold,
             format,
-            export_jsonschema, verbose,
+            export_jsonschema,
+            verbose,
         } => {
             // Handle JSON Schema export mode
             if *export_jsonschema {
@@ -807,7 +985,11 @@ fn main() {
                 if result.status == "failed" || result.score < diamond_threshold {
                     all_passed = false;
                 }
-                if *verbose { results.push(json!(result)); } else { results.push(json!({"name": result.skill_name, "score": result.score, "compliance_level": result.compliance_level, "passed": result.status == "success"})); }
+                if *verbose {
+                    results.push(json!(result));
+                } else {
+                    results.push(json!({"name": result.skill_name, "score": result.score, "compliance_level": result.compliance_level, "passed": result.status == "success"}));
+                }
             }
 
             match format.as_str() {
@@ -856,41 +1038,74 @@ fn main() {
                         let name = r["name"].as_str().unwrap_or("unknown");
                         let score = r["score"].as_f64().unwrap_or(0.0);
                         let passed = r["passed"].as_bool().unwrap_or(false);
-                        let missing = r["missing_sections"].as_array().cloned().unwrap_or_default();
-                        
-                        println!("═══════════════════════════════════════════════════════════════════");
+                        let missing = r["missing_sections"]
+                            .as_array()
+                            .cloned()
+                            .unwrap_or_default();
+
+                        println!(
+                            "═══════════════════════════════════════════════════════════════════"
+                        );
                         println!("SMST VALIDATION REPORT: {}", name);
-                        println!("═══════════════════════════════════════════════════════════════════");
+                        println!(
+                            "═══════════════════════════════════════════════════════════════════"
+                        );
                         println!("");
-                        println!("OVERALL: {}", if passed { "✅ DIAMOND READY" } else { "❌ NOT READY" });
+                        println!(
+                            "OVERALL: {}",
+                            if passed {
+                                "✅ DIAMOND READY"
+                            } else {
+                                "❌ NOT READY"
+                            }
+                        );
                         println!("Score: {:.1}/100 (Threshold: {}%)", score, threshold);
                         println!("");
-                        
-                        println!("───────────────────────────────────────────────────────────────────");
+
+                        println!(
+                            "───────────────────────────────────────────────────────────────────"
+                        );
                         println!("COMPONENT STATUS");
-                        println!("───────────────────────────────────────────────────────────────────");
-                        
+                        println!(
+                            "───────────────────────────────────────────────────────────────────"
+                        );
+
                         let all_sections = [
-                            "INPUTS", "OUTPUTS", "STATE", "OPERATOR MODE", 
-                            "PERFORMANCE", "INVARIANTS", "FAILURE MODES", "TELEMETRY"
+                            "INPUTS",
+                            "OUTPUTS",
+                            "STATE",
+                            "OPERATOR MODE",
+                            "PERFORMANCE",
+                            "INVARIANTS",
+                            "FAILURE MODES",
+                            "TELEMETRY",
                         ];
-                        
+
                         for section in all_sections {
                             let is_missing = missing.iter().any(|m| m.as_str() == Some(section));
                             let status = if is_missing { "□ ✗" } else { "■ ✓" };
                             println!("{:<15} [{}]", section, status);
                         }
-                        
+
                         if !missing.is_empty() {
                             println!("");
-                            println!("───────────────────────────────────────────────────────────────────");
+                            println!(
+                                "───────────────────────────────────────────────────────────────────"
+                            );
                             println!("GAPS TO DIAMOND");
-                            println!("───────────────────────────────────────────────────────────────────");
+                            println!(
+                                "───────────────────────────────────────────────────────────────────"
+                            );
                             for m in missing {
-                                println!("- {}: Missing required section", m.as_str().unwrap_or("UNKNOWN"));
+                                println!(
+                                    "- {}: Missing required section",
+                                    m.as_str().unwrap_or("UNKNOWN")
+                                );
                             }
                         }
-                        println!("═══════════════════════════════════════════════════════════════════\n");
+                        println!(
+                            "═══════════════════════════════════════════════════════════════════\n"
+                        );
                     }
                 }
                 _ => {
@@ -904,7 +1119,12 @@ fn main() {
             let p = std::path::Path::new(path);
             let paths: Vec<String> = if path.ends_with(".md") || p.is_file() {
                 // Not standard for build, but handle gracefully
-                vec![p.parent().unwrap_or(std::path::Path::new(".")).to_string_lossy().to_string()]
+                vec![
+                    p.parent()
+                        .unwrap_or(std::path::Path::new("."))
+                        .to_string_lossy()
+                        .to_string(),
+                ]
             } else if p.is_dir() {
                 let skill_md_direct = p.join("SKILL.md");
                 if skill_md_direct.exists() {
@@ -938,13 +1158,17 @@ fn main() {
             if all_results.len() == 1 {
                 println!("{}", serde_json::to_string_pretty(&all_results[0]).unwrap());
             } else {
-                println!("{}", serde_json::to_string_pretty(&json!({
-                    "status": if all_success { "success" } else { "failed" },
-                    "count": all_results.len(),
-                    "results": all_results
-                })).unwrap());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "status": if all_success { "success" } else { "failed" },
+                        "count": all_results.len(),
+                        "results": all_results
+                    }))
+                    .unwrap()
+                );
             }
-            
+
             if !all_success {
                 std::process::exit(1);
             }
@@ -1018,7 +1242,9 @@ fn main() {
                         let tree = rsk::generate_decision_tree(&smst);
                         match serde_yaml::to_string(&tree) {
                             Ok(yaml) => println!("{}", yaml),
-                            Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
+                            Err(e) => {
+                                println!("{}", json!({"status": "error", "message": e.to_string()}))
+                            }
                         }
                     }
                     Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
@@ -1112,7 +1338,10 @@ fn main() {
                 let result = rsk::tokenize(text);
                 println!("{}", serde_json::to_string_pretty(&result).unwrap());
             }
-            TextAction::Normalize { text, strip_punctuation } => {
+            TextAction::Normalize {
+                text,
+                strip_punctuation,
+            } => {
                 let result = rsk::normalize(text, *strip_punctuation);
                 println!("{}", serde_json::to_string_pretty(&result).unwrap());
             }
@@ -1126,19 +1355,25 @@ fn main() {
             }
             TextAction::Ngrams { text, n, words } => {
                 let ngrams = rsk::extract_ngrams(text, *n, *words);
-                println!("{}", json!({
-                    "n": n,
-                    "mode": if *words { "word" } else { "character" },
-                    "count": ngrams.len(),
-                    "ngrams": ngrams,
-                }));
+                println!(
+                    "{}",
+                    json!({
+                        "n": n,
+                        "mode": if *words { "word" } else { "character" },
+                        "count": ngrams.len(),
+                        "ngrams": ngrams,
+                    })
+                );
             }
             TextAction::Slugify { text } => {
                 let result = rsk::slugify(text);
-                println!("{}", json!({
-                    "original": text,
-                    "slug": result,
-                }));
+                println!(
+                    "{}",
+                    json!({
+                        "original": text,
+                        "slug": result,
+                    })
+                );
             }
         },
         Commands::Levenshtein { source, target } => {
@@ -1190,8 +1425,12 @@ fn main() {
                 let mut content = String::new();
                 match io::stdin().read_to_string(&mut content) {
                     Ok(_) => match parse_yaml(&content) {
-                        Ok(result) => println!("{}", serde_json::to_string_pretty(&result).unwrap()),
-                        Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
+                        Ok(result) => {
+                            println!("{}", serde_json::to_string_pretty(&result).unwrap())
+                        }
+                        Err(e) => {
+                            println!("{}", json!({"status": "error", "message": e.to_string()}))
+                        }
                     },
                     Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
                 }
@@ -1245,14 +1484,21 @@ fn main() {
                 let tree: rsk::DecisionTree = match serde_yaml::from_str(&tree_content) {
                     Ok(t) => t,
                     Err(e) => {
-                        eprintln!("{}", json!({"status": "error", "message": format!("Invalid logic tree: {}", e)}));
+                        eprintln!(
+                            "{}",
+                            json!({"status": "error", "message": format!("Invalid logic tree: {}", e)})
+                        );
                         std::process::exit(1);
                     }
                 };
 
                 let engine = rsk::DecisionEngine::new(tree);
-                let variables: HashMap<String, Value> = serde_json::from_str(input).unwrap_or_default();
-                let mut ctx = DecisionContext { variables, execution_path: Vec::new() };
+                let variables: HashMap<String, Value> =
+                    serde_json::from_str(input).unwrap_or_default();
+                let mut ctx = DecisionContext {
+                    variables,
+                    execution_path: Vec::new(),
+                };
 
                 let result = engine.execute(&mut ctx);
                 println!("{}", serde_json::to_string_pretty(&json!({
@@ -1341,33 +1587,47 @@ fn main() {
                         _ => rsk::CompressionLevel::Default,
                     };
                     let result = rsk::gzip_compress_string(text, compression_level);
-                    println!("{}", json!({
-                        "original_size": result.original_size,
-                        "compressed_size": result.compressed_size,
-                        "ratio": result.ratio,
-                        "savings_percent": result.savings_percent,
-                        "data_base64": BASE64.encode(&result.data),
-                    }));
+                    println!(
+                        "{}",
+                        json!({
+                            "original_size": result.original_size,
+                            "compressed_size": result.compressed_size,
+                            "ratio": result.ratio,
+                            "savings_percent": result.savings_percent,
+                            "data_base64": BASE64.encode(&result.data),
+                        })
+                    );
                 }
-                CompressAction::Gunzip { data } => {
-                    match BASE64.decode(data) {
-                        Ok(bytes) => match rsk::gzip_decompress_string(&bytes) {
-                            Ok(text) => println!("{}", json!({
+                CompressAction::Gunzip { data } => match BASE64.decode(data) {
+                    Ok(bytes) => match rsk::gzip_decompress_string(&bytes) {
+                        Ok(text) => println!(
+                            "{}",
+                            json!({
                                 "status": "success",
                                 "text": text,
-                            })),
-                            Err(e) => println!("{}", json!({
+                            })
+                        ),
+                        Err(e) => println!(
+                            "{}",
+                            json!({
                                 "status": "error",
                                 "message": e,
-                            })),
-                        },
-                        Err(e) => println!("{}", json!({
+                            })
+                        ),
+                    },
+                    Err(e) => println!(
+                        "{}",
+                        json!({
                             "status": "error",
                             "message": format!("Invalid base64: {}", e),
-                        })),
-                    }
-                }
-                CompressAction::File { path, output, level } => {
+                        })
+                    ),
+                },
+                CompressAction::File {
+                    path,
+                    output,
+                    level,
+                } => {
                     let compression_level = match level.as_str() {
                         "fast" => rsk::CompressionLevel::Fast,
                         "best" => rsk::CompressionLevel::Best,
@@ -1378,25 +1638,34 @@ fn main() {
                             let result = rsk::gzip_compress(&data, compression_level);
                             let out_path = output.clone().unwrap_or_else(|| format!("{}.gz", path));
                             match fs::write(&out_path, &result.data) {
-                                Ok(_) => println!("{}", json!({
-                                    "status": "success",
-                                    "input_path": path,
-                                    "output_path": out_path,
-                                    "original_size": result.original_size,
-                                    "compressed_size": result.compressed_size,
-                                    "ratio": result.ratio,
-                                    "savings_percent": result.savings_percent,
-                                })),
-                                Err(e) => println!("{}", json!({
-                                    "status": "error",
-                                    "message": format!("Failed to write output: {}", e),
-                                })),
+                                Ok(_) => println!(
+                                    "{}",
+                                    json!({
+                                        "status": "success",
+                                        "input_path": path,
+                                        "output_path": out_path,
+                                        "original_size": result.original_size,
+                                        "compressed_size": result.compressed_size,
+                                        "ratio": result.ratio,
+                                        "savings_percent": result.savings_percent,
+                                    })
+                                ),
+                                Err(e) => println!(
+                                    "{}",
+                                    json!({
+                                        "status": "error",
+                                        "message": format!("Failed to write output: {}", e),
+                                    })
+                                ),
                             }
                         }
-                        Err(e) => println!("{}", json!({
-                            "status": "error",
-                            "message": format!("Failed to read input: {}", e),
-                        })),
+                        Err(e) => println!(
+                            "{}",
+                            json!({
+                                "status": "error",
+                                "message": format!("Failed to read input: {}", e),
+                            })
+                        ),
                     }
                 }
                 CompressAction::Estimate { text } => {
@@ -1410,70 +1679,78 @@ fn main() {
                     } else {
                         "incompressible"
                     };
-                    println!("{}", json!({
-                        "estimated_ratio": ratio,
-                        "compressibility": compressibility,
-                        "input_size": text.len(),
-                        "estimated_compressed_size": (text.len() as f64 * ratio).round() as usize,
-                    }));
+                    println!(
+                        "{}",
+                        json!({
+                            "estimated_ratio": ratio,
+                            "compressibility": compressibility,
+                            "input_size": text.len(),
+                            "estimated_compressed_size": (text.len() as f64 * ratio).round() as usize,
+                        })
+                    );
                 }
             }
-        },
+        }
         #[cfg(feature = "forge")]
         Commands::Forge { action } => {
             use forge_spec::{load_spec, parse_spec};
 
             match action {
-                ForgeAction::Validate { path } => {
-                    match fs::read_to_string(path) {
-                        Ok(content) => match load_spec(&content) {
-                            Ok(spec) => {
-                                let ingest_count = spec.ingest.len();
-                                let transform_count = spec.transform.len();
-                                let sink_count = spec.sink.len();
-                                println!("{}", json!({
+                ForgeAction::Validate { path } => match fs::read_to_string(path) {
+                    Ok(content) => match load_spec(&content) {
+                        Ok(spec) => {
+                            let ingest_count = spec.ingest.len();
+                            let transform_count = spec.transform.len();
+                            let sink_count = spec.sink.len();
+                            println!(
+                                "{}",
+                                json!({
                                     "status": "valid",
                                     "pipeline": spec.pipeline.name,
                                     "version": spec.pipeline.version,
                                     "ingest_sources": ingest_count,
                                     "transforms": transform_count,
                                     "sinks": sink_count,
-                                }));
-                            }
-                            Err(e) => {
-                                println!("{}", json!({
+                                })
+                            );
+                        }
+                        Err(e) => {
+                            println!(
+                                "{}",
+                                json!({
                                     "status": "invalid",
                                     "error": e.to_string(),
-                                }));
-                                std::process::exit(1);
-                            }
-                        },
-                        Err(e) => {
-                            println!("{}", json!({
-                                "status": "error",
-                                "message": format!("Failed to read file: {}", e),
-                            }));
+                                })
+                            );
                             std::process::exit(1);
                         }
+                    },
+                    Err(e) => {
+                        println!(
+                            "{}",
+                            json!({
+                                "status": "error",
+                                "message": format!("Failed to read file: {}", e),
+                            })
+                        );
+                        std::process::exit(1);
                     }
-                }
-                ForgeAction::Parse { path } => {
-                    match fs::read_to_string(path) {
-                        Ok(content) => match parse_spec(&content) {
-                            Ok(spec) => {
-                                println!("{}", serde_json::to_string_pretty(&spec).unwrap());
-                            }
-                            Err(e) => {
-                                println!("{}", json!({"status": "error", "message": e.to_string()}));
-                                std::process::exit(1);
-                            }
-                        },
+                },
+                ForgeAction::Parse { path } => match fs::read_to_string(path) {
+                    Ok(content) => match parse_spec(&content) {
+                        Ok(spec) => {
+                            println!("{}", serde_json::to_string_pretty(&spec).unwrap());
+                        }
                         Err(e) => {
                             println!("{}", json!({"status": "error", "message": e.to_string()}));
                             std::process::exit(1);
                         }
+                    },
+                    Err(e) => {
+                        println!("{}", json!({"status": "error", "message": e.to_string()}));
+                        std::process::exit(1);
                     }
-                }
+                },
                 ForgeAction::Graph { path } => {
                     match fs::read_to_string(path) {
                         Ok(content) => match parse_spec(&content) {
@@ -1492,7 +1769,8 @@ fn main() {
                                 }
 
                                 // Add transform nodes and edges
-                                let mut prev_id: Option<&str> = spec.ingest.first().map(|i| i.id.as_str());
+                                let mut prev_id: Option<&str> =
+                                    spec.ingest.first().map(|i| i.id.as_str());
                                 for transform in &spec.transform {
                                     nodes.push(json!({
                                         "id": &transform.id,
@@ -1527,14 +1805,21 @@ fn main() {
                                     }));
                                 }
 
-                                println!("{}", serde_json::to_string_pretty(&json!({
-                                    "pipeline": spec.pipeline.name,
-                                    "nodes": nodes,
-                                    "edges": edges,
-                                })).unwrap());
+                                println!(
+                                    "{}",
+                                    serde_json::to_string_pretty(&json!({
+                                        "pipeline": spec.pipeline.name,
+                                        "nodes": nodes,
+                                        "edges": edges,
+                                    }))
+                                    .unwrap()
+                                );
                             }
                             Err(e) => {
-                                println!("{}", json!({"status": "error", "message": e.to_string()}));
+                                println!(
+                                    "{}",
+                                    json!({"status": "error", "message": e.to_string()})
+                                );
                                 std::process::exit(1);
                             }
                         },
@@ -1545,34 +1830,44 @@ fn main() {
                     }
                 }
                 ForgeAction::Sources => {
-                    println!("{}", json!({
-                        "sources": [
-                            {"type": "stdin", "description": "Standard input"},
-                            {"type": "http_json", "description": "HTTP endpoint returning JSON"},
-                            {"type": "http_csv", "description": "HTTP endpoint returning CSV"},
-                            {"type": "s3_parquet", "description": "S3 bucket with Parquet files"},
-                            {"type": "s3_json", "description": "S3 bucket with JSON files"},
-                            {"type": "postgres", "description": "PostgreSQL database"},
-                            {"type": "mysql", "description": "MySQL database"},
-                            {"type": "sqlite", "description": "SQLite database"},
-                        ]
-                    }));
+                    println!(
+                        "{}",
+                        json!({
+                            "sources": [
+                                {"type": "stdin", "description": "Standard input"},
+                                {"type": "http_json", "description": "HTTP endpoint returning JSON"},
+                                {"type": "http_csv", "description": "HTTP endpoint returning CSV"},
+                                {"type": "s3_parquet", "description": "S3 bucket with Parquet files"},
+                                {"type": "s3_json", "description": "S3 bucket with JSON files"},
+                                {"type": "postgres", "description": "PostgreSQL database"},
+                                {"type": "mysql", "description": "MySQL database"},
+                                {"type": "sqlite", "description": "SQLite database"},
+                            ]
+                        })
+                    );
                 }
                 ForgeAction::Transforms => {
-                    println!("{}", json!({
-                        "transforms": [
-                            {"operation": "filter", "description": "Filter rows by expression"},
-                            {"operation": "select", "description": "Select/rename columns"},
-                            {"operation": "aggregate", "description": "Group and aggregate data"},
-                            {"operation": "join", "description": "Join with another source"},
-                            {"operation": "deduplicate", "description": "Remove duplicate rows"},
-                            {"operation": "chunk", "description": "Split into chunks for batching"},
-                            {"operation": "embed", "description": "Generate embeddings for text"},
-                            {"operation": "signal_detect_prr", "description": "PRR signal detection (pharmacovigilance)"},
-                        ]
-                    }));
+                    println!(
+                        "{}",
+                        json!({
+                            "transforms": [
+                                {"operation": "filter", "description": "Filter rows by expression"},
+                                {"operation": "select", "description": "Select/rename columns"},
+                                {"operation": "aggregate", "description": "Group and aggregate data"},
+                                {"operation": "join", "description": "Join with another source"},
+                                {"operation": "deduplicate", "description": "Remove duplicate rows"},
+                                {"operation": "chunk", "description": "Split into chunks for batching"},
+                                {"operation": "embed", "description": "Generate embeddings for text"},
+                                {"operation": "signal_detect_prr", "description": "PRR signal detection (pharmacovigilance)"},
+                            ]
+                        })
+                    );
                 }
-                ForgeAction::Run { path, input, dry_run } => {
+                ForgeAction::Run {
+                    path,
+                    input,
+                    dry_run,
+                } => {
                     use std::io::{self, Read as IoRead, Write as IoWrite};
 
                     match fs::read_to_string(path) {
@@ -1586,29 +1881,37 @@ fn main() {
                                 let sink_type = sink.map(|s| format!("{:?}", s.sink_type));
 
                                 if *dry_run {
-                                    println!("{}", json!({
-                                        "status": "dry_run",
-                                        "pipeline": spec.pipeline.name,
-                                        "source": source_type,
-                                        "transforms": spec.transform.len(),
-                                        "sink": sink_type,
-                                        "would_execute": true,
-                                    }));
+                                    println!(
+                                        "{}",
+                                        json!({
+                                            "status": "dry_run",
+                                            "pipeline": spec.pipeline.name,
+                                            "source": source_type,
+                                            "transforms": spec.transform.len(),
+                                            "sink": sink_type,
+                                            "would_execute": true,
+                                        })
+                                    );
                                     return;
                                 }
 
                                 // Get input data
                                 let data: String = if let Some(input_str) = input {
                                     input_str.clone()
-                                } else if source.is_some_and(|s| matches!(s.source_type, forge_spec::SourceType::Stdin)) {
+                                } else if source.is_some_and(|s| {
+                                    matches!(s.source_type, forge_spec::SourceType::Stdin)
+                                }) {
                                     let mut buffer = String::new();
                                     io::stdin().read_to_string(&mut buffer).unwrap_or_default();
                                     buffer
                                 } else {
-                                    eprintln!("{}", json!({
-                                        "status": "error",
-                                        "message": "Source type not supported for direct execution. Use --input or stdin source.",
-                                    }));
+                                    eprintln!(
+                                        "{}",
+                                        json!({
+                                            "status": "error",
+                                            "message": "Source type not supported for direct execution. Use --input or stdin source.",
+                                        })
+                                    );
                                     std::process::exit(1);
                                 };
 
@@ -1618,28 +1921,37 @@ fn main() {
                                     match &transform.operation {
                                         forge_spec::Operation::Deduplicate => {
                                             // For JSON arrays, deduplicate
-                                            if let Ok(json_val) = serde_json::from_str::<serde_json::Value>(&result)
-                                                && let Some(arr) = json_val.as_array() {
-                                                    let mut seen = std::collections::HashSet::new();
-                                                    let deduped: Vec<_> = arr.iter()
-                                                        .filter(|item| {
-                                                            let key = item.to_string();
-                                                            seen.insert(key)
-                                                        })
-                                                        .cloned()
-                                                        .collect();
-                                                    result = serde_json::to_string_pretty(&deduped).unwrap_or(result);
-                                                }
+                                            if let Ok(json_val) =
+                                                serde_json::from_str::<serde_json::Value>(&result)
+                                                && let Some(arr) = json_val.as_array()
+                                            {
+                                                let mut seen = std::collections::HashSet::new();
+                                                let deduped: Vec<_> = arr
+                                                    .iter()
+                                                    .filter(|item| {
+                                                        let key = item.to_string();
+                                                        seen.insert(key)
+                                                    })
+                                                    .cloned()
+                                                    .collect();
+                                                result = serde_json::to_string_pretty(&deduped)
+                                                    .unwrap_or(result);
+                                            }
                                         }
                                         _ => {
                                             // Other transforms: pass through (log for debug)
-                                            eprintln!("Transform {:?} not yet implemented, passing through", transform.operation);
+                                            eprintln!(
+                                                "Transform {:?} not yet implemented, passing through",
+                                                transform.operation
+                                            );
                                         }
                                     }
                                 }
 
                                 // Output to sink
-                                if sink.is_some_and(|s| matches!(s.sink_type, forge_spec::SinkType::Stdout)) {
+                                if sink.is_some_and(|s| {
+                                    matches!(s.sink_type, forge_spec::SinkType::Stdout)
+                                }) {
                                     io::stdout().write_all(result.as_bytes()).unwrap();
                                     if !result.ends_with('\n') {
                                         io::stdout().write_all(b"\n").unwrap();
@@ -1648,59 +1960,75 @@ fn main() {
                                     match &s.sink_type {
                                         forge_spec::SinkType::JsonFile => {
                                             if let Some(ref file_config) = s.file {
-                                                fs::write(&file_config.path, &result).unwrap_or_else(|e| {
-                                                    eprintln!("Failed to write JSON: {}", e);
-                                                });
-                                                println!("{}", json!({
-                                                    "status": "success",
-                                                    "output_path": file_config.path,
-                                                    "bytes_written": result.len(),
-                                                }));
+                                                fs::write(&file_config.path, &result)
+                                                    .unwrap_or_else(|e| {
+                                                        eprintln!("Failed to write JSON: {}", e);
+                                                    });
+                                                println!(
+                                                    "{}",
+                                                    json!({
+                                                        "status": "success",
+                                                        "output_path": file_config.path,
+                                                        "bytes_written": result.len(),
+                                                    })
+                                                );
                                             }
                                         }
                                         _ => {
-                                            eprintln!("{}", json!({
-                                                "status": "error",
-                                                "message": format!("Sink type {:?} not yet supported for execution", s.sink_type),
-                                            }));
+                                            eprintln!(
+                                                "{}",
+                                                json!({
+                                                    "status": "error",
+                                                    "message": format!("Sink type {:?} not yet supported for execution", s.sink_type),
+                                                })
+                                            );
                                             std::process::exit(1);
                                         }
                                     }
                                 }
                             }
                             Err(e) => {
-                                eprintln!("{}", json!({
-                                    "status": "error",
-                                    "message": e.to_string(),
-                                }));
+                                eprintln!(
+                                    "{}",
+                                    json!({
+                                        "status": "error",
+                                        "message": e.to_string(),
+                                    })
+                                );
                                 std::process::exit(1);
                             }
                         },
                         Err(e) => {
-                            eprintln!("{}", json!({
-                                "status": "error",
-                                "message": format!("Failed to read file: {}", e),
-                            }));
+                            eprintln!(
+                                "{}",
+                                json!({
+                                    "status": "error",
+                                    "message": format!("Failed to read file: {}", e),
+                                })
+                            );
                             std::process::exit(1);
                         }
                     }
                 }
                 ForgeAction::Sinks => {
-                    println!("{}", json!({
-                        "sinks": [
-                            {"type": "stdout", "description": "Standard output"},
-                            {"type": "parquet", "description": "Parquet file"},
-                            {"type": "json", "description": "JSON file"},
-                            {"type": "csv", "description": "CSV file"},
-                            {"type": "postgres", "description": "PostgreSQL database"},
-                            {"type": "mysql", "description": "MySQL database"},
-                            {"type": "sqlite", "description": "SQLite database"},
-                            {"type": "qdrant", "description": "Qdrant vector database"},
-                        ]
-                    }));
+                    println!(
+                        "{}",
+                        json!({
+                            "sinks": [
+                                {"type": "stdout", "description": "Standard output"},
+                                {"type": "parquet", "description": "Parquet file"},
+                                {"type": "json", "description": "JSON file"},
+                                {"type": "csv", "description": "CSV file"},
+                                {"type": "postgres", "description": "PostgreSQL database"},
+                                {"type": "mysql", "description": "MySQL database"},
+                                {"type": "sqlite", "description": "SQLite database"},
+                                {"type": "qdrant", "description": "Qdrant vector database"},
+                            ]
+                        })
+                    );
                 }
             }
-        },
+        }
         Commands::Exec { action } => {
             match action {
                 ExecAction::Plan { modules } => {
@@ -1718,20 +2046,30 @@ fn main() {
                     let module_list: Vec<serde_json::Value> = match serde_json::from_str(&content) {
                         Ok(list) => list,
                         Err(e) => {
-                            eprintln!("{}", json!({"status": "error", "message": format!("Invalid JSON: {}", e)}));
+                            eprintln!(
+                                "{}",
+                                json!({"status": "error", "message": format!("Invalid JSON: {}", e)})
+                            );
                             std::process::exit(1);
                         }
                     };
 
                     // Convert to ExecutionModule
-                    let exec_modules: Vec<ExecutionModule> = module_list.iter()
+                    let exec_modules: Vec<ExecutionModule> = module_list
+                        .iter()
                         .map(|m| {
                             let id = m["id"].as_str().unwrap_or("unknown").to_string();
                             let name = m["name"].as_str().unwrap_or(&id).to_string();
-                            let deps: Vec<String> = m["dependencies"].as_array()
-                                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                            let deps: Vec<String> = m["dependencies"]
+                                .as_array()
+                                .map(|arr| {
+                                    arr.iter()
+                                        .filter_map(|v| v.as_str().map(String::from))
+                                        .collect()
+                                })
                                 .unwrap_or_default();
-                            let effort = m["effort"].as_str()
+                            let effort = m["effort"]
+                                .as_str()
                                 .and_then(EffortSize::from_str)
                                 .unwrap_or(EffortSize::M);
                             let risk = m["risk"].as_f64().unwrap_or(0.3) as f32;
@@ -1770,10 +2108,11 @@ fn main() {
                         .unwrap_or_else(|| std::path::PathBuf::from("/tmp/chain-state"));
 
                     match CheckpointManager::new(state_dir.to_str().unwrap_or("/tmp/chain-state")) {
-                        Ok(manager) => {
-                            match manager.load(id) {
-                                Ok(Some(ctx)) => {
-                                    println!("{}", serde_json::to_string_pretty(&json!({
+                        Ok(manager) => match manager.load(id) {
+                            Ok(Some(ctx)) => {
+                                println!(
+                                    "{}",
+                                    serde_json::to_string_pretty(&json!({
                                         "status": "found",
                                         "context": {
                                             "id": ctx.id,
@@ -1784,16 +2123,20 @@ fn main() {
                                             "failed_steps": ctx.failed_steps.len(),
                                             "total_steps": ctx.total_steps,
                                         }
-                                    })).unwrap());
-                                }
-                                Ok(None) => {
-                                    println!("{}", json!({"status": "not_found", "id": id}));
-                                }
-                                Err(e) => {
-                                    eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
-                                }
+                                    }))
+                                    .unwrap()
+                                );
                             }
-                        }
+                            Ok(None) => {
+                                println!("{}", json!({"status": "not_found", "id": id}));
+                            }
+                            Err(e) => {
+                                eprintln!(
+                                    "{}",
+                                    json!({"status": "error", "message": e.to_string()})
+                                );
+                            }
+                        },
                         Err(e) => {
                             eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
                         }
@@ -1805,11 +2148,12 @@ fn main() {
                         .unwrap_or_else(|| std::path::PathBuf::from("/tmp/chain-state"));
 
                     match CheckpointManager::new(state_dir.to_str().unwrap_or("/tmp/chain-state")) {
-                        Ok(manager) => {
-                            match manager.load(id) {
-                                Ok(Some(ctx)) => {
-                                    let next = ctx.next_step();
-                                    println!("{}", serde_json::to_string_pretty(&json!({
+                        Ok(manager) => match manager.load(id) {
+                            Ok(Some(ctx)) => {
+                                let next = ctx.next_step();
+                                println!(
+                                    "{}",
+                                    serde_json::to_string_pretty(&json!({
                                         "status": "resumable",
                                         "context": {
                                             "id": ctx.id,
@@ -1818,16 +2162,20 @@ fn main() {
                                             "completed_steps": ctx.completed_steps,
                                             "total_steps": ctx.total_steps,
                                         }
-                                    })).unwrap());
-                                }
-                                Ok(None) => {
-                                    println!("{}", json!({"status": "not_found", "id": id}));
-                                }
-                                Err(e) => {
-                                    eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
-                                }
+                                    }))
+                                    .unwrap()
+                                );
                             }
-                        }
+                            Ok(None) => {
+                                println!("{}", json!({"status": "not_found", "id": id}));
+                            }
+                            Err(e) => {
+                                eprintln!(
+                                    "{}",
+                                    json!({"status": "error", "message": e.to_string()})
+                                );
+                            }
+                        },
                         Err(e) => {
                             eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
                         }
@@ -1847,17 +2195,26 @@ fn main() {
                     let module_list: Vec<serde_json::Value> = match serde_json::from_str(&content) {
                         Ok(list) => list,
                         Err(e) => {
-                            eprintln!("{}", json!({"status": "error", "message": format!("Invalid JSON: {}", e)}));
+                            eprintln!(
+                                "{}",
+                                json!({"status": "error", "message": format!("Invalid JSON: {}", e)})
+                            );
                             std::process::exit(1);
                         }
                     };
 
-                    let exec_modules: Vec<ExecutionModule> = module_list.iter()
+                    let exec_modules: Vec<ExecutionModule> = module_list
+                        .iter()
                         .map(|m| {
                             let id = m["id"].as_str().unwrap_or("unknown").to_string();
                             let name = m["name"].as_str().unwrap_or(&id).to_string();
-                            let deps: Vec<String> = m["dependencies"].as_array()
-                                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                            let deps: Vec<String> = m["dependencies"]
+                                .as_array()
+                                .map(|arr| {
+                                    arr.iter()
+                                        .filter_map(|v| v.as_str().map(String::from))
+                                        .collect()
+                                })
                                 .unwrap_or_default();
                             ExecutionModule::new(&id, &name, deps)
                         })
@@ -1866,12 +2223,15 @@ fn main() {
                     match build_execution_plan(exec_modules) {
                         Ok(plan) => {
                             let conflicts = detect_resource_conflicts(&plan);
-                            println!("{}", json!({
-                                "status": "valid",
-                                "modules": plan.modules.len(),
-                                "levels": plan.levels.len(),
-                                "conflicts": conflicts.len(),
-                            }));
+                            println!(
+                                "{}",
+                                json!({
+                                    "status": "valid",
+                                    "modules": plan.modules.len(),
+                                    "levels": plan.levels.len(),
+                                    "conflicts": conflicts.len(),
+                                })
+                            );
                         }
                         Err(e) => {
                             println!("{}", json!({"status": "invalid", "error": e.to_string()}));
@@ -1882,7 +2242,9 @@ fn main() {
             }
         }
         Commands::Server { socket } => {
-            let path = socket.clone().unwrap_or_else(|| "/tmp/rsk-state.sock".to_string());
+            let path = socket
+                .clone()
+                .unwrap_or_else(|| "/tmp/rsk-state.sock".to_string());
             let rt = tokio::runtime::Runtime::new().unwrap();
             rt.block_on(async {
                 let server = rsk::StateServer::new(&path);
@@ -1891,12 +2253,18 @@ fn main() {
         }
         Commands::Route { action } => {
             match action {
-                RouteAction::Find { query, source, strategy, limit } => {
+                RouteAction::Find {
+                    query,
+                    source,
+                    strategy,
+                    limit,
+                } => {
                     let engine = RoutingEngine::new();
                     // Note: In production, engine would be loaded with skill capabilities
                     // For now, show what the interface would return
 
-                    let strat = RoutingStrategy::from_str(strategy).unwrap_or(RoutingStrategy::Hybrid);
+                    let strat =
+                        RoutingStrategy::from_str(strategy).unwrap_or(RoutingStrategy::Hybrid);
                     let request = RoutingRequest {
                         source: source.clone().unwrap_or_default(),
                         context: query.clone(),
@@ -1906,19 +2274,23 @@ fn main() {
 
                     match engine.route(&request) {
                         Ok(result) => {
-                            println!("{}", serde_json::to_string_pretty(&json!({
-                                "status": "success",
-                                "query": query,
-                                "strategy": format!("{:?}", result.strategy),
-                                "recommendations": result.recommendations.iter().map(|r| json!({
-                                    "target": r.target,
-                                    "score": r.score,
-                                    "confidence": r.confidence,
-                                    "reasoning": r.reasoning,
-                                })).collect::<Vec<_>>(),
-                                "total_considered": result.total_considered,
-                                "duration_ms": result.duration_ms,
-                            })).unwrap());
+                            println!(
+                                "{}",
+                                serde_json::to_string_pretty(&json!({
+                                    "status": "success",
+                                    "query": query,
+                                    "strategy": format!("{:?}", result.strategy),
+                                    "recommendations": result.recommendations.iter().map(|r| json!({
+                                        "target": r.target,
+                                        "score": r.score,
+                                        "confidence": r.confidence,
+                                        "reasoning": r.reasoning,
+                                    })).collect::<Vec<_>>(),
+                                    "total_considered": result.total_considered,
+                                    "duration_ms": result.duration_ms,
+                                }))
+                                .unwrap()
+                            );
                         }
                         Err(e) => {
                             eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
@@ -1926,30 +2298,33 @@ fn main() {
                     }
                 }
                 RouteAction::Strategies => {
-                    println!("{}", json!({
-                        "strategies": [
-                            {
-                                "name": "adjacency",
-                                "weight": 0.5,
-                                "description": "Graph-based routing using skill adjacency edges"
-                            },
-                            {
-                                "name": "capability",
-                                "weight": 0.3,
-                                "description": "Pattern matching on skill triggers and handles"
-                            },
-                            {
-                                "name": "semantic",
-                                "weight": 0.2,
-                                "description": "Keyword similarity using Levenshtein distance"
-                            },
-                            {
-                                "name": "hybrid",
-                                "weight": 1.0,
-                                "description": "Weighted combination of all strategies (default)"
-                            }
-                        ]
-                    }));
+                    println!(
+                        "{}",
+                        json!({
+                            "strategies": [
+                                {
+                                    "name": "adjacency",
+                                    "weight": 0.5,
+                                    "description": "Graph-based routing using skill adjacency edges"
+                                },
+                                {
+                                    "name": "capability",
+                                    "weight": 0.3,
+                                    "description": "Pattern matching on skill triggers and handles"
+                                },
+                                {
+                                    "name": "semantic",
+                                    "weight": 0.2,
+                                    "description": "Keyword similarity using Levenshtein distance"
+                                },
+                                {
+                                    "name": "hybrid",
+                                    "weight": 1.0,
+                                    "description": "Weighted combination of all strategies (default)"
+                                }
+                            ]
+                        })
+                    );
                 }
                 RouteAction::Fuzzy { query, limit } => {
                     // This uses the existing fuzzy_search functionality
@@ -1964,11 +2339,14 @@ fn main() {
                     ];
 
                     let results = fuzzy_search(query, &example_skills, *limit);
-                    println!("{}", json!({
-                        "status": "success",
-                        "query": query,
-                        "matches": results,
-                    }));
+                    println!(
+                        "{}",
+                        json!({
+                            "status": "success",
+                            "query": query,
+                            "matches": results,
+                        })
+                    );
                 }
             }
         }
@@ -1989,75 +2367,91 @@ fn main() {
 
                             // Filter by status if specified
                             let filtered: Vec<_> = if let Some(s) = status {
-                                contexts.into_iter().filter(|ctx| {
-                                    format!("{:?}", ctx.status).to_lowercase().contains(&s.to_lowercase())
-                                }).collect()
+                                contexts
+                                    .into_iter()
+                                    .filter(|ctx| {
+                                        format!("{:?}", ctx.status)
+                                            .to_lowercase()
+                                            .contains(&s.to_lowercase())
+                                    })
+                                    .collect()
                             } else {
                                 contexts
                             };
 
-                            println!("{}", serde_json::to_string_pretty(&json!({
-                                "status": "success",
-                                "count": filtered.len(),
-                                "checkpoints": filtered.iter().map(|ctx| json!({
-                                    "id": ctx.id,
-                                    "name": ctx.name,
-                                    "status": format!("{:?}", ctx.status),
-                                    "progress": ctx.progress_percent(),
-                                    "updated_at": ctx.updated_at.to_rfc3339(),
-                                })).collect::<Vec<_>>(),
-                            })).unwrap());
+                            println!(
+                                "{}",
+                                serde_json::to_string_pretty(&json!({
+                                    "status": "success",
+                                    "count": filtered.len(),
+                                    "checkpoints": filtered.iter().map(|ctx| json!({
+                                        "id": ctx.id,
+                                        "name": ctx.name,
+                                        "status": format!("{:?}", ctx.status),
+                                        "progress": ctx.progress_percent(),
+                                        "updated_at": ctx.updated_at.to_rfc3339(),
+                                    })).collect::<Vec<_>>(),
+                                }))
+                                .unwrap()
+                            );
                         }
-                        StateAction::Show { id } => {
-                            match manager.load(id) {
-                                Ok(Some(ctx)) => {
-                                    println!("{}", serde_json::to_string_pretty(&ctx).unwrap());
-                                }
-                                Ok(None) => {
-                                    println!("{}", json!({"status": "not_found", "id": id}));
-                                }
-                                Err(e) => {
-                                    eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
-                                }
+                        StateAction::Show { id } => match manager.load(id) {
+                            Ok(Some(ctx)) => {
+                                println!("{}", serde_json::to_string_pretty(&ctx).unwrap());
                             }
-                        }
-                        StateAction::Delete { id } => {
-                            match manager.delete(id) {
-                                Ok(true) => {
-                                    println!("{}", json!({"status": "deleted", "id": id}));
-                                }
-                                Ok(false) => {
-                                    println!("{}", json!({"status": "not_found", "id": id}));
-                                }
-                                Err(e) => {
-                                    eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
-                                }
+                            Ok(None) => {
+                                println!("{}", json!({"status": "not_found", "id": id}));
                             }
-                        }
-                        StateAction::Cleanup { max_age } => {
-                            match manager.cleanup(*max_age) {
-                                Ok(count) => {
-                                    println!("{}", json!({
+                            Err(e) => {
+                                eprintln!(
+                                    "{}",
+                                    json!({"status": "error", "message": e.to_string()})
+                                );
+                            }
+                        },
+                        StateAction::Delete { id } => match manager.delete(id) {
+                            Ok(true) => {
+                                println!("{}", json!({"status": "deleted", "id": id}));
+                            }
+                            Ok(false) => {
+                                println!("{}", json!({"status": "not_found", "id": id}));
+                            }
+                            Err(e) => {
+                                eprintln!(
+                                    "{}",
+                                    json!({"status": "error", "message": e.to_string()})
+                                );
+                            }
+                        },
+                        StateAction::Cleanup { max_age } => match manager.cleanup(*max_age) {
+                            Ok(count) => {
+                                println!(
+                                    "{}",
+                                    json!({
                                         "status": "success",
                                         "removed": count,
                                         "max_age_days": max_age,
-                                    }));
-                                }
-                                Err(e) => {
-                                    eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
-                                }
+                                    })
+                                );
                             }
-                        }
-                        StateAction::Stats => {
-                            match manager.stats() {
-                                Ok(stats) => {
-                                    println!("{}", serde_json::to_string_pretty(&stats).unwrap());
-                                }
-                                Err(e) => {
-                                    eprintln!("{}", json!({"status": "error", "message": e.to_string()}));
-                                }
+                            Err(e) => {
+                                eprintln!(
+                                    "{}",
+                                    json!({"status": "error", "message": e.to_string()})
+                                );
                             }
-                        }
+                        },
+                        StateAction::Stats => match manager.stats() {
+                            Ok(stats) => {
+                                println!("{}", serde_json::to_string_pretty(&stats).unwrap());
+                            }
+                            Err(e) => {
+                                eprintln!(
+                                    "{}",
+                                    json!({"status": "error", "message": e.to_string()})
+                                );
+                            }
+                        },
                     }
                 }
                 Err(e) => {
@@ -2079,7 +2473,10 @@ fn main() {
                         std::process::exit(1);
                     }
 
-                    let out_path = output.as_ref().map(PathBuf::from).unwrap_or(default_registry_path);
+                    let out_path = output
+                        .as_ref()
+                        .map(PathBuf::from)
+                        .unwrap_or(default_registry_path);
                     if let Some(parent) = out_path.parent() {
                         let _ = fs::create_dir_all(parent);
                     }
@@ -2096,24 +2493,37 @@ fn main() {
                     })).unwrap());
                 }
                 SkillsAction::List { registry, strategy } => {
-                    let reg_path = registry.as_ref().map(PathBuf::from).unwrap_or(default_registry_path);
+                    let reg_path = registry
+                        .as_ref()
+                        .map(PathBuf::from)
+                        .unwrap_or(default_registry_path);
                     let reg = match SkillRegistry::load(&reg_path) {
                         Ok(r) => r,
                         Err(e) => {
-                            eprintln!("{}", json!({"status": "error", "message": format!("Failed to load registry: {}", e)}));
+                            eprintln!(
+                                "{}",
+                                json!({"status": "error", "message": format!("Failed to load registry: {}", e)})
+                            );
                             std::process::exit(1);
                         }
                     };
 
                     let mut skills = reg.list();
                     if let Some(s) = strategy {
-                        skills.retain(|entry| format!("{:?}", entry.strategy).to_lowercase().contains(&s.to_lowercase()));
+                        skills.retain(|entry| {
+                            format!("{:?}", entry.strategy)
+                                .to_lowercase()
+                                .contains(&s.to_lowercase())
+                        });
                     }
 
                     println!("{}", serde_json::to_string_pretty(&skills).unwrap());
                 }
                 SkillsAction::Info { name, registry } => {
-                    let reg_path = registry.as_ref().map(PathBuf::from).unwrap_or(default_registry_path);
+                    let reg_path = registry
+                        .as_ref()
+                        .map(PathBuf::from)
+                        .unwrap_or(default_registry_path);
                     let reg = match SkillRegistry::load(&reg_path) {
                         Ok(r) => r,
                         Err(e) => {
@@ -2130,8 +2540,15 @@ fn main() {
                         }
                     }
                 }
-                SkillsAction::Execute { name, input, registry } => {
-                    let reg_path = registry.as_ref().map(PathBuf::from).unwrap_or(default_registry_path);
+                SkillsAction::Execute {
+                    name,
+                    input,
+                    registry,
+                } => {
+                    let reg_path = registry
+                        .as_ref()
+                        .map(PathBuf::from)
+                        .unwrap_or(default_registry_path);
                     let reg = match SkillRegistry::load(&reg_path) {
                         Ok(r) => r,
                         Err(e) => {
@@ -2152,10 +2569,14 @@ fn main() {
                         let logic_content = fs::read_to_string(logic_path).unwrap();
                         let tree: rsk::DecisionTree = serde_yaml::from_str(&logic_content).unwrap();
                         let engine = rsk::DecisionEngine::new(tree);
-                        
-                        let variables: HashMap<String, Value> = serde_json::from_str(&input).unwrap();
-                        let mut ctx = DecisionContext { variables, execution_path: Vec::new() };
-                        
+
+                        let variables: HashMap<String, Value> =
+                            serde_json::from_str(&input).unwrap();
+                        let mut ctx = DecisionContext {
+                            variables,
+                            execution_path: Vec::new(),
+                        };
+
                         let result = engine.execute(&mut ctx);
                         println!("{}", serde_json::to_string_pretty(&json!({
                             "status": "success",
@@ -2168,11 +2589,14 @@ fn main() {
                             }
                         })).unwrap());
                     } else {
-                        println!("{}", json!({
-                            "status": "unsupported",
-                            "message": "Skill has no logic.yaml and cannot be executed deterministically yet",
-                            "strategy": format!("{:?}", skill.strategy),
-                        }));
+                        println!(
+                            "{}",
+                            json!({
+                                "status": "unsupported",
+                                "message": "Skill has no logic.yaml and cannot be executed deterministically yet",
+                                "strategy": format!("{:?}", skill.strategy),
+                            })
+                        );
                     }
                 }
             }
@@ -2183,8 +2607,15 @@ fn main() {
                 .unwrap_or_else(|| PathBuf::from("skills.json"));
 
             match action {
-                ChainAction::Validate { name, depth, registry } => {
-                    let reg_path = registry.as_ref().map(PathBuf::from).unwrap_or(default_registry_path);
+                ChainAction::Validate {
+                    name,
+                    depth,
+                    registry,
+                } => {
+                    let reg_path = registry
+                        .as_ref()
+                        .map(PathBuf::from)
+                        .unwrap_or(default_registry_path);
                     let reg = match SkillRegistry::load(&reg_path) {
                         Ok(r) => r,
                         Err(e) => {
@@ -2202,8 +2633,14 @@ fn main() {
                     let mut all_diamond = true;
 
                     for (skill, passed, score) in chain_results {
-                        let status = if passed { "✅ DIAMOND" } else { "❌ NOT READY" };
-                        if !passed { all_diamond = false; }
+                        let status = if passed {
+                            "✅ DIAMOND"
+                        } else {
+                            "❌ NOT READY"
+                        };
+                        if !passed {
+                            all_diamond = false;
+                        }
                         println!("{:<30} | {:<15} | {:.1}%", skill, status, score);
                     }
 
@@ -2221,8 +2658,11 @@ fn main() {
             let default_registry_path = dirs::home_dir()
                 .map(|h| h.join(".rsk/skills.json"))
                 .unwrap_or_else(|| PathBuf::from("skills.json"));
-            
-            let reg_path = registry.as_ref().map(PathBuf::from).unwrap_or(default_registry_path);
+
+            let reg_path = registry
+                .as_ref()
+                .map(PathBuf::from)
+                .unwrap_or(default_registry_path);
             let reg = match SkillRegistry::load(&reg_path) {
                 Ok(r) => r,
                 Err(e) => {
@@ -2242,22 +2682,559 @@ fn main() {
             if let Some(logic_path) = &skill.logic_path {
                 let logic_content = fs::read_to_string(logic_path).unwrap();
                 let tree: rsk::DecisionTree = serde_yaml::from_str(&logic_content).unwrap();
-                
+
                 // 1. Synthesize Code
                 let code = rsk::synthesize_intrinsic(&name, &tree);
                 let out_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                     .join("src/modules/dynamic_intrinsics.rs");
-                
+
                 fs::write(&out_path, code).unwrap();
-                
-                println!("{}", serde_json::to_string_pretty(&json!({
-                    "status": "evolved",
-                    "skill": name,
-                    "generated_file": out_path.to_string_lossy(),
-                    "message": "Logic synthesized. Run 'cargo build' to integrate.",
-                })).unwrap());
+
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "status": "evolved",
+                        "skill": name,
+                        "generated_file": out_path.to_string_lossy(),
+                        "message": "Logic synthesized. Run 'cargo build' to integrate.",
+                    }))
+                    .unwrap()
+                );
             } else {
-                eprintln!("{}", json!({"status": "error", "message": "Skill has no logic to evolve"}));
+                eprintln!(
+                    "{}",
+                    json!({"status": "error", "message": "Skill has no logic to evolve"})
+                );
+            }
+        }
+        Commands::Hooks { action } => {
+            use rsk::hooks::{
+                blindspot::BlindspotCheck,
+                policy::PolicyFile,
+                scanner::{format_scan_result, scan_directory},
+                staleness::{check_staleness, format_staleness_result},
+                validation::{categorize_file, format_validation_result, validate_file},
+            };
+
+            let policy = PolicyFile::load_or_default(None);
+
+            match action {
+                HooksAction::Validate { path, format } => {
+                    let path = PathBuf::from(&path);
+                    let result = validate_file(&path, &policy);
+
+                    if format == "json" {
+                        println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                    } else {
+                        let formatted = format_validation_result(&result);
+                        if !formatted.is_empty() {
+                            println!("{}", formatted);
+                        } else {
+                            println!("[OK] {} - no policy violations", path.display());
+                        }
+                    }
+                }
+                HooksAction::Staleness { path, format } => {
+                    let path = PathBuf::from(&path);
+                    let result = check_staleness(&path, &policy);
+
+                    if format == "json" {
+                        println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                    } else {
+                        println!("{}", format_staleness_result(&result));
+                    }
+                }
+                HooksAction::Categorize { path } => {
+                    let path = PathBuf::from(&path);
+                    let category = categorize_file(&path, &policy);
+                    println!("{}", category);
+                }
+                HooksAction::Scan {
+                    path,
+                    depth,
+                    format,
+                } => {
+                    let path = PathBuf::from(&path);
+                    let result = scan_directory(&path, *depth, &policy);
+
+                    if format == "json" {
+                        println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                    } else {
+                        println!("{}", format_scan_result(&result));
+                    }
+                }
+                HooksAction::Policy => {
+                    println!("=== File Organization Policy ===\n");
+
+                    if let Some(settings) = &policy.settings {
+                        println!("Settings:");
+                        println!("  Mode: {}", settings.mode.as_deref().unwrap_or("advisory"));
+                        println!(
+                            "  Stale action: {}",
+                            settings.stale_action.as_deref().unwrap_or("report")
+                        );
+                        println!();
+                    }
+
+                    if let Some(rules) = &policy.placement_rules {
+                        println!("Placement Rules ({} categories):", rules.len());
+                        for (name, rule) in rules {
+                            println!("  {}:", name);
+                            println!("    Patterns: {:?}", rule.patterns);
+                            if !rule.forbidden_paths.is_empty() {
+                                println!("    Forbidden: {:?}", rule.forbidden_paths);
+                            }
+                            if !rule.recommended_paths.is_empty() {
+                                println!("    Recommended: {:?}", rule.recommended_paths);
+                            }
+                        }
+                        println!();
+                    }
+
+                    if let Some(staleness) = &policy.staleness {
+                        println!("Staleness Rules:");
+                        println!("  Default: {} days", staleness.default_days.unwrap_or(30));
+                        if let Some(rules) = &staleness.path_rules {
+                            for (pattern, rule) in rules {
+                                println!(
+                                    "  {}: {} days ({})",
+                                    pattern,
+                                    rule.days.unwrap_or(30),
+                                    rule.action.as_deref().unwrap_or("report")
+                                );
+                            }
+                        }
+                    }
+                }
+                HooksAction::Blindspot { path, format } => {
+                    let path = PathBuf::from(&path);
+                    let check = BlindspotCheck::for_file(&path, &policy);
+
+                    if format == "json" {
+                        println!("{}", serde_json::to_string_pretty(&check).unwrap());
+                    } else {
+                        println!("{}", check.message);
+                        println!("\nChecklist:");
+                        for item in &check.items {
+                            println!("  - {}", item);
+                        }
+                    }
+                }
+                HooksAction::SubagentReview {
+                    agent_type,
+                    description,
+                } => {
+                    let check = BlindspotCheck::for_subagent(&agent_type, &description);
+                    println!("{}", check.message);
+                }
+                HooksAction::SchemaVersion => {
+                    println!("{}", rsk::hooks::SCHEMA_VERSION);
+                }
+            }
+        }
+        Commands::Tov { action } => {
+            use rsk::tov::{
+                AlgorithmCorrectness, CharacterizedHarmEvent, ClinicalOutcome, ClinicianResponse,
+                ConservationLaw, Determinism, HarmCharacteristics, HarmType, KHSAI, Multiplicity,
+                PropagationProbability, Temporal, analyze_attenuation, classify_harm,
+                determine_aca_case, harm_type_characteristics, interpret_khs_ai, protective_depth,
+            };
+
+            match action {
+                TovAction::Classify { mult, temp, det } => {
+                    let multiplicity = match mult.to_lowercase().as_str() {
+                        "single" => Multiplicity::Single,
+                        "multiple" => Multiplicity::Multiple,
+                        _ => {
+                            eprintln!("Error: mult must be 'single' or 'multiple'");
+                            std::process::exit(1);
+                        }
+                    };
+                    let temporal = match temp.to_lowercase().as_str() {
+                        "acute" => Temporal::Acute,
+                        "chronic" => Temporal::Chronic,
+                        _ => {
+                            eprintln!("Error: temp must be 'acute' or 'chronic'");
+                            std::process::exit(1);
+                        }
+                    };
+                    let determinism = match det.to_lowercase().as_str() {
+                        "deterministic" => Determinism::Deterministic,
+                        "stochastic" => Determinism::Stochastic,
+                        _ => {
+                            eprintln!("Error: det must be 'deterministic' or 'stochastic'");
+                            std::process::exit(1);
+                        }
+                    };
+
+                    let event = CharacterizedHarmEvent {
+                        characteristics: HarmCharacteristics {
+                            multiplicity,
+                            temporal,
+                            determinism,
+                        },
+                    };
+                    let harm_type = classify_harm(event);
+                    println!(
+                        "{}",
+                        json!({
+                            "harm_type": format!("{:?}", harm_type),
+                            "multiplicity": format!("{:?}", multiplicity),
+                            "temporal": format!("{:?}", temporal),
+                            "determinism": format!("{:?}", determinism),
+                        })
+                    );
+                }
+                TovAction::Attenuation { probs } => {
+                    let probabilities: Result<Vec<PropagationProbability>, _> = probs
+                        .split(',')
+                        .map(|s| {
+                            s.trim()
+                                .parse::<f64>()
+                                .map_err(|e| e.to_string())
+                                .and_then(|v| {
+                                    if v > 0.0 && v < 1.0 {
+                                        Ok(PropagationProbability::new(v))
+                                    } else {
+                                        Err("Probability must be in (0, 1)".to_string())
+                                    }
+                                })
+                        })
+                        .collect();
+
+                    match probabilities {
+                        Ok(probs) => {
+                            let result = analyze_attenuation(&probs);
+                            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                        }
+                        Err(e) => {
+                            eprintln!("Error parsing probabilities: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+                TovAction::ProtectiveDepth { target, alpha } => {
+                    if *target <= 0.0 || *target >= 1.0 {
+                        eprintln!("Error: target must be in (0, 1)");
+                        std::process::exit(1);
+                    }
+                    if *alpha <= 0.0 {
+                        eprintln!("Error: alpha must be positive");
+                        std::process::exit(1);
+                    }
+                    let depth = protective_depth(*target, *alpha);
+                    println!(
+                        "{}",
+                        json!({
+                            "target_probability": target,
+                            "attenuation_rate": alpha,
+                            "protective_depth": depth,
+                        })
+                    );
+                }
+                TovAction::Aca {
+                    correctness,
+                    response,
+                    outcome,
+                } => {
+                    let alg_correctness = match correctness.to_lowercase().as_str() {
+                        "correct" => AlgorithmCorrectness::Correct,
+                        "wrong" => AlgorithmCorrectness::Wrong,
+                        _ => {
+                            eprintln!("Error: correctness must be 'correct' or 'wrong'");
+                            std::process::exit(1);
+                        }
+                    };
+                    let clin_response = match response.to_lowercase().as_str() {
+                        "followed" => ClinicianResponse::Followed,
+                        "overrode" => ClinicianResponse::Overrode,
+                        _ => {
+                            eprintln!("Error: response must be 'followed' or 'overrode'");
+                            std::process::exit(1);
+                        }
+                    };
+                    let clin_outcome = match outcome.to_lowercase().as_str() {
+                        "good" => ClinicalOutcome::Good,
+                        "harm" => ClinicalOutcome::Harm,
+                        _ => {
+                            eprintln!("Error: outcome must be 'good' or 'harm'");
+                            std::process::exit(1);
+                        }
+                    };
+
+                    let case = determine_aca_case(alg_correctness, clin_response, clin_outcome);
+                    let propagation = rsk::tov::case_propagation_factor(case);
+                    println!(
+                        "{}",
+                        json!({
+                            "case": format!("{:?}", case),
+                            "propagation_factor": propagation,
+                            "description": match case {
+                                rsk::tov::ACACase::CaseI => "Incident - algorithm wrong, followed, harm occurred",
+                                rsk::tov::ACACase::CaseII => "Exculpated - algorithm correct, overridden, harm occurred",
+                                rsk::tov::ACACase::CaseIII => "Signal - algorithm wrong, overridden (near-miss)",
+                                rsk::tov::ACACase::CaseIV => "Baseline - algorithm correct, followed, good outcome",
+                            },
+                        })
+                    );
+                }
+                TovAction::Khs {
+                    latency,
+                    accuracy,
+                    resource,
+                    drift,
+                } => {
+                    let khs = KHSAI::calculate(*latency, *accuracy, *resource, *drift);
+                    let status = interpret_khs_ai(khs.overall);
+                    println!(
+                        "{}",
+                        json!({
+                            "overall": khs.overall,
+                            "status": format!("{:?}", status),
+                            "latency_stability": khs.latency_stability,
+                            "accuracy_stability": khs.accuracy_stability,
+                            "resource_efficiency": khs.resource_efficiency,
+                            "drift_score": khs.drift_score,
+                        })
+                    );
+                }
+                TovAction::HarmTypes => {
+                    let types = [
+                        HarmType::Acute,
+                        HarmType::Cumulative,
+                        HarmType::OffTarget,
+                        HarmType::Cascade,
+                        HarmType::Idiosyncratic,
+                        HarmType::Saturation,
+                        HarmType::Interaction,
+                        HarmType::Population,
+                    ];
+                    let output: Vec<_> = types
+                        .iter()
+                        .map(|t| {
+                            let chars = harm_type_characteristics(*t);
+                            json!({
+                                "type": format!("{:?}", t),
+                                "multiplicity": format!("{:?}", chars.multiplicity),
+                                "temporal": format!("{:?}", chars.temporal),
+                                "determinism": format!("{:?}", chars.determinism),
+                            })
+                        })
+                        .collect();
+                    println!("{}", serde_json::to_string_pretty(&output).unwrap());
+                }
+                TovAction::ConservationLaws => {
+                    let laws = [
+                        ConservationLaw::Mass,
+                        ConservationLaw::Energy,
+                        ConservationLaw::State,
+                        ConservationLaw::Flux,
+                        ConservationLaw::Catalyst,
+                        ConservationLaw::Rate,
+                        ConservationLaw::Equilibrium,
+                        ConservationLaw::Saturation,
+                        ConservationLaw::Entropy,
+                        ConservationLaw::Discretization,
+                        ConservationLaw::Structure,
+                    ];
+                    let output: Vec<_> = laws
+                        .iter()
+                        .map(|l| {
+                            json!({
+                                "index": l.index(),
+                                "name": format!("{:?}", l),
+                                "type": format!("{:?}", l.law_type()),
+                            })
+                        })
+                        .collect();
+                    println!("{}", serde_json::to_string_pretty(&output).unwrap());
+                }
+            }
+        }
+        Commands::Guardian { action } => {
+            use rsk::guardian::iair::{
+                CheckabilityLevel, ExpertiseLevel, OutputTreatment, StakesLevel,
+            };
+            use rsk::guardian::{
+                ContextRiskParams, IAIRBuilder, IncidentCategory, OutcomeType, calculate_risk,
+                recommend_minimization,
+            };
+
+            match action {
+                GuardianAction::Risk {
+                    stakes,
+                    expertise,
+                    checkability,
+                    output,
+                } => {
+                    let stakes_level = match stakes.to_lowercase().as_str() {
+                        "low" => StakesLevel::Low,
+                        "moderate" => StakesLevel::Moderate,
+                        "high" => StakesLevel::High,
+                        "critical" => StakesLevel::Critical,
+                        _ => {
+                            eprintln!("Error: stakes must be low, moderate, high, or critical");
+                            std::process::exit(1);
+                        }
+                    };
+                    let expertise_level = match expertise.to_lowercase().as_str() {
+                        "low" => ExpertiseLevel::Low,
+                        "moderate" => ExpertiseLevel::Moderate,
+                        "high" => ExpertiseLevel::High,
+                        "unknown" => ExpertiseLevel::Unknown,
+                        _ => {
+                            eprintln!("Error: expertise must be low, moderate, high, or unknown");
+                            std::process::exit(1);
+                        }
+                    };
+                    let checkability_level = match checkability.to_lowercase().as_str() {
+                        "low" => CheckabilityLevel::Low,
+                        "moderate" => CheckabilityLevel::Moderate,
+                        "high" => CheckabilityLevel::High,
+                        "unfalsifiable" => CheckabilityLevel::Unfalsifiable,
+                        _ => {
+                            eprintln!(
+                                "Error: checkability must be low, moderate, high, or unfalsifiable"
+                            );
+                            std::process::exit(1);
+                        }
+                    };
+                    let output_treatment = match output.to_lowercase().as_str() {
+                        "draft" => OutputTreatment::Draft,
+                        "reviewed" => OutputTreatment::Reviewed,
+                        "direct_use" => OutputTreatment::DirectUse,
+                        "published" => OutputTreatment::Published,
+                        _ => {
+                            eprintln!(
+                                "Error: output must be draft, reviewed, direct_use, or published"
+                            );
+                            std::process::exit(1);
+                        }
+                    };
+
+                    let params = ContextRiskParams {
+                        stakes: stakes_level,
+                        expertise: expertise_level,
+                        checkability: checkability_level,
+                        output_treatment,
+                    };
+                    let result = calculate_risk(&params);
+                    println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                }
+                GuardianAction::Report {
+                    category,
+                    domain,
+                    stakes,
+                    severity,
+                } => {
+                    let cat = match IncidentCategory::from_code(&category) {
+                        Some(c) => c,
+                        None => {
+                            eprintln!(
+                                "Error: unknown category code '{}'. Use 'rsk guardian categories' to see valid codes.",
+                                category
+                            );
+                            std::process::exit(1);
+                        }
+                    };
+                    let stakes_level = match stakes.to_lowercase().as_str() {
+                        "low" => StakesLevel::Low,
+                        "moderate" => StakesLevel::Moderate,
+                        "high" => StakesLevel::High,
+                        "critical" => StakesLevel::Critical,
+                        _ => StakesLevel::Moderate,
+                    };
+
+                    let iair = IAIRBuilder::new()
+                        .session_id("cli-generated")
+                        .model("Claude", "unknown")
+                        .context(
+                            ExpertiseLevel::Unknown,
+                            stakes_level,
+                            CheckabilityLevel::Moderate,
+                        )
+                        .domain(domain.clone())
+                        .incident(cat)
+                        .outcome(OutcomeType::NearMiss, *severity)
+                        .build_minimal()
+                        .unwrap();
+
+                    println!("{}", serde_json::to_string_pretty(&iair).unwrap());
+                }
+                GuardianAction::Categories => {
+                    let categories = [
+                        (
+                            "CL-CONFAB",
+                            "Confabulation",
+                            "Confident, detailed, incorrect output",
+                        ),
+                        (
+                            "CL-MOTREASON",
+                            "Motivated Reasoning",
+                            "Apparent rigor, wrong conclusion",
+                        ),
+                        (
+                            "CL-VULNCODE",
+                            "Vulnerable Code",
+                            "Security flaw in generated code",
+                        ),
+                        (
+                            "CL-MANIP",
+                            "Manipulation",
+                            "Persuasion without user awareness",
+                        ),
+                        (
+                            "CL-FALSESYNTH",
+                            "False Synthesis",
+                            "Imposed coherence on contradictions",
+                        ),
+                        ("CL-APOPH", "Apophenia", "False pattern detection"),
+                        (
+                            "CL-BADFOLLOW",
+                            "Bad Follow",
+                            "Harmful instruction following",
+                        ),
+                        (
+                            "CL-ERRORPROP",
+                            "Error Propagation",
+                            "Early error compounded",
+                        ),
+                        (
+                            "CL-OVERCONF",
+                            "Overconfidence",
+                            "Certainty exceeded accuracy",
+                        ),
+                        (
+                            "CL-HALLUCITE",
+                            "Hallucinated Citation",
+                            "Non-existent source cited",
+                        ),
+                    ];
+                    let output: Vec<_> = categories
+                        .iter()
+                        .map(|(code, name, desc)| {
+                            json!({
+                                "code": code,
+                                "name": name,
+                                "description": desc,
+                            })
+                        })
+                        .collect();
+                    println!("{}", serde_json::to_string_pretty(&output).unwrap());
+                }
+                GuardianAction::Minimize { risk, incidents } => {
+                    let level = recommend_minimization(*risk, *incidents);
+                    println!(
+                        "{}",
+                        json!({
+                            "risk_score": risk,
+                            "incident_count": incidents,
+                            "recommended_level": format!("{:?}", level),
+                            "description": level.description(),
+                            "effect": format!("{:?}", level.signal_effect()),
+                        })
+                    );
+                }
             }
         }
     }

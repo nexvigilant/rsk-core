@@ -18,6 +18,7 @@
 //! - **`yaml_processor`** - YAML/TOML parsing and validation
 //! - **taxonomy** - O(1) compile-time lookup tables via phf (compliance levels, SMST components)
 //! - **telemetry** - Unified tracing infrastructure with span-based logging
+//! - **hooks** - File organization, validation, and monitoring hooks
 //! - **`python_bindings`** - `PyO3` bridge for Python integration (requires `python` feature)
 //!
 //! ## CLI Commands
@@ -46,6 +47,11 @@
 //! rsk skills scan <path>           Build skill registry
 //! rsk skills list                  List discovered skills
 //! rsk skills execute <name>        Execute deterministic skill
+//! rsk hooks validate <path>        Validate file placement
+//! rsk hooks staleness <path>       Check file staleness
+//! rsk hooks scan <dir>             Scan for violations
+//! rsk hooks policy                 Show policy configuration
+//! rsk hooks blindspot <path>       Generate blindspot check
 //! ```
 //!
 //! ## Performance
@@ -81,9 +87,11 @@ pub use modules::decision_engine::*;
 pub use modules::evolution::*;
 pub use modules::execution_engine::*;
 pub use modules::graph::*;
+pub use modules::guardian;
+pub use modules::hooks;
+pub use modules::intent::*;
 pub use modules::levenshtein::*;
 pub use modules::math::*;
-pub use modules::intent::*;
 #[cfg(feature = "python")]
 pub use modules::python_bindings::*;
 pub use modules::routing_engine::*;
@@ -94,6 +102,7 @@ pub use modules::strategy::*;
 pub use modules::taxonomy::*;
 pub use modules::telemetry::*;
 pub use modules::text_processor::*;
+pub use modules::tov;
 pub use modules::yaml_processor::*;
 
 pub fn version() -> &'static str {
