@@ -71,8 +71,9 @@ impl ValidationResult {
 pub fn categorize_file(path: &Path, policy: &PolicyFile) -> String {
     let path_str = path.to_str().unwrap_or("");
     let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+    let lower_filename = filename.to_lowercase();
 
-    // Check against policy placement rules
+    // Check against policy placement rules first
     if let Some(rules) = &policy.placement_rules {
         for (category, rule) in rules {
             for pattern in &rule.patterns {
@@ -81,6 +82,19 @@ pub fn categorize_file(path: &Path, policy: &PolicyFile) -> String {
                 }
             }
         }
+    }
+
+    // Check sensitive patterns BEFORE extension matching
+    // This catches files like "secrets.json", ".env", "credentials.yaml"
+    if lower_filename == ".env"
+        || lower_filename.starts_with(".env.")
+        || lower_filename.contains("secret")
+        || lower_filename.contains("credential")
+        || lower_filename.contains("password")
+        || lower_filename.contains("api_key")
+        || lower_filename.contains("apikey")
+    {
+        return "sensitive".to_string();
     }
 
     // Fallback categorization by extension
@@ -95,17 +109,7 @@ pub fn categorize_file(path: &Path, policy: &PolicyFile) -> String {
         Some("o" | "pyc" | "pyo" | "class") => "build_artifacts".to_string(),
         Some("env") => "sensitive".to_string(),
         Some("pem" | "key" | "crt" | "p12") => "sensitive".to_string(),
-        _ => {
-            // Check filename patterns for sensitive files
-            let lower = filename.to_lowercase();
-            if lower.contains("secret")
-                || lower.contains("credential")
-                || lower.contains("password")
-            {
-                return "sensitive".to_string();
-            }
-            "other".to_string()
-        }
+        _ => "other".to_string(),
     }
 }
 

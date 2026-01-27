@@ -39,6 +39,7 @@ use super::condition::evaluate_condition;
 use super::types::{
     Chain, ChainResult, ChainStep, ConditionalStep, StepResult, StepStatus, StepType,
 };
+use rayon::prelude::*;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::time::Instant;
@@ -372,11 +373,164 @@ fn execute_group(
     let is_parallel = group.len() > 1 && group.iter().all(|(_, s)| s.is_parallel());
 
     if is_parallel && config.parallel_enabled && !config.dry_run {
-        // TODO: Use rayon for actual parallelism when added to Cargo.toml
-        // For now, execute sequentially but mark as parallel-capable
-        execute_group_sequential(group, executor, context, config)
+        execute_group_parallel(group, executor, context, config)
     } else {
         execute_group_sequential(group, executor, context, config)
+    }
+}
+
+/// Execute a group in parallel using rayon
+fn execute_group_parallel(
+    group: &[(usize, &StepType)],
+    executor: &dyn SkillExecutor,
+    context: &mut ExecutionContext,
+    config: &ExecutorConfig,
+) -> Vec<StepResult> {
+    // Snapshot the context for parallel read access
+    let context_snapshot = context.clone();
+
+    // Execute steps in parallel, collecting results
+    let results: Vec<StepResult> = group
+        .par_iter()
+        .map(|(index, step)| match step {
+            StepType::Regular(chain_step) => {
+                execute_step_parallel(*index, chain_step, executor, &context_snapshot, config)
+            }
+            StepType::Conditional(cond_step) => execute_conditional_step_parallel(
+                *index,
+                cond_step,
+                executor,
+                &context_snapshot,
+                config,
+            ),
+        })
+        .collect();
+
+    // Merge results back into the main context
+    for result in &results {
+        if let Some(output) = &result.output {
+            context.step_outputs.insert(result.index, output.clone());
+        }
+
+        // Check for failures
+        let is_failure =
+            result.status == StepStatus::Failed || result.status == StepStatus::TimedOut;
+        if is_failure && config.fail_fast {
+            // Find if this step is required
+            if let Some((_, step)) = group.iter().find(|(i, _)| *i == result.index) {
+                let is_required = match step {
+                    StepType::Regular(s) => s.required,
+                    StepType::Conditional(_) => true,
+                };
+                if is_required {
+                    context.should_abort = true;
+                }
+            }
+        }
+    }
+
+    results
+}
+
+/// Execute a single step in parallel context (immutable context)
+fn execute_step_parallel(
+    index: usize,
+    step: &ChainStep,
+    executor: &dyn SkillExecutor,
+    context: &ExecutionContext,
+    config: &ExecutorConfig,
+) -> StepResult {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let start = Instant::now();
+    let start_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as u64;
+
+    if config.dry_run {
+        return StepResult {
+            index,
+            skill: step.skill.clone(),
+            status: StepStatus::WouldExecute,
+            output: None,
+            error: None,
+            duration_ms: 0,
+            start_time,
+            end_time: start_time,
+            branch_taken: None,
+        };
+    }
+
+    let exec_result = executor.execute(&step.skill, step.args.as_deref(), context);
+    let duration_ms = start.elapsed().as_millis() as u64;
+    let end_time = start_time + duration_ms;
+
+    if exec_result.success {
+        StepResult {
+            index,
+            skill: step.skill.clone(),
+            status: StepStatus::Success,
+            output: Some(exec_result.output),
+            error: None,
+            duration_ms,
+            start_time,
+            end_time,
+            branch_taken: None,
+        }
+    } else {
+        StepResult {
+            index,
+            skill: step.skill.clone(),
+            status: StepStatus::Failed,
+            output: None,
+            error: exec_result.error,
+            duration_ms,
+            start_time,
+            end_time,
+            branch_taken: None,
+        }
+    }
+}
+
+/// Execute a conditional step in parallel context (immutable context)
+fn execute_conditional_step_parallel(
+    index: usize,
+    cond_step: &ConditionalStep,
+    executor: &dyn SkillExecutor,
+    context: &ExecutionContext,
+    config: &ExecutorConfig,
+) -> StepResult {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    // Evaluate the condition
+    let condition_met = evaluate_condition(&cond_step.condition, &context.as_json());
+    let start_time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis() as u64;
+
+    if condition_met {
+        let mut result =
+            execute_step_parallel(index, &cond_step.then_step, executor, context, config);
+        result.branch_taken = Some("then".to_string());
+        result
+    } else if let Some(else_step) = &cond_step.else_step {
+        let mut result = execute_step_parallel(index, else_step, executor, context, config);
+        result.branch_taken = Some("else".to_string());
+        result
+    } else {
+        StepResult {
+            index,
+            skill: cond_step.then_step.skill.clone(),
+            status: StepStatus::Skipped,
+            output: None,
+            error: None,
+            duration_ms: 0,
+            start_time,
+            end_time: start_time,
+            branch_taken: Some("skipped".to_string()),
+        }
     }
 }
 

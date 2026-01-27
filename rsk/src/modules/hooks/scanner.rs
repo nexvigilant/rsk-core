@@ -55,10 +55,10 @@ pub fn scan_directory(path: &Path, max_depth: usize, policy: &PolicyFile) -> Sca
         .follow_links(false)
         .into_iter()
         .filter_entry(|e| {
-            // Skip hidden directories and known skip dirs
-            if e.file_type().is_dir() {
+            // Skip hidden directories and known skip dirs (but not the root path)
+            if e.file_type().is_dir() && e.depth() > 0 {
                 if let Some(name) = e.file_name().to_str() {
-                    if name.starts_with('.') && name != "." {
+                    if name.starts_with('.') {
                         return false;
                     }
                     if SKIP_DIRS.contains(&name) {
