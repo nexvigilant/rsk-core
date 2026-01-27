@@ -1,0 +1,22 @@
+//! CLI command handlers.
+//!
+//! Each handler module corresponds to a top-level command or group of related commands.
+
+pub mod compress;
+pub mod exec;
+#[cfg(feature = "forge")]
+pub mod forge;
+pub mod generate;
+pub mod graph;
+pub mod guardian;
+pub mod hooks;
+pub mod route;
+pub mod simple;
+pub mod skills;
+pub mod state;
+pub mod taxonomy;
+pub mod telemetry;
+pub mod text;
+pub mod tov;
+pub mod verify;
+pub mod yaml;
