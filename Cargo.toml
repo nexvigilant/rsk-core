@@ -2,9 +2,9 @@
 resolver = "2"
 members = [
     "rsk",
-    "rust-forge/crates/*"
 ]
-exclude = ["rust-forge/fuzz"]
+# rust-forge crates not yet populated
+# exclude = ["rust-forge/fuzz"]
 
 [workspace.package]
 version = "0.1.0"
@@ -79,10 +79,11 @@ num = "0.4"
 # Async utilities
 async-trait = "0.1"
 
-# Internal crates (Paths adjusted for new root)
-forge-spec = { path = "rust-forge/crates/forge-spec" }
-forge-runtime = { path = "rust-forge/crates/forge-runtime" }
-forge-codegen = { path = "rust-forge/crates/forge-codegen" }
+# Internal crates
+# NOTE: forge-* crates not yet populated - uncomment when available
+# forge-spec = { path = "rust-forge/crates/forge-spec" }
+# forge-runtime = { path = "rust-forge/crates/forge-runtime" }
+# forge-codegen = { path = "rust-forge/crates/forge-codegen" }
 
 # RSK - Rust Skills Kernel
 rsk = { path = "rsk" }
