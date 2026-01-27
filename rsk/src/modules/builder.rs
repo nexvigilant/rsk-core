@@ -1,5 +1,7 @@
-use crate::modules::text_processor::{extract_smst};
-use crate::modules::code_generator::{generate_validation_rules, generate_test_scaffold, generate_decision_tree};
+use crate::modules::code_generator::{
+    generate_decision_tree, generate_test_scaffold, generate_validation_rules,
+};
+use crate::modules::text_processor::extract_smst;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -15,7 +17,7 @@ pub struct BuildResult {
 
 pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
     let skill_md_path = path.join("SKILL.md");
-    
+
     if !skill_md_path.exists() {
         return BuildResult {
             skill_name: "unknown".to_string(),
@@ -28,18 +30,20 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
 
     let content = match fs::read_to_string(&skill_md_path) {
         Ok(c) => c,
-        Err(e) => return BuildResult {
-            skill_name: "unknown".to_string(),
-            path: path.to_path_buf(),
-            artifacts_created: vec![],
-            status: "failed".to_string(),
-            error: Some(format!("Failed to read SKILL.md: {}", e)),
-        },
+        Err(e) => {
+            return BuildResult {
+                skill_name: "unknown".to_string(),
+                path: path.to_path_buf(),
+                artifacts_created: vec![],
+                status: "failed".to_string(),
+                error: Some(format!("Failed to read SKILL.md: {}", e)),
+            };
+        }
     };
 
     let smst = extract_smst(&content);
     let skill_name = smst.frontmatter.name.clone();
-    
+
     if skill_name == "unknown" || skill_name.is_empty() {
         return BuildResult {
             skill_name: "unknown".to_string(),
@@ -56,7 +60,11 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
         return BuildResult {
             skill_name,
             path: path.to_path_buf(),
-            artifacts_created: vec!["logic.yaml (planned)".to_string(), "validation_rules.json (planned)".to_string(), "tests/scaffold.rs (planned)".to_string()],
+            artifacts_created: vec![
+                "logic.yaml (planned)".to_string(),
+                "validation_rules.json (planned)".to_string(),
+                "tests/scaffold.rs (planned)".to_string(),
+            ],
             status: "dry_run".to_string(),
             error: None,
         };
@@ -89,13 +97,15 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
             }
             artifacts_created.push("logic.yaml".to_string());
         }
-        Err(e) => return BuildResult {
-            skill_name: skill_name.clone(),
-            path: path.to_path_buf(),
-            artifacts_created,
-            status: "failed".to_string(),
-            error: Some(format!("Failed to serialize logic.yaml: {}", e)),
-        },
+        Err(e) => {
+            return BuildResult {
+                skill_name: skill_name.clone(),
+                path: path.to_path_buf(),
+                artifacts_created,
+                status: "failed".to_string(),
+                error: Some(format!("Failed to serialize logic.yaml: {}", e)),
+            };
+        }
     }
 
     // 2. Generate validation_rules.json
@@ -114,20 +124,22 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
             }
             artifacts_created.push("validation_rules.json".to_string());
         }
-        Err(e) => return BuildResult {
-            skill_name: skill_name.clone(),
-            path: path.to_path_buf(),
-            artifacts_created,
-            status: "failed".to_string(),
-            error: Some(format!("Failed to serialize validation_rules.json: {}", e)),
-        },
+        Err(e) => {
+            return BuildResult {
+                skill_name: skill_name.clone(),
+                path: path.to_path_buf(),
+                artifacts_created,
+                status: "failed".to_string(),
+                error: Some(format!("Failed to serialize validation_rules.json: {}", e)),
+            };
+        }
     }
 
     // 3. Generate test_scaffold.rs
     let tests_dir = path.join("tests");
     if !tests_dir.exists() {
         if let Err(e) = fs::create_dir_all(&tests_dir) {
-             return BuildResult {
+            return BuildResult {
                 skill_name: skill_name.clone(),
                 path: path.to_path_buf(),
                 artifacts_created,
@@ -199,17 +211,19 @@ pub fn verify_skill_file(path: &Path) -> VerifyResult {
 
     let content = match fs::read_to_string(path) {
         Ok(c) => c,
-        Err(e) => return VerifyResult {
-            skill_name: "unknown".to_string(),
-            score: 0.0,
-            compliance_level: "none".to_string(),
-            checks: vec![SkillCheck {
-                name: "File read".to_string(),
+        Err(e) => {
+            return VerifyResult {
+                skill_name: "unknown".to_string(),
+                score: 0.0,
+                compliance_level: "none".to_string(),
+                checks: vec![SkillCheck {
+                    name: "File read".to_string(),
+                    status: "failed".to_string(),
+                    message: format!("Failed to read file: {}", e),
+                }],
                 status: "failed".to_string(),
-                message: format!("Failed to read file: {}", e),
-            }],
-            status: "failed".to_string(),
-        },
+            };
+        }
     };
 
     let smst = extract_smst(&content);
@@ -217,8 +231,15 @@ pub fn verify_skill_file(path: &Path) -> VerifyResult {
 
     checks.push(SkillCheck {
         name: "SMST v2.0 Compliance".to_string(),
-        status: if smst.is_diamond_compliant { "passed".to_string() } else { "partial".to_string() },
-        message: format!("Score: {:.1}/100, Level: {}", smst.score.total_score, smst.score.compliance_level),
+        status: if smst.is_diamond_compliant {
+            "passed".to_string()
+        } else {
+            "partial".to_string()
+        },
+        message: format!(
+            "Score: {:.1}/100, Level: {}",
+            smst.score.total_score, smst.score.compliance_level
+        ),
     });
 
     // For a single file, we skip the directory-based checks for now
@@ -229,7 +250,11 @@ pub fn verify_skill_file(path: &Path) -> VerifyResult {
         score: smst.score.total_score,
         compliance_level: smst.score.compliance_level,
         checks,
-        status: if smst.is_diamond_compliant { "success".to_string() } else { "partial".to_string() },
+        status: if smst.is_diamond_compliant {
+            "success".to_string()
+        } else {
+            "partial".to_string()
+        },
     }
 }
 
@@ -253,17 +278,19 @@ pub fn verify_skill(path: &Path) -> VerifyResult {
 
     let content = match fs::read_to_string(&skill_md_path) {
         Ok(c) => c,
-        Err(e) => return VerifyResult {
-            skill_name: "unknown".to_string(),
-            score: 0.0,
-            compliance_level: "none".to_string(),
-            checks: vec![SkillCheck {
-                name: "SKILL.md read".to_string(),
+        Err(e) => {
+            return VerifyResult {
+                skill_name: "unknown".to_string(),
+                score: 0.0,
+                compliance_level: "none".to_string(),
+                checks: vec![SkillCheck {
+                    name: "SKILL.md read".to_string(),
+                    status: "failed".to_string(),
+                    message: format!("Failed to read SKILL.md: {}", e),
+                }],
                 status: "failed".to_string(),
-                message: format!("Failed to read SKILL.md: {}", e),
-            }],
-            status: "failed".to_string(),
-        },
+            };
+        }
     };
 
     let smst = extract_smst(&content);
@@ -271,8 +298,15 @@ pub fn verify_skill(path: &Path) -> VerifyResult {
 
     checks.push(SkillCheck {
         name: "SMST v2.0 Compliance".to_string(),
-        status: if smst.is_diamond_compliant { "passed".to_string() } else { "partial".to_string() },
-        message: format!("Score: {:.1}/100, Level: {}", smst.score.total_score, smst.score.compliance_level),
+        status: if smst.is_diamond_compliant {
+            "passed".to_string()
+        } else {
+            "partial".to_string()
+        },
+        message: format!(
+            "Score: {:.1}/100, Level: {}",
+            smst.score.total_score, smst.score.compliance_level
+        ),
     });
 
     // Check for artifacts
@@ -286,10 +320,16 @@ pub fn verify_skill(path: &Path) -> VerifyResult {
     for (file, desc) in artifacts {
         let file_path = path.join(file);
         let exists = file_path.exists();
-        if !exists { artifacts_missing = true; }
+        if !exists {
+            artifacts_missing = true;
+        }
         checks.push(SkillCheck {
             name: format!("Artifact: {}", file),
-            status: if exists { "passed".to_string() } else { "missing".to_string() },
+            status: if exists {
+                "passed".to_string()
+            } else {
+                "missing".to_string()
+            },
             message: desc.to_string(),
         });
     }
@@ -353,8 +393,9 @@ pub fn verify_skill(path: &Path) -> VerifyResult {
     }
 
     // Strict Gold Standard
-    let all_passed = checks.iter().any(|c| c.name == "SMST v2.0 Compliance" && (c.status == "passed" || c.status == "partial"))
-        && !artifacts_missing 
+    let all_passed = checks.iter().any(|c| {
+        c.name == "SMST v2.0 Compliance" && (c.status == "passed" || c.status == "partial")
+    }) && !artifacts_missing
         && !scripts_missing
         && functional_tests_passed;
 
@@ -363,6 +404,10 @@ pub fn verify_skill(path: &Path) -> VerifyResult {
         score: smst.score.total_score,
         compliance_level: smst.score.compliance_level,
         checks,
-        status: if all_passed { "success".to_string() } else { "failed".to_string() },
+        status: if all_passed {
+            "success".to_string()
+        } else {
+            "failed".to_string()
+        },
     }
 }

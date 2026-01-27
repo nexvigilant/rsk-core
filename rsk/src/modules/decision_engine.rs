@@ -2,9 +2,9 @@
 //!
 //! Deterministic execution engine for logic trees defined in YAML/JSON.
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use regex::Regex;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -13,7 +13,17 @@ use regex::Regex;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Operator {
-    Eq, Neq, Gt, Gte, Lt, Lte, Contains, NotContains, Matches, IsNull, IsNotNull,
+    Eq,
+    Neq,
+    Gt,
+    Gte,
+    Lt,
+    Lte,
+    Contains,
+    NotContains,
+    Matches,
+    IsNull,
+    IsNotNull,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -40,7 +50,7 @@ impl Value {
             Value::Object(obj) => format!("{:?}", obj),
         }
     }
-    
+
     pub fn as_f64(&self) -> Option<f64> {
         match self {
             Value::Int(i) => Some(*i as f64),
@@ -82,7 +92,7 @@ pub enum DecisionNode {
         input_variable: String,
         output_variable: String,
         next: String,
-    }
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,9 +108,15 @@ pub struct DecisionContext {
 }
 
 impl DecisionContext {
-    pub fn new() -> Self { Self::default() }
-    pub fn set(&mut self, key: &str, value: Value) { self.variables.insert(key.to_string(), value); }
-    pub fn get(&self, key: &str) -> Option<&Value> { self.variables.get(key) }
+    pub fn new() -> Self {
+        Self::default()
+    }
+    pub fn set(&mut self, key: &str, value: Value) {
+        self.variables.insert(key.to_string(), value);
+    }
+    pub fn get(&self, key: &str) -> Option<&Value> {
+        self.variables.get(key)
+    }
 }
 
 pub struct DecisionEngine {
@@ -114,21 +130,26 @@ pub fn load_tree(yaml: &str) -> anyhow::Result<DecisionTree> {
 pub fn load_tree_strict(yaml: &str) -> anyhow::Result<DecisionTree> {
     let tree: DecisionTree = serde_yaml::from_str(yaml)
         .map_err(|e| anyhow::anyhow!("Invalid decision tree YAML: {}", e))?;
-    
+
     // Phase 2 mandate: No LlmFallback allowed in Diamond skills
     // We walk all nodes to ensure zero-tolerance enforcement
     for (id, node) in &tree.nodes {
         validate_node_recursive(id, node, &tree.nodes)?;
     }
-    
+
     Ok(tree)
 }
 
-fn validate_node_recursive(id: &str, node: &DecisionNode, _nodes: &HashMap<String, DecisionNode>) -> anyhow::Result<()> {
+fn validate_node_recursive(
+    id: &str,
+    node: &DecisionNode,
+    _nodes: &HashMap<String, DecisionNode>,
+) -> anyhow::Result<()> {
     match node {
-        DecisionNode::LlmFallback { .. } => {
-            Err(anyhow::anyhow!("Strict mode violation: Node '{}' uses forbidden LlmFallback. Deterministic logic required.", id))
-        },
+        DecisionNode::LlmFallback { .. } => Err(anyhow::anyhow!(
+            "Strict mode violation: Node '{}' uses forbidden LlmFallback. Deterministic logic required.",
+            id
+        )),
         // In the future, we could add cycle detection here if needed
         _ => Ok(()),
     }
@@ -137,12 +158,17 @@ fn validate_node_recursive(id: &str, node: &DecisionNode, _nodes: &HashMap<Strin
 #[derive(Debug, Clone)]
 pub enum ExecutionResult {
     Value(Value),
-    LlmRequest { prompt: String, context: HashMap<String, Value> },
+    LlmRequest {
+        prompt: String,
+        context: HashMap<String, Value>,
+    },
     Error(String),
 }
 
 impl DecisionEngine {
-    pub fn new(tree: DecisionTree) -> Self { Self { tree } }
+    pub fn new(tree: DecisionTree) -> Self {
+        Self { tree }
+    }
 
     pub fn execute(&self, ctx: &mut DecisionContext) -> ExecutionResult {
         let mut current_id = self.tree.start.clone();
@@ -150,7 +176,9 @@ impl DecisionEngine {
         let mut steps = 0;
 
         loop {
-            if steps >= max_steps { return ExecutionResult::Error("Max depth".to_string()); }
+            if steps >= max_steps {
+                return ExecutionResult::Error("Max depth".to_string());
+            }
             steps += 1;
             ctx.execution_path.push(current_id.clone());
             let node = match self.tree.nodes.get(&current_id) {
@@ -159,15 +187,37 @@ impl DecisionEngine {
             };
 
             match node {
-                DecisionNode::Condition { variable, operator, value, true_next, false_next } => {
+                DecisionNode::Condition {
+                    variable,
+                    operator,
+                    value,
+                    true_next,
+                    false_next,
+                } => {
                     let var_val = ctx.get(variable).unwrap_or(&Value::Null);
                     let result = self.evaluate_condition(var_val, operator, value.as_ref());
-                    current_id = if result { true_next.clone() } else { false_next.clone() };
-                },
-                DecisionNode::Action { action, target, value, next } => {
-                    let processed_val = value.as_ref().map(|v| self.interpolate_value(v, ctx)).unwrap_or(Value::Null);
+                    current_id = if result {
+                        true_next.clone()
+                    } else {
+                        false_next.clone()
+                    };
+                }
+                DecisionNode::Action {
+                    action,
+                    target,
+                    value,
+                    next,
+                } => {
+                    let processed_val = value
+                        .as_ref()
+                        .map(|v| self.interpolate_value(v, ctx))
+                        .unwrap_or(Value::Null);
                     match action.as_str() {
-                        "set_variable" => { if let Some(t) = target { ctx.set(t, processed_val); } },
+                        "set_variable" => {
+                            if let Some(t) = target {
+                                ctx.set(t, processed_val);
+                            }
+                        }
                         "log" => eprintln!("[logic] {}", processed_val.as_string()),
                         _ => {}
                     }
@@ -175,14 +225,22 @@ impl DecisionEngine {
                         Some(n) => current_id = n.clone(),
                         None => return ExecutionResult::Error("Action no next".to_string()),
                     }
-                },
+                }
                 DecisionNode::Return { value } => {
                     return ExecutionResult::Value(self.interpolate_value(value, ctx));
-                },
+                }
                 DecisionNode::LlmFallback { prompt, .. } => {
-                    return ExecutionResult::LlmRequest { prompt: prompt.clone(), context: ctx.variables.clone() };
-                },
-                DecisionNode::Intrinsic { function, input_variable, output_variable, next } => {
+                    return ExecutionResult::LlmRequest {
+                        prompt: prompt.clone(),
+                        context: ctx.variables.clone(),
+                    };
+                }
+                DecisionNode::Intrinsic {
+                    function,
+                    input_variable,
+                    output_variable,
+                    next,
+                } => {
                     let input = ctx.get(input_variable).cloned().unwrap_or(Value::Null);
                     let result = self.execute_intrinsic(function, input);
                     ctx.set(output_variable, result);
@@ -202,17 +260,23 @@ impl DecisionEngine {
                         let key_path = result[start + 2..start + end].trim();
                         let replacement = self.resolve_path(key_path, ctx).as_string();
                         result = result.replace(full_tag, &replacement);
-                    } else { break; }
+                    } else {
+                        break;
+                    }
                 }
                 Value::String(result)
-            },
+            }
             Value::Object(map) => {
                 let mut new_map = HashMap::new();
-                for (k, v) in map { new_map.insert(k.clone(), self.interpolate_value(v, ctx)); }
+                for (k, v) in map {
+                    new_map.insert(k.clone(), self.interpolate_value(v, ctx));
+                }
                 Value::Object(new_map)
-            },
-            Value::Array(arr) => Value::Array(arr.iter().map(|v| self.interpolate_value(v, ctx)).collect()),
-            _ => val.clone()
+            }
+            Value::Array(arr) => {
+                Value::Array(arr.iter().map(|v| self.interpolate_value(v, ctx)).collect())
+            }
+            _ => val.clone(),
         }
     }
 
@@ -234,13 +298,22 @@ impl DecisionEngine {
         current.unwrap_or(Value::Null)
     }
 
-    fn resolve_part(&self, part: &str, ctx: &DecisionContext, base: Option<Value>) -> Option<Value> {
+    fn resolve_part(
+        &self,
+        part: &str,
+        ctx: &DecisionContext,
+        base: Option<Value>,
+    ) -> Option<Value> {
         if part.contains('[') && part.contains(']') {
             let base_key = part.split('[').next().unwrap();
             let idx_str = part.split('[').nth(1).unwrap().trim_end_matches(']');
-            
+
             let array_val = if let Some(b) = base {
-                if let Value::Object(map) = b { map.get(base_key).cloned() } else { None }
+                if let Value::Object(map) = b {
+                    map.get(base_key).cloned()
+                } else {
+                    None
+                }
             } else {
                 ctx.variables.get(base_key).cloned()
             };
@@ -254,7 +327,7 @@ impl DecisionEngine {
             if let Some(b) = base {
                 match b {
                     Value::Object(map) => map.get(part).cloned(),
-                    _ => None
+                    _ => None,
                 }
             } else {
                 ctx.variables.get(part).cloned()
@@ -272,26 +345,42 @@ impl DecisionEngine {
                     map.insert("number".to_string(), Value::Int(res.number));
                     map.insert("reason".to_string(), Value::String(res.reason));
                     Value::Object(map)
-                } else { Value::String("Error: int required".to_string()) }
-            },
+                } else {
+                    Value::String("Error: int required".to_string())
+                }
+            }
             "sha256" => {
                 let res = crate::modules::crypto::sha256_hash(&input.as_string());
                 let mut map = HashMap::new();
                 map.insert("hex".to_string(), Value::String(res.hex));
                 Value::Object(map)
-            },
+            }
             "optimize_strategy" => {
                 if let Value::Object(args) = input {
-                    let fields_val = args.get("fields").cloned().unwrap_or(Value::Array(Vec::new()));
-                    let tactics_val = args.get("tactics").cloned().unwrap_or(Value::Array(Vec::new()));
-                    let fields: Vec<crate::modules::strategy::StrategicField> = serde_json::from_str(&serde_json::to_string(&fields_val).unwrap()).unwrap_or_default();
-                    let tactics: Vec<crate::modules::strategy::WinTactic> = serde_json::from_str(&serde_json::to_string(&tactics_val).unwrap()).unwrap_or_default();
-                    let results = crate::modules::strategy::StrategyOptimizer::new(fields, tactics).optimize();
-                    let res_val: Vec<Value> = serde_json::from_str(&serde_json::to_string(&results).unwrap()).unwrap();
+                    let fields_val = args
+                        .get("fields")
+                        .cloned()
+                        .unwrap_or(Value::Array(Vec::new()));
+                    let tactics_val = args
+                        .get("tactics")
+                        .cloned()
+                        .unwrap_or(Value::Array(Vec::new()));
+                    let fields: Vec<crate::modules::strategy::StrategicField> =
+                        serde_json::from_str(&serde_json::to_string(&fields_val).unwrap())
+                            .unwrap_or_default();
+                    let tactics: Vec<crate::modules::strategy::WinTactic> =
+                        serde_json::from_str(&serde_json::to_string(&tactics_val).unwrap())
+                            .unwrap_or_default();
+                    let results = crate::modules::strategy::StrategyOptimizer::new(fields, tactics)
+                        .optimize();
+                    let res_val: Vec<Value> =
+                        serde_json::from_str(&serde_json::to_string(&results).unwrap()).unwrap();
                     Value::Array(res_val)
-                } else { Value::Null }
-            },
-            _ => Value::String(format!("Unknown: {}", function))
+                } else {
+                    Value::Null
+                }
+            }
+            _ => Value::String(format!("Unknown: {}", function)),
         }
     }
 
@@ -301,10 +390,18 @@ impl DecisionEngine {
             Operator::Neq => actual != target.unwrap_or(&Value::Null),
             Operator::IsNull => matches!(actual, Value::Null),
             Operator::IsNotNull => !matches!(actual, Value::Null),
-            Operator::Gt => actual.as_f64().unwrap_or(0.0) > target.and_then(|v| v.as_f64()).unwrap_or(0.0),
-            Operator::Gte => actual.as_f64().unwrap_or(0.0) >= target.and_then(|v| v.as_f64()).unwrap_or(0.0),
-            Operator::Lt => actual.as_f64().unwrap_or(0.0) < target.and_then(|v| v.as_f64()).unwrap_or(0.0),
-            Operator::Lte => actual.as_f64().unwrap_or(0.0) <= target.and_then(|v| v.as_f64()).unwrap_or(0.0),
+            Operator::Gt => {
+                actual.as_f64().unwrap_or(0.0) > target.and_then(|v| v.as_f64()).unwrap_or(0.0)
+            }
+            Operator::Gte => {
+                actual.as_f64().unwrap_or(0.0) >= target.and_then(|v| v.as_f64()).unwrap_or(0.0)
+            }
+            Operator::Lt => {
+                actual.as_f64().unwrap_or(0.0) < target.and_then(|v| v.as_f64()).unwrap_or(0.0)
+            }
+            Operator::Lte => {
+                actual.as_f64().unwrap_or(0.0) <= target.and_then(|v| v.as_f64()).unwrap_or(0.0)
+            }
             Operator::Contains => {
                 if let (Value::String(s), Some(Value::String(t))) = (actual, target) {
                     s.contains(t)
@@ -313,7 +410,7 @@ impl DecisionEngine {
                 } else {
                     false
                 }
-            },
+            }
             Operator::NotContains => {
                 if let (Value::String(s), Some(Value::String(t))) = (actual, target) {
                     !s.contains(t)
@@ -322,7 +419,7 @@ impl DecisionEngine {
                 } else {
                     true
                 }
-            },
+            }
             Operator::Matches => {
                 if let (Value::String(s), Some(Value::String(t))) = (actual, target) {
                     if let Ok(re) = Regex::new(t) {
@@ -348,9 +445,12 @@ mod tests {
         let mut strategy = HashMap::new();
         strategy.insert("field_id".to_string(), Value::String("F1".to_string()));
         ctx.set("optimal_paths", Value::Array(vec![Value::Object(strategy)]));
-        
-        let engine = DecisionEngine::new(DecisionTree { start: "".to_string(), nodes: HashMap::new() });
-        
+
+        let engine = DecisionEngine::new(DecisionTree {
+            start: "".to_string(),
+            nodes: HashMap::new(),
+        });
+
         let template = Value::String("Field is {{optimal_paths[0].field_id}}".to_string());
         let result = engine.interpolate_value(&template, &ctx);
         assert_eq!(result, Value::String("Field is F1".to_string()));
@@ -367,6 +467,11 @@ nodes:
 "#;
         let result = load_tree_strict(yaml);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("uses forbidden LlmFallback"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("uses forbidden LlmFallback")
+        );
     }
 }

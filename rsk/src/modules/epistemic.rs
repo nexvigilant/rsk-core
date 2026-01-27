@@ -51,8 +51,17 @@ pub struct EpistemicResult {
 
 /// Overconfident language patterns (compiled once)
 static OVERCONFIDENT_WORDS: &[&str] = &[
-    "always", "never", "definitely", "certainly", "obviously", "clearly",
-    "undoubtedly", "unquestionably", "absolutely", "proven", "guaranteed",
+    "always",
+    "never",
+    "definitely",
+    "certainly",
+    "obviously",
+    "clearly",
+    "undoubtedly",
+    "unquestionably",
+    "absolutely",
+    "proven",
+    "guaranteed",
 ];
 
 /// Pre-compiled regex patterns for overconfident words

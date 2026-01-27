@@ -128,11 +128,7 @@ impl SessionState {
 
     /// Get the N most recent executions
     pub fn recent_executions(&self, n: usize) -> Vec<&ExecutionEntry> {
-        self.execution_history
-            .iter()
-            .rev()
-            .take(n)
-            .collect()
+        self.execution_history.iter().rev().take(n).collect()
     }
 
     /// Trim history to keep only the most recent N entries
@@ -180,11 +176,9 @@ pub fn load_state(path: &Path) -> Result<SessionState, SessionError> {
         return Ok(SessionState::new());
     }
 
-    let content = fs::read_to_string(path)
-        .map_err(|e| SessionError::IoError(e.to_string()))?;
+    let content = fs::read_to_string(path).map_err(|e| SessionError::IoError(e.to_string()))?;
 
-    serde_json::from_str(&content)
-        .map_err(|e| SessionError::ParseError(e.to_string()))
+    serde_json::from_str(&content).map_err(|e| SessionError::ParseError(e.to_string()))
 }
 
 /// Save session state to a JSON file (atomic write)
@@ -197,15 +191,12 @@ pub fn save_state(path: &Path, state: &SessionState) -> Result<(), SessionError>
 
     // Ensure parent directory exists
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|e| SessionError::IoError(e.to_string()))?;
+        fs::create_dir_all(parent).map_err(|e| SessionError::IoError(e.to_string()))?;
     }
 
-    fs::write(&temp_path, &content)
-        .map_err(|e| SessionError::IoError(e.to_string()))?;
+    fs::write(&temp_path, &content).map_err(|e| SessionError::IoError(e.to_string()))?;
 
-    fs::rename(&temp_path, path)
-        .map_err(|e| SessionError::IoError(e.to_string()))?;
+    fs::rename(&temp_path, path).map_err(|e| SessionError::IoError(e.to_string()))?;
 
     Ok(())
 }
@@ -234,10 +225,7 @@ pub fn track_completion(
 }
 
 /// Track execution failure
-pub fn track_failure(
-    state_path: &Path,
-    error: Option<&str>,
-) -> Result<SessionState, SessionError> {
+pub fn track_failure(state_path: &Path, error: Option<&str>) -> Result<SessionState, SessionError> {
     let mut state = load_state(state_path)?;
     state.fail_execution(error);
     save_state(state_path, &state)?;
@@ -245,17 +233,12 @@ pub fn track_failure(
 }
 
 /// Append to log file (optional feature from original skill_router.py)
-pub fn append_log(
-    log_path: &Path,
-    skill_name: &str,
-    message: &str,
-) -> Result<(), SessionError> {
+pub fn append_log(log_path: &Path, skill_name: &str, message: &str) -> Result<(), SessionError> {
     use std::io::Write;
 
     // Ensure parent directory exists
     if let Some(parent) = log_path.parent() {
-        fs::create_dir_all(parent)
-            .map_err(|e| SessionError::IoError(e.to_string()))?;
+        fs::create_dir_all(parent).map_err(|e| SessionError::IoError(e.to_string()))?;
     }
 
     let mut file = fs::OpenOptions::new()
@@ -325,7 +308,8 @@ fn uuid_v4() -> String {
 
     // Build UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
     // where y is 8, 9, a, or b
-    format!("{:08x}-{:04x}-4{:03x}-{:04x}-{:012x}",
+    format!(
+        "{:08x}-{:04x}-4{:03x}-{:04x}-{:012x}",
         (a >> 32) as u32,
         ((a >> 16) & 0xFFFF) as u16,
         ((a >> 4) & 0xFFF) as u16,
@@ -362,7 +346,10 @@ mod tests {
 
         assert_eq!(state.execution_history.len(), 1);
         assert_eq!(state.execution_history[0].skill_name, "test-skill");
-        assert_eq!(state.execution_history[0].context, Some("test context".to_string()));
+        assert_eq!(
+            state.execution_history[0].context,
+            Some("test context".to_string())
+        );
         assert_eq!(state.current_skill, "test-skill");
     }
 
@@ -383,7 +370,13 @@ mod tests {
         state.fail_execution(Some("timeout"));
 
         assert_eq!(state.execution_history[0].status, "failed");
-        assert!(state.execution_history[0].context.as_ref().unwrap().contains("timeout"));
+        assert!(
+            state.execution_history[0]
+                .context
+                .as_ref()
+                .unwrap()
+                .contains("timeout")
+        );
     }
 
     #[test]
@@ -436,10 +429,15 @@ mod tests {
         let state_path = dir.path().join("state.json");
         let log_path = dir.path().join("execution.log");
 
-        let state = route_skill(&state_path, Some(&log_path), "routed-skill", Some("test")).unwrap();
+        let state =
+            route_skill(&state_path, Some(&log_path), "routed-skill", Some("test")).unwrap();
 
         assert_eq!(state.execution_history.len(), 1);
-        assert!(fs::read_to_string(&log_path).unwrap().contains("routed-skill"));
+        assert!(
+            fs::read_to_string(&log_path)
+                .unwrap()
+                .contains("routed-skill")
+        );
     }
 
     #[test]

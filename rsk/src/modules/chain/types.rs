@@ -482,7 +482,11 @@ impl ChainResult {
         if self.steps.is_empty() {
             100.0
         } else {
-            let completed = self.steps.iter().filter(|s| s.status != StepStatus::Pending).count();
+            let completed = self
+                .steps
+                .iter()
+                .filter(|s| s.status != StepStatus::Pending)
+                .count();
             (completed as f32 / self.steps.len() as f32) * 100.0
         }
     }
@@ -513,10 +517,8 @@ mod tests {
 
     #[test]
     fn test_conditional_step() {
-        let cond = ConditionalStep::new(
-            "context.has_tests == true",
-            ChainStep::new("run-tests"),
-        ).with_else(ChainStep::new("skip-tests"));
+        let cond = ConditionalStep::new("context.has_tests == true", ChainStep::new("run-tests"))
+            .with_else(ChainStep::new("skip-tests"));
 
         assert_eq!(cond.condition, "context.has_tests == true");
         assert_eq!(cond.then_step.skill, "run-tests");
@@ -540,10 +542,22 @@ mod tests {
 
     #[test]
     fn test_composition_type_operators() {
-        assert_eq!(CompositionType::from_operator("->"), Some(CompositionType::Sequential));
-        assert_eq!(CompositionType::from_operator("|"), Some(CompositionType::Parallel));
-        assert_eq!(CompositionType::from_operator("?"), Some(CompositionType::Conditional));
-        assert_eq!(CompositionType::from_operator("*"), Some(CompositionType::Loop));
+        assert_eq!(
+            CompositionType::from_operator("->"),
+            Some(CompositionType::Sequential)
+        );
+        assert_eq!(
+            CompositionType::from_operator("|"),
+            Some(CompositionType::Parallel)
+        );
+        assert_eq!(
+            CompositionType::from_operator("?"),
+            Some(CompositionType::Conditional)
+        );
+        assert_eq!(
+            CompositionType::from_operator("*"),
+            Some(CompositionType::Loop)
+        );
         assert_eq!(CompositionType::from_operator("invalid"), None);
     }
 
@@ -575,8 +589,8 @@ mod tests {
 
     #[test]
     fn test_serialization() {
-        let chain = Chain::new("serialize-test")
-            .with_step(ChainStep::new("step1").with_args("--flag"));
+        let chain =
+            Chain::new("serialize-test").with_step(ChainStep::new("step1").with_args("--flag"));
 
         let json = serde_json::to_string(&chain).unwrap();
         let deserialized: Chain = serde_json::from_str(&json).unwrap();

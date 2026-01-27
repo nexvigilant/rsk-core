@@ -36,7 +36,9 @@
 //! ```
 
 use super::condition::evaluate_condition;
-use super::types::{Chain, ChainResult, ChainStep, StepResult, StepStatus, StepType, ConditionalStep};
+use super::types::{
+    Chain, ChainResult, ChainStep, ConditionalStep, StepResult, StepStatus, StepType,
+};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::time::Instant;
@@ -123,8 +125,14 @@ impl ExecutionContext {
         }
 
         // Add metadata
-        obj.insert("current_step".to_string(), Value::Number(self.current_step.into()));
-        obj.insert("total_steps".to_string(), Value::Number(self.total_steps.into()));
+        obj.insert(
+            "current_step".to_string(),
+            Value::Number(self.current_step.into()),
+        );
+        obj.insert(
+            "total_steps".to_string(),
+            Value::Number(self.total_steps.into()),
+        );
 
         Value::Object(obj)
     }
@@ -165,7 +173,12 @@ pub trait SkillExecutor: Send + Sync {
     ///
     /// # Returns
     /// Result with output value or error
-    fn execute(&self, skill: &str, args: Option<&str>, context: &ExecutionContext) -> SkillExecutionResult;
+    fn execute(
+        &self,
+        skill: &str,
+        args: Option<&str>,
+        context: &ExecutionContext,
+    ) -> SkillExecutionResult;
 }
 
 /// Simple function-based executor for testing and simple use cases
@@ -189,7 +202,12 @@ impl<F> SkillExecutor for FnExecutor<F>
 where
     F: Fn(&str, Option<&str>, &ExecutionContext) -> SkillExecutionResult + Send + Sync,
 {
-    fn execute(&self, skill: &str, args: Option<&str>, context: &ExecutionContext) -> SkillExecutionResult {
+    fn execute(
+        &self,
+        skill: &str,
+        args: Option<&str>,
+        context: &ExecutionContext,
+    ) -> SkillExecutionResult {
         (self.func)(skill, args, context)
     }
 }
@@ -251,8 +269,16 @@ fn execute_step(
     StepResult {
         index,
         skill: step.skill.clone(),
-        status: if result.success { StepStatus::Success } else { StepStatus::Failed },
-        output: if result.success { Some(result.output) } else { None },
+        status: if result.success {
+            StepStatus::Success
+        } else {
+            StepStatus::Failed
+        },
+        output: if result.success {
+            Some(result.output)
+        } else {
+            None
+        },
         error: result.error,
         duration_ms,
         start_time,
@@ -375,7 +401,8 @@ fn execute_group_sequential(
             }
         };
 
-        let is_failure = result.status == StepStatus::Failed || result.status == StepStatus::TimedOut;
+        let is_failure =
+            result.status == StepStatus::Failed || result.status == StepStatus::TimedOut;
 
         // Check if we should abort
         if is_failure {
@@ -457,7 +484,10 @@ pub fn execute_chain(
     // Calculate overall success - failures from optional steps don't count
     let success = all_results.iter().enumerate().all(|(i, r)| {
         // Success, Skipped, or WouldExecute are always OK
-        if matches!(r.status, StepStatus::Success | StepStatus::Skipped | StepStatus::WouldExecute) {
+        if matches!(
+            r.status,
+            StepStatus::Success | StepStatus::Skipped | StepStatus::WouldExecute
+        ) {
             return true;
         }
         // For Failed/TimedOut, check if the step was optional
@@ -481,7 +511,11 @@ pub fn execute_chain(
         dry_run: config.dry_run,
         checkpoint_id: None,
         parallel_efficiency: None,
-        error: if success { None } else { Some("One or more steps failed".to_string()) },
+        error: if success {
+            None
+        } else {
+            Some("One or more steps failed".to_string())
+        },
     }
 }
 
@@ -507,7 +541,11 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn success_executor(_skill: &str, _args: Option<&str>, _ctx: &ExecutionContext) -> SkillExecutionResult {
+    fn success_executor(
+        _skill: &str,
+        _args: Option<&str>,
+        _ctx: &ExecutionContext,
+    ) -> SkillExecutionResult {
         SkillExecutionResult {
             success: true,
             output: json!({"status": "ok"}),
@@ -516,7 +554,11 @@ mod tests {
         }
     }
 
-    fn failing_executor(skill: &str, _args: Option<&str>, _ctx: &ExecutionContext) -> SkillExecutionResult {
+    fn failing_executor(
+        skill: &str,
+        _args: Option<&str>,
+        _ctx: &ExecutionContext,
+    ) -> SkillExecutionResult {
         if skill == "fail" {
             SkillExecutionResult {
                 success: false,
@@ -545,8 +587,7 @@ mod tests {
 
     #[test]
     fn test_execute_dry_run() {
-        let chain = Chain::new("test")
-            .with_step(ChainStep::new("step-one"));
+        let chain = Chain::new("test").with_step(ChainStep::new("step-one"));
 
         let config = ExecutorConfig {
             dry_run: true,
@@ -602,10 +643,10 @@ mod tests {
     fn test_execute_conditional_then() {
         let chain = Chain::new("test")
             .with_context("flag", json!(true))
-            .with_step(StepType::Conditional(ConditionalStep::new(
-                "context.flag == true",
-                ChainStep::new("then-step"),
-            ).with_else(ChainStep::new("else-step"))));
+            .with_step(StepType::Conditional(
+                ConditionalStep::new("context.flag == true", ChainStep::new("then-step"))
+                    .with_else(ChainStep::new("else-step")),
+            ));
 
         let config = ExecutorConfig::default();
         let result = execute_chain_with_fn(&chain, success_executor, &config);
@@ -619,10 +660,10 @@ mod tests {
     fn test_execute_conditional_else() {
         let chain = Chain::new("test")
             .with_context("flag", json!(false))
-            .with_step(StepType::Conditional(ConditionalStep::new(
-                "context.flag == true",
-                ChainStep::new("then-step"),
-            ).with_else(ChainStep::new("else-step"))));
+            .with_step(StepType::Conditional(
+                ConditionalStep::new("context.flag == true", ChainStep::new("then-step"))
+                    .with_else(ChainStep::new("else-step")),
+            ));
 
         let config = ExecutorConfig::default();
         let result = execute_chain_with_fn(&chain, success_executor, &config);
@@ -685,7 +726,11 @@ mod tests {
             .with_step(ChainStep::new("producer").with_outputs(vec!["result".to_string()]))
             .with_step(ChainStep::new("consumer").with_inputs(vec!["result".to_string()]));
 
-        fn output_executor(skill: &str, _args: Option<&str>, _ctx: &ExecutionContext) -> SkillExecutionResult {
+        fn output_executor(
+            skill: &str,
+            _args: Option<&str>,
+            _ctx: &ExecutionContext,
+        ) -> SkillExecutionResult {
             if skill == "producer" {
                 SkillExecutionResult {
                     success: true,

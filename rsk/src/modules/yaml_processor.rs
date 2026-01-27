@@ -118,9 +118,9 @@ pub fn parse_toml(content: &str) -> Result<ParseResult, ConfigError> {
             depth: 0,
         });
     }
-    
-    let data: JsonValue = toml::from_str(trimmed)
-        .map_err(|e| ConfigError::TomlParse(e.to_string()))?;
+
+    let data: JsonValue =
+        toml::from_str(trimmed).map_err(|e| ConfigError::TomlParse(e.to_string()))?;
 
     Ok(ParseResult {
         status: "success".to_string(),
@@ -309,7 +309,7 @@ pub fn extract_taxonomy_schema(content: &str) -> Result<TaxonomySchema, ConfigEr
 pub fn parse_yaml_frontmatter(content: &str) -> Result<JsonValue, ConfigError> {
     use regex::Regex;
     let re = Regex::new(r"(?s)^---\s*\n(.*?)\n---\s*\n").unwrap();
-    
+
     if let Some(caps) = re.captures(content) {
         let frontmatter_content = &caps[1];
         serde_yaml::from_str(frontmatter_content).map_err(|e| ConfigError::YamlParse(e.to_string()))
@@ -326,10 +326,11 @@ pub fn parse_yaml_frontmatter(content: &str) -> Result<JsonValue, ConfigError> {
             }
             if let Some(end) = end_idx {
                 let fm_content = lines[1..end].join("\n");
-                return serde_yaml::from_str(&fm_content).map_err(|e| ConfigError::YamlParse(e.to_string()));
+                return serde_yaml::from_str(&fm_content)
+                    .map_err(|e| ConfigError::YamlParse(e.to_string()));
             }
         }
-        
+
         Err(ConfigError::YamlParse(
             "No valid frontmatter found (must be enclosed in --- markers)".to_string(),
         ))
@@ -452,12 +453,13 @@ fn validate_tree_nodes(node: &JsonValue, errors: &mut Vec<String>, path: &str) {
 
             // Recursively validate children
             if let Some(children) = map.get("children").or_else(|| map.get("branches"))
-                && let JsonValue::Array(arr) = children {
-                    for (i, child) in arr.iter().enumerate() {
-                        let child_path = format!("{}/children[{}]", path, i);
-                        validate_tree_nodes(child, errors, &child_path);
-                    }
+                && let JsonValue::Array(arr) = children
+            {
+                for (i, child) in arr.iter().enumerate() {
+                    let child_path = format!("{}/children[{}]", path, i);
+                    validate_tree_nodes(child, errors, &child_path);
                 }
+            }
         }
         JsonValue::Array(arr) => {
             for (i, item) in arr.iter().enumerate() {
@@ -561,8 +563,7 @@ fn extract_dt_nodes(
             let mut child_ids = Vec::new();
 
             // Process children
-            if let Some(JsonValue::Array(arr)) =
-                map.get("children").or_else(|| map.get("branches"))
+            if let Some(JsonValue::Array(arr)) = map.get("children").or_else(|| map.get("branches"))
             {
                 for (i, child) in arr.iter().enumerate() {
                     let child_id = format!("{}_{}", node_id, i);

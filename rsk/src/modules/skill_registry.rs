@@ -4,12 +4,12 @@
 //! Handles the mapping between high-level skill names and their underlying
 //! implementations (Rust intrinsics, YAML logic trees, or LLM fallbacks).
 
-use crate::modules::text_processor::extract_smst;
 use crate::modules::decision_engine::DecisionTree;
+use crate::modules::text_processor::extract_smst;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -78,26 +78,32 @@ impl SkillRegistry {
     }
 
     fn register_skill_from_path(&mut self, skill_md_path: &Path) -> Result<(), String> {
-        let content = fs::read_to_string(skill_md_path)
-            .map_err(|e| e.to_string())?;
-        
+        let content = fs::read_to_string(skill_md_path).map_err(|e| e.to_string())?;
+
         let smst = extract_smst(&content);
         let name = smst.frontmatter.name.clone();
-        
+
         // Check for logic.yaml in the same directory
         let dir = skill_md_path.parent().unwrap();
         let logic_path = dir.join("logic.yaml");
         let has_logic = logic_path.exists();
-        
+
         // Determine strategy
         let strategy = if has_logic {
             let logic_content = fs::read_to_string(&logic_path).unwrap_or_default();
             if let Ok(tree) = serde_yaml::from_str::<DecisionTree>(&logic_content) {
                 // Check if any node is an LLM fallback
                 let has_llm = tree.nodes.values().any(|n| {
-                    matches!(n, crate::modules::decision_engine::DecisionNode::LlmFallback { .. })
+                    matches!(
+                        n,
+                        crate::modules::decision_engine::DecisionNode::LlmFallback { .. }
+                    )
                 });
-                if has_llm { ExecutionStrategy::Hybrid } else { ExecutionStrategy::DeterministicLogic }
+                if has_llm {
+                    ExecutionStrategy::Hybrid
+                } else {
+                    ExecutionStrategy::DeterministicLogic
+                }
             } else {
                 ExecutionStrategy::PureLlm
             }
@@ -105,19 +111,28 @@ impl SkillRegistry {
             // Some skills might be built-in intrinsics even without logic.yaml
             // We can add a lookup table here for known intrinsics
             match name.as_str() {
-                "is-prime" | "topological-sort" | "levenshtein" | "sha256" => ExecutionStrategy::RustIntrinsic,
+                "is-prime" | "topological-sort" | "levenshtein" | "sha256" => {
+                    ExecutionStrategy::RustIntrinsic
+                }
                 _ => ExecutionStrategy::PureLlm,
             }
         };
 
-        self.skills.insert(name.clone(), SkillEntry {
-            name,
-            version: smst.frontmatter.version.clone().unwrap_or_else(|| "0.1.0".to_string()),
-            smst_score: smst.score.total_score,
-            strategy,
-            logic_path: if has_logic { Some(logic_path) } else { None },
-            skill_md_path: skill_md_path.to_path_buf(),
-        });
+        self.skills.insert(
+            name.clone(),
+            SkillEntry {
+                name,
+                version: smst
+                    .frontmatter
+                    .version
+                    .clone()
+                    .unwrap_or_else(|| "0.1.0".to_string()),
+                smst_score: smst.score.total_score,
+                strategy,
+                logic_path: if has_logic { Some(logic_path) } else { None },
+                skill_md_path: skill_md_path.to_path_buf(),
+            },
+        );
 
         Ok(())
     }
@@ -147,24 +162,24 @@ impl SkillRegistry {
         let mut results = Vec::new();
         let mut visited = std::collections::HashSet::new();
         let mut queue = std::collections::VecDeque::new();
-        
+
         queue.push_back((start_skill.to_string(), 0));
-        
+
         while let Some((skill_name, current_depth)) = queue.pop_front() {
             if current_depth > depth || visited.contains(&skill_name) {
                 continue;
             }
-            
+
             visited.insert(skill_name.clone());
-            
+
             if let Some(entry) = self.get(&skill_name) {
                 let passed = entry.smst_score >= 85.0;
                 results.push((skill_name.clone(), passed, entry.smst_score));
-                
+
                 // Add children from adjacencies
                 let content = fs::read_to_string(&entry.skill_md_path).unwrap_or_default();
                 let smst = extract_smst(&content);
-                
+
                 for adj in smst.frontmatter.adjacencies {
                     queue.push_back((adj.target, current_depth + 1));
                 }
@@ -172,7 +187,7 @@ impl SkillRegistry {
                 results.push((skill_name.clone(), false, 0.0));
             }
         }
-        
+
         results
     }
 }
@@ -192,9 +207,11 @@ mod tests {
         let dir = tempdir().unwrap();
         let skill_dir = dir.path().join("test-skill");
         fs::create_dir(&skill_dir).unwrap();
-        
+
         let skill_md = skill_dir.join("SKILL.md");
-        fs::write(skill_md, "---
+        fs::write(
+            skill_md,
+            "---
 name: test-skill
 version: 1.0.0
 compliance-level: diamond
@@ -202,11 +219,13 @@ compliance-level: diamond
 # test-skill
 ## Machine Specification
 ### 1. INPUTS
-").unwrap();
+",
+        )
+        .unwrap();
 
         let mut registry = SkillRegistry::new();
         registry.load_from_directory(dir.path()).unwrap();
-        
+
         assert!(registry.get("test-skill").is_some());
         let entry = registry.get("test-skill").unwrap();
         assert_eq!(entry.strategy, ExecutionStrategy::PureLlm);
@@ -217,24 +236,32 @@ compliance-level: diamond
         let dir = tempdir().unwrap();
         let skill_dir = dir.path().join("is-prime");
         fs::create_dir(&skill_dir).unwrap();
-        
-        fs::write(skill_dir.join("SKILL.md"), "---
+
+        fs::write(
+            skill_dir.join("SKILL.md"),
+            "---
 name: is-prime
 version: 1.0.0
 compliance-level: diamond
----").unwrap();
+---",
+        )
+        .unwrap();
 
-        fs::write(skill_dir.join("logic.yaml"), "
+        fs::write(
+            skill_dir.join("logic.yaml"),
+            "
 start: check
 nodes:
   check:
     type: return
     value: true
-").unwrap();
+",
+        )
+        .unwrap();
 
         let mut registry = SkillRegistry::new();
         registry.load_from_directory(dir.path()).unwrap();
-        
+
         let entry = registry.get("is-prime").unwrap();
         assert_eq!(entry.strategy, ExecutionStrategy::DeterministicLogic);
     }

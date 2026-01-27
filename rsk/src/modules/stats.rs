@@ -23,8 +23,8 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
-use std::f64::consts::PI;
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
+use std::f64::consts::PI;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DISTRIBUTION FUNCTIONS (Utilizing statrs for robustness)
@@ -98,7 +98,8 @@ fn incomplete_beta(x: f64, a: f64, b: f64) -> f64 {
         cf *= c * d;
 
         // Odd step
-        let numerator = -((a + m_f) * (a + b + m_f) * x) / ((a + 2.0 * m_f) * (a + 2.0 * m_f + 1.0));
+        let numerator =
+            -((a + m_f) * (a + b + m_f) * x) / ((a + 2.0 * m_f) * (a + 2.0 * m_f + 1.0));
 
         d = 1.0 + numerator * d;
         if d.abs() < 1e-30 {
@@ -393,8 +394,14 @@ pub fn chi_square_test(input: &ChiSquareInput) -> StatisticalResult {
     let row_totals = [a + b, c + d];
     let col_totals = [a + c, b + d];
     let expected = [
-        [row_totals[0] * col_totals[0] / n, row_totals[0] * col_totals[1] / n],
-        [row_totals[1] * col_totals[0] / n, row_totals[1] * col_totals[1] / n],
+        [
+            row_totals[0] * col_totals[0] / n,
+            row_totals[0] * col_totals[1] / n,
+        ],
+        [
+            row_totals[1] * col_totals[0] / n,
+            row_totals[1] * col_totals[1] / n,
+        ],
     ];
 
     // Calculate chi-square statistic
@@ -501,11 +508,7 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
 
     // Welch's t-statistic
     let se = (var1 / n1 + var2 / n2).sqrt();
-    let t_stat = if se > 0.0 {
-        (mean1 - mean2) / se
-    } else {
-        0.0
-    };
+    let t_stat = if se > 0.0 { (mean1 - mean2) / se } else { 0.0 };
 
     // Welch's degrees of freedom
     let dof = if var1 > 0.0 && var2 > 0.0 {
@@ -563,7 +566,10 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
         assumptions.push(AssumptionCheck {
             name: "Variance homogeneity".to_string(),
             passed: false,
-            message: format!("Variance ratio = {:.1}; using Welch's correction", var_ratio),
+            message: format!(
+                "Variance ratio = {:.1}; using Welch's correction",
+                var_ratio
+            ),
             severity: "info".to_string(),
         });
     }
@@ -633,8 +639,8 @@ pub fn proportion_test(input: &ProportionInput) -> Result<StatisticalResult, Str
     let z_crit: f64 = 1.96;
     let denominator = 1.0 + z_crit.powi(2) / n;
     let center = (p_hat + z_crit.powi(2) / (2.0 * n)) / denominator;
-    let margin =
-        z_crit * (p_hat * (1.0 - p_hat) / n + z_crit.powi(2) / (4.0 * n.powi(2))).sqrt() / denominator;
+    let margin = z_crit * (p_hat * (1.0 - p_hat) / n + z_crit.powi(2) / (4.0 * n.powi(2))).sqrt()
+        / denominator;
     let ci_lower = (center - margin).max(0.0);
     let ci_upper = (center + margin).min(1.0);
 
@@ -662,10 +668,7 @@ pub fn proportion_test(input: &ProportionInput) -> Result<StatisticalResult, Str
 
     // Epistemic interpretation
     let (level, interp) = interpret_p_value(p_value);
-    let full_interpretation = format!(
-        "Sample proportion {:.3} vs null {}. {}.",
-        p_hat, p0, interp
-    );
+    let full_interpretation = format!("Sample proportion {:.3} vs null {}. {}.", p_hat, p0, interp);
 
     Ok(StatisticalResult {
         test_name: "One-sample proportion z-test".to_string(),

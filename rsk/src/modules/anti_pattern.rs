@@ -242,11 +242,7 @@ fn match_structural_symptom(
 
     let (matched, confidence) = if direction == "exceeds" {
         let m = *value > threshold;
-        let c = if m {
-            (value / threshold).min(1.0)
-        } else {
-            0.0
-        };
+        let c = if m { (value / threshold).min(1.0) } else { 0.0 };
         (m, c)
     } else {
         let m = *value < threshold;
@@ -262,7 +258,10 @@ fn match_structural_symptom(
         Some(SymptomMatch {
             description: symptom.description.clone(),
             pattern: symptom.pattern.clone(),
-            evidence: format!("{}={} ({} threshold {})", metric, value, direction, threshold),
+            evidence: format!(
+                "{}={} ({} threshold {})",
+                metric, value, direction, threshold
+            ),
             confidence,
         })
     } else {
@@ -454,15 +453,13 @@ fn determine_overall_health(detections: &[Detection]) -> OverallHealth {
 
     let max_severity = detections
         .iter()
-        .filter_map(|d| {
-            match d.severity.as_str() {
-                "BLOCKER" => Some(5u8),
-                "CRITICAL" => Some(4),
-                "HIGH" => Some(3),
-                "MEDIUM" => Some(2),
-                "LOW" => Some(1),
-                _ => None,
-            }
+        .filter_map(|d| match d.severity.as_str() {
+            "BLOCKER" => Some(5u8),
+            "CRITICAL" => Some(4),
+            "HIGH" => Some(3),
+            "MEDIUM" => Some(2),
+            "LOW" => Some(1),
+            _ => None,
         })
         .max()
         .unwrap_or(1);
@@ -510,9 +507,7 @@ pub fn detect_anti_patterns(
 
         for symptom in &pattern.symptoms {
             let maybe_match = match symptom.symptom_type {
-                SymptomType::Structural => {
-                    match_structural_symptom(symptom, &features.numeric)
-                }
+                SymptomType::Structural => match_structural_symptom(symptom, &features.numeric),
                 SymptomType::Behavioral => {
                     match_behavioral_symptom(symptom, &features.numeric, context)
                 }
@@ -527,9 +522,8 @@ pub fn detect_anti_patterns(
 
         if !symptom_matches.is_empty() && !pattern.symptoms.is_empty() {
             let match_rate = symptom_matches.len() as f64 / pattern.symptoms.len() as f64;
-            let avg_confidence: f64 =
-                symptom_matches.iter().map(|m| m.confidence).sum::<f64>()
-                    / symptom_matches.len() as f64;
+            let avg_confidence: f64 = symptom_matches.iter().map(|m| m.confidence).sum::<f64>()
+                / symptom_matches.len() as f64;
             let overall_confidence = match_rate * avg_confidence;
 
             if overall_confidence > config.threshold {
@@ -540,11 +534,7 @@ pub fn detect_anti_patterns(
                     category: pattern.category.clone(),
                     confidence: (overall_confidence * 100.0).round() / 100.0,
                     match_rate: (match_rate * 100.0).round() / 100.0,
-                    symptom_count: format!(
-                        "{}/{}",
-                        symptom_matches.len(),
-                        pattern.symptoms.len()
-                    ),
+                    symptom_count: format!("{}/{}", symptom_matches.len(), pattern.symptoms.len()),
                     severity: severity.label().to_string(),
                     symptom_matches,
                     root_causes: pattern.root_causes.clone(),
@@ -700,7 +690,10 @@ mod tests {
             root_causes: vec![],
             remediation: vec![],
         }];
-        assert_eq!(determine_overall_health(&detections), OverallHealth::Critical);
+        assert_eq!(
+            determine_overall_health(&detections),
+            OverallHealth::Critical
+        );
     }
 
     #[test]
@@ -768,11 +761,7 @@ mod tests {
             symptom_type: SymptomType::Textual,
             pattern: "tech_debt_keywords".to_string(),
             description: "Contains technical debt markers".to_string(),
-            keywords: vec![
-                "TODO".to_string(),
-                "FIXME".to_string(),
-                "HACK".to_string(),
-            ],
+            keywords: vec!["TODO".to_string(), "FIXME".to_string(), "HACK".to_string()],
             ..Default::default()
         };
 

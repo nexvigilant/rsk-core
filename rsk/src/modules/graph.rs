@@ -60,11 +60,18 @@ impl<'de> serde::Deserialize<'de> for Adjacency {
                         "weight" => weight = map.next_value()?,
                         "when" => when = map.next_value()?,
                         "action" => action = map.next_value()?,
-                        _ => { let _: serde::de::IgnoredAny = map.next_value()?; }
+                        _ => {
+                            let _: serde::de::IgnoredAny = map.next_value()?;
+                        }
                     }
                 }
 
-                Ok(Adjacency { target, weight, when, action })
+                Ok(Adjacency {
+                    target,
+                    weight,
+                    when,
+                    action,
+                })
             }
         }
 
@@ -80,7 +87,7 @@ pub struct SkillGraph {
 impl From<HashMap<String, Vec<String>>> for SkillGraph {
     fn from(map: HashMap<String, Vec<String>>) -> Self {
         let mut graph = SkillGraph::new();
-        
+
         // 1. First pass: Collect all unique node names
         let mut all_nodes = HashSet::new();
         for (node, neighbors) in &map {
@@ -95,14 +102,18 @@ impl From<HashMap<String, Vec<String>>> for SkillGraph {
         // SkillNode uses Dependencies (node -> [depends on])
         // We will build it assuming Successors for now to match rsk_bridge.py usage
         for node_name in all_nodes {
-            let adjacencies = map.get(&node_name)
+            let adjacencies = map
+                .get(&node_name)
                 .map(|neighbors| {
-                    neighbors.iter().map(|n| Adjacency {
-                        target: n.clone(),
-                        weight: 1.0, // Default weight
-                        when: "success".to_string(),
-                        action: "".to_string(),
-                    }).collect()
+                    neighbors
+                        .iter()
+                        .map(|n| Adjacency {
+                            target: n.clone(),
+                            weight: 1.0, // Default weight
+                            when: "success".to_string(),
+                            action: "".to_string(),
+                        })
+                        .collect()
                 })
                 .unwrap_or_default();
 
@@ -144,7 +155,10 @@ impl SkillGraph {
             for dep in &node.dependencies {
                 if !self.nodes.contains_key(dep) {
                     // Dependency missing - return as error (using cycle detection format for now or we could change signature)
-                    return Err(vec![format!("Missing dependency: {} for node {}", dep, name)]);
+                    return Err(vec![format!(
+                        "Missing dependency: {} for node {}",
+                        dep, name
+                    )]);
                 }
                 adj.entry(dep.clone()).or_default().push(name.clone());
                 *in_degree.entry(name.clone()).or_insert(0) += 1;
@@ -204,10 +218,9 @@ impl SkillGraph {
                             *cycle = on_stack[pos..].to_vec();
                             return true;
                         }
-                        if !visited.contains(v)
-                            && find_cycle(v, adj, visited, on_stack, cycle) {
-                                return true;
-                            }
+                        if !visited.contains(v) && find_cycle(v, adj, visited, on_stack, cycle) {
+                            return true;
+                        }
                     }
                 }
 
@@ -230,9 +243,10 @@ impl SkillGraph {
 
             for node in &remaining {
                 if !visited.contains(node)
-                    && find_cycle(node, &dep_adj, &mut visited, &mut on_stack, &mut cycle) {
-                        break;
-                    }
+                    && find_cycle(node, &dep_adj, &mut visited, &mut on_stack, &mut cycle)
+                {
+                    break;
+                }
             }
 
             Err(cycle)
@@ -248,7 +262,9 @@ impl SkillGraph {
                 for node_name in level {
                     if let Some(node) = self.nodes.get(&node_name) {
                         for output in &node.outputs {
-                            if let Some(other_node) = level_outputs.insert(output.clone(), node_name.clone()) {
+                            if let Some(other_node) =
+                                level_outputs.insert(output.clone(), node_name.clone())
+                            {
                                 conflicts.push(format!(
                                     "Resource conflict: nodes '{}' and '{}' both write to output '{}'",
                                     other_node, node_name, output
@@ -283,7 +299,10 @@ impl SkillGraph {
             for dep in &node.dependencies {
                 if !self.nodes.contains_key(dep) {
                     // Dependency missing - return as error (using cycle detection format for now or we could change signature)
-                    return Err(vec![format!("Missing dependency: {} for node {}", dep, name)]);
+                    return Err(vec![format!(
+                        "Missing dependency: {} for node {}",
+                        dep, name
+                    )]);
                 }
                 adj.entry(dep.clone()).or_default().push(name.clone());
                 *in_degree.entry(name.clone()).or_insert(0) += 1;
@@ -908,7 +927,7 @@ mod tests {
             outputs: vec!["shared_var".to_string()],
             ..Default::default()
         });
-        
+
         // a and b are both level 0 (parallel) and write to same output
         let conflicts = graph.detect_resource_conflicts();
         assert_eq!(conflicts.len(), 1);

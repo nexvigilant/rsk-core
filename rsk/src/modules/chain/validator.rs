@@ -15,8 +15,8 @@
 //! 5. **Parallelism**: Parallel steps don't conflict on resources
 
 use super::types::{Chain, ChainStep, StepType};
-use std::collections::{HashMap, HashSet};
 use serde::Serialize;
+use std::collections::{HashMap, HashSet};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // VALIDATION RESULT TYPES
@@ -116,14 +116,16 @@ impl ValidationResult {
 
     /// Get all errors
     pub fn errors(&self) -> Vec<&ValidationIssue> {
-        self.issues.iter()
+        self.issues
+            .iter()
             .filter(|i| i.severity == Severity::Error)
             .collect()
     }
 
     /// Get all warnings
     pub fn warnings(&self) -> Vec<&ValidationIssue> {
-        self.issues.iter()
+        self.issues
+            .iter()
             .filter(|i| i.severity == Severity::Warning)
             .collect()
     }
@@ -180,7 +182,10 @@ fn validate_structure(chain: &Chain, result: &mut ValidationResult) {
     if chain.steps.len() > 100 {
         result.add(ValidationIssue::warning(
             "MANY_STEPS",
-            format!("Chain has {} steps; consider breaking into sub-chains", chain.steps.len()),
+            format!(
+                "Chain has {} steps; consider breaking into sub-chains",
+                chain.steps.len()
+            ),
         ));
     }
 }
@@ -193,10 +198,10 @@ fn validate_skill_names(chain: &Chain, result: &mut ValidationResult) {
         let skill_name = step.skill_name();
 
         if skill_name.is_empty() {
-            result.add(ValidationIssue::error(
-                "EMPTY_SKILL",
-                "Skill name cannot be empty",
-            ).at_step(i, skill_name));
+            result.add(
+                ValidationIssue::error("EMPTY_SKILL", "Skill name cannot be empty")
+                    .at_step(i, skill_name),
+            );
             continue;
         }
 
@@ -212,10 +217,16 @@ fn validate_skill_names(chain: &Chain, result: &mut ValidationResult) {
 
         // Check for reserved names
         if is_reserved_name(skill_name) {
-            result.add(ValidationIssue::warning(
-                "RESERVED_NAME",
-                format!("Skill name '{}' is reserved and may conflict with built-in functionality", skill_name),
-            ).at_step(i, skill_name));
+            result.add(
+                ValidationIssue::warning(
+                    "RESERVED_NAME",
+                    format!(
+                        "Skill name '{}' is reserved and may conflict with built-in functionality",
+                        skill_name
+                    ),
+                )
+                .at_step(i, skill_name),
+            );
         }
     }
 }
@@ -223,8 +234,8 @@ fn validate_skill_names(chain: &Chain, result: &mut ValidationResult) {
 /// Check if a name is reserved (built-in or system).
 fn is_reserved_name(name: &str) -> bool {
     const RESERVED: &[&str] = &[
-        "help", "version", "debug", "config", "init", "test",
-        "build", "run", "exec", "eval", "true", "false", "null",
+        "help", "version", "debug", "config", "init", "test", "build", "run", "exec", "eval",
+        "true", "false", "null",
     ];
     RESERVED.contains(&name)
 }
@@ -308,28 +319,40 @@ fn validate_conditionals(chain: &Chain, result: &mut ValidationResult) {
         if let StepType::Conditional(cond) = step {
             // Condition must not be empty
             if cond.condition.trim().is_empty() {
-                result.add(ValidationIssue::error(
-                    "EMPTY_CONDITION",
-                    "Conditional step has empty condition",
-                ).at_step(i, &cond.then_step.skill));
+                result.add(
+                    ValidationIssue::error(
+                        "EMPTY_CONDITION",
+                        "Conditional step has empty condition",
+                    )
+                    .at_step(i, &cond.then_step.skill),
+                );
             }
 
             // Validate then step skill name
             let name_regex = regex::Regex::new(r"^[a-z][a-z0-9-]*$").unwrap();
             if !name_regex.is_match(&cond.then_step.skill) {
-                result.add(ValidationIssue::error(
-                    "INVALID_THEN_SKILL",
-                    format!("Then branch skill '{}' has invalid name", cond.then_step.skill),
-                ).at_step(i, &cond.then_step.skill));
+                result.add(
+                    ValidationIssue::error(
+                        "INVALID_THEN_SKILL",
+                        format!(
+                            "Then branch skill '{}' has invalid name",
+                            cond.then_step.skill
+                        ),
+                    )
+                    .at_step(i, &cond.then_step.skill),
+                );
             }
 
             // Validate else step if present
             if let Some(else_step) = &cond.else_step {
                 if !name_regex.is_match(&else_step.skill) {
-                    result.add(ValidationIssue::error(
-                        "INVALID_ELSE_SKILL",
-                        format!("Else branch skill '{}' has invalid name", else_step.skill),
-                    ).at_step(i, &else_step.skill));
+                    result.add(
+                        ValidationIssue::error(
+                            "INVALID_ELSE_SKILL",
+                            format!("Else branch skill '{}' has invalid name", else_step.skill),
+                        )
+                        .at_step(i, &else_step.skill),
+                    );
                 }
             }
 
@@ -351,7 +374,7 @@ fn validate_conditionals(chain: &Chain, result: &mut ValidationResult) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::modules::chain::types::{ConditionalStep};
+    use crate::modules::chain::types::ConditionalStep;
 
     #[test]
     fn test_valid_chain() {
@@ -366,8 +389,7 @@ mod tests {
 
     #[test]
     fn test_empty_name() {
-        let chain = Chain::new("")
-            .with_step(ChainStep::new("step"));
+        let chain = Chain::new("").with_step(ChainStep::new("step"));
 
         let result = validate_chain(&chain);
         assert!(!result.valid);
@@ -385,12 +407,16 @@ mod tests {
 
     #[test]
     fn test_invalid_skill_name() {
-        let chain = Chain::new("test")
-            .with_step(ChainStep::new("Invalid_Name"));
+        let chain = Chain::new("test").with_step(ChainStep::new("Invalid_Name"));
 
         let result = validate_chain(&chain);
         assert!(!result.valid);
-        assert!(result.errors().iter().any(|i| i.code == "INVALID_SKILL_NAME"));
+        assert!(
+            result
+                .errors()
+                .iter()
+                .any(|i| i.code == "INVALID_SKILL_NAME")
+        );
     }
 
     #[test]
@@ -428,27 +454,35 @@ mod tests {
     #[test]
     fn test_parallel_resource_conflict() {
         let chain = Chain::new("test")
-            .with_step(ChainStep::new("step-a")
-                .parallel()
-                .with_parallel_group(1)
-                .with_outputs(vec!["shared".to_string()]))
-            .with_step(ChainStep::new("step-b")
-                .parallel()
-                .with_parallel_group(1)
-                .with_outputs(vec!["shared".to_string()]));
+            .with_step(
+                ChainStep::new("step-a")
+                    .parallel()
+                    .with_parallel_group(1)
+                    .with_outputs(vec!["shared".to_string()]),
+            )
+            .with_step(
+                ChainStep::new("step-b")
+                    .parallel()
+                    .with_parallel_group(1)
+                    .with_outputs(vec!["shared".to_string()]),
+            );
 
         let result = validate_chain(&chain);
         assert!(!result.valid);
-        assert!(result.errors().iter().any(|i| i.code == "PARALLEL_CONFLICT"));
+        assert!(
+            result
+                .errors()
+                .iter()
+                .any(|i| i.code == "PARALLEL_CONFLICT")
+        );
     }
 
     #[test]
     fn test_conditional_empty_condition() {
-        let chain = Chain::new("test")
-            .with_step(StepType::Conditional(ConditionalStep::new(
-                "",
-                ChainStep::new("then-step"),
-            )));
+        let chain = Chain::new("test").with_step(StepType::Conditional(ConditionalStep::new(
+            "",
+            ChainStep::new("then-step"),
+        )));
 
         let result = validate_chain(&chain);
         assert!(!result.valid);
@@ -457,11 +491,10 @@ mod tests {
 
     #[test]
     fn test_conditional_no_else_info() {
-        let chain = Chain::new("test")
-            .with_step(StepType::Conditional(ConditionalStep::new(
-                "context.flag == true",
-                ChainStep::new("then-step"),
-            )));
+        let chain = Chain::new("test").with_step(StepType::Conditional(ConditionalStep::new(
+            "context.flag == true",
+            ChainStep::new("then-step"),
+        )));
 
         let result = validate_chain(&chain);
         assert!(result.valid); // Info doesn't fail validation
@@ -470,8 +503,7 @@ mod tests {
 
     #[test]
     fn test_reserved_name_warning() {
-        let chain = Chain::new("test")
-            .with_step(ChainStep::new("help"));
+        let chain = Chain::new("test").with_step(ChainStep::new("help"));
 
         let result = validate_chain(&chain);
         assert!(result.valid); // Warning doesn't fail validation

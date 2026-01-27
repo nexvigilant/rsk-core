@@ -51,17 +51,17 @@ pub mod types;
 pub mod validator;
 
 // Re-export commonly used types and functions
-pub use condition::{evaluate_condition, evaluate_condition_result, resolve_value, ConditionError};
+pub use condition::{ConditionError, evaluate_condition, evaluate_condition_result, resolve_value};
 pub use executor::{
-    execute_chain, execute_chain_with_fn, ExecutionContext, ExecutorConfig, FnExecutor,
-    SkillExecutionResult, SkillExecutor,
+    ExecutionContext, ExecutorConfig, FnExecutor, SkillExecutionResult, SkillExecutor,
+    execute_chain, execute_chain_with_fn,
 };
-pub use parser::{assign_parallel_groups, parse_inline, parse_yaml, ParseError};
+pub use parser::{ParseError, assign_parallel_groups, parse_inline, parse_yaml};
 pub use types::{
     Chain, ChainResult, ChainStep, CompositionType, ConditionalStep, StepResult, StepStatus,
     StepType,
 };
-pub use validator::{is_valid, validate_chain, Severity, ValidationIssue, ValidationResult};
+pub use validator::{Severity, ValidationIssue, ValidationResult, is_valid, validate_chain};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HIGH-LEVEL CONVENIENCE FUNCTIONS

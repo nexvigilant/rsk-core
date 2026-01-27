@@ -164,7 +164,7 @@ pub fn query_path(data: &Value, path: &str) -> QueryResult {
                         value: None,
                         path: path.to_string(),
                         value_type: None,
-                    }
+                    };
                 }
             },
             PathPart::Index(idx) => match current.get(*idx) {
@@ -176,7 +176,7 @@ pub fn query_path(data: &Value, path: &str) -> QueryResult {
                         value: None,
                         path: path.to_string(),
                         value_type: None,
-                    }
+                    };
                 }
             },
         };
@@ -289,7 +289,15 @@ pub fn diff_json(left: &Value, right: &Value) -> DiffResult {
     let mut modified = Vec::new();
     let mut unchanged = Vec::new();
 
-    diff_recursive(left, right, "", &mut added, &mut removed, &mut modified, &mut unchanged);
+    diff_recursive(
+        left,
+        right,
+        "",
+        &mut added,
+        &mut removed,
+        &mut modified,
+        &mut unchanged,
+    );
 
     DiffResult {
         status: "success".to_string(),

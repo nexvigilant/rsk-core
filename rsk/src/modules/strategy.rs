@@ -11,7 +11,7 @@ pub struct StrategicField {
     pub id: String,
     pub market_size: f64,
     pub growth_rate: f64,
-    pub capability_fit: f64, // 0.0 to 1.0
+    pub capability_fit: f64,        // 0.0 to 1.0
     pub competitive_intensity: f64, // 0.0 to 1.0 (lower is better)
 }
 
@@ -46,7 +46,7 @@ impl StrategyOptimizer {
     }
 
     /// Evaluates all combinations of fields and tactics to find the optimal strategy.
-    /// Complexity: O(fields * tactics) - linear in nodes, but allows for massive 
+    /// Complexity: O(fields * tactics) - linear in nodes, but allows for massive
     /// scaling (exponential combinations in larger trees).
     pub fn optimize(&self) -> Vec<StrategyScore> {
         let mut results = Vec::new();
@@ -61,7 +61,7 @@ impl StrategyOptimizer {
 
                 let win_probability = (competitive_fit * tactic_strength).clamp(0.0, 1.0);
                 let combined_score = field_potential * win_probability;
-                
+
                 results.push(StrategyScore {
                     field_id: field.id.clone(),
                     tactic_id: tactic.id.clone(),
@@ -73,7 +73,11 @@ impl StrategyOptimizer {
         }
 
         // Sort by combined score descending
-        results.sort_by(|a, b| b.combined_score.partial_cmp(&a.score_val()).unwrap_or(std::cmp::Ordering::Equal));
+        results.sort_by(|a, b| {
+            b.combined_score
+                .partial_cmp(&a.score_val())
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         results
     }
 }

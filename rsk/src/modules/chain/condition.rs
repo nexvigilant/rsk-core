@@ -62,7 +62,11 @@ impl ConditionError {
 
 impl std::fmt::Display for ConditionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Condition error in '{}': {}", self.condition, self.message)
+        write!(
+            f,
+            "Condition error in '{}': {}",
+            self.condition, self.message
+        )
     }
 }
 
@@ -81,9 +85,13 @@ fn compare_values(left: &Value, op: &str, right: &Value) -> bool {
         "==" => values_equal(left, right),
         "!=" => !values_equal(left, right),
         ">" => compare_numeric(left, right).map(|c| c > 0).unwrap_or(false),
-        ">=" => compare_numeric(left, right).map(|c| c >= 0).unwrap_or(false),
+        ">=" => compare_numeric(left, right)
+            .map(|c| c >= 0)
+            .unwrap_or(false),
         "<" => compare_numeric(left, right).map(|c| c < 0).unwrap_or(false),
-        "<=" => compare_numeric(left, right).map(|c| c <= 0).unwrap_or(false),
+        "<=" => compare_numeric(left, right)
+            .map(|c| c <= 0)
+            .unwrap_or(false),
         _ => false,
     }
 }

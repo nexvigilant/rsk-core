@@ -210,14 +210,17 @@ impl ExecutionContext {
         if !self.skipped_steps.contains(&step) {
             self.skipped_steps.push(step);
         }
-        self.step_results.insert(step.to_string(), StepResult {
-            step,
-            success: false,
-            message: format!("Skipped: {}", reason),
-            output: Value::Null,
-            duration_ms: 0,
-            completed_at: Utc::now(),
-        });
+        self.step_results.insert(
+            step.to_string(),
+            StepResult {
+                step,
+                success: false,
+                message: format!("Skipped: {}", reason),
+                output: Value::Null,
+                duration_ms: 0,
+                completed_at: Utc::now(),
+            },
+        );
         self.updated_at = Utc::now();
     }
 
@@ -288,24 +291,30 @@ impl CheckpointManager {
         // Verify path if it exists
         if path.exists() {
             if !path.is_dir() {
-                return Err(StateError::InvalidState(format!("Path exists but is not a directory: {}", state_dir)));
+                return Err(StateError::InvalidState(format!(
+                    "Path exists but is not a directory: {}",
+                    state_dir
+                )));
             }
             // Check write permissions by attempting to create a sentinel file if possible or just metadata check
-            let metadata = std::fs::metadata(&path).map_err(|e| StateError::IoError(e.to_string()))?;
+            let metadata =
+                std::fs::metadata(&path).map_err(|e| StateError::IoError(e.to_string()))?;
             if metadata.permissions().readonly() {
-                return Err(StateError::PermissionDenied(format!("Directory is read-only: {}", state_dir)));
+                return Err(StateError::PermissionDenied(format!(
+                    "Directory is read-only: {}",
+                    state_dir
+                )));
             }
         } else {
             // Create directory if it doesn't exist
-            std::fs::create_dir_all(&path)
-                .map_err(|e| StateError::IoError(e.to_string()))?;
+            std::fs::create_dir_all(&path).map_err(|e| StateError::IoError(e.to_string()))?;
         }
 
-        let mut manager = Self { 
+        let mut manager = Self {
             state_dir: path,
             id_map: HashMap::new(),
         };
-        
+
         // Initial scan to build the ID map
         manager.refresh_id_map()?;
 
@@ -315,8 +324,8 @@ impl CheckpointManager {
     /// Refresh the internal ID to path mapping
     fn refresh_id_map(&mut self) -> Result<(), StateError> {
         self.id_map.clear();
-        let entries = std::fs::read_dir(&self.state_dir)
-            .map_err(|e| StateError::IoError(e.to_string()))?;
+        let entries =
+            std::fs::read_dir(&self.state_dir).map_err(|e| StateError::IoError(e.to_string()))?;
 
         for entry in entries.flatten() {
             let path = entry.path();
@@ -325,9 +334,9 @@ impl CheckpointManager {
                     // Our deterministic naming: [id].json
                     // If it follows the old naming [name]-[id].json, we try to extract the ID
                     if let Some(id) = stem.split('-').last() {
-                         self.id_map.insert(id.to_string(), path.clone());
+                        self.id_map.insert(id.to_string(), path.clone());
                     } else {
-                         self.id_map.insert(stem.to_string(), path.clone());
+                        self.id_map.insert(stem.to_string(), path.clone());
                     }
                 }
             }
@@ -349,8 +358,7 @@ impl CheckpointManager {
         let json = serde_json::to_string_pretty(context)
             .map_err(|e| StateError::SerializeError(e.to_string()))?;
 
-        std::fs::write(&path, json)
-            .map_err(|e| StateError::IoError(e.to_string()))?;
+        std::fs::write(&path, json).map_err(|e| StateError::IoError(e.to_string()))?;
 
         // Update cache
         self.id_map.insert(context.id.clone(), path.clone());
@@ -387,9 +395,7 @@ impl CheckpointManager {
             .filter(|ctx| {
                 matches!(
                     ctx.status,
-                    ExecutionStatus::Created
-                        | ExecutionStatus::Running
-                        | ExecutionStatus::Paused
+                    ExecutionStatus::Created | ExecutionStatus::Running | ExecutionStatus::Paused
                 )
             })
             .max_by_key(|ctx| ctx.updated_at);
@@ -425,17 +431,22 @@ impl CheckpointManager {
     }
 
     /// List contexts by status
-    pub fn list_by_status(&self, status: &ExecutionStatus) -> Result<Vec<ExecutionContext>, StateError> {
+    pub fn list_by_status(
+        &self,
+        status: &ExecutionStatus,
+    ) -> Result<Vec<ExecutionContext>, StateError> {
         let all = self.list()?;
-        Ok(all.into_iter().filter(|ctx| &ctx.status == status).collect())
+        Ok(all
+            .into_iter()
+            .filter(|ctx| &ctx.status == status)
+            .collect())
     }
 
     /// Delete a context by ID
     pub fn delete(&mut self, id: &str) -> Result<bool, StateError> {
         if let Some(path) = self.id_map.remove(id) {
             if path.exists() {
-                std::fs::remove_file(&path)
-                    .map_err(|e| StateError::IoError(e.to_string()))?;
+                std::fs::remove_file(&path).map_err(|e| StateError::IoError(e.to_string()))?;
                 return Ok(true);
             }
         }
@@ -454,7 +465,9 @@ impl CheckpointManager {
         for ctx in contexts {
             if ctx.updated_at < cutoff {
                 match ctx.status {
-                    ExecutionStatus::Completed | ExecutionStatus::Cancelled | ExecutionStatus::Failed(_) => {
+                    ExecutionStatus::Completed
+                    | ExecutionStatus::Cancelled
+                    | ExecutionStatus::Failed(_) => {
                         if self.delete(&ctx.id)? {
                             removed += 1;
                         }
@@ -675,9 +688,15 @@ mod tests {
     fn test_list_contexts() {
         let (mut manager, _temp) = create_test_manager();
 
-        manager.save(&manager.create_context("pipeline-a", 2)).unwrap();
-        manager.save(&manager.create_context("pipeline-b", 3)).unwrap();
-        manager.save(&manager.create_context("pipeline-a", 4)).unwrap();
+        manager
+            .save(&manager.create_context("pipeline-a", 2))
+            .unwrap();
+        manager
+            .save(&manager.create_context("pipeline-b", 3))
+            .unwrap();
+        manager
+            .save(&manager.create_context("pipeline-a", 4))
+            .unwrap();
 
         let all = manager.list().unwrap();
         assert_eq!(all.len(), 3);

@@ -3,12 +3,12 @@
 //! Generates Rust validation rules, test scaffolds, and documentation from SMST.
 //! Part of Tier 2 (Acceleration) in the Rust Migration Strategy.
 
+use crate::modules::decision_engine::{DecisionNode, DecisionTree, Operator, Value};
 use crate::modules::text_processor::SmstResult;
-use crate::modules::decision_engine::{DecisionTree, DecisionNode, Operator, Value};
-use std::collections::HashMap;
 #[cfg(test)]
 use crate::modules::text_processor::{SkillFrontmatter, SkillMachineSpec};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Generated validation rule from SMST INVARIANTS section
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -171,11 +171,19 @@ fn parse_invariants_to_rules(skill_name: &str, invariants: &str) -> Vec<Validati
             if line.contains("---") {
                 continue;
             }
-            
-            let parts: Vec<String> = line.trim_matches('|').split('|').map(|s| s.trim().to_lowercase()).collect();
-            
+
+            let parts: Vec<String> = line
+                .trim_matches('|')
+                .split('|')
+                .map(|s| s.trim().to_lowercase())
+                .collect();
+
             // Is this a header row?
-            if parts.iter().any(|p| p == "condition" || p == "type" || p == "invariant") || line.contains("---") {
+            if parts
+                .iter()
+                .any(|p| p == "condition" || p == "type" || p == "invariant")
+                || line.contains("---")
+            {
                 if !line.contains("---") {
                     current_column_map.clear();
                     for (i, p) in parts.iter().enumerate() {
@@ -188,18 +196,28 @@ fn parse_invariants_to_rules(skill_name: &str, invariants: &str) -> Vec<Validati
             // Extract based on column name if map exists
             let content = if !current_column_map.is_empty() {
                 let actual_parts: Vec<&str> = line.trim_matches('|').split('|').collect();
-                let col_idx = current_column_map.get("condition")
+                let col_idx = current_column_map
+                    .get("condition")
                     .or_else(|| current_column_map.get("invariant"))
                     .or_else(|| current_column_map.get("type"))
                     .cloned()
                     .unwrap_or(0);
-                
+
                 actual_parts.get(col_idx).map(|s| s.trim()).unwrap_or("")
             } else {
-                line.trim_matches('|').split('|').next().unwrap_or("").trim()
+                line.trim_matches('|')
+                    .split('|')
+                    .next()
+                    .unwrap_or("")
+                    .trim()
             };
 
-            if content.is_empty() || content.to_lowercase() == "condition" || content.to_lowercase() == "invariant" { continue; }
+            if content.is_empty()
+                || content.to_lowercase() == "condition"
+                || content.to_lowercase() == "invariant"
+            {
+                continue;
+            }
 
             let (condition, error_message) = extract_invariant_pattern(content);
             rules.push(ValidationRule {
@@ -298,11 +316,19 @@ fn parse_failure_modes_to_rules(skill_name: &str, failure_modes: &str) -> Vec<Va
             if line.contains("---") {
                 continue;
             }
-            
-            let parts: Vec<String> = line.trim_matches('|').split('|').map(|s| s.trim().to_lowercase()).collect();
-            
+
+            let parts: Vec<String> = line
+                .trim_matches('|')
+                .split('|')
+                .map(|s| s.trim().to_lowercase())
+                .collect();
+
             // Is this a header row?
-            if parts.iter().any(|p| p == "trigger" || p == "response" || p == "mode") || line.contains("---") {
+            if parts
+                .iter()
+                .any(|p| p == "trigger" || p == "response" || p == "mode")
+                || line.contains("---")
+            {
                 if !line.contains("---") {
                     current_column_map.clear();
                     for (i, p) in parts.iter().enumerate() {
@@ -315,18 +341,29 @@ fn parse_failure_modes_to_rules(skill_name: &str, failure_modes: &str) -> Vec<Va
             // Extract based on column name if map exists
             let content = if !current_column_map.is_empty() {
                 let actual_parts: Vec<&str> = line.trim_matches('|').split('|').collect();
-                let col_idx = current_column_map.get("response")
+                let col_idx = current_column_map
+                    .get("response")
                     .or_else(|| current_column_map.get("trigger"))
                     .or_else(|| current_column_map.get("mode"))
                     .cloned()
                     .unwrap_or(0);
-                
+
                 actual_parts.get(col_idx).map(|s| s.trim()).unwrap_or("")
             } else {
-                line.trim_matches('|').split('|').last().unwrap_or("").trim()
+                line.trim_matches('|')
+                    .split('|')
+                    .last()
+                    .unwrap_or("")
+                    .trim()
             };
 
-            if content.is_empty() || content.to_lowercase() == "response" || content.to_lowercase() == "trigger" || content.to_lowercase() == "mode" { continue; }
+            if content.is_empty()
+                || content.to_lowercase() == "response"
+                || content.to_lowercase() == "trigger"
+                || content.to_lowercase() == "mode"
+            {
+                continue;
+            }
 
             let (severity, error_message) = parse_failure_mode_severity(content);
             rules.push(ValidationRule {
@@ -436,20 +473,21 @@ fn extract_param_info(text: &str) -> (String, String) {
     // Try backtick pattern first: `param_name`
     if text.contains('`')
         && let Some(start) = text.find('`')
-            && let Some(end) = text[start + 1..].find('`') {
-                let name = &text[start + 1..start + 1 + end];
-                // Try to find type in parentheses
-                let type_str = if let Some(paren_start) = text.find('(') {
-                    if let Some(paren_end) = text.find(')') {
-                        text[paren_start + 1..paren_end].to_string()
-                    } else {
-                        "any".to_string()
-                    }
-                } else {
-                    "any".to_string()
-                };
-                return (name.to_string(), type_str);
+        && let Some(end) = text[start + 1..].find('`')
+    {
+        let name = &text[start + 1..start + 1 + end];
+        // Try to find type in parentheses
+        let type_str = if let Some(paren_start) = text.find('(') {
+            if let Some(paren_end) = text.find(')') {
+                text[paren_start + 1..paren_end].to_string()
+            } else {
+                "any".to_string()
             }
+        } else {
+            "any".to_string()
+        };
+        return (name.to_string(), type_str);
+    }
 
     // Try colon pattern: name: type
     if text.contains(':') {
@@ -714,22 +752,23 @@ fn generate_struct_definitions_string(smst: &SmstResult) -> String {
 
     // State struct (if present)
     if let Some(state) = &smst.spec.state
-        && !state.trim().is_empty() {
-            code.push_str(&format!("/// State for {}\n", skill_name));
-            code.push_str("#[derive(Debug, Clone, Default, Serialize, Deserialize)]\n");
-            code.push_str(&format!("pub struct {}State {{\n", type_name));
-            for line in state.lines() {
-                let (name, type_str) = extract_param_info(line.trim());
-                if !name.is_empty() {
-                    code.push_str(&format!(
-                        "    pub {}: {},\n",
-                        to_snake_case(&name),
-                        rust_type_from_str(&type_str)
-                    ));
-                }
+        && !state.trim().is_empty()
+    {
+        code.push_str(&format!("/// State for {}\n", skill_name));
+        code.push_str("#[derive(Debug, Clone, Default, Serialize, Deserialize)]\n");
+        code.push_str(&format!("pub struct {}State {{\n", type_name));
+        for line in state.lines() {
+            let (name, type_str) = extract_param_info(line.trim());
+            if !name.is_empty() {
+                code.push_str(&format!(
+                    "    pub {}: {},\n",
+                    to_snake_case(&name),
+                    rust_type_from_str(&type_str)
+                ));
             }
-            code.push_str("}\n\n");
         }
+        code.push_str("}\n\n");
+    }
 
     code
 }
@@ -780,10 +819,7 @@ fn generate_full_rust_module(smst: &SmstResult) -> String {
     code.push_str(&format!("pub enum {}Error {{\n", type_name));
     if let Some(failure_modes) = &smst.spec.failure_modes {
         for (idx, line) in failure_modes.lines().enumerate() {
-            let line = line
-                .trim()
-                .trim_start_matches(['-', '*'])
-                .trim();
+            let line = line.trim().trim_start_matches(['-', '*']).trim();
             if !line.is_empty() && !line.starts_with('#') {
                 code.push_str(&format!("    #[error(\"{}\")]\n", truncate(line, 60)));
                 code.push_str(&format!("    Failure{},\n", idx));
@@ -822,19 +858,28 @@ pub fn generate_decision_tree(smst: &SmstResult) -> DecisionTree {
             }
         }
     }
-    
-    let default_var = input_vars.first().cloned().unwrap_or_else(|| "input".to_string());
+
+    let default_var = input_vars
+        .first()
+        .cloned()
+        .unwrap_or_else(|| "input".to_string());
 
     // 2. Map invariants to deterministic condition nodes
     let rules = generate_validation_rules(smst);
-    
+
     // Initial action node
-    nodes.insert(start_node.clone(), DecisionNode::Action {
-        action: "log".to_string(),
-        target: None,
-        value: Some(Value::String(format!("Starting validation for {}", smst.frontmatter.name))),
-        next: Some("check_inv_0".to_string()),
-    });
+    nodes.insert(
+        start_node.clone(),
+        DecisionNode::Action {
+            action: "log".to_string(),
+            target: None,
+            value: Some(Value::String(format!(
+                "Starting validation for {}",
+                smst.frontmatter.name
+            ))),
+            next: Some("check_inv_0".to_string()),
+        },
+    );
 
     for (i, rule) in rules.invariant_rules.iter().enumerate() {
         let node_id = format!("check_inv_{}", i);
@@ -844,26 +889,36 @@ pub fn generate_decision_tree(smst: &SmstResult) -> DecisionTree {
             "execute_core_logic".to_string()
         };
 
-        let variable = input_vars.iter()
+        let variable = input_vars
+            .iter()
             .find(|v| rule.description.to_lowercase().contains(&v.to_lowercase()))
             .cloned()
             .unwrap_or_else(|| default_var.clone());
 
-        nodes.insert(node_id, DecisionNode::Condition {
-            variable,
-            operator: Operator::IsNotNull,
-            value: None,
-            true_next: next_id,
-            false_next: format!("fail_inv_{}", i),
-        });
+        nodes.insert(
+            node_id,
+            DecisionNode::Condition {
+                variable,
+                operator: Operator::IsNotNull,
+                value: None,
+                true_next: next_id,
+                false_next: format!("fail_inv_{}", i),
+            },
+        );
 
         let mut error_obj = HashMap::new();
         error_obj.insert("status".to_string(), Value::String("error".to_string()));
-        error_obj.insert("message".to_string(), Value::String(rule.error_message.clone()));
+        error_obj.insert(
+            "message".to_string(),
+            Value::String(rule.error_message.clone()),
+        );
 
-        nodes.insert(format!("fail_inv_{}", i), DecisionNode::Return {
-            value: Value::Object(error_obj),
-        });
+        nodes.insert(
+            format!("fail_inv_{}", i),
+            DecisionNode::Return {
+                value: Value::Object(error_obj),
+            },
+        );
     }
 
     // 3. Main execution branch (LLM Fallback for complex logic)
@@ -912,12 +967,19 @@ pub fn compile_rules(rules: &[ValidationRule], _target: CompilationTarget) -> St
     let mut code = String::new();
     for rule in rules {
         code.push_str(&format!("    // {}\n", rule.description));
-        code.push_str(&format!("    if !({}) {{ return Err(SkillError::Validation(\"{}\".to_string())); }}\n", rule.condition, rule.error_message));
+        code.push_str(&format!(
+            "    if !({}) {{ return Err(SkillError::Validation(\"{}\".to_string())); }}\n",
+            rule.condition, rule.error_message
+        ));
     }
     code
 }
 
-pub fn compile_rules_with_schema(rules: &[ValidationRule], target: CompilationTarget, _schema: Option<&StructSchema>) -> String {
+pub fn compile_rules_with_schema(
+    rules: &[ValidationRule],
+    target: CompilationTarget,
+    _schema: Option<&StructSchema>,
+) -> String {
     // For now, schema-aware is same as basic, but can be improved
     compile_rules(rules, target)
 }
@@ -927,19 +989,26 @@ pub fn generate_extensive_tests(_smst: &SmstResult) -> Vec<GeneratedTestCase> {
     Vec::new()
 }
 
-pub fn generate_schema_aware_tests(_smst: &SmstResult, input: &StructSchema, _output: &StructSchema) -> Vec<GeneratedTestCase> {
+pub fn generate_schema_aware_tests(
+    _smst: &SmstResult,
+    input: &StructSchema,
+    _output: &StructSchema,
+) -> Vec<GeneratedTestCase> {
     let mut tests = Vec::new();
-    
+
     for field in &input.fields {
         tests.push(GeneratedTestCase {
             name: format!("test_boundary_{}", to_snake_case(&field.field_name)),
             category: "edge".to_string(),
             description: format!("Boundary test for field {}", field.field_name),
-            inputs: format!("{{ \"{}\": /* boundary value for {} */ }}", field.field_name, field.field_type),
+            inputs: format!(
+                "{{ \"{}\": /* boundary value for {} */ }}",
+                field.field_name, field.field_type
+            ),
             expected: "Ok(_) or Err(ValidationError)".to_string(),
         });
     }
-    
+
     tests
 }
 
@@ -957,7 +1026,10 @@ pub fn generate_attestation_code(intent: &crate::modules::intent::StructuredInte
     code.push_str("#[test]\n");
     code.push_str("fn test_intent_attestation() {\n");
     code.push_str("    // PROOF: Verify implementation pattern matches claimed intent\n");
-    code.push_str(&format!("    let claimed_pattern = \"{:?}\";\n", intent.pattern));
+    code.push_str(&format!(
+        "    let claimed_pattern = \"{:?}\";\n",
+        intent.pattern
+    ));
     code.push_str("    let actual_pattern = env!(\"SKILL_PATTERN\");\n");
     code.push_str("    assert_eq!(actual_pattern, claimed_pattern, \"Intent Breach: implementation pattern does not match claim\");\n");
     code.push_str("\n");
@@ -1013,22 +1085,23 @@ pub fn generate_struct_definitions(smst: &SmstResult) -> (String, Vec<StructSche
 
     // State schema
     if let Some(state) = &smst.spec.state
-        && !state.trim().is_empty() {
-            let mut state_fields = Vec::new();
-            for line in state.lines() {
-                let (name, type_str) = extract_param_info(line.trim());
-                if !name.is_empty() {
-                    state_fields.push(FieldSchema {
-                        field_name: to_snake_case(&name),
-                        field_type: rust_type_from_str(&type_str).to_string(),
-                    });
-                }
+        && !state.trim().is_empty()
+    {
+        let mut state_fields = Vec::new();
+        for line in state.lines() {
+            let (name, type_str) = extract_param_info(line.trim());
+            if !name.is_empty() {
+                state_fields.push(FieldSchema {
+                    field_name: to_snake_case(&name),
+                    field_type: rust_type_from_str(&type_str).to_string(),
+                });
             }
-            schemas.push(StructSchema {
-                struct_name: format!("{}State", type_name),
-                fields: state_fields,
-            });
         }
+        schemas.push(StructSchema {
+            struct_name: format!("{}State", type_name),
+            fields: state_fields,
+        });
+    }
 
     (code, schemas)
 }

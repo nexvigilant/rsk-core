@@ -12,7 +12,7 @@
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 use tracing::Span;
-use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, prelude::*};
 
 // ============================================================================
 // Metrics for Autonomous Skill Runtime
@@ -29,12 +29,16 @@ pub struct AutonomyStats {
 
 impl AutonomyStats {
     pub fn autonomy_ratio(&self) -> f64 {
-        if self.total_nodes_executed == 0 { return 1.0; }
+        if self.total_nodes_executed == 0 {
+            return 1.0;
+        }
         self.deterministic_nodes as f64 / self.total_nodes_executed as f64
     }
 
     pub fn ips(&self, total_duration_secs: f64) -> f64 {
-        if total_duration_secs == 0.0 { return 0.0; }
+        if total_duration_secs == 0.0 {
+            return 0.0;
+        }
         self.total_nodes_executed as f64 / total_duration_secs
     }
 }
@@ -108,11 +112,11 @@ impl TelemetryConfig {
 
 /// Initialize the telemetry system
 pub fn init_telemetry(config: TelemetryConfig) -> anyhow::Result<()> {
-    let filter = config.filter
+    let filter = config
+        .filter
         .unwrap_or_else(|| format!("rsk={}", config.level));
 
-    let filter_layer = EnvFilter::try_new(&filter)
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+    let filter_layer = EnvFilter::try_new(&filter).unwrap_or_else(|_| EnvFilter::new("info"));
 
     match config.format.as_str() {
         "json" => {
@@ -154,7 +158,7 @@ pub fn init_telemetry(config: TelemetryConfig) -> anyhow::Result<()> {
                 .map_err(|e| anyhow::anyhow!("Failed to initialize default telemetry: {}", e))?;
         }
     }
-    
+
     Ok(())
 }
 

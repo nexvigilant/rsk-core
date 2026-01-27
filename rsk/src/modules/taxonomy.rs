@@ -30,7 +30,10 @@ use phf::phf_map;
 use serde::{Deserialize, Serialize, Serializer};
 
 /// Helper to serialize static string slices as JSON arrays
-fn serialize_static_slice<S>(slice: &&'static [&'static str], serializer: S) -> Result<S::Ok, S::Error>
+fn serialize_static_slice<S>(
+    slice: &&'static [&'static str],
+    serializer: S,
+) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
@@ -210,10 +213,7 @@ pub fn lookup_smst_component(name: &str) -> Option<&'static SmstComponent> {
 
 /// Get all required SMST components
 pub fn required_smst_components() -> Vec<&'static SmstComponent> {
-    SMST_COMPONENTS
-        .values()
-        .filter(|c| c.required)
-        .collect()
+    SMST_COMPONENTS.values().filter(|c| c.required).collect()
 }
 
 /// Get all SMST components
@@ -688,10 +688,7 @@ mod tests {
 
     #[test]
     fn test_smst_weights_sum_to_one() {
-        let total_weight: f64 = all_smst_components()
-            .iter()
-            .map(|c| c.weight)
-            .sum();
+        let total_weight: f64 = all_smst_components().iter().map(|c| c.weight).sum();
         assert!((total_weight - 1.0).abs() < 0.001);
     }
 

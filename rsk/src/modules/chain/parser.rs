@@ -73,7 +73,9 @@ impl ParseError {
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match (self.line, self.column) {
-            (Some(line), Some(col)) => write!(f, "Parse error at {}:{}: {}", line, col, self.message),
+            (Some(line), Some(col)) => {
+                write!(f, "Parse error at {}:{}: {}", line, col, self.message)
+            }
             (Some(line), None) => write!(f, "Parse error at line {}: {}", line, self.message),
             _ => write!(f, "Parse error: {}", self.message),
         }
@@ -87,19 +89,14 @@ impl std::error::Error for ParseError {}
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Valid skill name pattern: lowercase letters, digits, hyphens
-static SKILL_NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"^[a-z][a-z0-9-]*$").unwrap()
-});
+static SKILL_NAME_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^[a-z][a-z0-9-]*$").unwrap());
 
 /// Sequential operator
-static SEQUENTIAL_SPLIT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\s*->\s*").unwrap()
-});
+static SEQUENTIAL_SPLIT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*->\s*").unwrap());
 
 /// Parallel operator
-static PARALLEL_SPLIT: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\s*\|\s*").unwrap()
-});
+static PARALLEL_SPLIT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*\|\s*").unwrap());
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INLINE PARSER
@@ -125,9 +122,15 @@ pub fn parse_inline(input: &str) -> Result<Chain, ParseError> {
 
     // Detect composition type by operator presence
     let (composition, parts) = if input.contains(" -> ") {
-        (CompositionType::Sequential, SEQUENTIAL_SPLIT.split(input).collect::<Vec<_>>())
+        (
+            CompositionType::Sequential,
+            SEQUENTIAL_SPLIT.split(input).collect::<Vec<_>>(),
+        )
     } else if input.contains(" | ") {
-        (CompositionType::Parallel, PARALLEL_SPLIT.split(input).collect::<Vec<_>>())
+        (
+            CompositionType::Parallel,
+            PARALLEL_SPLIT.split(input).collect::<Vec<_>>(),
+        )
     } else {
         // Single skill
         (CompositionType::Sequential, vec![input])
@@ -139,8 +142,7 @@ pub fn parse_inline(input: &str) -> Result<Chain, ParseError> {
         let part = part.trim();
 
         if part.is_empty() {
-            return Err(ParseError::new("Empty skill name in chain")
-                .with_location(1, i + 1));
+            return Err(ParseError::new("Empty skill name in chain").with_location(1, i + 1));
         }
 
         // Parse skill with optional args: "skill-name --arg1 --arg2"
@@ -150,7 +152,8 @@ pub fn parse_inline(input: &str) -> Result<Chain, ParseError> {
             return Err(ParseError::new(&format!(
                 "Invalid skill name '{}': must be lowercase letters, digits, and hyphens",
                 skill_name
-            )).with_source(part));
+            ))
+            .with_source(part));
         }
 
         let mut step = ChainStep::new(&skill_name);
@@ -357,7 +360,7 @@ pub fn parse_yaml(content: &str) -> Result<Chain, ParseError> {
                         in_parallel = true;
                     }
                     step = step.parallel().with_parallel_group(
-                        named.parallel_group.unwrap_or(current_parallel_group)
+                        named.parallel_group.unwrap_or(current_parallel_group),
                     );
                 } else {
                     in_parallel = false;
@@ -450,7 +453,10 @@ mod tests {
         assert_eq!(chain.name, "inline");
         assert_eq!(chain.len(), 3);
         assert_eq!(chain.composition, CompositionType::Sequential);
-        assert_eq!(chain.skill_names(), vec!["smart-goal", "decompose-task", "proceed"]);
+        assert_eq!(
+            chain.skill_names(),
+            vec!["smart-goal", "decompose-task", "proceed"]
+        );
     }
 
     #[test]
@@ -497,8 +503,8 @@ mod tests {
     #[test]
     fn test_parse_inline_invalid_skill_name() {
         assert!(parse_inline("InvalidName").is_err()); // Uppercase
-        assert!(parse_inline("123-skill").is_err());   // Starts with number
-        assert!(parse_inline("skill_name").is_err());  // Underscore
+        assert!(parse_inline("123-skill").is_err()); // Starts with number
+        assert!(parse_inline("skill_name").is_err()); // Underscore
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -530,7 +536,10 @@ steps:
 "#;
         let chain = parse_yaml(yaml).unwrap();
 
-        assert_eq!(chain.description, Some("A well-documented pipeline".to_string()));
+        assert_eq!(
+            chain.description,
+            Some("A well-documented pipeline".to_string())
+        );
     }
 
     #[test]
@@ -555,7 +564,10 @@ steps:
         // build and test are parallel in same group
         assert!(chain.steps[1].is_parallel());
         assert!(chain.steps[2].is_parallel());
-        assert_eq!(chain.steps[1].parallel_group(), chain.steps[2].parallel_group());
+        assert_eq!(
+            chain.steps[1].parallel_group(),
+            chain.steps[2].parallel_group()
+        );
 
         // deploy is not parallel
         assert!(!chain.steps[3].is_parallel());

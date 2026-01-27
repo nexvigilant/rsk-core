@@ -210,11 +210,11 @@ impl RoutingEngine {
 
     /// Load skill graph from file
     pub fn load_graph(&mut self, path: &Path) -> Result<(), RoutingError> {
-        let content = std::fs::read_to_string(path)
-            .map_err(|e| RoutingError::IoError(e.to_string()))?;
+        let content =
+            std::fs::read_to_string(path).map_err(|e| RoutingError::IoError(e.to_string()))?;
 
-        let graph: SkillGraph = serde_json::from_str(&content)
-            .map_err(|e| RoutingError::ParseError(e.to_string()))?;
+        let graph: SkillGraph =
+            serde_json::from_str(&content).map_err(|e| RoutingError::ParseError(e.to_string()))?;
 
         self.skill_names = graph.nodes.keys().cloned().collect();
         self.graph = Some(graph);
@@ -236,7 +236,8 @@ impl RoutingEngine {
             self.skill_names.push(capability.name.clone());
         }
 
-        self.capabilities.insert(capability.name.clone(), capability);
+        self.capabilities
+            .insert(capability.name.clone(), capability);
     }
 
     /// Build semantic index from all capabilities
@@ -305,7 +306,10 @@ impl RoutingEngine {
                         target: adj.target.clone(),
                         score: adj.weight,
                         confidence: 0.9, // High confidence for explicit edges
-                        reasoning: format!("Adjacent to {} with weight {:.2}", request.source, adj.weight),
+                        reasoning: format!(
+                            "Adjacent to {} with weight {:.2}",
+                            request.source, adj.weight
+                        ),
                         strategy_scores: {
                             let mut m = HashMap::new();
                             m.insert("adjacency".to_string(), adj.weight);
@@ -320,7 +324,10 @@ impl RoutingEngine {
     }
 
     /// Capability-based routing using pattern matching
-    fn route_capability(&self, request: &RoutingRequest) -> Result<Vec<RoutingScore>, RoutingError> {
+    fn route_capability(
+        &self,
+        request: &RoutingRequest,
+    ) -> Result<Vec<RoutingScore>, RoutingError> {
         let mut scores = Vec::new();
         let query_lower = request.context.to_lowercase();
 
@@ -375,7 +382,8 @@ impl RoutingEngine {
         let mut skill_scores: HashMap<String, (f32, Vec<String>)> = HashMap::new();
 
         // Extract words from query
-        let query_words: Vec<&str> = request.context
+        let query_words: Vec<&str> = request
+            .context
             .split(|c: char| !c.is_alphanumeric())
             .filter(|w| w.len() > 2)
             .collect();
@@ -387,7 +395,9 @@ impl RoutingEngine {
             // Direct match
             if let Some(skills) = self.semantic_index.get(&word_lower) {
                 for skill in skills {
-                    let entry = skill_scores.entry(skill.clone()).or_insert((0.0, Vec::new()));
+                    let entry = skill_scores
+                        .entry(skill.clone())
+                        .or_insert((0.0, Vec::new()));
                     entry.0 += 0.3;
                     entry.1.push(format!("exact: {}", word));
                 }
@@ -397,9 +407,12 @@ impl RoutingEngine {
             for (indexed_word, skills) in &self.semantic_index {
                 let distance = levenshtein(&word_lower, indexed_word).distance;
                 if distance <= 2 && distance > 0 {
-                    let similarity = 1.0 - (distance as f32 / word_lower.len().max(indexed_word.len()) as f32);
+                    let similarity =
+                        1.0 - (distance as f32 / word_lower.len().max(indexed_word.len()) as f32);
                     for skill in skills {
-                        let entry = skill_scores.entry(skill.clone()).or_insert((0.0, Vec::new()));
+                        let entry = skill_scores
+                            .entry(skill.clone())
+                            .or_insert((0.0, Vec::new()));
                         entry.0 += similarity * 0.2;
                         entry.1.push(format!("fuzzy: {} ~ {}", word, indexed_word));
                     }
@@ -408,19 +421,18 @@ impl RoutingEngine {
         }
 
         // Convert to RoutingScores
-        let scores: Vec<RoutingScore> = skill_scores.into_iter()
-            .map(|(skill, (score, matches))| {
-                RoutingScore {
-                    target: skill,
-                    score: score.min(1.0),
-                    confidence: (matches.len() as f32 * 0.15).min(0.8),
-                    reasoning: matches.into_iter().take(3).collect::<Vec<_>>().join(", "),
-                    strategy_scores: {
-                        let mut m = HashMap::new();
-                        m.insert("semantic".to_string(), score.min(1.0));
-                        m
-                    },
-                }
+        let scores: Vec<RoutingScore> = skill_scores
+            .into_iter()
+            .map(|(skill, (score, matches))| RoutingScore {
+                target: skill,
+                score: score.min(1.0),
+                confidence: (matches.len() as f32 * 0.15).min(0.8),
+                reasoning: matches.into_iter().take(3).collect::<Vec<_>>().join(", "),
+                strategy_scores: {
+                    let mut m = HashMap::new();
+                    m.insert("semantic".to_string(), score.min(1.0));
+                    m
+                },
             })
             .collect();
 
@@ -446,7 +458,9 @@ impl RoutingEngine {
             });
             entry.score += score.score * RoutingStrategy::Adjacency.hybrid_weight();
             entry.confidence = entry.confidence.max(score.confidence);
-            entry.strategy_scores.insert("adjacency".to_string(), score.score);
+            entry
+                .strategy_scores
+                .insert("adjacency".to_string(), score.score);
             if !score.reasoning.is_empty() {
                 if !entry.reasoning.is_empty() {
                     entry.reasoning.push_str("; ");
@@ -465,7 +479,9 @@ impl RoutingEngine {
             });
             entry.score += score.score * RoutingStrategy::Capability.hybrid_weight();
             entry.confidence = entry.confidence.max(score.confidence);
-            entry.strategy_scores.insert("capability".to_string(), score.score);
+            entry
+                .strategy_scores
+                .insert("capability".to_string(), score.score);
             if !score.reasoning.is_empty() {
                 if !entry.reasoning.is_empty() {
                     entry.reasoning.push_str("; ");
@@ -484,7 +500,9 @@ impl RoutingEngine {
             });
             entry.score += score.score * RoutingStrategy::Semantic.hybrid_weight();
             entry.confidence = entry.confidence.max(score.confidence);
-            entry.strategy_scores.insert("semantic".to_string(), score.score);
+            entry
+                .strategy_scores
+                .insert("semantic".to_string(), score.score);
             if !score.reasoning.is_empty() {
                 if !entry.reasoning.is_empty() {
                     entry.reasoning.push_str("; ");
@@ -551,25 +569,47 @@ mod tests {
         // Add some test capabilities
         engine.add_capability(SkillCapability {
             name: "proceed".to_string(),
-            triggers: vec!["proceed".to_string(), "execute".to_string(), "run tasks".to_string()],
+            triggers: vec![
+                "proceed".to_string(),
+                "execute".to_string(),
+                "run tasks".to_string(),
+            ],
             handles: vec!["task execution".to_string(), "DAG processing".to_string()],
-            keywords: vec!["execution".to_string(), "dag".to_string(), "tasks".to_string()],
+            keywords: vec![
+                "execution".to_string(),
+                "dag".to_string(),
+                "tasks".to_string(),
+            ],
             category: "orchestration".to_string(),
         });
 
         engine.add_capability(SkillCapability {
             name: "skill-validator".to_string(),
             triggers: vec!["validate".to_string(), "check skill".to_string()],
-            handles: vec!["skill validation".to_string(), "compliance checking".to_string()],
-            keywords: vec!["validate".to_string(), "compliance".to_string(), "check".to_string()],
+            handles: vec![
+                "skill validation".to_string(),
+                "compliance checking".to_string(),
+            ],
+            keywords: vec![
+                "validate".to_string(),
+                "compliance".to_string(),
+                "check".to_string(),
+            ],
             category: "validation".to_string(),
         });
 
         engine.add_capability(SkillCapability {
             name: "topological-sort".to_string(),
             triggers: vec!["topsort".to_string(), "sort dependencies".to_string()],
-            handles: vec!["graph sorting".to_string(), "dependency ordering".to_string()],
-            keywords: vec!["graph".to_string(), "sort".to_string(), "dependencies".to_string()],
+            handles: vec![
+                "graph sorting".to_string(),
+                "dependency ordering".to_string(),
+            ],
+            keywords: vec![
+                "graph".to_string(),
+                "sort".to_string(),
+                "dependencies".to_string(),
+            ],
             category: "algorithms".to_string(),
         });
 
@@ -680,8 +720,14 @@ mod tests {
 
     #[test]
     fn test_strategy_from_str() {
-        assert_eq!(RoutingStrategy::from_str("adjacency"), Some(RoutingStrategy::Adjacency));
-        assert_eq!(RoutingStrategy::from_str("HYBRID"), Some(RoutingStrategy::Hybrid));
+        assert_eq!(
+            RoutingStrategy::from_str("adjacency"),
+            Some(RoutingStrategy::Adjacency)
+        );
+        assert_eq!(
+            RoutingStrategy::from_str("HYBRID"),
+            Some(RoutingStrategy::Hybrid)
+        );
         assert_eq!(RoutingStrategy::from_str("invalid"), None);
     }
 }

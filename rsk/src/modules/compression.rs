@@ -2,8 +2,8 @@
 //!
 //! Provides gzip compression/decompression with performance metrics.
 
-use flate2::read::{GzDecoder, GzEncoder};
 use flate2::Compression;
+use flate2::read::{GzDecoder, GzEncoder};
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 
@@ -89,7 +89,8 @@ pub fn gzip_decompress(data: &[u8]) -> Result<DecompressionResult, String> {
     let mut decoder = GzDecoder::new(data);
     let mut decompressed = Vec::new();
 
-    decoder.read_to_end(&mut decompressed)
+    decoder
+        .read_to_end(&mut decompressed)
         .map_err(|e| format!("Decompression failed: {}", e))?;
 
     let decompressed_size = decompressed.len();
@@ -110,8 +111,7 @@ pub fn gzip_decompress(data: &[u8]) -> Result<DecompressionResult, String> {
 /// Decompress gzip data to string
 pub fn gzip_decompress_string(data: &[u8]) -> Result<String, String> {
     let result = gzip_decompress(data)?;
-    String::from_utf8(result.data)
-        .map_err(|e| format!("Invalid UTF-8 in decompressed data: {}", e))
+    String::from_utf8(result.data).map_err(|e| format!("Invalid UTF-8 in decompressed data: {}", e))
 }
 
 /// Analyze compressibility of data without actually compressing
@@ -129,7 +129,8 @@ pub fn estimate_compressibility(data: &[u8]) -> f64 {
 
     // Calculate Shannon entropy
     let total = data.len() as f64;
-    let entropy: f64 = freq.iter()
+    let entropy: f64 = freq
+        .iter()
         .filter(|&&count| count > 0)
         .map(|&count| {
             let p = count as f64 / total;

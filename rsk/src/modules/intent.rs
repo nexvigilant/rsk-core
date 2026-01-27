@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -27,20 +27,34 @@ pub struct StructuredIntent {
 
 pub fn classify_intent(intent: &str) -> anyhow::Result<StructuredIntent> {
     let intent_lower = intent.to_lowercase();
-    
+
     // Pattern detection
-    let pattern = if intent_lower.contains("audit") || intent_lower.contains("validate") || intent_lower.contains("verify") || intent_lower.contains("check") {
+    let pattern = if intent_lower.contains("audit")
+        || intent_lower.contains("validate")
+        || intent_lower.contains("verify")
+        || intent_lower.contains("check")
+    {
         SkillPattern::Auditor
-    } else if intent_lower.contains("calculate") || intent_lower.contains("compute") || intent_lower.contains("math") || intent_lower.contains("algorithm") {
+    } else if intent_lower.contains("calculate")
+        || intent_lower.contains("compute")
+        || intent_lower.contains("math")
+        || intent_lower.contains("algorithm")
+    {
         SkillPattern::Computer
-    } else if intent_lower.contains("transform") || intent_lower.contains("convert") || intent_lower.contains("parse") {
+    } else if intent_lower.contains("transform")
+        || intent_lower.contains("convert")
+        || intent_lower.contains("parse")
+    {
         SkillPattern::Transformer
     } else {
         SkillPattern::Generic
     };
 
     // Complexity detection
-    let complexity = if intent_lower.contains("complex") || intent_lower.contains("heavy") || intent_lower.contains("performance") {
+    let complexity = if intent_lower.contains("complex")
+        || intent_lower.contains("heavy")
+        || intent_lower.contains("performance")
+    {
         SkillComplexity::High
     } else if intent_lower.contains("simple") || intent_lower.contains("basic") {
         SkillComplexity::Low
@@ -54,15 +68,15 @@ pub fn classify_intent(intent: &str) -> anyhow::Result<StructuredIntent> {
         SkillPattern::Auditor => {
             rsk_modules.push("rule_compiler".to_string());
             rsk_modules.push("logic_validator".to_string());
-        },
+        }
         SkillPattern::Computer => {
             rsk_modules.push("math".to_string());
             rsk_modules.push("graph".to_string());
-        },
+        }
         SkillPattern::Transformer => {
             rsk_modules.push("text_processor".to_string());
             rsk_modules.push("compression".to_string());
-        },
+        }
         SkillPattern::Generic => {
             rsk_modules.push("yaml_processor".to_string());
         }

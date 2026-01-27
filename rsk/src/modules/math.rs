@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use uom::si::f64::*;
 use uom::si::length::meter;
-use uom::si::time::second;
 use uom::si::mass::kilogram;
+use uom::si::time::second;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MomentumResult {
@@ -15,10 +15,10 @@ pub fn calculate_momentum(mass_kg: f64, distance_m: f64, time_s: f64) -> Momentu
     let m = Mass::new::<kilogram>(mass_kg);
     let d = Length::new::<meter>(distance_m);
     let t = Time::new::<second>(time_s);
-    
+
     let velocity = d / t;
     let momentum = m * velocity;
-    
+
     MomentumResult {
         value: momentum.value,
         unit: "kg·m/s".to_string(),
@@ -62,7 +62,7 @@ pub fn is_prime(n: i64) -> PrimeResult {
             reason: "Numbers less than or equal to 1 are not prime".to_string(),
         };
     }
-    
+
     if n == 2 {
         return PrimeResult {
             is_prime: true,
@@ -70,7 +70,7 @@ pub fn is_prime(n: i64) -> PrimeResult {
             reason: "2 is the only even prime number".to_string(),
         };
     }
-    
+
     if n % 2 == 0 {
         return PrimeResult {
             is_prime: false,
@@ -78,7 +78,7 @@ pub fn is_prime(n: i64) -> PrimeResult {
             reason: format!("{} is even and greater than 2", n),
         };
     }
-    
+
     let limit = (n as f64).sqrt() as i64;
     for i in (3..=limit).step_by(2) {
         if n % i == 0 {
@@ -89,7 +89,7 @@ pub fn is_prime(n: i64) -> PrimeResult {
             };
         }
     }
-    
+
     PrimeResult {
         is_prime: true,
         number: n,
@@ -142,7 +142,7 @@ mod tests {
         // Division by zero edge case
         let result = calculate_variance(50.0, 0.0);
         assert_eq!(result.absolute, 50.0);
-        assert!(result.percentage.is_infinite()); 
+        assert!(result.percentage.is_infinite());
     }
 
     #[test]

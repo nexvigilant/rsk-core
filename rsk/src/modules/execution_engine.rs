@@ -257,7 +257,11 @@ pub enum ExecutionError {
     /// Invalid module configuration
     InvalidModule(String),
     /// Resource conflict between modules
-    ResourceConflict { module_a: String, module_b: String, resource: String },
+    ResourceConflict {
+        module_a: String,
+        module_b: String,
+        resource: String,
+    },
     /// Checkpoint save/load failed
     CheckpointError(String),
     /// Generic execution error
@@ -272,8 +276,16 @@ impl std::fmt::Display for ExecutionError {
             }
             Self::ModuleNotFound(id) => write!(f, "Module not found: {}", id),
             Self::InvalidModule(msg) => write!(f, "Invalid module: {}", msg),
-            Self::ResourceConflict { module_a, module_b, resource } => {
-                write!(f, "Resource conflict: {} and {} both touch {}", module_a, module_b, resource)
+            Self::ResourceConflict {
+                module_a,
+                module_b,
+                resource,
+            } => {
+                write!(
+                    f,
+                    "Resource conflict: {} and {} both touch {}",
+                    module_a, module_b, resource
+                )
             }
             Self::CheckpointError(msg) => write!(f, "Checkpoint error: {}", msg),
             Self::ExecutionFailed(msg) => write!(f, "Execution failed: {}", msg),
@@ -329,7 +341,9 @@ pub struct ModuleResult {
 /// ];
 /// let plan = build_execution_plan(modules)?;
 /// ```
-pub fn build_execution_plan(modules: Vec<ExecutionModule>) -> Result<ExecutionPlan, ExecutionError> {
+pub fn build_execution_plan(
+    modules: Vec<ExecutionModule>,
+) -> Result<ExecutionPlan, ExecutionError> {
     if modules.is_empty() {
         return Ok(ExecutionPlan {
             modules: HashMap::new(),
@@ -345,9 +359,10 @@ pub fn build_execution_plan(modules: Vec<ExecutionModule>) -> Result<ExecutionPl
     let mut module_map: HashMap<String, ExecutionModule> = HashMap::new();
     for module in modules {
         if module_map.contains_key(&module.id) {
-            return Err(ExecutionError::InvalidModule(
-                format!("Duplicate module ID: {}", module.id)
-            ));
+            return Err(ExecutionError::InvalidModule(format!(
+                "Duplicate module ID: {}",
+                module.id
+            )));
         }
         module_map.insert(module.id.clone(), module);
     }
@@ -475,13 +490,17 @@ fn calculate_estimated_duration(
     modules: &HashMap<String, ExecutionModule>,
     levels: &[Vec<String>],
 ) -> u32 {
-    levels.iter().map(|level| {
-        level.iter()
-            .filter_map(|id| modules.get(id))
-            .map(|m| m.effort.to_minutes())
-            .max()
-            .unwrap_or(0)
-    }).sum()
+    levels
+        .iter()
+        .map(|level| {
+            level
+                .iter()
+                .filter_map(|id| modules.get(id))
+                .map(|m| m.effort.to_minutes())
+                .max()
+                .unwrap_or(0)
+        })
+        .sum()
 }
 
 /// Get the next module to execute from a plan.
@@ -494,7 +513,8 @@ pub fn get_next_module(plan: &ExecutionPlan) -> Option<&ExecutionModule> {
             if module.status == ModuleStatus::Pending {
                 // Check if all dependencies are completed
                 let deps_complete = module.dependencies.iter().all(|dep_id| {
-                    plan.modules.get(dep_id)
+                    plan.modules
+                        .get(dep_id)
                         .map(|dep| dep.status == ModuleStatus::Completed)
                         .unwrap_or(false)
                 });
@@ -511,15 +531,17 @@ pub fn get_next_module(plan: &ExecutionPlan) -> Option<&ExecutionModule> {
 ///
 /// Returns all pending modules whose dependencies are all completed.
 pub fn get_ready_modules(plan: &ExecutionPlan) -> Vec<&ExecutionModule> {
-    plan.execution_order.iter()
+    plan.execution_order
+        .iter()
         .filter_map(|id| plan.modules.get(id))
         .filter(|module| {
-            module.status == ModuleStatus::Pending &&
-            module.dependencies.iter().all(|dep_id| {
-                plan.modules.get(dep_id)
-                    .map(|dep| dep.status == ModuleStatus::Completed)
-                    .unwrap_or(false)
-            })
+            module.status == ModuleStatus::Pending
+                && module.dependencies.iter().all(|dep_id| {
+                    plan.modules
+                        .get(dep_id)
+                        .map(|dep| dep.status == ModuleStatus::Completed)
+                        .unwrap_or(false)
+                })
         })
         .collect()
 }
@@ -532,7 +554,9 @@ pub fn complete_module(
     message: &str,
     duration_ms: u64,
 ) -> Result<ModuleResult, ExecutionError> {
-    let module = plan.modules.get_mut(module_id)
+    let module = plan
+        .modules
+        .get_mut(module_id)
         .ok_or_else(|| ExecutionError::ModuleNotFound(module_id.to_string()))?;
 
     module.status = match signal {
@@ -554,7 +578,10 @@ pub fn complete_module(
 /// Check if the plan is complete (all modules completed or failed).
 pub fn is_plan_complete(plan: &ExecutionPlan) -> bool {
     plan.modules.values().all(|m| {
-        matches!(m.status, ModuleStatus::Completed | ModuleStatus::Failed(_) | ModuleStatus::Skipped)
+        matches!(
+            m.status,
+            ModuleStatus::Completed | ModuleStatus::Failed(_) | ModuleStatus::Skipped
+        )
     })
 }
 
@@ -566,7 +593,7 @@ pub fn detect_resource_conflicts(plan: &ExecutionPlan) -> Vec<ExecutionError> {
 
     for level in &plan.levels {
         let mut resource_owners: HashMap<&String, &String> = HashMap::new();
-        
+
         for module_id in level {
             if let Some(module) = plan.modules.get(module_id) {
                 for resource in &module.resources {
@@ -609,9 +636,7 @@ mod tests {
 
     #[test]
     fn test_build_plan_single_module() {
-        let modules = vec![
-            ExecutionModule::new("M1", "Single task", vec![]),
-        ];
+        let modules = vec![ExecutionModule::new("M1", "Single task", vec![])];
         let plan = build_execution_plan(modules).unwrap();
 
         assert_eq!(plan.modules.len(), 1);
@@ -688,7 +713,11 @@ mod tests {
         let modules = vec![
             ExecutionModule::new("M1", "Root A", vec![]),
             ExecutionModule::new("M2", "Root B", vec![]),
-            ExecutionModule::new("M3", "Depends on both", vec!["M1".to_string(), "M2".to_string()]),
+            ExecutionModule::new(
+                "M3",
+                "Depends on both",
+                vec!["M1".to_string(), "M2".to_string()],
+            ),
         ];
         let plan = build_execution_plan(modules).unwrap();
 
@@ -725,9 +754,11 @@ mod tests {
 
     #[test]
     fn test_build_plan_missing_dependency() {
-        let modules = vec![
-            ExecutionModule::new("M1", "Depends on missing", vec!["MISSING".to_string()]),
-        ];
+        let modules = vec![ExecutionModule::new(
+            "M1",
+            "Depends on missing",
+            vec!["MISSING".to_string()],
+        )];
         let result = build_execution_plan(modules);
 
         assert!(result.is_err());
@@ -758,22 +789,18 @@ mod tests {
 
     #[test]
     fn test_risk_clamping() {
-        let module = ExecutionModule::new("M1", "Test", vec![])
-            .with_risk(1.5); // Over max
+        let module = ExecutionModule::new("M1", "Test", vec![]).with_risk(1.5); // Over max
         assert_eq!(module.risk, 1.0);
 
-        let module2 = ExecutionModule::new("M2", "Test", vec![])
-            .with_risk(-0.5); // Under min
+        let module2 = ExecutionModule::new("M2", "Test", vec![]).with_risk(-0.5); // Under min
         assert_eq!(module2.risk, 0.0);
     }
 
     #[test]
     fn test_resource_conflict_detection() {
         let modules = vec![
-            ExecutionModule::new("M1", "A", vec![])
-                .with_resources(vec!["file.rs".to_string()]),
-            ExecutionModule::new("M2", "B", vec![])
-                .with_resources(vec!["file.rs".to_string()]),
+            ExecutionModule::new("M1", "A", vec![]).with_resources(vec!["file.rs".to_string()]),
+            ExecutionModule::new("M2", "B", vec![]).with_resources(vec!["file.rs".to_string()]),
         ];
         // Both at level 0 (no deps) and touch same file
 
@@ -808,9 +835,7 @@ mod tests {
     #[test]
     fn test_build_plan_100_modules_parallel() {
         let modules: Vec<ExecutionModule> = (0..100)
-            .map(|i| {
-                ExecutionModule::new(&format!("M{}", i), &format!("Module {}", i), vec![])
-            })
+            .map(|i| ExecutionModule::new(&format!("M{}", i), &format!("Module {}", i), vec![]))
             .collect();
 
         let plan = build_execution_plan(modules).unwrap();

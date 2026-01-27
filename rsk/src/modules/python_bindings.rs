@@ -64,41 +64,54 @@ use std::collections::HashMap;
 
 #[cfg(feature = "python")]
 use crate::modules::{
+    anti_pattern::{
+        AntiPattern, DetectionConfig, Features, Symptom, SymptomType, create_god_object_pattern,
+        create_paper_constructs_pattern, detect_anti_patterns,
+    },
     builder::{build_skill, verify_skill},
     chain::{
-        parse_inline as chain_parse_inline, parse_yaml as chain_parse_yaml,
-        validate_chain, execute_chain_with_fn, Chain, ChainStep, StepType,
-        ExecutorConfig, SkillExecutionResult, ValidationResult as ChainValidationResult,
+        Chain, ChainStep, ExecutorConfig, SkillExecutionResult, StepType,
+        ValidationResult as ChainValidationResult, execute_chain_with_fn,
+        parse_inline as chain_parse_inline, parse_yaml as chain_parse_yaml, validate_chain,
     },
-    stats::{
-        chi_square_test, t_test_independent, proportion_test, correlation_test,
-        ChiSquareInput, TTestInput, ProportionInput, CorrelationInput,
+    code_generator::{
+        generate_decision_tree, generate_rust_stub, generate_test_scaffold,
+        generate_validation_rules,
     },
-    anti_pattern::{
-        detect_anti_patterns, Features, DetectionConfig, AntiPattern, Symptom, SymptomType,
-        create_god_object_pattern, create_paper_constructs_pattern,
+    compression::{
+        CompressionLevel, estimate_compressibility, gzip_compress_string, gzip_decompress_string,
     },
-    code_generator::{generate_validation_rules, generate_test_scaffold, generate_rust_stub, generate_decision_tree},
-    compression::{gzip_compress_string, gzip_decompress_string, estimate_compressibility, CompressionLevel},
     crypto::{sha256_hash, sha256_verify},
-    execution_engine::{ExecutionModule, EffortSize, build_execution_plan},
+    decision_engine::{DecisionContext, DecisionEngine, DecisionTree, ExecutionResult, Value},
+    epistemic::{
+        ConfidenceLevel, EpistemicResult, get_hedging_suggestions, validate_claim, validate_claims,
+    },
+    execution_engine::{EffortSize, ExecutionModule, build_execution_plan},
     graph::{SkillGraph, SkillNode},
-    json_processor::{parse_json, serialize_json, query_path, set_path, merge_json, diff_json, flatten_json, unflatten_json},
+    intent::classify_intent,
+    json_processor::{
+        diff_json, flatten_json, merge_json, parse_json, query_path, serialize_json, set_path,
+        unflatten_json,
+    },
     levenshtein::{fuzzy_search, levenshtein},
     math::{calculate_variance, is_prime},
-    intent::classify_intent,
     session_tracker::{
-        load_state as session_load, save_state as session_save,
-        track_execution as session_track, track_completion as session_complete,
-        track_failure as session_fail, append_log as session_log,
-        route_skill as session_route, SessionState,
+        SessionState, append_log as session_log, load_state as session_load,
+        route_skill as session_route, save_state as session_save,
+        track_completion as session_complete, track_execution as session_track,
+        track_failure as session_fail,
     },
     state_manager::{CheckpointManager, ExecutionContext},
-    taxonomy::{query_taxonomy, list_taxonomy},
-    text_processor::{extract_smst, parse_frontmatter, tokenize, normalize, word_frequency, analyze_compressibility},
+    stats::{
+        ChiSquareInput, CorrelationInput, ProportionInput, TTestInput, chi_square_test,
+        correlation_test, proportion_test, t_test_independent,
+    },
+    taxonomy::{list_taxonomy, query_taxonomy},
+    text_processor::{
+        analyze_compressibility, extract_smst, normalize, parse_frontmatter, tokenize,
+        word_frequency,
+    },
     yaml_processor::parse_yaml,
-    decision_engine::{DecisionEngine, DecisionTree, DecisionContext, ExecutionResult, Value},
-    epistemic::{validate_claim, validate_claims, get_hedging_suggestions, EpistemicResult, ConfidenceLevel},
 };
 
 // ============================================================================
@@ -123,15 +136,26 @@ fn py_levenshtein(py: Python<'_>, source: &str, target: &str) -> PyResult<PyObje
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "fuzzy_search")]
-fn py_fuzzy_search(py: Python<'_>, query: &str, candidates: Vec<String>, limit: usize) -> PyResult<PyObject> {
+fn py_fuzzy_search(
+    py: Python<'_>,
+    query: &str,
+    candidates: Vec<String>,
+    limit: usize,
+) -> PyResult<PyObject> {
     let results = fuzzy_search(query, &candidates, limit);
-    let list: Vec<PyObject> = results.iter().map(|r| {
-        let dict = PyDict::new(py);
-        dict.set_item("candidate", &r.candidate).expect("Failed to set candidate");
-        dict.set_item("distance", r.distance).expect("Failed to set distance");
-        dict.set_item("similarity", r.similarity).expect("Failed to set similarity");
-        dict.into()
-    }).collect();
+    let list: Vec<PyObject> = results
+        .iter()
+        .map(|r| {
+            let dict = PyDict::new(py);
+            dict.set_item("candidate", &r.candidate)
+                .expect("Failed to set candidate");
+            dict.set_item("distance", r.distance)
+                .expect("Failed to set distance");
+            dict.set_item("similarity", r.similarity)
+                .expect("Failed to set similarity");
+            dict.into()
+        })
+        .collect();
     Ok(list.into_pyobject(py)?.into())
 }
 
@@ -198,7 +222,10 @@ fn py_classify_intent(py: Python<'_>, intent: &str) -> PyResult<PyObject> {
         Ok(result) => {
             let dict = PyDict::new(py);
             dict.set_item("pattern", format!("{:?}", result.pattern).to_uppercase())?;
-            dict.set_item("complexity", format!("{:?}", result.complexity).to_uppercase())?;
+            dict.set_item(
+                "complexity",
+                format!("{:?}", result.complexity).to_uppercase(),
+            )?;
             dict.set_item("rsk_modules", result.rsk_modules)?;
             Ok(dict.into())
         }
@@ -220,19 +247,20 @@ fn py_query_taxonomy(py: Python<'_>, taxonomy_type: &str, key: &str) -> PyResult
     dict.set_item("query_type", &result.query_type)?;
     dict.set_item("key", &result.key)?;
     dict.set_item("found", result.found)?;
-    
+
     if let Some(data) = result.data {
-        // We still use JSON as an intermediate for complex dynamic data 
-        // until we have a full PyO3 trait for our Value types, but 
+        // We still use JSON as an intermediate for complex dynamic data
+        // until we have a full PyO3 trait for our Value types, but
         // we return the dict directly.
-        let json_str = serde_json::to_string(&data).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+        let json_str = serde_json::to_string(&data)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         let json_module = py.import("json")?;
         let py_data = json_module.call_method1("loads", (json_str,))?;
         dict.set_item("data", py_data)?;
     } else {
         dict.set_item("data", py.None())?;
     }
-    
+
     Ok(dict.into())
 }
 
@@ -242,7 +270,8 @@ fn py_query_taxonomy(py: Python<'_>, taxonomy_type: &str, key: &str) -> PyResult
 #[pyo3(name = "list_taxonomy")]
 fn py_list_taxonomy(py: Python<'_>, taxonomy_type: &str) -> PyResult<PyObject> {
     let result = list_taxonomy(taxonomy_type);
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -262,8 +291,9 @@ fn py_extract_smst(py: Python<'_>, content: &str) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
 
     // Build frontmatter dict via JSON for completeness (includes adjacencies)
-    let fm_json = serde_json::to_string(&result.frontmatter)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Frontmatter serialization failed: {}", e)))?;
+    let fm_json = serde_json::to_string(&result.frontmatter).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("Frontmatter serialization failed: {}", e))
+    })?;
     let frontmatter_dict = json_module.call_method1("loads", (fm_json,))?;
 
     // Build spec dict directly
@@ -308,7 +338,8 @@ fn py_parse_frontmatter(py: Python<'_>, content: &str) -> PyResult<PyObject> {
     let val = fm.flatten_to_json();
 
     // Convert back to Python dict via PyO3 compatible JSON conversion
-    let json_str = serde_json::to_string(&val).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&val)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -330,7 +361,8 @@ fn py_parse_frontmatter(py: Python<'_>, content: &str) -> PyResult<PyObject> {
 #[pyo3(name = "tokenize")]
 fn py_tokenize(py: Python<'_>, text: &str) -> PyResult<PyObject> {
     let result = tokenize(text);
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -349,7 +381,8 @@ fn py_tokenize(py: Python<'_>, text: &str) -> PyResult<PyObject> {
 #[pyo3(name = "normalize", signature = (text, remove_punctuation=true))]
 fn py_normalize(py: Python<'_>, text: &str, remove_punctuation: bool) -> PyResult<PyObject> {
     let result = normalize(text, remove_punctuation);
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -368,7 +401,8 @@ fn py_normalize(py: Python<'_>, text: &str, remove_punctuation: bool) -> PyResul
 #[pyo3(name = "word_frequency", signature = (text, top_n=10))]
 fn py_word_frequency(py: Python<'_>, text: &str, top_n: usize) -> PyResult<PyObject> {
     let result = word_frequency(text, top_n);
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -386,7 +420,8 @@ fn py_word_frequency(py: Python<'_>, text: &str, top_n: usize) -> PyResult<PyObj
 #[pyo3(name = "text_entropy")]
 fn py_text_entropy(py: Python<'_>, text: &str) -> PyResult<PyObject> {
     let result = analyze_compressibility(text);
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -440,8 +475,7 @@ fn py_gzip_compress(py: Python<'_>, text: &str, level: &str) -> PyResult<PyObjec
 #[pyfunction]
 #[pyo3(name = "gzip_decompress")]
 fn py_gzip_decompress(_py: Python<'_>, data: &[u8]) -> PyResult<String> {
-    gzip_decompress_string(data)
-        .map_err(pyo3::exceptions::PyValueError::new_err)
+    gzip_decompress_string(data).map_err(pyo3::exceptions::PyValueError::new_err)
 }
 
 /// Estimate compressibility of data without actually compressing
@@ -478,7 +512,10 @@ fn py_estimate_compressibility(_py: Python<'_>, data: &[u8]) -> PyResult<f64> {
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "topological_sort")]
-fn py_topological_sort(py: Python<'_>, graph: std::collections::HashMap<String, Vec<String>>) -> PyResult<PyObject> {
+fn py_topological_sort(
+    py: Python<'_>,
+    graph: std::collections::HashMap<String, Vec<String>>,
+) -> PyResult<PyObject> {
     // Convert Python dict to SkillGraph
     // Input format: node -> [successors] (what this node points to)
     // We need to invert to dependencies format for SkillGraph
@@ -497,7 +534,9 @@ fn py_topological_sort(py: Python<'_>, graph: std::collections::HashMap<String, 
 
     for (node, successors) in &graph {
         for successor in successors {
-            dependencies.get_mut(successor).map(|deps| deps.push(node.clone()));
+            dependencies
+                .get_mut(successor)
+                .map(|deps| deps.push(node.clone()));
         }
     }
 
@@ -549,7 +588,10 @@ fn py_topological_sort(py: Python<'_>, graph: std::collections::HashMap<String, 
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "level_parallelization")]
-fn py_level_parallelization(py: Python<'_>, graph: std::collections::HashMap<String, Vec<String>>) -> PyResult<PyObject> {
+fn py_level_parallelization(
+    py: Python<'_>,
+    graph: std::collections::HashMap<String, Vec<String>>,
+) -> PyResult<PyObject> {
     // Same conversion logic as topological_sort
     let mut all_nodes: std::collections::HashSet<String> = graph.keys().cloned().collect();
     for successors in graph.values() {
@@ -563,7 +605,9 @@ fn py_level_parallelization(py: Python<'_>, graph: std::collections::HashMap<Str
 
     for (node, successors) in &graph {
         for successor in successors {
-            dependencies.get_mut(successor).map(|deps| deps.push(node.clone()));
+            dependencies
+                .get_mut(successor)
+                .map(|deps| deps.push(node.clone()));
         }
     }
 
@@ -640,14 +684,15 @@ fn py_shortest_path(
         let adjacencies: Vec<crate::modules::graph::Adjacency> = graph
             .get(node_name)
             .map(|edges| {
-                edges.iter().map(|(target, weight)| {
-                    crate::modules::graph::Adjacency {
+                edges
+                    .iter()
+                    .map(|(target, weight)| crate::modules::graph::Adjacency {
                         target: target.clone(),
                         weight: *weight,
                         when: "success".to_string(),
                         action: "".to_string(),
-                    }
-                }).collect()
+                    })
+                    .collect()
             })
             .unwrap_or_default();
 
@@ -709,7 +754,8 @@ fn py_parse_yaml_string(py: Python<'_>, content: &str) -> PyResult<PyObject> {
     match parse_yaml(content) {
         Ok(result) => {
             // Convert the Rust ParseResult to Python dict via JSON
-            let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let json_module = py.import("json")?;
             let py_dict = json_module.call_method1("loads", (json_str,))?;
             Ok(py_dict.into())
@@ -766,48 +812,57 @@ fn py_build_execution_plan(
 
     for module_dict in &modules {
         // Extract required fields
-        let id: String = module_dict.get("id")
+        let id: String = module_dict
+            .get("id")
             .ok_or_else(|| pyo3::exceptions::PyValueError::new_err("Module missing 'id' field"))?
             .extract(py)?;
 
-        let name: String = module_dict.get("name")
+        let name: String = module_dict
+            .get("name")
             .ok_or_else(|| pyo3::exceptions::PyValueError::new_err("Module missing 'name' field"))?
             .extract(py)?;
 
-        let dependencies: Vec<String> = module_dict.get("dependencies")
+        let dependencies: Vec<String> = module_dict
+            .get("dependencies")
             .map(|v| v.extract(py))
             .transpose()?
             .unwrap_or_default();
 
         // Extract optional fields with defaults
-        let effort_str: String = module_dict.get("effort")
+        let effort_str: String = module_dict
+            .get("effort")
             .map(|v| v.extract(py))
             .transpose()?
             .unwrap_or_else(|| "M".to_string());
 
         let effort = EffortSize::from_str(&effort_str).unwrap_or(EffortSize::M);
 
-        let risk: f32 = module_dict.get("risk")
+        let risk: f32 = module_dict
+            .get("risk")
             .map(|v| v.extract(py))
             .transpose()?
             .unwrap_or(0.3);
 
-        let critical: bool = module_dict.get("critical")
+        let critical: bool = module_dict
+            .get("critical")
             .map(|v| v.extract(py))
             .transpose()?
             .unwrap_or(false);
 
-        let purpose: String = module_dict.get("purpose")
+        let purpose: String = module_dict
+            .get("purpose")
             .map(|v| v.extract(py))
             .transpose()?
             .unwrap_or_default();
 
-        let resources: Vec<String> = module_dict.get("resources")
+        let resources: Vec<String> = module_dict
+            .get("resources")
             .map(|v| v.extract(py))
             .transpose()?
             .unwrap_or_default();
 
-        let deliverables: Vec<String> = module_dict.get("deliverables")
+        let deliverables: Vec<String> = module_dict
+            .get("deliverables")
             .map(|v| v.extract(py))
             .transpose()?
             .unwrap_or_default();
@@ -836,7 +891,10 @@ fn py_build_execution_plan(
             dict.set_item("execution_order", &plan.execution_order)?;
             dict.set_item("levels", &plan.levels)?;
             dict.set_item("critical_path", &plan.critical_path)?;
-            dict.set_item("estimated_duration_minutes", plan.estimated_duration_minutes)?;
+            dict.set_item(
+                "estimated_duration_minutes",
+                plan.estimated_duration_minutes,
+            )?;
             dict.set_item("module_count", plan.modules.len())?;
             dict.set_item("status", "success")?;
         }
@@ -879,8 +937,9 @@ fn py_generate_validation_rules(py: Python<'_>, content: &str) -> PyResult<PyObj
     let rules = generate_validation_rules(&smst);
 
     // Convert to Python dict
-    let json_str = serde_json::to_string(&rules)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Rules serialization failed: {}", e)))?;
+    let json_str = serde_json::to_string(&rules).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("Rules serialization failed: {}", e))
+    })?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -905,7 +964,8 @@ fn py_generate_test_scaffold(py: Python<'_>, content: &str) -> PyResult<PyObject
     let smst = extract_smst(content);
     let scaffold = generate_test_scaffold(&smst);
 
-    let json_str = serde_json::to_string(&scaffold).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&scaffold)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -929,7 +989,8 @@ fn py_generate_rust_stub(py: Python<'_>, content: &str) -> PyResult<PyObject> {
     let smst = extract_smst(content);
     let stub = generate_rust_stub(&smst);
 
-    let json_str = serde_json::to_string(&stub).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&stub)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -948,9 +1009,10 @@ fn py_generate_rust_stub(py: Python<'_>, content: &str) -> PyResult<PyObject> {
 fn py_generate_logic(_py: Python<'_>, content: &str) -> PyResult<String> {
     let smst = extract_smst(content);
     let tree = generate_decision_tree(&smst);
-    
-    serde_yaml::to_string(&tree)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("YAML serialization failed: {}", e)))
+
+    serde_yaml::to_string(&tree).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("YAML serialization failed: {}", e))
+    })
 }
 
 // ============================================================================
@@ -995,10 +1057,15 @@ fn py_checkpoint_create_manager(py: Python<'_>, state_dir: &str) -> PyResult<PyO
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "checkpoint_create_context")]
-fn py_checkpoint_create_context(py: Python<'_>, name: &str, total_steps: usize) -> PyResult<PyObject> {
+fn py_checkpoint_create_context(
+    py: Python<'_>,
+    name: &str,
+    total_steps: usize,
+) -> PyResult<PyObject> {
     let ctx = ExecutionContext::new(name, total_steps);
 
-    let json_str = serde_json::to_string(&ctx).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&ctx)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -1075,7 +1142,8 @@ fn py_checkpoint_load(py: Python<'_>, state_dir: &str, context_id: &str) -> PyRe
 
     match manager.load(context_id) {
         Ok(Some(ctx)) => {
-            let json_str = serde_json::to_string(&ctx).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&ctx)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let json_module = py.import("json")?;
             let py_dict = json_module.call_method1("loads", (json_str,))?;
             Ok(py_dict.into())
@@ -1118,7 +1186,8 @@ fn py_checkpoint_find_resumable(py: Python<'_>, state_dir: &str, name: &str) -> 
 
     match manager.find_resumable(name) {
         Ok(Some(ctx)) => {
-            let json_str = serde_json::to_string(&ctx).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&ctx)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let json_module = py.import("json")?;
             let py_dict = json_module.call_method1("loads", (json_str,))?;
             Ok(py_dict.into())
@@ -1160,7 +1229,8 @@ fn py_checkpoint_list(py: Python<'_>, state_dir: &str) -> PyResult<PyObject> {
 
     match manager.list() {
         Ok(contexts) => {
-            let json_str = serde_json::to_string(&contexts).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&contexts)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let json_module = py.import("json")?;
             let py_list = json_module.call_method1("loads", (json_str,))?;
             dict.set_item("contexts", py_list)?;
@@ -1314,7 +1384,8 @@ fn py_checkpoint_cleanup(py: Python<'_>, state_dir: &str, max_age_days: u32) -> 
 fn py_parse_json_string(py: Python<'_>, content: &str) -> PyResult<PyObject> {
     match parse_json(content) {
         Ok(result) => {
-            let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let json_module = py.import("json")?;
             let py_dict = json_module.call_method1("loads", (json_str,))?;
             Ok(py_dict.into())
@@ -1343,7 +1414,11 @@ fn py_parse_json_string(py: Python<'_>, content: &str) -> PyResult<PyObject> {
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "serialize_json", signature = (data, pretty=false))]
-fn py_serialize_json(py: Python<'_>, data: &Bound<'_, pyo3::PyAny>, pretty: bool) -> PyResult<PyObject> {
+fn py_serialize_json(
+    py: Python<'_>,
+    data: &Bound<'_, pyo3::PyAny>,
+    pretty: bool,
+) -> PyResult<PyObject> {
     // Convert Python object to JSON string, then parse to serde_json::Value
     let json_module = py.import("json")?;
     let json_str: String = json_module.call_method1("dumps", (data,))?.extract()?;
@@ -1400,7 +1475,8 @@ fn py_json_query(py: Python<'_>, data: &Bound<'_, pyo3::PyAny>, path: &str) -> P
     dict.set_item("path", &result.path)?;
 
     if let Some(v) = result.value {
-        let value_str = serde_json::to_string(&v).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+        let value_str = serde_json::to_string(&v)
+            .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
         let py_value = json_module.call_method1("loads", (value_str,))?;
         dict.set_item("value", py_value)?;
     } else {
@@ -1433,7 +1509,12 @@ fn py_json_query(py: Python<'_>, data: &Bound<'_, pyo3::PyAny>, path: &str) -> P
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "json_set")]
-fn py_json_set(py: Python<'_>, data: &Bound<'_, pyo3::PyAny>, path: &str, new_value: &Bound<'_, pyo3::PyAny>) -> PyResult<PyObject> {
+fn py_json_set(
+    py: Python<'_>,
+    data: &Bound<'_, pyo3::PyAny>,
+    path: &str,
+    new_value: &Bound<'_, pyo3::PyAny>,
+) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
 
     // Convert data to serde_json::Value
@@ -1450,7 +1531,8 @@ fn py_json_set(py: Python<'_>, data: &Bound<'_, pyo3::PyAny>, path: &str, new_va
         .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
 
     // Convert back to Python
-    let result_str = serde_json::to_string(&json_data).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let result_str = serde_json::to_string(&json_data)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_result = json_module.call_method1("loads", (result_str,))?;
     Ok(py_result.into())
 }
@@ -1471,7 +1553,11 @@ fn py_json_set(py: Python<'_>, data: &Bound<'_, pyo3::PyAny>, path: &str, new_va
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "json_merge")]
-fn py_json_merge(py: Python<'_>, target: &Bound<'_, pyo3::PyAny>, source: &Bound<'_, pyo3::PyAny>) -> PyResult<PyObject> {
+fn py_json_merge(
+    py: Python<'_>,
+    target: &Bound<'_, pyo3::PyAny>,
+    source: &Bound<'_, pyo3::PyAny>,
+) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
 
     let target_str: String = json_module.call_method1("dumps", (target,))?.extract()?;
@@ -1489,7 +1575,8 @@ fn py_json_merge(py: Python<'_>, target: &Bound<'_, pyo3::PyAny>, source: &Bound
     dict.set_item("keys_added", result.keys_added)?;
     dict.set_item("keys_overwritten", result.keys_overwritten)?;
 
-    let data_str = serde_json::to_string(&result.data).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let data_str = serde_json::to_string(&result.data)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_data = json_module.call_method1("loads", (data_str,))?;
     dict.set_item("data", py_data)?;
 
@@ -1514,7 +1601,11 @@ fn py_json_merge(py: Python<'_>, target: &Bound<'_, pyo3::PyAny>, source: &Bound
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "json_diff")]
-fn py_json_diff(py: Python<'_>, left: &Bound<'_, pyo3::PyAny>, right: &Bound<'_, pyo3::PyAny>) -> PyResult<PyObject> {
+fn py_json_diff(
+    py: Python<'_>,
+    left: &Bound<'_, pyo3::PyAny>,
+    right: &Bound<'_, pyo3::PyAny>,
+) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
 
     let left_str: String = json_module.call_method1("dumps", (left,))?.extract()?;
@@ -1566,7 +1657,8 @@ fn py_json_flatten(py: Python<'_>, data: &Bound<'_, pyo3::PyAny>) -> PyResult<Py
     dict.set_item("total_keys", result.total_keys)?;
 
     // Convert HashMap to Python dict
-    let flat_str = serde_json::to_string(&result.data).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let flat_str = serde_json::to_string(&result.data)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_flat = json_module.call_method1("loads", (flat_str,))?;
     dict.set_item("data", py_flat)?;
 
@@ -1588,11 +1680,15 @@ fn py_json_flatten(py: Python<'_>, data: &Bound<'_, pyo3::PyAny>) -> PyResult<Py
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "json_unflatten")]
-fn py_json_unflatten(py: Python<'_>, data: std::collections::HashMap<String, pyo3::Py<pyo3::PyAny>>) -> PyResult<PyObject> {
+fn py_json_unflatten(
+    py: Python<'_>,
+    data: std::collections::HashMap<String, pyo3::Py<pyo3::PyAny>>,
+) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
 
     // Convert Python values to serde_json::Value
-    let mut rust_map: std::collections::HashMap<String, serde_json::Value> = std::collections::HashMap::new();
+    let mut rust_map: std::collections::HashMap<String, serde_json::Value> =
+        std::collections::HashMap::new();
     for (key, py_value) in data {
         let value_str: String = json_module.call_method1("dumps", (py_value,))?.extract()?;
         let json_value: serde_json::Value = serde_json::from_str(&value_str)
@@ -1602,7 +1698,8 @@ fn py_json_unflatten(py: Python<'_>, data: std::collections::HashMap<String, pyo
 
     match unflatten_json(&rust_map) {
         Ok(result) => {
-            let result_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let result_str = serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (result_str,))?;
             Ok(py_result.into())
         }
@@ -1625,17 +1722,23 @@ fn py_json_unflatten(py: Python<'_>, data: std::collections::HashMap<String, pyo
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "execute_logic")]
-fn py_execute_logic(py: Python<'_>, tree_yaml: &str, inputs: &Bound<'_, pyo3::PyAny>) -> PyResult<PyObject> {
+fn py_execute_logic(
+    py: Python<'_>,
+    tree_yaml: &str,
+    inputs: &Bound<'_, pyo3::PyAny>,
+) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
 
     // Parse tree from YAML
-    let tree: DecisionTree = serde_yaml::from_str(tree_yaml)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Invalid decision tree YAML: {}", e)))?;
+    let tree: DecisionTree = serde_yaml::from_str(tree_yaml).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("Invalid decision tree YAML: {}", e))
+    })?;
 
     // Convert inputs dict to HashMap<String, Value> via JSON
     let inputs_str: String = json_module.call_method1("dumps", (inputs,))?.extract()?;
-    let variables: HashMap<String, Value> = serde_json::from_str(&inputs_str)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Invalid inputs format: {}", e)))?;
+    let variables: HashMap<String, Value> = serde_json::from_str(&inputs_str).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("Invalid inputs format: {}", e))
+    })?;
 
     let mut context = DecisionContext {
         variables,
@@ -1651,17 +1754,22 @@ fn py_execute_logic(py: Python<'_>, tree_yaml: &str, inputs: &Bound<'_, pyo3::Py
     match result {
         ExecutionResult::Value(val) => {
             dict.set_item("status", "success")?;
-            let val_json = serde_json::to_string(&val).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let val_json = serde_json::to_string(&val)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_val = json_module.call_method1("loads", (val_json,))?;
             dict.set_item("value", py_val)?;
-        },
-        ExecutionResult::LlmRequest { prompt, context: llm_ctx } => {
+        }
+        ExecutionResult::LlmRequest {
+            prompt,
+            context: llm_ctx,
+        } => {
             dict.set_item("status", "llm_fallback")?;
             dict.set_item("prompt", prompt)?;
-            let ctx_json = serde_json::to_string(&llm_ctx).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let ctx_json = serde_json::to_string(&llm_ctx)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_ctx = json_module.call_method1("loads", (ctx_json,))?;
             dict.set_item("context", py_ctx)?;
-        },
+        }
         ExecutionResult::Error(e) => {
             dict.set_item("status", "error")?;
             dict.set_item("error", e)?;
@@ -1690,7 +1798,8 @@ fn py_build_skill(py: Python<'_>, path: &str, dry_run: bool) -> PyResult<PyObjec
     let p = std::path::Path::new(path);
     let result = build_skill(p, dry_run);
 
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -1710,7 +1819,8 @@ fn py_verify_skill(py: Python<'_>, path: &str) -> PyResult<PyObject> {
     let p = std::path::Path::new(path);
     let result = verify_skill(p);
 
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let json_module = py.import("json")?;
     let py_dict = json_module.call_method1("loads", (json_str,))?;
     Ok(py_dict.into())
@@ -1746,17 +1856,20 @@ fn py_parse_chain_inline(py: Python<'_>, input: &str) -> PyResult<PyObject> {
             dict.set_item("step_count", chain.len())?;
 
             // Extract step names
-            let step_names: Vec<String> = chain.steps.iter().filter_map(|s| {
-                match s {
+            let step_names: Vec<String> = chain
+                .steps
+                .iter()
+                .filter_map(|s| match s {
                     StepType::Regular(step) => Some(step.skill.clone()),
                     StepType::Conditional(c) => Some(format!("conditional:{}", c.then_step.skill)),
-                }
-            }).collect();
+                })
+                .collect();
             dict.set_item("steps", step_names)?;
 
             // Serialize full chain as JSON for advanced use
             let json_module = py.import("json")?;
-            let chain_json = serde_json::to_string(&chain).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let chain_json = serde_json::to_string(&chain)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_chain = json_module.call_method1("loads", (chain_json,))?;
             dict.set_item("chain", py_chain)?;
         }
@@ -1796,17 +1909,20 @@ fn py_parse_chain_yaml(py: Python<'_>, content: &str) -> PyResult<PyObject> {
             dict.set_item("step_count", chain.len())?;
 
             // Extract step names
-            let step_names: Vec<String> = chain.steps.iter().filter_map(|s| {
-                match s {
+            let step_names: Vec<String> = chain
+                .steps
+                .iter()
+                .filter_map(|s| match s {
                     StepType::Regular(step) => Some(step.skill.clone()),
                     StepType::Conditional(c) => Some(format!("conditional:{}", c.then_step.skill)),
-                }
-            }).collect();
+                })
+                .collect();
             dict.set_item("steps", step_names)?;
 
             // Serialize full chain as JSON for advanced use
             let json_module = py.import("json")?;
-            let chain_json = serde_json::to_string(&chain).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let chain_json = serde_json::to_string(&chain)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_chain = json_module.call_method1("loads", (chain_json,))?;
             dict.set_item("chain", py_chain)?;
         }
@@ -1835,13 +1951,19 @@ fn py_parse_chain_yaml(py: Python<'_>, content: &str) -> PyResult<PyObject> {
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "validate_chain_json")]
-fn py_validate_chain_json(py: Python<'_>, chain_json: &Bound<'_, pyo3::PyAny>) -> PyResult<PyObject> {
+fn py_validate_chain_json(
+    py: Python<'_>,
+    chain_json: &Bound<'_, pyo3::PyAny>,
+) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
 
     // Convert Python dict to JSON string, then parse to Chain
-    let json_str: String = json_module.call_method1("dumps", (chain_json,))?.extract()?;
-    let chain: Chain = serde_json::from_str(&json_str)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Invalid chain JSON: {}", e)))?;
+    let json_str: String = json_module
+        .call_method1("dumps", (chain_json,))?
+        .extract()?;
+    let chain: Chain = serde_json::from_str(&json_str).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("Invalid chain JSON: {}", e))
+    })?;
 
     let validation = validate_chain(&chain);
 
@@ -1849,13 +1971,22 @@ fn py_validate_chain_json(py: Python<'_>, chain_json: &Bound<'_, pyo3::PyAny>) -
     dict.set_item("valid", validation.valid)?;
 
     // Serialize issues
-    let issues_json = serde_json::to_string(&validation.issues).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let issues_json = serde_json::to_string(&validation.issues)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_issues = json_module.call_method1("loads", (issues_json,))?;
     dict.set_item("issues", py_issues)?;
 
     // Count by severity
-    let warnings = validation.issues.iter().filter(|i| i.severity == crate::modules::chain::Severity::Warning).count();
-    let errors = validation.issues.iter().filter(|i| i.severity == crate::modules::chain::Severity::Error).count();
+    let warnings = validation
+        .issues
+        .iter()
+        .filter(|i| i.severity == crate::modules::chain::Severity::Warning)
+        .count();
+    let errors = validation
+        .issues
+        .iter()
+        .filter(|i| i.severity == crate::modules::chain::Severity::Error)
+        .count();
     dict.set_item("warnings", warnings)?;
     dict.set_item("errors", errors)?;
 
@@ -1877,13 +2008,20 @@ fn py_validate_chain_json(py: Python<'_>, chain_json: &Bound<'_, pyo3::PyAny>) -
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "execute_chain_dry_run", signature = (chain_json, max_parallel=4))]
-fn py_execute_chain_dry_run(py: Python<'_>, chain_json: &Bound<'_, pyo3::PyAny>, max_parallel: usize) -> PyResult<PyObject> {
+fn py_execute_chain_dry_run(
+    py: Python<'_>,
+    chain_json: &Bound<'_, pyo3::PyAny>,
+    max_parallel: usize,
+) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
 
     // Convert Python dict to Chain
-    let json_str: String = json_module.call_method1("dumps", (chain_json,))?.extract()?;
-    let chain: Chain = serde_json::from_str(&json_str)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Invalid chain JSON: {}", e)))?;
+    let json_str: String = json_module
+        .call_method1("dumps", (chain_json,))?
+        .extract()?;
+    let chain: Chain = serde_json::from_str(&json_str).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("Invalid chain JSON: {}", e))
+    })?;
 
     // Configure for dry run
     let config = ExecutorConfig {
@@ -1905,7 +2043,8 @@ fn py_execute_chain_dry_run(py: Python<'_>, chain_json: &Bound<'_, pyo3::PyAny>,
     );
 
     // Serialize result
-    let result_json = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let result_json = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_result = json_module.call_method1("loads", (result_json,))?;
     Ok(py_result.into())
 }
@@ -1940,7 +2079,8 @@ fn py_create_chain(py: Python<'_>, name: &str, steps: Vec<String>) -> PyResult<P
 
     // Serialize full chain
     let json_module = py.import("json")?;
-    let chain_json = serde_json::to_string(&chain).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let chain_json = serde_json::to_string(&chain)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_chain = json_module.call_method1("loads", (chain_json,))?;
     dict.set_item("chain", py_chain)?;
 
@@ -1974,7 +2114,8 @@ fn py_chi_square(py: Python<'_>, a: i64, b: i64, c: i64, d: i64) -> PyResult<PyO
     let result = chi_square_test(&input);
 
     let json_module = py.import("json")?;
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_result = json_module.call_method1("loads", (json_str,))?;
     Ok(py_result.into())
 }
@@ -2001,7 +2142,8 @@ fn py_t_test(py: Python<'_>, group1: Vec<f64>, group2: Vec<f64>) -> PyResult<PyO
     match t_test_independent(&input) {
         Ok(result) => {
             let json_module = py.import("json")?;
-            let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (json_str,))?;
             Ok(py_result.into())
         }
@@ -2036,7 +2178,8 @@ fn py_proportion_z_test(py: Python<'_>, successes: i64, n: i64, null: f64) -> Py
     match proportion_test(&input) {
         Ok(result) => {
             let json_module = py.import("json")?;
-            let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (json_str,))?;
             Ok(py_result.into())
         }
@@ -2066,7 +2209,8 @@ fn py_pearson_correlation(py: Python<'_>, x: Vec<f64>, y: Vec<f64>) -> PyResult<
     match correlation_test(&input) {
         Ok(result) => {
             let json_module = py.import("json")?;
-            let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&result)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (json_str,))?;
             Ok(py_result.into())
         }
@@ -2124,7 +2268,8 @@ fn py_detect_anti_patterns(
     let result = detect_anti_patterns(&feat, &context, &patterns, &config);
 
     let json_module = py.import("json")?;
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_result = json_module.call_method1("loads", (json_str,))?;
     Ok(py_result.into())
 }
@@ -2154,8 +2299,9 @@ fn py_detect_anti_patterns_custom(
     artifact_name: &str,
 ) -> PyResult<PyObject> {
     // Parse patterns from JSON
-    let patterns: Vec<AntiPattern> = serde_json::from_str(patterns_json)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Invalid patterns JSON: {}", e)))?;
+    let patterns: Vec<AntiPattern> = serde_json::from_str(patterns_json).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("Invalid patterns JSON: {}", e))
+    })?;
 
     let mut feat = Features::default();
     feat.numeric = features;
@@ -2170,7 +2316,8 @@ fn py_detect_anti_patterns_custom(
     let result = detect_anti_patterns(&feat, &context, &patterns, &config);
 
     let json_module = py.import("json")?;
-    let json_str = serde_json::to_string(&result).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&result)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_result = json_module.call_method1("loads", (json_str,))?;
     Ok(py_result.into())
 }
@@ -2189,7 +2336,8 @@ fn py_get_builtin_patterns(py: Python<'_>) -> PyResult<PyObject> {
     ];
 
     let json_module = py.import("json")?;
-    let json_str = serde_json::to_string(&patterns).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&patterns)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_result = json_module.call_method1("loads", (json_str,))?;
     Ok(py_result.into())
 }
@@ -2219,7 +2367,8 @@ fn py_session_load(py: Python<'_>, path: &str) -> PyResult<PyObject> {
     match session_load(p) {
         Ok(state) => {
             let json_module = py.import("json")?;
-            let json_str = serde_json::to_string(&state).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&state)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (json_str,))?;
             Ok(py_result.into())
         }
@@ -2248,14 +2397,21 @@ fn py_session_load(py: Python<'_>, path: &str) -> PyResult<PyObject> {
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "session_save")]
-fn py_session_save(py: Python<'_>, path: &str, state_json: &Bound<'_, pyo3::PyAny>) -> PyResult<PyObject> {
+fn py_session_save(
+    py: Python<'_>,
+    path: &str,
+    state_json: &Bound<'_, pyo3::PyAny>,
+) -> PyResult<PyObject> {
     let json_module = py.import("json")?;
     let dict = PyDict::new(py);
 
     // Convert Python dict to SessionState
-    let json_str: String = json_module.call_method1("dumps", (state_json,))?.extract()?;
-    let state: SessionState = serde_json::from_str(&json_str)
-        .map_err(|e| pyo3::exceptions::PyValueError::new_err(format!("Invalid state JSON: {}", e)))?;
+    let json_str: String = json_module
+        .call_method1("dumps", (state_json,))?
+        .extract()?;
+    let state: SessionState = serde_json::from_str(&json_str).map_err(|e| {
+        pyo3::exceptions::PyValueError::new_err(format!("Invalid state JSON: {}", e))
+    })?;
 
     let p = std::path::Path::new(path);
 
@@ -2300,7 +2456,8 @@ fn py_session_track_execution(
     match session_track(p, skill_name, context) {
         Ok(state) => {
             let json_module = py.import("json")?;
-            let json_str = serde_json::to_string(&state).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&state)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (json_str,))?;
             Ok(py_result.into())
         }
@@ -2334,7 +2491,8 @@ fn py_session_complete(
     match session_complete(p, duration_ms) {
         Ok(state) => {
             let json_module = py.import("json")?;
-            let json_str = serde_json::to_string(&state).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&state)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (json_str,))?;
             Ok(py_result.into())
         }
@@ -2358,17 +2516,14 @@ fn py_session_complete(
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "session_fail", signature = (state_path, error=None))]
-fn py_session_fail(
-    py: Python<'_>,
-    state_path: &str,
-    error: Option<&str>,
-) -> PyResult<PyObject> {
+fn py_session_fail(py: Python<'_>, state_path: &str, error: Option<&str>) -> PyResult<PyObject> {
     let p = std::path::Path::new(state_path);
 
     match session_fail(p, error) {
         Ok(state) => {
             let json_module = py.import("json")?;
-            let json_str = serde_json::to_string(&state).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&state)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (json_str,))?;
             Ok(py_result.into())
         }
@@ -2393,7 +2548,12 @@ fn py_session_fail(
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "session_append_log")]
-fn py_session_append_log(py: Python<'_>, log_path: &str, skill_name: &str, message: &str) -> PyResult<PyObject> {
+fn py_session_append_log(
+    py: Python<'_>,
+    log_path: &str,
+    skill_name: &str,
+    message: &str,
+) -> PyResult<PyObject> {
     let p = std::path::Path::new(log_path);
     let dict = PyDict::new(py);
 
@@ -2447,7 +2607,8 @@ fn py_session_route(
     match session_route(state_p, log_p, skill_name, context) {
         Ok(state) => {
             let json_module = py.import("json")?;
-            let json_str = serde_json::to_string(&state).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+            let json_str = serde_json::to_string(&state)
+                .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
             let py_result = json_module.call_method1("loads", (json_str,))?;
             Ok(py_result.into())
         }
@@ -2493,11 +2654,14 @@ fn py_validate_epistemic_claim(py: Python<'_>, claim: &str) -> PyResult<PyObject
     dict.set_item("valid", result.valid)?;
     dict.set_item("issues", result.issues)?;
     dict.set_item("suggestions", result.suggestions)?;
-    dict.set_item("confidence_level", match result.confidence_level {
-        ConfidenceLevel::High => "high",
-        ConfidenceLevel::Medium => "medium",
-        ConfidenceLevel::Low => "low",
-    })?;
+    dict.set_item(
+        "confidence_level",
+        match result.confidence_level {
+            ConfidenceLevel::High => "high",
+            ConfidenceLevel::Medium => "medium",
+            ConfidenceLevel::Low => "low",
+        },
+    )?;
     dict.set_item("detected_words", result.detected_words)?;
     Ok(dict.into())
 }
@@ -2510,7 +2674,8 @@ fn py_validate_epistemic_claims(py: Python<'_>, claims: Vec<String>) -> PyResult
     let claim_refs: Vec<&str> = claims.iter().map(|s| s.as_str()).collect();
     let results = validate_claims(&claim_refs);
     let json_module = py.import("json")?;
-    let json_str = serde_json::to_string(&results).map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
+    let json_str = serde_json::to_string(&results)
+        .map_err(|e| pyo3::exceptions::PyValueError::new_err(e.to_string()))?;
     let py_result = json_module.call_method1("loads", (json_str,))?;
     Ok(py_result.into())
 }
@@ -2519,7 +2684,12 @@ fn py_validate_epistemic_claims(py: Python<'_>, claims: Vec<String>) -> PyResult
 #[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(name = "log_skill_execution")]
-fn py_log_skill_execution(py: Python<'_>, skill_name: &str, session_id: &str, status: &str) -> PyResult<PyObject> {
+fn py_log_skill_execution(
+    py: Python<'_>,
+    skill_name: &str,
+    session_id: &str,
+    status: &str,
+) -> PyResult<PyObject> {
     tracing::info!(
         skill = %skill_name,
         session = %session_id,
@@ -2676,7 +2846,10 @@ pub fn rsk(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // Module info
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
-    m.add("__doc__", "Rust Skill Kernel - High-performance Python bindings")?;
+    m.add(
+        "__doc__",
+        "Rust Skill Kernel - High-performance Python bindings",
+    )?;
 
     Ok(())
 }
