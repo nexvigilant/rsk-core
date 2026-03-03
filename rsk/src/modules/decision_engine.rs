@@ -391,16 +391,28 @@ impl DecisionEngine {
             Operator::IsNull => matches!(actual, Value::Null),
             Operator::IsNotNull => !matches!(actual, Value::Null),
             Operator::Gt => {
-                actual.as_f64().unwrap_or(0.0) > target.and_then(|v| v.as_f64()).unwrap_or(0.0)
+                match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
+                    (Some(a), Some(t)) => a > t,
+                    _ => false,
+                }
             }
             Operator::Gte => {
-                actual.as_f64().unwrap_or(0.0) >= target.and_then(|v| v.as_f64()).unwrap_or(0.0)
+                match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
+                    (Some(a), Some(t)) => a >= t,
+                    _ => false,
+                }
             }
             Operator::Lt => {
-                actual.as_f64().unwrap_or(0.0) < target.and_then(|v| v.as_f64()).unwrap_or(0.0)
+                match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
+                    (Some(a), Some(t)) => a < t,
+                    _ => false,
+                }
             }
             Operator::Lte => {
-                actual.as_f64().unwrap_or(0.0) <= target.and_then(|v| v.as_f64()).unwrap_or(0.0)
+                match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
+                    (Some(a), Some(t)) => a <= t,
+                    _ => false,
+                }
             }
             Operator::Contains => {
                 if let (Value::String(s), Some(Value::String(t))) = (actual, target) {

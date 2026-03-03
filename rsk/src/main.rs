@@ -8,9 +8,9 @@ use clap::{Parser, Subcommand};
 mod cli;
 
 use cli::{
-    ChainAction, CompressAction, ExecAction, GenerateAction, GraphAction, GuardianAction,
-    HooksAction, RouteAction, Sha256Action, SkillsAction, StateAction, TaxonomyAction,
-    TelemetryAction, TextAction, TovAction, YamlAction,
+    AntiPatternAction, ChainAction, CompressAction, ExecAction, GenerateAction, GraphAction,
+    GuardianAction, HooksAction, MicrogramAction, RouteAction, Sha256Action, SkillsAction,
+    StateAction, TaxonomyAction, TelemetryAction, TextAction, TovAction, YamlAction,
 };
 
 #[cfg(feature = "forge")]
@@ -172,10 +172,22 @@ enum Commands {
         #[command(subcommand)]
         action: SkillsAction,
     },
-    /// Skill chain validation
+    /// Skill chain validation and execution
     Chain {
         #[command(subcommand)]
         action: ChainAction,
+    },
+    /// Anti-pattern detection and registration
+    #[command(name = "anti-pattern")]
+    AntiPattern {
+        #[command(subcommand)]
+        action: AntiPatternAction,
+    },
+    /// Microgram: atomic self-testing programs
+    #[command(name = "mcg")]
+    Microgram {
+        #[command(subcommand)]
+        action: MicrogramAction,
     },
     /// Evolve a skill from logic.yaml to Rust intrinsic
     Evolve {
@@ -261,6 +273,10 @@ fn main() {
         Commands::State { action } => cli::handlers::state::handle_state(&action),
         Commands::Skills { action } => cli::handlers::skills::handle_skills(&action),
         Commands::Chain { action } => cli::handlers::skills::handle_chain(&action),
+        Commands::AntiPattern { action } => {
+            cli::handlers::anti_pattern::handle_anti_pattern(&action)
+        }
+        Commands::Microgram { action } => cli::handlers::microgram::handle_microgram(&action),
         Commands::Evolve { name, registry } => {
             cli::handlers::skills::handle_evolve(&name, &registry)
         }
