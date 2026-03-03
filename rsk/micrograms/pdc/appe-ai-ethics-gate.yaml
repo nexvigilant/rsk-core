@@ -1,0 +1,329 @@
+name: appe-ai-ethics-gate
+description: "APPE Ch7.5: AI ethics decision gate — evaluates ethical reasoning about AI in pharmacovigilance across 5 core principles"
+version: 0.1.0
+tree:
+  start: check_ho
+  nodes:
+    # --- PHASE 1: Check all 5 true (EXEMPLARY path) ---
+    check_ho:
+      type: condition
+      variable: human_oversight_maintained
+      operator: eq
+      value: true
+      true_next: check_ba
+      false_next: xho_ba
+
+    check_ba:
+      type: condition
+      variable: bias_assessment_done
+      operator: eq
+      value: true
+      true_next: check_pp
+      false_next: xba_pp
+
+    check_pp:
+      type: condition
+      variable: privacy_protected
+      operator: eq
+      value: true
+      true_next: check_td
+      false_next: xpp_td
+
+    check_td:
+      type: condition
+      variable: transparency_documented
+      operator: eq
+      value: true
+      true_next: check_vp
+      false_next: xtd_vp
+
+    check_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: exemplary
+      false_next: prof_validation
+
+    # --- ho=F subpath ---
+    xho_ba:
+      type: condition
+      variable: bias_assessment_done
+      operator: eq
+      value: true
+      true_next: xho_bat_pp
+      false_next: xho_baf_pp
+
+    xho_bat_pp:
+      type: condition
+      variable: privacy_protected
+      operator: eq
+      value: true
+      true_next: xho_bat_ppt_td
+      false_next: xho_bat_ppf_td
+
+    xho_bat_ppt_td:
+      type: condition
+      variable: transparency_documented
+      operator: eq
+      value: true
+      true_next: xho_bat_ppt_tdt_vp
+      false_next: xho_bat_ppt_tdf_vp
+
+    xho_bat_ppt_tdt_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: prof_oversight
+      false_next: developing
+
+    xho_bat_ppt_tdf_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: developing
+      false_next: insufficient
+
+    xho_bat_ppf_td:
+      type: condition
+      variable: transparency_documented
+      operator: eq
+      value: true
+      true_next: xho_bat_ppf_tdt_vp
+      false_next: insufficient
+
+    xho_bat_ppf_tdt_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: developing
+      false_next: insufficient
+
+    xho_baf_pp:
+      type: condition
+      variable: privacy_protected
+      operator: eq
+      value: true
+      true_next: xho_baf_ppt_td
+      false_next: insufficient
+
+    xho_baf_ppt_td:
+      type: condition
+      variable: transparency_documented
+      operator: eq
+      value: true
+      true_next: xho_baf_ppt_tdt_vp
+      false_next: insufficient
+
+    xho_baf_ppt_tdt_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: developing
+      false_next: insufficient
+
+    # --- ba=F subpath (ho=T, ba=F) ---
+    xba_pp:
+      type: condition
+      variable: privacy_protected
+      operator: eq
+      value: true
+      true_next: xba_ppt_td
+      false_next: xba_ppf_td
+
+    xba_ppt_td:
+      type: condition
+      variable: transparency_documented
+      operator: eq
+      value: true
+      true_next: xba_ppt_tdt_vp
+      false_next: xba_ppt_tdf_vp
+
+    xba_ppt_tdt_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: prof_bias
+      false_next: developing
+
+    xba_ppt_tdf_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: developing
+      false_next: insufficient
+
+    xba_ppf_td:
+      type: condition
+      variable: transparency_documented
+      operator: eq
+      value: true
+      true_next: xba_ppf_tdt_vp
+      false_next: insufficient
+
+    xba_ppf_tdt_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: developing
+      false_next: insufficient
+
+    # --- pp=F subpath (ho=T, ba=T, pp=F) ---
+    xpp_td:
+      type: condition
+      variable: transparency_documented
+      operator: eq
+      value: true
+      true_next: xpp_tdt_vp
+      false_next: xpp_tdf_vp
+
+    xpp_tdt_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: prof_privacy
+      false_next: developing
+
+    xpp_tdf_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: developing
+      false_next: insufficient
+
+    # --- td=F subpath (ho=T, ba=T, pp=T, td=F) ---
+    xtd_vp:
+      type: condition
+      variable: validation_protocol_exists
+      operator: eq
+      value: true
+      true_next: prof_transparency
+      false_next: developing
+
+    # --- RETURN NODES ---
+    exemplary:
+      type: return
+      value:
+        ethics_level: EXEMPLARY
+        ethics_score: 5
+        ready_for_epa10: true
+        gaps: []
+        remediation: "All AI ethics principles demonstrated — cleared for EPA10 progression"
+        principle_violated: "none"
+
+    prof_oversight:
+      type: return
+      value:
+        ethics_level: PROFICIENT
+        ethics_score: 4
+        ready_for_epa10: true
+        gaps: ["human_oversight_maintained"]
+        remediation: "Establish and document human oversight protocols for all AI-assisted PV decisions"
+        principle_violated: "Human Oversight"
+
+    prof_bias:
+      type: return
+      value:
+        ethics_level: PROFICIENT
+        ethics_score: 4
+        ready_for_epa10: true
+        gaps: ["bias_assessment_done"]
+        remediation: "Conduct and document comprehensive AI bias assessment before deployment"
+        principle_violated: "AI Fairness"
+
+    prof_privacy:
+      type: return
+      value:
+        ethics_level: PROFICIENT
+        ethics_score: 4
+        ready_for_epa10: true
+        gaps: ["privacy_protected"]
+        remediation: "Implement privacy-by-design principles and document data protection measures"
+        principle_violated: "AI Privacy"
+
+    prof_transparency:
+      type: return
+      value:
+        ethics_level: PROFICIENT
+        ethics_score: 4
+        ready_for_epa10: true
+        gaps: ["transparency_documented"]
+        remediation: "Document AI decision-making rationale and explainability methods"
+        principle_violated: "AI Transparency"
+
+    prof_validation:
+      type: return
+      value:
+        ethics_level: PROFICIENT
+        ethics_score: 4
+        ready_for_epa10: true
+        gaps: ["validation_protocol_exists"]
+        remediation: "Develop and document AI validation protocol with performance benchmarks"
+        principle_violated: "AI Validation"
+
+    developing:
+      type: return
+      value:
+        ethics_level: DEVELOPING
+        ethics_score: 3
+        ready_for_epa10: false
+        gaps: ["multiple_principles"]
+        remediation: "Address identified AI ethics gaps through targeted training and protocol development before EPA10"
+        principle_violated: "Multiple AI ethics principles require attention"
+
+    insufficient:
+      type: return
+      value:
+        ethics_level: INSUFFICIENT
+        ethics_score: 1
+        ready_for_epa10: false
+        gaps: ["critical_foundation_missing"]
+        remediation: "Comprehensive AI ethics training required — complete foundational modules before advanced PV work"
+        principle_violated: "Core AI ethics principles not demonstrated"
+
+tests:
+# EXEMPLARY: all 5 principles satisfied
+- input: { human_oversight_maintained: true, bias_assessment_done: true, privacy_protected: true, transparency_documented: true, validation_protocol_exists: true }
+  expect: { ethics_level: EXEMPLARY, ethics_score: 5, ready_for_epa10: true }
+# PROFICIENT: oversight gap only
+- input: { human_oversight_maintained: false, bias_assessment_done: true, privacy_protected: true, transparency_documented: true, validation_protocol_exists: true }
+  expect: { ethics_level: PROFICIENT, ready_for_epa10: true, gaps: [human_oversight_maintained] }
+# PROFICIENT: bias gap only
+- input: { human_oversight_maintained: true, bias_assessment_done: false, privacy_protected: true, transparency_documented: true, validation_protocol_exists: true }
+  expect: { ethics_level: PROFICIENT, ready_for_epa10: true, gaps: [bias_assessment_done] }
+# PROFICIENT: privacy gap only
+- input: { human_oversight_maintained: true, bias_assessment_done: true, privacy_protected: false, transparency_documented: true, validation_protocol_exists: true }
+  expect: { ethics_level: PROFICIENT, ready_for_epa10: true, gaps: [privacy_protected] }
+# PROFICIENT: transparency gap only
+- input: { human_oversight_maintained: true, bias_assessment_done: true, privacy_protected: true, transparency_documented: false, validation_protocol_exists: true }
+  expect: { ethics_level: PROFICIENT, ready_for_epa10: true, gaps: [transparency_documented] }
+# PROFICIENT: validation gap only
+- input: { human_oversight_maintained: true, bias_assessment_done: true, privacy_protected: true, transparency_documented: true, validation_protocol_exists: false }
+  expect: { ethics_level: PROFICIENT, ready_for_epa10: true, gaps: [validation_protocol_exists] }
+# DEVELOPING: 3 true — oversight and bias missing
+- input: { human_oversight_maintained: false, bias_assessment_done: false, privacy_protected: true, transparency_documented: true, validation_protocol_exists: true }
+  expect: { ethics_level: DEVELOPING, ready_for_epa10: false }
+# DEVELOPING: 3 true — oversight and validation missing
+- input: { human_oversight_maintained: false, bias_assessment_done: true, privacy_protected: true, transparency_documented: true, validation_protocol_exists: false }
+  expect: { ethics_level: DEVELOPING, ready_for_epa10: false }
+# INSUFFICIENT: 2 true — three principles missing
+- input: { human_oversight_maintained: false, bias_assessment_done: false, privacy_protected: false, transparency_documented: true, validation_protocol_exists: true }
+  expect: { ethics_level: INSUFFICIENT, ready_for_epa10: false }
+# INSUFFICIENT: 1 true — four principles missing
+- input: { human_oversight_maintained: false, bias_assessment_done: false, privacy_protected: false, transparency_documented: false, validation_protocol_exists: true }
+  expect: { ethics_level: INSUFFICIENT, ready_for_epa10: false }
+# INSUFFICIENT: all false
+- input: { human_oversight_maintained: false, bias_assessment_done: false, privacy_protected: false, transparency_documented: false, validation_protocol_exists: false }
+  expect: { ethics_level: INSUFFICIENT, ready_for_epa10: false }
+# INSUFFICIENT: only oversight true
+- input: { human_oversight_maintained: true, bias_assessment_done: false, privacy_protected: false, transparency_documented: false, validation_protocol_exists: false }
+  expect: { ethics_level: INSUFFICIENT, ready_for_epa10: false }

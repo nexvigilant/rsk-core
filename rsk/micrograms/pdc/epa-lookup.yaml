@@ -1,0 +1,395 @@
+name: epa-lookup
+description: "PDC: Return full EPA specification by ID (1-20) — name, tier, primary/supporting domains with min levels, CPA mapping"
+version: 0.1.0
+tree:
+  start: check_e1
+  nodes:
+    check_e1:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 1
+      true_next: e1
+      false_next: check_e2
+    check_e2:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 2
+      true_next: e2
+      false_next: check_e3
+    check_e3:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 3
+      true_next: e3
+      false_next: check_e4
+    check_e4:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 4
+      true_next: e4
+      false_next: check_e5
+    check_e5:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 5
+      true_next: e5
+      false_next: check_e6
+    check_e6:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 6
+      true_next: e6
+      false_next: check_e7
+    check_e7:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 7
+      true_next: e7
+      false_next: check_e8
+    check_e8:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 8
+      true_next: e8
+      false_next: check_e9
+    check_e9:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 9
+      true_next: e9
+      false_next: check_e10
+    check_e10:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 10
+      true_next: e10
+      false_next: check_e11
+    check_e11:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 11
+      true_next: e11
+      false_next: check_e12
+    check_e12:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 12
+      true_next: e12
+      false_next: check_e13
+    check_e13:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 13
+      true_next: e13
+      false_next: check_e14
+    check_e14:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 14
+      true_next: e14
+      false_next: check_e15
+    check_e15:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 15
+      true_next: e15
+      false_next: check_e16
+    check_e16:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 16
+      true_next: e16
+      false_next: check_e17
+    check_e17:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 17
+      true_next: e17
+      false_next: check_e18
+    check_e18:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 18
+      true_next: e18
+      false_next: check_e19
+    check_e19:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 19
+      true_next: e19
+      false_next: check_e20
+    check_e20:
+      type: condition
+      variable: epa_id
+      operator: eq
+      value: 20
+      true_next: e20
+      false_next: invalid
+    e1:
+      type: return
+      value:
+        name: "Process and Evaluate Individual Case Safety Reports"
+        tier: CORE
+        cpa: 1
+        primary_domains: "D4:L3, D2:L3, D3:L3"
+        supporting_domains: "D1:L2, D14:L2, D6:L2"
+        domain_count: 6
+        max_primary_level: 3
+        quality_metrics: "accuracy>98%, ADR_id=100%, timeline=100%, coding>95%"
+    e2:
+      type: return
+      value:
+        name: "Perform Literature Screening and Evaluation for Safety Signals"
+        tier: CORE
+        cpa: 2
+        primary_domains: "D15:L3, D8:L3, D2:L3, D5:L3"
+        supporting_domains: "D9:L2, D14:L2"
+        domain_count: 6
+        max_primary_level: 3
+    e3:
+      type: return
+      value:
+        name: "Prepare and Present Safety Information to Stakeholders"
+        tier: CORE
+        cpa: 6
+        primary_domains: "D14:L3, D10:L3, D1:L3"
+        supporting_domains: "D13:L2, D2:L3, D3:L2"
+        domain_count: 6
+        max_primary_level: 3
+    e4:
+      type: return
+      value:
+        name: "Conduct Post-Marketing Surveillance Data Analysis"
+        tier: CORE
+        cpa: 5
+        primary_domains: "D7:L3, D9:L3, D8:L3, D5:L3"
+        supporting_domains: "D15:L3, D10:L2, D6:L2"
+        domain_count: 7
+        max_primary_level: 3
+    e5:
+      type: return
+      value:
+        name: "Detect and Validate Potential Safety Signals"
+        tier: CORE
+        cpa: 2
+        primary_domains: "D8:L4, D2:L3, D10:L3, D3:L3"
+        supporting_domains: "D15:L3, D14:L3, D5:L2"
+        domain_count: 7
+        max_primary_level: 4
+    e6:
+      type: return
+      value:
+        name: "Develop Safety Sections for Regulatory Documents"
+        tier: CORE
+        cpa: 4
+        primary_domains: "D12:L3, D11:L3, D14:L3"
+        supporting_domains: "D10:L3, D2:L2, D6:L2, D3:L2"
+        domain_count: 7
+        max_primary_level: 3
+    e7:
+      type: return
+      value:
+        name: "Design and Implement Risk Minimization Measures"
+        tier: CORE
+        cpa: 3
+        primary_domains: "D11:L4, D13:L3, D14:L3, D6:L3"
+        supporting_domains: "D10:L3, D3:L2"
+        domain_count: 6
+        max_primary_level: 4
+    e8:
+      type: return
+      value:
+        name: "Lead Cross-Functional Safety Investigations"
+        tier: CORE
+        cpa: 2
+        primary_domains: "D8:L4, D14:L4, D1:L3, D10:L3"
+        supporting_domains: "D13:L3, D5:L3"
+        domain_count: 6
+        max_primary_level: 4
+    e9:
+      type: return
+      value:
+        name: "Ensure Pharmacovigilance Quality and Compliance"
+        tier: CORE
+        cpa: 4
+        primary_domains: "D12:L4, D1:L3, D11:L3"
+        supporting_domains: "D4:L3, D7:L3, D5:L3, D6:L2"
+        domain_count: 7
+        max_primary_level: 4
+    e10:
+      type: return
+      value:
+        name: "Implement and Validate AI Tools for Pharmacovigilance"
+        tier: CORE
+        cpa: 8
+        primary_domains: "D1:L4, D8:L4, D12:L3"
+        supporting_domains: "D15:L3, D14:L3, D3:L3, D6:L3"
+        domain_count: 7
+        max_primary_level: 4
+        is_ai_gateway: true
+        unlocks_cpa8: true
+    e11:
+      type: return
+      value:
+        name: "Develop and Execute Global Pharmacovigilance Strategy"
+        tier: EXECUTIVE
+        cpa: 3
+        primary_domains: "D13:L5, D11:L5, D12:L5, D1:L5"
+        supporting_domains: "D10:L4"
+        domain_count: 5
+        max_primary_level: 5
+    e12:
+      type: return
+      value:
+        name: "Lead Digital Transformation in Pharmacovigilance"
+        tier: EXECUTIVE
+        cpa: 8
+        primary_domains: "AllAI:L5, D15:L5, D14:L5"
+        supporting_domains: "D11:L4"
+        domain_count: 4
+        max_primary_level: 5
+    e13:
+      type: return
+      value:
+        name: "Build and Lead High-Performance Global Teams"
+        tier: EXECUTIVE
+        cpa: 6
+        primary_domains: "D14:L5, D13:L5, D1:L5"
+        supporting_domains: "All:L4"
+        domain_count: 15
+        max_primary_level: 5
+    e14:
+      type: return
+      value:
+        name: "Influence Regulatory Policy and Industry Standards"
+        tier: EXECUTIVE
+        cpa: 4
+        primary_domains: "D12:L5+, D1:L5+, D13:L5"
+        supporting_domains: "D14:L5, D10:L5, D5:L4"
+        domain_count: 6
+        max_primary_level: 6
+    e15:
+      type: return
+      value:
+        name: "Drive Innovation in Pharmacovigilance Science"
+        tier: EXECUTIVE
+        cpa: 7
+        primary_domains: "D8:L5+, D9:L5+, D10:L5+, D5:L5+"
+        supporting_domains: "All:L4+"
+        domain_count: 15
+        max_primary_level: 6
+    e16:
+      type: return
+      value:
+        name: "Manage Enterprise Risk and Crisis Response"
+        tier: EXECUTIVE
+        cpa: 3
+        primary_domains: "D11:L5+, D14:L5+, D13:L5"
+        supporting_domains: "D12:L5, D10:L5, D6:L4"
+        domain_count: 6
+        max_primary_level: 6
+    e17:
+      type: return
+      value:
+        name: "Develop Next-Generation PV Leaders"
+        tier: EXECUTIVE
+        cpa: 7
+        primary_domains: "All:L5+, D14:L5+, D1:L5+"
+        supporting_domains: "D3:L5+, D5:L5+, D6:L5+"
+        domain_count: 15
+        max_primary_level: 6
+    e18:
+      type: return
+      value:
+        name: "Create Strategic External Partnerships"
+        tier: EXECUTIVE
+        cpa: 6
+        primary_domains: "D13:L5+, D14:L5, D12:L5"
+        supporting_domains: "D11:L4, D15:L4"
+        domain_count: 5
+        max_primary_level: 6
+    e19:
+      type: return
+      value:
+        name: "Shape Public Perception of Medication Safety"
+        tier: EXECUTIVE
+        cpa: 6
+        primary_domains: "D14:L5++, D13:L5+, D10:L5"
+        supporting_domains: "D1:L5, D3:L4"
+        domain_count: 5
+        max_primary_level: 7
+    e20:
+      type: return
+      value:
+        name: "Lead Industry Transformation Initiatives"
+        tier: EXECUTIVE
+        cpa: 7
+        primary_domains: "All:L5++, D1:L5++, D14:L5++"
+        supporting_domains: "All:L5++"
+        domain_count: 15
+        max_primary_level: 7
+    invalid:
+      type: return
+      value:
+        name: INVALID
+        error: "EPA ID must be 1-20"
+tests:
+- input:
+    epa_id: 1
+  expect:
+    name: "Process and Evaluate Individual Case Safety Reports"
+    tier: CORE
+    cpa: 1
+    domain_count: 6
+- input:
+    epa_id: 5
+  expect:
+    name: "Detect and Validate Potential Safety Signals"
+    max_primary_level: 4
+- input:
+    epa_id: 10
+  expect:
+    name: "Implement and Validate AI Tools for Pharmacovigilance"
+    is_ai_gateway: true
+    cpa: 8
+- input:
+    epa_id: 11
+  expect:
+    tier: EXECUTIVE
+    max_primary_level: 5
+- input:
+    epa_id: 14
+  expect:
+    name: "Influence Regulatory Policy and Industry Standards"
+    max_primary_level: 6
+- input:
+    epa_id: 20
+  expect:
+    name: "Lead Industry Transformation Initiatives"
+    max_primary_level: 7
+- input:
+    epa_id: 0
+  expect:
+    name: INVALID
+- input: {}
+  expect:
+    name: INVALID

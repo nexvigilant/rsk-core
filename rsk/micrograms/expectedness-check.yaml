@@ -1,0 +1,72 @@
+name: expectedness-check
+description: 'ICH E2A expectedness classification: EXPECTED_LISTED if event in label, EXPECTED_CLASS if class listed, UNEXPECTED if neither'
+version: 0.1.0
+tree:
+  start: check_event_listed
+  nodes:
+    check_event_listed:
+      type: condition
+      variable: event_in_label
+      operator: eq
+      value: true
+      true_next: expected_listed
+      false_next: check_class_listed
+    check_class_listed:
+      type: condition
+      variable: event_class_in_label
+      operator: eq
+      value: true
+      true_next: expected_class
+      false_next: unexpected
+    expected_listed:
+      type: return
+      value:
+        expectedness: EXPECTED_LISTED
+        description: Specific adverse event is listed in product labeling
+        regulatory_impact: Periodic reporting only - no expedited submission required
+    expected_class:
+      type: return
+      value:
+        expectedness: EXPECTED_CLASS
+        description: Event class is labeled but specific event not listed - borderline expectedness
+        regulatory_impact: Medical review required to confirm expectedness determination
+    unexpected:
+      type: return
+      value:
+        expectedness: UNEXPECTED
+        description: Adverse event not listed in product labeling
+        regulatory_impact: Expedited reporting required if case is serious per ICH E2A
+tests:
+- input:
+    event_in_label: true
+    event_class_in_label: true
+  expect:
+    expectedness: EXPECTED_LISTED
+    description: Specific adverse event is listed in product labeling
+    regulatory_impact: Periodic reporting only - no expedited submission required
+- input:
+    event_in_label: true
+    event_class_in_label: false
+  expect:
+    expectedness: EXPECTED_LISTED
+    description: Specific adverse event is listed in product labeling
+    regulatory_impact: Periodic reporting only - no expedited submission required
+- input:
+    event_in_label: false
+    event_class_in_label: true
+  expect:
+    expectedness: EXPECTED_CLASS
+    description: Event class is labeled but specific event not listed - borderline expectedness
+    regulatory_impact: Medical review required to confirm expectedness determination
+- input:
+    event_in_label: false
+    event_class_in_label: false
+  expect:
+    expectedness: UNEXPECTED
+    description: Adverse event not listed in product labeling
+    regulatory_impact: Expedited reporting required if case is serious per ICH E2A
+- input: {}
+  expect:
+    expectedness: UNEXPECTED
+    description: Adverse event not listed in product labeling
+    regulatory_impact: Expedited reporting required if case is serious per ICH E2A

@@ -1,0 +1,327 @@
+name: appe-portfolio-tracker
+description: "APPE Ch7.2/7.6: Portfolio completeness tracker — assesses evidence collection progress across domains. Caller must pre-compute total_collected = d1+d2+d3+d14+reflection_count. Thresholds assume total_required=20 (90%=18, 75%=15, 50%=10)."
+version: 0.1.0
+tree:
+  start: check_comprehensive
+  nodes:
+    # --- STATUS: check completeness thresholds ---
+    check_comprehensive:
+      type: condition
+      variable: total_collected
+      operator: gte
+      value: 18
+      true_next: check_refl_comp
+      false_next: check_adequate
+
+    check_adequate:
+      type: condition
+      variable: total_collected
+      operator: gte
+      value: 15
+      true_next: check_refl_adeq
+      false_next: check_in_progress
+
+    check_in_progress:
+      type: condition
+      variable: total_collected
+      operator: gte
+      value: 10
+      true_next: check_refl_inprog
+      false_next: check_refl_insuf
+
+    # --- REFLECTION: check reflection_count >= 3 per status ---
+    check_refl_comp:
+      type: condition
+      variable: reflection_count
+      operator: gte
+      value: 3
+      true_next: check_gap_comp_rt
+      false_next: check_gap_comp_rf
+
+    check_refl_adeq:
+      type: condition
+      variable: reflection_count
+      operator: gte
+      value: 3
+      true_next: check_gap_adeq_rt
+      false_next: check_gap_adeq_rf
+
+    check_refl_inprog:
+      type: condition
+      variable: reflection_count
+      operator: gte
+      value: 3
+      true_next: check_gap_inprog_rt
+      false_next: check_gap_inprog_rf
+
+    check_refl_insuf:
+      type: condition
+      variable: reflection_count
+      operator: gte
+      value: 3
+      true_next: check_gap_insuf_rt
+      false_next: check_gap_insuf_rf
+
+    # --- GAP: check d1 < 3 as primary gap indicator ---
+    check_gap_comp_rt:
+      type: condition
+      variable: d1_evidence_count
+      operator: lt
+      value: 3
+      true_next: comp_refl_t_gap_d1
+      false_next: comp_refl_t_gap_none
+
+    check_gap_comp_rf:
+      type: condition
+      variable: d1_evidence_count
+      operator: lt
+      value: 3
+      true_next: comp_refl_f_gap_d1
+      false_next: comp_refl_f_gap_none
+
+    check_gap_adeq_rt:
+      type: condition
+      variable: d1_evidence_count
+      operator: lt
+      value: 3
+      true_next: adeq_refl_t_gap_d1
+      false_next: adeq_refl_t_gap_none
+
+    check_gap_adeq_rf:
+      type: condition
+      variable: d1_evidence_count
+      operator: lt
+      value: 3
+      true_next: adeq_refl_f_gap_d1
+      false_next: adeq_refl_f_gap_none
+
+    check_gap_inprog_rt:
+      type: condition
+      variable: d1_evidence_count
+      operator: lt
+      value: 3
+      true_next: inprog_refl_t_gap_d1
+      false_next: inprog_refl_t_gap_none
+
+    check_gap_inprog_rf:
+      type: condition
+      variable: d1_evidence_count
+      operator: lt
+      value: 3
+      true_next: inprog_refl_f_gap_d1
+      false_next: inprog_refl_f_gap_none
+
+    check_gap_insuf_rt:
+      type: condition
+      variable: d1_evidence_count
+      operator: lt
+      value: 3
+      true_next: insuf_refl_t_gap_d1
+      false_next: insuf_refl_t_gap_none
+
+    check_gap_insuf_rf:
+      type: condition
+      variable: d1_evidence_count
+      operator: lt
+      value: 3
+      true_next: insuf_refl_f_gap_d1
+      false_next: insuf_refl_f_gap_none
+
+    # --- RETURN NODES: COMPREHENSIVE ---
+    comp_refl_t_gap_none:
+      type: return
+      value:
+        status: COMPREHENSIVE
+        ready_for_final: true
+        reflection_adequate: true
+        gap_domain: "none"
+        completeness_note: ">=90% evidence collected"
+        next_action: "Proceed to final bridge assessment"
+
+    comp_refl_t_gap_d1:
+      type: return
+      value:
+        status: COMPREHENSIVE
+        ready_for_final: true
+        reflection_adequate: true
+        gap_domain: "domain_1"
+        completeness_note: ">=90% evidence collected"
+        next_action: "Proceed to bridge assessment — strengthen domain_1 evidence before submission"
+
+    comp_refl_f_gap_none:
+      type: return
+      value:
+        status: COMPREHENSIVE
+        ready_for_final: true
+        reflection_adequate: false
+        gap_domain: "none"
+        completeness_note: ">=90% evidence collected"
+        next_action: "Add at least 3 reflections before final submission"
+
+    comp_refl_f_gap_d1:
+      type: return
+      value:
+        status: COMPREHENSIVE
+        ready_for_final: true
+        reflection_adequate: false
+        gap_domain: "domain_1"
+        completeness_note: ">=90% evidence collected"
+        next_action: "Add reflections and strengthen domain_1 evidence"
+
+    # --- RETURN NODES: ADEQUATE ---
+    adeq_refl_t_gap_none:
+      type: return
+      value:
+        status: ADEQUATE
+        ready_for_final: true
+        reflection_adequate: true
+        gap_domain: "none"
+        completeness_note: "75-89% evidence collected"
+        next_action: "Complete remaining evidence to reach comprehensive level"
+
+    adeq_refl_t_gap_d1:
+      type: return
+      value:
+        status: ADEQUATE
+        ready_for_final: true
+        reflection_adequate: true
+        gap_domain: "domain_1"
+        completeness_note: "75-89% evidence collected"
+        next_action: "Prioritize domain_1 evidence collection to close gap"
+
+    adeq_refl_f_gap_none:
+      type: return
+      value:
+        status: ADEQUATE
+        ready_for_final: true
+        reflection_adequate: false
+        gap_domain: "none"
+        completeness_note: "75-89% evidence collected"
+        next_action: "Add reflections and continue evidence collection"
+
+    adeq_refl_f_gap_d1:
+      type: return
+      value:
+        status: ADEQUATE
+        ready_for_final: true
+        reflection_adequate: false
+        gap_domain: "domain_1"
+        completeness_note: "75-89% evidence collected"
+        next_action: "Add reflections and strengthen domain_1 evidence"
+
+    # --- RETURN NODES: IN_PROGRESS ---
+    inprog_refl_t_gap_none:
+      type: return
+      value:
+        status: IN_PROGRESS
+        ready_for_final: false
+        reflection_adequate: true
+        gap_domain: "none"
+        completeness_note: "50-74% evidence collected"
+        next_action: "Accelerate evidence collection — target 15+ items before midpoint review"
+
+    inprog_refl_t_gap_d1:
+      type: return
+      value:
+        status: IN_PROGRESS
+        ready_for_final: false
+        reflection_adequate: true
+        gap_domain: "domain_1"
+        completeness_note: "50-74% evidence collected"
+        next_action: "Focus domain_1 activities to address portfolio gap"
+
+    inprog_refl_f_gap_none:
+      type: return
+      value:
+        status: IN_PROGRESS
+        ready_for_final: false
+        reflection_adequate: false
+        gap_domain: "none"
+        completeness_note: "50-74% evidence collected"
+        next_action: "Increase evidence collection and add weekly reflections"
+
+    inprog_refl_f_gap_d1:
+      type: return
+      value:
+        status: IN_PROGRESS
+        ready_for_final: false
+        reflection_adequate: false
+        gap_domain: "domain_1"
+        completeness_note: "50-74% evidence collected"
+        next_action: "Prioritize domain_1 activities and add reflections immediately"
+
+    # --- RETURN NODES: INSUFFICIENT ---
+    insuf_refl_t_gap_none:
+      type: return
+      value:
+        status: INSUFFICIENT
+        ready_for_final: false
+        reflection_adequate: true
+        gap_domain: "none"
+        completeness_note: "<50% evidence collected"
+        next_action: "Immediate action required — consult preceptor and intensify evidence collection"
+
+    insuf_refl_t_gap_d1:
+      type: return
+      value:
+        status: INSUFFICIENT
+        ready_for_final: false
+        reflection_adequate: true
+        gap_domain: "domain_1"
+        completeness_note: "<50% evidence collected"
+        next_action: "Immediate action — focus on domain_1 and all evidence collection"
+
+    insuf_refl_f_gap_none:
+      type: return
+      value:
+        status: INSUFFICIENT
+        ready_for_final: false
+        reflection_adequate: false
+        gap_domain: "none"
+        completeness_note: "<50% evidence collected"
+        next_action: "Immediate preceptor consultation — intensive remediation plan required"
+
+    insuf_refl_f_gap_d1:
+      type: return
+      value:
+        status: INSUFFICIENT
+        ready_for_final: false
+        reflection_adequate: false
+        gap_domain: "domain_1"
+        completeness_note: "<50% evidence collected"
+        next_action: "Immediate preceptor consultation — address domain_1 gap and all evidence collection"
+
+tests:
+# COMPREHENSIVE: full portfolio with all reflections
+- input: { d1_evidence_count: 5, d2_evidence_count: 5, d3_evidence_count: 5, d14_evidence_count: 5, reflection_count: 5, total_required: 20, total_collected: 25 }
+  expect: { status: COMPREHENSIVE, ready_for_final: true, reflection_adequate: true }
+# COMPREHENSIVE: exactly at 90% threshold with adequate reflections
+- input: { d1_evidence_count: 4, d2_evidence_count: 4, d3_evidence_count: 4, d14_evidence_count: 4, reflection_count: 2, total_required: 20, total_collected: 18 }
+  expect: { status: COMPREHENSIVE, ready_for_final: true, reflection_adequate: false }
+# COMPREHENSIVE: d1 is a gap domain
+- input: { d1_evidence_count: 2, d2_evidence_count: 5, d3_evidence_count: 5, d14_evidence_count: 5, reflection_count: 3, total_required: 20, total_collected: 20 }
+  expect: { status: COMPREHENSIVE, ready_for_final: true, reflection_adequate: true, gap_domain: domain_1 }
+# ADEQUATE: 75-89% with reflections (total=16)
+- input: { d1_evidence_count: 4, d2_evidence_count: 4, d3_evidence_count: 4, d14_evidence_count: 2, reflection_count: 2, total_required: 20, total_collected: 16 }
+  expect: { status: ADEQUATE, ready_for_final: true, reflection_adequate: false }
+# ADEQUATE: exactly at 75% threshold
+- input: { d1_evidence_count: 3, d2_evidence_count: 4, d3_evidence_count: 4, d14_evidence_count: 4, reflection_count: 4, total_required: 20, total_collected: 15 }
+  expect: { status: ADEQUATE, ready_for_final: true, reflection_adequate: true }
+# IN_PROGRESS: 50-74% with reflections
+- input: { d1_evidence_count: 3, d2_evidence_count: 3, d3_evidence_count: 3, d14_evidence_count: 3, reflection_count: 3, total_required: 20, total_collected: 12 }
+  expect: { status: IN_PROGRESS, ready_for_final: false, reflection_adequate: true }
+# IN_PROGRESS: exactly at 50% threshold, no reflections
+- input: { d1_evidence_count: 2, d2_evidence_count: 3, d3_evidence_count: 3, d14_evidence_count: 2, reflection_count: 0, total_required: 20, total_collected: 10 }
+  expect: { status: IN_PROGRESS, ready_for_final: false, reflection_adequate: false }
+# INSUFFICIENT: below 50%
+- input: { d1_evidence_count: 2, d2_evidence_count: 2, d3_evidence_count: 2, d14_evidence_count: 2, reflection_count: 1, total_required: 20, total_collected: 9 }
+  expect: { status: INSUFFICIENT, ready_for_final: false, reflection_adequate: false }
+# INSUFFICIENT: nearly empty portfolio
+- input: { d1_evidence_count: 0, d2_evidence_count: 0, d3_evidence_count: 0, d14_evidence_count: 0, reflection_count: 0, total_required: 20, total_collected: 0 }
+  expect: { status: INSUFFICIENT, ready_for_final: false, reflection_adequate: false }
+# INSUFFICIENT: d1 is gap domain
+- input: { d1_evidence_count: 1, d2_evidence_count: 2, d3_evidence_count: 2, d14_evidence_count: 2, reflection_count: 4, total_required: 20, total_collected: 7 }
+  expect: { status: INSUFFICIENT, ready_for_final: false, reflection_adequate: true, gap_domain: domain_1 }
+# Edge: just below ADEQUATE (total=14 < 15)
+- input: { d1_evidence_count: 3, d2_evidence_count: 4, d3_evidence_count: 4, d14_evidence_count: 3, reflection_count: 0, total_required: 20, total_collected: 14 }
+  expect: { status: IN_PROGRESS, ready_for_final: false }

@@ -1,0 +1,169 @@
+name: naranjo-quick
+description: Quick Naranjo causality classification from total score
+version: 0.1.0
+tree:
+  start: definite_check
+  nodes:
+    probable_check:
+      type: condition
+      variable: naranjo_score
+      operator: gte
+      value: 5
+      true_next: probable
+      false_next: possible_check
+    definite:
+      type: return
+      value:
+        confidence: 95
+        causality: DEFINITE
+        action: withdraw_drug
+    doubtful:
+      type: return
+      value:
+        causality: DOUBTFUL
+        confidence: 20
+        action: document
+    possible:
+      type: return
+      value:
+        causality: POSSIBLE
+        confidence: 50
+        action: monitor
+    possible_check:
+      type: condition
+      variable: naranjo_score
+      operator: gte
+      value: 1
+      true_next: possible
+      false_next: doubtful
+    definite_check:
+      type: condition
+      variable: naranjo_score
+      operator: gte
+      value: 9
+      true_next: definite
+      false_next: probable_check
+    probable:
+      type: return
+      value:
+        confidence: 75
+        causality: PROBABLE
+        action: investigate
+tests:
+- input:
+    naranjo_score: 10
+  expect:
+    confidence: 95
+    action: withdraw_drug
+    causality: DEFINITE
+- input:
+    naranjo_score: 7
+  expect:
+    confidence: 75
+    causality: PROBABLE
+    action: investigate
+- input:
+    naranjo_score: 3
+  expect:
+    causality: POSSIBLE
+    confidence: 50
+    action: monitor
+- input:
+    naranjo_score: 0
+  expect:
+    causality: DOUBTFUL
+    confidence: 20
+    action: document
+- input:
+    naranjo_score: 9
+  expect:
+    confidence: 95
+    action: withdraw_drug
+    causality: DEFINITE
+- input:
+    naranjo_score: 5
+  expect:
+    confidence: 75
+    causality: PROBABLE
+    action: investigate
+- input:
+    naranjo_score: 1
+  expect:
+    action: monitor
+    causality: POSSIBLE
+    confidence: 50
+- input:
+    naranjo_score: -1
+  expect:
+    confidence: 20
+    causality: DOUBTFUL
+    action: document
+- input:
+    naranjo_score: 4
+  expect:
+    causality: POSSIBLE
+    action: monitor
+    confidence: 50
+- input:
+    naranjo_score: 6
+  expect:
+    action: investigate
+    causality: PROBABLE
+    confidence: 75
+- input:
+    naranjo_score: 500
+  expect:
+    confidence: 95
+    causality: DEFINITE
+    action: withdraw_drug
+- input: {}
+  expect:
+    causality: DOUBTFUL
+    action: document
+    confidence: 20
+- input:
+    naranjo_score: -1
+  expect:
+    causality: DOUBTFUL
+    confidence: 20
+    action: document
+- input:
+    naranjo_score: 2
+  expect:
+    action: monitor
+    causality: POSSIBLE
+    confidence: 50
+- input:
+    naranjo_score: 100
+  expect:
+    action: withdraw_drug
+    causality: DEFINITE
+    confidence: 95
+- input: {}
+  expect:
+    confidence: 20
+    action: document
+    causality: DOUBTFUL
+- input:
+    naranjo_score: -1
+  expect:
+    confidence: 20
+    causality: DOUBTFUL
+    action: document
+- input:
+    naranjo_score: 8
+  expect:
+    action: investigate
+    confidence: 75
+    causality: PROBABLE
+- input:
+    naranjo_score: 900
+  expect:
+    action: withdraw_drug
+    causality: DEFINITE
+    confidence: 95
+- input: {}
+  expect:
+    action: document
+    causality: DOUBTFUL
+    confidence: 20

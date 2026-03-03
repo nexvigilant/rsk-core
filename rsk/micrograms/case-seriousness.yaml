@@ -1,0 +1,95 @@
+name: case-seriousness
+description: 'ICH E2A seriousness classification: SERIOUS if death/hospitalization/disability criteria met'
+version: 0.1.0
+tree:
+  start: death_check
+  nodes:
+    hosp_check:
+      type: condition
+      variable: hospitalization
+      operator: eq
+      value: true
+      true_next: serious
+      false_next: disability_check
+    disability_check:
+      type: condition
+      variable: disability
+      operator: eq
+      value: true
+      true_next: serious
+      false_next: not_serious
+    death_check:
+      type: condition
+      variable: death
+      operator: eq
+      value: true
+      true_next: serious
+      false_next: hosp_check
+    serious:
+      type: return
+      value:
+        seriousness: SERIOUS
+        reportable: true
+        expedited: true
+    not_serious:
+      type: return
+      value:
+        reportable: false
+        expedited: false
+        seriousness: NON-SERIOUS
+tests:
+- input:
+    death: true
+    hospitalization: false
+    disability: false
+  expect:
+    reportable: true
+    expedited: true
+    seriousness: SERIOUS
+- input:
+    death: false
+    hospitalization: true
+    disability: false
+  expect:
+    reportable: true
+    seriousness: SERIOUS
+    expedited: true
+- input:
+    hospitalization: false
+    death: false
+    disability: true
+  expect:
+    reportable: true
+    expedited: true
+    seriousness: SERIOUS
+- input:
+    death: false
+    disability: false
+    hospitalization: false
+  expect:
+    reportable: false
+    expedited: false
+    seriousness: NON-SERIOUS
+- input:
+    hospitalization: true
+    death: true
+    disability: true
+  expect:
+    seriousness: SERIOUS
+    reportable: true
+    expedited: true
+- input: {}
+  expect:
+    seriousness: NON-SERIOUS
+    expedited: false
+    reportable: false
+- input: {}
+  expect:
+    expedited: false
+    seriousness: NON-SERIOUS
+    reportable: false
+- input: {}
+  expect:
+    reportable: false
+    expedited: false
+    seriousness: NON-SERIOUS

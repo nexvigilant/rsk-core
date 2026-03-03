@@ -1,0 +1,73 @@
+name: prr-signal
+description: PRR signal detection threshold gate (PRR >= 2.0 = signal)
+version: 0.1.0
+tree:
+  start: check
+  nodes:
+    check:
+      type: condition
+      variable: prr
+      operator: gte
+      value: 2
+      true_next: signal
+      false_next: no_signal
+    signal:
+      type: return
+      value:
+        signal_detected: true
+        classification: signal
+    no_signal:
+      type: return
+      value:
+        signal_detected: false
+        classification: noise
+tests:
+- input:
+    prr: 3.5
+  expect:
+    signal_detected: true
+    classification: signal
+- input:
+    prr: 1.8
+  expect:
+    signal_detected: false
+    classification: noise
+- input:
+    prr: 2.0
+  expect:
+    classification: signal
+    signal_detected: true
+- input:
+    prr: 0.5
+  expect:
+    signal_detected: false
+    classification: noise
+- input:
+    prr: 0
+  expect:
+    classification: noise
+    signal_detected: false
+- input:
+    prr: -1
+  expect:
+    signal_detected: false
+    classification: noise
+- input:
+    prr: 1
+  expect:
+    classification: noise
+    signal_detected: false
+- input:
+    prr: 3
+  expect:
+    classification: signal
+    signal_detected: true
+- input:
+    prr: 200
+  expect:
+    classification: signal
+    signal_detected: true
+- input: {}
+  expect:
+    signal_detected: false
+    classification: noise
