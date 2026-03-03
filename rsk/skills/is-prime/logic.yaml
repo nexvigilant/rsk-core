@@ -1,0 +1,66 @@
+start: check_input
+nodes:
+  check_input:
+    type: condition
+    variable: number
+    operator: is_not_null
+    true_next: check_greater_than_one
+    false_next: fail_missing
+
+  check_greater_than_one:
+    type: condition
+    variable: number
+    operator: gt
+    value: 1
+    true_next: check_is_two
+    false_next: not_prime
+
+  check_is_two:
+    type: condition
+    variable: number
+    operator: eq
+    value: 2
+    true_next: is_prime_result
+    false_next: check_is_three
+
+  check_is_three:
+    type: condition
+    variable: number
+    operator: eq
+    value: 3
+    true_next: is_prime_result
+    false_next: check_is_five
+
+  check_is_five:
+    type: condition
+    variable: number
+    operator: eq
+    value: 5
+    true_next: is_prime_result
+    false_next: check_is_seven
+
+  check_is_seven:
+    type: condition
+    variable: number
+    operator: eq
+    value: 7
+    true_next: is_prime_result
+    false_next: not_prime
+
+  is_prime_result:
+    type: return
+    value:
+      is_prime: true
+      message: "Number is prime"
+
+  not_prime:
+    type: return
+    value:
+      is_prime: false
+      message: "Number is not prime"
+
+  fail_missing:
+    type: return
+    value:
+      is_prime: false
+      message: "No number provided"

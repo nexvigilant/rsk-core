@@ -1,0 +1,63 @@
+start: check_score
+nodes:
+  check_score:
+    type: condition
+    variable: score
+    operator: is_not_null
+    true_next: check_escalate
+    false_next: fail_missing
+
+  check_escalate:
+    type: condition
+    variable: score
+    operator: gte
+    value: 80
+    true_next: escalate
+
+    false_next: check_mitigate
+
+  check_mitigate:
+    type: condition
+    variable: score
+    operator: gte
+    value: 50
+    true_next: mitigate
+    false_next: check_monitor
+
+  check_monitor:
+    type: condition
+    variable: score
+    operator: gte
+    value: 25
+    true_next: monitor
+    false_next: accept
+
+  escalate:
+    type: return
+    value:
+      action: "ESCALATE"
+      rationale: "Score >= 80 requires immediate escalation"
+
+  mitigate:
+    type: return
+    value:
+      action: "MITIGATE"
+      rationale: "Score 50-79 requires active mitigation"
+
+  monitor:
+    type: return
+    value:
+      action: "MONITOR"
+      rationale: "Score 25-49 requires ongoing monitoring"
+
+  accept:
+    type: return
+    value:
+      action: "ACCEPT"
+      rationale: "Score < 25 is within acceptable risk tolerance"
+
+  fail_missing:
+    type: return
+    value:
+      action: "UNKNOWN"
+      rationale: "No score provided"

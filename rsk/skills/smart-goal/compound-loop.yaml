@@ -1,0 +1,9 @@
+name: ferro-forge-compound
+description: "The flywheel: attempt -> detect anti-patterns -> simplify -> chain -> compound"
+steps:
+  - skill: attempt
+  - skill: detect-failure
+  - skill: capture-anti-pattern
+  - skill: simplify-to-atoms
+  - skill: chain-atoms
+  - skill: compound-capability

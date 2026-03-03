@@ -1,0 +1,5 @@
+name: validate-and-detect
+description: "Validate a goal then detect anti-patterns in the result"
+steps:
+  - skill: smart-goal
+  - skill: detect-anti-patterns

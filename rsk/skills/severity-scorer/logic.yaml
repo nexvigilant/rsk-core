@@ -1,0 +1,70 @@
+start: check_confidence
+nodes:
+  check_confidence:
+    type: condition
+    variable: confidence
+    operator: is_not_null
+    true_next: check_critical
+    false_next: fail_missing
+
+  check_critical:
+    type: condition
+    variable: is_critical_path
+    operator: eq
+    value: true
+    true_next: critical_path_scoring
+    false_next: normal_scoring
+
+  critical_path_scoring:
+    type: condition
+    variable: confidence
+    operator: gte
+    value: 0.7
+    true_next: severity_critical
+    false_next: severity_high
+
+  normal_scoring:
+    type: condition
+    variable: confidence
+    operator: gte
+    value: 0.7
+    true_next: severity_high
+    false_next: check_medium
+
+  check_medium:
+    type: condition
+    variable: confidence
+    operator: gte
+    value: 0.4
+    true_next: severity_medium
+    false_next: severity_low
+
+  severity_critical:
+    type: return
+    value:
+      severity: "CRITICAL"
+      score: 95
+
+  severity_high:
+    type: return
+    value:
+      severity: "HIGH"
+      score: 75
+
+  severity_medium:
+    type: return
+    value:
+      severity: "MEDIUM"
+      score: 50
+
+  severity_low:
+    type: return
+    value:
+      severity: "LOW"
+      score: 25
+
+  fail_missing:
+    type: return
+    value:
+      severity: "UNKNOWN"
+      score: 0

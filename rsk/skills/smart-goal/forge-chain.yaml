@@ -1,0 +1,11 @@
+name: forge-pipeline
+description: "Forge cycle: detect anti-patterns in parallel with validation, then compound"
+steps:
+  - skill: parse-input
+  - skill: detect-anti-patterns
+    parallel: true
+  - skill: validate-structure
+    parallel: true
+  - skill: score-quality
+  - skill: register-new-patterns
+  - skill: emit-compound-result

@@ -1,0 +1,7 @@
+name: smart-goal-pipeline
+description: "Validate a goal, detect anti-patterns, then score it"
+steps:
+  - skill: validate-input
+  - skill: check-anti-patterns
+  - skill: score-goal
+  - skill: emit-result

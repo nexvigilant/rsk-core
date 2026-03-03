@@ -1,0 +1,11 @@
+name: full-pipeline
+description: "End-to-end: validate goal -> score severity -> classify risk"
+context:
+  goal_text: "Reduce patient adverse events by 30% with specific target metrics by Q4"
+  resources_available: true
+  confidence: 0.85
+  is_critical_path: true
+steps:
+  - skill: smart-goal
+  - skill: severity-scorer
+  - skill: risk-classifier
