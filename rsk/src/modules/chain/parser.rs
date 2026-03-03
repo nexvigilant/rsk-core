@@ -213,6 +213,8 @@ struct YamlChain {
     #[serde(default)]
     composition: Option<String>,
     #[serde(default)]
+    context: std::collections::HashMap<String, serde_json::Value>,
+    #[serde(default)]
     tags: Vec<String>,
     #[serde(default)]
     version: Option<String>,
@@ -401,7 +403,7 @@ pub fn parse_yaml(content: &str) -> Result<Chain, ParseError> {
         description: yaml_chain.description,
         steps,
         composition,
-        context: std::collections::HashMap::new(),
+        context: yaml_chain.context,
         tags: yaml_chain.tags,
         version: yaml_chain.version,
     })

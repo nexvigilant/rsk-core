@@ -2,11 +2,84 @@
 
 use crate::cli::actions::{ChainAction, SkillsAction};
 use crate::cli::utils::default_registry_path;
-use rsk::{DecisionContext, DecisionEngine, ExecutionResult, SkillRegistry, Value};
-use serde_json::json;
+use rsk::modules::chain::{ExecutionContext, SkillExecutionResult};
+use rsk::{
+    DecisionContext, DecisionEngine, DecisionTree, ExecutionResult, SkillRegistry,
+    Value as RskValue,
+};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+
+/// Shared executor: resolves skill names through registry, runs logic trees.
+/// Falls back to pass-through for unregistered skills.
+fn registry_executor(
+    registry: &Option<SkillRegistry>,
+    skill_name: &str,
+    _args: Option<&str>,
+    ctx: &ExecutionContext,
+) -> SkillExecutionResult {
+    if let Some(reg) = registry {
+        if let Some(entry) = reg.get(skill_name) {
+            if let Some(logic_path) = &entry.logic_path {
+                if let Ok(content) = fs::read_to_string(logic_path) {
+                    if let Ok(tree) = serde_yaml::from_str::<DecisionTree>(&content) {
+                        let engine = DecisionEngine::new(tree);
+                        let variables: HashMap<String, RskValue> = ctx
+                            .variables
+                            .iter()
+                            .filter_map(|(k, v)| {
+                                serde_json::from_value::<RskValue>(v.clone())
+                                    .ok()
+                                    .map(|rv| (k.clone(), rv))
+                            })
+                            .collect();
+                        let mut dctx = DecisionContext {
+                            variables,
+                            execution_path: Vec::new(),
+                        };
+                        let exec_result = engine.execute(&mut dctx);
+                        return match exec_result {
+                            ExecutionResult::Value(v) => SkillExecutionResult {
+                                success: true,
+                                output: json!({
+                                    "skill": skill_name,
+                                    "path": dctx.execution_path,
+                                    "result": v,
+                                }),
+                                error: None,
+                                duration_ms: 0,
+                            },
+                            ExecutionResult::Error(e) => SkillExecutionResult {
+                                success: false,
+                                output: Value::Null,
+                                error: Some(e),
+                                duration_ms: 0,
+                            },
+                            ExecutionResult::LlmRequest { prompt, .. } => SkillExecutionResult {
+                                success: true,
+                                output: json!({
+                                    "skill": skill_name,
+                                    "llm_fallback": prompt,
+                                }),
+                                error: None,
+                                duration_ms: 0,
+                            },
+                        };
+                    }
+                }
+            }
+        }
+    }
+    // Fallback: skill not in registry or has no logic tree
+    SkillExecutionResult {
+        success: true,
+        output: json!({"skill": skill_name, "status": "pass-through"}),
+        error: None,
+        duration_ms: 0,
+    }
+}
 
 /// Handle skills subcommands.
 pub fn handle_skills(action: &SkillsAction) {
@@ -117,11 +190,38 @@ pub fn handle_skills(action: &SkillsAction) {
             };
 
             if let Some(logic_path) = &skill.logic_path {
-                let logic_content = fs::read_to_string(logic_path).unwrap();
-                let tree: rsk::DecisionTree = serde_yaml::from_str(&logic_content).unwrap();
+                let logic_content = match fs::read_to_string(logic_path) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        eprintln!(
+                            "{}",
+                            json!({"status": "error", "message": format!("Cannot read {}: {e}", logic_path.display())})
+                        );
+                        std::process::exit(1);
+                    }
+                };
+                let tree: rsk::DecisionTree = match serde_yaml::from_str(&logic_content) {
+                    Ok(t) => t,
+                    Err(e) => {
+                        eprintln!(
+                            "{}",
+                            json!({"status": "error", "message": format!("YAML parse error: {e}")})
+                        );
+                        std::process::exit(1);
+                    }
+                };
                 let engine = DecisionEngine::new(tree);
 
-                let variables: HashMap<String, Value> = serde_json::from_str(input).unwrap();
+                let variables: HashMap<String, RskValue> = match serde_json::from_str(input) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        eprintln!(
+                            "{}",
+                            json!({"status": "error", "message": format!("Invalid input JSON: {e}")})
+                        );
+                        std::process::exit(1);
+                    }
+                };
                 let mut ctx = DecisionContext {
                     variables,
                     execution_path: Vec::new(),
@@ -205,6 +305,114 @@ pub fn handle_chain(action: &ChainAction) {
                 println!("STATUS: ⚠️ GAPS DETECTED IN CHAIN");
             }
             println!("═══════════════════════════════════════════════════════════════════");
+        }
+        ChainAction::Run {
+            chain,
+            dry_run,
+            fail_fast,
+        } => {
+            use rsk::modules::chain::{ExecutorConfig, execute_chain_with_fn, parse_inline};
+
+            let parsed = match parse_inline(chain) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Parse error: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let reg_path = default_registry_path();
+            let registry = SkillRegistry::load(&reg_path).ok();
+
+            let config = ExecutorConfig {
+                dry_run: *dry_run,
+                fail_fast: *fail_fast,
+                ..Default::default()
+            };
+
+            let result = execute_chain_with_fn(
+                &parsed,
+                |skill_name, args, ctx| registry_executor(&registry, skill_name, args, ctx),
+                &config,
+            );
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "chain": parsed.name,
+                    "success": result.success,
+                    "dry_run": result.dry_run,
+                    "steps": result.steps.iter().map(|s| json!({
+                        "skill": s.skill,
+                        "status": format!("{:?}", s.status),
+                        "output": s.output,
+                        "duration_ms": s.duration_ms,
+                    })).collect::<Vec<_>>(),
+                    "duration_ms": result.duration_ms,
+                }))
+                .unwrap_or_default()
+            );
+        }
+        ChainAction::RunYaml { path, dry_run } => {
+            use rsk::modules::chain::{
+                ExecutorConfig, SkillExecutionResult, execute_chain_with_fn, parse_yaml,
+            };
+
+            let content = match fs::read_to_string(path) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Read error: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let parsed = match parse_yaml(&content) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Parse error: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let reg_path = default_registry_path();
+            let registry = SkillRegistry::load(&reg_path).ok();
+
+            let config = ExecutorConfig {
+                dry_run: *dry_run,
+                ..Default::default()
+            };
+
+            let result = execute_chain_with_fn(
+                &parsed,
+                |skill_name, args, ctx| registry_executor(&registry, skill_name, args, ctx),
+                &config,
+            );
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "chain": parsed.name,
+                    "success": result.success,
+                    "dry_run": result.dry_run,
+                    "steps": result.steps.iter().map(|s| json!({
+                        "skill": s.skill,
+                        "status": format!("{:?}", s.status),
+                        "output": s.output,
+                        "duration_ms": s.duration_ms,
+                    })).collect::<Vec<_>>(),
+                    "duration_ms": result.duration_ms,
+                }))
+                .unwrap_or_default()
+            );
         }
     }
 }

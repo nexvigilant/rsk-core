@@ -414,6 +414,25 @@ pub enum ChainAction {
         #[arg(short, long)]
         registry: Option<String>,
     },
+    /// Run an inline chain definition (e.g. "analyze -> transform -> output")
+    Run {
+        /// Inline chain definition using -> for sequential, | for parallel
+        chain: String,
+        /// Dry run mode — show what would execute without running
+        #[arg(long)]
+        dry_run: bool,
+        /// Fail fast — stop on first error (default: true)
+        #[arg(long, default_value = "true")]
+        fail_fast: bool,
+    },
+    /// Run a chain from a YAML definition file
+    RunYaml {
+        /// Path to chain YAML file
+        path: String,
+        /// Dry run mode
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 #[derive(Subcommand)]
@@ -454,6 +473,253 @@ pub enum SkillsAction {
         #[arg(short, long)]
         registry: Option<String>,
     },
+}
+
+#[derive(Subcommand)]
+pub enum MicrogramAction {
+    /// Run a microgram with input JSON
+    Run {
+        /// Path to microgram YAML file
+        path: String,
+        /// Input JSON (e.g. '{"n": 5}')
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+    /// Run self-tests for a microgram
+    Test {
+        /// Path to microgram YAML file
+        path: String,
+    },
+    /// Run all self-tests in a directory
+    TestAll {
+        /// Path to micrograms directory
+        #[arg(default_value = "micrograms")]
+        dir: String,
+    },
+    /// List micrograms in a directory
+    List {
+        /// Path to micrograms directory
+        #[arg(default_value = "micrograms")]
+        dir: String,
+    },
+    /// Chain micrograms: output of N flows into input of N+1
+    Chain {
+        /// Microgram names separated by ->  (e.g. "threshold-gate -> score-label")
+        chain: String,
+        /// Directory containing microgram YAML files
+        #[arg(short, long, default_value = "micrograms")]
+        dir: String,
+        /// Initial input JSON
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+    /// Generate a microgram from a spec
+    Generate {
+        /// Microgram name
+        name: String,
+        /// Description
+        #[arg(short, long)]
+        desc: String,
+        /// Variable to check
+        #[arg(short, long)]
+        var: String,
+        /// Operator: gt, gte, lt, lte, eq, is_null, is_not_null, matches
+        #[arg(short, long)]
+        op: String,
+        /// Threshold value (integer)
+        #[arg(short, long)]
+        threshold: i64,
+        /// Output label for true branch
+        #[arg(long, default_value = "result")]
+        true_label: String,
+        /// Output label for false branch
+        #[arg(long, default_value = "result")]
+        false_label: String,
+        /// Directory to write to
+        #[arg(long, default_value = "micrograms")]
+        out_dir: String,
+    },
+    /// Evolve a microgram by adding boundary test cases
+    Evolve {
+        /// Path to microgram YAML file
+        path: String,
+    },
+    /// Auto-compose a chain to produce required output fields
+    Compose {
+        /// Required output field names, comma-separated
+        #[arg(short, long)]
+        require: String,
+        /// Directory containing micrograms
+        #[arg(short, long, default_value = "micrograms")]
+        dir: String,
+        /// Initial input JSON
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+    /// Benchmark all micrograms in a directory
+    Bench {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+        /// Number of iterations per microgram
+        #[arg(short, long, default_value = "1000")]
+        iterations: usize,
+    },
+    /// Auto: compose → chain → execute → verify in one shot
+    Auto {
+        /// Required output field names, comma-separated
+        #[arg(short, long)]
+        require: String,
+        /// Directory containing micrograms
+        #[arg(short, long, default_value = "micrograms")]
+        dir: String,
+        /// Initial input JSON
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+    /// Catalog the microgram ecosystem with connection graph
+    Catalog {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+    },
+    /// Diff two micrograms — structural and behavioral comparison
+    Diff {
+        /// Path to first microgram
+        left: String,
+        /// Path to second microgram
+        right: String,
+    },
+    /// Merge two micrograms into one with dispatch routing
+    Merge {
+        /// Path to first microgram
+        left: String,
+        /// Path to second microgram
+        right: String,
+        /// Name for merged microgram
+        #[arg(short, long)]
+        name: String,
+        /// Description
+        #[arg(short, long, default_value = "Merged microgram")]
+        desc: String,
+        /// Output directory
+        #[arg(long, default_value = "micrograms")]
+        out_dir: String,
+    },
+    /// Pipe multiple JSON inputs through a microgram or chain
+    Pipe {
+        /// Microgram name or chain (names separated by ->)
+        target: String,
+        /// Directory containing micrograms
+        #[arg(short, long, default_value = "micrograms")]
+        dir: String,
+        /// JSON array of input objects
+        #[arg(short, long)]
+        inputs: String,
+    },
+    /// Save ecosystem state to a snapshot file
+    Snapshot {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+        /// Output snapshot file
+        #[arg(short, long, default_value = "micrograms.snapshot.json")]
+        out: String,
+    },
+    /// Restore ecosystem from a snapshot file
+    Restore {
+        /// Snapshot file to restore from
+        snap: String,
+        /// Directory to restore into
+        #[arg(short, long, default_value = "micrograms")]
+        dir: String,
+    },
+    /// Stress test with random inputs
+    Stress {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+        /// Iterations per microgram
+        #[arg(short, long, default_value = "10000")]
+        iterations: usize,
+        /// Random seed
+        #[arg(short, long, default_value = "42")]
+        seed: u64,
+    },
+    /// Cross-test matrix: run every microgram against every other's tests
+    Matrix {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+    },
+    /// Decision path coverage analysis
+    Coverage {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+    },
+    /// Clone a microgram with mutated thresholds
+    Clone {
+        /// Path to source microgram
+        source: String,
+        /// Name for the clone
+        #[arg(short, long)]
+        name: String,
+        /// Threshold shift (positive or negative integer)
+        #[arg(short, long, default_value = "0")]
+        delta: i64,
+        /// Output directory
+        #[arg(long, default_value = "micrograms")]
+        out_dir: String,
+    },
+    /// Shrink an input to its minimal form that produces the same output
+    Shrink {
+        /// Path to microgram YAML file
+        path: String,
+        /// Input JSON to shrink
+        #[arg(short, long)]
+        input: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum AntiPatternAction {
+    /// Detect anti-patterns in numeric features
+    Detect {
+        /// JSON object of numeric features (e.g. '{"method_count": 25, "line_count": 600}')
+        #[arg(short, long)]
+        features: String,
+        /// Detection confidence threshold (0.0-1.0)
+        #[arg(short, long, default_value = "0.3")]
+        threshold: f64,
+    },
+    /// Register a new anti-pattern from an observed failure
+    Add {
+        /// Pattern name
+        name: String,
+        /// Category (code, process, infra)
+        #[arg(short, long, default_value = "code")]
+        category: String,
+        /// Description of what this pattern catches
+        #[arg(short, long)]
+        description: String,
+        /// Metric name to watch
+        #[arg(short, long)]
+        metric: String,
+        /// Threshold value
+        #[arg(short, long)]
+        threshold: f64,
+        /// Direction: "exceeds" or "below"
+        #[arg(long, default_value = "exceeds")]
+        direction: String,
+        /// Remediation advice
+        #[arg(short, long)]
+        remediation: String,
+    },
+    /// List all registered anti-patterns
+    List,
+    /// Show registry stats
+    Stats,
 }
 
 #[cfg(feature = "forge")]

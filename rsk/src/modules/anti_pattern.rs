@@ -648,6 +648,134 @@ pub fn create_paper_constructs_pattern() -> AntiPattern {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// PATTERN REGISTRY (Compound Loop)
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// File-backed anti-pattern registry for compounding learned patterns
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PatternRegistry {
+    pub patterns: Vec<AntiPattern>,
+    pub version: String,
+    #[serde(default)]
+    pub total_detections: u64,
+}
+
+impl PatternRegistry {
+    /// Create a new registry with built-in patterns
+    pub fn new() -> Self {
+        Self {
+            patterns: vec![create_god_object_pattern(), create_paper_constructs_pattern()],
+            version: "1.0.0".to_string(),
+            total_detections: 0,
+        }
+    }
+
+    /// Load from a JSON file, or create default if missing
+    pub fn load_or_create(path: &std::path::Path) -> Result<Self, String> {
+        if path.exists() {
+            let content =
+                std::fs::read_to_string(path).map_err(|e| format!("Read error: {e}"))?;
+            serde_json::from_str(&content).map_err(|e| format!("Parse error: {e}"))
+        } else {
+            let registry = Self::new();
+            registry.save(path)?;
+            Ok(registry)
+        }
+    }
+
+    /// Save to a JSON file
+    pub fn save(&self, path: &std::path::Path) -> Result<(), String> {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| format!("Mkdir error: {e}"))?;
+        }
+        let content =
+            serde_json::to_string_pretty(self).map_err(|e| format!("Serialize error: {e}"))?;
+        std::fs::write(path, content).map_err(|e| format!("Write error: {e}"))
+    }
+
+    /// Register a new anti-pattern (the "learn" step of the compound loop)
+    pub fn register(&mut self, pattern: AntiPattern) -> bool {
+        // Deduplicate by name
+        if self.patterns.iter().any(|p| p.name == pattern.name) {
+            return false;
+        }
+        self.patterns.push(pattern);
+        true
+    }
+
+    /// Run detection against all registered patterns
+    pub fn detect(
+        &mut self,
+        features: &Features,
+        context: &HashMap<String, bool>,
+        config: &DetectionConfig,
+    ) -> DetectionResult {
+        let result = detect_anti_patterns(features, context, &self.patterns, config);
+        self.total_detections += result.detections_count as u64;
+        result
+    }
+
+    /// Get pattern count
+    pub fn len(&self) -> usize {
+        self.patterns.len()
+    }
+
+    /// Check if empty
+    pub fn is_empty(&self) -> bool {
+        self.patterns.is_empty()
+    }
+
+    /// List pattern names
+    pub fn names(&self) -> Vec<&str> {
+        self.patterns.iter().map(|p| p.name.as_str()).collect()
+    }
+
+    /// Default registry path
+    pub fn default_path() -> std::path::PathBuf {
+        dirs::home_dir()
+            .map(|h| h.join(".rsk/anti_patterns.json"))
+            .unwrap_or_else(|| std::path::PathBuf::from("anti_patterns.json"))
+    }
+}
+
+impl Default for PatternRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Quick builder for creating anti-patterns from a failure observation
+pub fn pattern_from_observation(
+    name: &str,
+    category: &str,
+    description: &str,
+    metric_name: &str,
+    threshold: f64,
+    direction: &str,
+    remediation: Vec<String>,
+) -> AntiPattern {
+    AntiPattern {
+        name: name.to_string(),
+        category: category.to_string(),
+        base_severity: 2,
+        definition: description.to_string(),
+        symptoms: vec![Symptom {
+            symptom_type: SymptomType::Metric,
+            pattern: metric_name.to_string(),
+            description: description.to_string(),
+            threshold: Some(threshold),
+            direction: direction.to_string(),
+            metric: Some(metric_name.to_string()),
+            ..Default::default()
+        }],
+        root_causes: vec![description.to_string()],
+        prevention: remediation.clone(),
+        remediation,
+        related_patterns: vec![],
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // TESTS
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -798,5 +926,99 @@ mod tests {
         // Should only check process category
         assert!(result.categories_checked.contains(&"process".to_string()));
         assert!(!result.categories_checked.contains(&"code".to_string()));
+    }
+
+    #[test]
+    fn test_registry_new() {
+        let registry = PatternRegistry::new();
+        assert_eq!(registry.len(), 2); // god object + paper constructs
+        assert!(registry.names().contains(&"God Object"));
+        assert!(registry.names().contains(&"Paper Constructs"));
+    }
+
+    #[test]
+    fn test_registry_register_dedup() {
+        let mut registry = PatternRegistry::new();
+        let initial = registry.len();
+
+        // New pattern should register
+        let pattern = pattern_from_observation(
+            "Excessive Nesting",
+            "code",
+            "Too many nesting levels",
+            "nesting_depth",
+            5.0,
+            "exceeds",
+            vec!["Extract methods".to_string()],
+        );
+        assert!(registry.register(pattern));
+        assert_eq!(registry.len(), initial + 1);
+
+        // Duplicate name should not register
+        let dup = pattern_from_observation(
+            "Excessive Nesting",
+            "code",
+            "duplicate",
+            "nesting_depth",
+            5.0,
+            "exceeds",
+            vec![],
+        );
+        assert!(!registry.register(dup));
+        assert_eq!(registry.len(), initial + 1);
+    }
+
+    #[test]
+    fn test_registry_save_load() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("patterns.json");
+
+        let mut registry = PatternRegistry::new();
+        registry.register(pattern_from_observation(
+            "Test Pattern",
+            "test",
+            "test desc",
+            "test_metric",
+            10.0,
+            "exceeds",
+            vec!["fix it".to_string()],
+        ));
+        registry.save(&path).unwrap();
+
+        let loaded = PatternRegistry::load_or_create(&path).unwrap();
+        assert_eq!(loaded.len(), 3);
+        assert!(loaded.names().contains(&"Test Pattern"));
+    }
+
+    #[test]
+    fn test_registry_detect_increments_counter() {
+        let mut registry = PatternRegistry::new();
+        let mut features = Features::default();
+        features.numeric.insert("method_count".to_string(), 25.0);
+        features.numeric.insert("line_count".to_string(), 600.0);
+
+        let context = HashMap::new();
+        let config = DetectionConfig::default();
+
+        assert_eq!(registry.total_detections, 0);
+        let result = registry.detect(&features, &context, &config);
+        assert!(!result.clean);
+        assert!(registry.total_detections > 0);
+    }
+
+    #[test]
+    fn test_pattern_from_observation() {
+        let pattern = pattern_from_observation(
+            "Long Function",
+            "code",
+            "Function exceeds line limit",
+            "function_lines",
+            50.0,
+            "exceeds",
+            vec!["Extract smaller functions".to_string()],
+        );
+        assert_eq!(pattern.name, "Long Function");
+        assert_eq!(pattern.symptoms.len(), 1);
+        assert_eq!(pattern.symptoms[0].threshold, Some(50.0));
     }
 }

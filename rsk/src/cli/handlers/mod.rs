@@ -2,7 +2,9 @@
 //!
 //! Each handler module corresponds to a top-level command or group of related commands.
 
+pub mod anti_pattern;
 pub mod compress;
+pub mod microgram;
 pub mod exec;
 #[cfg(feature = "forge")]
 pub mod forge;

@@ -16,6 +16,7 @@ pub mod intent;
 pub mod json_processor;
 pub mod levenshtein;
 pub mod math;
+pub mod microgram;
 #[cfg(feature = "python")]
 pub mod python_bindings;
 pub mod routing_engine;
