@@ -4,3 +4,4 @@ coverage_*.txt
 2026-*.txt
 .claude/
 notebooks/
+test_*.txt
