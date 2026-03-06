@@ -1,6 +1,22 @@
 name: integration-d10
 description: "Domain 10 cross-domain integration — benefit-risk assessment connects to communication, signal detection, risk management, and research."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    epas:
+      type: string
+    integration_type:
+      type: string
+    module:
+      type: string
+    nexcore:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:

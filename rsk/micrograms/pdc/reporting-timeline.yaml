@@ -1,6 +1,36 @@
 name: reporting-timeline
 description: "Domain 4: Regulatory reporting timeline by jurisdiction and event type — FDA, EMA, PMDA, Health Canada deadlines."
 version: 0.1.0
+interface:
+  inputs:
+    is_fatal_or_life_threatening:
+      type: bool
+      required: false
+    is_serious_unexpected:
+      type: bool
+      required: false
+    region:
+      type: string
+      required: false
+  outputs:
+    database:
+      type: string
+    deadline_calendar_days:
+      type: int
+    followup:
+      type: string
+    format:
+      type: string
+    note:
+      type: string
+    reference:
+      type: string
+    region:
+      type: string
+    report_type:
+      type: string
+    submission:
+      type: string
 tree:
   start: check_region
   nodes:
@@ -196,3 +226,30 @@ tests:
 - input: {}
   expect:
     region: ICH_DEFAULT
+# -- covers ema_90day --
+- input:
+    region: ema
+    is_serious_unexpected: false
+  expect:
+    region: EMA
+    deadline_calendar_days: 90
+    report_type: "Non-expedited ICSR"
+    database: EudraVigilance
+# -- covers hc_15day --
+- input:
+    region: health_canada
+    is_serious_unexpected: true
+  expect:
+    region: HEALTH_CANADA
+    deadline_calendar_days: 15
+    report_type: "Expedited ADR Report"
+    database: "Canada Vigilance"
+# -- covers pmda_periodic --
+- input:
+    region: pmda
+    is_serious_unexpected: false
+  expect:
+    region: PMDA
+    deadline_calendar_days: 90
+    report_type: "Periodic Safety Report"
+    database: "J-PRISM"

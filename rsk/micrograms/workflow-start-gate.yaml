@@ -1,6 +1,21 @@
 name: workflow-start-gate
 description: 'PVOS workflow gating: gates workflow start on valid workflow type and data readiness prerequisites'
 version: 0.1.0
+interface:
+  inputs:
+    data_ready:
+      type: bool
+      required: false
+    workflow_type:
+      type: string
+      required: false
+  outputs:
+    description:
+      type: string
+    gate:
+      type: string
+    workflow:
+      type: string
 tree:
   start: check_data_ready
   nodes:

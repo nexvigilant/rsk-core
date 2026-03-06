@@ -1,6 +1,20 @@
 name: harm-type-router
 description: 'Route ToV harm types A-H to response protocols based on NexVigilant 8-type harm taxonomy'
 version: 0.1.0
+interface:
+  inputs:
+    harm_type:
+      type: string
+      required: false
+  outputs:
+    escalate:
+      type: bool
+    protocol:
+      type: string
+    severity:
+      type: string
+    sla_hours:
+      type: int
 tree:
   start: check_type_a
   nodes:

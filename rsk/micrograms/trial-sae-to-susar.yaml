@@ -1,0 +1,126 @@
+name: trial-sae-to-susar
+description: Routes serious adverse event classification to SUSAR determination and reporting timeline
+version: 0.1.0
+
+interface:
+  inputs:
+    is_serious:
+      type: boolean
+      required: true
+      description: Whether event meets seriousness criteria
+    is_unexpected:
+      type: boolean
+      required: true
+      description: Whether event is unexpected per product information
+    is_related:
+      type: boolean
+      required: true
+      description: Whether event is causally related to investigational product
+  outputs:
+    is_susar:
+      type: boolean
+      description: Whether event qualifies as SUSAR (Suspected Unexpected Serious Adverse Reaction)
+    reporting_timeline_days:
+      type: integer
+      description: Number of days to report to regulatory authorities
+    rationale:
+      type: string
+      description: Justification for SUSAR classification
+
+tree:
+  start: check_seriousness
+  nodes:
+    check_seriousness:
+      type: condition
+      variable: is_serious
+      operator: eq
+      value: true
+      true_next: check_unexpected
+      false_next: not_serious
+
+    check_unexpected:
+      type: condition
+      variable: is_unexpected
+      operator: eq
+      value: true
+      true_next: check_related
+      false_next: serious_expected
+
+    check_related:
+      type: condition
+      variable: is_related
+      operator: eq
+      value: true
+      true_next: susar_true
+      false_next: serious_unexpected_unrelated
+
+    susar_true:
+      type: return
+      value:
+        is_susar: true
+        reporting_timeline_days: 7
+        rationale: "Serious, unexpected, and related event qualifies as SUSAR - report within 7 days"
+
+    serious_unexpected_unrelated:
+      type: return
+      value:
+        is_susar: false
+        reporting_timeline_days: 30
+        rationale: "Serious unexpected but unrelated event - standard reporting within 30 days"
+
+    serious_expected:
+      type: return
+      value:
+        is_susar: false
+        reporting_timeline_days: 30
+        rationale: "Serious expected event - standard reporting within 30 days"
+
+    not_serious:
+      type: condition
+      variable: is_unexpected
+      operator: eq
+      value: true
+      true_next: check_related_not_serious
+      false_next: not_serious_expected
+
+    check_related_not_serious:
+      type: condition
+      variable: is_related
+      operator: eq
+      value: true
+      true_next: non_serious_unexpected_related
+      false_next: non_serious_unexpected_unrelated
+
+    non_serious_unexpected_related:
+      type: return
+      value:
+        is_susar: false
+        reporting_timeline_days: 60
+        rationale: "Non-serious but unexpected and related event - report within 60 days"
+
+    non_serious_unexpected_unrelated:
+      type: return
+      value:
+        is_susar: false
+        reporting_timeline_days: 60
+        rationale: "Non-serious unexpected unrelated event - report within 60 days"
+
+    not_serious_expected:
+      type: return
+      value:
+        is_susar: false
+        reporting_timeline_days: 90
+        rationale: "Non-serious expected event - routine reporting within 90 days"
+
+tests:
+  - input: { is_serious: true, is_unexpected: true, is_related: true }
+    expect: { is_susar: true, reporting_timeline_days: 7, rationale: "Serious, unexpected, and related event qualifies as SUSAR - report within 7 days" }
+
+  - input: { is_serious: true, is_unexpected: true, is_related: false }
+    expect: { is_susar: false, reporting_timeline_days: 30, rationale: "Serious unexpected but unrelated event - standard reporting within 30 days" }
+
+  - input: { is_serious: false, is_unexpected: true, is_related: true }
+    expect: { is_susar: false, reporting_timeline_days: 60, rationale: "Non-serious but unexpected and related event - report within 60 days" }
+
+  - input: { is_serious: false, is_unexpected: false, is_related: false }
+    expect: { is_susar: false, reporting_timeline_days: 90, rationale: "Non-serious expected event - routine reporting within 90 days" }

@@ -1,6 +1,49 @@
 name: appe-bridge-assessment
 description: "APPE Ch7.6: APPE-to-Fellowship bridge assessment. Routes to Fellowship, Industry, or ContinuingEd. Chains from appe-integration-scorer and level-gate."
 version: 0.1.0
+interface:
+  inputs:
+    d1_level:
+      type: int
+      required: false
+    d2_level:
+      type: float
+      required: false
+    d3_level:
+      type: int
+      required: false
+    growth_evidence_score:
+      type: float
+      required: false
+    integration_score:
+      type: int
+      required: false
+    learning_agility_score:
+      type: float
+      required: false
+  outputs:
+    alternative:
+      type: string
+    application_strength:
+      type: string
+    career_plan:
+      type: string
+    confidence:
+      type: string
+    development_area:
+      type: string
+    fellowship_ready:
+      type: bool
+    pathway:
+      type: string
+    plan:
+      type: string
+    pre_fellowship_plan:
+      type: string
+    recommendation:
+      type: string
+    strengths:
+      type: string
 tree:
   start: check_d1
   nodes:

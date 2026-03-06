@@ -1,6 +1,22 @@
 name: workflow-status-classifier
 description: 'PVOS workflow status: classifies workflow execution status from step completion and failure flag - NOT_STARTED/IN_PROGRESS/COMPLETED/FAILED'
 version: 0.1.0
+interface:
+  inputs:
+    has_failure:
+      type: bool
+      required: false
+    is_complete:
+      type: bool
+      required: false
+    steps_completed:
+      type: int
+      required: false
+  outputs:
+    description:
+      type: string
+    status:
+      type: string
 tree:
   start: check_failure
   nodes:

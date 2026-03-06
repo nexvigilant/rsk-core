@@ -1,5 +1,15 @@
 name: null-check
 description: "Verify a required field is present"
+interface:
+  inputs:
+    field:
+      type: string
+      required: false
+  outputs:
+    message:
+      type: string
+    valid:
+      type: bool
 tree:
   start: check
   nodes:

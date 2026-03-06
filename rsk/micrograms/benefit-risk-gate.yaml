@@ -1,6 +1,29 @@
 name: benefit-risk-gate
 description: 'Benefit-risk decision gate for initial pharmacovigilance assessment: routes to monitoring, management, or mitigation based on benefit/risk scores and unmet need'
 version: 0.1.0
+interface:
+  inputs:
+    alternative_available:
+      type: bool
+      required: false
+    benefit_score:
+      type: int
+      required: false
+    risk_score:
+      type: int
+      required: false
+    unmet_need:
+      type: bool
+      required: false
+  outputs:
+    action:
+      type: string
+    benefit_risk_ratio:
+      type: string
+    decision:
+      type: string
+    recommendation:
+      type: string
 tree:
   start: negative_check
   nodes:

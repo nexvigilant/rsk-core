@@ -1,6 +1,37 @@
 name: epa5-signal-detect
 description: "EPA 5: Detect and validate safety signals — routes by signal strength, evidence quality, and clinical significance."
 version: 0.1.0
+interface:
+  inputs:
+    case_count:
+      type: int
+      required: false
+    chi_squared:
+      type: float
+      required: false
+    clinical_significance:
+      type: string
+      required: false
+    has_biological_plausibility:
+      type: bool
+      required: false
+    has_literature_support:
+      type: bool
+      required: false
+    prr:
+      type: float
+      required: false
+  outputs:
+    action:
+      type: string
+    evidence_level:
+      type: string
+    methods_used:
+      type: string
+    next_steps:
+      type: string
+    outcome:
+      type: string
 tree:
   start: check_prr
   nodes:

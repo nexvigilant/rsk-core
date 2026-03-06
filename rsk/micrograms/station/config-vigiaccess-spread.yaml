@@ -1,0 +1,206 @@
+name: config-vigiaccess-spread
+description: "Classify geographic spread of WHO VigiAccess adverse reaction reports. Routes based on region count and volume concentration."
+version: 0.1.0
+
+interface:
+  inputs:
+    total_reports:
+      type: int
+      required: false
+      description: "Total global ICSR count for the medicine"
+    regions_reporting:
+      type: int
+      required: false
+      description: "Number of WHO regions with reports (max 6)"
+    top_region_pct:
+      type: int
+      required: false
+      description: "Percentage of reports from the most-reporting region"
+    has_pediatric_reports:
+      type: bool
+      required: false
+      description: "Reports exist in pediatric age groups"
+  outputs:
+    spread_class:
+      type: string
+      description: "global_concern, multi_regional, regional_cluster, localized, insufficient"
+    geographic_signal:
+      type: bool
+    investigation_scope:
+      type: string
+
+tree:
+  start: check_reports
+  nodes:
+    check_reports:
+      type: condition
+      variable: total_reports
+      operator: is_null
+      true_next: insufficient
+      false_next: check_minimum
+
+    check_minimum:
+      type: condition
+      variable: total_reports
+      operator: lt
+      value: 10
+      true_next: insufficient
+      false_next: check_regions
+
+    check_regions:
+      type: condition
+      variable: regions_reporting
+      operator: is_null
+      true_next: check_volume_only
+      false_next: check_global
+
+    check_global:
+      type: condition
+      variable: regions_reporting
+      operator: gte
+      value: 5
+      true_next: check_volume_for_global
+      false_next: check_multi_regional
+
+    check_volume_for_global:
+      type: condition
+      variable: total_reports
+      operator: gte
+      value: 100
+      true_next: global_concern
+      false_next: multi_regional
+
+    check_multi_regional:
+      type: condition
+      variable: regions_reporting
+      operator: gte
+      value: 3
+      true_next: multi_regional
+      false_next: check_concentration
+
+    check_concentration:
+      type: condition
+      variable: top_region_pct
+      operator: is_null
+      true_next: regional_cluster
+      false_next: check_concentrated
+
+    check_concentrated:
+      type: condition
+      variable: top_region_pct
+      operator: gte
+      value: 80
+      true_next: localized
+      false_next: regional_cluster
+
+    check_volume_only:
+      type: condition
+      variable: total_reports
+      operator: gte
+      value: 500
+      true_next: multi_regional
+      false_next: regional_cluster
+
+    global_concern:
+      type: return
+      value:
+        spread_class: global_concern
+        geographic_signal: true
+        investigation_scope: worldwide
+
+    multi_regional:
+      type: return
+      value:
+        spread_class: multi_regional
+        geographic_signal: true
+        investigation_scope: cross_regional
+
+    regional_cluster:
+      type: return
+      value:
+        spread_class: regional_cluster
+        geographic_signal: false
+        investigation_scope: targeted_regions
+
+    localized:
+      type: return
+      value:
+        spread_class: localized
+        geographic_signal: false
+        investigation_scope: single_region
+
+    insufficient:
+      type: return
+      value:
+        spread_class: insufficient
+        geographic_signal: false
+        investigation_scope: none
+
+tests:
+  - input:
+      total_reports: 5000
+      regions_reporting: 6
+      top_region_pct: 40
+    expect:
+      spread_class: global_concern
+      geographic_signal: true
+      investigation_scope: worldwide
+
+  - input:
+      total_reports: 200
+      regions_reporting: 5
+      top_region_pct: 35
+    expect:
+      spread_class: global_concern
+      geographic_signal: true
+      investigation_scope: worldwide
+
+  - input:
+      total_reports: 50
+      regions_reporting: 5
+      top_region_pct: 50
+    expect:
+      spread_class: multi_regional
+      geographic_signal: true
+      investigation_scope: cross_regional
+
+  - input:
+      total_reports: 300
+      regions_reporting: 3
+      top_region_pct: 60
+    expect:
+      spread_class: multi_regional
+      geographic_signal: true
+      investigation_scope: cross_regional
+
+  - input:
+      total_reports: 80
+      regions_reporting: 2
+      top_region_pct: 70
+    expect:
+      spread_class: regional_cluster
+      geographic_signal: false
+      investigation_scope: targeted_regions
+
+  - input:
+      total_reports: 50
+      regions_reporting: 1
+      top_region_pct: 95
+    expect:
+      spread_class: localized
+      geographic_signal: false
+      investigation_scope: single_region
+
+  - input:
+      total_reports: 5
+      regions_reporting: 1
+    expect:
+      spread_class: insufficient
+      geographic_signal: false
+      investigation_scope: none
+
+  - input: {}
+    expect:
+      spread_class: insufficient
+      geographic_signal: false
+      investigation_scope: none

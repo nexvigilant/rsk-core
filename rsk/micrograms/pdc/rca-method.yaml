@@ -1,6 +1,37 @@
 name: rca-method
 description: "Domain 6: Route to appropriate root cause analysis method by error complexity and investigation scope."
 version: 0.1.0
+interface:
+  inputs:
+    error_severity:
+      type: string
+      required: false
+    involves_behavior_question:
+      type: bool
+      required: false
+    is_multi_factor:
+      type: bool
+      required: false
+    is_proactive:
+      type: bool
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    approach:
+      type: string
+    best_for:
+      type: string
+    categories:
+      type: string
+    method:
+      type: string
+    name:
+      type: string
+    steps:
+      type: string
+    type:
+      type: string
 tree:
   start: check_proactive
   nodes:

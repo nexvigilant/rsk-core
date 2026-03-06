@@ -1,6 +1,22 @@
 name: workflow-define-validator
 description: 'PVOS workflow definition: validates that a workflow definition has required steps (detect + report) and minimum length before registration'
 version: 0.1.0
+interface:
+  inputs:
+    has_detect_step:
+      type: bool
+      required: false
+    has_report_step:
+      type: bool
+      required: false
+    step_count:
+      type: int
+      required: false
+  outputs:
+    description:
+      type: string
+    status:
+      type: string
 tree:
   start: check_length
   nodes:

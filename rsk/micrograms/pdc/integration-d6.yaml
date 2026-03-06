@@ -1,6 +1,28 @@
 name: integration-d6
 description: "Domain 6 cross-domain integration — enhanced coverage domain completing the triad (D3+D5+D6). Error prevention connects to quality, risk, case processing."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    enhanced_domain:
+      type: string
+    enhanced_pair:
+      type: bool
+    enhancement_status:
+      type: string
+    epas:
+      type: string
+    integration_type:
+      type: string
+    min_epa_coverage:
+      type: string
+    module:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:

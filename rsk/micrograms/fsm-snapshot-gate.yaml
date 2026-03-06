@@ -1,6 +1,19 @@
 name: fsm-snapshot-gate
 description: 'PVOS FSM snapshots: gates snapshot creation based on state change and time since last snapshot - avoid redundant captures'
 version: 0.1.0
+interface:
+  inputs:
+    minutes_since_last_snapshot:
+      type: int
+      required: false
+    state_changed:
+      type: bool
+      required: false
+  outputs:
+    decision:
+      type: string
+    description:
+      type: string
 tree:
   start: check_state_changed
   nodes:

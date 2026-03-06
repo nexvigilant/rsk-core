@@ -1,6 +1,21 @@
 name: signal-action
 description: 'Bridge: PRR signal + Naranjo causality → action urgency. Chains from prr-signal and naranjo-quick.'
 version: 0.1.0
+interface:
+  inputs:
+    causality:
+      type: string
+      required: false
+    signal_detected:
+      type: bool
+      required: false
+  outputs:
+    action_required:
+      type: bool
+    rationale:
+      type: string
+    urgency:
+      type: string
 tree:
   start: check_signal
   nodes:

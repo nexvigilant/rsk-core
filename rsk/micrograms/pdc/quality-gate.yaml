@@ -1,6 +1,22 @@
 name: quality-gate
 description: "PDC: Classify framework element as CORE (globally immutable) or FLEXIBLE (culturally adaptable)"
 version: 0.1.0
+interface:
+  inputs:
+    element_type:
+      type: string
+      required: false
+  outputs:
+    adaptation_allowed:
+      type: bool
+    classification:
+      type: string
+    mutability:
+      type: string
+    quality_check:
+      type: string
+    scope:
+      type: string
 tree:
   start: check_domain_def
   nodes:

@@ -1,6 +1,32 @@
 name: duplicate-gate
 description: 'Duplicate case detection: classifies case pairs as CONFIRMED/PROBABLE/POSSIBLE/UNLIKELY duplicate based on matching criteria and time window'
 version: 1.0.0
+interface:
+  inputs:
+    same_drug:
+      type: bool
+      required: false
+    same_event:
+      type: bool
+      required: false
+    same_patient:
+      type: bool
+      required: false
+    same_reporter:
+      type: bool
+      required: false
+    time_window_days:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    confidence:
+      type: string
+    duplicate:
+      type: string
+    review_rationale:
+      type: string
 tree:
   start: check_same_patient
   nodes:

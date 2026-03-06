@@ -1,6 +1,48 @@
 name: executive-impact
 description: "PDC: Validate L5+/L5++ executive impact metrics against quantitative thresholds"
 version: 0.1.0
+interface:
+  inputs:
+    countries_active:
+      type: int
+      required: false
+    mentees_count:
+      type: int
+      required: false
+    org_improvement_pct:
+      type: int
+      required: false
+    orgs_adopting:
+      type: int
+      required: false
+    orgs_leading_change:
+      type: int
+      required: false
+    regulatory_advisory_roles:
+      type: int
+      required: false
+    regulatory_guidances:
+      type: int
+      required: false
+    target_level:
+      type: int
+      required: false
+    value_created_millions:
+      type: int
+      required: false
+  outputs:
+    impact_class:
+      type: string
+    level:
+      type: string
+    message:
+      type: string
+    qualified:
+      type: bool
+    thresholds:
+      type: string
+    tier:
+      type: string
 tree:
   start: check_target_level
   nodes:

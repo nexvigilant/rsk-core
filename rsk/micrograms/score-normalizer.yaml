@@ -1,6 +1,14 @@
 name: score-normalizer
 description: Normalize score to pass/fail
 version: 0.1.0
+interface:
+  inputs:
+    score:
+      type: float
+      required: false
+  outputs:
+    passed:
+      type: bool
 tree:
   start: check
   nodes:

@@ -1,6 +1,27 @@
 name: multi-signal-combiner
 description: Combines PRR, ROR, IC, and EBGM signal classifications into an overall pharmacovigilance signal assessment. Two or more STRONG signals yield CONFIRMED; one STRONG yields PROBABLE; MODERATE counts determine POSSIBLE/SUGGESTIVE.
 version: 0.1.0
+interface:
+  inputs:
+    ebgm_signal:
+      type: string
+      required: false
+    ic_signal:
+      type: string
+      required: false
+    prr_signal:
+      type: string
+      required: false
+    ror_signal:
+      type: string
+      required: false
+  outputs:
+    overall:
+      type: string
+    priority:
+      type: string
+    signal_detected:
+      type: bool
 tree:
   start: check_prr_strong
   nodes:
@@ -383,3 +404,83 @@ tests:
     overall: NO_SIGNAL
     priority: NONE
     signal_detected: false
+# -- covers ror_mod_check_ic + ror_mod_only_check_ic_false (ebgm=MODERATE -> POSSIBLE) --
+- input:
+    prr_signal: NONE
+    ror_signal: MODERATE
+    ic_signal: NONE
+    ebgm_signal: MODERATE
+  expect:
+    overall: POSSIBLE
+    priority: MEDIUM
+    signal_detected: true
+# -- covers ror_mod_check_ic + ror_mod_only_check_ic_false (ebgm=NONE -> SUGGESTIVE) --
+- input:
+    prr_signal: NONE
+    ror_signal: MODERATE
+    ic_signal: NONE
+    ebgm_signal: NONE
+  expect:
+    overall: SUGGESTIVE
+    priority: LOW
+    signal_detected: true
+# -- covers ror_mod_check_ic + ror_ic_mod_check_ebgm (ebgm=MODERATE -> PROBABLE) --
+- input:
+    prr_signal: NONE
+    ror_signal: MODERATE
+    ic_signal: MODERATE
+    ebgm_signal: MODERATE
+  expect:
+    overall: PROBABLE
+    priority: HIGH
+    signal_detected: true
+# -- covers ror_mod_check_ic + ror_ic_mod_check_ebgm (ebgm=NONE -> POSSIBLE) --
+- input:
+    prr_signal: NONE
+    ror_signal: MODERATE
+    ic_signal: MODERATE
+    ebgm_signal: NONE
+  expect:
+    overall: POSSIBLE
+    priority: MEDIUM
+    signal_detected: true
+# -- covers ic_strong_check_ebgm (ebgm=STRONG -> CONFIRMED) --
+- input:
+    prr_signal: NONE
+    ror_signal: NONE
+    ic_signal: STRONG
+    ebgm_signal: STRONG
+  expect:
+    overall: CONFIRMED
+    priority: CRITICAL
+    signal_detected: true
+# -- covers ic_strong_check_ebgm (ebgm=NONE -> PROBABLE) --
+- input:
+    prr_signal: NONE
+    ror_signal: NONE
+    ic_signal: STRONG
+    ebgm_signal: NONE
+  expect:
+    overall: PROBABLE
+    priority: HIGH
+    signal_detected: true
+# -- covers prr_ic_mod_check_ebgm (ebgm=MODERATE -> PROBABLE) --
+- input:
+    prr_signal: MODERATE
+    ror_signal: NONE
+    ic_signal: MODERATE
+    ebgm_signal: MODERATE
+  expect:
+    overall: PROBABLE
+    priority: HIGH
+    signal_detected: true
+# -- covers prr_ic_mod_check_ebgm (ebgm=NONE -> POSSIBLE) --
+- input:
+    prr_signal: MODERATE
+    ror_signal: NONE
+    ic_signal: MODERATE
+    ebgm_signal: NONE
+  expect:
+    overall: POSSIBLE
+    priority: MEDIUM
+    signal_detected: true

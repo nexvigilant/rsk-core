@@ -1,6 +1,35 @@
 name: regulatory-pathway
 description: "Domain 12: Route to regulatory submission pathway by product type, urgency, and therapeutic designation."
 version: 0.1.0
+interface:
+  inputs:
+    has_breakthrough_designation:
+      type: bool
+      required: false
+    is_orphan:
+      type: bool
+      required: false
+    serious_condition:
+      type: bool
+      required: false
+    unmet_medical_need:
+      type: bool
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    business_impact:
+      type: string
+    ema:
+      type: string
+    fda:
+      type: string
+    features:
+      type: string
+    pathway:
+      type: string
+    review_timeline_months:
+      type: int
 tree:
   start: check_breakthrough
   nodes:

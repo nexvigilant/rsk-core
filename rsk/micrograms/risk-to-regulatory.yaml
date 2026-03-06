@@ -1,6 +1,31 @@
 name: risk-to-regulatory
 description: 'Router: routes risk management decisions to the appropriate regulatory submission action based on market action, benefit-risk verdict, and labeling needs'
 version: 1.0.0
+interface:
+  inputs:
+    benefit_risk_decision:
+      type: string
+      required: false
+    labeling_update_needed:
+      type: bool
+      required: false
+    market_action:
+      type: string
+      required: false
+    rems_required:
+      type: bool
+      required: false
+  outputs:
+    next_mg:
+      type: string
+    regulatory_filing:
+      type: string
+    route:
+      type: string
+    submission_type:
+      type: string
+    timeline:
+      type: string
 tree:
   start: check_withdrawal
   nodes:

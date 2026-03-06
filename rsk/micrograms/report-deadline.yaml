@@ -1,6 +1,21 @@
 name: report-deadline
 description: Determine regulatory reporting deadline based on seriousness and expectedness
 version: 0.1.0
+interface:
+  inputs:
+    expedited:
+      type: bool
+      required: false
+    seriousness:
+      type: string
+      required: false
+  outputs:
+    deadline_days:
+      type: int
+    regulatory_basis:
+      type: string
+    report_type:
+      type: string
 tree:
   start: expedited_check
   nodes:

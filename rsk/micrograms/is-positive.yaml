@@ -1,6 +1,14 @@
 name: is-positive
 description: Check if a number is positive
 version: 0.1.0
+interface:
+  inputs:
+    n:
+      type: int
+      required: false
+  outputs:
+    positive:
+      type: bool
 tree:
   start: check
   nodes:

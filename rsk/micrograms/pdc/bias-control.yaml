@@ -1,6 +1,26 @@
 name: bias-control
 description: "Domain 9: Identify bias type and route to appropriate control strategy — selection, information, confounding."
 version: 0.1.0
+interface:
+  inputs:
+    bias_type:
+      type: string
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    approach:
+      type: string
+    bias:
+      type: string
+    control_methods:
+      type: string
+    description:
+      type: string
+    framework:
+      type: string
+    subtypes:
+      type: string
 tree:
   start: check_type
   nodes:

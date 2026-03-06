@@ -1,6 +1,37 @@
 name: appe-integration-scorer
 description: "APPE Ch7.4: Score Foundation-Communication Integration Module (D1+D14) quality. Chains from anchor-d1 + integration-d14 outputs."
 version: 0.1.0
+interface:
+  inputs:
+    audience_types_demonstrated:
+      type: int
+      required: false
+    communication_clarity_pct:
+      type: int
+      required: false
+    peer_teaching_score:
+      type: float
+      required: false
+    technical_accuracy_pct:
+      type: int
+      required: false
+  outputs:
+    ch7_section:
+      type: string
+    gap:
+      type: string
+    integration_level:
+      type: string
+    message:
+      type: string
+    module_status:
+      type: string
+    ready_for_bridge:
+      type: bool
+    score:
+      type: int
+    strengths:
+      type: string
 tree:
   start: check_technical
   nodes:

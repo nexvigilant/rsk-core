@@ -1,6 +1,30 @@
 name: epa7-risk-minimize
 description: "EPA 7: Design risk minimization — routes by risk severity, population scope, and intervention type needed."
 version: 0.1.0
+interface:
+  inputs:
+    existing_labeling_adequate:
+      type: bool
+      required: false
+    population_scope:
+      type: string
+      required: false
+    risk_severity:
+      type: int
+      required: false
+  outputs:
+    ai_support:
+      type: string
+    evaluation:
+      type: string
+    intervention:
+      type: string
+    measures:
+      type: string
+    monitoring:
+      type: string
+    regulatory:
+      type: string
 tree:
   start: check_severity
   nodes:

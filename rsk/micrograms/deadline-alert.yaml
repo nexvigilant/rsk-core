@@ -1,6 +1,21 @@
 name: deadline-alert
 description: 'Bridge: regulatory deadline + confidence actionability → alert routing. Chains from report-deadline and confidence-gate.'
 version: 0.1.0
+interface:
+  inputs:
+    actionable:
+      type: bool
+      required: false
+    deadline_days:
+      type: int
+      required: false
+  outputs:
+    alert_level:
+      type: string
+    days_remaining_label:
+      type: string
+    response:
+      type: string
 tree:
   start: null_guard
   nodes:
@@ -15,14 +30,14 @@ tree:
       type: return
       value:
         alert_level: UNKNOWN
-        days_remaining: unknown
+        days_remaining_label: unknown
         response: "Deadline data missing \u2014 cannot assess urgency"
     routine:
       type: return
       value:
         response: Within normal timeline
         alert_level: ROUTINE
-        days_remaining: '>15'
+        days_remaining_label: '>15'
     check_actionable_soon:
       type: condition
       variable: actionable
@@ -34,7 +49,7 @@ tree:
       type: return
       value:
         alert_level: ESCALATE
-        days_remaining: <=7
+        days_remaining_label: <=7
         response: Deadline imminent but data insufficient — escalate for decision
     check_urgent:
       type: condition
@@ -46,7 +61,7 @@ tree:
     action:
       type: return
       value:
-        days_remaining: 8-15
+        days_remaining_label: 8-15
         alert_level: ACTION
         response: Prepare submission with available data
     check_soon:
@@ -60,7 +75,7 @@ tree:
       type: return
       value:
         alert_level: CRITICAL
-        days_remaining: <=7
+        days_remaining_label: <=7
         response: Immediate submission required
     check_actionable_urgent:
       type: condition
@@ -73,21 +88,21 @@ tree:
       type: return
       value:
         response: Approaching deadline — review data completeness
-        days_remaining: 8-15
+        days_remaining_label: 8-15
         alert_level: REVIEW
 tests:
 - input:
     deadline_days: 3
     actionable: true
   expect:
-    days_remaining: <=7
+    days_remaining_label: <=7
     alert_level: CRITICAL
     response: Immediate submission required
 - input:
     actionable: false
     deadline_days: 5
   expect:
-    days_remaining: <=7
+    days_remaining_label: <=7
     response: Deadline imminent but data insufficient — escalate for decision
     alert_level: ESCALATE
 - input:
@@ -95,7 +110,7 @@ tests:
     deadline_days: 10
   expect:
     alert_level: ACTION
-    days_remaining: 8-15
+    days_remaining_label: 8-15
     response: Prepare submission with available data
 - input:
     deadline_days: 12
@@ -103,26 +118,26 @@ tests:
   expect:
     response: Approaching deadline — review data completeness
     alert_level: REVIEW
-    days_remaining: 8-15
+    days_remaining_label: 8-15
 - input:
     deadline_days: 30
     actionable: true
   expect:
     alert_level: ROUTINE
-    days_remaining: '>15'
+    days_remaining_label: '>15'
     response: Within normal timeline
 - input:
     deadline_days: 7
     actionable: true
   expect:
     alert_level: CRITICAL
-    days_remaining: <=7
+    days_remaining_label: <=7
     response: Immediate submission required
 - input:
     deadline_days: 15
     actionable: true
   expect:
-    days_remaining: 8-15
+    days_remaining_label: 8-15
     alert_level: ACTION
     response: Prepare submission with available data
 - input:
@@ -131,57 +146,57 @@ tests:
   expect:
     response: Within normal timeline
     alert_level: ROUTINE
-    days_remaining: '>15'
+    days_remaining_label: '>15'
 - input: {}
   expect:
     alert_level: UNKNOWN
-    days_remaining: unknown
+    days_remaining_label: unknown
     response: "Deadline data missing \u2014 cannot assess urgency"
 - input:
     deadline_days: 0
   expect:
     alert_level: ESCALATE
     response: Deadline imminent but data insufficient — escalate for decision
-    days_remaining: <=7
+    days_remaining_label: <=7
 - input:
     deadline_days: -1
   expect:
-    days_remaining: <=7
+    days_remaining_label: <=7
     alert_level: ESCALATE
     response: Deadline imminent but data insufficient — escalate for decision
 - input:
     deadline_days: 6
   expect:
     response: Deadline imminent but data insufficient — escalate for decision
-    days_remaining: <=7
+    days_remaining_label: <=7
     alert_level: ESCALATE
 - input:
     deadline_days: 8
   expect:
     alert_level: REVIEW
-    days_remaining: 8-15
+    days_remaining_label: 8-15
     response: Approaching deadline — review data completeness
 - input:
     deadline_days: 700
   expect:
     alert_level: ROUTINE
     response: Within normal timeline
-    days_remaining: '>15'
+    days_remaining_label: '>15'
 - input: {}
   expect:
     alert_level: UNKNOWN
-    days_remaining: unknown
+    days_remaining_label: unknown
     response: "Deadline data missing \u2014 cannot assess urgency"
 - input:
     deadline_days: 0
   expect:
-    days_remaining: <=7
+    days_remaining_label: <=7
     alert_level: ESCALATE
     response: Deadline imminent but data insufficient — escalate for decision
 - input:
     deadline_days: -1
   expect:
-    days_remaining: <=7
+    days_remaining_label: <=7
     alert_level: ESCALATE
     response: Deadline imminent but data insufficient — escalate for decision
 - input:
@@ -189,20 +204,20 @@ tests:
   expect:
     response: Approaching deadline — review data completeness
     alert_level: REVIEW
-    days_remaining: 8-15
+    days_remaining_label: 8-15
 - input:
     deadline_days: 1500
   expect:
-    days_remaining: '>15'
+    days_remaining_label: '>15'
     alert_level: ROUTINE
     response: Within normal timeline
 - input: {}
   expect:
     alert_level: UNKNOWN
-    days_remaining: unknown
+    days_remaining_label: unknown
     response: "Deadline data missing \u2014 cannot assess urgency"
 - input: {}
   expect:
     alert_level: UNKNOWN
-    days_remaining: unknown
+    days_remaining_label: unknown
     response: "Deadline data missing \u2014 cannot assess urgency"

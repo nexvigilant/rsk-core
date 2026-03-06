@@ -1,6 +1,26 @@
 name: error-classifier
 description: "Domain 6: Classify medication error by type and stage in the medication use process — prescribing through monitoring."
 version: 0.1.0
+interface:
+  inputs:
+    error_stage:
+      type: string
+      required: false
+  outputs:
+    ai_detect:
+      type: string
+    examples:
+      type: string
+    human_factors:
+      type: string
+    investigation:
+      type: string
+    message:
+      type: string
+    prevention:
+      type: string
+    stage:
+      type: string
 tree:
   start: check_stage
   nodes:

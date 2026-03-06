@@ -1,6 +1,28 @@
 name: integration-d3
 description: "Domain 3 cross-domain integration — enhanced coverage domain, 50% EPA integration requirement. ADR recognition enhances signal, case, risk domains."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    enhanced_domain:
+      type: bool
+    enhanced_pair:
+      type: bool
+    enhancement_status:
+      type: string
+    epas:
+      type: string
+    integration_type:
+      type: string
+    min_epa_coverage:
+      type: string
+    module:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:

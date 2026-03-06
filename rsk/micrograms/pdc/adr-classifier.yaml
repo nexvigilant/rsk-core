@@ -1,6 +1,32 @@
 name: adr-classifier
 description: "Domain 2: Classify adverse drug reaction by type (A-F) — mechanism, predictability, dose-dependence, clinical approach."
 version: 0.1.0
+interface:
+  inputs:
+    adr_type:
+      type: string
+      required: false
+  outputs:
+    ai_detect:
+      type: string
+    classification:
+      type: string
+    dose_dependent:
+      type: bool
+    incidence:
+      type: string
+    management:
+      type: string
+    mechanism:
+      type: string
+    message:
+      type: string
+    mortality:
+      type: string
+    name:
+      type: string
+    predictable:
+      type: bool
 tree:
   start: check_type
   nodes:

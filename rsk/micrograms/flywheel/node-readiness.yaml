@@ -1,6 +1,22 @@
 name: node-readiness
 description: 'Flywheel node readiness gate: READY (loop_closure>=0.5 AND compounding>=0.5 AND automation>=0.2), WIRING (any>=0.3), DORMANT (all<0.3)'
 version: 0.1.0
+interface:
+  inputs:
+    automation:
+      type: int
+      required: false
+    compounding:
+      type: int
+      required: false
+    loop_closure:
+      type: int
+      required: false
+  outputs:
+    promotable:
+      type: bool
+    status:
+      type: string
 tree:
   start: check_ready
   nodes:

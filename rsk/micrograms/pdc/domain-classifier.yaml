@@ -1,6 +1,22 @@
 name: domain-classifier
 description: "PDC: Classify competency domain ID (1-15) into thematic group and layer"
 version: 0.1.0
+interface:
+  inputs:
+    domain_id:
+      type: int
+      required: false
+  outputs:
+    description:
+      type: string
+    domain_range:
+      type: string
+    error:
+      type: string
+    layer:
+      type: string
+    thematic_group:
+      type: string
 tree:
   start: null_guard
   nodes:

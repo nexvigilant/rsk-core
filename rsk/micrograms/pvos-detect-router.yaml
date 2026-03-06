@@ -1,6 +1,21 @@
 name: pvos-detect-router
 description: 'PVOS signal detection: routes detection request to the appropriate algorithm (PRR/ROR/IC/EBGM/Chi2/Fisher) based on algorithm selection and contingency table availability'
 version: 0.1.0
+interface:
+  inputs:
+    algorithm:
+      type: string
+      required: false
+    has_contingency:
+      type: bool
+      required: false
+  outputs:
+    algorithm:
+      type: string
+    description:
+      type: string
+    method:
+      type: string
 tree:
   start: check_contingency
   nodes:
@@ -144,3 +159,19 @@ tests:
     algorithm: Fisher
     method: fishers_exact_test
     description: Route to Fisher exact test - exact significance for small counts
+# no_data: no contingency table available
+- input:
+    algorithm: PRR
+    has_contingency: false
+  expect:
+    algorithm: NONE
+    method: error
+    description: No contingency table available - cannot run signal detection
+# unknown_algorithm: unrecognized algorithm name
+- input:
+    algorithm: BCPNN
+    has_contingency: true
+  expect:
+    algorithm: UNKNOWN
+    method: error
+    description: Unrecognized algorithm - choose PRR/ROR/IC/EBGM/Chi2/Fisher

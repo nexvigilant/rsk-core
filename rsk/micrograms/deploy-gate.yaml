@@ -1,6 +1,21 @@
 name: deploy-gate
 description: 'Bridge: test verdict deploy flag + quality score ship flag → release approval. Chains from test-verdict and quality-score.'
 version: 0.1.0
+interface:
+  inputs:
+    deploy:
+      type: bool
+      required: false
+    ship:
+      type: bool
+      required: false
+  outputs:
+    blockers:
+      type: string
+    release_approved:
+      type: bool
+    status:
+      type: string
 tree:
   start: check_deploy
   nodes:

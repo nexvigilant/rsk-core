@@ -1,6 +1,56 @@
 name: signal-method
 description: "Domain 8: Route to signal detection method by data type, sample size, and analytical goal — PRR, ROR, IC, EBGM, ML, NLP."
 version: 0.1.0
+interface:
+  inputs:
+    case_count:
+      type: int
+      required: false
+    data_type:
+      type: string
+      required: false
+    prefer_bayesian:
+      type: bool
+      required: false
+  outputs:
+    action:
+      type: string
+    ai_enhance:
+      type: string
+    approach:
+      type: string
+    capabilities:
+      type: string
+    components:
+      type: string
+    formula_ebgm:
+      type: string
+    formula_ic:
+      type: string
+    formula_prr:
+      type: string
+    formula_ror:
+      type: string
+    limitations:
+      type: string
+    nexcore_tool:
+      type: string
+    next_step:
+      type: string
+    note:
+      type: string
+    primary:
+      type: string
+    secondary:
+      type: string
+    signal_criteria:
+      type: string
+    signal_criteria_ic:
+      type: string
+    strengths:
+      type: string
+    tertiary:
+      type: string
 tree:
   start: check_data_type
   nodes:

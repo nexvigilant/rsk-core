@@ -1,0 +1,107 @@
+name: case-to-signal-feed
+description: Transforms case data into standardized signal feed record for PRR computation
+version: 0.1.0
+
+interface:
+  inputs:
+    drug_name:
+      type: string
+      required: true
+      description: Name of the drug
+    event_term:
+      type: string
+      required: true
+      description: Medical event term (MedDRA or plain text)
+    patient_age:
+      type: integer
+      required: false
+      description: Age in years
+    outcome:
+      type: string
+      required: false
+      description: Outcome classification
+  outputs:
+    signal_feed_record:
+      type: object
+      description: Standardized record with fields for PRR input
+
+tree:
+  start: validate_drug
+  nodes:
+    validate_drug:
+      type: condition
+      variable: drug_name
+      operator: is_not_null
+      true_next: validate_event
+      false_next: missing_drug
+
+    validate_event:
+      type: condition
+      variable: event_term
+      operator: is_not_null
+      true_next: check_age
+      false_next: missing_event
+
+    check_age:
+      type: condition
+      variable: patient_age
+      operator: is_not_null
+      true_next: with_age
+      false_next: without_age
+
+    with_age:
+      type: return
+      value:
+        signal_feed_record:
+          drug: "{{ drug_name }}"
+          event: "{{ event_term }}"
+          age_group: "adult"
+          outcome: "{{ outcome }}"
+          complete: true
+          data_quality: "high"
+
+    without_age:
+      type: return
+      value:
+        signal_feed_record:
+          drug: "{{ drug_name }}"
+          event: "{{ event_term }}"
+          age_group: "unknown"
+          outcome: "{{ outcome }}"
+          complete: false
+          data_quality: "medium"
+
+    missing_drug:
+      type: return
+      value:
+        signal_feed_record:
+          drug: null
+          event: "{{ event_term }}"
+          age_group: null
+          outcome: "{{ outcome }}"
+          complete: false
+          data_quality: "low"
+
+    missing_event:
+      type: return
+      value:
+        signal_feed_record:
+          drug: "{{ drug_name }}"
+          event: null
+          age_group: null
+          outcome: "{{ outcome }}"
+          complete: false
+          data_quality: "low"
+
+tests:
+  - input: { drug_name: "metformin", event_term: "lactic acidosis", patient_age: 62, outcome: "hospitalization" }
+    expect: { signal_feed_record: { drug: "metformin", event: "lactic acidosis", age_group: "adult", outcome: "hospitalization", complete: true, data_quality: "high" } }
+
+  - input: { drug_name: "lisinopril", event_term: "cough", patient_age: null, outcome: "outpatient" }
+    expect: { signal_feed_record: { drug: "lisinopril", event: "cough", age_group: "unknown", outcome: "outpatient", complete: false, data_quality: "medium" } }
+
+  - input: { drug_name: null, event_term: "rash", patient_age: 45, outcome: "recovery" }
+    expect: { signal_feed_record: { drug: null, event: "rash", age_group: null, outcome: "recovery", complete: false, data_quality: "low" } }
+
+  - input: { drug_name: "aspirin", event_term: "GI bleed", patient_age: 78, outcome: "fatal" }
+    expect: { signal_feed_record: { drug: "aspirin", event: "GI bleed", age_group: "adult", outcome: "fatal", complete: true, data_quality: "high" } }

@@ -1,6 +1,23 @@
 name: causality-to-action
 description: 'Bridge: routes causality assessment results to regulatory action with ICH E2B deadlines. Chains from naranjo-quick output.'
 version: 0.1.0
+interface:
+  inputs:
+    causality:
+      type: string
+      required: true
+    is_serious:
+      type: bool
+      required: false
+  outputs:
+    regulatory_action:
+      type: string
+    deadline_days:
+      type: int
+    reporting_type:
+      type: string
+    reason:
+      type: string
 tree:
   start: check_definite
   nodes:

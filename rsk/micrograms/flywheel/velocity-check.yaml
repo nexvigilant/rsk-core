@@ -1,6 +1,16 @@
 name: velocity-check
 description: 'Flywheel velocity classifier: ACCELERATING (nodes_wired_this_session>=2), STEADY (=1), STALLED (=0)'
 version: 0.1.0
+interface:
+  inputs:
+    nodes_wired:
+      type: int
+      required: false
+  outputs:
+    momentum:
+      type: string
+    velocity:
+      type: string
 tree:
   start: check_accelerating
   nodes:

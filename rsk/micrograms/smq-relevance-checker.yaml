@@ -1,0 +1,128 @@
+name: smq-relevance-checker
+description: "Check MedDRA SMQ relevance for an event term and estimate scope"
+version: 0.1.0
+
+tree:
+  start: validate_inputs
+  nodes:
+    validate_inputs:
+      type: condition
+      variable: event_term
+      operator: is_not_null
+      true_next: validate_smq
+      false_next: missing_input
+
+    validate_smq:
+      type: condition
+      variable: smq_name
+      operator: is_not_null
+      true_next: check_relevance
+      false_next: missing_input
+
+    check_relevance:
+      type: condition
+      variable: event_term
+      operator: matches
+      value: "(?i)(cardiac|heart|arrhythmia|infarction)"
+      true_next: check_smq_cardiac
+      false_next: check_respiratory
+
+    check_smq_cardiac:
+      type: condition
+      variable: smq_name
+      operator: matches
+      value: "(?i)(cardiac|heart|arrhythmia)"
+      true_next: relevant_narrow
+      false_next: not_relevant
+
+    check_respiratory:
+      type: condition
+      variable: event_term
+      operator: matches
+      value: "(?i)(respiratory|asthma|pneumonia|dyspnea)"
+      true_next: check_smq_respiratory
+      false_next: check_neuro
+
+    check_smq_respiratory:
+      type: condition
+      variable: smq_name
+      operator: matches
+      value: "(?i)(respiratory|asthma|lung|pneumonia)"
+      true_next: relevant_broad
+      false_next: not_relevant
+
+    check_neuro:
+      type: condition
+      variable: event_term
+      operator: matches
+      value: "(?i)(seizure|stroke|neurological|brain)"
+      true_next: check_smq_neuro
+      false_next: check_infection
+
+    check_smq_neuro:
+      type: condition
+      variable: smq_name
+      operator: matches
+      value: "(?i)(neuro|seizure|brain|stroke)"
+      true_next: relevant_narrow
+      false_next: not_relevant
+
+    check_infection:
+      type: condition
+      variable: event_term
+      operator: matches
+      value: "(?i)(infection|sepsis|pneumonia|abscess)"
+      true_next: check_smq_infection
+      false_next: not_relevant
+
+    check_smq_infection:
+      type: condition
+      variable: smq_name
+      operator: matches
+      value: "(?i)(infection|sepsis|immunosuppression)"
+      true_next: relevant_broad
+      false_next: not_relevant
+
+    relevant_narrow:
+      type: return
+      value:
+        likely_relevant: true
+        scope: "narrow"
+        confidence: 0.9
+
+    relevant_broad:
+      type: return
+      value:
+        likely_relevant: true
+        scope: "broad"
+        confidence: 0.7
+
+    not_relevant:
+      type: return
+      value:
+        likely_relevant: false
+        scope: "none"
+        confidence: 0.8
+
+    missing_input:
+      type: return
+      value:
+        likely_relevant: false
+        scope: null
+        confidence: 0.0
+
+tests:
+  - input: { event_term: "myocardial infarction", smq_name: "cardiac_arrhythmia" }
+    expect: { likely_relevant: true, scope: "narrow", confidence: 0.9 }
+
+  - input: { event_term: "pneumonia", smq_name: "respiratory_infection" }
+    expect: { likely_relevant: true, scope: "broad", confidence: 0.7 }
+
+  - input: { event_term: "seizure", smq_name: "neurological_disorders" }
+    expect: { likely_relevant: true, scope: "narrow", confidence: 0.9 }
+
+  - input: { event_term: "rash", smq_name: "cardiac_disease" }
+    expect: { likely_relevant: false, scope: "none", confidence: 0.8 }
+
+  - input: { event_term: null, smq_name: "infection_smq" }
+    expect: { likely_relevant: false, scope: null, confidence: 0.0 }

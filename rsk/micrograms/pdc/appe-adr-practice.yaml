@@ -1,6 +1,36 @@
 name: appe-adr-practice
 description: "APPE Ch7.2 Domain 2: ADR classification practice — maps reaction characteristics to DoTS/WHO type (A/B/C) with confidence and teaching points."
 version: 0.1.0
+interface:
+  inputs:
+    dose_dependent:
+      type: bool
+      required: false
+    immunological:
+      type: bool
+      required: false
+    mechanism_known:
+      type: bool
+      required: false
+    onset_days:
+      type: int
+      required: false
+    reaction_predictable:
+      type: bool
+      required: false
+  outputs:
+    adr_type:
+      type: string
+    classification:
+      type: string
+    confidence:
+      type: string
+    explanation:
+      type: string
+    needs_review:
+      type: bool
+    teaching_point:
+      type: string
 tree:
   start: check_type_a
   nodes:

@@ -1,6 +1,20 @@
 name: underreporting-estimator
 description: 'PVOS underreporting estimation: categorizes reporting completeness based on reported-to-expected case ratio'
 version: 0.1.0
+interface:
+  inputs:
+    reporting_ratio:
+      type: float
+      required: false
+  outputs:
+    category:
+      type: string
+    description:
+      type: string
+    estimated_reporting_pct:
+      type: string
+    recommendation:
+      type: string
 tree:
   start: check_severe
   nodes:

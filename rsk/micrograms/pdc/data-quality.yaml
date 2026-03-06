@@ -1,6 +1,30 @@
 name: data-quality
 description: "Domain 7: Assess data quality dimension and route to appropriate validation action — completeness, accuracy, consistency, timeliness, integrity."
 version: 0.1.0
+interface:
+  inputs:
+    quality_dimension:
+      type: string
+      required: false
+  outputs:
+    action_if_low:
+      type: string
+    ai_assist:
+      type: string
+    composite_target:
+      type: string
+    definition:
+      type: string
+    dimension:
+      type: string
+    framework:
+      type: string
+    metric:
+      type: string
+    target:
+      type: string
+    validation:
+      type: string
 tree:
   start: check_dimension
   nodes:

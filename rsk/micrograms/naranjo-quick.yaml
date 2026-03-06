@@ -1,6 +1,18 @@
 name: naranjo-quick
 description: Quick Naranjo causality classification from total score
 version: 0.1.0
+interface:
+  inputs:
+    naranjo_score:
+      type: int
+      required: true
+  outputs:
+    causality:
+      type: string
+    confidence:
+      type: int
+    action:
+      type: string
 tree:
   start: definite_check
   nodes:

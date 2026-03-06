@@ -1,6 +1,32 @@
 name: evidence-quality
 description: "Domain 10: Grade evidence quality using GRADE-style hierarchy — from RCT meta-analysis down to expert opinion."
 version: 0.1.0
+interface:
+  inputs:
+    evidence_type:
+      type: string
+      required: false
+    has_limitations:
+      type: bool
+      required: false
+    large_effect:
+      type: bool
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    confidence:
+      type: string
+    decision_impact:
+      type: string
+    downgrade_factors:
+      type: string
+    grade:
+      type: string
+    typical_sources:
+      type: string
+    upgrade_factors:
+      type: string
 tree:
   start: check_type
   nodes:

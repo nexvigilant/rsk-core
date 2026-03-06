@@ -1,6 +1,41 @@
 name: appe-epa-selector
 description: "APPE Ch7.3: Select appropriate foundational EPA and PV tool chain by week and domain levels. Chains TO icsr-triage, naranjo-quick, prr-signal."
 version: 0.1.0
+interface:
+  inputs:
+    d14_level:
+      type: int
+      required: false
+    d1_level:
+      type: int
+      required: false
+    d2_level:
+      type: int
+      required: false
+    week:
+      type: int
+      required: false
+  outputs:
+    activity:
+      type: string
+    ch7_ref:
+      type: string
+    epa_id:
+      type: int
+    epa_name:
+      type: string
+    epa_scope:
+      type: string
+    epas_active:
+      type: string
+    pv_tool_chain:
+      type: string
+    secondary_epa:
+      type: int
+    secondary_name:
+      type: string
+    supervision:
+      type: string
 tree:
   start: null_guard
   nodes:

@@ -1,6 +1,28 @@
 name: epa-readiness
 description: "PDC: Check if a professional's domain levels meet an EPA's minimum requirements (core EPAs 1-10)"
 version: 0.1.0
+interface:
+  inputs:
+    epa_id:
+      type: int
+      required: false
+    min_domain_level:
+      type: int
+      required: false
+    min_supporting_level:
+      type: int
+      required: false
+  outputs:
+    epa_range:
+      type: string
+    epa_tier:
+      type: string
+    message:
+      type: string
+    ready:
+      type: bool
+    status:
+      type: string
 tree:
   start: null_guard
   nodes:
@@ -218,3 +240,21 @@ tests:
 - input: {}
   expect:
     ready: false
+# not_ready_supporting: basic EPA, domain OK but supporting too low
+- input:
+    epa_id: 2
+    min_domain_level: 3
+    min_supporting_level: 1
+  expect:
+    ready: false
+    status: NOT_READY
+    message: "Supporting domains below minimum level requirement"
+# not_ready_intermediate: intermediate EPA, domain below L3
+- input:
+    epa_id: 4
+    min_domain_level: 2
+    min_supporting_level: 2
+  expect:
+    ready: false
+    status: NOT_READY
+    message: "Primary domains below L3 minimum for Core EPAs 4-5"

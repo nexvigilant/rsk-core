@@ -1,6 +1,27 @@
 name: assessment-router
 description: "PDC: Route to assessment method based on competency type and level"
 version: 0.1.0
+interface:
+  inputs:
+    competency_type:
+      type: string
+      required: false
+    level:
+      type: string
+      required: false
+  outputs:
+    assessor:
+      type: string
+    behavioral_anchors:
+      type: string
+    entrustment_focus:
+      type: string
+    frequency:
+      type: string
+    primary_method:
+      type: string
+    secondary_method:
+      type: string
 tree:
   start: check_level_high
   nodes:

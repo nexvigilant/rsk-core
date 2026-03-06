@@ -1,6 +1,26 @@
 name: level-gate
 description: "PDC: Gate competency level (1-7) into progression tier with behavioral anchor requirements"
 version: 0.1.0
+interface:
+  inputs:
+    level:
+      type: string
+      required: false
+  outputs:
+    anchor_type:
+      type: string
+    autonomy:
+      type: string
+    error:
+      type: string
+    flywheel_tier:
+      type: string
+    programs:
+      type: string
+    supervision:
+      type: string
+    tier:
+      type: string
 tree:
   start: null_guard
   nodes:

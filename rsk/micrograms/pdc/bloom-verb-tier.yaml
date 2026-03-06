@@ -1,6 +1,20 @@
 name: bloom-verb-tier
 description: "PDC: Map observed behavioral verb category to Bloom taxonomy tier (1-7) for anchor validation"
 version: 0.1.0
+interface:
+  inputs:
+    verb_category:
+      type: string
+      required: false
+  outputs:
+    bloom_level:
+      type: string
+    pdc_level:
+      type: string
+    verb_tier:
+      type: int
+    verbs:
+      type: string
 tree:
   start: check_recall
   nodes:

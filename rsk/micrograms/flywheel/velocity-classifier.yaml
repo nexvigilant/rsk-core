@@ -1,6 +1,18 @@
 name: velocity-classifier
 description: 'Classify flywheel velocity from avg_fix_time_ms matching MCP foundation_flywheel_velocity bands: EXCEPTIONAL (<=1h), TARGET (<=24h), ACCEPTABLE (<=168h/7d), SLOW (>168h)'
 version: 0.2.0
+interface:
+  inputs:
+    avg_fix_time_ms:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    band:
+      type: string
+    velocity_inverse:
+      type: string
 tree:
   start: check_exceptional
   nodes:

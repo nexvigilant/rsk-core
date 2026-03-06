@@ -1,6 +1,22 @@
 name: alert-config-validator
 description: 'PVOS alert configuration: validates alert config completeness - requires threshold, notification channel, and valid severity level'
 version: 0.1.0
+interface:
+  inputs:
+    has_notification:
+      type: bool
+      required: false
+    has_threshold:
+      type: bool
+      required: false
+    severity:
+      type: string
+      required: false
+  outputs:
+    description:
+      type: string
+    status:
+      type: string
 tree:
   start: check_threshold
   nodes:

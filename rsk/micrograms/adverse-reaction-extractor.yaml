@@ -1,0 +1,118 @@
+name: adverse-reaction-extractor
+description: "Extract frequency category and numeric range from adverse reaction text in DailyMed labels"
+version: 0.1.0
+
+tree:
+  start: check_reaction_text
+  nodes:
+    check_reaction_text:
+      type: condition
+      variable: reaction_text
+      operator: is_not_null
+      true_next: check_frequency_text
+      false_next: missing_input
+
+    check_frequency_text:
+      type: condition
+      variable: frequency_text
+      operator: is_not_null
+      true_next: classify_frequency
+      false_next: frequency_unknown
+
+    classify_frequency:
+      type: condition
+      variable: frequency_text
+      operator: matches
+      value: "(?i)(very common|>=10%|≥10|>=10)"
+      true_next: frequency_very_common
+      false_next: check_common
+
+    check_common:
+      type: condition
+      variable: frequency_text
+      operator: matches
+      value: "(?i)^common|1.*9%|1-10|≥1%"
+      true_next: frequency_common
+      false_next: check_uncommon
+
+    check_uncommon:
+      type: condition
+      variable: frequency_text
+      operator: matches
+      value: "(?i)(uncommon|0.1.*1%|0.1-1)"
+      true_next: frequency_uncommon
+      false_next: check_very_rare
+
+    check_very_rare:
+      type: condition
+      variable: frequency_text
+      operator: matches
+      value: "(?i)(very rare|<0.01%)"
+      true_next: frequency_very_rare
+      false_next: check_rare
+
+    check_rare:
+      type: condition
+      variable: frequency_text
+      operator: matches
+      value: "(?i)(^rare|0.01.*0.1%|0.01-0.1)"
+      true_next: frequency_rare
+      false_next: frequency_unknown
+
+    frequency_very_common:
+      type: return
+      value:
+        frequency_category: "very_common"
+        numeric_range: ">=10%"
+
+    frequency_common:
+      type: return
+      value:
+        frequency_category: "common"
+        numeric_range: "1-10%"
+
+    frequency_uncommon:
+      type: return
+      value:
+        frequency_category: "uncommon"
+        numeric_range: "0.1-1%"
+
+    frequency_rare:
+      type: return
+      value:
+        frequency_category: "rare"
+        numeric_range: "0.01-0.1%"
+
+    frequency_very_rare:
+      type: return
+      value:
+        frequency_category: "very_rare"
+        numeric_range: "<0.01%"
+
+    frequency_unknown:
+      type: return
+      value:
+        frequency_category: "unknown"
+        numeric_range: null
+
+    missing_input:
+      type: return
+      value:
+        frequency_category: "unknown"
+        numeric_range: null
+
+tests:
+  - input: { reaction_text: "headache", frequency_text: "very common (>=10%)" }
+    expect: { frequency_category: "very_common", numeric_range: ">=10%" }
+
+  - input: { reaction_text: "diarrhea", frequency_text: "common (5%)" }
+    expect: { frequency_category: "common", numeric_range: "1-10%" }
+
+  - input: { reaction_text: "rash", frequency_text: "uncommon (0.5%)" }
+    expect: { frequency_category: "uncommon", numeric_range: "0.1-1%" }
+
+  - input: { reaction_text: "anaphylaxis", frequency_text: null }
+    expect: { frequency_category: "unknown", numeric_range: null }
+
+  - input: { reaction_text: "liver toxicity", frequency_text: "very rare (<0.01%)" }
+    expect: { frequency_category: "very_rare", numeric_range: "<0.01%" }

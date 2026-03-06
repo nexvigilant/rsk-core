@@ -1,6 +1,30 @@
 name: next-step
 description: "Management: given current level and career goal, recommend the single next development action."
 version: 0.1.0
+interface:
+  inputs:
+    ai_interested:
+      type: bool
+      required: false
+    current_level:
+      type: int
+      required: false
+    has_mentees:
+      type: bool
+      required: false
+  outputs:
+    epa_focus:
+      type: string
+    next_action:
+      type: string
+    program:
+      type: string
+    timeline:
+      type: string
+    tip:
+      type: string
+    why:
+      type: string
 tree:
   start: null_guard
   nodes:

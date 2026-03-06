@@ -1,6 +1,36 @@
 name: trial-safety-report
 description: "Domain 5: Route clinical trial safety report by type — IND safety, DSUR, IB update, CSR. Returns timeline, content, regulatory requirements."
 version: 0.1.0
+interface:
+  inputs:
+    is_expedited:
+      type: bool
+      required: false
+    is_fatal_or_life_threatening:
+      type: bool
+      required: false
+    report_type:
+      type: string
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    content:
+      type: string
+    deadline_days:
+      type: int
+    distribution:
+      type: string
+    followup:
+      type: string
+    frequency:
+      type: string
+    regulation:
+      type: string
+    report:
+      type: string
+    trigger:
+      type: string
 tree:
   start: check_expedited
   nodes:

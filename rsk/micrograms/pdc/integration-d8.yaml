@@ -1,6 +1,24 @@
 name: integration-d8
 description: "Domain 8 cross-domain integration — signal detection connects to databases, literature, clinical assessment, benefit-risk, and global PV."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    epas:
+      type: string
+    integration_type:
+      type: string
+    module:
+      type: string
+    nexcore:
+      type: string
+    nexcore_crates:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:

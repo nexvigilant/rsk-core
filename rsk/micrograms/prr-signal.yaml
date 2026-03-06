@@ -1,6 +1,16 @@
 name: prr-signal
 description: PRR signal detection threshold gate (PRR >= 2.0 = signal)
 version: 0.1.0
+interface:
+  inputs:
+    prr:
+      type: float
+      required: true
+  outputs:
+    signal_detected:
+      type: bool
+    classification:
+      type: string
 tree:
   start: check
   nodes:

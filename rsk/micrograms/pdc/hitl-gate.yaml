@@ -1,6 +1,39 @@
 name: hitl-gate
 description: "PDC: Human-in-the-Loop gate — classify actions as AUTO (agent decides), REVIEW (human reviews output), APPROVE (human must pre-approve)"
 version: 0.1.0
+interface:
+  inputs:
+    affects_patient_safety:
+      type: bool
+      required: false
+    affects_regulatory_compliance:
+      type: bool
+      required: false
+    crosses_cpa_boundary:
+      type: bool
+      required: false
+    is_ai_autonomous_decision:
+      type: bool
+      required: false
+    is_irreversible:
+      type: bool
+      required: false
+    scope:
+      type: string
+      required: false
+  outputs:
+    audit_required:
+      type: bool
+    flywheel_tier:
+      type: string
+    gate:
+      type: string
+    governance_tier_min:
+      type: int
+    human_action:
+      type: string
+    rationale:
+      type: string
 tree:
   start: check_irreversible
   nodes:

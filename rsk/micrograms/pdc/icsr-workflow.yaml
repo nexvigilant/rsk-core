@@ -1,6 +1,37 @@
 name: icsr-workflow
 description: "Domain 4: Full ICSR processing workflow — intake through submission. Routes by case type, seriousness, and completeness."
 version: 0.1.0
+interface:
+  inputs:
+    has_minimum_data:
+      type: bool
+      required: false
+    is_fatal_or_life_threatening:
+      type: bool
+      required: false
+    is_serious:
+      type: bool
+      required: false
+    is_unexpected:
+      type: bool
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    deadline_days:
+      type: int
+    followup:
+      type: string
+    human_oversight:
+      type: string
+    minimum_data:
+      type: string
+    priority:
+      type: string
+    steps:
+      type: string
+    workflow:
+      type: string
 tree:
   start: check_valid
   nodes:

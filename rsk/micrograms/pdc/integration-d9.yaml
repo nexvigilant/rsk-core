@@ -1,6 +1,20 @@
 name: integration-d9
 description: "Domain 9 cross-domain integration — post-authorization research connects to signal detection, databases, clinical trials, and benefit-risk."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    epas:
+      type: string
+    integration_type:
+      type: string
+    module:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:

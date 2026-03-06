@@ -1,6 +1,16 @@
 name: threshold-gate
 description: Pass/fail gate against a configurable threshold
 version: 0.1.0
+interface:
+  inputs:
+    value:
+      type: int
+      required: false
+  outputs:
+    gate:
+      type: string
+    passed:
+      type: bool
 tree:
   start: check
   nodes:

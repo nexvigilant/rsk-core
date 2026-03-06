@@ -1,6 +1,29 @@
 name: pediatric-flag
 description: 'Pediatric PV flag: NEONATAL_FLAG for age <2, PEDIATRIC_URGENT for age <12 with developmental impact, PEDIATRIC_REVIEW for unlabeled pediatric use, STANDARD otherwise'
 version: 0.1.0
+interface:
+  inputs:
+    drug_has_pediatric_label:
+      type: bool
+      required: false
+    has_developmental_impact:
+      type: bool
+      required: false
+    has_growth_impact:
+      type: bool
+      required: false
+    patient_age:
+      type: int
+      required: false
+  outputs:
+    age_group:
+      type: string
+    flag:
+      type: string
+    rationale:
+      type: string
+    special_monitoring:
+      type: string
 tree:
   start: check_neonatal
   nodes:

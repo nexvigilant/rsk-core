@@ -1,6 +1,29 @@
 name: icsr-triage
 description: 'ICSR case intake: classify drug reaction by signal strength, seriousness, causality, and route to appropriate deadline'
 version: 0.1.0
+interface:
+  inputs:
+    death:
+      type: bool
+      required: false
+    hospitalization:
+      type: bool
+      required: false
+    naranjo_score:
+      type: int
+      required: false
+    prr:
+      type: float
+      required: false
+  outputs:
+    action:
+      type: string
+    channel:
+      type: string
+    deadline_days:
+      type: int
+    triage:
+      type: string
 tree:
   start: signal_check
   nodes:

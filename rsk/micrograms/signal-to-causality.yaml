@@ -1,6 +1,23 @@
 name: signal-to-causality
 description: 'Bridge: routes signal detection results to causality assessment recommendation. Chains from prr-signal output.'
 version: 0.1.0
+interface:
+  inputs:
+    signal_detected:
+      type: bool
+      required: true
+    prr:
+      type: float
+      required: false
+  outputs:
+    next_step:
+      type: string
+    priority:
+      type: string
+    recommended_tool:
+      type: string
+    reason:
+      type: string
 tree:
   start: check_signal
   nodes:

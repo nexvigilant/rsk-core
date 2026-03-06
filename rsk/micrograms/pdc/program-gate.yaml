@@ -1,6 +1,29 @@
 name: program-gate
 description: "PDC: Route program type by entry level and duration to exit level range"
 version: 0.1.0
+interface:
+  inputs:
+    duration_months:
+      type: int
+      required: false
+    entry_level:
+      type: int
+      required: false
+  outputs:
+    domains_focus:
+      type: string
+    duration_months:
+      type: string
+    duration_weeks:
+      type: int
+    exit_level_max:
+      type: int
+    exit_level_min:
+      type: int
+    focus:
+      type: string
+    program:
+      type: string
 tree:
   start: null_guard
   nodes:

@@ -1,6 +1,19 @@
 name: action-router
 description: 'Route flywheel composite health actions to specific remediation strategies. GREEN→no-op, YELLOW→monitor path, RED→intervention cascade.'
 version: 0.1.0
+interface:
+  inputs:
+    action:
+      type: string
+      required: false
+    degraded_dimension:
+      type: string
+      required: false
+  outputs:
+    steps:
+      type: string
+    strategy:
+      type: string
 tree:
   start: check_action
   nodes:

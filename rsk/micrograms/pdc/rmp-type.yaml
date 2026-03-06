@@ -1,6 +1,34 @@
 name: rmp-type
 description: "Domain 11: Route to risk minimization measure type by risk severity, population scope, and regulatory requirement."
 version: 0.1.0
+interface:
+  inputs:
+    labeling_adequate:
+      type: bool
+      required: false
+    requires_rems:
+      type: bool
+      required: false
+    risk_severity:
+      type: int
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    behavioral:
+      type: string
+    components:
+      type: string
+    examples:
+      type: string
+    monitoring:
+      type: string
+    name:
+      type: string
+    regulatory:
+      type: string
+    type:
+      type: string
 tree:
   start: check_rems
   nodes:

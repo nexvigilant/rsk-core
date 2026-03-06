@@ -1,6 +1,40 @@
 name: anchor-d1
 description: "PDC: Domain 1 (Foundations of PV) behavioral anchors by level — 7 anchors per level, 49 total"
 version: 0.1.0
+interface:
+  inputs:
+    level:
+      type: string
+      required: false
+  outputs:
+    a1:
+      type: string
+    a2:
+      type: string
+    a3:
+      type: string
+    a4:
+      type: string
+    a5:
+      type: string
+    a6:
+      type: string
+    a7:
+      type: string
+    anchor_count:
+      type: int
+    bloom_tier:
+      type: int
+    domain:
+      type: int
+    domain_name:
+      type: string
+    error:
+      type: string
+    has_quantitative_metrics:
+      type: bool
+    level:
+      type: string
 tree:
   start: check_l1
   nodes:
@@ -198,3 +232,15 @@ tests:
     level: 8
   expect:
     level: INVALID
+- input:
+    level: 2
+  expect:
+    level: L2
+    anchor_count: 7
+    bloom_tier: 2
+- input:
+    level: 4
+  expect:
+    level: L4
+    anchor_count: 7
+    bloom_tier: 4

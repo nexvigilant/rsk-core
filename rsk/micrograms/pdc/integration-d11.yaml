@@ -1,6 +1,20 @@
 name: integration-d11
 description: "Domain 11 cross-domain integration — risk management connects to benefit-risk, communication, error prevention, signal detection, and regulatory."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    epas:
+      type: string
+    integration_type:
+      type: string
+    module:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:

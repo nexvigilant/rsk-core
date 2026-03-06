@@ -1,6 +1,26 @@
 name: integration-d14
 description: "Domain 14 cross-domain integration — communication amplifies every other domain. Three integrated learning modules."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    assessment:
+      type: string
+    epas:
+      type: string
+    integration_type:
+      type: string
+    learning_module:
+      type: bool
+    module:
+      type: string
+    synergy:
+      type: string
+    three_modules:
+      type: string
 tree:
   start: check_target
   nodes:

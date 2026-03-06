@@ -1,6 +1,19 @@
 name: fsm-history-filter
 description: 'PVOS FSM history: filters state machine transition history relevance based on transition count and recency - ACTIVE/STALE/ARCHIVED'
 version: 0.1.0
+interface:
+  inputs:
+    days_since_last:
+      type: int
+      required: false
+    transitions_count:
+      type: int
+      required: false
+  outputs:
+    description:
+      type: string
+    relevance:
+      type: string
 tree:
   start: check_active
   nodes:

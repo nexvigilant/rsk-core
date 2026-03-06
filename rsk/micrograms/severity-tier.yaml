@@ -1,6 +1,18 @@
 name: severity-tier
 description: 'Classify severity into tiers: CRITICAL (>=90), HIGH (>=70), MEDIUM (>=40), LOW (<40)'
 version: 0.1.0
+interface:
+  inputs:
+    severity:
+      type: string
+      required: false
+  outputs:
+    escalate:
+      type: bool
+    priority:
+      type: int
+    tier:
+      type: string
 tree:
   start: critical_check
   nodes:

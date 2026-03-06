@@ -1,6 +1,32 @@
 name: rems-classifier
 description: 'FDA REMS type classifier: determines Risk Evaluation and Mitigation Strategy requirements per 21 CFR 314.520'
 version: 0.1.0
+interface:
+  inputs:
+    medication_guide_only:
+      type: bool
+      required: false
+    monitoring_required:
+      type: bool
+      required: false
+    patient_enrollment:
+      type: bool
+      required: false
+    prescriber_certification:
+      type: bool
+      required: false
+    restricted_distribution:
+      type: bool
+      required: false
+  outputs:
+    complexity:
+      type: string
+    elements:
+      type: string
+    regulatory_reference:
+      type: string
+    rems_type:
+      type: string
 tree:
   start: restricted_dist_check
   nodes:

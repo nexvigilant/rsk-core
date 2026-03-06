@@ -1,6 +1,26 @@
 name: organ-adr
 description: "Domain 3: Route ADR by affected organ system — hepatic, cardiovascular, neurological, hematological, immunological. Returns patterns, biomarkers, AI detection approach."
 version: 0.1.0
+interface:
+  inputs:
+    organ_system:
+      type: string
+      required: false
+  outputs:
+    ai_detect:
+      type: string
+    critical_rule:
+      type: string
+    key_biomarkers:
+      type: string
+    monitoring:
+      type: string
+    patterns:
+      type: string
+    severity_tool:
+      type: string
+    system:
+      type: string
 tree:
   start: check_hepatic
   nodes:

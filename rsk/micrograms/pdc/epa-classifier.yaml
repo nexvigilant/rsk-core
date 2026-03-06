@@ -1,6 +1,28 @@
 name: epa-classifier
 description: "PDC: Classify EPA (1-20) into Core/Executive tier with AI gateway detection"
 version: 0.1.0
+interface:
+  inputs:
+    epa_id:
+      type: int
+      required: false
+  outputs:
+    classification:
+      type: string
+    description:
+      type: string
+    error:
+      type: string
+    is_gateway:
+      type: bool
+    min_level_for_cpa8:
+      type: int
+    phases:
+      type: string
+    tier:
+      type: string
+    unlocks_cpa8:
+      type: bool
 tree:
   start: check_valid
   nodes:

@@ -1,6 +1,30 @@
 name: gap-detector
 description: "Management: detect competency gaps — given current level and target EPA, identify what domains need development."
 version: 0.1.0
+interface:
+  inputs:
+    current_min_primary:
+      type: int
+      required: false
+    current_min_supporting:
+      type: int
+      required: false
+    target_epa_max_level:
+      type: int
+      required: false
+  outputs:
+    development_months:
+      type: string
+    gap_type:
+      type: string
+    has_gap:
+      type: bool
+    message:
+      type: string
+    recommendation:
+      type: string
+    severity:
+      type: string
 tree:
   start: check_target_tier
   nodes:

@@ -1,6 +1,32 @@
 name: who-umc-quick
 description: 'WHO-UMC causality assessment scale: international standard alternative to Naranjo, used in VigiBase/VigiAccess reporting'
 version: 0.1.0
+interface:
+  inputs:
+    dechallenge_positive:
+      type: bool
+      required: false
+    known_reaction:
+      type: bool
+      required: false
+    no_alternative_explanation:
+      type: bool
+      required: false
+    rechallenge_positive:
+      type: bool
+      required: false
+    time_plausible:
+      type: bool
+      required: false
+  outputs:
+    causality:
+      type: string
+    description:
+      type: string
+    regulatory_use:
+      type: string
+    who_score:
+      type: int
 tree:
   start: time_plausible_check
   nodes:

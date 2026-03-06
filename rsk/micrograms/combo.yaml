@@ -1,6 +1,21 @@
 name: combo
 description: Positive or gate
 version: 0.1.0
+interface:
+  inputs:
+    n:
+      type: int
+      required: false
+    value:
+      type: int
+      required: false
+  outputs:
+    gate:
+      type: string
+    passed:
+      type: bool
+    positive:
+      type: bool
 tree:
   start: dispatch
   nodes:

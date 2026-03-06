@@ -1,6 +1,27 @@
 name: intervention-effectiveness
 description: "Domain 11: Evaluate risk management intervention effectiveness — process indicators, outcome indicators, and optimization actions."
 version: 0.1.0
+interface:
+  inputs:
+    outcome_achieved:
+      type: bool
+      required: false
+    process_adherence_pct:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    ai_role:
+      type: string
+    next_review:
+      type: string
+    optimization:
+      type: string
+    root_cause:
+      type: string
+    verdict:
+      type: string
 tree:
   start: check_outcome
   nodes:

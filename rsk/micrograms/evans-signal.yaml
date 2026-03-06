@@ -1,6 +1,26 @@
 name: evans-signal
 description: 'Evans criteria signal classifier: PRR >= 2.0 AND chi_square >= 3.841 AND N >= 3. Maps to GvpTranspiler Rule GVP-IX-02.'
 version: 0.1.0
+interface:
+  inputs:
+    chi_square:
+      type: float
+      required: false
+    n_cases:
+      type: int
+      required: false
+    prr:
+      type: float
+      required: false
+  outputs:
+    classification:
+      type: string
+    criteria_met:
+      type: string
+    evans_signal:
+      type: bool
+    guideline:
+      type: string
 tree:
   start: check_prr
   nodes:

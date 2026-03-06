@@ -1,6 +1,31 @@
 name: intake-to-triage
 description: 'Router: routes completed intake cases to the appropriate triage pathway based on validity, duplicate status, and data completeness'
 version: 1.0.0
+interface:
+  inputs:
+    completeness_pct:
+      type: int
+      required: false
+    duplicate_status:
+      type: string
+      required: false
+    serious_suspected:
+      type: bool
+      required: false
+    valid:
+      type: bool
+      required: false
+  aliases:
+    valid_icsr: valid
+  outputs:
+    action:
+      type: string
+    next_mg:
+      type: string
+    priority:
+      type: string
+    route:
+      type: string
 tree:
   start: check_valid
   nodes:

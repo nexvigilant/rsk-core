@@ -1,6 +1,18 @@
 name: risk-score-classifier
 description: 'Classify risk score 0-100 into CRITICAL/HIGH/MODERATE/LOW bands for Guardian risk routing'
 version: 0.1.0
+interface:
+  inputs:
+    risk_score:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    escalate:
+      type: bool
+    level:
+      type: string
 tree:
   start: check_critical
   nodes:

@@ -1,6 +1,27 @@
 name: appe-temporal-pattern
 description: "APPE Ch7.2 Domain 2 L1: Temporal pattern recognition for adverse event causality — classifies onset pattern and strengthens/weakens signal via dechallenge/rechallenge evidence."
 version: 0.1.0
+interface:
+  inputs:
+    drug_started_days_ago:
+      type: float
+      required: false
+    onset_hours:
+      type: float
+      required: false
+  outputs:
+    causality_signal:
+      type: string
+    dechallenge:
+      type: string
+    pattern:
+      type: string
+    rechallenge:
+      type: string
+    teaching_point:
+      type: string
+    temporal_plausibility:
+      type: string
 tree:
   start: check_immediate
   nodes:

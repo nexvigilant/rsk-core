@@ -1,6 +1,28 @@
 name: integration-d5
 description: "Domain 5 cross-domain integration — enhanced coverage domain, clinical trial safety connects to regulatory, signal detection, benefit-risk."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    enhanced_domain:
+      type: bool
+    enhanced_pair:
+      type: bool
+    enhancement_status:
+      type: string
+    epas:
+      type: string
+    integration_type:
+      type: string
+    min_epa_coverage:
+      type: string
+    module:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:
@@ -151,3 +173,10 @@ tests:
 - input: {}
   expect:
     integration_type: GENERAL
+- input:
+    target_domain: 2
+  expect:
+    integration_type: PRIMARY
+    module: Clinical Assessment-Trial Safety
+    synergy: clinical expertise enhances trial safety monitoring and AE evaluation
+    epas: EPA1, EPA5

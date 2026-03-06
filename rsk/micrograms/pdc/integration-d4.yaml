@@ -1,6 +1,20 @@
 name: integration-d4
 description: "Domain 4 cross-domain integration — ICSR processing enhances case quality, signal detection, compliance, and AI development."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    epas:
+      type: string
+    integration_type:
+      type: string
+    module:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:
@@ -140,3 +154,9 @@ tests:
 - input: {}
   expect:
     integration_type: GENERAL
+- input:
+    target_domain: 1
+  expect:
+    integration_type: SUPPORTING
+    module: Regulatory Foundation
+    synergy: foundational knowledge provides regulatory context for case processing decisions

@@ -1,6 +1,20 @@
 name: ic-signal
 description: Information Component (IC) Bayesian disproportionality signal gate. Uses IC025 (lower 95% credibility interval) as the conservative threshold.
 version: 0.1.0
+interface:
+  inputs:
+    ic025:
+      type: float
+      required: false
+  outputs:
+    confidence:
+      type: string
+    note:
+      type: string
+    signal:
+      type: string
+    signal_detected:
+      type: bool
 tree:
   start: null_guard
   nodes:

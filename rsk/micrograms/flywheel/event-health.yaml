@@ -1,6 +1,19 @@
 name: event-health
 description: 'Flywheel event flow health: GREEN (emitting>0 AND pending<100), YELLOW (emitting>0 AND pending>=100), RED (emitting=0)'
 version: 0.1.0
+interface:
+  inputs:
+    emitting_nodes:
+      type: int
+      required: false
+    pending_events:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    health:
+      type: string
 tree:
   start: check_emitting
   nodes:

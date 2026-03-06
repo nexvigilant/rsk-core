@@ -1,6 +1,21 @@
 name: ebgm-signal
 description: Empirical Bayes Geometric Mean (EBGM) signal detection gate. Uses EB05 (lower 5th percentile) as the conservative threshold; falls back to EBGM point estimate for borderline classification.
 version: 0.1.0
+interface:
+  inputs:
+    eb05:
+      type: float
+      required: false
+    ebgm:
+      type: float
+      required: false
+  outputs:
+    action:
+      type: string
+    signal:
+      type: string
+    signal_detected:
+      type: bool
 tree:
   start: check_strong
   nodes:

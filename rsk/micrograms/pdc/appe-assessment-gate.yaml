@@ -1,6 +1,36 @@
 name: appe-assessment-gate
 description: "APPE Ch7.2: Formative and summative assessment gates. Midpoint (W3) and final (W6) with behavioral anchor thresholds."
 version: 0.1.0
+interface:
+  inputs:
+    anchor_score:
+      type: float
+      required: false
+    assessment_type:
+      type: int
+      required: false
+    portfolio_complete:
+      type: int
+      required: false
+  outputs:
+    assessment_name:
+      type: string
+    assessment_result:
+      type: string
+    ch7_section:
+      type: string
+    details:
+      type: string
+    feedback_type:
+      type: string
+    gate_passed:
+      type: bool
+    message:
+      type: string
+    next_action:
+      type: string
+    ready_for_bridge:
+      type: bool
 tree:
   start: check_type
   nodes:

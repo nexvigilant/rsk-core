@@ -1,6 +1,21 @@
 name: test-verdict
 description: 'Classify test run: GREEN (0 failures), YELLOW (<=5% failure rate), RED (>5%)'
 version: 0.1.0
+interface:
+  inputs:
+    failure_rate:
+      type: int
+      required: false
+    failures:
+      type: int
+      required: false
+  outputs:
+    block:
+      type: bool
+    deploy:
+      type: bool
+    verdict:
+      type: string
 tree:
   start: null_guard
   nodes:

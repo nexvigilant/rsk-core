@@ -1,0 +1,152 @@
+name: literature-to-signal
+description: Routes literature findings into signal hypothesis and recommended actions
+version: 0.1.0
+
+interface:
+  inputs:
+    study_type:
+      type: string
+      required: true
+      description: "Type of study: case_report, cohort, case_control, rct, meta_analysis"
+    finding_type:
+      type: string
+      required: true
+      description: "Type of finding: new_adr, increased_frequency, new_risk_factor, mechanism"
+  outputs:
+    signal_hypothesis:
+      type: boolean
+      description: Whether finding constitutes a signal hypothesis
+    priority:
+      type: string
+      description: "Priority level: high, medium, low"
+    recommended_action:
+      type: string
+      description: Recommended next action
+
+tree:
+  start: check_study_type
+  nodes:
+    check_study_type:
+      type: condition
+      variable: study_type
+      operator: eq
+      value: "meta_analysis"
+      true_next: meta_finding
+      false_next: check_rct
+
+    meta_finding:
+      type: return
+      value:
+        signal_hypothesis: true
+        priority: "high"
+        recommended_action: "initiate_signal_assessment"
+
+    check_rct:
+      type: condition
+      variable: study_type
+      operator: eq
+      value: "rct"
+      true_next: check_rct_finding
+      false_next: check_cohort
+
+    check_rct_finding:
+      type: condition
+      variable: finding_type
+      operator: eq
+      value: "new_adr"
+      true_next: rct_new_adr
+      false_next: rct_other
+
+    rct_new_adr:
+      type: return
+      value:
+        signal_hypothesis: true
+        priority: "high"
+        recommended_action: "comparative_safety_analysis"
+
+    rct_other:
+      type: return
+      value:
+        signal_hypothesis: true
+        priority: "medium"
+        recommended_action: "evaluate_mechanism"
+
+    check_cohort:
+      type: condition
+      variable: study_type
+      operator: eq
+      value: "cohort"
+      true_next: check_cohort_finding
+      false_next: case_control_path
+
+    check_cohort_finding:
+      type: condition
+      variable: finding_type
+      operator: eq
+      value: "increased_frequency"
+      true_next: cohort_increased
+      false_next: cohort_other
+
+    cohort_increased:
+      type: return
+      value:
+        signal_hypothesis: true
+        priority: "high"
+        recommended_action: "signal_assessment"
+
+    cohort_other:
+      type: return
+      value:
+        signal_hypothesis: true
+        priority: "medium"
+        recommended_action: "literature_monitoring"
+
+    case_control_path:
+      type: condition
+      variable: study_type
+      operator: eq
+      value: "case_control"
+      true_next: cc_signal
+      false_next: case_report_path
+
+    cc_signal:
+      type: return
+      value:
+        signal_hypothesis: true
+        priority: "medium"
+        recommended_action: "confirm_with_cohort_data"
+
+    case_report_path:
+      type: condition
+      variable: finding_type
+      operator: eq
+      value: "new_adr"
+      true_next: cr_new_adr
+      false_next: cr_other
+
+    cr_new_adr:
+      type: return
+      value:
+        signal_hypothesis: true
+        priority: "medium"
+        recommended_action: "literature_search"
+
+    cr_other:
+      type: return
+      value:
+        signal_hypothesis: false
+        priority: "low"
+        recommended_action: "monitor"
+
+tests:
+  - input: { study_type: "meta_analysis", finding_type: "new_adr" }
+    expect: { signal_hypothesis: true, priority: "high", recommended_action: "initiate_signal_assessment" }
+
+  - input: { study_type: "rct", finding_type: "new_adr" }
+    expect: { signal_hypothesis: true, priority: "high", recommended_action: "comparative_safety_analysis" }
+
+  - input: { study_type: "cohort", finding_type: "increased_frequency" }
+    expect: { signal_hypothesis: true, priority: "high", recommended_action: "signal_assessment" }
+
+  - input: { study_type: "case_report", finding_type: "mechanism" }
+    expect: { signal_hypothesis: false, priority: "low", recommended_action: "monitor" }

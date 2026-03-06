@@ -1,6 +1,24 @@
 name: session-velocity
 description: 'Classify session development velocity from tool calls, commits, and files modified. Maps session metrics to flywheel velocity input for momentum tracking.'
 version: 0.1.0
+interface:
+  inputs:
+    commits:
+      type: int
+      required: false
+    files_modified:
+      type: int
+      required: false
+    tool_calls:
+      type: int
+      required: false
+  outputs:
+    contributes_to:
+      type: string
+    estimated_fix_time_ms:
+      type: int
+    session_band:
+      type: string
 tree:
   start: check_high_output
   nodes:

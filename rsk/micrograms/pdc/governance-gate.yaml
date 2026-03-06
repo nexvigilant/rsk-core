@@ -1,6 +1,27 @@
 name: governance-gate
 description: "PDC: Gate governance authority by tier — validates decision-maker competency level meets tier requirements"
 version: 0.1.0
+interface:
+  inputs:
+    actor_level:
+      type: int
+      required: false
+    governance_tier:
+      type: string
+      required: false
+  outputs:
+    authorized:
+      type: bool
+    decision_scope:
+      type: string
+    error:
+      type: string
+    gap:
+      type: string
+    responsibilities:
+      type: string
+    tier_name:
+      type: string
 tree:
   start: check_tier
   nodes:

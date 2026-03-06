@@ -1,6 +1,14 @@
 name: is-even
 description: Check if a number is even
 version: 0.1.0
+interface:
+  inputs:
+    n:
+      type: int
+      required: false
+  outputs:
+    even:
+      type: bool
 tree:
   start: check
   nodes:

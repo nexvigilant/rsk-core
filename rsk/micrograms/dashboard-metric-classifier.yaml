@@ -1,6 +1,16 @@
 name: dashboard-metric-classifier
 description: 'PVOS dashboard: classifies metric health as HEALTHY/WARNING/CRITICAL using standard PV operational thresholds (warn>=70, critical>=90)'
 version: 0.1.0
+interface:
+  inputs:
+    metric_value:
+      type: int
+      required: false
+  outputs:
+    description:
+      type: string
+    health:
+      type: string
 tree:
   start: check_critical
   nodes:

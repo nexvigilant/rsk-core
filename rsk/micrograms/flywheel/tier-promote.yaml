@@ -1,6 +1,28 @@
 name: tier-promote
 description: 'Flywheel tier promotion gate: validates node can advance Draft→Staging→Live based on emitter count, test pass rate, and reality score'
 version: 0.1.0
+interface:
+  inputs:
+    automation:
+      type: int
+      required: false
+    current_tier:
+      type: string
+      required: false
+    emitters:
+      type: int
+      required: false
+    reality_score:
+      type: int
+      required: false
+    test_pass_rate:
+      type: int
+      required: false
+  outputs:
+    approved:
+      type: bool
+    decision:
+      type: string
 tree:
   start: check_tier
   nodes:

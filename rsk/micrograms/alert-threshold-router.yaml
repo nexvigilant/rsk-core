@@ -1,6 +1,21 @@
 name: alert-threshold-router
 description: 'Route signal type + value to threshold action using Evans criteria and standard PV thresholds'
 version: 0.1.0
+interface:
+  inputs:
+    signal_type:
+      type: string
+      required: false
+    signal_value:
+      type: float
+      required: false
+  outputs:
+    action:
+      type: string
+    next_step:
+      type: string
+    requires_review:
+      type: bool
 tree:
   start: check_prr
   nodes:

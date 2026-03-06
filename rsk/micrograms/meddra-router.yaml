@@ -1,6 +1,26 @@
 name: meddra-router
 description: 'MedDRA coding level selector: determines which hierarchy level (LLT/PT/HLT/HLGT/SOC) to use based on coding purpose and context'
 version: 1.0.0
+interface:
+  inputs:
+    coding_purpose:
+      type: string
+      required: false
+    multiple_terms:
+      type: bool
+      required: false
+    specificity_available:
+      type: bool
+      required: false
+  outputs:
+    coding_guidance:
+      type: string
+    description:
+      type: string
+    level:
+      type: string
+    meddra_hierarchy_position:
+      type: int
 tree:
   start: check_case_coding
   nodes:

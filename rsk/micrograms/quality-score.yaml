@@ -1,6 +1,18 @@
 name: quality-score
 description: 'Classify code quality score: PASS (>=80), WARN (>=60), FAIL (<60)'
 version: 0.1.0
+interface:
+  inputs:
+    score:
+      type: float
+      required: false
+  outputs:
+    review_required:
+      type: bool
+    ship:
+      type: bool
+    verdict:
+      type: string
 tree:
   start: pass_check
   nodes:

@@ -1,6 +1,21 @@
 name: faers-result-classifier
 description: 'Classify FAERS query results by report count and serious percentage into action categories'
 version: 0.1.0
+interface:
+  inputs:
+    report_count:
+      type: int
+      required: false
+    serious_pct:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    category:
+      type: string
+    priority:
+      type: int
 tree:
   start: check_high_volume_serious
   nodes:
@@ -99,3 +114,10 @@ tests:
     category: MONITOR
     action: add_to_watchlist
     priority: 3
+- input:
+    report_count: 5
+    serious_pct: 20
+  expect:
+    category: ROUTINE
+    action: periodic_review
+    priority: 4

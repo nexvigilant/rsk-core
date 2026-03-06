@@ -1,6 +1,26 @@
 name: signal-to-risk
 description: 'Router: routes confirmed signals into risk management actions based on signal strength, causality, and product lifecycle stage'
 version: 1.0.0
+interface:
+  inputs:
+    causality:
+      type: string
+      required: false
+    overall_signal:
+      type: string
+      required: false
+    product_lifecycle:
+      type: string
+      required: false
+  outputs:
+    next_chain:
+      type: string
+    regulatory_action_needed:
+      type: bool
+    route:
+      type: string
+    urgency:
+      type: string
 tree:
   start: check_confirmed_signal
   nodes:

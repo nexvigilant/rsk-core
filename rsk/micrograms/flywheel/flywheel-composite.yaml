@@ -1,6 +1,27 @@
 name: flywheel-composite
 description: 'Composite flywheel health gate combining event flow, velocity band, and tier coverage. GREEN (healthy+fast+covered), YELLOW (any warning), RED (any critical failure).'
 version: 0.1.0
+interface:
+  inputs:
+    event_health:
+      type: string
+      required: false
+    live_node_count:
+      type: int
+      required: false
+    staging_node_count:
+      type: int
+      required: false
+    velocity_band:
+      type: string
+      required: false
+  outputs:
+    action:
+      type: string
+    composite_health:
+      type: string
+    flywheel_operational:
+      type: bool
 tree:
   start: check_event_red
   nodes:

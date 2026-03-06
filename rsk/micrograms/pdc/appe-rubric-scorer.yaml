@@ -1,6 +1,28 @@
 name: appe-rubric-scorer
 description: "APPE Ch7.6: Behavioral anchor rubric scorer — rates a single observation on the 4-point scale (1=Beginning to 4=Exemplary) across three dimensions"
 version: 0.1.0
+interface:
+  inputs:
+    communication_effectiveness:
+      type: int
+      required: false
+    integration_quality:
+      type: int
+      required: false
+    regulatory_knowledge:
+      type: int
+      required: false
+  outputs:
+    descriptor:
+      type: string
+    improvement_focus:
+      type: string
+    rubric_level:
+      type: string
+    score:
+      type: float
+    weakest_dimension:
+      type: string
 tree:
   start: check4_reg
   nodes:

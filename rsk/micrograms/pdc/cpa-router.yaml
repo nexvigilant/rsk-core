@@ -1,6 +1,26 @@
 name: cpa-router
 description: "PDC: Route CPA (1-8) to practice function with capstone detection"
 version: 0.1.0
+interface:
+  inputs:
+    cpa_id:
+      type: int
+      required: false
+  outputs:
+    description:
+      type: string
+    error:
+      type: string
+    function:
+      type: string
+    gateway_epa:
+      type: int
+    gateway_min_level:
+      type: int
+    is_capstone:
+      type: bool
+    requires_ai_gateway:
+      type: bool
 tree:
   start: check_valid
   nodes:

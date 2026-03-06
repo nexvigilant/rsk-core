@@ -1,6 +1,44 @@
 name: cpa-lookup
 description: "PDC: Return full CPA specification by ID — primary/supporting domains, EPA mappings, AI components, integration modules, agent routing"
 version: 0.1.0
+interface:
+  inputs:
+    cpa_id:
+      type: int
+      required: false
+  outputs:
+    agent:
+      type: string
+    ai_component:
+      type: string
+    ai_gateway_connection:
+      type: bool
+    career_stage:
+      type: string
+    error:
+      type: string
+    function:
+      type: string
+    integration_module:
+      type: string
+    is_capstone:
+      type: bool
+    key_epas:
+      type: string
+    metrics:
+      type: string
+    name:
+      type: string
+    prerequisites:
+      type: string
+    primary_domains:
+      type: string
+    requires_epa10_l4:
+      type: bool
+    roi_target_pct:
+      type: int
+    supporting_domains:
+      type: string
 tree:
   start: check_c1
   nodes:

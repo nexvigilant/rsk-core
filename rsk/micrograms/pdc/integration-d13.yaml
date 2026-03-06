@@ -1,6 +1,20 @@
 name: integration-d13
 description: "Domain 13 cross-domain integration — global PV connects to communication, risk management, regulatory, and information sources."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    epas:
+      type: string
+    integration_type:
+      type: string
+    module:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:

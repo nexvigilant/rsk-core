@@ -1,0 +1,147 @@
+name: external-interface-schema
+description: 'Component: Shaft (External API) — Spec §2.4. Schema validator for external interface data completeness. Validates that API health, auth, and rate limit metrics exist before attempting classification.'
+version: 0.1.0
+interface:
+  inputs:
+    api_endpoints_active:
+      type: int
+      required: false
+    requests_30d:
+      type: int
+      required: false
+    error_rate_pct:
+      type: float
+      required: false
+    auth_success_rate_pct:
+      type: float
+      required: false
+    rate_limit_hits_30d:
+      type: int
+      required: false
+  outputs:
+    data_complete:
+      type: bool
+    missing_fields:
+      type: string
+    can_compute_shaft:
+      type: bool
+tree:
+  start: check_endpoints
+  nodes:
+    check_endpoints:
+      type: condition
+      variable: api_endpoints_active
+      operator: gt
+      value: 0
+      true_next: check_requests
+      false_next: missing_endpoints
+    check_requests:
+      type: condition
+      variable: requests_30d
+      operator: gt
+      value: 0
+      true_next: check_error_rate
+      false_next: missing_requests
+    check_error_rate:
+      type: condition
+      variable: error_rate_pct
+      operator: is_not_null
+      value: true
+      true_next: check_auth
+      false_next: missing_error_rate
+    check_auth:
+      type: condition
+      variable: auth_success_rate_pct
+      operator: gt
+      value: 0.0
+      true_next: check_rate_limits
+      false_next: missing_auth
+    check_rate_limits:
+      type: condition
+      variable: rate_limit_hits_30d
+      operator: is_not_null
+      value: true
+      true_next: complete
+      false_next: missing_rate_limits
+    complete:
+      type: return
+      value:
+        data_complete: true
+        missing_fields: none
+        can_compute_shaft: true
+    missing_endpoints:
+      type: return
+      value:
+        data_complete: false
+        missing_fields: api_endpoints_active
+        can_compute_shaft: false
+    missing_requests:
+      type: return
+      value:
+        data_complete: false
+        missing_fields: requests_30d
+        can_compute_shaft: false
+    missing_error_rate:
+      type: return
+      value:
+        data_complete: false
+        missing_fields: error_rate_pct
+        can_compute_shaft: false
+    missing_auth:
+      type: return
+      value:
+        data_complete: false
+        missing_fields: auth_success_rate_pct
+        can_compute_shaft: false
+    missing_rate_limits:
+      type: return
+      value:
+        data_complete: false
+        missing_fields: rate_limit_hits_30d
+        can_compute_shaft: false
+tests:
+- input:
+    api_endpoints_active: 5
+    requests_30d: 10000
+    error_rate_pct: 2.5
+    auth_success_rate_pct: 99.1
+    rate_limit_hits_30d: 15
+  expect:
+    data_complete: true
+    missing_fields: none
+    can_compute_shaft: true
+- input:
+    api_endpoints_active: 0
+    requests_30d: 10000
+    error_rate_pct: 2.5
+    auth_success_rate_pct: 99.1
+    rate_limit_hits_30d: 15
+  expect:
+    data_complete: false
+    missing_fields: api_endpoints_active
+    can_compute_shaft: false
+- input: {}
+  expect:
+    data_complete: false
+    missing_fields: api_endpoints_active
+    can_compute_shaft: false
+- input:
+    api_endpoints_active: 3
+    requests_30d: 500
+    error_rate_pct: 0.0
+    auth_success_rate_pct: 100.0
+    rate_limit_hits_30d: 0
+  expect:
+    data_complete: true
+    missing_fields: none
+    can_compute_shaft: true
+- input:
+    api_endpoints_active: 3
+    requests_30d: 500
+    error_rate_pct: 5.0
+    auth_success_rate_pct: 0.0
+    rate_limit_hits_30d: 100
+  expect:
+    data_complete: false
+    missing_fields: auth_success_rate_pct
+    can_compute_shaft: false

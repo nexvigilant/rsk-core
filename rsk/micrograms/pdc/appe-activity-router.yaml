@@ -1,6 +1,31 @@
 name: appe-activity-router
 description: "APPE Ch7: Route participant to appropriate PV activity by week and level. Chains TO naranjo-quick, icsr-triage, prr-signal for live practice."
 version: 0.1.0
+interface:
+  inputs:
+    competency_level:
+      type: int
+      required: false
+    week:
+      type: int
+      required: false
+  outputs:
+    activities:
+      type: string
+    activity_type:
+      type: string
+    assessment:
+      type: string
+    ch7_section:
+      type: string
+    epa_focus:
+      type: string
+    message:
+      type: string
+    pv_tool_chain:
+      type: string
+    supervision:
+      type: string
 tree:
   start: null_guard
   nodes:

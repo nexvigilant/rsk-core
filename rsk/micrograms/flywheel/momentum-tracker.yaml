@@ -1,6 +1,21 @@
 name: momentum-tracker
 description: 'Detect flywheel momentum from current vs previous velocity (ms). ACCELERATING (current < previous * 0.9), MAINTAINING (within 10%), DECELERATING (current > previous * 1.1). Velocity is inverse: lower ms = faster.'
 version: 0.1.0
+interface:
+  inputs:
+    previous_velocity_ms:
+      type: int
+      required: false
+    velocity_ratio_pct:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    momentum:
+      type: string
+    trend:
+      type: string
 tree:
   start: check_first_reading
   nodes:

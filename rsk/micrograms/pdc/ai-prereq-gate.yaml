@@ -1,6 +1,64 @@
 name: ai-prereq-gate
 description: "PDC: Validate EPA10 AI Gateway prerequisites by phase — checks domain levels, exam scores, and project evidence"
 version: 0.1.0
+interface:
+  inputs:
+    ai_exam_score:
+      type: int
+      required: false
+    cross_functional_experience:
+      type: bool
+      required: false
+    domain_1_level:
+      type: int
+      required: false
+    domain_4_level:
+      type: int
+      required: false
+    domain_8_level:
+      type: int
+      required: false
+    domains_at_l3:
+      type: int
+      required: false
+    domains_at_l4:
+      type: int
+      required: false
+    epa10_level:
+      type: int
+      required: false
+    ethics_training:
+      type: bool
+      required: false
+    leadership_experience:
+      type: bool
+      required: false
+    project_roi_pct:
+      type: int
+      required: false
+    supervised_project_complete:
+      type: bool
+      required: false
+    target_phase:
+      type: int
+      required: false
+  outputs:
+    approved:
+      type: bool
+    cpa8_unlocked:
+      type: bool
+    error:
+      type: string
+    gap:
+      type: string
+    next_phase:
+      type: string
+    outcome:
+      type: string
+    phase:
+      type: string
+    phase_name:
+      type: string
 tree:
   start: check_phase
   nodes:

@@ -1,6 +1,33 @@
 name: inspection-readiness
 description: "Domain 12: Assess inspection readiness and route to preparation action by finding risk level and timeline."
 version: 0.1.0
+interface:
+  inputs:
+    has_critical_gaps:
+      type: bool
+      required: false
+    inspection_imminent:
+      type: bool
+      required: false
+    months_since_last_inspection:
+      type: int
+      required: false
+    readiness_score_pct:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    ai_assist:
+      type: string
+    escalation:
+      type: string
+    focus:
+      type: string
+    status:
+      type: string
+    timeline:
+      type: string
 tree:
   start: check_imminent
   nodes:

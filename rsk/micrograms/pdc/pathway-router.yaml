@@ -1,6 +1,28 @@
 name: pathway-router
 description: "PDC: Route professional to development pathway based on experience and career goal"
 version: 0.1.0
+interface:
+  inputs:
+    career_goal:
+      type: string
+      required: false
+    is_student:
+      type: bool
+      required: false
+    years_experience:
+      type: int
+      required: false
+  outputs:
+    assessment_first:
+      type: bool
+    entry_program:
+      type: string
+    pathway:
+      type: string
+    sequence:
+      type: string
+    specialization:
+      type: string
 tree:
   start: check_experience
   nodes:

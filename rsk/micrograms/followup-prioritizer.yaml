@@ -1,6 +1,32 @@
 name: followup-prioritizer
 description: 'Follow-up urgency router: determines priority, deadline hours, and contact method for incomplete ICSR cases based on outcome, seriousness, and regulatory deadline proximity'
 version: 1.0.0
+interface:
+  inputs:
+    days_since_receipt:
+      type: int
+      required: false
+    fatal_outcome:
+      type: bool
+      required: false
+    missing_critical_fields:
+      type: int
+      required: false
+    regulatory_deadline_days:
+      type: int
+      required: false
+    serious:
+      type: bool
+      required: false
+  outputs:
+    deadline_hours:
+      type: int
+    escalation_note:
+      type: string
+    method:
+      type: string
+    priority:
+      type: string
 tree:
   start: check_fatal
   nodes:

@@ -1,6 +1,30 @@
 name: pediatric-safety
 description: 'Pediatric age-based safety routing per ICH E11: classifies developmental stage, dose check requirement, and escalation for serious adverse events in minors'
 version: 0.1.0
+interface:
+  inputs:
+    age_years:
+      type: float
+      required: false
+    off_label:
+      type: bool
+      required: false
+    serious_ae:
+      type: bool
+      required: false
+  outputs:
+    category:
+      type: string
+    dose_check:
+      type: string
+    escalation:
+      type: string
+    off_label_flag:
+      type: bool
+    regulatory_reference:
+      type: string
+    risk_modifier:
+      type: string
 tree:
   start: null_guard
   nodes:
@@ -370,3 +394,33 @@ tests:
     category: AGE_UNKNOWN
     risk_modifier: REQUIRES_REVIEW
     dose_check: cannot_assess_without_age
+# infant_ol_serious: infant, off-label, serious AE
+- input:
+    age_years: 1.0
+    off_label: true
+    serious_ae: true
+  expect:
+    category: INFANT_TODDLER
+    risk_modifier: HIGH
+    off_label_flag: true
+    escalation: immediate_pediatric_review
+# preterm_ol: preterm neonate, off-label, non-serious
+- input:
+    age_years: 0.05
+    off_label: true
+    serious_ae: false
+  expect:
+    category: PRETERM_NEONATE
+    risk_modifier: HIGHEST
+    off_label_flag: true
+    escalation: none
+# adult_range: age >= 18
+- input:
+    age_years: 25.0
+    off_label: false
+    serious_ae: false
+  expect:
+    category: ADULT
+    risk_modifier: STANDARD
+    dose_check: adult_adjusted
+    escalation: none

@@ -1,6 +1,26 @@
 name: reporting-priority
 description: 'Master priority calculator combining seriousness + expectedness + causality per ICH E2A. P0 through P3 priority tiers.'
 version: 0.1.0
+interface:
+  inputs:
+    causality_category:
+      type: string
+      required: false
+    is_serious:
+      type: bool
+      required: false
+    is_unexpected:
+      type: bool
+      required: false
+  outputs:
+    deadline_days:
+      type: int
+    priority:
+      type: string
+    rationale:
+      type: string
+    report_type:
+      type: string
 tree:
   start: check_serious
   nodes:

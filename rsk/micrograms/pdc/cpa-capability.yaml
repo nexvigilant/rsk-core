@@ -1,6 +1,22 @@
 name: cpa-capability
 description: "CPA capability matrix — given a CPA and level, returns what that CPA can produce at that competency level."
 version: 0.1.0
+interface:
+  inputs:
+    level:
+      type: string
+      required: false
+  outputs:
+    can_do:
+      type: string
+    cannot_do:
+      type: string
+    hitl:
+      type: string
+    output_type:
+      type: string
+    supervision:
+      type: string
 tree:
   start: null_guard
   nodes:

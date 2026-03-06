@@ -1,6 +1,20 @@
 name: ror-signal
 description: Reporting Odds Ratio (ROR) signal detection threshold gate. Input ror as pre-computed (a*d)/(b*c).
 version: 0.1.0
+interface:
+  inputs:
+    ror:
+      type: float
+      required: false
+  outputs:
+    action:
+      type: string
+    note:
+      type: string
+    signal:
+      type: string
+    signal_detected:
+      type: bool
 tree:
   start: check_strong
   nodes:

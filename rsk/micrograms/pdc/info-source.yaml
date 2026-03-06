@@ -1,6 +1,30 @@
 name: info-source
 description: "Domain 15: Route to information source type by data need — literature, regulatory databases, RWD, social media, genomic, digital health."
 version: 0.1.0
+interface:
+  inputs:
+    source_type:
+      type: string
+      required: false
+  outputs:
+    access:
+      type: string
+    ai_assist:
+      type: string
+    approach:
+      type: string
+    bias_risk:
+      type: string
+    databases:
+      type: string
+    framework:
+      type: string
+    quality:
+      type: string
+    search_tip:
+      type: string
+    source:
+      type: string
 tree:
   start: check_type
   nodes:

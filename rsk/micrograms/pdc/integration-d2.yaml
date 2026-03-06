@@ -1,6 +1,20 @@
 name: integration-d2
 description: "Domain 2 cross-domain integration — clinical ADR expertise enhances which domains, EPA connections, CPA support."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    epas:
+      type: string
+    integration_type:
+      type: string
+    module:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:
@@ -140,3 +154,9 @@ tests:
 - input: {}
   expect:
     integration_type: GENERAL
+- input:
+    target_domain: 1
+  expect:
+    integration_type: SUPPORTING
+    module: Clinical Foundation
+    synergy: foundations provide context for clinical assessment decisions

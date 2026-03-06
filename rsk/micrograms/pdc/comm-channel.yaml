@@ -1,6 +1,28 @@
 name: comm-channel
 description: "Domain 14: Route to communication channel and approach by stakeholder type — regulatory, HCP, patient, internal, partner."
 version: 0.1.0
+interface:
+  inputs:
+    stakeholder:
+      type: string
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    approach:
+      type: string
+    channel:
+      type: string
+    format:
+      type: string
+    key_principle:
+      type: string
+    literacy:
+      type: string
+    primary:
+      type: string
+    tone:
+      type: string
 tree:
   start: check_stakeholder
   nodes:

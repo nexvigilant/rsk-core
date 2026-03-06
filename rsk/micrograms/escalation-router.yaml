@@ -1,6 +1,21 @@
 name: escalation-router
 description: 'Route by escalation flag and priority: IMMEDIATE (escalate+P1), URGENT (escalate+P2), QUEUE (no escalate)'
 version: 0.1.0
+interface:
+  inputs:
+    escalate:
+      type: bool
+      required: false
+    priority:
+      type: string
+      required: false
+  outputs:
+    channel:
+      type: string
+    route:
+      type: string
+    sla_minutes:
+      type: int
 tree:
   start: escalate_check
   nodes:

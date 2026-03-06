@@ -1,6 +1,30 @@
 name: dsmb-decision
 description: "Domain 5: DSMB recommendation routing — continue, modify, or terminate based on safety/efficacy balance and stopping rules."
 version: 0.1.0
+interface:
+  inputs:
+    futility_threshold_met:
+      type: bool
+      required: false
+    safety_concern_level:
+      type: string
+      required: false
+    stopping_rule_met:
+      type: bool
+      required: false
+  outputs:
+    actions:
+      type: string
+    communication:
+      type: string
+    documentation:
+      type: string
+    followup:
+      type: string
+    recommendation:
+      type: string
+    urgency:
+      type: string
 tree:
   start: check_stopping_rule
   nodes:

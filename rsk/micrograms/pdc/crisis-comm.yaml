@@ -1,6 +1,26 @@
 name: crisis-comm
 description: "Domain 14: Crisis communication routing by severity and timeline — immediate response through recovery."
 version: 0.1.0
+interface:
+  inputs:
+    crisis_phase:
+      type: string
+      required: false
+  outputs:
+    actions:
+      type: string
+    ai_assist:
+      type: string
+    communication:
+      type: string
+    phase:
+      type: string
+    rule:
+      type: string
+    stakeholders:
+      type: string
+    timeline:
+      type: string
 tree:
   start: check_phase
   nodes:

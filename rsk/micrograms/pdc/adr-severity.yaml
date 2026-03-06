@@ -1,6 +1,37 @@
 name: adr-severity
 description: "Domain 3: Grade ADR severity and determine response urgency — maps to CTCAE-style grading with clinical action."
 version: 0.1.0
+interface:
+  inputs:
+    is_fatal:
+      type: bool
+      required: false
+    is_life_threatening:
+      type: bool
+      required: false
+    requires_hospitalization:
+      type: bool
+      required: false
+    requires_medical_intervention:
+      type: bool
+      required: false
+  outputs:
+    action:
+      type: string
+    ai_priority:
+      type: string
+    clinical:
+      type: string
+    escalate:
+      type: bool
+    grade:
+      type: int
+    priority:
+      type: string
+    reporting:
+      type: string
+    severity:
+      type: string
 tree:
   start: check_fatal
   nodes:
@@ -41,6 +72,8 @@ tree:
         clinical: "post-mortem review if available, comprehensive case documentation"
         reporting: EXPEDITED_FATAL
         ai_priority: critical
+        escalate: true
+        priority: 1
     grade_4:
       type: return
       value:
@@ -50,6 +83,8 @@ tree:
         clinical: "specialist consultation, aggressive supportive care, consider antidote"
         reporting: EXPEDITED_SERIOUS
         ai_priority: high
+        escalate: true
+        priority: 1
     grade_3:
       type: return
       value:
@@ -59,6 +94,8 @@ tree:
         clinical: "specialist referral, diagnostic workup, treatment plan"
         reporting: EXPEDITED_SERIOUS
         ai_priority: high
+        escalate: true
+        priority: 2
     grade_2:
       type: return
       value:
@@ -68,6 +105,8 @@ tree:
         clinical: "symptomatic treatment, monitoring plan, patient education"
         reporting: STANDARD
         ai_priority: medium
+        escalate: false
+        priority: 3
     grade_1:
       type: return
       value:
@@ -77,6 +116,8 @@ tree:
         clinical: "observation, reassurance, symptom management if needed"
         reporting: STANDARD
         ai_priority: low
+        escalate: false
+        priority: 4
 tests:
 - input:
     is_fatal: true
@@ -84,12 +125,16 @@ tests:
     grade: 5
     severity: FATAL
     reporting: EXPEDITED_FATAL
+    escalate: true
+    priority: 1
 - input:
     is_life_threatening: true
     is_fatal: false
   expect:
     grade: 4
     severity: LIFE_THREATENING
+    escalate: true
+    priority: 1
 - input:
     requires_hospitalization: true
     is_life_threatening: false
@@ -97,18 +142,26 @@ tests:
   expect:
     grade: 3
     severity: SEVERE
+    escalate: true
+    priority: 2
 - input:
     requires_medical_intervention: true
     requires_hospitalization: false
   expect:
     grade: 2
     severity: MODERATE
+    escalate: false
+    priority: 3
 - input:
     requires_medical_intervention: false
   expect:
     grade: 1
     severity: MILD
+    escalate: false
+    priority: 4
 - input: {}
   expect:
     grade: 1
     severity: MILD
+    escalate: false
+    priority: 4

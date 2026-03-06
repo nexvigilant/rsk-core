@@ -1,6 +1,31 @@
 name: pregnancy-exposure
 description: 'Pregnancy exposure categorization and reporting requirements per ICH E2C/FDA guidance: trims risk level and mandates reporting based on teratogen status and outcome'
 version: 0.1.0
+interface:
+  inputs:
+    known_teratogen:
+      type: bool
+      required: false
+    live_birth:
+      type: bool
+      required: false
+    outcome_known:
+      type: bool
+      required: false
+    trimester:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    regulatory_reference:
+      type: string
+    reporting:
+      type: string
+    risk:
+      type: string
+    trimester_context:
+      type: string
 tree:
   start: known_teratogen_check
   nodes:

@@ -1,6 +1,32 @@
 name: triage-to-signal
 description: 'Router: routes triaged cases to signal detection, causality assessment, or periodic reporting based on seriousness and expectedness'
 version: 1.0.0
+interface:
+  inputs:
+    case_count:
+      type: int
+      required: false
+    causality_needed:
+      type: bool
+      required: false
+    expected:
+      type: bool
+      required: false
+    serious:
+      type: bool
+      required: false
+    signal_review_eligible:
+      type: bool
+      required: false
+  outputs:
+    escalation_needed:
+      type: bool
+    next_chain:
+      type: string
+    priority:
+      type: string
+    route:
+      type: string
 tree:
   start: check_susar
   nodes:

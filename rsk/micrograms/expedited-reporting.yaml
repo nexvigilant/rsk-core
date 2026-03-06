@@ -1,6 +1,32 @@
 name: expedited-reporting
 description: 'ICH E2D / FDA 21 CFR 312.32 expedited reporting timeline: determines report type and deadline from case characteristics and study phase'
 version: 0.1.0
+interface:
+  inputs:
+    fatal:
+      type: bool
+      required: false
+    life_threatening:
+      type: bool
+      required: false
+    serious:
+      type: bool
+      required: false
+    study_type:
+      type: string
+      required: false
+    unexpected:
+      type: bool
+      required: false
+  outputs:
+    days_from_awareness:
+      type: int
+    regulatory_reference:
+      type: string
+    report_type:
+      type: string
+    timeline:
+      type: string
 tree:
   start: serious_check
   nodes:

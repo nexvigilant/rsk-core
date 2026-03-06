@@ -1,6 +1,29 @@
 name: risk-classifier
 description: "PDC: Classify detected risk by category and severity, route to response team and protocol"
 version: 0.1.0
+interface:
+  inputs:
+    deviation_pct:
+      type: int
+      required: false
+    risk_category:
+      type: string
+      required: false
+  outputs:
+    governance_tier:
+      type: string
+    oversight:
+      type: string
+    protocol:
+      type: string
+    response_team:
+      type: string
+    severity:
+      type: string
+    sla_hours:
+      type: int
+    thresholds:
+      type: string
 tree:
   start: check_deviation
   nodes:

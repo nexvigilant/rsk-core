@@ -1,6 +1,24 @@
 name: epa9-quality-system
 description: "EPA 9: Quality and compliance — routes by finding type, severity, and CAPA requirements."
 version: 0.1.0
+interface:
+  inputs:
+    finding_severity:
+      type: string
+      required: false
+  outputs:
+    actions:
+      type: string
+    capa_required:
+      type: bool
+    classification:
+      type: string
+    escalation:
+      type: string
+    monitoring:
+      type: string
+    response_days:
+      type: int
 tree:
   start: check_critical
   nodes:

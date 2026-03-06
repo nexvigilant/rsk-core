@@ -1,6 +1,22 @@
 name: case-ingest-validator
 description: 'PVOS case ingestion: validates case data completeness before ingestion - requires drug, event, and reporter to proceed'
 version: 0.1.0
+interface:
+  inputs:
+    has_drug:
+      type: bool
+      required: false
+    has_event:
+      type: bool
+      required: false
+    has_reporter:
+      type: bool
+      required: false
+  outputs:
+    description:
+      type: string
+    status:
+      type: string
 tree:
   start: check_drug
   nodes:

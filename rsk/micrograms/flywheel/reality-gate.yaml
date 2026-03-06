@@ -1,6 +1,16 @@
 name: reality-gate
 description: 'VDAG Reality Gradient gate: APPROVED (>=50), WARN (>=20), BLOCKED (<20 = testing theater)'
 version: 0.1.0
+interface:
+  inputs:
+    reality_score:
+      type: int
+      required: false
+  outputs:
+    executable:
+      type: bool
+    verdict:
+      type: string
 tree:
   start: check_approved
   nodes:

@@ -1,6 +1,30 @@
 name: level-detail
 description: "PDC: Return full level characteristics — knowledge state, skill application, behavioral indicators, AI integration, assessment method"
 version: 0.1.0
+interface:
+  inputs:
+    level:
+      type: string
+      required: false
+  outputs:
+    ai_level:
+      type: string
+    assessment:
+      type: string
+    behavior:
+      type: string
+    characteristics:
+      type: string
+    error:
+      type: string
+    impact_thresholds:
+      type: string
+    knowledge:
+      type: string
+    level_name:
+      type: string
+    skill:
+      type: string
 tree:
   start: null_guard
   nodes:

@@ -1,6 +1,36 @@
 name: special-population
 description: "Domain 2: Flag special population considerations for ADR assessment — pediatric, geriatric, pregnancy, renal/hepatic, immunocompromised."
 version: 0.1.0
+interface:
+  inputs:
+    age_years:
+      type: int
+      required: false
+    hepatic_impairment:
+      type: bool
+      required: false
+    immunocompromised:
+      type: bool
+      required: false
+    is_pregnant:
+      type: bool
+      required: false
+    renal_impairment:
+      type: bool
+      required: false
+  outputs:
+    ai_flag:
+      type: string
+    considerations:
+      type: string
+    dose_adjustment:
+      type: string
+    enhanced_monitoring:
+      type: bool
+    population:
+      type: string
+    special_reporting:
+      type: string
 tree:
   start: null_guard
   nodes:

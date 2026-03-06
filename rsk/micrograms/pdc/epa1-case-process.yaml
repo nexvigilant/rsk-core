@@ -1,6 +1,38 @@
 name: epa1-case-process
 description: "EPA 1: Process ICSR — triage, collect, assess, code, narrate, submit. Routes by case seriousness and completeness."
 version: 0.1.0
+interface:
+  inputs:
+    involves_death:
+      type: bool
+      required: false
+    involves_hospitalization:
+      type: bool
+      required: false
+    is_reportable:
+      type: bool
+      required: false
+    is_serious:
+      type: bool
+      required: false
+    life_threatening:
+      type: bool
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    deadline_days:
+      type: int
+    priority:
+      type: string
+    requires_followup:
+      type: string
+    seriousness:
+      type: string
+    steps:
+      type: string
+    workflow:
+      type: string
 tree:
   start: check_reportable
   nodes:
@@ -125,3 +157,14 @@ tests:
 - input: {}
   expect:
     workflow: ARCHIVE
+- input:
+    is_reportable: true
+    is_serious: true
+    involves_death: false
+    involves_hospitalization: false
+    life_threatening: false
+  expect:
+    workflow: STANDARD
+    priority: MEDIUM
+    deadline_days: 90
+    seriousness: serious_other

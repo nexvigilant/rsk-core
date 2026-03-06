@@ -1,6 +1,32 @@
 name: full-case-router
 description: 'Master case processor: routes new cases through the complete PV workflow based on seriousness criteria, signal status, and causality state.'
 version: 0.1.0
+interface:
+  inputs:
+    causality_assessed:
+      type: bool
+      required: false
+    has_death:
+      type: bool
+      required: false
+    has_disability:
+      type: bool
+      required: false
+    has_hospitalization:
+      type: bool
+      required: false
+    signal_detected:
+      type: bool
+      required: false
+  outputs:
+    next_action:
+      type: string
+    priority:
+      type: string
+    reason:
+      type: string
+    tool_path:
+      type: string
 tree:
   start: check_death
   nodes:

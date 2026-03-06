@@ -1,6 +1,19 @@
 name: pvos-calibrate-gate
 description: 'PVOS threshold calibration: gates algorithm threshold calibration on minimum sample size (>=100) and feedback count (>=10) - prevents calibration on sparse data'
 version: 0.1.0
+interface:
+  inputs:
+    feedback_count:
+      type: int
+      required: false
+    sample_size:
+      type: int
+      required: false
+  outputs:
+    decision:
+      type: string
+    description:
+      type: string
 tree:
   start: check_sample
   nodes:

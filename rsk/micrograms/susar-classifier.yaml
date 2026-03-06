@@ -1,6 +1,26 @@
 name: susar-classifier
 description: 'ICH E2A SUSAR classification: Suspected Unexpected Serious Adverse Reaction determination from seriousness, expectedness, and causality'
 version: 0.1.0
+interface:
+  inputs:
+    causal_relationship:
+      type: string
+      required: false
+    serious:
+      type: bool
+      required: false
+    unexpected:
+      type: bool
+      required: false
+  outputs:
+    classification:
+      type: string
+    regulatory_reference:
+      type: string
+    reporting_timeline:
+      type: string
+    susar:
+      type: bool
 tree:
   start: serious_check
   nodes:

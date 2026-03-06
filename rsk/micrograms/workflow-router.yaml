@@ -1,6 +1,23 @@
 name: workflow-router
 description: 'Routes users to the correct PV starting tool based on what data they have available'
 version: 0.1.0
+interface:
+  inputs:
+    has_drug_event_data:
+      type: bool
+      required: false
+    task_type:
+      type: string
+      required: false
+  outputs:
+    description:
+      type: string
+    first_tool:
+      type: string
+    next_steps:
+      type: string
+    start_with:
+      type: string
 tree:
   start: check_task
   nodes:

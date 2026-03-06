@@ -1,6 +1,23 @@
 name: anchor-validator
 description: "PDC: Validate behavioral anchor verb against expected competency level (Bloom's taxonomy mapping)"
 version: 0.1.0
+interface:
+  inputs:
+    expected_level:
+      type: int
+      required: false
+    verb_tier:
+      type: int
+      required: false
+  outputs:
+    alignment:
+      type: bool
+    message:
+      type: string
+    reason:
+      type: string
+    verdict:
+      type: string
 tree:
   start: null_guard
   nodes:
@@ -212,3 +229,24 @@ tests:
   expect:
     verdict: INVALID
     reason: Verb tier required for validation
+# check_app_above: verb at application level, expected higher
+- input:
+    verb_tier: 3
+    expected_level: 5
+  expect:
+    verdict: BELOW_LEVEL
+    alignment: false
+# check_synth_above: verb at synthesis level, expected lower
+- input:
+    verb_tier: 5
+    expected_level: 3
+  expect:
+    verdict: ABOVE_LEVEL
+    alignment: false
+# check_inst_above: verb at institutional level, expected lower
+- input:
+    verb_tier: 6
+    expected_level: 4
+  expect:
+    verdict: ABOVE_LEVEL
+    alignment: false

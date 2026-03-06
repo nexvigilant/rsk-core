@@ -1,6 +1,46 @@
 name: coordinator-pipeline
 description: "PDC: Full coordinator pipeline — classify task scope, determine HITL level, identify domain, route to CPA agent"
 version: 0.1.0
+interface:
+  inputs:
+    affects_patient_safety:
+      type: bool
+      required: false
+    affects_regulatory:
+      type: bool
+      required: false
+    cpa_count:
+      type: int
+      required: false
+    is_irreversible:
+      type: bool
+      required: false
+    primary_cpa:
+      type: int
+      required: false
+  outputs:
+    action:
+      type: string
+    agent:
+      type: string
+    audit:
+      type: bool
+    cpa:
+      type: int
+    domains:
+      type: string
+    escalation:
+      type: string
+    governance_min:
+      type: string
+    hitl:
+      type: string
+    nexcore_targets:
+      type: string
+    reason:
+      type: string
+    tier:
+      type: string
 tree:
   start: check_safety
   nodes:

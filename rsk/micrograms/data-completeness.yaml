@@ -1,6 +1,18 @@
 name: data-completeness
 description: 'Assess data completeness: COMPLETE (>=95%), PARTIAL (>=70%), INSUFFICIENT (<70%)'
 version: 0.1.0
+interface:
+  inputs:
+    pct_filled:
+      type: int
+      required: false
+  outputs:
+    completeness:
+      type: string
+    needs_enrichment:
+      type: bool
+    proceed:
+      type: bool
 tree:
   start: complete_check
   nodes:

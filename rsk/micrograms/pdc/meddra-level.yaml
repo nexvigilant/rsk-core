@@ -1,6 +1,28 @@
 name: meddra-level
 description: "Domain 4: MedDRA hierarchy level router — SOC, HLGT, HLT, PT, LLT. Returns coding guidance and AI assist level."
 version: 0.1.0
+interface:
+  inputs:
+    coding_level:
+      type: string
+      required: false
+  outputs:
+    ai_role:
+      type: string
+    coding_rule:
+      type: string
+    count_approx:
+      type: int
+    description:
+      type: string
+    level:
+      type: string
+    name:
+      type: string
+    position:
+      type: int
+    use_for:
+      type: string
 tree:
   start: check_level
   nodes:

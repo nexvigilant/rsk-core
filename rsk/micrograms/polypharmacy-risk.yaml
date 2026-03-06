@@ -1,6 +1,24 @@
 name: polypharmacy-risk
 description: 'Polypharmacy risk assessment: HIGH_RISK if >5 drugs + interaction + elderly, MODERATE_RISK for intermediate combinations, LOW_RISK otherwise'
 version: 0.1.0
+interface:
+  inputs:
+    drug_count:
+      type: int
+      required: false
+    has_known_interaction:
+      type: bool
+      required: false
+    patient_age_over_65:
+      type: bool
+      required: false
+  outputs:
+    monitoring_frequency:
+      type: string
+    recommendation:
+      type: string
+    risk_level:
+      type: string
 tree:
   start: check_high_drug_count
   nodes:

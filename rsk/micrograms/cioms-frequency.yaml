@@ -1,6 +1,20 @@
 name: cioms-frequency
 description: 'CIOMS frequency classification for adverse reactions per EU SmPC Section 4.8 labeling convention'
 version: 0.1.0
+interface:
+  inputs:
+    incidence_pct:
+      type: float
+      required: false
+  outputs:
+    cioms_category:
+      type: string
+    frequency:
+      type: string
+    label_text:
+      type: string
+    section_in_smpc:
+      type: string
 tree:
   start: very_common_check
   nodes:

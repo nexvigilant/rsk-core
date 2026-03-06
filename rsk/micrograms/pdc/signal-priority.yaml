@@ -1,6 +1,31 @@
 name: signal-priority
 description: "Domain 8: Prioritize validated signal by public health impact, severity, frequency, and vulnerable population risk."
 version: 0.1.0
+interface:
+  inputs:
+    affects_vulnerable_population:
+      type: bool
+      required: false
+    frequency:
+      type: string
+      required: false
+    mortality_risk:
+      type: bool
+      required: false
+    severity:
+      type: string
+      required: false
+  outputs:
+    action:
+      type: string
+    communication:
+      type: string
+    monitoring:
+      type: string
+    priority:
+      type: string
+    timeline_days:
+      type: int
 tree:
   start: check_fatal_risk
   nodes:

@@ -1,6 +1,26 @@
 name: region-router
 description: "PDC: Route to regional implementation considerations — APAC, Europe, Americas, Emerging Markets"
 version: 0.1.0
+interface:
+  inputs:
+    region:
+      type: string
+      required: false
+  outputs:
+    ai_governance:
+      type: string
+    cultural_priority:
+      type: string
+    error:
+      type: string
+    language:
+      type: string
+    quality_integration:
+      type: string
+    region:
+      type: string
+    regulatory:
+      type: string
 tree:
   start: check_apac
   nodes:

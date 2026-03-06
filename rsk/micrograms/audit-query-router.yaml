@@ -1,6 +1,18 @@
 name: audit-query-router
 description: 'PVOS audit subsystem: routes audit log queries to the correct operation scope (ingest/detect/triage/report/all)'
 version: 0.1.0
+interface:
+  inputs:
+    operation:
+      type: string
+      required: false
+  outputs:
+    description:
+      type: string
+    scope:
+      type: string
+    table:
+      type: string
 tree:
   start: check_all
   nodes:
@@ -106,3 +118,9 @@ tests:
     scope: report
     table: audit_log
     description: Report audit - query regulatory submission events and deadlines
+- input:
+    operation: unknown_op
+  expect:
+    scope: error
+    table: none
+    description: Unknown operation type - choose ingest/detect/triage/report/all

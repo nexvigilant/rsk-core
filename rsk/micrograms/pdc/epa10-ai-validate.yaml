@@ -1,6 +1,29 @@
 name: epa10-ai-validate
 description: "EPA 10: AI tool validation — routes by validation stage, risk level, and regulatory requirement."
 version: 0.1.0
+interface:
+  inputs:
+    ai_risk_level:
+      type: string
+      required: false
+    has_regulatory_submission:
+      type: bool
+      required: false
+  outputs:
+    approval_required:
+      type: string
+    documentation:
+      type: string
+    hitl:
+      type: string
+    human_oversight:
+      type: string
+    review_frequency:
+      type: string
+    steps:
+      type: string
+    validation_level:
+      type: string
 tree:
   start: check_risk
   nodes:

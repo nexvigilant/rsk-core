@@ -1,6 +1,32 @@
 name: study-design
 description: "Domain 9: Route to appropriate study design by safety question type, data availability, and evidence needs."
 version: 0.1.0
+interface:
+  inputs:
+    is_interventional:
+      type: bool
+      required: false
+    is_pragmatic:
+      type: bool
+      required: false
+    question_type:
+      type: string
+      required: false
+  outputs:
+    ai_enhance:
+      type: string
+    bias_control:
+      type: string
+    design:
+      type: string
+    limitation:
+      type: string
+    name:
+      type: string
+    regulatory:
+      type: string
+    strength:
+      type: string
 tree:
   start: check_interventional
   nodes:

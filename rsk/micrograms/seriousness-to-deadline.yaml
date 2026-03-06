@@ -1,6 +1,29 @@
 name: seriousness-to-deadline
 description: 'Bridge: routes seriousness classification to ICH E2B reporting deadline. Chains from case-seriousness output.'
 version: 0.1.0
+interface:
+  inputs:
+    is_fatal:
+      type: bool
+      required: false
+    is_life_threatening:
+      type: bool
+      required: false
+    is_serious:
+      type: bool
+      required: false
+    is_unexpected:
+      type: bool
+      required: false
+  outputs:
+    deadline_days:
+      type: int
+    deadline_type:
+      type: string
+    regulatory_basis:
+      type: string
+    report_category:
+      type: string
 tree:
   start: check_fatal
   nodes:
@@ -149,3 +172,13 @@ tests:
     deadline_days: 90
     report_category: periodic
     regulatory_basis: ICH E2B - fatal but expected reaction included in periodic safety update
+- input:
+    is_fatal: false
+    is_life_threatening: true
+    is_unexpected: false
+    is_serious: true
+  expect:
+    deadline_type: PERIODIC_PSUR
+    deadline_days: 90
+    report_category: periodic
+    regulatory_basis: ICH E2B - life-threatening but expected reaction included in periodic safety update

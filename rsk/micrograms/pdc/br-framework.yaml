@@ -1,6 +1,46 @@
 name: br-framework
 description: "Domain 10: Route to benefit-risk assessment framework by complexity, stakeholder needs, and quantitative requirement."
 version: 0.1.0
+interface:
+  inputs:
+    complexity:
+      type: string
+      required: false
+    is_regulatory_submission:
+      type: bool
+      required: false
+    multiple_criteria:
+      type: bool
+      required: false
+    needs_economic:
+      type: bool
+      required: false
+    needs_quantitative:
+      type: bool
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    approach:
+      type: string
+    best_for:
+      type: string
+    framework:
+      type: string
+    limitations:
+      type: string
+    method:
+      type: string
+    metrics:
+      type: string
+    name:
+      type: string
+    nexcore_tool:
+      type: string
+    steps:
+      type: string
+    strengths:
+      type: string
 tree:
   start: check_quantitative
   nodes:

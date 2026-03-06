@@ -1,6 +1,29 @@
 name: appe-audience-adapter
 description: "APPE Ch7.4 Domain 14 L2: Adapts PV communication style, language level, and format for clinicians, regulators, patients, executives, and media. Applies urgency and complexity overrides."
 version: 0.1.0
+interface:
+  inputs:
+    audience_type:
+      type: string
+      required: false
+    technical_complexity:
+      type: int
+      required: false
+  outputs:
+    action_required:
+      type: string
+    detail_level:
+      type: string
+    format:
+      type: string
+    key_framing:
+      type: string
+    language_level:
+      type: string
+    simplification_needed:
+      type: bool
+    teaching_point:
+      type: string
 tree:
   start: check_clinician
   nodes:

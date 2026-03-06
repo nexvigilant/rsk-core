@@ -1,6 +1,46 @@
 name: cultural-adaptation
 description: "Domain 13: Route to cultural adaptation strategy by dimension — communication, decision-making, authority, safety reporting."
 version: 0.1.0
+interface:
+  inputs:
+    cultural_dimension:
+      type: string
+      required: false
+  outputs:
+    adaptation:
+      type: string
+    ai_assist:
+      type: string
+    approach:
+      type: string
+    collective:
+      type: string
+    consideration:
+      type: string
+    developing:
+      type: string
+    dimension:
+      type: string
+    egalitarian:
+      type: string
+    framework:
+      type: string
+    hierarchical:
+      type: string
+    high_context:
+      type: string
+    individualistic:
+      type: string
+    low_context:
+      type: string
+    proactive:
+      type: string
+    quality_gate:
+      type: string
+    reluctant:
+      type: string
+    risk:
+      type: string
 tree:
   start: check_dimension
   nodes:

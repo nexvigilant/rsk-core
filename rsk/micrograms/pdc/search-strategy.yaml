@@ -1,6 +1,32 @@
 name: search-strategy
 description: "Domain 15: Route to search strategy approach by urgency, comprehensiveness requirement, and available resources."
 version: 0.1.0
+interface:
+  inputs:
+    is_ongoing_monitoring:
+      type: bool
+      required: false
+    is_urgent:
+      type: bool
+      required: false
+    requires_systematic:
+      type: bool
+      required: false
+  outputs:
+    ai_assist:
+      type: string
+    approach:
+      type: string
+    databases:
+      type: string
+    documentation:
+      type: string
+    strategy:
+      type: string
+    timeline:
+      type: string
+    use_for:
+      type: string
 tree:
   start: check_urgency
   nodes:

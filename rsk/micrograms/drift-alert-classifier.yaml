@@ -1,6 +1,21 @@
 name: drift-alert-classifier
 description: 'PVOS drift alerting: classifies signal drift severity based on PRR change magnitude and time window'
 version: 0.1.0
+interface:
+  inputs:
+    prr_change_pct:
+      type: int
+      required: false
+    time_window_days:
+      type: int
+      required: false
+  outputs:
+    alert_level:
+      type: string
+    description:
+      type: string
+    severity:
+      type: string
 tree:
   start: check_critical
   nodes:

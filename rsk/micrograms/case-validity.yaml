@@ -1,6 +1,33 @@
 name: case-validity
 description: 'ICSR validity checker: enforces 4 minimum criteria per ICH E2B(R3) — reporter, patient, suspect drug, adverse event'
 version: 1.0.0
+interface:
+  inputs:
+    has_adverse_event:
+      type: bool
+      required: false
+    has_patient:
+      type: bool
+      required: false
+    has_reporter:
+      type: bool
+      required: false
+    has_suspect_drug:
+      type: bool
+      required: false
+  outputs:
+    action:
+      type: string
+    missing_count:
+      type: int
+    missing_fields:
+      type: string
+    regulatory_reference:
+      type: string
+    status:
+      type: string
+    valid:
+      type: bool
 tree:
   start: check_reporter
   nodes:
@@ -400,6 +427,78 @@ tests:
     has_reporter: true
     has_patient: true
     has_suspect_drug: false
+    has_adverse_event: false
+  expect:
+    valid: false
+    status: INVALID_MINIMAL
+    missing_count: 2
+    action: request_followup_urgent
+
+# -- covers missing_reporter_patient_no_drug + missing_3_reporter_drug_event --
+- input:
+    has_reporter: false
+    has_patient: true
+    has_suspect_drug: false
+    has_adverse_event: false
+  expect:
+    valid: false
+    status: INVALID_INSUFFICIENT
+    missing_count: 3
+    action: cannot_process
+
+# -- covers missing_reporter_patient_no_drug + missing_2_reporter_drug --
+- input:
+    has_reporter: false
+    has_patient: true
+    has_suspect_drug: false
+    has_adverse_event: true
+  expect:
+    valid: false
+    status: INVALID_MINIMAL
+    missing_count: 2
+    action: request_followup_urgent
+
+# -- covers missing_3_reporter_patient_event --
+- input:
+    has_reporter: false
+    has_patient: false
+    has_suspect_drug: true
+    has_adverse_event: false
+  expect:
+    valid: false
+    status: INVALID_INSUFFICIENT
+    missing_count: 3
+    action: cannot_process
+
+# -- covers missing_2_patient_event --
+- input:
+    has_reporter: true
+    has_patient: false
+    has_suspect_drug: true
+    has_adverse_event: false
+  expect:
+    valid: false
+    status: INVALID_MINIMAL
+    missing_count: 2
+    action: request_followup_urgent
+
+# -- covers missing_3_patient_drug_event --
+- input:
+    has_reporter: true
+    has_patient: false
+    has_suspect_drug: false
+    has_adverse_event: false
+  expect:
+    valid: false
+    status: INVALID_INSUFFICIENT
+    missing_count: 3
+    action: cannot_process
+
+# -- covers missing_2_reporter_event --
+- input:
+    has_reporter: false
+    has_patient: true
+    has_suspect_drug: true
     has_adverse_event: false
   expect:
     valid: false

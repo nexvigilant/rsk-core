@@ -1,6 +1,24 @@
 name: ai-gateway
 description: "PDC: EPA 10 AI Gateway typestate — route phase by current level to next phase and CPA 8 unlock"
 version: 0.1.0
+interface:
+  inputs:
+    epa10_level:
+      type: int
+      required: false
+  outputs:
+    activities:
+      type: string
+    cpa8_unlocked:
+      type: bool
+    description:
+      type: string
+    next_phase:
+      type: string
+    phase:
+      type: string
+    supervision:
+      type: string
 tree:
   start: null_guard
   nodes:

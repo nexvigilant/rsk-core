@@ -1,0 +1,303 @@
+name: outcome-severity-classifier
+description: 'Classify FAERS outcome codes into ICH E2A seriousness criteria with regulatory urgency. Maps openFDA outcome fields to expedited reporting thresholds.'
+version: 0.1.0
+interface:
+  inputs:
+    outcome:
+      type: string
+      required: false
+      description: 'FAERS outcome code: DE=death, LT=life-threatening, HO=hospitalization, DS=disability, CA=congenital_anomaly, RI=required_intervention, OT=other'
+    death_count:
+      type: int
+      required: false
+      description: 'For batch mode: number of fatal outcome reports'
+    serious_count:
+      type: int
+      required: false
+      description: 'For batch mode: number of serious outcome reports (DE+LT+HO+DS+CA)'
+    total_count:
+      type: int
+      required: false
+      description: 'For batch mode: total reports'
+  outputs:
+    seriousness:
+      type: string
+    ich_criterion:
+      type: string
+    expedited_reporting:
+      type: bool
+    reporting_timeframe_days:
+      type: int
+    priority:
+      type: int
+tree:
+  start: check_batch_mode
+  nodes:
+    check_batch_mode:
+      type: condition
+      variable: death_count
+      operator: is_not_null
+      true_next: check_batch_total
+      false_next: check_outcome
+
+    check_batch_total:
+      type: condition
+      variable: total_count
+      operator: is_not_null
+      true_next: check_deaths_present
+      false_next: missing_batch
+
+    check_deaths_present:
+      type: condition
+      variable: death_count
+      operator: gte
+      value: 1
+      true_next: check_death_cluster
+      false_next: check_serious_batch
+
+    check_death_cluster:
+      type: condition
+      variable: death_count
+      operator: gte
+      value: 3
+      true_next: batch_fatal_cluster
+      false_next: batch_fatal_isolated
+
+    check_serious_batch:
+      type: condition
+      variable: serious_count
+      operator: is_not_null
+      true_next: check_serious_high
+      false_next: batch_non_serious
+
+    check_serious_high:
+      type: condition
+      variable: serious_count
+      operator: gte
+      value: 10
+      true_next: batch_serious_high
+      false_next: batch_serious_low
+
+    check_outcome:
+      type: condition
+      variable: outcome
+      operator: is_not_null
+      true_next: check_death
+      false_next: unknown_outcome
+
+    check_death:
+      type: condition
+      variable: outcome
+      operator: matches
+      value: "(?i)^(DE|death|fatal)$"
+      true_next: outcome_death
+      false_next: check_life_threatening
+
+    check_life_threatening:
+      type: condition
+      variable: outcome
+      operator: matches
+      value: "(?i)^(LT|life.threatening)$"
+      true_next: outcome_life_threatening
+      false_next: check_hospitalization
+
+    check_hospitalization:
+      type: condition
+      variable: outcome
+      operator: matches
+      value: "(?i)^(HO|hospitalization|hospital)$"
+      true_next: outcome_hospitalization
+      false_next: check_disability
+
+    check_disability:
+      type: condition
+      variable: outcome
+      operator: matches
+      value: "(?i)^(DS|disability|disabling)$"
+      true_next: outcome_disability
+      false_next: check_congenital
+
+    check_congenital:
+      type: condition
+      variable: outcome
+      operator: matches
+      value: "(?i)^(CA|congenital.anomaly|birth.defect)$"
+      true_next: outcome_congenital
+      false_next: check_intervention
+
+    check_intervention:
+      type: condition
+      variable: outcome
+      operator: matches
+      value: "(?i)^(RI|required.intervention|intervention)$"
+      true_next: outcome_intervention
+      false_next: check_other
+
+    check_other:
+      type: condition
+      variable: outcome
+      operator: matches
+      value: "(?i)^(OT|other)$"
+      true_next: outcome_other
+      false_next: unknown_outcome
+
+    outcome_death:
+      type: return
+      value:
+        seriousness: FATAL
+        ich_criterion: "results_in_death"
+        expedited_reporting: true
+        reporting_timeframe_days: 7
+        priority: 1
+
+    outcome_life_threatening:
+      type: return
+      value:
+        seriousness: LIFE_THREATENING
+        ich_criterion: "life_threatening"
+        expedited_reporting: true
+        reporting_timeframe_days: 7
+        priority: 1
+
+    outcome_hospitalization:
+      type: return
+      value:
+        seriousness: SERIOUS
+        ich_criterion: "requires_hospitalization"
+        expedited_reporting: true
+        reporting_timeframe_days: 15
+        priority: 2
+
+    outcome_disability:
+      type: return
+      value:
+        seriousness: SERIOUS
+        ich_criterion: "persistent_disability"
+        expedited_reporting: true
+        reporting_timeframe_days: 15
+        priority: 2
+
+    outcome_congenital:
+      type: return
+      value:
+        seriousness: SERIOUS
+        ich_criterion: "congenital_anomaly"
+        expedited_reporting: true
+        reporting_timeframe_days: 15
+        priority: 2
+
+    outcome_intervention:
+      type: return
+      value:
+        seriousness: MEDICALLY_IMPORTANT
+        ich_criterion: "required_intervention"
+        expedited_reporting: true
+        reporting_timeframe_days: 15
+        priority: 3
+
+    outcome_other:
+      type: return
+      value:
+        seriousness: NON_SERIOUS
+        ich_criterion: "other"
+        expedited_reporting: false
+        reporting_timeframe_days: 90
+        priority: 4
+
+    unknown_outcome:
+      type: return
+      value:
+        seriousness: UNKNOWN
+        ich_criterion: null
+        expedited_reporting: false
+        reporting_timeframe_days: 90
+        priority: 5
+
+    batch_fatal_cluster:
+      type: return
+      value:
+        seriousness: FATAL_CLUSTER
+        ich_criterion: "results_in_death"
+        expedited_reporting: true
+        reporting_timeframe_days: 7
+        priority: 1
+
+    batch_fatal_isolated:
+      type: return
+      value:
+        seriousness: FATAL_ISOLATED
+        ich_criterion: "results_in_death"
+        expedited_reporting: true
+        reporting_timeframe_days: 7
+        priority: 1
+
+    batch_serious_high:
+      type: return
+      value:
+        seriousness: BATCH_SERIOUS_HIGH
+        ich_criterion: "multiple_serious"
+        expedited_reporting: true
+        reporting_timeframe_days: 15
+        priority: 2
+
+    batch_serious_low:
+      type: return
+      value:
+        seriousness: BATCH_SERIOUS_LOW
+        ich_criterion: "multiple_serious"
+        expedited_reporting: true
+        reporting_timeframe_days: 15
+        priority: 3
+
+    batch_non_serious:
+      type: return
+      value:
+        seriousness: BATCH_NON_SERIOUS
+        ich_criterion: "other"
+        expedited_reporting: false
+        reporting_timeframe_days: 90
+        priority: 4
+
+    missing_batch:
+      type: return
+      value:
+        seriousness: UNKNOWN
+        ich_criterion: null
+        expedited_reporting: false
+        reporting_timeframe_days: 90
+        priority: 5
+
+tests:
+# Single outcome tests — all FAERS codes
+- input: { outcome: "DE" }
+  expect: { seriousness: FATAL, ich_criterion: "results_in_death", expedited_reporting: true, reporting_timeframe_days: 7, priority: 1 }
+- input: { outcome: "death" }
+  expect: { seriousness: FATAL, expedited_reporting: true, reporting_timeframe_days: 7 }
+- input: { outcome: "LT" }
+  expect: { seriousness: LIFE_THREATENING, ich_criterion: "life_threatening", expedited_reporting: true, reporting_timeframe_days: 7, priority: 1 }
+- input: { outcome: "HO" }
+  expect: { seriousness: SERIOUS, ich_criterion: "requires_hospitalization", expedited_reporting: true, reporting_timeframe_days: 15, priority: 2 }
+- input: { outcome: "DS" }
+  expect: { seriousness: SERIOUS, ich_criterion: "persistent_disability", expedited_reporting: true, reporting_timeframe_days: 15 }
+- input: { outcome: "CA" }
+  expect: { seriousness: SERIOUS, ich_criterion: "congenital_anomaly", expedited_reporting: true, reporting_timeframe_days: 15 }
+- input: { outcome: "RI" }
+  expect: { seriousness: MEDICALLY_IMPORTANT, ich_criterion: "required_intervention", expedited_reporting: true, reporting_timeframe_days: 15, priority: 3 }
+- input: { outcome: "OT" }
+  expect: { seriousness: NON_SERIOUS, expedited_reporting: false, reporting_timeframe_days: 90, priority: 4 }
+- input: { outcome: null }
+  expect: { seriousness: UNKNOWN, expedited_reporting: false, reporting_timeframe_days: 90, priority: 5 }
+# Batch mode
+- input: { death_count: 5, total_count: 100 }
+  expect: { seriousness: FATAL_CLUSTER, expedited_reporting: true, reporting_timeframe_days: 7, priority: 1 }
+- input: { death_count: 1, total_count: 50 }
+  expect: { seriousness: FATAL_ISOLATED, expedited_reporting: true, reporting_timeframe_days: 7 }
+- input: { death_count: 0, serious_count: 25, total_count: 100 }
+  expect: { seriousness: BATCH_SERIOUS_HIGH, expedited_reporting: true, reporting_timeframe_days: 15, priority: 2 }
+- input: { death_count: 0, serious_count: 5, total_count: 200 }
+  expect: { seriousness: BATCH_SERIOUS_LOW, expedited_reporting: true, reporting_timeframe_days: 15, priority: 3 }
+- input: { death_count: 0, total_count: 100 }
+  expect: { seriousness: BATCH_NON_SERIOUS, expedited_reporting: false, reporting_timeframe_days: 90, priority: 4 }
+# Null safety
+- input: {}
+  expect: { seriousness: UNKNOWN, expedited_reporting: false, reporting_timeframe_days: 90, priority: 5 }

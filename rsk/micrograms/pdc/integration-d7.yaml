@@ -1,6 +1,22 @@
 name: integration-d7
 description: "Domain 7 cross-domain integration — spontaneous reporting systems connect to signal detection, case processing, literature, and global PV."
 version: 0.1.0
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    epas:
+      type: string
+    integration_type:
+      type: string
+    module:
+      type: string
+    nexcore:
+      type: string
+    synergy:
+      type: string
 tree:
   start: check_target
   nodes:

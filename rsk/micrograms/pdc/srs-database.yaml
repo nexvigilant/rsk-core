@@ -1,6 +1,34 @@
 name: srs-database
 description: "Domain 7: Route to spontaneous reporting system by jurisdiction — FAERS, EudraVigilance, VigiBase, JADER, Canada Vigilance. Returns structure, format, access."
 version: 0.1.0
+interface:
+  inputs:
+    system:
+      type: string
+      required: false
+  outputs:
+    ai_tools:
+      type: string
+    authority:
+      type: string
+    format:
+      type: string
+    full_name:
+      type: string
+    note:
+      type: string
+    public_access:
+      type: bool
+    public_url:
+      type: string
+    records:
+      type: string
+    signal_methods:
+      type: string
+    submission:
+      type: string
+    system:
+      type: string
 tree:
   start: check_fda
   nodes:

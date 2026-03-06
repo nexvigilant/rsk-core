@@ -1,6 +1,16 @@
 name: lifecycle-status-classifier
 description: 'PVOS entity lifecycle: classifies current lifecycle state and routes to appropriate action for new/active/suspended/archived entities'
 version: 0.1.0
+interface:
+  inputs:
+    current_state:
+      type: string
+      required: false
+  outputs:
+    action:
+      type: string
+    description:
+      type: string
 tree:
   start: check_new
   nodes:
@@ -78,3 +88,8 @@ tests:
   expect:
     action: AUDIT_ONLY
     description: Archived entity - read-only access for audit and compliance purposes
+- input:
+    current_state: bogus
+  expect:
+    action: ERROR
+    description: Unknown lifecycle state - manual intervention required
