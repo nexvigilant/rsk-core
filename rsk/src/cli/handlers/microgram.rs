@@ -3,9 +3,10 @@
 use crate::cli::actions::MicrogramAction;
 use rsk::modules::decision_engine::Value as RskValue;
 use rsk::modules::microgram::{
-    auto_execute, bench_all, catalog, clone_mutated, compose, coverage_all, diff,
-    evolve_tests, load_all, matrix, merge, pipe, pipe_chain, shrink, snapshot_restore,
-    snapshot_save, stress_all, test_all, CompositionGoal, Microgram, MicrogramSpec,
+    alias_check, auto_execute, bench_all, catalog, chain_resilient_by_names, clone_mutated,
+    compose, coverage_all, diff, evolve_tests, load_all, matrix, merge, pipe, pipe_chain, shrink,
+    snapshot_restore, snapshot_save, stress_all, test_all, test_chains, validate_contracts,
+    CompositionGoal, Microgram, MicrogramSpec,
 };
 use serde_json::json;
 use std::collections::HashMap;
@@ -129,8 +130,8 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 .unwrap_or_default()
             );
         }
-        MicrogramAction::Chain { chain, dir, input } => {
-            use rsk::modules::microgram::chain_by_names;
+        MicrogramAction::Chain { chain, dir, input, resilient, accumulate } => {
+            use rsk::modules::microgram::{chain_by_names, chain_accumulate_by_names};
 
             let names: Vec<&str> = chain.split("->").map(|s| s.trim()).collect();
 
@@ -145,29 +146,82 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 }
             };
 
-            let result = match chain_by_names(Path::new(dir), &names, variables) {
-                Ok(r) => r,
-                Err(e) => {
-                    eprintln!("{}", json!({"status": "error", "message": e}));
-                    std::process::exit(1);
-                }
-            };
+            if *resilient {
+                let result = match chain_resilient_by_names(Path::new(dir), &names, variables) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        eprintln!("{}", json!({"status": "error", "message": e}));
+                        std::process::exit(1);
+                    }
+                };
 
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&json!({
-                    "success": result.success,
-                    "steps": result.steps.iter().map(|s| json!({
-                        "name": s.name,
-                        "path": s.path,
-                        "output": s.output,
-                        "duration_us": s.duration_us,
-                    })).collect::<Vec<_>>(),
-                    "final_output": result.final_output,
-                    "total_duration_us": result.total_duration_us,
-                }))
-                .unwrap_or_default()
-            );
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "status": result.status,
+                        "steps": result.steps.iter().map(|s| json!({
+                            "name": s.name,
+                            "success": s.success,
+                            "path": s.path,
+                            "output": s.output,
+                            "duration_us": s.duration_us,
+                        })).collect::<Vec<_>>(),
+                        "final_output": result.final_output,
+                        "total_duration_us": result.total_duration_us,
+                        "failed_steps": result.failed_steps,
+                    }))
+                    .unwrap_or_default()
+                );
+            } else if *accumulate {
+                let result = match chain_accumulate_by_names(Path::new(dir), &names, variables) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        eprintln!("{}", json!({"status": "error", "message": e}));
+                        std::process::exit(1);
+                    }
+                };
+
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "mode": "accumulate",
+                        "success": result.success,
+                        "steps": result.steps.iter().map(|s| json!({
+                            "name": s.name,
+                            "path": s.path,
+                            "output": s.output,
+                            "duration_us": s.duration_us,
+                        })).collect::<Vec<_>>(),
+                        "final_output": result.final_output,
+                        "total_duration_us": result.total_duration_us,
+                    }))
+                    .unwrap_or_default()
+                );
+            } else {
+                let result = match chain_by_names(Path::new(dir), &names, variables) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        eprintln!("{}", json!({"status": "error", "message": e}));
+                        std::process::exit(1);
+                    }
+                };
+
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "success": result.success,
+                        "steps": result.steps.iter().map(|s| json!({
+                            "name": s.name,
+                            "path": s.path,
+                            "output": s.output,
+                            "duration_us": s.duration_us,
+                        })).collect::<Vec<_>>(),
+                        "final_output": result.final_output,
+                        "total_duration_us": result.total_duration_us,
+                    }))
+                    .unwrap_or_default()
+                );
+            }
         }
         MicrogramAction::Generate {
             name, desc, var, op, threshold, true_label, false_label, out_dir,
@@ -425,14 +479,28 @@ pub fn handle_microgram(action: &MicrogramAction) {
                     "total_micrograms": cat.total_micrograms,
                     "total_tests": cat.total_tests,
                     "all_pass": cat.all_pass,
-                    "entries": cat.entries.iter().map(|e| json!({
-                        "name": e.name,
-                        "description": e.description,
-                        "inputs": e.inputs,
-                        "outputs": e.outputs,
-                        "tests": e.test_count,
-                        "pass": e.tests_pass,
-                    })).collect::<Vec<_>>(),
+                    "entries": cat.entries.iter().map(|e| {
+                        let mut entry = json!({
+                            "name": e.name,
+                            "description": e.description,
+                            "version": e.version,
+                            "nodes": e.nodes,
+                            "inputs": e.inputs,
+                            "outputs": e.outputs,
+                            "typed_inputs": e.typed_inputs,
+                            "typed_outputs": e.typed_outputs,
+                            "has_interface": e.has_interface,
+                            "tests": e.test_count,
+                            "pass": e.tests_pass,
+                        });
+                        if !e.aliases.is_empty() {
+                            entry.as_object_mut().unwrap().insert(
+                                "aliases".to_string(),
+                                json!(e.aliases),
+                            );
+                        }
+                        entry
+                    }).collect::<Vec<_>>(),
                     "connections": cat.connections.iter().map(|(a, b)| {
                         format!("{} -> {}", a, b)
                     }).collect::<Vec<_>>(),
@@ -699,6 +767,222 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 }))
                 .unwrap_or_default()
             );
+        }
+        MicrogramAction::ValidateContracts { dir } => {
+            let result = match validate_contracts(Path::new(dir)) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "total_connections": result.total_connections,
+                    "valid": result.valid,
+                    "violations": result.violations.iter().map(|v| json!({
+                        "from": v.from,
+                        "to": v.to,
+                        "field": v.field,
+                        "from_type": v.from_type,
+                        "to_type": v.to_type,
+                        "message": v.message,
+                    })).collect::<Vec<_>>(),
+                }))
+                .unwrap_or_default()
+            );
+
+            if !result.violations.is_empty() {
+                std::process::exit(1);
+            }
+        }
+        MicrogramAction::AliasCheck { dir } => {
+            let result = match alias_check(Path::new(dir)) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "total_aliases": result.total_aliases,
+                    "conflicts": result.conflicts.iter().map(|c| json!({
+                        "alias": c.alias,
+                        "canonicals": c.canonicals.iter().map(|(mg, canon)| json!({
+                            "microgram": mg,
+                            "canonical": canon,
+                        })).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                    "unused": result.unused.iter().map(|(mg, alias, canon)| json!({
+                        "microgram": mg,
+                        "alias": alias,
+                        "canonical": canon,
+                    })).collect::<Vec<_>>(),
+                    "suggested": result.suggested.iter().map(|s| json!({
+                        "from": s.from,
+                        "to": s.to,
+                        "source": s.source,
+                        "target": s.target,
+                    })).collect::<Vec<_>>(),
+                }))
+                .unwrap_or_default()
+            );
+        }
+        MicrogramAction::ChainTest { dir } => {
+            let results = match test_chains(Path::new(dir)) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let total_chains = results.len();
+            let total_tests: usize = results.iter().map(|r| r.total).sum();
+            let total_passed: usize = results.iter().map(|r| r.passed).sum();
+            let total_failed: usize = results.iter().map(|r| r.failed).sum();
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "chains": total_chains,
+                    "total_tests": total_tests,
+                    "passed": total_passed,
+                    "failed": total_failed,
+                    "results": results.iter().map(|r| json!({
+                        "chain": r.chain_name,
+                        "passed": r.passed,
+                        "failed": r.failed,
+                        "tests": r.results.iter().map(|t| json!({
+                            "name": t.name,
+                            "passed": t.passed,
+                            "mismatch": t.mismatch,
+                        })).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                }))
+                .unwrap_or_default()
+            );
+
+            if total_failed > 0 {
+                std::process::exit(1);
+            }
+        }
+        MicrogramAction::Ci { dir, chains_dir, min_coverage } => {
+            let mut gates_passed = 0;
+            let mut gates_failed = 0;
+            let mut gate_results = Vec::new();
+
+            // Gate 1: All tests pass
+            let test_results = match test_all(Path::new(dir)) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+            let test_total: usize = test_results.iter().map(|r| r.total).sum();
+            let test_failed: usize = test_results.iter().map(|r| r.failed).sum();
+            if test_failed == 0 {
+                gates_passed += 1;
+                gate_results.push(json!({"gate": "tests", "status": "PASS", "detail": format!("{} tests across {} micrograms", test_total, test_results.len())}));
+            } else {
+                gates_failed += 1;
+                gate_results.push(json!({"gate": "tests", "status": "FAIL", "detail": format!("{} failures", test_failed)}));
+            }
+
+            // Gate 2: Zero contract violations
+            let contracts = match validate_contracts(Path::new(dir)) {
+                Ok(r) => r,
+                Err(e) => {
+                    gates_failed += 1;
+                    gate_results.push(json!({"gate": "contracts", "status": "FAIL", "detail": format!("Error: {}", e)}));
+                    // Continue to other gates
+                    rsk::modules::microgram::ContractValidation {
+                        total_connections: 0, valid: 0, violations: vec![]
+                    }
+                }
+            };
+            if contracts.violations.is_empty() {
+                gates_passed += 1;
+                gate_results.push(json!({"gate": "contracts", "status": "PASS", "detail": format!("{} connections validated", contracts.total_connections)}));
+            } else {
+                gates_failed += 1;
+                gate_results.push(json!({"gate": "contracts", "status": "FAIL", "detail": format!("{} violations", contracts.violations.len())}));
+            }
+
+            // Gate 3: 100% interface coverage
+            let all_mcgs = load_all(Path::new(dir)).unwrap_or_default();
+            let no_iface: Vec<String> = all_mcgs.iter()
+                .filter(|mg| mg.interface.is_none())
+                .map(|mg| mg.name.clone())
+                .collect();
+            if no_iface.is_empty() {
+                gates_passed += 1;
+                gate_results.push(json!({"gate": "interfaces", "status": "PASS", "detail": format!("{}/{} have interfaces", all_mcgs.len(), all_mcgs.len())}));
+            } else {
+                gates_failed += 1;
+                gate_results.push(json!({"gate": "interfaces", "status": "FAIL", "detail": format!("Missing: {:?}", no_iface)}));
+            }
+
+            // Gate 4: Coverage above threshold
+            let cov_results = coverage_all(Path::new(dir)).unwrap_or_default();
+            let below: Vec<String> = cov_results.iter()
+                .filter(|r| r.coverage_pct < *min_coverage as f64)
+                .map(|r| format!("{} ({:.0}%)", r.name, r.coverage_pct))
+                .collect();
+            if below.is_empty() {
+                gates_passed += 1;
+                gate_results.push(json!({"gate": "coverage", "status": "PASS", "detail": format!("All above {}%", min_coverage)}));
+            } else {
+                gates_failed += 1;
+                gate_results.push(json!({"gate": "coverage", "status": "FAIL", "detail": format!("{} below {}%: {:?}", below.len(), min_coverage, below)}));
+            }
+
+            // Gate 5: Chain tests (if chains dir exists)
+            let chains_path = Path::new(chains_dir);
+            if chains_path.exists() {
+                match test_chains(chains_path) {
+                    Ok(chain_results) => {
+                        let chain_failed: usize = chain_results.iter().map(|r| r.failed).sum();
+                        let chain_total: usize = chain_results.iter().map(|r| r.total).sum();
+                        if chain_failed == 0 {
+                            gates_passed += 1;
+                            gate_results.push(json!({"gate": "chains", "status": "PASS", "detail": format!("{} tests across {} chains", chain_total, chain_results.len())}));
+                        } else {
+                            gates_failed += 1;
+                            gate_results.push(json!({"gate": "chains", "status": "FAIL", "detail": format!("{} chain test failures", chain_failed)}));
+                        }
+                    }
+                    Err(e) => {
+                        gates_failed += 1;
+                        gate_results.push(json!({"gate": "chains", "status": "FAIL", "detail": format!("Error: {}", e)}));
+                    }
+                }
+            } else {
+                gate_results.push(json!({"gate": "chains", "status": "SKIP", "detail": "No chains directory"}));
+            }
+
+            let verdict = if gates_failed == 0 { "PASS" } else { "FAIL" };
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "verdict": verdict,
+                    "gates_passed": gates_passed,
+                    "gates_failed": gates_failed,
+                    "gates": gate_results,
+                }))
+                .unwrap_or_default()
+            );
+
+            if gates_failed > 0 {
+                std::process::exit(1);
+            }
         }
     }
 }

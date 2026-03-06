@@ -512,6 +512,12 @@ pub enum MicrogramAction {
         /// Initial input JSON
         #[arg(short, long, default_value = "{}")]
         input: String,
+        /// Resilient mode: continue after mid-chain failure, return partial results
+        #[arg(long)]
+        resilient: bool,
+        /// Accumulate mode: merge each step's output into running context instead of replacing
+        #[arg(long)]
+        accumulate: bool,
     },
     /// Generate a microgram from a spec
     Generate {
@@ -679,6 +685,36 @@ pub enum MicrogramAction {
         /// Input JSON to shrink
         #[arg(short, long)]
         input: String,
+    },
+    /// Validate cross-microgram type contracts
+    ValidateContracts {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+    },
+    /// Check alias health across the ecosystem
+    AliasCheck {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+    },
+    /// Run end-to-end tests for chain definitions
+    ChainTest {
+        /// Directory containing chain YAML definitions
+        #[arg(default_value = "chains")]
+        dir: String,
+    },
+    /// Run the full CI gate (tests + contracts + interfaces + coverage + chains)
+    Ci {
+        /// Directory containing micrograms
+        #[arg(default_value = "micrograms")]
+        dir: String,
+        /// Directory containing chain definitions
+        #[arg(long, default_value = "chains")]
+        chains_dir: String,
+        /// Minimum coverage percentage
+        #[arg(long, default_value = "80")]
+        min_coverage: u32,
     },
 }
 
