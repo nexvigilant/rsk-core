@@ -1,0 +1,207 @@
+name: regulatory-action-predictor
+description: "Predicts likely regulatory action based on cross-domain safety evidence"
+version: 0.1.0
+
+interface:
+  inputs:
+    signal_strength:
+      type: string
+      description: "Strength of safety signal: strong/moderate/weak/none"
+    evidence_level:
+      type: string
+      description: "Highest level of supporting evidence: I/II/III/IV/V"
+    seriousness:
+      type: string
+      description: "Seriousness category: serious/moderate/minor/unknown"
+    is_labeled:
+      type: boolean
+      description: "Whether the adverse event is already documented in drug label"
+  outputs:
+    predicted_action:
+      type: string
+      description: "Predicted regulatory action: none/label_update/dear_doctor/restriction/withdrawal"
+    urgency:
+      type: string
+      description: "Urgency level: low/medium/high/critical"
+
+tree:
+  start: assess_signal_strength
+  nodes:
+    assess_signal_strength:
+      type: condition
+      variable: signal_strength
+      operator: eq
+      value: none
+      true_next: no_action_path
+      false_next: assess_seriousness
+
+    assess_seriousness:
+      type: condition
+      variable: seriousness
+      operator: eq
+      value: serious
+      true_next: serious_path
+      false_next: nonserous_path
+
+    no_action_path:
+      type: return
+      value:
+        predicted_action: none
+        urgency: low
+
+    serious_path:
+      type: condition
+      variable: signal_strength
+      operator: eq
+      value: strong
+      true_next: check_labeled_serious
+      false_next: check_moderate_serious
+
+    check_labeled_serious:
+      type: condition
+      variable: is_labeled
+      operator: eq
+      value: true
+      true_next: assess_evidence_serious
+      false_next: withdrawal_path
+
+    assess_evidence_serious:
+      type: condition
+      variable: evidence_level
+      operator: eq
+      value: I
+      true_next: dear_doctor_path
+      false_next: label_update_path
+
+    check_moderate_serious:
+      type: condition
+      variable: signal_strength
+      operator: eq
+      value: moderate
+      true_next: check_evidence_moderate_serious
+      false_next: label_update_path
+
+    check_evidence_moderate_serious:
+      type: condition
+      variable: evidence_level
+      operator: eq
+      value: I
+      true_next: check_labeled_moderate
+      false_next: label_update_path
+
+    check_labeled_moderate:
+      type: condition
+      variable: is_labeled
+      operator: eq
+      value: true
+      true_next: restriction_path
+      false_next: dear_doctor_path
+
+    nonserous_path:
+      type: condition
+      variable: signal_strength
+      operator: eq
+      value: strong
+      true_next: check_evidence_minor
+      false_next: check_moderate_minor
+
+    check_evidence_minor:
+      type: condition
+      variable: evidence_level
+      operator: eq
+      value: I
+      true_next: label_update_path
+      false_next: label_update_path
+
+    check_moderate_minor:
+      type: condition
+      variable: evidence_level
+      operator: eq
+      value: I
+      true_next: label_update_path
+      false_next: no_action_path
+
+    label_update_path:
+      type: return
+      value:
+        predicted_action: label_update
+        urgency: medium
+
+    dear_doctor_path:
+      type: return
+      value:
+        predicted_action: dear_doctor
+        urgency: high
+
+    restriction_path:
+      type: return
+      value:
+        predicted_action: restriction
+        urgency: high
+
+    withdrawal_path:
+      type: return
+      value:
+        predicted_action: withdrawal
+        urgency: critical
+
+tests:
+  - name: "Strong serious signal, Level I evidence, not labeled"
+    input:
+      signal_strength: strong
+      evidence_level: I
+      seriousness: serious
+      is_labeled: false
+    expect:
+      predicted_action: withdrawal
+      urgency: critical
+
+  - name: "Strong serious signal, Level I evidence, already labeled"
+    input:
+      signal_strength: strong
+      evidence_level: I
+      seriousness: serious
+      is_labeled: true
+    expect:
+      predicted_action: dear_doctor
+      urgency: high
+
+  - name: "Moderate serious signal, Level I evidence, labeled"
+    input:
+      signal_strength: moderate
+      evidence_level: I
+      seriousness: serious
+      is_labeled: true
+    expect:
+      predicted_action: restriction
+      urgency: high
+
+  - name: "Moderate serious signal, Level III evidence"
+    input:
+      signal_strength: moderate
+      evidence_level: III
+      seriousness: serious
+      is_labeled: false
+    expect:
+      predicted_action: label_update
+      urgency: medium
+
+  - name: "Strong minor signal, Level I evidence"
+    input:
+      signal_strength: strong
+      evidence_level: I
+      seriousness: minor
+      is_labeled: false
+    expect:
+      predicted_action: label_update
+      urgency: medium
+
+  - name: "No signal detected"
+    input:
+      signal_strength: none
+      evidence_level: V
+      seriousness: unknown
+      is_labeled: false
+    expect:
+      predicted_action: none
+      urgency: low

@@ -1,0 +1,325 @@
+name: safety-profile-completeness
+description: "Assesses completeness of cross-domain safety profile data"
+version: 0.1.0
+
+interface:
+  inputs:
+    has_faers_data:
+      type: boolean
+      description: "Whether FAERS adverse event data is available"
+    has_trial_data:
+      type: boolean
+      description: "Whether clinical trial safety data is available"
+    has_label:
+      type: boolean
+      description: "Whether drug label with safety information is available"
+    has_literature:
+      type: boolean
+      description: "Whether published safety literature is available"
+    has_interactions:
+      type: boolean
+      description: "Whether drug-drug interaction data is available"
+  outputs:
+    profile_completeness:
+      type: string
+      description: "Completeness level: comprehensive/adequate/partial/insufficient"
+    gaps:
+      type: string
+      description: "Description of missing data sources"
+
+tree:
+  start: check_all_five
+  nodes:
+    check_all_five:
+      type: condition
+      variable: has_interactions
+      operator: eq
+      value: true
+      true_next: check_four_when_interactions
+      false_next: check_four_without_interactions
+
+    # Has interactions - check if all other 4 present
+    check_four_when_interactions:
+      type: condition
+      variable: has_label
+      operator: eq
+      value: true
+      true_next: check_three_with_interaction_label
+      false_next: check_adequate_four_with_interaction
+
+    check_three_with_interaction_label:
+      type: condition
+      variable: has_trial_data
+      operator: eq
+      value: true
+      true_next: check_two_with_three_label_inter
+      false_next: check_adequate_with_inter_label
+
+    check_two_with_three_label_inter:
+      type: condition
+      variable: has_literature
+      operator: eq
+      value: true
+      true_next: check_faers_final
+      false_next: check_faers_with_trial_inter_label
+
+    check_faers_final:
+      type: condition
+      variable: has_faers_data
+      operator: eq
+      value: true
+      true_next: comprehensive
+      false_next: adequate_four_with_all_but_faers
+
+    check_faers_with_trial_inter_label:
+      type: condition
+      variable: has_faers_data
+      operator: eq
+      value: true
+      true_next: adequate_four
+      false_next: partial_three_with_inter_label_trial
+
+    check_adequate_with_inter_label:
+      type: condition
+      variable: has_trial_data
+      operator: eq
+      value: true
+      true_next: adequate_four
+      false_next: check_literature_inter_label
+
+    check_literature_inter_label:
+      type: condition
+      variable: has_literature
+      operator: eq
+      value: true
+      true_next: adequate_four
+      false_next: check_faers_inter_label
+
+    check_faers_inter_label:
+      type: condition
+      variable: has_faers_data
+      operator: eq
+      value: true
+      true_next: adequate_four
+      false_next: partial_inter_label_only
+
+    # Does not have interactions
+    check_four_without_interactions:
+      type: condition
+      variable: has_label
+      operator: eq
+      value: true
+      true_next: check_three_no_inter_label
+      false_next: check_two_sources_no_label
+
+    check_three_no_inter_label:
+      type: condition
+      variable: has_trial_data
+      operator: eq
+      value: true
+      true_next: check_two_no_inter_trial_label
+      false_next: check_lit_no_inter_trial_label
+
+    check_two_no_inter_trial_label:
+      type: condition
+      variable: has_literature
+      operator: eq
+      value: true
+      true_next: check_faers_four_no_inter
+      false_next: check_faers_three_no_inter
+
+    check_faers_four_no_inter:
+      type: condition
+      variable: has_faers_data
+      operator: eq
+      value: true
+      true_next: adequate_four
+      false_next: partial_three_no_inter
+
+    check_faers_three_no_inter:
+      type: condition
+      variable: has_faers_data
+      operator: eq
+      value: true
+      true_next: adequate_four
+      false_next: partial_three_no_inter
+
+    check_lit_no_inter_trial_label:
+      type: condition
+      variable: has_literature
+      operator: eq
+      value: true
+      true_next: check_faers_lit_label_no_inter
+      false_next: partial_label_only_two_sources
+
+    check_faers_lit_label_no_inter:
+      type: condition
+      variable: has_faers_data
+      operator: eq
+      value: true
+      true_next: adequate_four
+      false_next: partial_three_lit_label
+
+    partial_label_only_two_sources:
+      type: return
+      value:
+        profile_completeness: partial
+        gaps: "missing trial and literature data"
+
+    check_two_sources_no_label:
+      type: condition
+      variable: has_trial_data
+      operator: eq
+      value: true
+      true_next: partial_trial_at_least
+      false_next: check_faers_literature_no_label
+
+    partial_trial_at_least:
+      type: return
+      value:
+        profile_completeness: partial
+        gaps: "missing label information"
+
+    check_faers_literature_no_label:
+      type: condition
+      variable: has_faers_data
+      operator: eq
+      value: true
+      true_next: partial_faers_at_least
+      false_next: check_literature_no_label
+
+    partial_faers_at_least:
+      type: return
+      value:
+        profile_completeness: partial
+        gaps: "missing label information"
+
+    check_literature_no_label:
+      type: condition
+      variable: has_literature
+      operator: eq
+      value: true
+      true_next: partial_lit_at_least
+      false_next: insufficient_no_data
+
+    partial_lit_at_least:
+      type: return
+      value:
+        profile_completeness: partial
+        gaps: "missing label information"
+
+    insufficient_no_data:
+      type: return
+      value:
+        profile_completeness: insufficient
+        gaps: "no comprehensive safety data available"
+
+    # Return nodes
+    comprehensive:
+      type: return
+      value:
+        profile_completeness: comprehensive
+        gaps: "none"
+
+    adequate_four:
+      type: return
+      value:
+        profile_completeness: adequate
+        gaps: "missing interactions data"
+
+    adequate_four_with_all_but_faers:
+      type: return
+      value:
+        profile_completeness: adequate
+        gaps: "missing FAERS data"
+
+    partial_three_with_inter_label_trial:
+      type: return
+      value:
+        profile_completeness: partial
+        gaps: "missing literature review"
+
+    partial_inter_label_only:
+      type: return
+      value:
+        profile_completeness: partial
+        gaps: "missing trial and literature data"
+
+    partial_three_no_inter:
+      type: return
+      value:
+        profile_completeness: partial
+        gaps: "missing interactions data"
+
+    partial_three_lit_label:
+      type: return
+      value:
+        profile_completeness: partial
+        gaps: "missing trial data"
+
+tests:
+  - name: "Complete data - all sources"
+    input:
+      has_faers_data: true
+      has_trial_data: true
+      has_label: true
+      has_literature: true
+      has_interactions: true
+    expect:
+      profile_completeness: comprehensive
+      gaps: "none"
+
+  - name: "Adequate - 4 sources with label"
+    input:
+      has_faers_data: true
+      has_trial_data: true
+      has_label: true
+      has_literature: true
+      has_interactions: false
+    expect:
+      profile_completeness: adequate
+      gaps: "missing interactions data"
+
+  - name: "Adequate - 4 without interactions"
+    input:
+      has_faers_data: true
+      has_trial_data: true
+      has_label: true
+      has_literature: false
+      has_interactions: false
+    expect:
+      profile_completeness: adequate
+      gaps: "missing interactions data"
+
+  - name: "Partial - trial data only"
+    input:
+      has_faers_data: false
+      has_trial_data: true
+      has_label: false
+      has_literature: false
+      has_interactions: false
+    expect:
+      profile_completeness: partial
+      gaps: "missing label information"
+
+  - name: "Partial - label and no trial/lit/faers"
+    input:
+      has_faers_data: false
+      has_trial_data: false
+      has_label: true
+      has_literature: false
+      has_interactions: false
+    expect:
+      profile_completeness: partial
+      gaps: "missing trial and literature data"
+
+  - name: "Insufficient - no data"
+    input:
+      has_faers_data: false
+      has_trial_data: false
+      has_label: false
+      has_literature: false
+      has_interactions: false
+    expect:
+      profile_completeness: insufficient
+      gaps: "no comprehensive safety data available"

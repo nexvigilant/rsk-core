@@ -1,0 +1,109 @@
+name: response-freshness-gate
+description: Validates API response data freshness. Determines if data is recent enough for the intended use case.
+version: 0.1.0
+interface:
+  inputs:
+    data_year:
+      type: int
+      required: false
+    current_year:
+      type: int
+      required: false
+    is_current:
+      type: bool
+      required: false
+  outputs:
+    freshness:
+      type: string
+    usable:
+      type: bool
+tree:
+  start: check_is_current
+  nodes:
+    check_is_current:
+      type: condition
+      variable: is_current
+      operator: eq
+      value: true
+      true_next: return_current
+      false_next: check_year
+    check_year:
+      type: condition
+      variable: data_year
+      operator: is_null
+      true_next: return_ancient
+      false_next: check_recent
+    check_recent:
+      type: condition
+      variable: data_year
+      operator: gte
+      value: 2020
+      true_next: check_within_5
+      false_next: return_ancient
+    check_within_5:
+      type: condition
+      variable: data_year
+      operator: gte
+      value: 2021
+      true_next: return_acceptable
+      false_next: return_stale
+    return_current:
+      type: return
+      value:
+        freshness: current
+        usable: true
+    return_acceptable:
+      type: return
+      value:
+        freshness: acceptable
+        usable: true
+    return_stale:
+      type: return
+      value:
+        freshness: stale
+        usable: false
+    return_ancient:
+      type: return
+      value:
+        freshness: ancient
+        usable: false
+tests:
+  - input:
+      data_year: 2026
+      current_year: 2026
+      is_current: true
+    expect:
+      freshness: current
+      usable: true
+  - input:
+      data_year: 2024
+      current_year: 2026
+      is_current: false
+    expect:
+      freshness: acceptable
+      usable: true
+  - input:
+      data_year: 2019
+      current_year: 2026
+      is_current: false
+    expect:
+      freshness: ancient
+      usable: false
+  - input:
+      data_year: 2010
+      current_year: 2026
+      is_current: false
+    expect:
+      freshness: ancient
+      usable: false
+  - input:
+      data_year: 2021
+      current_year: 2026
+      is_current: false
+    expect:
+      freshness: acceptable
+      usable: true
+  - input: {}
+    expect:
+      freshness: ancient
+      usable: false

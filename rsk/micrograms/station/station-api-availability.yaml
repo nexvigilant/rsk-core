@@ -1,0 +1,272 @@
+name: station-api-availability
+description: "Classify API availability: live proxy vs stub vs unknown"
+version: 0.1.0
+
+interface:
+  inputs:
+    domain:
+      type: string
+      description: "Domain to check (e.g., api.fda.gov, ema.europa.eu, vigiaccess.org)"
+  outputs:
+    availability:
+      type: string
+      description: "Status: live (working proxy), stub (mock only), unknown (no config)"
+    proxy_script:
+      type: string
+      description: "Script/endpoint to call for live domains, or empty for stub/unknown"
+
+tree:
+  start: check_live_fda
+  nodes:
+    check_live_fda:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "api.fda.gov"
+      true_next: return_live_fda
+      false_next: check_live_clinicaltrials
+
+    return_live_fda:
+      type: return
+      value:
+        availability: "live"
+        proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-fda.sh"
+
+    check_live_clinicaltrials:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "clinicaltrials.gov"
+      true_next: return_live_clinicaltrials
+      false_next: check_live_pubmed
+
+    return_live_clinicaltrials:
+      type: return
+      value:
+        availability: "live"
+        proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-clinicaltrials.sh"
+
+    check_live_pubmed:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "pubmed.ncbi.nlm.nih.gov"
+      true_next: return_live_pubmed
+      false_next: check_live_dailymed
+
+    return_live_pubmed:
+      type: return
+      value:
+        availability: "live"
+        proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-pubmed.sh"
+
+    check_live_dailymed:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "dailymed.nlm.nih.gov"
+      true_next: return_live_dailymed
+      false_next: check_live_rxnav
+
+    return_live_dailymed:
+      type: return
+      value:
+        availability: "live"
+        proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-dailymed.sh"
+
+    check_live_rxnav:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "rxnav.nlm.nih.gov"
+      true_next: return_live_rxnav
+      false_next: check_stub_ema
+
+    return_live_rxnav:
+      type: return
+      value:
+        availability: "live"
+        proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-rxnav.sh"
+
+    check_stub_ema:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "ema.europa.eu"
+      true_next: return_stub_ema
+      false_next: check_stub_eudravigilance
+
+    return_stub_ema:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_eudravigilance:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "eudravigilance.ema.europa.eu"
+      true_next: return_stub_eudravigilance
+      false_next: check_stub_vigiaccess
+
+    return_stub_eudravigilance:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_vigiaccess:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "vigiaccess.org"
+      true_next: return_stub_vigiaccess
+      false_next: check_stub_ich
+
+    return_stub_vigiaccess:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_ich:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "ich.org"
+      true_next: return_stub_ich
+      false_next: check_stub_meddra
+
+    return_stub_ich:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_meddra:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "meddra.org"
+      true_next: return_stub_meddra
+      false_next: check_stub_drugbank
+
+    return_stub_meddra:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_drugbank:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "drugbank.com"
+      true_next: return_stub_drugbank
+      false_next: check_stub_openvigilfrance
+
+    return_stub_drugbank:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_openvigilfrance:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "openvigilfrance.fr"
+      true_next: return_stub_openvigilfrance
+      false_next: check_stub_accessdata
+
+    return_stub_openvigilfrance:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_accessdata:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "accessdata.fda.gov"
+      true_next: return_stub_accessdata
+      false_next: check_stub_who_umc
+
+    return_stub_accessdata:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_who_umc:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "who-umc.org"
+      true_next: return_stub_who_umc
+      false_next: check_stub_cioms
+
+    return_stub_who_umc:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    check_stub_cioms:
+      type: condition
+      variable: domain
+      operator: eq
+      value: "cioms.ch"
+      true_next: return_stub_cioms
+      false_next: return_unknown
+
+    return_stub_cioms:
+      type: return
+      value:
+        availability: "stub"
+        proxy_script: ""
+
+    return_unknown:
+      type: return
+      value:
+        availability: "unknown"
+        proxy_script: ""
+
+tests:
+  - input: { domain: "api.fda.gov" }
+    expect: { availability: "live", proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-fda.sh" }
+
+  - input: { domain: "clinicaltrials.gov" }
+    expect: { availability: "live", proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-clinicaltrials.sh" }
+
+  - input: { domain: "pubmed.ncbi.nlm.nih.gov" }
+    expect: { availability: "live", proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-pubmed.sh" }
+
+  - input: { domain: "dailymed.nlm.nih.gov" }
+    expect: { availability: "live", proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-dailymed.sh" }
+
+  - input: { domain: "rxnav.nlm.nih.gov" }
+    expect: { availability: "live", proxy_script: "~/Projects/nexcore-wksp/nexcore-api/proxy-rxnav.sh" }
+
+  - input: { domain: "ema.europa.eu" }
+    expect: { availability: "stub", proxy_script: "" }
+
+  - input: { domain: "eudravigilance.ema.europa.eu" }
+    expect: { availability: "stub", proxy_script: "" }
+
+  - input: { domain: "vigiaccess.org" }
+    expect: { availability: "stub", proxy_script: "" }
+
+  - input: { domain: "meddra.org" }
+    expect: { availability: "stub", proxy_script: "" }
+
+  - input: { domain: "drugbank.com" }
+    expect: { availability: "stub", proxy_script: "" }
+
+  - input: { domain: "unknown.example.com" }
+    expect: { availability: "unknown", proxy_script: "" }
+
+  - input: { domain: "" }
+    expect: { availability: "unknown", proxy_script: "" }
