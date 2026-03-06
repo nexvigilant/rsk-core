@@ -1,0 +1,795 @@
+# NexVigilant Station — Microgram-to-Config Wiring Map
+# Secret Code: ∃→∂→→→κ→λ→ν
+# Each domain config is powered by microgram decision intelligence
+#
+# Primitives Key:
+#   κ = Comparison (threshold gate, classification)
+#   → = Causality (chain: input causes output)
+#   ∂ = Boundary (boundary detection, gating)
+#   Σ = Summation (aggregation, combination)
+#   λ = Mapping (routing, lookup)
+#   ν = Frequency (rate estimation, counting)
+#   ς = State (lifecycle, deadline tracking)
+#   ∧ = Conjunction (all-criteria gate, Evans-style AND)
+
+version: "1.0.0"
+generated: "2026-03-06"
+total_domains: 5
+total_tools: 32
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DOMAIN 1: accessdata.fda.gov — FDA FAERS adverse event database
+# Harbor depth: FAERS tools + nexcore-faers-etl + nexcore-pv-core already built.
+# This domain is our deepest PV harbor. Most micrograms apply here.
+# ─────────────────────────────────────────────────────────────────────────────
+domains:
+  accessdata.fda.gov:
+    description: "FDA FAERS adverse event data — the primary US spontaneous reporting database"
+    config_targets:
+      - "/cgi-bin/viewer/index.cfm"          # FAERS event viewer
+      - "/safety/faers/faers_opendata.htm"   # FAERS open data downloads
+    microgram_depth: 15
+    tools:
+
+      - tool_name: "compute-prr-signal"
+        description: "Classify PRR value as signal or noise using Evans criteria threshold (PRR >= 2.0)"
+        input_vars:
+          prr: "float — pre-computed PRR from 2x2 contingency table"
+        output_vars:
+          signal_detected: "bool"
+          classification: "signal | noise"
+        microgram_chain: ["prr-signal"]
+        key: "κ"
+        rationale: "Single threshold comparison — pure κ. Most common FAERS query output."
+
+      - tool_name: "compute-ror-signal"
+        description: "Classify ROR as STRONG/MODERATE/WEAK/NONE/PROTECTIVE with recommended action"
+        input_vars:
+          ror: "float — (a*d)/(b*c) from 2x2 table"
+        output_vars:
+          signal: "STRONG | MODERATE | WEAK | NONE | PROTECTIVE"
+          action: "immediate_review | standard_review | monitor | no_action | investigate_protective"
+          signal_detected: "bool"
+        microgram_chain: ["ror-signal"]
+        key: "κ"
+        rationale: "Graded threshold comparison. ROR >= 4.0 = STRONG, >= 2.0 = MODERATE, >= 1.5 = WEAK."
+
+      - tool_name: "compute-ebgm-signal"
+        description: "Classify EBGM/EB05 Bayesian disproportionality signal with fallback to point estimate for borderline cases"
+        input_vars:
+          eb05: "float — lower 5th percentile EB score"
+          ebgm: "float — point estimate (fallback for borderline)"
+        output_vars:
+          signal: "STRONG | MODERATE | WEAK | BORDERLINE | NONE"
+          action: "expedited_review | standard_review | monitor | increase_sample | no_action"
+          signal_detected: "bool"
+        microgram_chain: ["ebgm-signal"]
+        key: "κ"
+        rationale: "EB05 >= 5.0 = STRONG, >= 2.0 = MODERATE, >= 1.0 = WEAK. WHO-UMC preferred method."
+
+      - tool_name: "evaluate-evans-criteria"
+        description: "Apply all three Evans criteria simultaneously: PRR >= 2.0 AND chi² >= 3.841 AND N >= 3 (EMA GVP Module IX)"
+        input_vars:
+          prr: "float"
+          chi_square: "float"
+          n_cases: "int"
+        output_vars:
+          evans_signal: "bool"
+          classification: "SIGNAL | NO_SIGNAL | INSUFFICIENT"
+          criteria_met: "string"
+          guideline: "EMA GVP Module IX"
+        microgram_chain: ["evans-signal"]
+        key: "∧"
+        rationale: "All-criteria conjunction gate. INSUFFICIENT when PRR+chi² met but N < 3 — guards against small-N false positives."
+
+      - tool_name: "combine-signals"
+        description: "Aggregate PRR, ROR, IC, and EBGM classifications into overall signal verdict (CONFIRMED/PROBABLE/POSSIBLE/SUGGESTIVE/NO_SIGNAL)"
+        input_vars:
+          prr_signal: "STRONG | MODERATE | WEAK | NONE"
+          ror_signal: "STRONG | MODERATE | WEAK | NONE"
+          ic_signal: "STRONG | MODERATE | WEAK | NONE"
+          ebgm_signal: "STRONG | MODERATE | WEAK | NONE"
+        output_vars:
+          overall: "CONFIRMED | PROBABLE | POSSIBLE | SUGGESTIVE | NO_SIGNAL"
+          priority: "CRITICAL | HIGH | MEDIUM | LOW | NONE"
+          signal_detected: "bool"
+        microgram_chain: ["prr-signal", "ror-signal", "ic-signal", "ebgm-signal", "multi-signal-combiner"]
+        key: "Σ"
+        rationale: "Convergence aggregator. 2+ STRONG = CONFIRMED (CRITICAL priority). Implements multi-method consensus per GVP Module IX."
+
+      - tool_name: "full-signal-pipeline"
+        description: "End-to-end: compute PRR signal → assess causality need → apply Naranjo → derive regulatory action + deadline"
+        input_vars:
+          prr: "float"
+          naranjo_score: "int"
+          is_serious: "bool"
+        output_vars:
+          signal_detected: "bool"
+          causality: "DEFINITE | PROBABLE | POSSIBLE | DOUBTFUL"
+          regulatory_action: "expedited_report | standard_report | periodic_report | monitor | document"
+          deadline_days: "int"
+        microgram_chain: ["prr-signal", "signal-to-causality", "naranjo-quick", "causality-to-action"]
+        key: "→"
+        rationale: "The canonical PV signal chain. PRR detects → bridge routes to causality → Naranjo scores → action+deadline fires."
+
+      - tool_name: "triage-adverse-event"
+        description: "Single-pass triage: PRR + death/hospitalization + Naranjo → channel (pager/slack/queue/backlog) and deadline"
+        input_vars:
+          prr: "float"
+          death: "bool"
+          hospitalization: "bool"
+          naranjo_score: "int"
+        output_vars:
+          triage: "CRITICAL | SERIOUS | PROBABLE | MONITOR | LOW_SIGNAL"
+          channel: "pager | slack | queue | backlog | archive"
+          deadline_days: "int (7 | 15 | 30 | 90)"
+          action: "expedited_report | investigate | periodic_review | document"
+        microgram_chain: ["icsr-triage"]
+        key: "→∂"
+        rationale: "Boundary detection at the case intake surface. Routes to communication channel based on combined signal + seriousness."
+
+      - tool_name: "estimate-underreporting"
+        description: "Categorize FAERS reporting completeness by reported/expected ratio. Flag severe underreporting (< 1%) for surveillance audit."
+        input_vars:
+          reporting_ratio: "float — reported_cases / estimated_true_incidence"
+        output_vars:
+          category: "SEVERE_UNDERREPORTING | SIGNIFICANT_UNDERREPORTING | MODERATE_UNDERREPORTING | ACCEPTABLE_REPORTING"
+          estimated_reporting_pct: "string"
+          recommendation: "string"
+        microgram_chain: ["underreporting-estimator"]
+        key: "ν"
+        rationale: "Frequency/rate estimation. FAERS captures ~1-10% of true events — this quantifies the gap."
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # DOMAIN 2: dailymed.nlm.nih.gov — FDA drug labeling / SPL data
+  # Harbor depth: Expectedness and REMS logic tie directly to label content.
+  # Browser config extracts label sections; micrograms classify what was extracted.
+  # ─────────────────────────────────────────────────────────────────────────────
+  dailymed.nlm.nih.gov:
+    description: "FDA drug labeling (SPL) — adverse reactions, warnings, REMS requirements"
+    config_targets:
+      - "/dailymed/drugInfo.cfm"             # Drug label pages
+      - "/dailymed/search.cfm"               # Label search
+    microgram_depth: 7
+    tools:
+
+      - tool_name: "check-event-expectedness"
+        description: "Classify adverse event expectedness against product labeling: EXPECTED_LISTED / EXPECTED_CLASS / UNEXPECTED_SEVERITY / UNEXPECTED_NATURE (ICH E2A Section II.C)"
+        input_vars:
+          event_in_label: "bool — exact event listed in label"
+          event_class_in_label: "bool — event class listed (but not specific event)"
+          severity_in_label: "bool — observed severity matches labeling"
+        output_vars:
+          expectedness: "EXPECTED_LISTED | EXPECTED_CLASS | UNEXPECTED_SEVERITY | UNEXPECTED_NATURE"
+          regulatory_impact: "string"
+          regulatory_reference: "ICH E2A Section II.C"
+        microgram_chain: ["expectedness-check"]
+        key: "κ∂"
+        rationale: "Boundary classification at the label surface. Drives expedited vs periodic reporting decision."
+
+      - tool_name: "classify-rems-type"
+        description: "Determine FDA REMS type from label elements: FULL_REMS / ETASU_REMS / ETASU_LITE / MEDGUIDE_ONLY / NO_REMS (21 CFR 314.520)"
+        input_vars:
+          restricted_distribution: "bool"
+          prescriber_certification: "bool"
+          patient_enrollment: "bool"
+          monitoring_required: "bool"
+          medication_guide_only: "bool"
+        output_vars:
+          rems_type: "FULL_REMS | ETASU_REMS | ETASU_LITE | MEDGUIDE_ONLY | NO_REMS"
+          elements: "string — comma-separated REMS components"
+          complexity: "HIGH | MODERATE | LOW | NONE"
+          regulatory_reference: "21 CFR 314.520"
+        microgram_chain: ["rems-classifier"]
+        key: "κ"
+        rationale: "Tiered threshold gate across 5 label features. REMS complexity drives prescriber burden and patient access decisions."
+
+      - tool_name: "label-to-reporting-timeline"
+        description: "Full pipeline: extract expectedness from label → classify seriousness → determine reporting timeline (7/15/90 days)"
+        input_vars:
+          event_in_label: "bool"
+          event_class_in_label: "bool"
+          severity_in_label: "bool"
+          death: "bool"
+          hospitalization: "bool"
+          disability: "bool"
+          life_threatening: "bool"
+          congenital_anomaly: "bool"
+          medically_important: "bool"
+          study_type: "premarket | postmarket"
+          fatal: "bool"
+          unexpected: "bool"
+          serious: "bool"
+        output_vars:
+          expectedness: "string"
+          seriousness: "SERIOUS | NON-SERIOUS"
+          timeline: "7_CALENDAR_DAYS | 15_CALENDAR_DAYS | PERIODIC"
+          days_from_awareness: "int"
+          report_type: "IND_SAFETY | FIELD_ALERT | PSUR_DSUR | LINE_LISTING"
+          regulatory_reference: "string"
+        microgram_chain: ["expectedness-check", "case-seriousness", "expedited-reporting"]
+        key: "→"
+        rationale: "Three-step label→seriousness→deadline chain. Implements the ICH E2A/E2D decision tree end-to-end."
+
+      - tool_name: "classify-ae-frequency"
+        description: "Classify adverse event frequency from CIOMS frequency bands: Very Common / Common / Uncommon / Rare / Very Rare"
+        input_vars:
+          frequency_pct: "float — incidence as percentage"
+        output_vars:
+          frequency_band: "VERY_COMMON | COMMON | UNCOMMON | RARE | VERY_RARE"
+          cioms_range: "string (e.g., ≥1/10, ≥1/100 to <1/10)"
+        microgram_chain: ["cioms-frequency"]
+        key: "κ"
+        rationale: "CIOMS frequency classification. Drives label wording requirements per ICH M1 MedDRA conventions."
+
+      - tool_name: "route-by-harm-type"
+        description: "Route adverse event to specialist team by organ system / harm type: hepatic, cardiac, neurological, immunological, etc."
+        input_vars:
+          harm_type: "string — MedDRA SOC or harm category"
+        output_vars:
+          specialist_team: "string"
+          priority_tier: "string"
+          action: "string"
+        microgram_chain: ["harm-type-router"]
+        key: "λ"
+        rationale: "Mapping primitive. Label sections map to harm types which route to domain experts."
+
+      - tool_name: "compute-report-deadline"
+        description: "Compute absolute reporting deadline and alert status from case seriousness and receipt date"
+        input_vars:
+          seriousness: "SERIOUS | NON-SERIOUS"
+          is_fatal: "bool"
+          days_since_receipt: "int"
+        output_vars:
+          deadline_days: "int"
+          deadline_status: "OVERDUE | CRITICAL | WARNING | ON_TRACK"
+          report_type: "string"
+        microgram_chain: ["report-deadline", "deadline-alert"]
+        key: "ς"
+        rationale: "State-tracking primitive. Deadline is a time-state that degrades from ON_TRACK → OVERDUE."
+
+      - tool_name: "assess-benefit-risk"
+        description: "Evaluate product benefit-risk balance from label data: FAVORABLE / ACCEPTABLE / CONDITIONAL / UNFAVORABLE / NEGATIVE"
+        input_vars:
+          benefit_score: "int 0-100"
+          risk_score: "int 0-100"
+          unmet_need: "bool"
+          alternative_available: "bool"
+        output_vars:
+          decision: "FAVORABLE | ACCEPTABLE | CONDITIONAL | UNFAVORABLE | NEGATIVE"
+          action: "continue_monitoring | standard_risk_management | enhanced_monitoring_with_rmp | risk_mitigation_required | consider_withdrawal"
+          recommendation: "string"
+        microgram_chain: ["benefit-risk-gate"]
+        key: "κ"
+        rationale: "Five-tier benefit-risk classifier. Considers unmet need and alternatives — implements ICH E2C B/R framework."
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # DOMAIN 3: vigiaccess.org — WHO global ICSR database (public VigiBase interface)
+  # Harbor depth: WHO-UMC causality scale + international ICSR workflow.
+  # This domain powers cross-border signal harmonization.
+  # ─────────────────────────────────────────────────────────────────────────────
+  vigiaccess.org:
+    description: "WHO VigiAccess — global individual case safety report (ICSR) database"
+    config_targets:
+      - "/vigiaccess"                         # VigiAccess search interface
+      - "/vigiaccess/drug"                    # Drug-specific ICSR data
+    microgram_depth: 9
+    tools:
+
+      - tool_name: "assess-causality-who-umc"
+        description: "Apply WHO-UMC causality scale to VigiBase ICSRs: CERTAIN / PROBABLE / POSSIBLE / UNLIKELY / UNCLASSIFIED with regulatory guidance"
+        input_vars:
+          time_plausible: "bool — temporal relationship plausible"
+          known_reaction: "bool — reaction previously documented for drug class"
+          no_alternative_explanation: "bool"
+          dechallenge_positive: "bool — symptoms improved on withdrawal"
+          rechallenge_positive: "bool — symptoms recurred on re-exposure"
+        output_vars:
+          causality: "CERTAIN | PROBABLE | POSSIBLE | UNLIKELY | UNCLASSIFIED"
+          who_score: "int 1-6"
+          regulatory_use: "string"
+        microgram_chain: ["who-umc-quick"]
+        key: "κ"
+        rationale: "International standard — used in VigiBase. Alternative to Naranjo for WHO reporting context."
+
+      - tool_name: "who-causality-to-action"
+        description: "Bridge WHO-UMC causality to regulatory action pipeline with ICH E2B deadline computation"
+        input_vars:
+          causality: "CERTAIN | PROBABLE | POSSIBLE | UNLIKELY | UNCLASSIFIED"
+          is_serious: "bool"
+        output_vars:
+          regulatory_action: "string"
+          deadline_days: "int"
+          reporting_type: "string"
+        microgram_chain: ["who-umc-quick", "causality-to-action"]
+        key: "→"
+        rationale: "Causality→action causal chain. WHO-UMC CERTAIN maps to DEFINITE for deadline computation."
+
+      - tool_name: "triage-global-icsr"
+        description: "Full ICSR triage: PRR signal + death/hospitalization + causality → priority channel and deadline"
+        input_vars:
+          prr: "float"
+          death: "bool"
+          hospitalization: "bool"
+          naranjo_score: "int"
+        output_vars:
+          triage: "CRITICAL | SERIOUS | PROBABLE | MONITOR | LOW_SIGNAL"
+          channel: "pager | slack | queue | backlog | archive"
+          deadline_days: "int"
+          action: "string"
+        microgram_chain: ["icsr-triage"]
+        key: "→∂"
+        rationale: "Entry-point boundary classifier for global ICSR intake. Routes international cases by combined signal+seriousness."
+
+      - tool_name: "flag-pediatric-case"
+        description: "Flag case for pediatric safety review based on patient age. Pediatric cases require heightened scrutiny per ICH E11."
+        input_vars:
+          patient_age_years: "float"
+        output_vars:
+          pediatric: "bool"
+          age_group: "NEONATE | INFANT | CHILD | ADOLESCENT | ADULT"
+          regulatory_note: "string"
+        microgram_chain: ["pediatric-flag"]
+        key: "κ"
+        rationale: "Age boundary gate. ICH E11 defines age bands with distinct safety monitoring requirements."
+
+      - tool_name: "assess-polypharmacy-risk"
+        description: "Classify drug interaction risk level from concomitant medication count. High polypharmacy confounds ICSR causality."
+        input_vars:
+          concomitant_drug_count: "int"
+        output_vars:
+          polypharmacy_risk: "LOW | MODERATE | HIGH | VERY_HIGH"
+          action: "string"
+        microgram_chain: ["polypharmacy-risk"]
+        key: "κ"
+        rationale: "Threshold classification. ≥10 concomitants = VERY_HIGH — confounds causal attribution in ICSRs."
+
+      - tool_name: "flag-pregnancy-exposure"
+        description: "Classify pregnancy exposure risk for female patients of reproductive age. Triggers enhanced monitoring and registries."
+        input_vars:
+          pregnant: "bool"
+          trimester: "string"
+          drug_teratogenic_risk: "string"
+        output_vars:
+          exposure_risk: "string"
+          action: "string"
+          registry_required: "bool"
+        microgram_chain: ["pregnancy-exposure"]
+        key: "κ∂"
+        rationale: "Boundary detection at the reproductive risk surface. Triggers pregnancy registry enrollment per FDA guidance."
+
+      - tool_name: "assess-temporal-association"
+        description: "Score temporal plausibility of drug-event association based on onset timing, known mechanism latency, and dechallenge/rechallenge"
+        input_vars:
+          days_to_onset: "int"
+          dechallenge: "bool"
+          rechallenge: "bool"
+          known_latency: "bool"
+        output_vars:
+          temporal_score: "int"
+          association: "STRONG | MODERATE | WEAK | NONE"
+        microgram_chain: ["temporal-association"]
+        key: "κ"
+        rationale: "Temporal comparison gate. Onset timing is the primary temporal causality signal per WHO-UMC criteria."
+
+      - tool_name: "evaluate-dechallenge-rechallenge"
+        description: "Assess dechallenge and rechallenge results to strengthen or weaken causality assessment"
+        input_vars:
+          dechallenge_positive: "bool"
+          rechallenge_positive: "bool"
+          rechallenge_performed: "bool"
+        output_vars:
+          causality_modifier: "STRENGTHENS | WEAKENS | NEUTRAL"
+          score_delta: "int"
+          note: "string"
+        microgram_chain: ["dechallenge-rechallenge"]
+        key: "κ"
+        rationale: "Positive rechallenge is the strongest single causality criterion (WHO-UMC CERTAIN requires it)."
+
+      - tool_name: "compute-ic-signal"
+        description: "Classify IC025 Bayesian disproportionality signal for WHO VigiBase. IC025 >= 0 required for signal, >= 2.0 = STRONG."
+        input_vars:
+          ic025: "float — lower 95% credibility interval of IC"
+        output_vars:
+          signal: "STRONG | MODERATE | WEAK | NONE"
+          confidence: "HIGH | MODERATE | LOW"
+          signal_detected: "bool"
+        microgram_chain: ["ic-signal"]
+        key: "κ"
+        rationale: "IC is the WHO VigiBase primary signal detection method. IC025 is the conservative threshold."
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # DOMAIN 4: clinicaltrials.gov — Clinical trial safety data
+  # Harbor depth: SUSAR + E2A + unblinding are pure clinical trial concepts.
+  # These micrograms apply exclusively to this domain.
+  # ─────────────────────────────────────────────────────────────────────────────
+  clinicaltrials.gov:
+    description: "ClinicalTrials.gov — trial registry, safety monitoring, and results reporting"
+    config_targets:
+      - "/ct2/show"                           # Trial detail pages
+      - "/ct2/results"                        # Trial search results
+      - "/ct2/results/adverse_events"         # AE data tables
+    microgram_depth: 8
+    tools:
+
+      - tool_name: "classify-susar"
+        description: "Determine if adverse event qualifies as SUSAR (Suspected Unexpected Serious Adverse Reaction) per ICH E2A — triggers 15-day expedited reporting"
+        input_vars:
+          serious: "bool — meets ICH E2A seriousness criteria"
+          unexpected: "bool — not in investigator brochure or current label"
+          causal_relationship: "certain | probable | possible | unlikely | unrelated"
+        output_vars:
+          susar: "bool"
+          classification: "SUSAR | SUSPECTED_SUSAR | EXPECTED_SAR | UNEXPECTED_SAR_NO_CAUSALITY | NON_SERIOUS_AE"
+          reporting_timeline: "expedited_15day | periodic"
+          regulatory_reference: "ICH E2A Section III.B"
+        microgram_chain: ["susar-classifier"]
+        key: "∧"
+        rationale: "All-criteria gate: serious=true AND unexpected=true AND causality>=possible → SUSAR. One false condition blocks classification."
+
+      - tool_name: "classify-case-seriousness"
+        description: "Apply ICH E2A seriousness criteria: SERIOUS if death, hospitalization, disability, life-threatening, congenital anomaly, or medically important event"
+        input_vars:
+          death: "bool"
+          hospitalization: "bool"
+          disability: "bool"
+          life_threatening: "bool"
+          congenital_anomaly: "bool"
+          medically_important: "bool"
+        output_vars:
+          seriousness: "SERIOUS | NON-SERIOUS"
+          criterion: "DEATH | HOSPITALIZATION | DISABILITY | LIFE_THREATENING | CONGENITAL_ANOMALY | MEDICALLY_IMPORTANT"
+          reportable: "bool"
+          expedited: "bool"
+          regulatory_reference: "ICH E2A Section II.B"
+        microgram_chain: ["case-seriousness"]
+        key: "κ"
+        rationale: "Priority-ordered OR gate across 6 seriousness criteria. DEATH checked first — highest priority."
+
+      - tool_name: "determine-reporting-timeline"
+        description: "Compute IND safety report deadline from case characteristics: 7-day (fatal/life-threatening + unexpected, premarket) or 15-day (serious + unexpected)"
+        input_vars:
+          serious: "bool"
+          fatal: "bool"
+          life_threatening: "bool"
+          unexpected: "bool"
+          study_type: "premarket | postmarket"
+        output_vars:
+          timeline: "7_CALENDAR_DAYS | 15_CALENDAR_DAYS | PERIODIC"
+          report_type: "IND_SAFETY | FIELD_ALERT | PSUR_DSUR | LINE_LISTING"
+          regulatory_reference: "21 CFR 312.32 | ICH E2D | ICH E2C(R2)"
+          days_from_awareness: "int"
+        microgram_chain: ["expedited-reporting"]
+        key: "→"
+        rationale: "ICH E2D/FDA 21 CFR 312.32 reporting timeline decision tree. Premarket fatal/LT = 7-day IND safety."
+
+      - tool_name: "check-e2a-minimum-criteria"
+        description: "Verify ICH E2A minimum criteria for valid ICSR: identifiable patient + suspect drug + AE + reporter. All 4 required."
+        input_vars:
+          patient_identifiable: "bool"
+          suspect_drug: "bool"
+          adverse_event: "bool"
+          reporter_identifiable: "bool"
+        output_vars:
+          valid_icsr: "bool"
+          missing_criteria: "string"
+          action: "request_follow_up | accept | reject"
+        microgram_chain: ["e2a-minimum-criteria"]
+        key: "∧"
+        rationale: "Conjunction gate on 4 mandatory fields. Missing any one → invalid ICSR. Follows ICH E2A Section III.A."
+
+      - tool_name: "check-investigator-reporting-obligation"
+        description: "Determine if investigator must report to sponsor per ICH E6 GCP: serious + suspected causality triggers reporting obligation"
+        input_vars:
+          serious: "bool"
+          causality_suspected: "bool"
+          spontaneous_report: "bool"
+        output_vars:
+          must_report: "bool"
+          reporting_timeline: "string"
+          regulatory_reference: "ICH E6(R2) | ICH E2A"
+        microgram_chain: ["e2a-investigator-reporting"]
+        key: "∧"
+        rationale: "ICH E6 GCP gating: investigator obligation fires only on serious suspected ADRs."
+
+      - tool_name: "evaluate-unblinding-decision"
+        description: "Determine if case warrants emergency unblinding in a blinded trial: serious unexpected suspected reaction triggers unblinding gate"
+        input_vars:
+          serious: "bool"
+          unexpected: "bool"
+          causality_suspected: "bool"
+          blinded_trial: "bool"
+        output_vars:
+          unblind: "bool"
+          rationale: "string"
+          regulatory_reference: "ICH E2A | ICH E9"
+        microgram_chain: ["e2a-unblinding-decision"]
+        key: "∧"
+        rationale: "Safety boundary gate. Unblinding destroys trial integrity — only fires when serious+unexpected+suspected all true."
+
+      - tool_name: "full-trial-safety-pipeline"
+        description: "Complete trial safety chain: seriousness → SUSAR classification → Naranjo causality → reporting action + deadline"
+        input_vars:
+          death: "bool"
+          hospitalization: "bool"
+          disability: "bool"
+          life_threatening: "bool"
+          congenital_anomaly: "bool"
+          medically_important: "bool"
+          unexpected: "bool"
+          causal_relationship: "string"
+          naranjo_score: "int"
+          is_serious: "bool"
+        output_vars:
+          seriousness: "string"
+          susar: "bool"
+          causality: "string"
+          regulatory_action: "string"
+          deadline_days: "int"
+        microgram_chain: ["case-seriousness", "susar-classifier", "naranjo-quick", "causality-to-action"]
+        key: "→"
+        rationale: "Four-link chain covering the full ICH E2A safety assessment workflow for clinical trial AEs."
+
+      - tool_name: "assess-benefit-risk-trial"
+        description: "Evaluate ongoing trial benefit-risk balance. Risk score > 80 = NEGATIVE → consider suspension per DSMB mandate."
+        input_vars:
+          benefit_score: "int 0-100"
+          risk_score: "int 0-100"
+          unmet_need: "bool"
+          alternative_available: "bool"
+        output_vars:
+          decision: "FAVORABLE | ACCEPTABLE | CONDITIONAL | UNFAVORABLE | NEGATIVE"
+          action: "continue_monitoring | standard_risk_management | enhanced_monitoring_with_rmp | risk_mitigation_required | consider_withdrawal"
+          recommendation: "string"
+        microgram_chain: ["benefit-risk-gate"]
+        key: "κ"
+        rationale: "NEGATIVE decision (risk_score > 80) maps to DSMB suspension trigger in clinical trial context."
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # DOMAIN 5: www.ema.europa.eu — European Medicines Agency regulatory data
+  # Harbor depth: Evans criteria (GVP Module IX) + EPAR + RMP = EU-specific logic.
+  # Multi-signal consensus is the EMA preferred method.
+  # ─────────────────────────────────────────────────────────────────────────────
+  www.ema.europa.eu:
+    description: "European Medicines Agency — EPAR, PSUR, GVP guidelines, and signal detection"
+    config_targets:
+      - "/en/medicines/human/EPAR"            # EPAR documents
+      - "/en/human-regulatory/pharmacovigilance" # GVP guidelines
+      - "/en/medicines/human/referrals"       # Safety referrals
+    microgram_depth: 9
+    tools:
+
+      - tool_name: "evaluate-eu-signal-criteria"
+        description: "Apply EMA Evans criteria (GVP Module IX): PRR >= 2.0 AND chi² >= 3.841 AND N >= 3 → SIGNAL / NO_SIGNAL / INSUFFICIENT"
+        input_vars:
+          prr: "float"
+          chi_square: "float"
+          n_cases: "int"
+        output_vars:
+          evans_signal: "bool"
+          classification: "SIGNAL | NO_SIGNAL | INSUFFICIENT"
+          criteria_met: "string"
+          guideline: "EMA GVP Module IX"
+        microgram_chain: ["evans-signal"]
+        key: "∧"
+        rationale: "EMA mandatory signal detection criteria. N < 3 → INSUFFICIENT, not NO_SIGNAL — prevents masking of rare events."
+
+      - tool_name: "eu-multi-method-signal"
+        description: "EU GVP Module IX multi-method signal consensus: PRR + ROR + IC + EBGM → CONFIRMED / PROBABLE / POSSIBLE / SUGGESTIVE"
+        input_vars:
+          prr_signal: "STRONG | MODERATE | WEAK | NONE"
+          ror_signal: "STRONG | MODERATE | WEAK | NONE"
+          ic_signal: "STRONG | MODERATE | WEAK | NONE"
+          ebgm_signal: "STRONG | MODERATE | WEAK | NONE"
+        output_vars:
+          overall: "CONFIRMED | PROBABLE | POSSIBLE | SUGGESTIVE | NO_SIGNAL"
+          priority: "CRITICAL | HIGH | MEDIUM | LOW | NONE"
+          signal_detected: "bool"
+        microgram_chain: ["prr-signal", "ror-signal", "ic-signal", "ebgm-signal", "multi-signal-combiner"]
+        key: "Σ"
+        rationale: "EMA requires multi-method consensus (GVP Module IX). CONFIRMED = 2+ STRONG methods agree."
+
+      - tool_name: "eu-signal-to-action"
+        description: "Bridge EU multi-method signal to regulatory action via causality (PRR signal + Naranjo → urgency: URGENT/INVESTIGATE/MONITOR)"
+        input_vars:
+          signal_detected: "bool"
+          causality: "definite | probable | possible | doubtful"
+        output_vars:
+          action_required: "bool"
+          urgency: "URGENT | INVESTIGATE | MONITOR"
+          rationale: "string"
+        microgram_chain: ["multi-signal-combiner", "signal-action"]
+        key: "→"
+        rationale: "Signal+causality joint gate. EMA GVP Module IX: confirmed signal + probable causality → formal investigation."
+
+      - tool_name: "classify-eu-benefit-risk"
+        description: "EMA benefit-risk framework assessment for EPAR evaluation: FAVORABLE / ACCEPTABLE / CONDITIONAL / UNFAVORABLE / NEGATIVE"
+        input_vars:
+          benefit_score: "int 0-100"
+          risk_score: "int 0-100"
+          unmet_need: "bool"
+          alternative_available: "bool"
+        output_vars:
+          decision: "FAVORABLE | ACCEPTABLE | CONDITIONAL | UNFAVORABLE | NEGATIVE"
+          action: "string"
+          recommendation: "string"
+        microgram_chain: ["benefit-risk-gate"]
+        key: "κ"
+        rationale: "ICH E2C/EMA GVP Module V benefit-risk framework. NEGATIVE maps to CHMP referral procedure."
+
+      - tool_name: "assess-eu-expectedness"
+        description: "Assess event expectedness against SmPC (Summary of Product Characteristics) for EU expedited reporting decisions"
+        input_vars:
+          event_in_label: "bool — event in SmPC adverse reactions section"
+          event_class_in_label: "bool — event class in SmPC"
+          severity_in_label: "bool — severity matches SmPC"
+        output_vars:
+          expectedness: "EXPECTED_LISTED | EXPECTED_CLASS | UNEXPECTED_SEVERITY | UNEXPECTED_NATURE"
+          regulatory_impact: "string"
+          regulatory_reference: "ICH E2A Section II.C"
+        microgram_chain: ["expectedness-check"]
+        key: "κ∂"
+        rationale: "EU uses SmPC instead of US labeling, but ICH E2A expectedness criteria are harmonized globally."
+
+      - tool_name: "classify-eu-susar"
+        description: "EU Clinical Trial Regulation SUSAR classification for EudraVigilance submission trigger"
+        input_vars:
+          serious: "bool"
+          unexpected: "bool"
+          causal_relationship: "certain | probable | possible | unlikely | unrelated"
+        output_vars:
+          susar: "bool"
+          classification: "SUSAR | SUSPECTED_SUSAR | EXPECTED_SAR | NON_SERIOUS_AE"
+          reporting_timeline: "expedited_15day | periodic"
+          regulatory_reference: "ICH E2A | EU CTR 536/2014"
+        microgram_chain: ["susar-classifier"]
+        key: "∧"
+        rationale: "EU Clinical Trial Regulation requires SUSAR reporting to EudraVigilance within 15 days. Same ICH E2A logic."
+
+      - tool_name: "validate-signal-gate"
+        description: "Validate signal detection result meets minimum confidence and sample requirements before regulatory escalation"
+        input_vars:
+          signal_detected: "bool"
+          confidence_score: "float 0-1"
+          n_cases: "int"
+        output_vars:
+          validated: "bool"
+          reason: "string"
+          action: "escalate | monitor | insufficient_data"
+        microgram_chain: ["signal-validation-gate"]
+        key: "∂"
+        rationale: "Boundary gate before escalation. Prevents false positives from reaching CHMP. N < 3 always blocks."
+
+      - tool_name: "eu-full-signal-pipeline"
+        description: "EU end-to-end signal workflow: Evans criteria → multi-method consensus → causality → regulatory action + deadline"
+        input_vars:
+          prr: "float"
+          chi_square: "float"
+          n_cases: "int"
+          ror: "float"
+          ic025: "float"
+          eb05: "float"
+          naranjo_score: "int"
+          is_serious: "bool"
+        output_vars:
+          evans_signal: "bool"
+          overall_signal: "string"
+          causality: "string"
+          regulatory_action: "string"
+          deadline_days: "int"
+        microgram_chain: ["evans-signal", "prr-signal", "ror-signal", "ic-signal", "ebgm-signal", "multi-signal-combiner", "naranjo-quick", "causality-to-action"]
+        key: "→"
+        rationale: "Eight-microgram EU pipeline. Evans gates entry, multi-method builds consensus, causality drives action."
+
+      - tool_name: "risk-to-regulatory-pathway"
+        description: "Route risk classification to EU regulatory pathway: PSUR/PBRER, RMP update, referral, or label variation"
+        input_vars:
+          risk_level: "HIGH | MEDIUM | LOW"
+          signal_confirmed: "bool"
+          product_authorized: "bool"
+        output_vars:
+          pathway: "PSUR_UPDATE | RMP_UPDATE | REFERRAL | LABEL_VARIATION | ROUTINE_MONITORING"
+          urgency: "string"
+          regulatory_reference: "string"
+        microgram_chain: ["risk-to-regulatory"]
+        key: "λ"
+        rationale: "Mapping primitive: risk level → EU regulatory pathway. Determines whether EMA referral is triggered."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CHAIN CROSS-REFERENCE
+# Maps which chains span multiple domains (reusable across configs)
+# ─────────────────────────────────────────────────────────────────────────────
+cross_domain_chains:
+
+  pv_signal_mega_chain:
+    description: "PRR signal → causality → action — the universal PV decision backbone"
+    micrograms: ["prr-signal", "signal-to-causality", "naranjo-quick", "causality-to-action"]
+    applies_to: ["accessdata.fda.gov", "vigiaccess.org", "www.ema.europa.eu"]
+    key: "→"
+
+  multi_method_consensus:
+    description: "Four-method signal consensus — PRR + ROR + IC + EBGM → combined verdict"
+    micrograms: ["prr-signal", "ror-signal", "ic-signal", "ebgm-signal", "multi-signal-combiner"]
+    applies_to: ["accessdata.fda.gov", "www.ema.europa.eu", "vigiaccess.org"]
+    key: "Σ"
+
+  ich_e2a_seriousness_pipeline:
+    description: "ICH E2A seriousness → deadline — drives reporting obligation"
+    micrograms: ["case-seriousness", "report-deadline", "deadline-alert"]
+    applies_to: ["dailymed.nlm.nih.gov", "clinicaltrials.gov", "www.ema.europa.eu"]
+    key: "→ς"
+
+  susar_full_chain:
+    description: "Seriousness + expectedness + causality → SUSAR → expedited report"
+    micrograms: ["case-seriousness", "expectedness-check", "susar-classifier", "causality-to-action"]
+    applies_to: ["clinicaltrials.gov", "www.ema.europa.eu"]
+    key: "∧→"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GAP ANALYSIS
+# Micrograms in fleet with no domain assignment yet
+# ─────────────────────────────────────────────────────────────────────────────
+unmapped_micrograms:
+  # High-value candidates for future domain configs
+  - name: "rems-classifier"
+    suggested_domain: "accessdata.fda.gov/rems"
+    note: "REMS programs are FAERS-proximate; a dedicated config for the REMS database would activate this"
+
+  - name: "drug-comparison"
+    suggested_domain: "accessdata.fda.gov"
+    note: "Comparative safety tools need drug-level FAERS data extraction first"
+
+  - name: "signal-trend-detector"
+    suggested_domain: "accessdata.fda.gov"
+    note: "Requires time-series FAERS data; needs ETL pipeline to feed this microgram"
+
+  - name: "population-risk-aggregator"
+    suggested_domain: "vigiaccess.org"
+    note: "WHO VigiBase population-level estimates need denominator data"
+
+  - name: "pbrer-section-gate"
+    suggested_domain: "www.ema.europa.eu"
+    note: "PBRER structure maps to EMA PSUR submission portal — dedicated config needed"
+
+  - name: "benefit-risk-ratio"
+    suggested_domain: "www.ema.europa.eu"
+    note: "Numeric B/R ratio complements benefit-risk-gate qualitative decision"
+
+  - name: "cioms-frequency"
+    suggested_domain: "dailymed.nlm.nih.gov"
+    note: "Already mapped — duplicate entry intentional for label frequency classification"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BUILD ORDER (for contribute_create-config execution)
+# Priority ordered by Harbor Depth and existing tool coverage
+# ─────────────────────────────────────────────────────────────────────────────
+build_order:
+  1:
+    domain: "accessdata.fda.gov"
+    reason: "Deepest harbor — nexcore-faers-etl + nexcore-pv-core already built. Highest microgram depth (15)."
+    first_tool: "compute-prr-signal"
+    config_status: "pending"
+
+  2:
+    domain: "clinicaltrials.gov"
+    reason: "SUSAR + E2A micrograms are unique to this domain. High regulatory value."
+    first_tool: "classify-susar"
+    config_status: "pending"
+
+  3:
+    domain: "vigiaccess.org"
+    reason: "WHO-UMC + IC signal cover international ICSR workflow not in FAERS."
+    first_tool: "assess-causality-who-umc"
+    config_status: "pending"
+
+  4:
+    domain: "www.ema.europa.eu"
+    reason: "Evans criteria + EPAR B/R framework covers EU regulatory gap."
+    first_tool: "evaluate-eu-signal-criteria"
+    config_status: "pending"
+
+  5:
+    domain: "dailymed.nlm.nih.gov"
+    reason: "Label-centric tools complement FAERS signal pipeline."
+    first_tool: "check-event-expectedness"
+    config_status: "pending"
