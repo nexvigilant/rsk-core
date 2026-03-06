@@ -1,0 +1,165 @@
+name: cytokine-storm-classifier
+description: 'Cytokine release syndrome classifier: grades CRS severity per ASTCT 2019 consensus grading'
+version: 0.1.0
+interface:
+  inputs:
+    reaction_pt:
+      type: string
+      required: true
+      description: MedDRA preferred term for the immune reaction
+    fever_celsius:
+      type: float
+      required: false
+      description: Maximum temperature in Celsius
+    hypotension:
+      type: bool
+      required: false
+    vasopressors_required:
+      type: bool
+      required: false
+    hypoxia:
+      type: bool
+      required: false
+  outputs:
+    severity:
+      type: string
+      description: 'critical | serious | moderate | mild'
+    crs_grade:
+      type: int
+      description: 'ASTCT CRS grade 1-4'
+    soc:
+      type: string
+    action:
+      type: string
+tree:
+  start: check_crs
+  nodes:
+    check_crs:
+      type: condition
+      variable: reaction_pt
+      operator: contains
+      value: CYTOKINE
+      true_next: check_vasopressors
+      false_next: check_anaphylaxis
+    check_anaphylaxis:
+      type: condition
+      variable: reaction_pt
+      operator: contains
+      value: ANAPHYLAC
+      true_next: critical_anaphylaxis
+      false_next: check_immune_reaction
+    check_immune_reaction:
+      type: condition
+      variable: reaction_pt
+      operator: contains
+      value: IMMUNE
+      true_next: moderate
+      false_next: mild
+    check_vasopressors:
+      type: condition
+      variable: vasopressors_required
+      operator: eq
+      value: true
+      true_next: critical_crs
+      false_next: check_hypotension
+    check_hypotension:
+      type: condition
+      variable: hypotension
+      operator: eq
+      value: true
+      true_next: serious_crs
+      false_next: check_fever
+    check_fever:
+      type: condition
+      variable: fever_celsius
+      operator: gte
+      value: 39
+      true_next: moderate_crs
+      false_next: mild_crs
+    critical_crs:
+      type: return
+      value:
+        severity: critical
+        crs_grade: 4
+        soc: Immune system disorders
+        action: immediate_expedited_report
+    critical_anaphylaxis:
+      type: return
+      value:
+        severity: critical
+        crs_grade: 0
+        soc: Immune system disorders
+        action: immediate_expedited_report
+    serious_crs:
+      type: return
+      value:
+        severity: serious
+        crs_grade: 3
+        soc: Immune system disorders
+        action: expedited_report
+    moderate_crs:
+      type: return
+      value:
+        severity: moderate
+        crs_grade: 2
+        soc: Immune system disorders
+        action: monitor_and_assess
+    moderate:
+      type: return
+      value:
+        severity: moderate
+        crs_grade: 0
+        soc: Immune system disorders
+        action: monitor_and_assess
+    mild_crs:
+      type: return
+      value:
+        severity: mild
+        crs_grade: 1
+        soc: Immune system disorders
+        action: routine_surveillance
+    mild:
+      type: return
+      value:
+        severity: mild
+        crs_grade: 0
+        soc: Immune system disorders
+        action: routine_surveillance
+tests:
+  - name: crs_grade4
+    input:
+      reaction_pt: CYTOKINE RELEASE SYNDROME
+      vasopressors_required: true
+    expect:
+      severity: critical
+      crs_grade: 4
+  - name: crs_grade3
+    input:
+      reaction_pt: CYTOKINE RELEASE SYNDROME
+      hypotension: true
+    expect:
+      severity: serious
+      crs_grade: 3
+  - name: crs_grade2
+    input:
+      reaction_pt: CYTOKINE RELEASE SYNDROME
+      fever_celsius: 40.1
+    expect:
+      severity: moderate
+      crs_grade: 2
+  - name: crs_grade1
+    input:
+      reaction_pt: CYTOKINE RELEASE SYNDROME
+      fever_celsius: 38.0
+    expect:
+      severity: mild
+      crs_grade: 1
+  - name: anaphylaxis
+    input:
+      reaction_pt: ANAPHYLACTIC REACTION
+    expect:
+      severity: critical
+  - name: null_safety
+    input: {}
+    expect:
+      severity: mild
