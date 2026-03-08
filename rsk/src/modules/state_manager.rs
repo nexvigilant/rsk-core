@@ -157,7 +157,9 @@ impl ExecutionContext {
         if self.total_steps == 0 {
             return 100.0;
         }
-        (self.completed_steps.len() as f32 / self.total_steps as f32) * 100.0
+        #[allow(clippy::as_conversions)] // usize→f32 for progress percentage
+        let pct = self.completed_steps.len() as f32 / self.total_steps as f32;
+        pct * 100.0
     }
 
     /// Mark a step as started
@@ -206,7 +208,7 @@ impl ExecutionContext {
             StepResult {
                 step,
                 success: false,
-                message: format!("Skipped: {}", reason),
+                message: format!("Skipped: {reason}"),
                 output: Value::Null,
                 duration_ms: 0,
                 completed_at: Utc::now(),
@@ -258,12 +260,12 @@ pub enum StateError {
 impl std::fmt::Display for StateError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::IoError(s) => write!(f, "IO error: {}", s),
-            Self::SerializeError(s) => write!(f, "Serialization error: {}", s),
-            Self::DeserializeError(s) => write!(f, "Deserialization error: {}", s),
-            Self::NotFound(s) => write!(f, "Context not found: {}", s),
-            Self::InvalidState(s) => write!(f, "Invalid state: {}", s),
-            Self::PermissionDenied(s) => write!(f, "Permission denied: {}", s),
+            Self::IoError(s) => write!(f, "IO error: {s}"),
+            Self::SerializeError(s) => write!(f, "Serialization error: {s}"),
+            Self::DeserializeError(s) => write!(f, "Deserialization error: {s}"),
+            Self::NotFound(s) => write!(f, "Context not found: {s}"),
+            Self::InvalidState(s) => write!(f, "Invalid state: {s}"),
+            Self::PermissionDenied(s) => write!(f, "Permission denied: {s}"),
         }
     }
 }
@@ -283,8 +285,7 @@ impl CheckpointManager {
         if path.exists() {
             if !path.is_dir() {
                 return Err(StateError::InvalidState(format!(
-                    "Path exists but is not a directory: {}",
-                    state_dir
+                    "Path exists but is not a directory: {state_dir}"
                 )));
             }
             // Check write permissions by attempting to create a sentinel file if possible or just metadata check
@@ -292,8 +293,7 @@ impl CheckpointManager {
                 std::fs::metadata(&path).map_err(|e| StateError::IoError(e.to_string()))?;
             if metadata.permissions().readonly() {
                 return Err(StateError::PermissionDenied(format!(
-                    "Directory is read-only: {}",
-                    state_dir
+                    "Directory is read-only: {state_dir}"
                 )));
             }
         } else {
@@ -449,7 +449,7 @@ impl CheckpointManager {
     /// Removes checkpoints older than `max_age_days` that are completed, cancelled, or failed.
     pub fn cleanup(&mut self, max_age_days: u32) -> Result<usize, StateError> {
         let mut removed = 0;
-        let cutoff = Utc::now() - chrono::Duration::days(max_age_days as i64);
+        let cutoff = Utc::now() - chrono::Duration::days(i64::from(max_age_days));
 
         let contexts = self.list()?;
 

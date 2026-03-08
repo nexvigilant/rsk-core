@@ -8,23 +8,23 @@ pub fn handle_taxonomy(action: &TaxonomyAction) {
     match action {
         TaxonomyAction::Query { taxonomy_type, key } => {
             let result = query_taxonomy(taxonomy_type, key);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         TaxonomyAction::List { taxonomy_type } => {
             let result = list_taxonomy(taxonomy_type);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         TaxonomyAction::Compliance { level } => {
             let result = query_taxonomy("compliance", level);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         TaxonomyAction::Smst { component } => {
             let result = query_taxonomy("smst", component);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         TaxonomyAction::Category { category } => {
             let result = query_taxonomy("category", category);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
     }
 }

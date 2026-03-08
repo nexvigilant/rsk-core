@@ -64,7 +64,7 @@ pub fn handle_compress(action: &CompressAction) {
             match fs::read(path) {
                 Ok(data) => {
                     let result = rsk::gzip_compress(&data, compression_level);
-                    let out_path = output.clone().unwrap_or_else(|| format!("{}.gz", path));
+                    let out_path = output.clone().unwrap_or_else(|| format!("{path}.gz"));
                     match fs::write(&out_path, &result.data) {
                         Ok(_) => println!(
                             "{}",
@@ -107,13 +107,16 @@ pub fn handle_compress(action: &CompressAction) {
             } else {
                 "incompressible"
             };
+            #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            // usize→f64 for ratio multiplication, f64→usize for display — safe for text lengths
+            let estimated_compressed_size = (text.len() as f64 * ratio).round() as usize;
             println!(
                 "{}",
                 json!({
                     "estimated_ratio": ratio,
                     "compressibility": compressibility,
                     "input_size": text.len(),
-                    "estimated_compressed_size": (text.len() as f64 * ratio).round() as usize,
+                    "estimated_compressed_size": estimated_compressed_size,
                 })
             );
         }

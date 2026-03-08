@@ -45,12 +45,12 @@ pub fn handle_state(action: &StateAction) {
                             "updated_at": ctx.updated_at.to_rfc3339(),
                         })).collect::<Vec<_>>(),
                     }))
-                    .unwrap()
+                    .unwrap_or_default()
                 );
             }
             StateAction::Show { id } => match manager.load(id) {
                 Ok(Some(ctx)) => {
-                    println!("{}", serde_json::to_string_pretty(&ctx).unwrap());
+                    println!("{}", serde_json::to_string_pretty(&ctx).unwrap_or_default());
                 }
                 Ok(None) => {
                     println!("{}", json!({"status": "not_found", "id": id}));
@@ -87,7 +87,7 @@ pub fn handle_state(action: &StateAction) {
             },
             StateAction::Stats => match manager.stats() {
                 Ok(stats) => {
-                    println!("{}", serde_json::to_string_pretty(&stats).unwrap());
+                    println!("{}", serde_json::to_string_pretty(&stats).unwrap_or_default());
                 }
                 Err(e) => {
                     eprintln!("{}", json!({"status": "error", "message": e.to_string()}));

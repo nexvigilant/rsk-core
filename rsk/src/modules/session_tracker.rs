@@ -156,10 +156,10 @@ pub enum SessionError {
 impl std::fmt::Display for SessionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::NotFound(s) => write!(f, "Session file not found: {}", s),
-            Self::IoError(s) => write!(f, "IO error: {}", s),
-            Self::ParseError(s) => write!(f, "Parse error: {}", s),
-            Self::SerializeError(s) => write!(f, "Serialization error: {}", s),
+            Self::NotFound(s) => write!(f, "Session file not found: {s}"),
+            Self::IoError(s) => write!(f, "IO error: {s}"),
+            Self::ParseError(s) => write!(f, "Parse error: {s}"),
+            Self::SerializeError(s) => write!(f, "Serialization error: {s}"),
         }
     }
 }
@@ -248,7 +248,7 @@ pub fn append_log(log_path: &Path, skill_name: &str, message: &str) -> Result<()
         .map_err(|e| SessionError::IoError(e.to_string()))?;
 
     let timestamp = Utc::now().to_rfc3339();
-    writeln!(file, "[{}] [{}] {}", timestamp, skill_name, message)
+    writeln!(file, "[{timestamp}] [{skill_name}] {message}")
         .map_err(|e| SessionError::IoError(e.to_string()))?;
 
     Ok(())
@@ -299,21 +299,27 @@ fn uuid_v4() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
     let time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or_default()
         .as_nanos();
 
     // Mix time with constants to get pseudo-random values
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u128→u64 intentional truncation for pseudo-random mixing
     let a = (time as u64) ^ 0xDEADBEEF_CAFEBABE;
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u128→u64 intentional truncation for pseudo-random mixing
     let b = (time >> 64) as u64 ^ 0x12345678_ABCDEF01;
 
     // Build UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
     // where y is 8, 9, a, or b
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u64→u32/u16 intentional truncation for UUID segment extraction
+    let seg1 = (a >> 32) as u32;
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+    let seg2 = ((a >> 16) & 0xFFFF) as u16;
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+    let seg3 = ((a >> 4) & 0xFFF) as u16;
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+    let seg4 = (((b >> 16) & 0x3FFF) | 0x8000) as u16;
     format!(
-        "{:08x}-{:04x}-4{:03x}-{:04x}-{:012x}",
-        (a >> 32) as u32,
-        ((a >> 16) & 0xFFFF) as u16,
-        ((a >> 4) & 0xFFF) as u16,
-        (((b >> 16) & 0x3FFF) | 0x8000) as u16,
+        "{seg1:08x}-{seg2:04x}-4{seg3:03x}-{seg4:04x}-{:012x}",
         (b & 0xFFFFFFFFFFFF)
     )
 }
@@ -444,7 +450,7 @@ mod tests {
     fn test_trim_history() {
         let mut state = SessionState::new();
         for i in 0..10 {
-            state.add_execution(&format!("skill-{}", i), None);
+            state.add_execution(&format!("skill-{i}"), None);
         }
 
         assert_eq!(state.execution_history.len(), 10);
@@ -470,7 +476,7 @@ mod tests {
     fn test_recent_executions() {
         let mut state = SessionState::new();
         for i in 0..5 {
-            state.add_execution(&format!("skill-{}", i), None);
+            state.add_execution(&format!("skill-{i}"), None);
         }
 
         let recent = state.recent_executions(3);

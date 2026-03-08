@@ -56,14 +56,18 @@ pub fn gzip_compress(data: &[u8], level: CompressionLevel) -> CompressionResult 
     encoder.read_to_end(&mut compressed).unwrap_or_default();
 
     let compressed_size = compressed.len();
+    #[allow(clippy::as_conversions)] // usize→f64 for ratio
+    let compressed_f = compressed_size as f64;
+    #[allow(clippy::as_conversions)] // usize→f64 for ratio
+    let original_f = original_size as f64;
     let ratio = if original_size > 0 {
-        compressed_size as f64 / original_size as f64
+        compressed_f / original_f
     } else {
         1.0
     };
     // Handle case where compressed is larger than original (negative savings)
     let savings_percent = if original_size > 0 {
-        (1.0 - (compressed_size as f64 / original_size as f64)) * 100.0
+        (1.0 - (compressed_f / original_f)) * 100.0
     } else {
         0.0
     };
@@ -91,11 +95,15 @@ pub fn gzip_decompress(data: &[u8]) -> Result<DecompressionResult, String> {
 
     decoder
         .read_to_end(&mut decompressed)
-        .map_err(|e| format!("Decompression failed: {}", e))?;
+        .map_err(|e| format!("Decompression failed: {e}"))?;
 
     let decompressed_size = decompressed.len();
+    #[allow(clippy::as_conversions)] // usize→f64 for ratio
+    let decompressed_f = decompressed_size as f64;
+    #[allow(clippy::as_conversions)] // usize→f64 for ratio
+    let compressed_f = compressed_size as f64;
     let expansion_ratio = if compressed_size > 0 {
-        decompressed_size as f64 / compressed_size as f64
+        decompressed_f / compressed_f
     } else {
         1.0
     };
@@ -111,7 +119,7 @@ pub fn gzip_decompress(data: &[u8]) -> Result<DecompressionResult, String> {
 /// Decompress gzip data to string
 pub fn gzip_decompress_string(data: &[u8]) -> Result<String, String> {
     let result = gzip_decompress(data)?;
-    String::from_utf8(result.data).map_err(|e| format!("Invalid UTF-8 in decompressed data: {}", e))
+    String::from_utf8(result.data).map_err(|e| format!("Invalid UTF-8 in decompressed data: {e}"))
 }
 
 /// Analyze compressibility of data without actually compressing
@@ -124,15 +132,17 @@ pub fn estimate_compressibility(data: &[u8]) -> f64 {
     // Count byte frequencies
     let mut freq = [0usize; 256];
     for &byte in data {
-        freq[byte as usize] += 1;
+        freq[usize::from(byte)] += 1;
     }
 
     // Calculate Shannon entropy
+    #[allow(clippy::as_conversions)] // usize→f64 for entropy calculation
     let total = data.len() as f64;
     let entropy: f64 = freq
         .iter()
         .filter(|&&count| count > 0)
         .map(|&count| {
+            #[allow(clippy::as_conversions)] // usize→f64 for probability
             let p = count as f64 / total;
             -p * p.log2()
         })

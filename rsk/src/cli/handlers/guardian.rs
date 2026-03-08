@@ -65,7 +65,7 @@ pub fn handle_guardian(action: &GuardianAction) {
                 output_treatment,
             };
             let result = calculate_risk(&params);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         GuardianAction::Report {
             category,
@@ -73,15 +73,11 @@ pub fn handle_guardian(action: &GuardianAction) {
             stakes,
             severity,
         } => {
-            let cat = match IncidentCategory::from_code(category) {
-                Some(c) => c,
-                None => {
-                    eprintln!(
-                        "Error: unknown category code '{}'. Use 'rsk guardian categories' to see valid codes.",
-                        category
-                    );
-                    std::process::exit(1);
-                }
+            let Some(cat) = IncidentCategory::from_code(category) else {
+                eprintln!(
+                    "Error: unknown category code '{category}'. Use 'rsk guardian categories' to see valid codes."
+                );
+                std::process::exit(1);
             };
             let stakes_level = match stakes.to_lowercase().as_str() {
                 "low" => StakesLevel::Low,
@@ -91,7 +87,7 @@ pub fn handle_guardian(action: &GuardianAction) {
                 _ => StakesLevel::Moderate,
             };
 
-            let iair = IAIRBuilder::new()
+            let iair = match IAIRBuilder::new()
                 .session_id("cli-generated")
                 .model("Claude", "unknown")
                 .context(
@@ -103,9 +99,15 @@ pub fn handle_guardian(action: &GuardianAction) {
                 .incident(cat)
                 .outcome(OutcomeType::NearMiss, *severity)
                 .build_minimal()
-                .unwrap();
+            {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("Error building IAIR report: {e}");
+                    std::process::exit(1);
+                }
+            };
 
-            println!("{}", serde_json::to_string_pretty(&iair).unwrap());
+            println!("{}", serde_json::to_string_pretty(&iair).unwrap_or_default());
         }
         GuardianAction::Categories => {
             let categories = [
@@ -166,7 +168,7 @@ pub fn handle_guardian(action: &GuardianAction) {
                     })
                 })
                 .collect();
-            println!("{}", serde_json::to_string_pretty(&output).unwrap());
+            println!("{}", serde_json::to_string_pretty(&output).unwrap_or_default());
         }
         GuardianAction::Minimize { risk, incidents } => {
             let level = recommend_minimization(*risk, *incidents);

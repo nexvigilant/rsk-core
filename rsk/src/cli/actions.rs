@@ -521,6 +521,9 @@ pub enum MicrogramAction {
         /// Accumulate mode: merge each step's output into running context instead of replacing
         #[arg(long)]
         accumulate: bool,
+        /// Strict mode: reject input missing required fields at each chain step
+        #[arg(long)]
+        strict: bool,
     },
     /// Loop a chain: run repeatedly, feeding output back as input
     Loop {
@@ -541,6 +544,9 @@ pub enum MicrogramAction {
         /// Value that triggers halt (JSON)
         #[arg(long)]
         halt_value: Option<String>,
+        /// Strict mode: reject input missing required fields at each chain step
+        #[arg(long)]
+        strict: bool,
     },
     /// Generate a microgram from a spec
     Generate {
@@ -741,7 +747,38 @@ pub enum MicrogramAction {
         #[arg(default_value = "processes")]
         dir: String,
     },
-    /// Run the full CI gate (tests + contracts + interfaces + coverage + chains)
+    /// Validate all chain steps without executing (multi-error report)
+    ValidateChain {
+        /// Microgram names separated by ->
+        chain: String,
+        /// Directory containing microgram YAML files
+        #[arg(short, long, default_value = "micrograms")]
+        dir: String,
+        /// Initial input JSON
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+    /// Check vocabulary hygiene for a chain (field name coverage at each boundary)
+    Hygiene {
+        /// Microgram names separated by ->
+        chain: String,
+        /// Directory containing microgram YAML files
+        #[arg(short, long, default_value = "micrograms")]
+        dir: String,
+        /// Initial input JSON
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+    /// Integration patrol: detect unwired pub functions
+    Patrol {
+        /// Project root directory (default: current directory)
+        #[arg(short, long, default_value = ".")]
+        root: String,
+        /// Show only findings (hide OK symbols)
+        #[arg(long)]
+        findings_only: bool,
+    },
+    /// Run the full CI gate (tests + contracts + interfaces + coverage + chains + processes + stress)
     Ci {
         /// Directory containing micrograms
         #[arg(default_value = "micrograms")]
@@ -749,6 +786,9 @@ pub enum MicrogramAction {
         /// Directory containing chain definitions
         #[arg(long, default_value = "chains")]
         chains_dir: String,
+        /// Directory containing process definitions
+        #[arg(long, default_value = "processes")]
+        processes_dir: String,
         /// Minimum coverage percentage
         #[arg(long, default_value = "80")]
         min_coverage: u32,

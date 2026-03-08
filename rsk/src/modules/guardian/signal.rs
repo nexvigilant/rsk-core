@@ -76,7 +76,7 @@ impl SignalDetector {
     /// Detect signals from a collection of IAIRs
     pub fn detect_signals(&self, iairs: &[IAIR], window_days: Option<u32>) -> Vec<Signal> {
         let window = window_days.unwrap_or(self.default_window_days);
-        let cutoff = Utc::now() - Duration::days(window as i64);
+        let cutoff = Utc::now() - Duration::days(i64::from(window));
 
         // Filter to recent incidents
         let recent: Vec<_> = iairs
@@ -125,7 +125,7 @@ impl SignalDetector {
         }
 
         // Sort by signal strength
-        signals.sort_by(|a, b| b.signal_strength.partial_cmp(&a.signal_strength).unwrap());
+        signals.sort_by(|a, b| b.signal_strength.partial_cmp(&a.signal_strength).unwrap_or(std::cmp::Ordering::Equal));
         signals
     }
 
@@ -138,16 +138,18 @@ impl SignalDetector {
     ) -> Signal {
         let count = incidents.len();
         let total_severity: f64 = incidents.iter().map(|i| i.block_e.severity).sum();
+        #[allow(clippy::as_conversions)] // usize→f64 precision loss acceptable for incident counts
+        let count_f = count as f64;
         let avg_context_risk: f64 = incidents
             .iter()
             .map(|i| i.block_g.context_risk_score)
             .sum::<f64>()
-            / count as f64;
+            / count_f;
 
         // Signal strength formula: count * avg_severity * avg_risk / window_normalization
-        let avg_severity = total_severity / count as f64;
+        let avg_severity = total_severity / count_f;
         let signal_strength =
-            (count as f64 * avg_severity * avg_context_risk) / (window_days as f64 / 30.0);
+            (count_f * avg_severity * avg_context_risk) / (f64::from(window_days) / 30.0);
 
         let actionable = signal_strength >= self.actionable_threshold;
 
@@ -172,8 +174,8 @@ impl SignalDetector {
     /// Check for drift indicators
     pub fn detect_drift(&self, iairs: &[IAIR], baseline_period_days: u32) -> DriftAnalysis {
         let now = Utc::now();
-        let recent_cutoff = now - Duration::days(baseline_period_days as i64 / 2);
-        let baseline_cutoff = now - Duration::days(baseline_period_days as i64);
+        let recent_cutoff = now - Duration::days(i64::from(baseline_period_days) / 2);
+        let baseline_cutoff = now - Duration::days(i64::from(baseline_period_days));
 
         let recent: Vec<_> = iairs
             .iter()
@@ -188,8 +190,11 @@ impl SignalDetector {
             })
             .collect();
 
-        let recent_rate = recent.len() as f64 / (baseline_period_days as f64 / 2.0 / 30.0);
-        let baseline_rate = baseline.len() as f64 / (baseline_period_days as f64 / 2.0 / 30.0);
+        let period_f = f64::from(baseline_period_days);
+        #[allow(clippy::as_conversions)] // usize→f64 precision loss acceptable for incident counts
+        let recent_rate = recent.len() as f64 / (period_f / 2.0 / 30.0);
+        #[allow(clippy::as_conversions)] // usize→f64 precision loss acceptable for incident counts
+        let baseline_rate = baseline.len() as f64 / (period_f / 2.0 / 30.0);
 
         let drift_ratio = if baseline_rate > 0.0 {
             recent_rate / baseline_rate

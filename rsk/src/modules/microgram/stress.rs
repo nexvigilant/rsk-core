@@ -31,7 +31,9 @@ pub fn stress(mg: &Microgram, iterations: usize, seed: u64) -> StressResult {
     let mut next_rand = || -> i64 {
         rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
         // Map to range [-1000, 1000]
-        ((rng_state >> 33) as i64) % 2001 - 1000
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u64→i64 intentional for PRNG range mapping
+        let val = (rng_state >> 33) as i64;
+        val % 2001 - 1000
     };
 
     for _ in 0..iterations {
@@ -57,7 +59,9 @@ pub fn stress(mg: &Microgram, iterations: usize, seed: u64) -> StressResult {
     let min_us = *timings.first().unwrap_or(&0);
     let max_us = *timings.last().unwrap_or(&0);
     let avg_us = if timings.is_empty() { 0.0 } else {
-        timings.iter().sum::<u64>() as f64 / timings.len() as f64
+        #[allow(clippy::as_conversions)] // u64→f64 and usize→f64 for averaging
+        let avg = timings.iter().sum::<u64>() as f64 / timings.len() as f64;
+        avg
     };
 
     StressResult {
@@ -76,6 +80,8 @@ pub fn stress(mg: &Microgram, iterations: usize, seed: u64) -> StressResult {
 pub fn stress_all(dir: &Path, iterations: usize, seed: u64) -> Result<Vec<StressResult>, String> {
     let all = load_all(dir)?;
     Ok(all.iter().enumerate().map(|(i, mg)| {
-        stress(mg, iterations, seed.wrapping_add(i as u64))
+        #[allow(clippy::as_conversions)] // usize→u64 widening, safe on 64-bit
+        let offset = i as u64;
+        stress(mg, iterations, seed.wrapping_add(offset))
     }).collect())
 }

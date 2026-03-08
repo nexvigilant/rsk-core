@@ -259,8 +259,8 @@ impl std::fmt::Display for ExecutionError {
             Self::CycleDetected(cycle) => {
                 write!(f, "Circular dependency detected: {}", cycle.join(" -> "))
             }
-            Self::ModuleNotFound(id) => write!(f, "Module not found: {}", id),
-            Self::InvalidModule(msg) => write!(f, "Invalid module: {}", msg),
+            Self::ModuleNotFound(id) => write!(f, "Module not found: {id}"),
+            Self::InvalidModule(msg) => write!(f, "Invalid module: {msg}"),
             Self::ResourceConflict {
                 module_a,
                 module_b,
@@ -268,12 +268,11 @@ impl std::fmt::Display for ExecutionError {
             } => {
                 write!(
                     f,
-                    "Resource conflict: {} and {} both touch {}",
-                    module_a, module_b, resource
+                    "Resource conflict: {module_a} and {module_b} both touch {resource}"
                 )
             }
-            Self::CheckpointError(msg) => write!(f, "Checkpoint error: {}", msg),
-            Self::ExecutionFailed(msg) => write!(f, "Execution failed: {}", msg),
+            Self::CheckpointError(msg) => write!(f, "Checkpoint error: {msg}"),
+            Self::ExecutionFailed(msg) => write!(f, "Execution failed: {msg}"),
         }
     }
 }
@@ -808,7 +807,7 @@ mod tests {
                 } else {
                     vec![]
                 };
-                ExecutionModule::new(&format!("M{}", i), &format!("Module {}", i), deps)
+                ExecutionModule::new(&format!("M{i}"), &format!("Module {i}"), deps)
             })
             .collect();
 
@@ -820,7 +819,7 @@ mod tests {
     #[test]
     fn test_build_plan_100_modules_parallel() {
         let modules: Vec<ExecutionModule> = (0..100)
-            .map(|i| ExecutionModule::new(&format!("M{}", i), &format!("Module {}", i), vec![]))
+            .map(|i| ExecutionModule::new(&format!("M{i}"), &format!("Module {i}"), vec![]))
             .collect();
 
         let plan = build_execution_plan(modules).unwrap();

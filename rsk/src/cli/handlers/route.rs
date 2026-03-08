@@ -42,7 +42,7 @@ pub fn handle_route(action: &RouteAction) {
                             "total_considered": result.total_considered,
                             "duration_ms": result.duration_ms,
                         }))
-                        .unwrap()
+                        .unwrap_or_default()
                     );
                 }
                 Err(e) => {

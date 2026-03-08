@@ -9,7 +9,7 @@ pub fn handle_telemetry(action: &TelemetryAction) {
     match action {
         TelemetryAction::Status => {
             let status = get_telemetry_status();
-            println!("{}", serde_json::to_string_pretty(&status).unwrap());
+            println!("{}", serde_json::to_string_pretty(&status).unwrap_or_default());
         }
         TelemetryAction::Presets => {
             let presets = json!({
@@ -36,7 +36,7 @@ pub fn handle_telemetry(action: &TelemetryAction) {
                     }
                 ]
             });
-            println!("{}", serde_json::to_string_pretty(&presets).unwrap());
+            println!("{}", serde_json::to_string_pretty(&presets).unwrap_or_default());
         }
         TelemetryAction::Config { preset } => {
             let config = match preset.as_str() {
@@ -45,7 +45,7 @@ pub fn handle_telemetry(action: &TelemetryAction) {
                 "debug" => TelemetryConfig::debug(),
                 _ => TelemetryConfig::default(),
             };
-            println!("{}", serde_json::to_string_pretty(&config).unwrap());
+            println!("{}", serde_json::to_string_pretty(&config).unwrap_or_default());
         }
     }
 }

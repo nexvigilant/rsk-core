@@ -75,17 +75,18 @@ pub fn is_prime(n: i64) -> PrimeResult {
         return PrimeResult {
             is_prime: false,
             number: n,
-            reason: format!("{} is even and greater than 2", n),
+            reason: format!("{n} is even and greater than 2"),
         };
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // i64→f64 precision loss acceptable for sqrt bound; f64→i64 truncation intentional
     let limit = (n as f64).sqrt() as i64;
     for i in (3..=limit).step_by(2) {
         if n % i == 0 {
             return PrimeResult {
                 is_prime: false,
                 number: n,
-                reason: format!("{} is divisible by {}", n, i),
+                reason: format!("{n} is divisible by {i}"),
             };
         }
     }
@@ -93,7 +94,7 @@ pub fn is_prime(n: i64) -> PrimeResult {
     PrimeResult {
         is_prime: true,
         number: n,
-        reason: format!("{} has no divisors other than 1 and itself", n),
+        reason: format!("{n} has no divisors other than 1 and itself"),
     }
 }
 

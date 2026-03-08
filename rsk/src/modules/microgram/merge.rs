@@ -13,12 +13,12 @@ pub fn merge(a: &Microgram, b: &Microgram, name: &str, description: &str) -> Mic
 
     // Prefix all A nodes with "a_" and B nodes with "b_"
     for (node_name, node) in &a.tree.nodes {
-        let prefixed = format!("a_{}", node_name);
+        let prefixed = format!("a_{node_name}");
         let remapped = remap_node(node, "a_");
         nodes.insert(prefixed, remapped);
     }
     for (node_name, node) in &b.tree.nodes {
-        let prefixed = format!("b_{}", node_name);
+        let prefixed = format!("b_{node_name}");
         let remapped = remap_node(node, "b_");
         nodes.insert(prefixed, remapped);
     }
@@ -62,8 +62,8 @@ fn remap_node(node: &DecisionNode, prefix: &str) -> DecisionNode {
                 variable: variable.clone(),
                 operator: operator.clone(),
                 value: value.clone(),
-                true_next: format!("{}{}", prefix, true_next),
-                false_next: format!("{}{}", prefix, false_next),
+                true_next: format!("{prefix}{true_next}"),
+                false_next: format!("{prefix}{false_next}"),
             }
         }
         DecisionNode::Return { value } => DecisionNode::Return { value: value.clone() },
@@ -72,7 +72,7 @@ fn remap_node(node: &DecisionNode, prefix: &str) -> DecisionNode {
                 action: action.clone(),
                 target: target.clone(),
                 value: value.clone(),
-                next: next.as_ref().map(|n| format!("{}{}", prefix, n)),
+                next: next.as_ref().map(|n| format!("{prefix}{n}")),
             }
         }
         DecisionNode::LlmFallback { prompt, schema } => {
@@ -83,7 +83,7 @@ fn remap_node(node: &DecisionNode, prefix: &str) -> DecisionNode {
                 function: function.clone(),
                 input_variable: input_variable.clone(),
                 output_variable: output_variable.clone(),
-                next: format!("{}{}", prefix, next),
+                next: format!("{prefix}{next}"),
             }
         }
     }

@@ -16,12 +16,15 @@ use std::sync::LazyLock;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Tokenizer pattern - matches word characters
+#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
 pub(crate) static RE_TOKENIZE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\w]+").unwrap());
 
 /// Whitespace collapse pattern
+#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
 pub(crate) static RE_WHITESPACE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
 
 /// Slug cleanup pattern
+#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
 pub(crate) static RE_SLUG_SPECIAL: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"[^a-z0-9\s-]").unwrap());
 
@@ -166,10 +169,12 @@ pub fn analyze_compressibility(text: &str) -> CompressionAnalysis {
     let unique_chars = char_freq.len();
 
     // Calculate Shannon entropy estimate
+    #[allow(clippy::as_conversions)] // usize→f64 for entropy calculation
     let total = original_chars as f64;
     let entropy: f64 = char_freq
         .values()
         .map(|&count| {
+            #[allow(clippy::as_conversions)] // usize→f64 for probability
             let p = count as f64 / total;
             if p > 0.0 { -p * p.log2() } else { 0.0 }
         })

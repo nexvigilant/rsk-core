@@ -76,6 +76,7 @@ impl Severity {
         }
     }
 
+    #[allow(clippy::as_conversions)] // enum repr to u8, values are 1-5
     pub fn level(&self) -> u8 {
         *self as u8
     }
@@ -254,8 +255,7 @@ fn match_structural_symptom(
             description: symptom.description.clone(),
             pattern: symptom.pattern.clone(),
             evidence: format!(
-                "{}={} ({} threshold {})",
-                metric, value, direction, threshold
+                "{metric}={value} ({direction} threshold {threshold})"
             ),
             confidence,
         })
@@ -282,7 +282,7 @@ fn match_behavioral_symptom(
                 Some(SymptomMatch {
                     description: symptom.description.clone(),
                     pattern: symptom.pattern.clone(),
-                    evidence: format!("Spec:Impl ratio = {}:0 (infinite)", spec_count),
+                    evidence: format!("Spec:Impl ratio = {spec_count}:0 (infinite)"),
                     confidence: (spec_count / threshold / 2.0).min(1.0),
                 })
             } else if impl_count > 0.0 {
@@ -291,7 +291,7 @@ fn match_behavioral_symptom(
                     Some(SymptomMatch {
                         description: symptom.description.clone(),
                         pattern: symptom.pattern.clone(),
-                        evidence: format!("Spec:Impl ratio = {:.1}:1", ratio),
+                        evidence: format!("Spec:Impl ratio = {ratio:.1}:1"),
                         confidence: (ratio / threshold / 2.0).min(1.0),
                     })
                 } else {
@@ -309,7 +309,7 @@ fn match_behavioral_symptom(
                 Some(SymptomMatch {
                     description: symptom.description.clone(),
                     pattern: symptom.pattern.clone(),
-                    evidence: format!("Meta:Actual ratio = {}:0", meta_count),
+                    evidence: format!("Meta:Actual ratio = {meta_count}:0"),
                     confidence: 0.9,
                 })
             } else if actual_count > 0.0 {
@@ -318,7 +318,7 @@ fn match_behavioral_symptom(
                     Some(SymptomMatch {
                         description: symptom.description.clone(),
                         pattern: symptom.pattern.clone(),
-                        evidence: format!("Meta:Actual ratio = {:.1}:1", ratio),
+                        evidence: format!("Meta:Actual ratio = {ratio:.1}:1"),
                         confidence: (ratio / threshold / 2.0).min(1.0),
                     })
                 } else {
@@ -334,7 +334,7 @@ fn match_behavioral_symptom(
                 Some(SymptomMatch {
                     description: symptom.description.clone(),
                     pattern: symptom.pattern.clone(),
-                    evidence: format!("Recurrence count = {}", recurrence_count),
+                    evidence: format!("Recurrence count = {recurrence_count}"),
                     confidence: (recurrence_count / threshold).min(1.0),
                 })
             } else {
@@ -366,6 +366,7 @@ fn match_textual_symptom(
         .collect();
 
     if !found_keywords.is_empty() {
+        #[allow(clippy::as_conversions)] // usize→f64 for ratio
         let match_ratio = found_keywords.len() as f64 / symptom.keywords.len() as f64;
         Some(SymptomMatch {
             description: symptom.description.clone(),
@@ -405,7 +406,7 @@ fn match_metric_symptom(
         Some(SymptomMatch {
             description: symptom.description.clone(),
             pattern: symptom.pattern.clone(),
-            evidence: format!("{}={} ({} {})", metric, value, direction, threshold),
+            evidence: format!("{metric}={value} ({direction} {threshold})"),
             confidence: ((value - threshold).abs() / threshold + 0.5).min(1.0),
         })
     } else {
@@ -516,7 +517,9 @@ pub fn detect_anti_patterns(
         }
 
         if !symptom_matches.is_empty() && !pattern.symptoms.is_empty() {
+            #[allow(clippy::as_conversions)] // usize→f64 for ratio
             let match_rate = symptom_matches.len() as f64 / pattern.symptoms.len() as f64;
+            #[allow(clippy::as_conversions)] // usize→f64 for averaging
             let avg_confidence: f64 = symptom_matches.iter().map(|m| m.confidence).sum::<f64>()
                 / symptom_matches.len() as f64;
             let overall_confidence = match_rate * avg_confidence;
@@ -706,7 +709,9 @@ impl PatternRegistry {
         config: &DetectionConfig,
     ) -> DetectionResult {
         let result = detect_anti_patterns(features, context, &self.patterns, config);
-        self.total_detections += result.detections_count as u64;
+        #[allow(clippy::as_conversions)] // usize→u64 widening, always safe on 64-bit
+        let count = result.detections_count as u64;
+        self.total_detections += count;
         result
     }
 

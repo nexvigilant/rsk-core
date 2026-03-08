@@ -89,13 +89,16 @@ impl std::error::Error for ParseError {}
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Valid skill name pattern: lowercase letters, digits, hyphens
+#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
 static SKILL_NAME_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^[a-z][a-z0-9-]*$").unwrap());
 
 /// Sequential operator
+#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
 static SEQUENTIAL_SPLIT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*->\s*").unwrap());
 
 /// Parallel operator
+#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
 static PARALLEL_SPLIT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*\|\s*").unwrap());
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -150,8 +153,7 @@ pub fn parse_inline(input: &str) -> Result<Chain, ParseError> {
 
         if !SKILL_NAME_REGEX.is_match(&skill_name) {
             return Err(ParseError::new(&format!(
-                "Invalid skill name '{}': must be lowercase letters, digits, and hyphens",
-                skill_name
+                "Invalid skill name '{skill_name}': must be lowercase letters, digits, and hyphens"
             ))
             .with_source(part));
         }
@@ -305,7 +307,7 @@ impl YamlThenElse {
 pub fn parse_yaml(content: &str) -> Result<Chain, ParseError> {
     // Use serde_yaml to parse
     let yaml_chain: YamlChain = serde_yaml::from_str(content)
-        .map_err(|e| ParseError::new(&format!("YAML parse error: {}", e)))?;
+        .map_err(|e| ParseError::new(&format!("YAML parse error: {e}")))?;
 
     // Convert to Chain
     let mut steps = Vec::with_capacity(yaml_chain.steps.len());
@@ -317,8 +319,7 @@ pub fn parse_yaml(content: &str) -> Result<Chain, ParseError> {
             YamlStep::Simple(skill_name) => {
                 if !SKILL_NAME_REGEX.is_match(&skill_name) {
                     return Err(ParseError::new(&format!(
-                        "Invalid skill name '{}': must be lowercase letters, digits, and hyphens",
-                        skill_name
+                        "Invalid skill name '{skill_name}': must be lowercase letters, digits, and hyphens"
                     )));
                 }
                 steps.push(StepType::Regular(ChainStep::new(&skill_name)));

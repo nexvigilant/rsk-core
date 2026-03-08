@@ -36,7 +36,9 @@ pub fn coverage(mg: &Microgram) -> CoverageResult {
         .collect();
 
     let coverage_pct = if total_nodes == 0 { 100.0 } else {
-        (covered_nodes as f64 / total_nodes as f64) * 100.0
+        #[allow(clippy::as_conversions)] // usize→f64 for coverage percentage
+        let pct = (covered_nodes as f64 / total_nodes as f64) * 100.0;
+        pct
     };
 
     CoverageResult {

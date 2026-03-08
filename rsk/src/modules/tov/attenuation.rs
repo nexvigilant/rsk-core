@@ -28,8 +28,7 @@ impl PropagationProbability {
     pub fn new(value: f64) -> Self {
         assert!(
             value > 0.0 && value < 1.0,
-            "Probability must be in (0, 1), got {}",
-            value
+            "Probability must be in (0, 1), got {value}"
         );
         Self { value }
     }
@@ -75,14 +74,18 @@ pub fn attenuation_rate(probs: &[PropagationProbability]) -> f64 {
         return 0.0;
     }
     let log_sum: f64 = probs.iter().map(|p| p.get().ln()).sum();
-    -log_sum / probs.len() as f64
+    #[allow(clippy::as_conversions)] // usize→f64 for ratio
+    let count = probs.len() as f64;
+    -log_sum / count
 }
 
 /// Compute harm probability using exponential form (Theorem 10.2 Version D)
 ///
 /// P(H) = e^{-alpha(H-1)}
 pub fn harm_probability_exponential(alpha: f64, harm_level: usize) -> f64 {
-    (-alpha * (harm_level as f64 - 1.0)).exp()
+    #[allow(clippy::as_conversions)] // usize→f64 for math
+    let level = harm_level as f64;
+    (-alpha * (level - 1.0)).exp()
 }
 
 /// Compute protective depth for target probability (Corollary)
@@ -97,7 +100,8 @@ pub fn protective_depth(target_probability: f64, attenuation_rate: f64) -> usize
     );
     assert!(attenuation_rate > 0.0, "Attenuation rate must be positive");
     let min_depth = 1.0 + (-target_probability.ln()) / attenuation_rate;
-    min_depth.ceil() as usize
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // f64→usize: ceil of positive value
+    { min_depth.ceil() as usize }
 }
 
 /// Maximum probability in a slice
@@ -114,7 +118,8 @@ pub fn max_probability(probs: &[PropagationProbability]) -> f64 {
 pub fn uniform_bound(probs: &[PropagationProbability]) -> f64 {
     let p_max = max_probability(probs);
     let h_minus_1 = probs.len();
-    p_max.powi(h_minus_1 as i32)
+    let exp = i32::try_from(h_minus_1).unwrap_or(i32::MAX);
+    p_max.powi(exp)
 }
 
 /// Verify attenuation property: harm decreases with depth
@@ -249,6 +254,7 @@ mod tests {
             .collect();
 
         let actual = harm_probability(&probs);
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // test: small i32 literal
         let expected = p_val.powi(levels as i32);
 
         assert!(

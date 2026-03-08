@@ -77,6 +77,18 @@
 //! assert_eq!(parsed.format, "yaml");
 //! ```
 
+// Strict clippy campaign — lints added incrementally per pass
+// Pass 1: style lints | Pass 2: cast safety | Pass 3: unwrap/expect safety
+#![deny(
+    clippy::uninlined_format_args,
+    clippy::manual_let_else,
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::unwrap_used,
+    clippy::expect_used
+)]
+
 pub mod modules;
 
 pub use modules::builder::*;

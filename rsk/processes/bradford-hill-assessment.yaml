@@ -1,0 +1,80 @@
+name: bradford-hill-assessment
+description: 'Governed Bradford Hill evidence assessment: signal comparison → dose-response classification → causality assessment → action recommendation. Governor controls iteration depth based on evidence accumulation. Exercises cross-variable comparison in a governed loop.'
+version: 0.1.0
+micrograms_dir: ../micrograms
+
+steps:
+  - signal-comparator
+  - dose-response-classifier
+  - naranjo-quick
+  - causality-to-action
+
+governor: loop-governor
+max_iterations: 3
+detect_convergence: true
+accumulate: true
+trajectory: true
+
+primitive_signature:
+  dominant: 'ρ'
+  expression: 'ρ(κ(signals) → κ(doses) → μ(causality) → →(action)) at ∂(governor) — governed Bradford Hill assessment'
+  primes: ['ρ', 'κ', 'μ', '∂', '→', 'N']
+  arguments: ['signal_a', 'signal_b', 'low_dose_rate', 'mid_dose_rate', 'high_dose_rate', 'naranjo_score', 'is_serious']
+
+tests:
+# Strong evidence: concordant signals + monotonic dose-response + high Naranjo + serious
+- name: strong evidence converges to expedited
+  input:
+    signal_a: 5.0
+    signal_b: 4.2
+    low_dose_rate: 10
+    mid_dose_rate: 25
+    high_dose_rate: 50
+    naranjo_score: 7
+    is_serious: true
+    scale: chain
+    session_levels: "5,5,4,5"
+  expect:
+    agreement: CONCORDANT
+    pattern: MONOTONIC_INCREASE
+    dose_response_met: 'yes'
+    causality: PROBABLE
+  expect_halt: Convergence
+
+# Weak evidence: discordant signals + flat dose-response + low Naranjo
+- name: weak evidence converges to monitor
+  input:
+    signal_a: 3.0
+    signal_b: 0.5
+    low_dose_rate: 15
+    mid_dose_rate: 15
+    high_dose_rate: 15
+    naranjo_score: 2
+    is_serious: false
+    scale: chain
+    session_levels: "4,4,3,4"
+  expect:
+    agreement: DISCORDANT
+    pattern: FLAT
+    dose_response_met: 'no'
+    causality: POSSIBLE
+  expect_halt: Convergence
+
+# Contradictory: both-null signals + inverse dose-response
+- name: contradictory evidence converges
+  input:
+    signal_a: 0.8
+    signal_b: 1.1
+    low_dose_rate: 50
+    mid_dose_rate: 30
+    high_dose_rate: 10
+    naranjo_score: 3
+    is_serious: false
+    scale: chain
+    session_levels: "4,3,4,4"
+  expect:
+    agreement: BOTH_NULL
+    pattern: INVERSE
+    dose_response_met: 'no'
+    causality: POSSIBLE
+  expect_halt: Convergence

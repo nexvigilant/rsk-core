@@ -487,7 +487,9 @@ impl ChainResult {
                 .iter()
                 .filter(|s| s.status != StepStatus::Pending)
                 .count();
-            (completed as f32 / self.steps.len() as f32) * 100.0
+            #[allow(clippy::as_conversions)] // usize→f32 for progress percentage
+            let pct = completed as f32 / self.steps.len() as f32;
+            pct * 100.0
         }
     }
 }

@@ -64,7 +64,9 @@ pub fn levenshtein(source: &str, target: &str) -> LevenshteinResult {
     let similarity = if max_len == 0 {
         1.0
     } else {
-        1.0 - (distance as f64 / max_len as f64)
+        #[allow(clippy::as_conversions)] // usize→f64 for similarity ratio
+        let sim = 1.0 - (distance as f64 / max_len as f64);
+        sim
     };
 
     LevenshteinResult {

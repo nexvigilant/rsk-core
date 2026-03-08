@@ -94,8 +94,7 @@ impl BlindspotCheck {
                     "Deletable: Any unnecessary complexity?".to_string(),
                 ],
                 format!(
-                    "[Blindspot Check] Code modified: {}. Self-review: assumptions, edge cases, failure modes, deletable complexity. State confidence.",
-                    filename
+                    "[Blindspot Check] Code modified: {filename}. Self-review: assumptions, edge cases, failure modes, deletable complexity. State confidence."
                 ),
             ),
             BlindspotType::Test => (
@@ -106,8 +105,7 @@ impl BlindspotCheck {
                     "Readability: Is the test self-documenting?".to_string(),
                 ],
                 format!(
-                    "[Blindspot Check] Test modified: {}. Verify: coverage complete, assertions specific, tests isolated.",
-                    filename
+                    "[Blindspot Check] Test modified: {filename}. Verify: coverage complete, assertions specific, tests isolated."
                 ),
             ),
             BlindspotType::Plan => (
@@ -118,8 +116,7 @@ impl BlindspotCheck {
                     "Assumptions: What's being taken for granted?".to_string(),
                 ],
                 format!(
-                    "[Plan Review] Plan modified: {}. Verify: alternatives considered, dependencies identified, steps complete, assumptions explicit.",
-                    filename
+                    "[Plan Review] Plan modified: {filename}. Verify: alternatives considered, dependencies identified, steps complete, assumptions explicit."
                 ),
             ),
             BlindspotType::Config => (
@@ -130,8 +127,7 @@ impl BlindspotCheck {
                     "Required: All required fields present?".to_string(),
                 ],
                 format!(
-                    "[Config Check] Config modified: {}. Verify: syntax valid, no exposed secrets, backwards compatible.",
-                    filename
+                    "[Config Check] Config modified: {filename}. Verify: syntax valid, no exposed secrets, backwards compatible."
                 ),
             ),
             BlindspotType::Sensitive => (
@@ -142,8 +138,7 @@ impl BlindspotCheck {
                     "Rotation: Is there a rotation/expiry policy?".to_string(),
                 ],
                 format!(
-                    "[SECURITY] Sensitive file modified: {}. VERIFY: gitignored, not logged, permissions restricted.",
-                    filename
+                    "[SECURITY] Sensitive file modified: {filename}. VERIFY: gitignored, not logged, permissions restricted."
                 ),
             ),
             BlindspotType::Docs => (
@@ -153,13 +148,12 @@ impl BlindspotCheck {
                     "Examples: Are examples up to date?".to_string(),
                 ],
                 format!(
-                    "[Doc Check] Documentation modified: {}. Verify: accurate, complete, examples current.",
-                    filename
+                    "[Doc Check] Documentation modified: {filename}. Verify: accurate, complete, examples current."
                 ),
             ),
             BlindspotType::Other => (
                 vec!["Review: Does this file need to exist?".to_string()],
-                format!("[File Check] File modified: {}.", filename),
+                format!("[File Check] File modified: {filename}."),
             ),
         };
 

@@ -218,6 +218,7 @@ impl<const BITS: u64> ValidatedRarity<BITS> {
     }
 
     /// Check if this rarity exceeds the non-recurrence threshold
+    #[allow(clippy::as_conversions)] // const fn: u8→u64 lossless widening, From::from unavailable in const
     pub const fn is_non_recurrent(&self) -> bool {
         BITS >= NonRecurrenceThreshold::VALUE as u64
     }
@@ -296,6 +297,7 @@ impl<const NUM: u32, const DEN: u32> BoundedProbability<NUM, DEN> {
     }
 
     /// Get the probability as f64
+    #[allow(clippy::as_conversions)] // const fn: u32→f64 lossless widening, From::from unavailable in const
     pub const fn value(&self) -> f64 {
         NUM as f64 / DEN as f64
     }

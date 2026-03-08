@@ -220,8 +220,9 @@ fn parse_invariants_to_rules(skill_name: &str, invariants: &str) -> Vec<Validati
             }
 
             let (condition, error_message) = extract_invariant_pattern(content);
+            let snake = to_snake_case(skill_name);
             rules.push(ValidationRule {
-                id: format!("{}_inv_{}", to_snake_case(skill_name), idx),
+                id: format!("{snake}_inv_{idx}"),
                 description: content.to_string(),
                 severity: "error".to_string(),
                 condition,
@@ -254,8 +255,9 @@ fn parse_invariants_to_rules(skill_name: &str, invariants: &str) -> Vec<Validati
         // Extract key patterns from invariant text
         let (condition, error_message) = extract_invariant_pattern(content);
 
+        let snake = to_snake_case(skill_name);
         rules.push(ValidationRule {
-            id: format!("{}_inv_{}", to_snake_case(skill_name), idx),
+            id: format!("{snake}_inv_{idx}"),
             description: content.to_string(),
             severity: "error".to_string(),
             condition,
@@ -273,24 +275,24 @@ fn extract_invariant_pattern(text: &str) -> (String, String) {
     // Pattern matching for common invariant expressions
     if text_lower.contains("must") {
         let condition = text.replace("must", "should").replace("Must", "Should");
-        let error = format!("Invariant violation: {}", text);
+        let error = format!("Invariant violation: {text}");
         (condition, error)
     } else if text_lower.contains("always") {
         let condition = text.to_string();
-        let error = format!("Always condition failed: {}", text);
+        let error = format!("Always condition failed: {text}");
         (condition, error)
     } else if text_lower.contains("never") {
         let condition = text
             .replace("never", "should not")
             .replace("Never", "Should not");
-        let error = format!("Never condition violated: {}", text);
+        let error = format!("Never condition violated: {text}");
         (condition, error)
     } else if text_lower.contains("required") {
         let condition = text.to_string();
-        let error = format!("Required condition not met: {}", text);
+        let error = format!("Required condition not met: {text}");
         (condition, error)
     } else {
-        (text.to_string(), format!("Validation failed: {}", text))
+        (text.to_string(), format!("Validation failed: {text}"))
     }
 }
 
@@ -366,11 +368,12 @@ fn parse_failure_modes_to_rules(skill_name: &str, failure_modes: &str) -> Vec<Va
             }
 
             let (severity, error_message) = parse_failure_mode_severity(content);
+            let snake = to_snake_case(skill_name);
             rules.push(ValidationRule {
-                id: format!("{}_fm_{}", to_snake_case(skill_name), idx),
+                id: format!("{snake}_fm_{idx}"),
                 description: content.to_string(),
                 severity,
-                condition: format!("check_{}_fm_{}", to_snake_case(skill_name), idx),
+                condition: format!("check_{snake}_fm_{idx}"),
                 error_message,
             });
             continue;
@@ -392,11 +395,12 @@ fn parse_failure_modes_to_rules(skill_name: &str, failure_modes: &str) -> Vec<Va
         // Parse failure mode format: CODE: Description or just description
         let (severity, error_message) = parse_failure_mode_severity(content);
 
+        let snake = to_snake_case(skill_name);
         rules.push(ValidationRule {
-            id: format!("{}_fm_{}", to_snake_case(skill_name), idx),
+            id: format!("{snake}_fm_{idx}"),
             description: content.to_string(),
             severity,
-            condition: format!("check_{}_fm_{}", to_snake_case(skill_name), idx),
+            condition: format!("check_{snake}_fm_{idx}"),
             error_message,
         });
     }
@@ -453,12 +457,13 @@ fn parse_inputs_to_rules(skill_name: &str, inputs: &str) -> Vec<ValidationRule> 
         let (param_name, param_type) = extract_param_info(content);
 
         if !param_name.is_empty() {
+            let snake = to_snake_case(skill_name);
             rules.push(ValidationRule {
-                id: format!("{}_input_{}", to_snake_case(skill_name), idx),
-                description: format!("Validate input: {}", content),
+                id: format!("{snake}_input_{idx}"),
+                description: format!("Validate input: {content}"),
                 severity: "error".to_string(),
-                condition: format!("validate_{}({})", param_name, param_type),
-                error_message: format!("Invalid input {}: expected {}", param_name, param_type),
+                condition: format!("validate_{param_name}({param_type})"),
+                error_message: format!("Invalid input {param_name}: expected {param_type}"),
             });
         }
     }
@@ -528,12 +533,13 @@ fn parse_outputs_to_rules(skill_name: &str, outputs: &str) -> Vec<ValidationRule
         let (output_name, output_type) = extract_param_info(content);
 
         if !output_name.is_empty() {
+            let snake = to_snake_case(skill_name);
             rules.push(ValidationRule {
-                id: format!("{}_output_{}", to_snake_case(skill_name), idx),
-                description: format!("Validate output: {}", content),
+                id: format!("{snake}_output_{idx}"),
+                description: format!("Validate output: {content}"),
                 severity: "error".to_string(),
-                condition: format!("validate_output_{}({})", output_name, output_type),
-                error_message: format!("Invalid output {}: expected {}", output_name, output_type),
+                condition: format!("validate_output_{output_name}({output_type})"),
+                error_message: format!("Invalid output {output_name}: expected {output_type}"),
             });
         }
     }
@@ -567,7 +573,7 @@ pub fn generate_test_scaffold(smst: &SmstResult) -> TestScaffold {
 
     TestScaffold {
         skill_name: skill_name.clone(),
-        module_path: format!("tests::{}", module_name),
+        module_path: format!("tests::{module_name}"),
         test_cases,
         rust_code,
     }
@@ -580,9 +586,9 @@ fn generate_positive_tests(skill_name: &str, inputs: &str) -> Vec<GeneratedTestC
 
     // Generate a basic happy path test
     tests.push(GeneratedTestCase {
-        name: format!("test_{}_happy_path", snake_name),
+        name: format!("test_{snake_name}_happy_path"),
         category: "positive".to_string(),
-        description: format!("Test {} with valid inputs", skill_name),
+        description: format!("Test {skill_name} with valid inputs"),
         inputs: extract_sample_inputs(inputs),
         expected: "Ok(...)".to_string(),
     });
@@ -606,12 +612,13 @@ fn generate_negative_tests(skill_name: &str, failure_modes: &str) -> Vec<Generat
             continue;
         }
 
+        let truncated_desc = truncate(content, 50);
         tests.push(GeneratedTestCase {
-            name: format!("test_{}_failure_{}", snake_name, idx),
+            name: format!("test_{snake_name}_failure_{idx}"),
             category: "negative".to_string(),
-            description: format!("Test {} handles: {}", skill_name, truncate(content, 50)),
+            description: format!("Test {skill_name} handles: {truncated_desc}"),
             inputs: "/* trigger failure condition */".to_string(),
-            expected: format!("Err(...) // {}", truncate(content, 30)),
+            expected: { let t = truncate(content, 30); format!("Err(...) // {t}") },
         });
     }
 
@@ -634,10 +641,11 @@ fn generate_edge_tests(skill_name: &str, invariants: &str) -> Vec<GeneratedTestC
             continue;
         }
 
+        let truncated = truncate(content, 50);
         tests.push(GeneratedTestCase {
-            name: format!("test_{}_edge_{}", snake_name, idx),
+            name: format!("test_{snake_name}_edge_{idx}"),
             category: "edge".to_string(),
-            description: format!("Edge case for invariant: {}", truncate(content, 50)),
+            description: format!("Edge case for invariant: {truncated}"),
             inputs: "/* boundary condition */".to_string(),
             expected: "/* invariant maintained */".to_string(),
         });
@@ -654,7 +662,7 @@ fn extract_sample_inputs(inputs: &str) -> String {
         let line = line.trim();
         let (name, type_str) = extract_param_info(line);
         if !name.is_empty() {
-            params.push(format!("{}: /* {} */", name, type_str));
+            params.push(format!("{name}: /* {type_str} */"));
         }
     }
 
@@ -669,19 +677,24 @@ fn extract_sample_inputs(inputs: &str) -> String {
 fn generate_rust_test_module(module_name: &str, test_cases: &[GeneratedTestCase]) -> String {
     let mut code = String::new();
 
-    code.push_str(&format!("//! Generated tests for {}\n", module_name));
+    code.push_str(&format!("//! Generated tests for {module_name}\n"));
     code.push_str("//! Auto-generated by rsk generate tests\n\n");
     code.push_str("#[cfg(test)]\n");
-    code.push_str(&format!("mod {}_tests {{\n", module_name));
+    code.push_str(&format!("mod {module_name}_tests {{\n"));
     code.push_str("    use super::*;\n\n");
 
     for test in test_cases {
-        code.push_str(&format!("    /// {}\n", test.description));
-        code.push_str(&format!("    /// Category: {}\n", test.category));
+        let desc = &test.description;
+        let cat = &test.category;
+        let name = &test.name;
+        let inputs = &test.inputs;
+        let expected = &test.expected;
+        code.push_str(&format!("    /// {desc}\n"));
+        code.push_str(&format!("    /// Category: {cat}\n"));
         code.push_str("    #[test]\n");
-        code.push_str(&format!("    fn {}() {{\n", test.name));
-        code.push_str(&format!("        // Inputs: {}\n", test.inputs));
-        code.push_str(&format!("        // Expected: {}\n", test.expected));
+        code.push_str(&format!("    fn {name}() {{\n"));
+        code.push_str(&format!("        // Inputs: {inputs}\n"));
+        code.push_str(&format!("        // Expected: {expected}\n"));
         code.push_str("        todo!(\"Implement test\")\n");
         code.push_str("    }\n\n");
     }
@@ -715,9 +728,9 @@ fn generate_struct_definitions_string(smst: &SmstResult) -> String {
     let type_name = to_pascal_case(skill_name);
 
     // Input struct
-    code.push_str(&format!("/// Input for {}\n", skill_name));
+    code.push_str(&format!("/// Input for {skill_name}\n"));
     code.push_str("#[derive(Debug, Clone, Default, Serialize, Deserialize)]\n");
-    code.push_str(&format!("pub struct {}Input {{\n", type_name));
+    code.push_str(&format!("pub struct {type_name}Input {{\n"));
     if let Some(inputs) = &smst.spec.inputs {
         for line in inputs.lines() {
             let (name, type_str) = extract_param_info(line.trim());
@@ -733,9 +746,9 @@ fn generate_struct_definitions_string(smst: &SmstResult) -> String {
     code.push_str("}\n\n");
 
     // Output struct
-    code.push_str(&format!("/// Output for {}\n", skill_name));
+    code.push_str(&format!("/// Output for {skill_name}\n"));
     code.push_str("#[derive(Debug, Clone, Default, Serialize, Deserialize)]\n");
-    code.push_str(&format!("pub struct {}Output {{\n", type_name));
+    code.push_str(&format!("pub struct {type_name}Output {{\n"));
     if let Some(outputs) = &smst.spec.outputs {
         for line in outputs.lines() {
             let (name, type_str) = extract_param_info(line.trim());
@@ -754,9 +767,9 @@ fn generate_struct_definitions_string(smst: &SmstResult) -> String {
     if let Some(state) = &smst.spec.state
         && !state.trim().is_empty()
     {
-        code.push_str(&format!("/// State for {}\n", skill_name));
+        code.push_str(&format!("/// State for {skill_name}\n"));
         code.push_str("#[derive(Debug, Clone, Default, Serialize, Deserialize)]\n");
-        code.push_str(&format!("pub struct {}State {{\n", type_name));
+        code.push_str(&format!("pub struct {type_name}State {{\n"));
         for line in state.lines() {
             let (name, type_str) = extract_param_info(line.trim());
             if !name.is_empty() {
@@ -780,13 +793,12 @@ fn generate_function_signatures(smst: &SmstResult) -> String {
     let type_name = to_pascal_case(skill_name);
     let fn_name = to_snake_case(skill_name);
 
-    code.push_str(&format!("/// Execute {}\n", skill_name));
+    code.push_str(&format!("/// Execute {skill_name}\n"));
     if let Some(desc) = &smst.frontmatter.description {
-        code.push_str(&format!("///\n/// {}\n", desc));
+        code.push_str(&format!("///\n/// {desc}\n"));
     }
     code.push_str(&format!(
-        "pub fn {}(input: {}Input) -> Result<{}Output, {}Error> {{\n",
-        fn_name, type_name, type_name, type_name
+        "pub fn {fn_name}(input: {type_name}Input) -> Result<{type_name}Output, {type_name}Error> {{\n",
     ));
     code.push_str("    todo!(\"Implement skill logic\")\n");
     code.push_str("}\n");
@@ -802,11 +814,10 @@ fn generate_full_rust_module(smst: &SmstResult) -> String {
 
     // Module header
     code.push_str(&format!(
-        "//! {} - Auto-generated Rust module\n",
-        skill_name
+        "//! {skill_name} - Auto-generated Rust module\n",
     ));
     if let Some(desc) = &smst.frontmatter.description {
-        code.push_str(&format!("//!\n//! {}\n", desc));
+        code.push_str(&format!("//!\n//! {desc}\n"));
     }
     code.push_str("//!\n//! Generated by: rsk generate stub\n\n");
 
@@ -814,15 +825,15 @@ fn generate_full_rust_module(smst: &SmstResult) -> String {
     code.push_str("use thiserror::Error;\n\n");
 
     // Error type
-    code.push_str(&format!("/// Errors for {}\n", skill_name));
+    code.push_str(&format!("/// Errors for {skill_name}\n"));
     code.push_str("#[derive(Debug, Error)]\n");
-    code.push_str(&format!("pub enum {}Error {{\n", type_name));
+    code.push_str(&format!("pub enum {type_name}Error {{\n"));
     if let Some(failure_modes) = &smst.spec.failure_modes {
         for (idx, line) in failure_modes.lines().enumerate() {
             let line = line.trim().trim_start_matches(['-', '*']).trim();
             if !line.is_empty() && !line.starts_with('#') {
                 code.push_str(&format!("    #[error(\"{}\")]\n", truncate(line, 60)));
-                code.push_str(&format!("    Failure{},\n", idx));
+                code.push_str(&format!("    Failure{idx},\n"));
             }
         }
     }
@@ -882,7 +893,7 @@ pub fn generate_decision_tree(smst: &SmstResult) -> DecisionTree {
     );
 
     for (i, rule) in rules.invariant_rules.iter().enumerate() {
-        let node_id = format!("check_inv_{}", i);
+        let node_id = format!("check_inv_{i}");
         let next_id = if i < rules.invariant_rules.len() - 1 {
             format!("check_inv_{}", i + 1)
         } else {
@@ -902,7 +913,7 @@ pub fn generate_decision_tree(smst: &SmstResult) -> DecisionTree {
                 operator: Operator::IsNotNull,
                 value: None,
                 true_next: next_id,
-                false_next: format!("fail_inv_{}", i),
+                false_next: format!("fail_inv_{i}"),
             },
         );
 
@@ -914,7 +925,7 @@ pub fn generate_decision_tree(smst: &SmstResult) -> DecisionTree {
         );
 
         nodes.insert(
-            format!("fail_inv_{}", i),
+            format!("fail_inv_{i}"),
             DecisionNode::Return {
                 value: Value::Object(error_obj),
             },
@@ -966,7 +977,8 @@ fn to_pascal_case(s: &str) -> String {
 pub fn compile_rules(rules: &[ValidationRule], _target: CompilationTarget) -> String {
     let mut code = String::new();
     for rule in rules {
-        code.push_str(&format!("    // {}\n", rule.description));
+        let desc = &rule.description;
+        code.push_str(&format!("    // {desc}\n"));
         code.push_str(&format!(
             "    if !({}) {{ return Err(SkillError::Validation(\"{}\".to_string())); }}\n",
             rule.condition, rule.error_message
@@ -998,9 +1010,9 @@ pub fn generate_schema_aware_tests(
 
     for field in &input.fields {
         tests.push(GeneratedTestCase {
-            name: format!("test_boundary_{}", to_snake_case(&field.field_name)),
+            name: { let s = to_snake_case(&field.field_name); format!("test_boundary_{s}") },
             category: "edge".to_string(),
-            description: format!("Boundary test for field {}", field.field_name),
+            description: { let f = &field.field_name; format!("Boundary test for field {f}") },
             inputs: format!(
                 "{{ \"{}\": /* boundary value for {} */ }}",
                 field.field_name, field.field_type
@@ -1035,7 +1047,7 @@ pub fn generate_attestation_code(intent: &crate::modules::intent::StructuredInte
     code.push('\n');
     code.push_str("    // PROOF: Verify required kernel modules are linked\n");
     for module in &intent.rsk_modules {
-        code.push_str(&format!("    assert!(cfg!(feature = \"{}\"), \"Capability Gap: required module '{}' not available\");\n", module, module));
+        code.push_str(&format!("    assert!(cfg!(feature = \"{module}\"), \"Capability Gap: required module '{module}' not available\");\n"));
     }
     code.push_str("}\n");
     code
@@ -1061,7 +1073,7 @@ pub fn generate_struct_definitions(smst: &SmstResult) -> (String, Vec<StructSche
         }
     }
     schemas.push(StructSchema {
-        struct_name: format!("{}Input", type_name),
+        struct_name: format!("{type_name}Input"),
         fields: input_fields,
     });
 
@@ -1079,7 +1091,7 @@ pub fn generate_struct_definitions(smst: &SmstResult) -> (String, Vec<StructSche
         }
     }
     schemas.push(StructSchema {
-        struct_name: format!("{}Output", type_name),
+        struct_name: format!("{type_name}Output"),
         fields: output_fields,
     });
 
@@ -1098,7 +1110,7 @@ pub fn generate_struct_definitions(smst: &SmstResult) -> (String, Vec<StructSche
             }
         }
         schemas.push(StructSchema {
-            struct_name: format!("{}State", type_name),
+            struct_name: format!("{type_name}State"),
             fields: state_fields,
         });
     }

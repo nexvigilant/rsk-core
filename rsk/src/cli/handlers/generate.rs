@@ -36,7 +36,7 @@ pub fn handle_generate(action: &GenerateAction) {
                         }
                     }
                     _ => {
-                        println!("{}", serde_json::to_string_pretty(&rules).unwrap());
+                        println!("{}", serde_json::to_string_pretty(&rules).unwrap_or_default());
                     }
                 }
             }
@@ -51,7 +51,7 @@ pub fn handle_generate(action: &GenerateAction) {
                         println!("{}", scaffold.rust_code);
                     }
                     _ => {
-                        println!("{}", serde_json::to_string_pretty(&scaffold).unwrap());
+                        println!("{}", serde_json::to_string_pretty(&scaffold).unwrap_or_default());
                     }
                 }
             }
@@ -70,7 +70,7 @@ pub fn handle_generate(action: &GenerateAction) {
                 let smst = rsk::extract_smst(&content);
                 let tree = rsk::generate_decision_tree(&smst);
                 match serde_yaml::to_string(&tree) {
-                    Ok(yaml) => println!("{}", yaml),
+                    Ok(yaml) => println!("{yaml}"),
                     Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
                 }
             }

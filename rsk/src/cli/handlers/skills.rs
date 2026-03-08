@@ -110,7 +110,7 @@ pub fn handle_skills(action: &SkillsAction) {
                     "message": format!("Scanned {} skills and saved to {:?}", registry.skills.len(), out_path),
                     "count": registry.skills.len(),
                 }))
-                .unwrap()
+                .unwrap_or_default()
             );
         }
         SkillsAction::List { registry, strategy } => {
@@ -138,7 +138,7 @@ pub fn handle_skills(action: &SkillsAction) {
                 });
             }
 
-            println!("{}", serde_json::to_string_pretty(&skills).unwrap());
+            println!("{}", serde_json::to_string_pretty(&skills).unwrap_or_default());
         }
         SkillsAction::Info { name, registry } => {
             let reg_path = registry
@@ -154,7 +154,9 @@ pub fn handle_skills(action: &SkillsAction) {
             };
 
             match reg.get(name) {
-                Some(skill) => println!("{}", serde_json::to_string_pretty(skill).unwrap()),
+                Some(skill) => {
+                    println!("{}", serde_json::to_string_pretty(skill).unwrap_or_default());
+                }
                 None => {
                     eprintln!("{}", json!({"status": "not_found", "name": name}));
                     std::process::exit(1);
@@ -178,12 +180,9 @@ pub fn handle_skills(action: &SkillsAction) {
                 }
             };
 
-            let skill = match reg.get(name) {
-                Some(s) => s,
-                None => {
-                    eprintln!("{}", json!({"status": "not_found", "name": name}));
-                    std::process::exit(1);
-                }
+            let Some(skill) = reg.get(name) else {
+                eprintln!("{}", json!({"status": "not_found", "name": name}));
+                std::process::exit(1);
             };
 
             if let Some(logic_path) = &skill.logic_path {
@@ -237,7 +236,7 @@ pub fn handle_skills(action: &SkillsAction) {
                             ExecutionResult::Error(e) => json!({"error": e}),
                         }
                     }))
-                    .unwrap()
+                    .unwrap_or_default()
                 );
             } else {
                 println!(
@@ -276,7 +275,7 @@ pub fn handle_chain(action: &ChainAction) {
             };
 
             println!("═══════════════════════════════════════════════════════════════════");
-            println!("CHAIN VALIDATION: {} (Depth: {})", name, depth);
+            println!("CHAIN VALIDATION: {name} (Depth: {depth})");
             println!("═══════════════════════════════════════════════════════════════════");
             println!();
 
@@ -292,7 +291,7 @@ pub fn handle_chain(action: &ChainAction) {
                 if !passed {
                     all_diamond = false;
                 }
-                println!("{:<30} | {:<15} | {:.1}%", skill, status, score);
+                println!("{skill:<30} | {status:<15} | {score:.1}%");
             }
 
             println!();
@@ -429,24 +428,45 @@ pub fn handle_evolve(name: &str, registry: &Option<String>) {
         }
     };
 
-    let skill = match reg.get(name) {
-        Some(s) => s,
-        None => {
-            eprintln!("{}", json!({"status": "not_found", "name": name}));
-            std::process::exit(1);
-        }
+    let Some(skill) = reg.get(name) else {
+        eprintln!("{}", json!({"status": "not_found", "name": name}));
+        std::process::exit(1);
     };
 
     if let Some(logic_path) = &skill.logic_path {
-        let logic_content = fs::read_to_string(logic_path).unwrap();
-        let tree: rsk::DecisionTree = serde_yaml::from_str(&logic_content).unwrap();
+        let logic_content = match fs::read_to_string(logic_path) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!(
+                    "{}",
+                    json!({"status": "error", "message": format!("Cannot read {}: {e}", logic_path.display())})
+                );
+                std::process::exit(1);
+            }
+        };
+        let tree: rsk::DecisionTree = match serde_yaml::from_str(&logic_content) {
+            Ok(t) => t,
+            Err(e) => {
+                eprintln!(
+                    "{}",
+                    json!({"status": "error", "message": format!("YAML parse error: {e}")})
+                );
+                std::process::exit(1);
+            }
+        };
 
         // 1. Synthesize Code
         let code = rsk::synthesize_intrinsic(name, &tree);
         let out_path =
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/modules/dynamic_intrinsics.rs");
 
-        fs::write(&out_path, code).unwrap();
+        if let Err(e) = fs::write(&out_path, code) {
+            eprintln!(
+                "{}",
+                json!({"status": "error", "message": format!("Cannot write {}: {e}", out_path.display())})
+            );
+            std::process::exit(1);
+        }
 
         println!(
             "{}",
@@ -456,7 +476,7 @@ pub fn handle_evolve(name: &str, registry: &Option<String>) {
                 "generated_file": out_path.to_string_lossy(),
                 "message": "Logic synthesized. Run 'cargo build' to integrate.",
             }))
-            .unwrap()
+            .unwrap_or_default()
         );
     } else {
         eprintln!(

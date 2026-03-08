@@ -18,6 +18,7 @@ pub mod coverage;
 pub mod diff;
 pub mod evolve;
 pub mod generate;
+pub mod hygiene;
 pub mod interface;
 pub mod matrix;
 pub mod merge;
@@ -25,6 +26,7 @@ pub mod pipe;
 pub mod shrink;
 pub mod snapshot;
 pub mod stress;
+pub mod patrol;
 pub mod chain_registry;
 
 // Re-export all public items from submodules
@@ -33,10 +35,16 @@ pub use catalog::{
     Catalog, CatalogEntry, alias_check, catalog,
 };
 pub use chain::{
-    ChainResult, ChainStatus, LoopHalt, LoopResult, ResilientChainResult,
+    ChainResult, ChainStatus, ChainValidationResult, LoopHalt, LoopResult,
+    PathMismatch, PathSnapshotResult, ResilientChainResult, StepValidationError,
     chain, chain_accumulate, chain_accumulate_by_names,
     chain_by_names, chain_loop, chain_loop_by_names,
     chain_resilient, chain_resilient_by_names,
+    chain_validate_all, chain_verify_paths,
+};
+pub use hygiene::{
+    BoundaryReport, FieldGap, HygieneReport,
+    check_chain_hygiene, check_chain_hygiene_by_names,
 };
 pub use clone::clone_mutated;
 pub use compose::{
@@ -58,6 +66,10 @@ pub use chain_registry::{
     ChainDefinition, ChainTestCase, ChainTestResult, SingleChainTestResult,
     ProcessDefinition, ProcessTestCase, ProcessTestResult, SingleProcessTestResult,
     load_chains, load_processes, test_chains, test_processes,
+};
+pub use patrol::{
+    PatrolFinding, PatrolReport, PatrolVerdict, Ring, SymbolClass,
+    run_patrol, run_patrol_default,
 };
 
 use crate::modules::decision_engine::{
@@ -238,7 +250,7 @@ impl Microgram {
         };
 
         let exec_result = engine.execute(&mut ctx);
-        let duration_us = start.elapsed().as_micros() as u64;
+        let duration_us = u64::try_from(start.elapsed().as_micros()).unwrap_or(u64::MAX);
 
         let output = match exec_result {
             crate::modules::decision_engine::ExecutionResult::Value(v) => {
@@ -288,13 +300,12 @@ impl Microgram {
                     Some(actual_val) if actual_val == expected_val => {}
                     Some(actual_val) => {
                         mismatch = Some(format!(
-                            "{}: expected {:?}, got {:?}",
-                            key, expected_val, actual_val
+                            "{key}: expected {expected_val:?}, got {actual_val:?}"
                         ));
                         test_passed = false;
                     }
                     None => {
-                        mismatch = Some(format!("{}: expected {:?}, got nothing", key, expected_val));
+                        mismatch = Some(format!("{key}: expected {expected_val:?}, got nothing"));
                         test_passed = false;
                     }
                 }
@@ -339,8 +350,7 @@ impl Microgram {
         for (name, field) in &iface.inputs {
             if field.required && !actual_inputs.contains(name.as_str()) {
                 violations.push(format!(
-                    "input '{}' declared as required but not referenced in any condition node",
-                    name
+                    "input '{name}' declared as required but not referenced in any condition node"
                 ));
             }
         }
@@ -349,8 +359,7 @@ impl Microgram {
         for name in iface.outputs.keys() {
             if !actual_outputs.contains(name.as_str()) {
                 violations.push(format!(
-                    "output '{}' declared but not found in any return node",
-                    name
+                    "output '{name}' declared but not found in any return node"
                 ));
             }
         }
@@ -359,8 +368,7 @@ impl Microgram {
         for field in &actual_outputs {
             if !field.starts_with('_') && !iface.outputs.contains_key(*field) {
                 violations.push(format!(
-                    "return node produces '{}' which is not declared in interface outputs",
-                    field
+                    "return node produces '{field}' which is not declared in interface outputs"
                 ));
             }
         }
@@ -610,7 +618,7 @@ tests:
         let mut input = HashMap::new();
         input.insert("value".to_string(), Value::Int(90));
 
-        let result = chain(&[gate, label], input);
+        let result = chain(&[gate, label], input, false);
 
         assert!(result.success);
         assert_eq!(result.steps.len(), 2);
@@ -630,7 +638,7 @@ tests:
         let mut input = HashMap::new();
         input.insert("value".to_string(), Value::Int(50));
 
-        let result = chain(&[gate, label], input);
+        let result = chain(&[gate, label], input, false);
 
         assert!(result.success);
         assert_eq!(
@@ -856,8 +864,12 @@ tests:
 
         for r in &results {
             assert_eq!(r.iterations, 100);
-            assert!(r.min_us <= r.avg_us as u64 + 1);
-            assert!(r.avg_us <= r.max_us as f64 + 1.0);
+            #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // f64→u64 for test assertion comparison
+            let avg_as_u64 = r.avg_us as u64;
+            assert!(r.min_us <= avg_as_u64 + 1);
+            #[allow(clippy::as_conversions)] // u64→f64 for test assertion comparison
+            let max_as_f64 = r.max_us as f64;
+            assert!(r.avg_us <= max_as_f64 + 1.0);
             assert!(r.p95_us <= r.max_us);
             assert!(r.tests_pass);
             // Sub-millisecond: p95 should be under 1000us
@@ -1512,7 +1524,7 @@ tests:
         let mut input = HashMap::new();
         input.insert("reporter".to_string(), Value::Bool(true));
 
-        let result = chain::chain(&[source, consumer], input);
+        let result = chain::chain(&[source, consumer], input, false);
         assert!(result.success, "Chain should succeed");
         assert_eq!(
             result.final_output.get("route"),
@@ -1567,7 +1579,7 @@ tests:
         input.insert("raw_score".to_string(), Value::Int(25));  // alias → low
         input.insert("score".to_string(), Value::Int(75));       // direct → high
 
-        let result = chain::chain(&[consumer], input);
+        let result = chain::chain(&[consumer], input, false);
         assert!(result.success);
         assert_eq!(
             result.final_output.get("result"),
@@ -1647,5 +1659,283 @@ tests:
         assert!(plan.feasible, "Should compose a feasible chain via alias: {:?}", plan);
         assert!(plan.chain.contains(&"source-mg".to_string()), "Chain should include source");
         assert!(plan.chain.contains(&"consumer-mg".to_string()), "Chain should include consumer");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Application 1: Path Snapshot Testing
+    // ═══════════════════════════════════════════════════════════════════
+
+    #[test]
+    fn test_path_snapshot_pass() {
+        let gate = Microgram::parse(THRESHOLD_GATE).unwrap();
+        let label = Microgram::parse(SCORE_LABEL).unwrap();
+
+        let mut input = HashMap::new();
+        input.insert("value".to_string(), Value::Int(90));
+
+        let expected_paths = vec![
+            vec!["check".to_string(), "pass".to_string()],        // gate: 90 >= 80 → pass
+            vec!["check".to_string(), "high".to_string()],        // label: 100 >= 50 → high
+        ];
+
+        let (_result, snapshot) = chain::chain_verify_paths(
+            &[gate, label], input, &expected_paths, false,
+        );
+        assert!(snapshot.success, "Path snapshot should match: {:?}", snapshot.mismatches);
+        assert_eq!(snapshot.steps_checked, 2);
+    }
+
+    #[test]
+    fn test_path_snapshot_detects_structural_change() {
+        let gate = Microgram::parse(THRESHOLD_GATE).unwrap();
+        let label = Microgram::parse(SCORE_LABEL).unwrap();
+
+        let mut input = HashMap::new();
+        input.insert("value".to_string(), Value::Int(90));
+
+        // Deliberately wrong path expectation
+        let expected_paths = vec![
+            vec!["check".to_string(), "fail".to_string()],        // WRONG: actually passes
+            vec!["check".to_string(), "high".to_string()],
+        ];
+
+        let (_result, snapshot) = chain::chain_verify_paths(
+            &[gate, label], input, &expected_paths, false,
+        );
+        assert!(!snapshot.success, "Should detect path mismatch");
+        assert_eq!(snapshot.mismatches.len(), 1);
+        assert_eq!(snapshot.mismatches[0].step_index, 0);
+        assert_eq!(snapshot.mismatches[0].step_name, "threshold-gate");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Application 2: Multi-Error Chain Validation
+    // ═══════════════════════════════════════════════════════════════════
+
+    #[test]
+    fn test_validate_all_reports_every_step() {
+        // Build a chain where multiple steps have required fields
+        let step_a = Microgram::parse(r#"
+name: step-a
+description: "Requires x"
+interface:
+  inputs:
+    x:
+      type: int
+      required: true
+  outputs:
+    y:
+      type: int
+tree:
+  start: ret
+  nodes:
+    ret:
+      type: return
+      value:
+        y: 1
+tests:
+  - input: { x: 1 }
+    expect: { y: 1 }
+"#).unwrap();
+
+        let step_b = Microgram::parse(r#"
+name: step-b
+description: "Requires z"
+interface:
+  inputs:
+    z:
+      type: string
+      required: true
+  outputs:
+    result:
+      type: string
+tree:
+  start: ret
+  nodes:
+    ret:
+      type: return
+      value:
+        result: done
+tests:
+  - input: { z: "hello" }
+    expect: { result: done }
+"#).unwrap();
+
+        // Empty input — both steps should report errors
+        let result = chain::chain_validate_all(&[step_a, step_b], &HashMap::new());
+        assert!(!result.valid);
+        assert_eq!(result.total_errors, 2);
+        assert_eq!(result.step_errors.len(), 2);
+        assert_eq!(result.step_errors[0].step_name, "step-a");
+        assert_eq!(result.step_errors[1].step_name, "step-b");
+    }
+
+    #[test]
+    fn test_validate_all_clean_when_inputs_provided() {
+        let gate = Microgram::parse(THRESHOLD_GATE).unwrap();
+        let label = Microgram::parse(SCORE_LABEL).unwrap();
+
+        // These micrograms have no required fields, so any input is valid
+        let result = chain::chain_validate_all(&[gate, label], &HashMap::new());
+        assert!(result.valid);
+        assert_eq!(result.total_errors, 0);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Application 3: Vocabulary Hygiene
+    // ═══════════════════════════════════════════════════════════════════
+
+    #[test]
+    fn test_hygiene_detects_field_gaps() {
+        let producer = Microgram::parse(r#"
+name: producer
+description: "Outputs alpha and beta"
+interface:
+  inputs: {}
+  outputs:
+    alpha:
+      type: int
+    beta:
+      type: string
+tree:
+  start: ret
+  nodes:
+    ret:
+      type: return
+      value:
+        alpha: 1
+        beta: "x"
+tests:
+  - input: {}
+    expect: { alpha: 1, beta: "x" }
+"#).unwrap();
+
+        let consumer = Microgram::parse(r#"
+name: consumer
+description: "Needs alpha, beta, and gamma"
+interface:
+  inputs:
+    alpha:
+      type: int
+    beta:
+      type: string
+    gamma:
+      type: bool
+      required: true
+  outputs:
+    result:
+      type: string
+tree:
+  start: ret
+  nodes:
+    ret:
+      type: return
+      value:
+        result: done
+tests:
+  - input: { alpha: 1, beta: "x", gamma: true }
+    expect: { result: done }
+"#).unwrap();
+
+        let report = hygiene::check_chain_hygiene(&[producer, consumer], &HashMap::new());
+        assert!(!report.clean, "Should detect missing required field 'gamma'");
+        assert_eq!(report.required_gaps, 1);
+        assert_eq!(report.total_gaps, 1);
+        assert_eq!(report.boundaries[0].coverage, 2.0 / 3.0);
+        assert_eq!(report.boundaries[0].gaps[0].field, "gamma");
+    }
+
+    #[test]
+    fn test_hygiene_clean_when_all_fields_satisfied() {
+        let producer = Microgram::parse(r#"
+name: producer
+description: "Outputs score"
+interface:
+  outputs:
+    score:
+      type: int
+tree:
+  start: ret
+  nodes:
+    ret:
+      type: return
+      value:
+        score: 100
+tests:
+  - input: {}
+    expect: { score: 100 }
+"#).unwrap();
+
+        let consumer = Microgram::parse(r#"
+name: consumer
+description: "Needs score"
+interface:
+  inputs:
+    score:
+      type: int
+      required: true
+  outputs:
+    label:
+      type: string
+tree:
+  start: ret
+  nodes:
+    ret:
+      type: return
+      value:
+        label: HIGH
+tests:
+  - input: { score: 100 }
+    expect: { label: HIGH }
+"#).unwrap();
+
+        let report = hygiene::check_chain_hygiene(&[producer, consumer], &HashMap::new());
+        assert!(report.clean, "All required fields satisfied");
+        assert_eq!(report.required_gaps, 0);
+        assert_eq!(report.overall_coverage, 1.0);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Integration Patrol
+    // ═══════════════════════════════════════════════════════════════════
+
+    #[test]
+    fn test_patrol_runs_on_codebase() {
+        // Run patrol against the actual microgram module
+        let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let report = patrol::run_patrol_default(project_root).unwrap();
+
+        // Patrol should find symbols and classify them
+        assert!(report.total_symbols > 0, "Should find pub functions");
+        assert_eq!(report.unclassified, 0, "All re-exported symbols should be classified");
+
+        // Every finding should have a valid verdict
+        for finding in &report.findings {
+            match &finding.verdict {
+                patrol::PatrolVerdict::Ok => {
+                    // Ring meets or exceeds expected
+                }
+                patrol::PatrolVerdict::Unwired => {
+                    // Feature at Ring < 2 or library at Ring 0
+                    assert!(
+                        finding.actual_ring < finding.expected_ring,
+                        "Unwired finding {}: actual {:?} should be below expected {:?}",
+                        finding.symbol, finding.actual_ring, finding.expected_ring
+                    );
+                }
+                patrol::PatrolVerdict::Unclassified => {
+                    assert_eq!(finding.classification, patrol::SymbolClass::Unclassified);
+                }
+                patrol::PatrolVerdict::StaleConfig => {
+                    panic!(
+                        "Stale config entry '{}': listed in patrol.yaml but not found in source",
+                        finding.symbol
+                    );
+                }
+            }
+        }
+
+        // No stale config entries should exist
+        assert_eq!(report.stale, 0, "patrol.yaml should not contain stale entries");
     }
 }

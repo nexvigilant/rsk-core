@@ -3,8 +3,7 @@
 use crate::cli::actions::MicrogramAction;
 use rsk::modules::decision_engine::Value as RskValue;
 use rsk::modules::microgram::{
-    alias_check, auto_execute, bench_all, catalog, chain_loop_by_names,
-    chain_resilient_by_names, clone_mutated,
+    alias_check, auto_execute, bench_all, catalog, clone_mutated,
     compose, coverage_all, diff, evolve_tests, load_all, matrix, merge, pipe, pipe_chain, shrink,
     snapshot_restore, snapshot_save, stress_all, test_all, test_chains, test_processes,
     validate_contracts,
@@ -136,8 +135,11 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 .unwrap_or_default()
             );
         }
-        MicrogramAction::Chain { chain, dir, input, resilient, accumulate } => {
-            use rsk::modules::microgram::{chain_by_names, chain_accumulate_by_names};
+        MicrogramAction::Chain { chain, dir, input, resilient, accumulate, strict } => {
+            use rsk::modules::microgram::chain::{
+                chain as chain_fn, chain_accumulate, chain_resilient,
+            };
+            use rsk::modules::microgram::load_all;
 
             let names: Vec<&str> = chain.split("->").map(|s| s.trim()).collect();
 
@@ -152,14 +154,27 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 }
             };
 
-            if *resilient {
-                let result = match chain_resilient_by_names(Path::new(dir), &names, variables) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        eprintln!("{}", json!({"status": "error", "message": e}));
+            // Load micrograms once, resolve by name
+            let all = match load_all(Path::new(dir)) {
+                Ok(a) => a,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+            let mut ordered = Vec::with_capacity(names.len());
+            for name in &names {
+                match all.iter().find(|mg| mg.name == *name) {
+                    Some(mg) => ordered.push(mg.clone()),
+                    None => {
+                        eprintln!("{}", json!({"status": "error", "message": format!("Microgram '{}' not found in {}", name, dir)}));
                         std::process::exit(1);
                     }
-                };
+                }
+            }
+
+            if *resilient {
+                let result = chain_resilient(&ordered, variables, *strict);
 
                 println!(
                     "{}",
@@ -179,13 +194,7 @@ pub fn handle_microgram(action: &MicrogramAction) {
                     .unwrap_or_default()
                 );
             } else if *accumulate {
-                let result = match chain_accumulate_by_names(Path::new(dir), &names, variables) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        eprintln!("{}", json!({"status": "error", "message": e}));
-                        std::process::exit(1);
-                    }
-                };
+                let result = chain_accumulate(&ordered, variables, *strict);
 
                 println!(
                     "{}",
@@ -204,13 +213,7 @@ pub fn handle_microgram(action: &MicrogramAction) {
                     .unwrap_or_default()
                 );
             } else {
-                let result = match chain_by_names(Path::new(dir), &names, variables) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        eprintln!("{}", json!({"status": "error", "message": e}));
-                        std::process::exit(1);
-                    }
-                };
+                let result = chain_fn(&ordered, variables, *strict);
 
                 println!(
                     "{}",
@@ -229,7 +232,10 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 );
             }
         }
-        MicrogramAction::Loop { chain, dir, input, max_iterations, halt_field, halt_value } => {
+        MicrogramAction::Loop { chain, dir, input, max_iterations, halt_field, halt_value, strict } => {
+            use rsk::modules::microgram::chain::chain_loop;
+            use rsk::modules::microgram::load_all;
+
             let names: Vec<&str> = chain.split("->").map(|s| s.trim()).collect();
 
             let variables: HashMap<String, RskValue> = match serde_json::from_str(input) {
@@ -243,22 +249,34 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 }
             };
 
-            let hv: Option<RskValue> = halt_value.as_ref().and_then(|v| serde_json::from_str(v).ok());
-
-            let result = match chain_loop_by_names(
-                Path::new(dir),
-                &names,
-                variables,
-                *max_iterations,
-                halt_field.as_deref(),
-                hv.as_ref(),
-            ) {
-                Ok(r) => r,
+            let all = match load_all(Path::new(dir)) {
+                Ok(a) => a,
                 Err(e) => {
                     eprintln!("{}", json!({"status": "error", "message": e}));
                     std::process::exit(1);
                 }
             };
+            let mut ordered = Vec::with_capacity(names.len());
+            for name in &names {
+                match all.iter().find(|mg| mg.name == *name) {
+                    Some(mg) => ordered.push(mg.clone()),
+                    None => {
+                        eprintln!("{}", json!({"status": "error", "message": format!("Microgram '{}' not found in {}", name, dir)}));
+                        std::process::exit(1);
+                    }
+                }
+            }
+
+            let hv: Option<RskValue> = halt_value.as_ref().and_then(|v| serde_json::from_str(v).ok());
+
+            let result = chain_loop(
+                &ordered,
+                variables,
+                *max_iterations,
+                halt_field.as_deref(),
+                hv.as_ref(),
+                *strict,
+            );
 
             println!(
                 "{}",
@@ -306,7 +324,7 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 std::process::exit(1);
             }
 
-            let file_path = dir.join(format!("{}.yaml", name));
+            let file_path = dir.join(format!("{name}.yaml"));
             if let Err(e) = std::fs::write(&file_path, &yaml) {
                 eprintln!("{}", json!({"status": "error", "message": format!("Cannot write: {e}")}));
                 std::process::exit(1);
@@ -544,16 +562,13 @@ pub fn handle_microgram(action: &MicrogramAction) {
                             "tests": e.test_count,
                             "pass": e.tests_pass,
                         });
-                        if !e.aliases.is_empty() {
-                            entry.as_object_mut().unwrap().insert(
-                                "aliases".to_string(),
-                                json!(e.aliases),
-                            );
+                        if !e.aliases.is_empty() && let Some(obj) = entry.as_object_mut() {
+                            obj.insert("aliases".to_string(), json!(e.aliases));
                         }
                         entry
                     }).collect::<Vec<_>>(),
                     "connections": cat.connections.iter().map(|(a, b)| {
-                        format!("{} -> {}", a, b)
+                        format!("{a} -> {b}")
                     }).collect::<Vec<_>>(),
                 }))
                 .unwrap_or_default()
@@ -594,7 +609,7 @@ pub fn handle_microgram(action: &MicrogramAction) {
             if !dir.exists() {
                 let _ = std::fs::create_dir_all(dir);
             }
-            let file_path = dir.join(format!("{}.yaml", name));
+            let file_path = dir.join(format!("{name}.yaml"));
             if let Err(e) = std::fs::write(&file_path, &yaml) {
                 eprintln!("{}", json!({"status": "error", "message": format!("{e}")}));
                 std::process::exit(1);
@@ -638,12 +653,9 @@ pub fn handle_microgram(action: &MicrogramAction) {
                     Ok(a) => a,
                     Err(e) => { eprintln!("{}", json!({"status": "error", "message": e})); std::process::exit(1); }
                 };
-                let mg = match all.iter().find(|m| m.name == *target) {
-                    Some(m) => m,
-                    None => {
-                        eprintln!("{}", json!({"status": "error", "message": format!("Microgram '{}' not found", target)}));
-                        std::process::exit(1);
-                    }
+                let Some(mg) = all.iter().find(|m| m.name == *target) else {
+                    eprintln!("{}", json!({"status": "error", "message": format!("Microgram '{target}' not found")}));
+                    std::process::exit(1);
                 };
                 let result = pipe(mg, &input_data);
                 println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
@@ -737,6 +749,7 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 Err(e) => { eprintln!("{}", json!({"status": "error", "message": e})); std::process::exit(1); }
             };
 
+            #[allow(clippy::as_conversions)] // usize→f64 for averaging — safe for microgram counts
             let avg_cov: f64 = if results.is_empty() { 0.0 } else {
                 results.iter().map(|r| r.coverage_pct).sum::<f64>() / results.len() as f64
             };
@@ -771,7 +784,7 @@ pub fn handle_microgram(action: &MicrogramAction) {
 
             let dir = Path::new(out_dir);
             if !dir.exists() { let _ = std::fs::create_dir_all(dir); }
-            let file_path = dir.join(format!("{}.yaml", name));
+            let file_path = dir.join(format!("{name}.yaml"));
             if let Err(e) = std::fs::write(&file_path, yaml) {
                 eprintln!("{}", json!({"status": "error", "message": format!("{e}")}));
                 std::process::exit(1);
@@ -884,6 +897,140 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 .unwrap_or_default()
             );
         }
+        MicrogramAction::ValidateChain { chain, dir, input } => {
+            use rsk::modules::microgram::chain::chain_validate_all;
+            use rsk::modules::microgram::load_all;
+
+            let names: Vec<&str> = chain.split("->").map(|s| s.trim()).collect();
+
+            let variables: HashMap<String, RskValue> = match serde_json::from_str(input) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Invalid input JSON: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let all = match load_all(Path::new(dir)) {
+                Ok(a) => a,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+            let mut ordered = Vec::with_capacity(names.len());
+            for name in &names {
+                match all.iter().find(|mg| mg.name == *name) {
+                    Some(mg) => ordered.push(mg.clone()),
+                    None => {
+                        eprintln!("{}", json!({"status": "error", "message": format!("Microgram '{}' not found in {}", name, dir)}));
+                        std::process::exit(1);
+                    }
+                }
+            }
+
+            let result = chain_validate_all(&ordered, &variables);
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "valid": result.valid,
+                    "steps_checked": result.steps_checked,
+                    "total_errors": result.total_errors,
+                    "step_errors": result.step_errors,
+                }))
+                .unwrap_or_default()
+            );
+        }
+        MicrogramAction::Hygiene { chain, dir, input } => {
+            use rsk::modules::microgram::hygiene::check_chain_hygiene;
+            use rsk::modules::microgram::load_all;
+
+            let names: Vec<&str> = chain.split("->").map(|s| s.trim()).collect();
+
+            let variables: HashMap<String, RskValue> = match serde_json::from_str(input) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Invalid input JSON: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let all = match load_all(Path::new(dir)) {
+                Ok(a) => a,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+            let mut ordered = Vec::with_capacity(names.len());
+            for name in &names {
+                match all.iter().find(|mg| mg.name == *name) {
+                    Some(mg) => ordered.push(mg.clone()),
+                    None => {
+                        eprintln!("{}", json!({"status": "error", "message": format!("Microgram '{}' not found in {}", name, dir)}));
+                        std::process::exit(1);
+                    }
+                }
+            }
+
+            let report = check_chain_hygiene(&ordered, &variables);
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "clean": report.clean,
+                    "overall_coverage": report.overall_coverage,
+                    "total_gaps": report.total_gaps,
+                    "required_gaps": report.required_gaps,
+                    "boundaries": report.boundaries,
+                }))
+                .unwrap_or_default()
+            );
+        }
+        MicrogramAction::Patrol { root, findings_only } => {
+            use rsk::modules::microgram::patrol::run_patrol_default;
+
+            let report = match run_patrol_default(Path::new(root)) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let findings: Vec<_> = if *findings_only {
+                report.findings.iter()
+                    .filter(|f| f.verdict != rsk::modules::microgram::patrol::PatrolVerdict::Ok)
+                    .collect()
+            } else {
+                report.findings.iter().collect()
+            };
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "clean": report.clean,
+                    "total_symbols": report.total_symbols,
+                    "ok": report.ok,
+                    "unwired": report.unwired,
+                    "unclassified": report.unclassified,
+                    "stale": report.stale,
+                    "findings": findings,
+                }))
+                .unwrap_or_default()
+            );
+
+            if !report.clean {
+                std::process::exit(1);
+            }
+        }
         MicrogramAction::ChainTest { dir } => {
             let results = match test_chains(Path::new(dir)) {
                 Ok(r) => r,
@@ -923,7 +1070,7 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 std::process::exit(1);
             }
         }
-        MicrogramAction::Ci { dir, chains_dir, min_coverage } => {
+        MicrogramAction::Ci { dir, chains_dir, processes_dir, min_coverage } => {
             let mut gates_passed = 0;
             let mut gates_failed = 0;
             let mut gate_results = Vec::new();
@@ -982,8 +1129,9 @@ pub fn handle_microgram(action: &MicrogramAction) {
 
             // Gate 4: Coverage above threshold
             let cov_results = coverage_all(Path::new(dir)).unwrap_or_default();
+            let min_cov_f64 = f64::from(*min_coverage);
             let below: Vec<String> = cov_results.iter()
-                .filter(|r| r.coverage_pct < *min_coverage as f64)
+                .filter(|r| r.coverage_pct < min_cov_f64)
                 .map(|r| format!("{} ({:.0}%)", r.name, r.coverage_pct))
                 .collect();
             if below.is_empty() {
@@ -1016,6 +1164,49 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 }
             } else {
                 gate_results.push(json!({"gate": "chains", "status": "SKIP", "detail": "No chains directory"}));
+            }
+
+            // Gate 6: Process tests (if processes dir exists)
+            let procs_path = Path::new(processes_dir);
+            if procs_path.exists() {
+                match test_processes(procs_path) {
+                    Ok(proc_results) => {
+                        let proc_failed: usize = proc_results.iter().map(|r| r.failed).sum();
+                        let proc_total: usize = proc_results.iter().map(|r| r.total).sum();
+                        if proc_failed == 0 {
+                            gates_passed += 1;
+                            gate_results.push(json!({"gate": "processes", "status": "PASS", "detail": format!("{} tests across {} processes", proc_total, proc_results.len())}));
+                        } else {
+                            gates_failed += 1;
+                            gate_results.push(json!({"gate": "processes", "status": "FAIL", "detail": format!("{} process test failures", proc_failed)}));
+                        }
+                    }
+                    Err(e) => {
+                        gates_failed += 1;
+                        gate_results.push(json!({"gate": "processes", "status": "FAIL", "detail": format!("Error: {}", e)}));
+                    }
+                }
+            } else {
+                gate_results.push(json!({"gate": "processes", "status": "SKIP", "detail": "No processes directory"}));
+            }
+
+            // Gate 7: Stress test (100 iterations, no errors)
+            match stress_all(Path::new(dir), 100, 42) {
+                Ok(stress_results) => {
+                    let errored_count: usize = stress_results.iter().filter(|r| r.errored > 0).count();
+                    if errored_count == 0 {
+                        gates_passed += 1;
+                        gate_results.push(json!({"gate": "stress", "status": "PASS", "detail": format!("{} micrograms stress-tested (100 iterations each)", stress_results.len())}));
+                    } else {
+                        gates_failed += 1;
+                        let errored_names: Vec<String> = stress_results.iter().filter(|r| r.errored > 0).map(|r| format!("{} ({} errors)", r.name, r.errored)).collect();
+                        gate_results.push(json!({"gate": "stress", "status": "FAIL", "detail": format!("{} micrograms had errors: {:?}", errored_count, errored_names)}));
+                    }
+                }
+                Err(e) => {
+                    gates_failed += 1;
+                    gate_results.push(json!({"gate": "stress", "status": "FAIL", "detail": format!("Error: {}", e)}));
+                }
             }
 
             let verdict = if gates_failed == 0 { "PASS" } else { "FAIL" };

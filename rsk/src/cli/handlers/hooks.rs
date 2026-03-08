@@ -20,11 +20,11 @@ pub fn handle_hooks(action: &HooksAction) {
             let result = validate_file(&path, &policy);
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
             } else {
                 let formatted = format_validation_result(&result);
                 if !formatted.is_empty() {
-                    println!("{}", formatted);
+                    println!("{formatted}");
                 } else {
                     println!("[OK] {} - no policy violations", path.display());
                 }
@@ -35,7 +35,7 @@ pub fn handle_hooks(action: &HooksAction) {
             let result = check_staleness(&path, &policy);
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
             } else {
                 println!("{}", format_staleness_result(&result));
             }
@@ -43,7 +43,7 @@ pub fn handle_hooks(action: &HooksAction) {
         HooksAction::Categorize { path } => {
             let path = PathBuf::from(&path);
             let category = categorize_file(&path, &policy);
-            println!("{}", category);
+            println!("{category}");
         }
         HooksAction::Scan {
             path,
@@ -54,7 +54,7 @@ pub fn handle_hooks(action: &HooksAction) {
             let result = scan_directory(&path, *depth, &policy);
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
             } else {
                 println!("{}", format_scan_result(&result));
             }
@@ -75,7 +75,7 @@ pub fn handle_hooks(action: &HooksAction) {
             if let Some(rules) = &policy.placement_rules {
                 println!("Placement Rules ({} categories):", rules.len());
                 for (name, rule) in rules {
-                    println!("  {}:", name);
+                    println!("  {name}:");
                     println!("    Patterns: {:?}", rule.patterns);
                     if !rule.forbidden_paths.is_empty() {
                         println!("    Forbidden: {:?}", rule.forbidden_paths);
@@ -107,12 +107,12 @@ pub fn handle_hooks(action: &HooksAction) {
             let check = BlindspotCheck::for_file(&path, &policy);
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&check).unwrap());
+                println!("{}", serde_json::to_string_pretty(&check).unwrap_or_default());
             } else {
                 println!("{}", check.message);
                 println!("\nChecklist:");
                 for item in &check.items {
-                    println!("  - {}", item);
+                    println!("  - {item}");
                 }
             }
         }

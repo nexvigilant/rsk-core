@@ -14,7 +14,9 @@ pub fn handle_yaml(action: &YamlAction) {
     match action {
         YamlAction::Parse { path } => match fs::read_to_string(path) {
             Ok(content) => match parse_yaml(&content) {
-                Ok(result) => println!("{}", serde_json::to_string_pretty(&result).unwrap()),
+                Ok(result) => {
+                    println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+                }
                 Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
             },
             Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
@@ -24,7 +26,9 @@ pub fn handle_yaml(action: &YamlAction) {
             let mut content = String::new();
             match io::stdin().read_to_string(&mut content) {
                 Ok(_) => match parse_yaml(&content) {
-                    Ok(result) => println!("{}", serde_json::to_string_pretty(&result).unwrap()),
+                    Ok(result) => {
+                        println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+                    }
                     Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
                 },
                 Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
@@ -32,7 +36,9 @@ pub fn handle_yaml(action: &YamlAction) {
         }
         YamlAction::Toml { path } => match fs::read_to_string(path) {
             Ok(content) => match parse_toml(&content) {
-                Ok(result) => println!("{}", serde_json::to_string_pretty(&result).unwrap()),
+                Ok(result) => {
+                    println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+                }
                 Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
             },
             Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
@@ -40,20 +46,24 @@ pub fn handle_yaml(action: &YamlAction) {
         YamlAction::Validate { path, schema } => match fs::read_to_string(path) {
             Ok(content) => {
                 let result = validate_schema(&content, schema.as_deref());
-                println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
             }
             Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
         },
         YamlAction::DecisionTree { path } => match fs::read_to_string(path) {
             Ok(content) => match analyze_decision_tree(&content) {
-                Ok(analysis) => println!("{}", serde_json::to_string_pretty(&analysis).unwrap()),
+                Ok(analysis) => {
+                    println!("{}", serde_json::to_string_pretty(&analysis).unwrap_or_default());
+                }
                 Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
             },
             Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
         },
         YamlAction::Taxonomy { path } => match fs::read_to_string(path) {
             Ok(content) => match extract_taxonomy_schema(&content) {
-                Ok(schema) => println!("{}", serde_json::to_string_pretty(&schema).unwrap()),
+                Ok(schema) => {
+                    println!("{}", serde_json::to_string_pretty(&schema).unwrap_or_default());
+                }
                 Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
             },
             Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
@@ -61,7 +71,7 @@ pub fn handle_yaml(action: &YamlAction) {
         YamlAction::Frontmatter { path } => match fs::read_to_string(path) {
             Ok(content) => match parse_yaml_frontmatter(&content) {
                 Ok(frontmatter) => {
-                    println!("{}", serde_json::to_string_pretty(&frontmatter).unwrap())
+                    println!("{}", serde_json::to_string_pretty(&frontmatter).unwrap_or_default());
                 }
                 Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
             },
@@ -104,7 +114,7 @@ pub fn handle_yaml(action: &YamlAction) {
                         ExecutionResult::Error(e) => json!({"error": e}),
                     }
                 }))
-                .unwrap()
+                .unwrap_or_default()
             );
         }
     }

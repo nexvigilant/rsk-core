@@ -151,15 +151,18 @@ class SuiteReport:
 
 # --- Microgram Execution ---
 
-def run_mcg(name, inputs, timeout=5):
+def run_mcg(name, inputs, timeout=5, strict=False):
     """Execute a microgram and return (success, output_dict, duration_us)."""
     path = os.path.join(MCG_DIR, f"{name}.yaml")
     if not os.path.exists(path):
         return False, {"error": f"File not found: {path}"}, 0
 
     try:
+        cmd = [RSK_BIN, "mcg", "run", "-i", json.dumps(inputs), path]
+        if strict:
+            cmd.append("--strict")
         result = subprocess.run(
-            [RSK_BIN, "mcg", "run", "-i", json.dumps(inputs), path],
+            cmd,
             capture_output=True, text=True, timeout=timeout
         )
         if result.returncode != 0:
@@ -213,7 +216,7 @@ def test_rejection(verbose=False):
             continue  # Skip micrograms with no required fields
 
         # Test 1a: Empty input should fail when required fields exist
-        success, output, _ = run_mcg(name, {})
+        success, output, _ = run_mcg(name, {}, strict=True)
         if success:
             report.results.append(TestResult(
                 suite="REJECTION",
@@ -232,7 +235,7 @@ def test_rejection(verbose=False):
             ))
 
         # Test 1b: Garbage fields (no valid fields present)
-        success, output, _ = run_mcg(name, {"bogus_xyz": "garbage"})
+        success, output, _ = run_mcg(name, {"bogus_xyz": "garbage"}, strict=True)
         if success:
             report.results.append(TestResult(
                 suite="REJECTION",

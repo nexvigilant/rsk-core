@@ -32,28 +32,28 @@ pub fn handle_text(action: &TextAction) {
         TextAction::Smst { path } => match fs::read_to_string(path) {
             Ok(content) => {
                 let result = rsk::extract_smst(&content);
-                println!("{}", serde_json::to_string_pretty(&result).unwrap());
+                println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
             }
             Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
         },
         TextAction::Tokenize { text } => {
             let result = rsk::tokenize(text);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         TextAction::Normalize {
             text,
             strip_punctuation,
         } => {
             let result = rsk::normalize(text, *strip_punctuation);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         TextAction::Frequency { text, top } => {
             let result = rsk::word_frequency(text, *top);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         TextAction::Entropy { text } => {
             let result = rsk::analyze_compressibility(text);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap());
+            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
         }
         TextAction::Ngrams { text, n, words } => {
             let ngrams = rsk::extract_ngrams(text, *n, *words);

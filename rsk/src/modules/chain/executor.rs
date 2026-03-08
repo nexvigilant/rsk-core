@@ -122,7 +122,7 @@ impl ExecutionContext {
 
         // Add step outputs with step_ prefix
         for (i, v) in &self.step_outputs {
-            obj.insert(format!("step_{}", i), v.clone());
+            obj.insert(format!("step_{i}"), v.clone());
         }
 
         // Add metadata
@@ -228,7 +228,7 @@ fn execute_step(
     let start = Instant::now();
     let start_time = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as u64)
+        .map(|d| u64::try_from(d.as_millis()).unwrap_or(u64::MAX))
         .unwrap_or(0);
 
     // Dry run mode
@@ -248,8 +248,8 @@ fn execute_step(
 
     // Execute the skill
     let result = executor.execute(&step.skill, step.args.as_deref(), context);
-    let duration_ms = start.elapsed().as_millis() as u64;
-    let end_time = start_time + duration_ms;
+    let duration_ms = u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX);
+    let end_time = start_time.saturating_add(duration_ms);
 
     // Store output in context
     if result.success {
@@ -454,8 +454,8 @@ fn execute_step_parallel(
     let start = Instant::now();
     let start_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis() as u64;
+        .map(|d| u64::try_from(d.as_millis()).unwrap_or(u64::MAX))
+        .unwrap_or(0);
 
     if config.dry_run {
         return StepResult {
@@ -472,8 +472,8 @@ fn execute_step_parallel(
     }
 
     let exec_result = executor.execute(&step.skill, step.args.as_deref(), context);
-    let duration_ms = start.elapsed().as_millis() as u64;
-    let end_time = start_time + duration_ms;
+    let duration_ms = u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX);
+    let end_time = start_time.saturating_add(duration_ms);
 
     if exec_result.success {
         StepResult {
@@ -516,8 +516,8 @@ fn execute_conditional_step_parallel(
     let condition_met = evaluate_condition(&cond_step.condition, &context.as_json());
     let start_time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis() as u64;
+        .map(|d| u64::try_from(d.as_millis()).unwrap_or(u64::MAX))
+        .unwrap_or(0);
 
     if condition_met {
         let mut result =
@@ -664,7 +664,7 @@ pub fn execute_chain(
         }
     });
 
-    let duration_ms = start.elapsed().as_millis() as u64;
+    let duration_ms = u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX);
 
     ChainResult {
         chain_name: chain.name.clone(),

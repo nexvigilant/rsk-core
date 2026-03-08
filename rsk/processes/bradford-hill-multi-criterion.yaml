@@ -1,0 +1,91 @@
+name: bradford-hill-multi-criterion
+description: 'Governed Bradford Hill multi-criterion assessment: temporal + signal + dose-response + rechallenge + Naranjo causality. The highest-composition artifact — 5 micrograms × governor × loop × accumulate. Crown process.'
+version: 0.1.0
+micrograms_dir: ../micrograms
+
+steps:
+  - temporal-association
+  - signal-comparator
+  - dose-response-classifier
+  - rechallenge-evaluator
+  - naranjo-quick
+
+governor: loop-governor
+max_iterations: 3
+detect_convergence: true
+accumulate: true
+trajectory: true
+
+primitive_signature:
+  dominant: 'ρ'
+  expression: 'ρ(κ(temporal) → κ(signal) → κ(dose-response) → κ(rechallenge) → μ(naranjo)) at ∂(governor)'
+  primes: ['ρ', 'κ', '∂', 'N', 'μ', '→']
+
+tests:
+# Strong evidence converges
+- name: strong evidence converges
+  input:
+    drug_start_to_event_days: 3
+    event_before_drug: false
+    signal_a: 5.0
+    signal_b: 4.5
+    threshold: 2.0
+    low_dose_rate: 10
+    mid_dose_rate: 25
+    high_dose_rate: 50
+    baseline_rate: 5
+    first_exposure_rate: 20
+    rechallenge_rate: 20
+    naranjo_score: 7
+    scale: chain
+    session_levels: "5,5,4,5"
+  expect:
+    temporal_plausibility: STRONG
+    causality: PROBABLE
+    experiment_criterion_met: 'yes'
+  expect_halt: Convergence
+
+# Weak evidence converges
+- name: weak evidence converges
+  input:
+    drug_start_to_event_days: 120
+    event_before_drug: false
+    signal_a: 1.0
+    signal_b: 0.8
+    threshold: 2.0
+    low_dose_rate: 15
+    mid_dose_rate: 15
+    high_dose_rate: 15
+    baseline_rate: 10
+    first_exposure_rate: 8
+    rechallenge_rate: 9
+    naranjo_score: 2
+    scale: chain
+    session_levels: "4,4,3,4"
+  expect:
+    temporal_plausibility: WEAK
+    causality: POSSIBLE
+    experiment_criterion_met: 'no'
+  expect_halt: Convergence
+
+# Mixed evidence converges
+- name: mixed evidence converges
+  input:
+    drug_start_to_event_days: 5
+    event_before_drug: false
+    signal_a: 3.0
+    signal_b: 1.5
+    threshold: 2.0
+    low_dose_rate: 20
+    mid_dose_rate: 15
+    high_dose_rate: 10
+    baseline_rate: 5
+    first_exposure_rate: 15
+    rechallenge_rate: 30
+    naranjo_score: 5
+    scale: chain
+    session_levels: "4,4,4,4"
+  expect:
+    temporal_plausibility: STRONG
+    causality: PROBABLE
+  expect_halt: Convergence

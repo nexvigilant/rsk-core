@@ -214,6 +214,7 @@ impl SkillGraph {
                     for v in neighbors {
                         if on_stack.contains(v) {
                             // Cycle found!
+                            #[allow(clippy::unwrap_used)] // guarded: on_stack.contains(v) is true in this branch
                             let pos = on_stack.iter().position(|x| x == v).unwrap();
                             *cycle = on_stack[pos..].to_vec();
                             return true;
@@ -266,8 +267,7 @@ impl SkillGraph {
                                 level_outputs.insert(output.clone(), node_name.clone())
                             {
                                 conflicts.push(format!(
-                                    "Resource conflict: nodes '{}' and '{}' both write to output '{}'",
-                                    other_node, node_name, output
+                                    "Resource conflict: nodes '{other_node}' and '{node_name}' both write to output '{output}'"
                                 ));
                             }
                         }

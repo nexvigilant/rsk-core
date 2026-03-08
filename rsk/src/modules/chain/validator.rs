@@ -192,6 +192,8 @@ fn validate_structure(chain: &Chain, result: &mut ValidationResult) {
 
 /// Validate skill name format.
 fn validate_skill_names(chain: &Chain, result: &mut ValidationResult) {
+    // Safety: compile-time literal pattern — Regex::new cannot fail
+    #[allow(clippy::unwrap_used)]
     let name_regex = regex::Regex::new(r"^[a-z][a-z0-9-]*$").unwrap();
 
     for (i, step) in chain.steps.iter().enumerate() {
@@ -209,8 +211,7 @@ fn validate_skill_names(chain: &Chain, result: &mut ValidationResult) {
             result.add(ValidationIssue::error(
                 "INVALID_SKILL_NAME",
                 format!(
-                    "Skill name '{}' is invalid: must be lowercase letters, digits, and hyphens, starting with a letter",
-                    skill_name
+                    "Skill name '{skill_name}' is invalid: must be lowercase letters, digits, and hyphens, starting with a letter"
                 ),
             ).at_step(i, skill_name));
         }
@@ -221,8 +222,7 @@ fn validate_skill_names(chain: &Chain, result: &mut ValidationResult) {
                 ValidationIssue::warning(
                     "RESERVED_NAME",
                     format!(
-                        "Skill name '{}' is reserved and may conflict with built-in functionality",
-                        skill_name
+                        "Skill name '{skill_name}' is reserved and may conflict with built-in functionality"
                     ),
                 )
                 .at_step(i, skill_name),
@@ -265,8 +265,7 @@ fn validate_dependencies(chain: &Chain, result: &mut ValidationResult) {
                     result.add(ValidationIssue::warning(
                         "DUPLICATE_OUTPUT",
                         format!(
-                            "Output '{}' is produced by multiple steps; later value will overwrite",
-                            output
+                            "Output '{output}' is produced by multiple steps; later value will overwrite"
                         ),
                     ).at_step(i, &chain_step.skill));
                 }
@@ -315,6 +314,8 @@ fn validate_parallel_resources(chain: &Chain, result: &mut ValidationResult) {
 
 /// Validate conditional steps.
 fn validate_conditionals(chain: &Chain, result: &mut ValidationResult) {
+    // Safety: compile-time literal pattern — Regex::new cannot fail
+    #[allow(clippy::unwrap_used)]
     let name_regex = regex::Regex::new(r"^[a-z][a-z0-9-]*$").unwrap();
     for (i, step) in chain.steps.iter().enumerate() {
         if let StepType::Conditional(cond) = step {

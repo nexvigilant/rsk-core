@@ -32,14 +32,20 @@ impl AutonomyStats {
         if self.total_nodes_executed == 0 {
             return 1.0;
         }
-        self.deterministic_nodes as f64 / self.total_nodes_executed as f64
+        #[allow(clippy::as_conversions)] // u64→f64 precision loss acceptable for ratio
+        let det = self.deterministic_nodes as f64;
+        #[allow(clippy::as_conversions)] // u64→f64 precision loss acceptable for ratio
+        let total = self.total_nodes_executed as f64;
+        det / total
     }
 
     pub fn ips(&self, total_duration_secs: f64) -> f64 {
         if total_duration_secs == 0.0 {
             return 0.0;
         }
-        self.total_nodes_executed as f64 / total_duration_secs
+        #[allow(clippy::as_conversions)] // u64→f64 precision loss acceptable for rate calculation
+        let nodes = self.total_nodes_executed as f64;
+        nodes / total_duration_secs
     }
 }
 
@@ -130,7 +136,7 @@ pub fn init_telemetry(config: TelemetryConfig) -> anyhow::Result<()> {
                 .with(filter_layer)
                 .with(fmt_layer)
                 .try_init()
-                .map_err(|e| anyhow::anyhow!("Failed to initialize JSON telemetry: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to initialize JSON telemetry: {e}"))?;
         }
         "compact" => {
             let fmt_layer = fmt::layer()
@@ -143,7 +149,7 @@ pub fn init_telemetry(config: TelemetryConfig) -> anyhow::Result<()> {
                 .with(filter_layer)
                 .with(fmt_layer)
                 .try_init()
-                .map_err(|e| anyhow::anyhow!("Failed to initialize compact telemetry: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to initialize compact telemetry: {e}"))?;
         }
         _ => {
             let fmt_layer = fmt::layer()
@@ -155,7 +161,7 @@ pub fn init_telemetry(config: TelemetryConfig) -> anyhow::Result<()> {
                 .with(filter_layer)
                 .with(fmt_layer)
                 .try_init()
-                .map_err(|e| anyhow::anyhow!("Failed to initialize default telemetry: {}", e))?;
+                .map_err(|e| anyhow::anyhow!("Failed to initialize default telemetry: {e}"))?;
         }
     }
 
@@ -215,7 +221,7 @@ impl OperationTimer {
         let ms = elapsed.as_millis();
 
         if let Some(threshold) = self.threshold_warn_ms
-            && ms > threshold as u128
+            && ms > u128::from(threshold)
         {
             tracing::warn!(
                 target: "rsk",
@@ -263,10 +269,13 @@ impl Metric {
             name: name.to_string(),
             value: MetricValue::Counter(value),
             labels: vec![],
-            timestamp_ms: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_millis() as u64,
+            timestamp_ms: u64::try_from(
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis(),
+            )
+            .unwrap_or(u64::MAX),
         }
     }
 }

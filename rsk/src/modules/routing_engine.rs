@@ -183,10 +183,10 @@ impl std::fmt::Display for RoutingError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::GraphNotLoaded => write!(f, "Skill graph not loaded"),
-            Self::SourceNotFound(s) => write!(f, "Source skill not found: {}", s),
-            Self::InvalidStrategy(s) => write!(f, "Invalid routing strategy: {}", s),
-            Self::IoError(s) => write!(f, "IO error: {}", s),
-            Self::ParseError(s) => write!(f, "Parse error: {}", s),
+            Self::SourceNotFound(s) => write!(f, "Source skill not found: {s}"),
+            Self::InvalidStrategy(s) => write!(f, "Invalid routing strategy: {s}"),
+            Self::IoError(s) => write!(f, "IO error: {s}"),
+            Self::ParseError(s) => write!(f, "Parse error: {s}"),
         }
     }
 }
@@ -274,7 +274,7 @@ impl RoutingEngine {
 
         // Sort by score descending and take top N
         let mut recommendations: Vec<RoutingScore> = scores.into_iter().collect();
-        recommendations.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        recommendations.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
         recommendations.truncate(request.limit);
 
         Ok(RoutingResult {
@@ -283,7 +283,7 @@ impl RoutingEngine {
             strategy: request.strategy,
             recommendations,
             total_considered: self.skill_names.len(),
-            duration_ms: start.elapsed().as_millis() as u64,
+            duration_ms: u64::try_from(start.elapsed().as_millis()).unwrap_or(u64::MAX),
         })
     }
 
@@ -334,7 +334,7 @@ impl RoutingEngine {
             for trigger in &capability.triggers {
                 if query_lower.contains(&trigger.to_lowercase()) {
                     score += 0.5;
-                    matched.push(format!("trigger: {}", trigger));
+                    matched.push(format!("trigger: {trigger}"));
                 }
             }
 
@@ -342,7 +342,7 @@ impl RoutingEngine {
             for handle in &capability.handles {
                 if query_lower.contains(&handle.to_lowercase()) {
                     score += 0.3;
-                    matched.push(format!("handles: {}", handle));
+                    matched.push(format!("handles: {handle}"));
                 }
             }
 
@@ -350,7 +350,7 @@ impl RoutingEngine {
             for keyword in &capability.keywords {
                 if query_lower.contains(&keyword.to_lowercase()) {
                     score += 0.1;
-                    matched.push(format!("keyword: {}", keyword));
+                    matched.push(format!("keyword: {keyword}"));
                 }
             }
 
@@ -358,6 +358,7 @@ impl RoutingEngine {
                 scores.push(RoutingScore {
                     target: capability.name.clone(),
                     score: score.min(1.0),
+                    #[allow(clippy::as_conversions)] // usize→f32 for confidence scoring
                     confidence: (matched.len() as f32 * 0.2).min(0.9),
                     reasoning: matched.join(", "),
                     strategy_scores: {
@@ -394,7 +395,7 @@ impl RoutingEngine {
                         .entry(skill.clone())
                         .or_insert((0.0, Vec::new()));
                     entry.0 += 0.3;
-                    entry.1.push(format!("exact: {}", word));
+                    entry.1.push(format!("exact: {word}"));
                 }
             }
 
@@ -402,6 +403,7 @@ impl RoutingEngine {
             for (indexed_word, skills) in &self.semantic_index {
                 let distance = levenshtein(&word_lower, indexed_word).distance;
                 if distance <= 2 && distance > 0 {
+                    #[allow(clippy::as_conversions)] // usize→f32 for similarity scoring
                     let similarity =
                         1.0 - (distance as f32 / word_lower.len().max(indexed_word.len()) as f32);
                     for skill in skills {
@@ -409,7 +411,7 @@ impl RoutingEngine {
                             .entry(skill.clone())
                             .or_insert((0.0, Vec::new()));
                         entry.0 += similarity * 0.2;
-                        entry.1.push(format!("fuzzy: {} ~ {}", word, indexed_word));
+                        entry.1.push(format!("fuzzy: {word} ~ {indexed_word}"));
                     }
                 }
             }
@@ -421,6 +423,7 @@ impl RoutingEngine {
             .map(|(skill, (score, matches))| RoutingScore {
                 target: skill,
                 score: score.min(1.0),
+                #[allow(clippy::as_conversions)] // usize→f32 for confidence scoring
                 confidence: (matches.len() as f32 * 0.15).min(0.8),
                 reasoning: matches.into_iter().take(3).collect::<Vec<_>>().join(", "),
                 strategy_scores: {

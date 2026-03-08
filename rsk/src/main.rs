@@ -287,10 +287,16 @@ fn main() {
         // Server command
         Commands::Server { socket } => {
             let path = socket.unwrap_or_else(|| "/tmp/rsk-state.sock".to_string());
-            let rt = tokio::runtime::Runtime::new().unwrap();
+            let Ok(rt) = tokio::runtime::Runtime::new() else {
+                eprintln!("Failed to create tokio runtime");
+                std::process::exit(1);
+            };
             rt.block_on(async {
                 let server = rsk::StateServer::new(&path);
-                server.run().await.unwrap();
+                if let Err(e) = server.run().await {
+                    eprintln!("Server error: {e}");
+                    std::process::exit(1);
+                }
             });
         }
 

@@ -46,13 +46,14 @@ impl Value {
             Value::Int(i) => i.to_string(),
             Value::Float(f) => f.to_string(),
             Value::String(s) => s.clone(),
-            Value::Array(arr) => format!("{:?}", arr),
-            Value::Object(obj) => format!("{:?}", obj),
+            Value::Array(arr) => format!("{arr:?}"),
+            Value::Object(obj) => format!("{obj:?}"),
         }
     }
 
     pub fn as_f64(&self) -> Option<f64> {
         match self {
+            #[allow(clippy::as_conversions)] // i64→f64 precision loss acceptable for numeric conversion
             Value::Int(i) => Some(*i as f64),
             Value::Float(f) => Some(*f),
             Value::String(s) => s.parse::<f64>().ok(),
@@ -125,12 +126,12 @@ pub struct DecisionEngine {
 }
 
 pub fn load_tree(yaml: &str) -> anyhow::Result<DecisionTree> {
-    serde_yaml::from_str(yaml).map_err(|e| anyhow::anyhow!("Invalid decision tree YAML: {}", e))
+    serde_yaml::from_str(yaml).map_err(|e| anyhow::anyhow!("Invalid decision tree YAML: {e}"))
 }
 
 pub fn load_tree_strict(yaml: &str) -> anyhow::Result<DecisionTree> {
     let tree: DecisionTree = serde_yaml::from_str(yaml)
-        .map_err(|e| anyhow::anyhow!("Invalid decision tree YAML: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Invalid decision tree YAML: {e}"))?;
 
     // Phase 2 mandate: No LlmFallback allowed in Diamond skills
     // We walk all nodes to ensure zero-tolerance enforcement
@@ -148,8 +149,7 @@ fn validate_node_recursive(
 ) -> anyhow::Result<()> {
     match node {
         DecisionNode::LlmFallback { .. } => Err(anyhow::anyhow!(
-            "Strict mode violation: Node '{}' uses forbidden LlmFallback. Deterministic logic required.",
-            id
+            "Strict mode violation: Node '{id}' uses forbidden LlmFallback. Deterministic logic required."
         )),
         // In the future, we could add cycle detection here if needed
         _ => Ok(()),
@@ -182,9 +182,8 @@ impl DecisionEngine {
             }
             steps += 1;
             ctx.execution_path.push(current_id.clone());
-            let node = match self.tree.nodes.get(&current_id) {
-                Some(n) => n,
-                None => return ExecutionResult::Error(format!("Node not found: {}", current_id)),
+            let Some(node) = self.tree.nodes.get(&current_id) else {
+                return ExecutionResult::Error(format!("Node not found: {current_id}"));
             };
 
             match node {
@@ -196,7 +195,7 @@ impl DecisionEngine {
                     false_next,
                 } => {
                     let var_val = ctx.get(variable).unwrap_or(&Value::Null);
-                    let resolved_value = value.as_ref().map(|v| self.interpolate_value(v, &ctx));
+                    let resolved_value = value.as_ref().map(|v| self.interpolate_value(v, ctx));
                     let result = self.evaluate_condition(var_val, operator, resolved_value.as_ref());
                     current_id = if result {
                         true_next.clone()
@@ -305,7 +304,11 @@ impl DecisionEngine {
         base: Option<Value>,
     ) -> Option<Value> {
         if part.contains('[') && part.contains(']') {
+            // SAFETY: The enclosing `if` guarantees `part` contains `[`, so
+            // `split('[')` yields at least two items; `.next()` and `.nth(1)` cannot be None.
+            #[allow(clippy::unwrap_used)]
             let base_key = part.split('[').next().unwrap();
+            #[allow(clippy::unwrap_used)]
             let idx_str = part.split('[').nth(1).unwrap().trim_end_matches(']');
 
             let array_val = if let Some(b) = base {
@@ -363,22 +366,29 @@ impl DecisionEngine {
                         .get("tactics")
                         .cloned()
                         .unwrap_or(Value::Array(Vec::new()));
+                    // SAFETY: `Value` (and `StrategicField`/`WinTactic`) all derive
+                    // Serialize; serde_json::to_string on a fully-Serialize type cannot fail.
+                    #[allow(clippy::unwrap_used)]
                     let fields: Vec<crate::modules::strategy::StrategicField> =
                         serde_json::from_str(&serde_json::to_string(&fields_val).unwrap())
                             .unwrap_or_default();
+                    #[allow(clippy::unwrap_used)]
                     let tactics: Vec<crate::modules::strategy::WinTactic> =
                         serde_json::from_str(&serde_json::to_string(&tactics_val).unwrap())
                             .unwrap_or_default();
                     let results = crate::modules::strategy::StrategyOptimizer::new(fields, tactics)
                         .optimize();
+                    // SAFETY: `results` derives Serialize; serde_json::to_string cannot fail.
+                    // The outer from_str uses unwrap_or_default as fallback for deserialization.
+                    #[allow(clippy::unwrap_used)]
                     let res_val: Vec<Value> =
-                        serde_json::from_str(&serde_json::to_string(&results).unwrap()).unwrap();
+                        serde_json::from_str(&serde_json::to_string(&results).unwrap()).unwrap_or_default();
                     Value::Array(res_val)
                 } else {
                     Value::Null
                 }
             }
-            _ => Value::String(format!("Unknown: {}", function)),
+            _ => Value::String(format!("Unknown: {function}")),
         }
     }
 

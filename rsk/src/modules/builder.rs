@@ -36,7 +36,7 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
                 path: path.to_path_buf(),
                 artifacts_created: vec![],
                 status: "failed".to_string(),
-                error: Some(format!("Failed to read SKILL.md: {}", e)),
+                error: Some(format!("Failed to read SKILL.md: {e}")),
             };
         }
     };
@@ -77,7 +77,7 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
             path: path.to_path_buf(),
             artifacts_created: vec![],
             status: "failed".to_string(),
-            error: Some(format!("Failed to create skill directory: {}", e)),
+            error: Some(format!("Failed to create skill directory: {e}")),
         };
     }
 
@@ -92,7 +92,7 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
                     path: path.to_path_buf(),
                     artifacts_created,
                     status: "failed".to_string(),
-                    error: Some(format!("Failed to write logic.yaml: {}", e)),
+                    error: Some(format!("Failed to write logic.yaml: {e}")),
                 };
             }
             artifacts_created.push("logic.yaml".to_string());
@@ -103,7 +103,7 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
                 path: path.to_path_buf(),
                 artifacts_created,
                 status: "failed".to_string(),
-                error: Some(format!("Failed to serialize logic.yaml: {}", e)),
+                error: Some(format!("Failed to serialize logic.yaml: {e}")),
             };
         }
     }
@@ -119,7 +119,7 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
                     path: path.to_path_buf(),
                     artifacts_created: artifacts_created.clone(),
                     status: "failed".to_string(),
-                    error: Some(format!("Failed to write validation_rules.json: {}", e)),
+                    error: Some(format!("Failed to write validation_rules.json: {e}")),
                 };
             }
             artifacts_created.push("validation_rules.json".to_string());
@@ -130,7 +130,7 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
                 path: path.to_path_buf(),
                 artifacts_created,
                 status: "failed".to_string(),
-                error: Some(format!("Failed to serialize validation_rules.json: {}", e)),
+                error: Some(format!("Failed to serialize validation_rules.json: {e}")),
             };
         }
     }
@@ -145,7 +145,7 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
             path: path.to_path_buf(),
             artifacts_created,
             status: "failed".to_string(),
-            error: Some(format!("Failed to create tests directory: {}", e)),
+            error: Some(format!("Failed to create tests directory: {e}")),
         };
     }
     let test_scaffold = generate_test_scaffold(&smst);
@@ -156,7 +156,7 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
             path: path.to_path_buf(),
             artifacts_created,
             status: "failed".to_string(),
-            error: Some(format!("Failed to write test_scaffold.rs: {}", e)),
+            error: Some(format!("Failed to write test_scaffold.rs: {e}")),
         };
     }
     artifacts_created.push("tests/scaffold.rs".to_string());
@@ -203,7 +203,7 @@ pub fn verify_skill_file(path: &Path) -> VerifyResult {
             checks: vec![SkillCheck {
                 name: "File existence".to_string(),
                 status: "failed".to_string(),
-                message: format!("{:?} not found", path),
+                message: format!("{path:?} not found"),
             }],
             status: "failed".to_string(),
         };
@@ -219,7 +219,7 @@ pub fn verify_skill_file(path: &Path) -> VerifyResult {
                 checks: vec![SkillCheck {
                     name: "File read".to_string(),
                     status: "failed".to_string(),
-                    message: format!("Failed to read file: {}", e),
+                    message: format!("Failed to read file: {e}"),
                 }],
                 status: "failed".to_string(),
             };
@@ -286,7 +286,7 @@ pub fn verify_skill(path: &Path) -> VerifyResult {
                 checks: vec![SkillCheck {
                     name: "SKILL.md read".to_string(),
                     status: "failed".to_string(),
-                    message: format!("Failed to read SKILL.md: {}", e),
+                    message: format!("Failed to read SKILL.md: {e}"),
                 }],
                 status: "failed".to_string(),
             };
@@ -324,7 +324,7 @@ pub fn verify_skill(path: &Path) -> VerifyResult {
             artifacts_missing = true;
         }
         checks.push(SkillCheck {
-            name: format!("Artifact: {}", file),
+            name: format!("Artifact: {file}"),
             status: if exists {
                 "passed".to_string()
             } else {

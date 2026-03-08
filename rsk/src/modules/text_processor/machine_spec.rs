@@ -20,10 +20,12 @@ macro_rules! f {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Next header pattern for section parsing
+#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
 pub(crate) static RE_NEXT_HEADER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^###|^##").unwrap());
 
 /// Skill name extraction pattern
+#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
 pub(crate) static RE_SKILL_NAME: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?m)^name:\s*([a-zA-Z0-9_-]+)").unwrap());
 
@@ -111,9 +113,13 @@ pub fn parse_skill_md(content: &str) -> ParsingResult {
             for (section_name, field_name) in section_patterns {
                 // Use regex to match optional numbering and extra text like "### 1. INPUTS (Extra)"
                 // Note: These section-specific patterns are compiled per-call but this is acceptable
-                // since the number of iterations is bounded (8 sections max)
-                let pattern = format!(r"(?im)^###\s*(?:\d+\.\s*)?{}\b", section_name);
-                let re = Regex::new(&pattern).unwrap();
+                // since the number of iterations is bounded (8 sections max).
+                // Safety: `section_name` values are compile-time string literals (INPUTS, OUTPUTS,
+                // etc.) containing only ASCII word characters — the interpolated pattern is always
+                // a valid regex and Regex::new cannot fail.
+                #[allow(clippy::unwrap_used)]
+                let re = Regex::new(&format!(r"(?im)^###\s*(?:\d+\.\s*)?{section_name}\b"))
+                    .unwrap();
 
                 if let Some(mat) = re.find(spec_content) {
                     let start: usize = mat.start();
@@ -271,9 +277,10 @@ pub fn calculate_smst_score(
     }
 
     // Section scores
-    score += (sections_present as f64) * 9.375;
+    score += f64::from(sections_present) * 9.375;
 
     // Determine compliance level based on score
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // f64→u8 for compliance level bucketing; score is bounded [0, 100]
     let compliance_level = match score as u8 {
         85..=100 => "diamond",
         70..=84 => "platinum",

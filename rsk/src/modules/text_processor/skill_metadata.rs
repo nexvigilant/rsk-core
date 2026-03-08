@@ -16,8 +16,12 @@ use crate::modules::graph::Adjacency;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Frontmatter extraction pattern
-pub(crate) static RE_FRONTMATTER: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?s)---\s*(.*?)\s*---").unwrap());
+pub(crate) static RE_FRONTMATTER: LazyLock<Regex> = LazyLock::new(|| {
+    // SAFETY: Pattern is a compile-time string literal verified to be a valid regex;
+    // Regex::new on a valid literal pattern cannot fail at runtime.
+    #[allow(clippy::unwrap_used)]
+    Regex::new(r"(?s)---\s*(.*?)\s*---").unwrap()
+});
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -93,6 +97,9 @@ impl SkillFrontmatter {
                 serde_json::Value::String(v.clone()),
             );
         }
+        // SAFETY: Vec<String> and Vec<Adjacency> (which derives Serialize) cannot produce
+        // a non-serializable value; serde_json::to_value on these types never fails.
+        #[allow(clippy::unwrap_used)]
         obj.insert(
             "categories".to_string(),
             serde_json::to_value(&self.categories).unwrap(),
@@ -107,18 +114,22 @@ impl SkillFrontmatter {
         if let Some(v) = &self.context {
             obj.insert("context".to_string(), serde_json::Value::String(v.clone()));
         }
+        #[allow(clippy::unwrap_used)]
         obj.insert(
             "depends-on".to_string(),
             serde_json::to_value(&self.depends_on).unwrap(),
         );
+        #[allow(clippy::unwrap_used)]
         obj.insert(
             "triggers".to_string(),
             serde_json::to_value(&self.triggers).unwrap(),
         );
+        #[allow(clippy::unwrap_used)]
         obj.insert(
             "keywords".to_string(),
             serde_json::to_value(&self.keywords).unwrap(),
         );
+        #[allow(clippy::unwrap_used)]
         obj.insert(
             "adjacencies".to_string(),
             serde_json::to_value(&self.adjacencies).unwrap(),

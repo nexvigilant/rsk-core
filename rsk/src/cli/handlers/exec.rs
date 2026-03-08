@@ -52,6 +52,7 @@ pub fn handle_exec(action: &ExecAction) {
                         .as_str()
                         .and_then(EffortSize::parse_str)
                         .unwrap_or(EffortSize::M);
+                    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // f64→f32 acceptable for risk score display
                     let risk = m["risk"].as_f64().unwrap_or(0.3) as f32;
 
                     ExecutionModule::new(&id, &name, deps)
@@ -77,7 +78,7 @@ pub fn handle_exec(action: &ExecAction) {
                                 "resource_conflicts": conflicts.len(),
                             }
                         }))
-                        .unwrap()
+                        .unwrap_or_default()
                     );
                 }
                 Err(e) => {
@@ -106,7 +107,7 @@ pub fn handle_exec(action: &ExecAction) {
                                     "total_steps": ctx.total_steps,
                                 }
                             }))
-                            .unwrap()
+                            .unwrap_or_default()
                         );
                     }
                     Ok(None) => {
@@ -140,7 +141,7 @@ pub fn handle_exec(action: &ExecAction) {
                                     "total_steps": ctx.total_steps,
                                 }
                             }))
-                            .unwrap()
+                            .unwrap_or_default()
                         );
                     }
                     Ok(None) => {

@@ -73,7 +73,7 @@ pub fn pipe_chain(
     let mut total_us = 0u64;
 
     for (i, input) in inputs.iter().enumerate() {
-        let chain_result = chain(&ordered, input.clone());
+        let chain_result = chain(&ordered, input.clone(), false);
         total_us += chain_result.total_duration_us;
         if chain_result.success { succeeded += 1; }
 
@@ -140,7 +140,7 @@ pub fn reduce_count(results: &PipeResult, field: &str) -> HashMap<String, usize>
     let mut counts = HashMap::new();
     for entry in &results.results {
         let key = entry.output.get(field)
-            .map(|v| format!("{:?}", v))
+            .map(|v| format!("{v:?}"))
             .unwrap_or_else(|| "null".to_string());
         *counts.entry(key).or_insert(0) += 1;
     }
@@ -152,7 +152,9 @@ fn cmp_values(a: &Value, b: &Value) -> Option<std::cmp::Ordering> {
     match (a, b) {
         (Value::Int(x), Value::Int(y)) => Some(x.cmp(y)),
         (Value::Float(x), Value::Float(y)) => x.partial_cmp(y),
+        #[allow(clippy::as_conversions)] // i64→f64 precision loss acceptable for comparison
         (Value::Int(x), Value::Float(y)) => (*x as f64).partial_cmp(y),
+        #[allow(clippy::as_conversions)] // i64→f64 precision loss acceptable for comparison
         (Value::Float(x), Value::Int(y)) => x.partial_cmp(&(*y as f64)),
         _ => None,
     }

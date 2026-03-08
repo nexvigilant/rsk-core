@@ -90,7 +90,7 @@ pub fn handle_verify(
             },
             "required": ["frontmatter", "spec", "score"]
         });
-        println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+        println!("{}", serde_json::to_string_pretty(&schema).unwrap_or_default());
         return;
     }
 
@@ -101,7 +101,7 @@ pub fn handle_verify(
     let mut all_passed = true;
 
     let diamond_threshold = rsk::lookup_compliance_level("diamond")
-        .map(|l| l.min_score as f64)
+        .map(|l| f64::from(l.min_score))
         .unwrap_or(threshold);
 
     for skill_path in &paths {
@@ -133,7 +133,7 @@ pub fn handle_verify(
     match format {
         "json" => {
             if results.len() == 1 {
-                println!("{}", serde_json::to_string_pretty(&results[0]).unwrap());
+                println!("{}", serde_json::to_string_pretty(&results[0]).unwrap_or_default());
             } else {
                 println!(
                     "{}",
@@ -143,7 +143,7 @@ pub fn handle_verify(
                         "passed": results.iter().filter(|r| r["passed"] == true).count(),
                         "results": results,
                     }))
-                    .unwrap()
+                    .unwrap_or_default()
                 );
             }
         }
@@ -169,7 +169,7 @@ pub fn handle_verify(
         "report" => {
             for r in &results {
                 if let Some(err) = r.get("error") {
-                    println!("❌ ERROR: {}", err);
+                    println!("❌ ERROR: {err}");
                     continue;
                 }
 
@@ -182,7 +182,7 @@ pub fn handle_verify(
                     .unwrap_or_default();
 
                 println!("═══════════════════════════════════════════════════════════════════");
-                println!("SMST VALIDATION REPORT: {}", name);
+                println!("SMST VALIDATION REPORT: {name}");
                 println!("═══════════════════════════════════════════════════════════════════");
                 println!();
                 println!(
@@ -193,7 +193,7 @@ pub fn handle_verify(
                         "❌ NOT READY"
                     }
                 );
-                println!("Score: {:.1}/100 (Threshold: {}%)", score, threshold);
+                println!("Score: {score:.1}/100 (Threshold: {threshold}%)");
                 println!();
 
                 println!("───────────────────────────────────────────────────────────────────");
@@ -214,7 +214,7 @@ pub fn handle_verify(
                 for section in all_sections {
                     let is_missing = missing.iter().any(|m| m.as_str() == Some(section));
                     let status = if is_missing { "□ ✗" } else { "■ ✓" };
-                    println!("{:<15} [{}]", section, status);
+                    println!("{section:<15} [{status}]");
                 }
 
                 if !missing.is_empty() {
@@ -233,7 +233,7 @@ pub fn handle_verify(
             }
         }
         _ => {
-            eprintln!("Unknown format: {}", format);
+            eprintln!("Unknown format: {format}");
             std::process::exit(1);
         }
     }
@@ -258,7 +258,7 @@ pub fn handle_build(path: &str, dry_run: bool) {
     }
 
     if all_results.len() == 1 {
-        println!("{}", serde_json::to_string_pretty(&all_results[0]).unwrap());
+        println!("{}", serde_json::to_string_pretty(&all_results[0]).unwrap_or_default());
     } else {
         println!(
             "{}",
@@ -267,7 +267,7 @@ pub fn handle_build(path: &str, dry_run: bool) {
                 "count": all_results.len(),
                 "results": all_results
             }))
-            .unwrap()
+            .unwrap_or_default()
         );
     }
 

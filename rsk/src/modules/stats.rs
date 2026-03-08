@@ -32,6 +32,7 @@ use std::f64::consts::PI;
 
 /// Standard normal CDF using statrs
 fn normal_cdf(x: f64) -> f64 {
+    #[allow(clippy::unwrap_used)] // Normal::new(0.0, 1.0) uses compile-time constants and cannot fail
     let n = Normal::new(0.0, 1.0).unwrap();
     n.cdf(x)
 }
@@ -42,6 +43,7 @@ fn t_cdf(t: f64, df: f64) -> f64 {
     if df <= 0.0 {
         return if t < 0.0 { 0.0 } else { 1.0 };
     }
+    #[allow(clippy::unwrap_used)] // df > 0.0 is guaranteed by the guard above; StudentsT::new cannot fail
     let dist = StudentsT::new(0.0, 1.0, df).unwrap();
     dist.cdf(t)
 }
@@ -74,7 +76,9 @@ fn ln_gamma(x: f64) -> f64 {
     let x = x - 1.0;
     let mut ag = c[0];
     for (i, ci) in c.iter().enumerate().skip(1) {
-        ag += ci / (x + i as f64);
+        #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+        let idx = i as f64; // usize→f64: Lanczos index, always small (1..=8)
+        ag += ci / (x + idx);
     }
 
     let t = x + g + 0.5;
@@ -113,7 +117,9 @@ fn gamma_series(a: f64, x: f64) -> f64 {
     let mut term = sum;
 
     for n in 1..max_iter {
-        term *= x / (a + n as f64);
+        #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+        let n_f64 = n as f64; // i32→f64: series index, always small (1..100)
+        term *= x / (a + n_f64);
         sum += term;
         if term.abs() < sum.abs() * eps {
             break;
@@ -134,7 +140,9 @@ fn gamma_cf(a: f64, x: f64) -> f64 {
     let mut h = d;
 
     for i in 1..=max_iter {
-        let an = -(i as f64) * (i as f64 - a);
+        #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+        let i_f64 = i as f64; // i32→f64: CF iteration index, always small (1..=100)
+        let an = -i_f64 * (i_f64 - a);
         b += 2.0;
         d = an * d + b;
         if d.abs() < 1e-30 {
@@ -307,9 +315,13 @@ pub struct ChiSquareInput {
 
 /// Chi-square test for independence (2x2 contingency table)
 pub fn chi_square_test(input: &ChiSquareInput) -> StatisticalResult {
-    let a = input.a as f64;
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    let a = input.a as f64; // i64→f64: contingency cell count, precision loss acceptable
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     let b = input.b as f64;
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     let c = input.c as f64;
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     let d = input.d as f64;
     let n = a + b + c + d;
 
@@ -358,8 +370,7 @@ pub fn chi_square_test(input: &ChiSquareInput) -> StatisticalResult {
             name: "Expected cell count".to_string(),
             passed: false,
             message: format!(
-                "Minimum expected value is {:.1} (<5); Fisher's exact test may be more appropriate",
-                min_expected
+                "Minimum expected value is {min_expected:.1} (<5); Fisher's exact test may be more appropriate"
             ),
             severity: "warning".to_string(),
         });
@@ -367,7 +378,7 @@ pub fn chi_square_test(input: &ChiSquareInput) -> StatisticalResult {
         assumptions.push(AssumptionCheck {
             name: "Expected cell count".to_string(),
             passed: true,
-            message: format!("All expected values ≥5 (min: {:.1})", min_expected),
+            message: format!("All expected values ≥5 (min: {min_expected:.1})"),
             severity: "info".to_string(),
         });
     }
@@ -375,7 +386,7 @@ pub fn chi_square_test(input: &ChiSquareInput) -> StatisticalResult {
     // Epistemic interpretation
     let (level, interp) = interpret_p_value(p);
     let effect_interp = interpret_effect_size(phi, "phi");
-    let full_interpretation = format!("{}. Effect size (φ={:.3}): {}.", interp, phi, effect_interp);
+    let full_interpretation = format!("{interp}. Effect size (φ={phi:.3}): {effect_interp}.");
 
     StatisticalResult {
         test_name: "Chi-square test for independence".to_string(),
@@ -386,7 +397,8 @@ pub fn chi_square_test(input: &ChiSquareInput) -> StatisticalResult {
         ci_upper: None,
         ci_level: 0.95,
         degrees_of_freedom: Some(dof),
-        sample_size: Some(n as usize),
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        sample_size: Some(n as usize), // f64→usize: total count from i64 cells, always non-negative
         assumptions,
         epistemic_level: level.as_str().to_string(),
         interpretation: full_interpretation,
@@ -418,7 +430,9 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
         return Err("Both groups must have at least one value".to_string());
     }
 
-    let n1 = g1.len() as f64;
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    let n1 = g1.len() as f64; // usize→f64: sample size, precision loss acceptable for statistics
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     let n2 = g2.len() as f64;
 
     // Calculate means
@@ -467,9 +481,10 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
         assumptions.push(AssumptionCheck {
             name: "Sample size".to_string(),
             passed: n1 >= 10.0 && n2 >= 10.0,
+            #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             message: format!(
                 "n1={}, n2={}; small samples may violate normality assumption",
-                n1 as usize, n2 as usize
+                n1 as usize, n2 as usize // f64→usize: display only, values originated from .len()
             ),
             severity: if n1 < 10.0 || n2 < 10.0 {
                 "warning"
@@ -490,8 +505,7 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
             name: "Variance homogeneity".to_string(),
             passed: false,
             message: format!(
-                "Variance ratio = {:.1}; using Welch's correction",
-                var_ratio
+                "Variance ratio = {var_ratio:.1}; using Welch's correction"
             ),
             severity: "info".to_string(),
         });
@@ -501,8 +515,7 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
     let (level, interp) = interpret_p_value(p);
     let effect_interp = interpret_effect_size(d, "cohens_d");
     let full_interpretation = format!(
-        "{}. Effect size (Cohen's d={:.3}): {}.",
-        interp, d, effect_interp
+        "{interp}. Effect size (Cohen's d={d:.3}): {effect_interp}."
     );
 
     Ok(StatisticalResult {
@@ -514,7 +527,8 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
         ci_upper: Some(ci_upper),
         ci_level: 0.95,
         degrees_of_freedom: Some(dof),
-        sample_size: Some((n1 + n2) as usize),
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        sample_size: Some((n1 + n2) as usize), // f64→usize: sum of .len() values, always non-negative
         assumptions,
         epistemic_level: level.as_str().to_string(),
         interpretation: full_interpretation,
@@ -540,7 +554,9 @@ pub struct ProportionInput {
 
 /// One-sample proportion z-test
 pub fn proportion_test(input: &ProportionInput) -> Result<StatisticalResult, String> {
-    let x = input.successes as f64;
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    let x = input.successes as f64; // i64→f64: count, precision loss acceptable for statistics
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     let n = input.n as f64;
     let p0 = input.null.unwrap_or(0.5);
 
@@ -591,7 +607,7 @@ pub fn proportion_test(input: &ProportionInput) -> Result<StatisticalResult, Str
 
     // Epistemic interpretation
     let (level, interp) = interpret_p_value(p_value);
-    let full_interpretation = format!("Sample proportion {:.3} vs null {}. {}.", p_hat, p0, interp);
+    let full_interpretation = format!("Sample proportion {p_hat:.3} vs null {p0}. {interp}.");
 
     Ok(StatisticalResult {
         test_name: "One-sample proportion z-test".to_string(),
@@ -602,7 +618,8 @@ pub fn proportion_test(input: &ProportionInput) -> Result<StatisticalResult, Str
         ci_upper: Some(ci_upper),
         ci_level: 0.95,
         degrees_of_freedom: None,
-        sample_size: Some(n as usize),
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        sample_size: Some(n as usize), // f64→usize: originated from i64 count, always non-negative
         assumptions,
         epistemic_level: level.as_str().to_string(),
         interpretation: full_interpretation,
@@ -637,7 +654,8 @@ pub fn correlation_test(input: &CorrelationInput) -> Result<StatisticalResult, S
         return Err("Need at least 3 data points for correlation".to_string());
     }
 
-    let n = x.len() as f64;
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    let n = x.len() as f64; // usize→f64: sample size, precision loss acceptable for statistics
 
     // Calculate means
     let mean_x: f64 = x.iter().sum::<f64>() / n;
@@ -697,9 +715,10 @@ pub fn correlation_test(input: &CorrelationInput) -> Result<StatisticalResult, S
         assumptions.push(AssumptionCheck {
             name: "Sample size".to_string(),
             passed: n >= 10.0,
+            #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
             message: format!(
                 "n={}; consider Spearman if data may be non-normal",
-                n as usize
+                n as usize // f64→usize: display only, value originated from .len()
             ),
             severity: if n < 10.0 { "warning" } else { "info" }.to_string(),
         });
@@ -710,8 +729,7 @@ pub fn correlation_test(input: &CorrelationInput) -> Result<StatisticalResult, S
     let strength = interpret_effect_size(r, "correlation");
     let direction = if r > 0.0 { "positive" } else { "negative" };
     let full_interpretation = format!(
-        "{} {} correlation (r={:.3}). {}.",
-        strength, direction, r, p_interp
+        "{strength} {direction} correlation (r={r:.3}). {p_interp}."
     );
 
     Ok(StatisticalResult {
@@ -723,7 +741,8 @@ pub fn correlation_test(input: &CorrelationInput) -> Result<StatisticalResult, S
         ci_upper: Some(ci_upper),
         ci_level: 0.95,
         degrees_of_freedom: Some(dof),
-        sample_size: Some(n as usize),
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        sample_size: Some(n as usize), // f64→usize: originated from .len(), always non-negative
         assumptions,
         epistemic_level: level.as_str().to_string(),
         interpretation: full_interpretation,
@@ -756,7 +775,7 @@ mod tests {
     fn test_chi_square_cdf() {
         // Chi-square with df=1, x=3.84 should give ~0.95
         let result = chi_square_cdf(3.84, 1.0);
-        assert!((result - 0.95).abs() < 0.02, "Got {}", result);
+        assert!((result - 0.95).abs() < 0.02, "Got {result}");
     }
 
     // Chi-square test

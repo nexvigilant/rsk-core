@@ -17,7 +17,7 @@ pub fn synthesize_intrinsic(name: &str, tree: &DecisionTree) -> String {
 
     code.push_str("use rsk::Value;\n");
     code.push_str("use std::collections::HashMap;\n\n");
-    code.push_str(&format!("pub fn {}(input: Value) -> Value {{ \n", fn_name));
+    code.push_str(&format!("pub fn {fn_name}(input: Value) -> Value {{ \n"));
     code.push_str("    let mut variables = HashMap::new();\n");
     code.push_str("    if let Value::Object(map) = input { variables = map; }\n\n");
 
@@ -71,9 +71,8 @@ fn generate_node_code(node_id: &str, tree: &DecisionTree, indent_level: usize) -
     let mut code = String::new();
     let indent = "    ".repeat(indent_level);
 
-    let node = match tree.nodes.get(node_id) {
-        Some(n) => n,
-        None => return indent + "return Value::Null;\n",
+    let Some(node) = tree.nodes.get(node_id) else {
+        return indent + "return Value::Null;\n";
     };
 
     match node {

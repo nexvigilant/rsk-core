@@ -254,12 +254,14 @@ fn fields_likely_alias(a: &str, b: &str) -> bool {
     }
     // Levenshtein distance: catch typos and minor variations
     // Only for names of similar length (within 3 chars)
-    let len_diff = (a.len() as i32 - b.len() as i32).unsigned_abs() as usize;
+    let len_diff = a.len().abs_diff(b.len());
     if len_diff <= 3 {
         let dist = levenshtein(a, b);
         let max_len = a.len().max(b.len());
         // Normalized distance < 0.3 suggests same concept
-        if max_len > 0 && (dist as f64 / max_len as f64) < 0.3 {
+        #[allow(clippy::as_conversions)] // usize→f64 for ratio
+        let normalized_dist = dist as f64 / max_len as f64;
+        if max_len > 0 && normalized_dist < 0.3 {
             return true;
         }
     }

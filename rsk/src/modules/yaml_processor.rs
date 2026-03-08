@@ -137,7 +137,7 @@ fn get_json_keys(value: &JsonValue) -> Vec<String> {
         for (k, v) in map {
             keys.push(k.clone());
             for inner_k in get_json_keys(v) {
-                keys.push(format!("{}.{}", k, inner_k));
+                keys.push(format!("{k}.{inner_k}"));
             }
         }
     }
@@ -308,6 +308,7 @@ pub fn extract_taxonomy_schema(content: &str) -> Result<TaxonomySchema, ConfigEr
 /// Parse YAML frontmatter from SKILL.md content (proper YAML parsing)
 pub fn parse_yaml_frontmatter(content: &str) -> Result<JsonValue, ConfigError> {
     use regex::Regex;
+    #[allow(clippy::unwrap_used)] // compile-time literal regex pattern cannot fail to compile
     let re = Regex::new(r"(?s)^---\s*\n(.*?)\n---\s*\n").unwrap();
 
     if let Some(caps) = re.captures(content) {
@@ -426,8 +427,7 @@ fn validate_tree_nodes(node: &JsonValue, errors: &mut Vec<String>, path: &str) {
 
             if !has_condition && !has_action && !has_children {
                 errors.push(format!(
-                    "Node at '{}' has no condition, action, or children",
-                    path
+                    "Node at '{path}' has no condition, action, or children",
                 ));
             }
 
@@ -436,14 +436,14 @@ fn validate_tree_nodes(node: &JsonValue, errors: &mut Vec<String>, path: &str) {
                 && let JsonValue::Array(arr) = children
             {
                 for (i, child) in arr.iter().enumerate() {
-                    let child_path = format!("{}/children[{}]", path, i);
+                    let child_path = format!("{path}/children[{i}]");
                     validate_tree_nodes(child, errors, &child_path);
                 }
             }
         }
         JsonValue::Array(arr) => {
             for (i, item) in arr.iter().enumerate() {
-                let item_path = format!("{}[{}]", path, i);
+                let item_path = format!("{path}[{i}]");
                 validate_tree_nodes(item, errors, &item_path);
             }
         }
@@ -464,8 +464,7 @@ fn validate_taxonomy(data: &JsonValue, _errors: &mut Vec<String>, warnings: &mut
     let depth = calculate_depth(data);
     if depth > 8 {
         warnings.push(format!(
-            "Taxonomy depth ({}) is high - consider flattening",
-            depth
+            "Taxonomy depth ({depth}) is high - consider flattening",
         ));
     }
 }
@@ -480,7 +479,7 @@ fn validate_skill_frontmatter(
 
     for field in required {
         if data.get(field).is_none() {
-            errors.push(format!("Missing required field: {}", field));
+            errors.push(format!("Missing required field: {field}"));
         }
     }
 
@@ -489,8 +488,7 @@ fn validate_skill_frontmatter(
         let valid_levels = ["Bronze", "Silver", "Gold", "Platinum", "Diamond"];
         if !valid_levels.contains(&level) {
             errors.push(format!(
-                "Invalid compliance-level: '{}'. Expected one of: {:?}",
-                level, valid_levels
+                "Invalid compliance-level: '{level}'. Expected one of: {valid_levels:?}",
             ));
         }
     }
@@ -519,7 +517,7 @@ fn extract_dt_nodes(
                 .get("id")
                 .and_then(|v| v.as_str())
                 .map(String::from)
-                .unwrap_or_else(|| format!("{}_{}", parent_id, nodes.len()));
+                .unwrap_or_else(|| format!("{parent_id}_{}", nodes.len()));
 
             let condition = map
                 .get("condition")
@@ -546,7 +544,7 @@ fn extract_dt_nodes(
             if let Some(JsonValue::Array(arr)) = map.get("children").or_else(|| map.get("branches"))
             {
                 for (i, child) in arr.iter().enumerate() {
-                    let child_id = format!("{}_{}", node_id, i);
+                    let child_id = format!("{node_id}_{i}");
                     child_ids.push(child_id.clone());
                     extract_dt_nodes(child, nodes, conditions, actions, depth + 1, &node_id);
                 }
@@ -568,7 +566,7 @@ fn extract_dt_nodes(
                     conditions,
                     actions,
                     depth,
-                    &format!("{}_{}", parent_id, i),
+                    &format!("{parent_id}_{i}"),
                 );
             }
         }
@@ -804,7 +802,7 @@ created = 2025-01-13T10:00:00Z
 
     #[test]
     fn test_parse_yaml_large_array() {
-        let items: Vec<String> = (0..1000).map(|i| format!("  - item{}", i)).collect();
+        let items: Vec<String> = (0..1000).map(|i| format!("  - item{i}")).collect();
         let yaml = format!("items:\n{}", items.join("\n"));
         let result = parse_yaml(&yaml).unwrap();
         let arr = result.data.get("items").unwrap().as_array().unwrap();
@@ -816,7 +814,7 @@ created = 2025-01-13T10:00:00Z
         // Create 20-level deep nesting
         let mut yaml = String::new();
         for i in 0..20 {
-            yaml.push_str(&format!("{}level{}:\n", "  ".repeat(i), i));
+            yaml.push_str(&format!("{}level{i}:\n", "  ".repeat(i)));
         }
         yaml.push_str(&format!("{}value: deep", "  ".repeat(20)));
 

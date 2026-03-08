@@ -315,7 +315,7 @@ pub fn evaluate_condition_result(condition: &str, context: &Value) -> Result<boo
 
             if left_str.is_empty() || right_str.is_empty() {
                 return Err(ConditionError::new(
-                    &format!("Missing operand for operator '{}'", op),
+                    &format!("Missing operand for operator '{op}'"),
                     condition,
                 ));
             }

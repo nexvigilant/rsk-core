@@ -1,0 +1,70 @@
+# Integration Patrol Classification
+#
+# Declares which pub functions are "features" (must reach Ring 2: CLI or chain_registry)
+# vs "library" (Ring 1 is sufficient: used by sibling modules).
+#
+# Any re-exported pub function NOT listed here is UNCLASSIFIED — the patrol
+# will flag it, forcing the author to decide: feature or library?
+#
+# Ring definitions:
+#   Ring 0: same module's #[cfg(test)] only
+#   Ring 1: sibling modules within microgram/
+#   Ring 2: CLI handlers (cli/handlers/) or chain_registry test infrastructure
+
+features:
+  # Core chain execution — must be CLI-invocable
+  - chain
+  - chain_accumulate
+  - chain_resilient
+  - chain_loop
+  # Two macro-tooling applications — must be CLI or registry-invocable
+  - chain_validate_all
+  - check_chain_hygiene
+  # Ecosystem tools — each has a CLI subcommand
+  - catalog
+  - alias_check
+  - compose
+  - auto_execute
+  - bench_all
+  - validate_contracts
+  - coverage
+  - coverage_all
+  - diff
+  - evolve_tests
+  - matrix
+  - merge
+  - pipe
+  - pipe_chain
+  - shrink
+  - snapshot_save
+  - snapshot_restore
+  - stress
+  - stress_all
+  - clone_mutated
+  - test_chains
+  - test_processes
+  - test_all
+  - run_patrol_default
+
+library:
+  # Convenience wrappers for external Rust consumers — Ring 1 OK
+  - chain_by_names
+  - chain_accumulate_by_names
+  - chain_resilient_by_names
+  - chain_loop_by_names
+  - check_chain_hygiene_by_names
+  - apply_aliases
+  - load_all
+  - load_chains
+  - load_processes
+  # Pipe sub-operations — called by pipe_chain, not directly CLI-invoked
+  - filter_results
+  - map_field
+  - reduce_count
+  # Associated constructors — not free functions, but picked up by parser
+  - load
+  - parse
+  # Consumed by chain_registry test infrastructure, not directly CLI-invoked
+  - chain_verify_paths
+  # Consumed by run_patrol_default, not directly CLI-invoked
+  - run_patrol

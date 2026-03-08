@@ -95,13 +95,12 @@ pub fn validate_contracts(dir: &Path) -> Result<ContractValidation, String> {
                         field: if a_field == b_field {
                             a_field.clone()
                         } else {
-                            format!("{} (alias → {})", a_field, b_field)
+                            format!("{a_field} (alias → {b_field})")
                         },
                         from_type: a_type.clone(),
                         to_type: b_type.clone(),
                         message: format!(
-                            "{} outputs '{}' as {} but {} expects {} as {}",
-                            a_name, a_field, a_type, b_name, b_field, b_type
+                            "{a_name} outputs '{a_field}' as {a_type} but {b_name} expects {b_field} as {b_type}"
                         ),
                     });
                 }

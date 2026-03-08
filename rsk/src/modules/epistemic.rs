@@ -69,7 +69,7 @@ static OVERCONFIDENT_PATTERNS: LazyLock<Vec<(String, Regex)>> = LazyLock::new(||
     OVERCONFIDENT_WORDS
         .iter()
         .filter_map(|word| {
-            Regex::new(&format!(r"(?i)\b{}\b", word))
+            Regex::new(&format!(r"(?i)\b{word}\b"))
                 .ok()
                 .map(|re| (word.to_string(), re))
         })
@@ -78,8 +78,8 @@ static OVERCONFIDENT_PATTERNS: LazyLock<Vec<(String, Regex)>> = LazyLock::new(||
 
 /// Citation pattern (looks for [citations] or explicit "source" mentions)
 static CITATION_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"\[|\bsource\b|\bcitation\b|\breference\b|\baccording to\b")
-        .expect("Citation pattern should compile")
+    #[allow(clippy::unwrap_used)] // compile-time literal regex pattern cannot fail to compile
+    Regex::new(r"\[|\bsource\b|\bcitation\b|\breference\b|\baccording to\b").unwrap()
 });
 
 /// Validate a claim for epistemic rigor.
@@ -104,7 +104,7 @@ pub fn validate_claim(claim: &str) -> EpistemicResult {
     // Check for overconfident language
     for (word, pattern) in OVERCONFIDENT_PATTERNS.iter() {
         if pattern.is_match(claim) {
-            issues.push(format!("Uses overconfident language: '{}'", word));
+            issues.push(format!("Uses overconfident language: '{word}'"));
             detected_words.push(word.clone());
         }
     }

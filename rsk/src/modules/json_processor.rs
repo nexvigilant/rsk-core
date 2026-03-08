@@ -240,6 +240,7 @@ pub fn set_path(data: &mut Value, path: &str, value: Value) -> Result<(), JsonEr
                 if !current.is_object() {
                     *current = Value::Object(Map::new());
                 }
+                #[allow(clippy::unwrap_used)] // guarded: *current was just set to Object above if it wasn't already
                 let obj = current.as_object_mut().unwrap();
                 obj.entry(key.clone()).or_insert_with(|| {
                     if next_is_index {
@@ -253,6 +254,7 @@ pub fn set_path(data: &mut Value, path: &str, value: Value) -> Result<(), JsonEr
                 if !current.is_array() {
                     *current = Value::Array(vec![]);
                 }
+                #[allow(clippy::unwrap_used)] // guarded: *current was just set to Array above if it wasn't already
                 let arr = current.as_array_mut().unwrap();
                 while arr.len() <= *idx {
                     arr.push(if next_is_index {
@@ -500,7 +502,7 @@ fn diff_recursive(
                 let full_path = if path.is_empty() {
                     key.clone()
                 } else {
-                    format!("{}.{}", path, key)
+                    format!("{path}.{key}")
                 };
 
                 if let Some(right_value) = right_map.get(key) {
@@ -524,7 +526,7 @@ fn diff_recursive(
                     let full_path = if path.is_empty() {
                         key.clone()
                     } else {
-                        format!("{}.{}", path, key)
+                        format!("{path}.{key}")
                     };
                     added.push(full_path);
                 }
@@ -534,9 +536,9 @@ fn diff_recursive(
             let max_len = left_arr.len().max(right_arr.len());
             for i in 0..max_len {
                 let full_path = if path.is_empty() {
-                    format!("[{}]", i)
+                    format!("[{i}]")
                 } else {
-                    format!("{}[{}]", path, i)
+                    format!("{path}[{i}]")
                 };
 
                 match (left_arr.get(i), right_arr.get(i)) {
@@ -572,7 +574,7 @@ fn flatten_recursive(data: &Value, prefix: &str, result: &mut HashMap<String, Va
                 let new_prefix = if prefix.is_empty() {
                     key.clone()
                 } else {
-                    format!("{}.{}", prefix, key)
+                    format!("{prefix}.{key}")
                 };
                 flatten_recursive(value, &new_prefix, result);
             }
@@ -580,9 +582,9 @@ fn flatten_recursive(data: &Value, prefix: &str, result: &mut HashMap<String, Va
         Value::Array(arr) => {
             for (i, value) in arr.iter().enumerate() {
                 let new_prefix = if prefix.is_empty() {
-                    format!("[{}]", i)
+                    format!("[{i}]")
                 } else {
-                    format!("{}[{}]", prefix, i)
+                    format!("{prefix}[{i}]")
                 };
                 flatten_recursive(value, &new_prefix, result);
             }
@@ -834,7 +836,7 @@ mod tests {
         // Create 50-level deep nesting
         let mut json = String::from("{\"l0\":");
         for i in 1..50 {
-            json.push_str(&format!("{{\"l{}\":", i));
+            json.push_str(&format!("{{\"l{i}\":"));
         }
         json.push_str("1");
         for _ in 0..50 {
@@ -849,7 +851,7 @@ mod tests {
     fn test_flatten_large() {
         let mut data = serde_json::json!({});
         for i in 0..100 {
-            data[format!("key{}", i)] = serde_json::json!(i);
+            data[format!("key{i}")] = serde_json::json!(i);
         }
         let result = flatten_json(&data);
         assert_eq!(result.total_keys, 100);

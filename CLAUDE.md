@@ -13,7 +13,8 @@ cargo build -p rsk --release                        # Build binary (required bef
 cargo test -p rsk --lib                              # Unit tests
 cargo test -p rsk -- test_name                       # Run a single test by name
 cargo test -p rsk --tests                            # Integration tests
-cargo clippy -p rsk -- -D warnings                   # Lint
+cargo clippy -p rsk -- -D warnings                   # Lint (default)
+cargo clippy -p rsk -- -D clippy::uninlined_format_args -D clippy::manual_let_else -D clippy::as_conversions -D clippy::cast_possible_truncation -D clippy::cast_sign_loss -D clippy::unwrap_used -D clippy::expect_used  # Lint (strict)
 cargo bench -p rsk                                   # Benchmarks (criterion)
 
 # Microgram operations (require release binary)

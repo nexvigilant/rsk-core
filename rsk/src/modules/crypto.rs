@@ -16,7 +16,7 @@ pub fn sha256_hash(input: &str) -> HashResult {
 
     HashResult {
         algorithm: "SHA-256".to_string(),
-        hex: format!("{:x}", result),
+        hex: format!("{result:x}"),
         bytes_hashed: input.len(),
     }
 }
@@ -29,7 +29,7 @@ pub fn sha256_bytes(input: &[u8]) -> HashResult {
 
     HashResult {
         algorithm: "SHA-256".to_string(),
-        hex: format!("{:x}", result),
+        hex: format!("{result:x}"),
         bytes_hashed: input.len(),
     }
 }

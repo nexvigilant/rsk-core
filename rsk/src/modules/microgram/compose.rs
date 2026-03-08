@@ -192,8 +192,13 @@ pub fn bench_all(dir: &Path, iterations: usize) -> Result<Vec<BenchResult>, Stri
         timings.sort();
         let min_us = timings[0];
         let max_us = timings[timings.len() - 1];
-        let avg_us = timings.iter().sum::<u64>() as f64 / timings.len() as f64;
-        let p95_idx = (timings.len() as f64 * 0.95) as usize;
+        #[allow(clippy::as_conversions)] // usize→f64 for ratio
+        let timing_count = timings.len() as f64;
+        #[allow(clippy::as_conversions)] // u64→f64 for ratio
+        let timing_sum = timings.iter().sum::<u64>() as f64;
+        let avg_us = timing_sum / timing_count;
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // f64→usize for index, value always non-negative
+        let p95_idx = (timing_count * 0.95) as usize;
         let p95_us = timings[p95_idx.min(timings.len() - 1)];
 
         let test_result = mg.test();
@@ -240,7 +245,7 @@ pub fn auto_execute(
             plan,
             execution: None,
             verified: false,
-            duration_us: start.elapsed().as_micros() as u64,
+            duration_us: u64::try_from(start.elapsed().as_micros()).unwrap_or(u64::MAX),
         });
     }
 
@@ -253,7 +258,7 @@ pub fn auto_execute(
         chain_result.steps.iter().any(|step| step.output.contains_key(field))
     });
 
-    let duration_us = start.elapsed().as_micros() as u64;
+    let duration_us = u64::try_from(start.elapsed().as_micros()).unwrap_or(u64::MAX);
 
     Ok(AutoResult {
         plan,

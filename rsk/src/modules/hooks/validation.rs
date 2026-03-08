@@ -135,7 +135,7 @@ pub fn validate_file(path: &Path, policy: &PolicyFile) -> ValidationResult {
                 if !is_exception {
                     result.add_warning(
                         "warning",
-                        &format!("File in forbidden zone: {}", forbidden_path),
+                        &format!("File in forbidden zone: {forbidden_path}"),
                         "forbidden_zones",
                     );
                     result
@@ -208,11 +208,12 @@ pub fn format_validation_result(result: &ValidationResult) -> String {
             "error" => "[ERROR]",
             _ => "[File Placement]",
         };
-        output.push_str(&format!("{} {}\n", prefix, warning.message));
+        let msg = &warning.message;
+        output.push_str(&format!("{prefix} {msg}\n"));
     }
 
     if let Some(suggestion) = result.suggestions.first() {
-        output.push_str(&format!("  → {}\n", suggestion));
+        output.push_str(&format!("  → {suggestion}\n"));
     }
 
     output.trim_end().to_string()

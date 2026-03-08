@@ -70,7 +70,7 @@ impl SkillRegistry {
         for entry in walker {
             let path = entry.path();
             if let Err(e) = self.register_skill_from_path(path) {
-                eprintln!("Warning: Failed to register skill at {:?}: {}", path, e);
+                eprintln!("Warning: Failed to register skill at {path:?}: {e}");
             }
         }
 
@@ -84,7 +84,7 @@ impl SkillRegistry {
         let name = smst.frontmatter.name.clone();
 
         // Check for logic.yaml in the same directory
-        let dir = skill_md_path.parent().unwrap();
+        let dir = skill_md_path.parent().unwrap_or(skill_md_path);
         let logic_path = dir.join("logic.yaml");
         let has_logic = logic_path.exists();
 

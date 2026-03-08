@@ -38,6 +38,11 @@ pub struct ChainTestCase {
     pub name: String,
     pub input: HashMap<String, Value>,
     pub expect: HashMap<String, Value>,
+    /// Optional per-step expected decision paths (macrotest pattern).
+    /// Each entry is the expected path for one chain step. If fewer entries
+    /// than chain steps, uncovered steps are not checked.
+    #[serde(default)]
+    pub expect_paths: Vec<Vec<String>>,
 }
 
 /// Result of testing one chain definition
@@ -102,7 +107,7 @@ impl ChainDefinition {
                     input: t.input.clone(),
                     expected: t.expect.clone(),
                     actual: HashMap::new(),
-                    mismatch: Some(format!("Missing micrograms: {:?}", missing)),
+                    mismatch: Some(format!("Missing micrograms: {missing:?}")),
                 }).collect(),
             };
         }
@@ -111,11 +116,11 @@ impl ChainDefinition {
 
         for test in &self.tests {
             let chain_result = if self.accumulate {
-                chain_accumulate(&owned, test.input.clone())
+                chain_accumulate(&owned, test.input.clone(), false)
             } else {
-                chain(&owned, test.input.clone())
+                chain(&owned, test.input.clone(), false)
             };
-            let actual = chain_result.final_output;
+            let actual = chain_result.final_output.clone();
 
             let mut mismatch = None;
             let mut test_passed = true;
@@ -125,13 +130,32 @@ impl ChainDefinition {
                     Some(actual_val) if actual_val == expected_val => {}
                     Some(actual_val) => {
                         mismatch = Some(format!(
-                            "{}: expected {:?}, got {:?}", key, expected_val, actual_val
+                            "{key}: expected {expected_val:?}, got {actual_val:?}"
                         ));
                         test_passed = false;
                     }
                     None => {
                         mismatch = Some(format!(
-                            "{}: expected {:?}, not in output", key, expected_val
+                            "{key}: expected {expected_val:?}, not in output"
+                        ));
+                        test_passed = false;
+                    }
+                }
+            }
+
+            // Path snapshot verification (macrotest pattern):
+            // if expect_paths is non-empty, verify each step's decision path
+            if !test.expect_paths.is_empty() {
+                for (step_i, expected_path) in test.expect_paths.iter().enumerate() {
+                    if step_i >= chain_result.steps.len() {
+                        break;
+                    }
+                    let actual_path = &chain_result.steps[step_i].path;
+                    if actual_path != expected_path {
+                        mismatch = Some(format!(
+                            "path[{}] ({}): expected {:?}, got {:?}",
+                            step_i, chain_result.steps[step_i].name,
+                            expected_path, actual_path
                         ));
                         test_passed = false;
                     }
@@ -316,7 +340,7 @@ impl ProcessDefinition {
         for step_name in &effective {
             match micrograms.iter().find(|mg| mg.name == *step_name) {
                 Some(mg) => ordered.push(mg.clone()),
-                None => return Err(format!("Microgram '{}' not found", step_name)),
+                None => return Err(format!("Microgram '{step_name}' not found")),
             }
         }
 
@@ -327,7 +351,7 @@ impl ProcessDefinition {
             .or_else(|| if self.governor.is_some() { Some(Value::String("HALT".to_string())) } else { None });
         let halt_value = halt_value_owned.as_ref();
 
-        Ok(chain_loop(&ordered, input, self.max_iterations, halt_field, halt_value))
+        Ok(chain_loop(&ordered, input, self.max_iterations, halt_field, halt_value, false))
     }
 
     /// Run all process test cases
@@ -354,9 +378,9 @@ impl ProcessDefinition {
 
             let halt_reason = match &loop_result.halt_reason {
                 super::chain::LoopHalt::MaxIterations => "MaxIterations".to_string(),
-                super::chain::LoopHalt::HaltCondition { field, .. } => format!("HaltCondition({})", field),
-                super::chain::LoopHalt::Convergence { iteration } => format!("Convergence({})", iteration),
-                super::chain::LoopHalt::ChainFailure { iteration, step } => format!("ChainFailure({}, {})", iteration, step),
+                super::chain::LoopHalt::HaltCondition { field, .. } => format!("HaltCondition({field})"),
+                super::chain::LoopHalt::Convergence { iteration } => format!("Convergence({iteration})"),
+                super::chain::LoopHalt::ChainFailure { iteration, step } => format!("ChainFailure({iteration}, {step})"),
             };
 
             let mut mismatch = None;
@@ -367,24 +391,23 @@ impl ProcessDefinition {
                 match loop_result.final_state.get(key) {
                     Some(actual_val) if actual_val == expected_val => {}
                     Some(actual_val) => {
-                        mismatch = Some(format!("{}: expected {:?}, got {:?}", key, expected_val, actual_val));
+                        mismatch = Some(format!("{key}: expected {expected_val:?}, got {actual_val:?}"));
                         test_passed = false;
                     }
                     None => {
-                        mismatch = Some(format!("{}: expected {:?}, not in output", key, expected_val));
+                        mismatch = Some(format!("{key}: expected {expected_val:?}, not in output"));
                         test_passed = false;
                     }
                 }
             }
 
             // Check expected iterations
-            if let Some(expected_iters) = test.expect_iterations {
-                if loop_result.iterations != expected_iters {
+            if let Some(expected_iters) = test.expect_iterations
+                && loop_result.iterations != expected_iters {
                     mismatch = Some(format!(
-                        "iterations: expected {}, got {}", expected_iters, loop_result.iterations
+                        "iterations: expected {expected_iters}, got {}", loop_result.iterations
                     ));
                     test_passed = false;
-                }
             }
 
             // Check expected halt reason type
@@ -397,7 +420,7 @@ impl ProcessDefinition {
                 };
                 if halt_type != expected_halt.as_str() {
                     mismatch = Some(format!(
-                        "halt_reason: expected {}, got {}", expected_halt, halt_type
+                        "halt_reason: expected {expected_halt}, got {halt_type}"
                     ));
                     test_passed = false;
                 }
