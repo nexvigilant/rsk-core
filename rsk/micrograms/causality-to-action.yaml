@@ -19,8 +19,22 @@ interface:
     reason:
       type: string
 tree:
-  start: check_definite
+  start: check_causality_present
   nodes:
+    check_causality_present:
+      type: condition
+      variable: causality
+      operator: is_null
+      value: null
+      true_next: reject_missing_causality
+      false_next: check_definite
+    reject_missing_causality:
+      type: return
+      value:
+        regulatory_action: REJECTED
+        deadline_days: 0
+        reporting_type: none
+        reason: "REJECTED: causality field is required. This microgram must receive output from naranjo-quick or equivalent causality assessment. Direct bypass from signal detection is not permitted."
     check_definite:
       type: condition
       variable: causality
@@ -165,10 +179,10 @@ tests:
     reason: Doubtful or no causality - document internally for signal tracking
 - input: {}
   expect:
-    regulatory_action: document
+    regulatory_action: REJECTED
     deadline_days: 0
-    reporting_type: internal_record
-    reason: Doubtful or no causality - document internally for signal tracking
+    reporting_type: none
+    reason: "REJECTED: causality field is required. This microgram must receive output from naranjo-quick or equivalent causality assessment. Direct bypass from signal detection is not permitted."
 - input:
     causality: DEFINITE
     is_serious: true

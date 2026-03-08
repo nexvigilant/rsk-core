@@ -32,6 +32,12 @@ interface:
       type: bool
     regulatory_reference:
       type: string
+    is_serious:
+      type: bool
+    is_fatal:
+      type: bool
+    is_life_threatening:
+      type: bool
 tree:
   start: death_check
   nodes:
@@ -85,6 +91,9 @@ tree:
         reportable: true
         expedited: true
         regulatory_reference: ICH E2A Section II.B
+        is_serious: true
+        is_fatal: true
+        is_life_threatening: false
     serious_hosp:
       type: return
       value:
@@ -93,6 +102,9 @@ tree:
         reportable: true
         expedited: true
         regulatory_reference: ICH E2A Section II.B
+        is_serious: true
+        is_fatal: false
+        is_life_threatening: false
     serious_disability:
       type: return
       value:
@@ -101,6 +113,9 @@ tree:
         reportable: true
         expedited: true
         regulatory_reference: ICH E2A Section II.B
+        is_serious: true
+        is_fatal: false
+        is_life_threatening: false
     serious_life_threatening:
       type: return
       value:
@@ -109,6 +124,9 @@ tree:
         reportable: true
         expedited: true
         regulatory_reference: ICH E2A Section II.B
+        is_serious: true
+        is_fatal: false
+        is_life_threatening: true
     serious_congenital:
       type: return
       value:
@@ -117,6 +135,9 @@ tree:
         reportable: true
         expedited: true
         regulatory_reference: ICH E2A Section II.B
+        is_serious: true
+        is_fatal: false
+        is_life_threatening: false
     serious_medically_important:
       type: return
       value:
@@ -125,6 +146,9 @@ tree:
         reportable: true
         expedited: true
         regulatory_reference: ICH E2A Section II.A.4
+        is_serious: true
+        is_fatal: false
+        is_life_threatening: false
     not_serious:
       type: return
       value:
@@ -132,6 +156,9 @@ tree:
         reportable: false
         expedited: false
         regulatory_reference: ICH E2A Section II.B
+        is_serious: false
+        is_fatal: false
+        is_life_threatening: false
 tests:
 # Original 3 criteria - death
 - input:
@@ -147,6 +174,9 @@ tests:
     reportable: true
     expedited: true
     regulatory_reference: ICH E2A Section II.B
+    is_serious: true
+    is_fatal: true
+    is_life_threatening: false
 # Original 3 criteria - hospitalization
 - input:
     death: false
@@ -161,6 +191,9 @@ tests:
     reportable: true
     expedited: true
     regulatory_reference: ICH E2A Section II.B
+    is_serious: true
+    is_fatal: false
+    is_life_threatening: false
 # Original 3 criteria - disability
 - input:
     death: false
@@ -175,6 +208,9 @@ tests:
     reportable: true
     expedited: true
     regulatory_reference: ICH E2A Section II.B
+    is_serious: true
+    is_fatal: false
+    is_life_threatening: false
 # New criterion - life-threatening
 - input:
     death: false
@@ -189,6 +225,9 @@ tests:
     reportable: true
     expedited: true
     regulatory_reference: ICH E2A Section II.B
+    is_serious: true
+    is_fatal: false
+    is_life_threatening: true
 # New criterion - congenital anomaly
 - input:
     death: false
@@ -203,6 +242,9 @@ tests:
     reportable: true
     expedited: true
     regulatory_reference: ICH E2A Section II.B
+    is_serious: true
+    is_fatal: false
+    is_life_threatening: false
 # New criterion - medically important
 - input:
     death: false
@@ -217,6 +259,9 @@ tests:
     reportable: true
     expedited: true
     regulatory_reference: ICH E2A Section II.A.4
+    is_serious: true
+    is_fatal: false
+    is_life_threatening: false
 # All criteria false - not serious
 - input:
     death: false
@@ -230,6 +275,9 @@ tests:
     reportable: false
     expedited: false
     regulatory_reference: ICH E2A Section II.B
+    is_serious: false
+    is_fatal: false
+    is_life_threatening: false
 # All criteria true - death takes priority
 - input:
     death: true
@@ -244,6 +292,9 @@ tests:
     reportable: true
     expedited: true
     regulatory_reference: ICH E2A Section II.B
+    is_serious: true
+    is_fatal: true
+    is_life_threatening: false
 # Empty input - defaults to not serious
 - input: {}
   expect:
@@ -251,3 +302,6 @@ tests:
     reportable: false
     expedited: false
     regulatory_reference: ICH E2A Section II.B
+    is_serious: false
+    is_fatal: false
+    is_life_threatening: false

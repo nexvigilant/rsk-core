@@ -14,8 +14,41 @@ interface:
     action:
       type: string
 tree:
-  start: definite_check
+  start: check_score_present
   nodes:
+    check_score_present:
+      type: condition
+      variable: naranjo_score
+      operator: is_null
+      value: null
+      true_next: reject_missing
+      false_next: check_upper_bound
+    reject_missing:
+      type: return
+      value:
+        causality: REJECTED
+        confidence: 0
+        action: "REJECTED: naranjo_score is required"
+    check_upper_bound:
+      type: condition
+      variable: naranjo_score
+      operator: gt
+      value: 13
+      true_next: reject_out_of_range
+      false_next: check_lower_bound
+    check_lower_bound:
+      type: condition
+      variable: naranjo_score
+      operator: lt
+      value: -4
+      true_next: reject_out_of_range
+      false_next: definite_check
+    reject_out_of_range:
+      type: return
+      value:
+        causality: REJECTED
+        confidence: 0
+        action: "REJECTED: naranjo_score must be in range [-4, 13]. Values outside this range indicate input error (possible PRR or other statistical value used instead of Naranjo score)."
     probable_check:
       type: condition
       variable: naranjo_score
@@ -125,14 +158,14 @@ tests:
 - input:
     naranjo_score: 500
   expect:
-    confidence: 95
-    causality: DEFINITE
-    action: withdraw_drug
+    confidence: 0
+    causality: REJECTED
+    action: "REJECTED: naranjo_score must be in range [-4, 13]. Values outside this range indicate input error (possible PRR or other statistical value used instead of Naranjo score)."
 - input: {}
   expect:
-    causality: DOUBTFUL
-    action: document
-    confidence: 20
+    causality: REJECTED
+    action: "REJECTED: naranjo_score is required"
+    confidence: 0
 - input:
     naranjo_score: -1
   expect:
@@ -148,14 +181,14 @@ tests:
 - input:
     naranjo_score: 100
   expect:
-    action: withdraw_drug
-    causality: DEFINITE
-    confidence: 95
+    action: "REJECTED: naranjo_score must be in range [-4, 13]. Values outside this range indicate input error (possible PRR or other statistical value used instead of Naranjo score)."
+    causality: REJECTED
+    confidence: 0
 - input: {}
   expect:
-    confidence: 20
-    action: document
-    causality: DOUBTFUL
+    confidence: 0
+    action: "REJECTED: naranjo_score is required"
+    causality: REJECTED
 - input:
     naranjo_score: -1
   expect:
@@ -171,11 +204,12 @@ tests:
 - input:
     naranjo_score: 900
   expect:
-    action: withdraw_drug
-    causality: DEFINITE
-    confidence: 95
-- input: {}
+    action: "REJECTED: naranjo_score must be in range [-4, 13]. Values outside this range indicate input error (possible PRR or other statistical value used instead of Naranjo score)."
+    causality: REJECTED
+    confidence: 0
+- input:
+    naranjo_score: -5
   expect:
-    action: document
-    causality: DOUBTFUL
-    confidence: 20
+    action: "REJECTED: naranjo_score must be in range [-4, 13]. Values outside this range indicate input error (possible PRR or other statistical value used instead of Naranjo score)."
+    causality: REJECTED
+    confidence: 0

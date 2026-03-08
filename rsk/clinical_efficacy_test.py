@@ -395,24 +395,32 @@ def test_boundary(verbose=False):
     # This SHOULD fail — PRR is a ratio (float), Naranjo is a clinical score (int 0-10)
     for prr_as_naranjo in [2, 5, 10, 50, 200]:
         success, output, _ = run_mcg("naranjo-quick", {"naranjo_score": prr_as_naranjo})
-        if success and prr_as_naranjo > 10:
-            # Naranjo scale is 0-10. Accepting 50 or 200 is a range violation.
+        causality = output.get("causality", "") if success else ""
+        if success and prr_as_naranjo > 13 and causality != "REJECTED":
+            # Naranjo scale is -4 to +13. Accepting 50 or 200 without rejection is a range violation.
             report.results.append(TestResult(
                 suite="BOUNDARY", microgram="naranjo-quick",
                 test_name=f"prr_as_naranjo_{prr_as_naranjo}",
                 passed=False,
                 detail=f"Accepted naranjo_score={prr_as_naranjo} (valid range: -4 to +13). "
-                       f"Classified as {output.get('causality')}. "
+                       f"Classified as {causality}. "
                        f"A PRR value was accepted as a clinical score without range validation.",
                 severity="WARNING",
                 fix_suggestion="Add range check: naranjo_score must be in [-4, 13]",
             ))
-        elif success and prr_as_naranjo <= 10:
+        elif success and prr_as_naranjo > 13 and causality == "REJECTED":
             report.results.append(TestResult(
                 suite="BOUNDARY", microgram="naranjo-quick",
                 test_name=f"prr_as_naranjo_{prr_as_naranjo}",
                 passed=True,
-                detail=f"Score {prr_as_naranjo} is in valid Naranjo range, classified: {output.get('causality')}",
+                detail=f"Correctly rejected out-of-range naranjo_score={prr_as_naranjo}",
+            ))
+        elif success and prr_as_naranjo <= 13:
+            report.results.append(TestResult(
+                suite="BOUNDARY", microgram="naranjo-quick",
+                test_name=f"prr_as_naranjo_{prr_as_naranjo}",
+                passed=True,
+                detail=f"Score {prr_as_naranjo} is in valid Naranjo range, classified: {causality}",
             ))
 
     # Test: Can signal-to-causality output skip the Naranjo assessment entirely?
@@ -422,20 +430,30 @@ def test_boundary(verbose=False):
         # bridge_output has next_step, priority, recommended_tool — NOT causality
         success2, action_output, _ = run_mcg("causality-to-action", bridge_output)
         if success2:
-            # causality-to-action accepted bridge output without causality field
             actual_action = action_output.get("regulatory_action")
-            report.results.append(TestResult(
-                suite="BOUNDARY",
-                microgram="signal-to-causality → causality-to-action (SKIP naranjo)",
-                test_name="boundary_bypass",
-                passed=False,
-                detail=f"Bypassed Naranjo assessment entirely. Bridge output fed directly to action. "
-                       f"Got: regulatory_action={actual_action}. "
-                       f"The confinement boundary was crossed without clinical assessment.",
-                severity="CRITICAL",
-                fix_suggestion="causality-to-action should REQUIRE causality field from Naranjo output, "
-                              "not accept missing causality as DOUBTFUL",
-            ))
+            if actual_action == "REJECTED":
+                # causality-to-action correctly rejected input without causality field
+                report.results.append(TestResult(
+                    suite="BOUNDARY",
+                    microgram="signal-to-causality → causality-to-action (SKIP naranjo)",
+                    test_name="boundary_enforced",
+                    passed=True,
+                    detail=f"Correctly rejected bridge output that skipped Naranjo assessment: {action_output.get('reason', '')[:80]}",
+                ))
+            else:
+                # causality-to-action silently accepted bridge output without causality field
+                report.results.append(TestResult(
+                    suite="BOUNDARY",
+                    microgram="signal-to-causality → causality-to-action (SKIP naranjo)",
+                    test_name="boundary_bypass",
+                    passed=False,
+                    detail=f"Bypassed Naranjo assessment entirely. Bridge output fed directly to action. "
+                           f"Got: regulatory_action={actual_action}. "
+                           f"The confinement boundary was crossed without clinical assessment.",
+                    severity="CRITICAL",
+                    fix_suggestion="causality-to-action should REQUIRE causality field from Naranjo output, "
+                                  "not accept missing causality as DOUBTFUL",
+                ))
         else:
             report.results.append(TestResult(
                 suite="BOUNDARY",
