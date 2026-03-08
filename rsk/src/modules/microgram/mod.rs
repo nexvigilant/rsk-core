@@ -183,6 +183,51 @@ impl Microgram {
         serde_yaml::from_str(yaml).map_err(|e| format!("Parse error: {e}"))
     }
 
+    /// Validate input against declared interface.
+    /// Returns a list of validation errors (empty = valid).
+    pub fn validate_input(&self, input: &HashMap<String, Value>) -> Vec<String> {
+        let mut errors = Vec::new();
+        if let Some(ref iface) = self.interface {
+            for (field_name, field_spec) in &iface.inputs {
+                if field_spec.required {
+                    match input.get(field_name) {
+                        None | Some(Value::Null) => {
+                            errors.push(format!(
+                                "Missing required field '{}' (type: {})",
+                                field_name, field_spec.field_type
+                            ));
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        errors
+    }
+
+    /// Execute with given input variables.
+    /// If `strict` validation is enabled and required fields are missing,
+    /// returns a REJECTED result instead of silently processing.
+    pub fn run_strict(&self, input: HashMap<String, Value>) -> MicrogramResult {
+        let validation_errors = self.validate_input(&input);
+        if !validation_errors.is_empty() {
+            let mut output = HashMap::new();
+            output.insert(
+                "_error".to_string(),
+                Value::String(format!("REJECTED: {}", validation_errors.join("; "))),
+            );
+            output.insert("_valid".to_string(), Value::Bool(false));
+            return MicrogramResult {
+                name: self.name.clone(),
+                success: false,
+                path: vec!["input_validation".to_string()],
+                output,
+                duration_us: 0,
+            };
+        }
+        self.run(input)
+    }
+
     /// Execute with given input variables
     pub fn run(&self, input: HashMap<String, Value>) -> MicrogramResult {
         let start = std::time::Instant::now();
