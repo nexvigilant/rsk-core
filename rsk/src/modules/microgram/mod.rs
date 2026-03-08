@@ -102,6 +102,27 @@ pub struct Microgram {
     pub tests: Vec<MicrogramTest>,
     #[serde(default)]
     pub interface: Option<MicrogramInterface>,
+    /// T1 primitive signature — which Lex Primitiva this microgram embodies
+    #[serde(default)]
+    pub primitive_signature: Option<PrimitiveSignature>,
+}
+
+/// T1 Lex Primitiva signature for a microgram
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PrimitiveSignature {
+    /// Dominant primitive (the one this microgram IS)
+    pub dominant: String,
+    /// Full primitive expression (e.g., "κ(ς(∅))")
+    pub expression: String,
+    /// Component primes (irreducible primitives present)
+    #[serde(default)]
+    pub primes: Vec<String>,
+    /// Arguments the dominant operates on (typed Σ: what is being summed?)
+    #[serde(default)]
+    pub arguments: Vec<String>,
+    /// Predicted signature when chained with another microgram
+    #[serde(default)]
+    pub chain_prediction: Option<String>,
 }
 
 fn default_version() -> String {

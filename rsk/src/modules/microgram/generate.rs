@@ -74,6 +74,7 @@ impl MicrogramSpec {
             },
             tests,
             interface: None,
+            primitive_signature: None,
         }
     }
 

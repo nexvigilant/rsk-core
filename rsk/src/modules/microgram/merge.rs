@@ -50,6 +50,7 @@ pub fn merge(a: &Microgram, b: &Microgram, name: &str, description: &str) -> Mic
         },
         tests,
         interface: None,
+        primitive_signature: None,
     }
 }
 

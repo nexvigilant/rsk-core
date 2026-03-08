@@ -1,6 +1,12 @@
 name: session-scorecard
 description: 'Product Chain Scorecard: scores a session (or any work unit) on how far it advanced through the T1 primitive product chain. L0=Void identified, L1=State measured, L2=Compared, L3=Acted, L4=Persisted, L5=Shipped. Self-similar across scales: session, chain, directive, strategy.'
 version: 0.1.0
+primitive_signature:
+  dominant: κ
+  expression: 'κ(ς(∅)) iterated at 6 levels — monotonic comparison chain'
+  primes: ['∅', 'ς', 'κ', '→', '∂']
+  arguments: ['∅', 'ς', 'κ', '→', 'π', '∝']
+  chain_prediction: 'Σ<∝|π|→>(κ(ς(∅))) — typed sum over level-specific primitives'
 interface:
   inputs:
     void_identified:

@@ -1,6 +1,12 @@
 name: scorecard-compound
 description: 'Compound Scorecard: aggregates session-level product chain scores into multi-scale verdicts. Self-similar — uses the same L0-L5 product chain at every scale. Input is an array of session levels; output is the compound score plus the scale-appropriate verdict.'
 version: 0.1.0
+primitive_signature:
+  dominant: Σ
+  expression: 'Σ<∝|π|→>(levels) / N — typed aggregation: sums specific primitives, not abstract values'
+  primes: ['Σ', 'κ', 'N', '∂']
+  arguments: ['∝', 'π', '→']
+  chain_prediction: 'ν(Σ<∝|π|→>(levels)) — when tracked over time, becomes frequency-governed'
 interface:
   inputs:
     session_levels:
