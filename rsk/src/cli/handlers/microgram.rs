@@ -16,7 +16,7 @@ use std::path::Path;
 
 pub fn handle_microgram(action: &MicrogramAction) {
     match action {
-        MicrogramAction::Run { path, input } => {
+        MicrogramAction::Run { path, input, strict } => {
             let mg = match Microgram::load(Path::new(path)) {
                 Ok(m) => m,
                 Err(e) => {
@@ -36,7 +36,11 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 }
             };
 
-            let result = mg.run(variables);
+            let result = if *strict {
+                mg.run_strict(variables)
+            } else {
+                mg.run(variables)
+            };
             println!(
                 "{}",
                 serde_json::to_string_pretty(&json!({

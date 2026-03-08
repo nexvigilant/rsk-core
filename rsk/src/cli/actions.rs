@@ -484,6 +484,9 @@ pub enum MicrogramAction {
         /// Input JSON (e.g. '{"n": 5}')
         #[arg(short, long, default_value = "{}")]
         input: String,
+        /// Strict mode: reject input missing required fields declared in interface
+        #[arg(long)]
+        strict: bool,
     },
     /// Run self-tests for a microgram
     Test {
