@@ -6,7 +6,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{UnixListener, UnixStream};
+use tokio::net::UnixListener;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -39,6 +39,12 @@ pub enum StateResponse {
 
 pub struct StateStore {
     data: DashMap<String, Value>,
+}
+
+impl Default for StateStore {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl StateStore {

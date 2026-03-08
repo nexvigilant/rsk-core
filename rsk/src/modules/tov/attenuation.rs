@@ -34,11 +34,6 @@ impl PropagationProbability {
         Self { value }
     }
 
-    /// Create without validation (for internal use)
-    pub(crate) fn new_unchecked(value: f64) -> Self {
-        Self { value }
-    }
-
     /// Get the probability value
     pub fn get(&self) -> f64 {
         self.value

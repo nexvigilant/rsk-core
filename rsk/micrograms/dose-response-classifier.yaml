@@ -1,69 +1,9 @@
 name: dose-response-classifier
 description: 'Biophysics dose-response classification: maps force (dose) and mass (resistance) to predicted response category using stem-phys F=ma model'
 version: 0.1.0
-interface:
-  inputs:
-    dose_mg:
-      type: number
-      required: true
-      description: 'Drug dose in mg'
-    body_weight_kg:
-      type: number
-      required: true
-      description: 'Patient body weight in kg'
-    dose_per_kg:
-      type: number
-      required: true
-      description: 'dose_mg / body_weight_kg (pre-computed)'
-    therapeutic_index:
-      type: number
-      required: true
-      description: 'Ratio of toxic_dose / effective_dose (higher = safer)'
-  outputs:
-    response_category:
-      type: string
-    risk_level:
-      type: string
-    mechanism:
-      type: string
 tree:
   start: check_zero_dose
   nodes:
-    check_zero_dose:
-      type: condition
-      variable: dose_mg
-      operator: eq
-      value: 0
-      true_next: no_effect
-      false_next: check_subtherapeutic
-    check_subtherapeutic:
-      type: condition
-      variable: dose_per_kg
-      operator: lt
-      value: 0.1
-      true_next: subtherapeutic
-      false_next: check_narrow_ti
-    check_narrow_ti:
-      type: condition
-      variable: therapeutic_index
-      operator: lt
-      value: 2.0
-      true_next: check_high_dose_narrow
-      false_next: check_wide_ti
-    check_high_dose_narrow:
-      type: condition
-      variable: dose_per_kg
-      operator: gt
-      value: 5.0
-      true_next: toxic_narrow
-      false_next: check_moderate_narrow
-    check_moderate_narrow:
-      type: condition
-      variable: dose_per_kg
-      operator: gt
-      value: 1.0
-      true_next: therapeutic_narrow_caution
-      false_next: therapeutic_low
     check_wide_ti:
       type: condition
       variable: therapeutic_index
@@ -71,6 +11,13 @@ tree:
       value: 10.0
       true_next: check_high_dose_wide
       false_next: check_moderate_dose
+    check_subtherapeutic:
+      type: condition
+      variable: dose_per_kg
+      operator: lt
+      value: 0.1
+      true_next: subtherapeutic
+      false_next: check_narrow_ti
     check_high_dose_wide:
       type: condition
       variable: dose_per_kg
@@ -78,6 +25,13 @@ tree:
       value: 10.0
       true_next: supratherapeutic_wide
       false_next: therapeutic_safe
+    check_narrow_ti:
+      type: condition
+      variable: therapeutic_index
+      operator: lt
+      value: 2.0
+      true_next: check_high_dose_narrow
+      false_next: check_wide_ti
     check_moderate_dose:
       type: condition
       variable: dose_per_kg
@@ -85,6 +39,81 @@ tree:
       value: 10.0
       true_next: supratherapeutic_moderate
       false_next: check_elevated_dose
+    no_effect:
+      type: return
+      value:
+        mechanism: Zero force applied — no acceleration (F=ma, F=0)
+        response_category: NO_EFFECT
+        risk_level: none
+    therapeutic_safe:
+      type: return
+      value:
+        mechanism: Proportional force-response within wide TI — optimal acceleration
+        response_category: THERAPEUTIC_SAFE
+        risk_level: low
+    therapeutic_elevated:
+      type: return
+      value:
+        risk_level: medium
+        mechanism: Elevated force-mass ratio with moderate TI — within range but above standard dosing
+        response_category: THERAPEUTIC
+    toxic_narrow:
+      type: return
+      value:
+        response_category: TOXIC
+        risk_level: critical
+        mechanism: High force with narrow TI — exceeds safe acceleration boundary
+    therapeutic_standard:
+      type: return
+      value:
+        response_category: THERAPEUTIC
+        risk_level: low
+        mechanism: Standard force-mass ratio within expected acceleration range
+    therapeutic_low:
+      type: return
+      value:
+        response_category: THERAPEUTIC_LOW
+        risk_level: low
+        mechanism: Low force with narrow TI — within safe range but monitor closely
+    therapeutic_narrow_caution:
+      type: return
+      value:
+        mechanism: Therapeutic range but narrow TI — near boundary between effect and toxicity
+        response_category: THERAPEUTIC_CAUTION
+        risk_level: high
+    check_zero_dose:
+      type: condition
+      variable: dose_mg
+      operator: eq
+      value: 0
+      true_next: no_effect
+      false_next: check_subtherapeutic
+    check_high_dose_narrow:
+      type: condition
+      variable: dose_per_kg
+      operator: gt
+      value: 5.0
+      true_next: toxic_narrow
+      false_next: check_moderate_narrow
+    subtherapeutic:
+      type: return
+      value:
+        mechanism: Force below detection limit — insufficient to overcome inertial mass
+        response_category: SUBTHERAPEUTIC
+        risk_level: low
+    check_moderate_narrow:
+      type: condition
+      variable: dose_per_kg
+      operator: gt
+      value: 1.0
+      true_next: therapeutic_narrow_caution
+      false_next: therapeutic_low
+    supratherapeutic_moderate:
+      type: return
+      value:
+        risk_level: high
+        mechanism: Force exceeds proportional range with moderate TI
+        response_category: SUPRATHERAPEUTIC
     check_elevated_dose:
       type: condition
       variable: dose_per_kg
@@ -92,144 +121,274 @@ tree:
       value: 5.0
       true_next: therapeutic_elevated
       false_next: therapeutic_standard
-    no_effect:
-      type: return
-      value:
-        response_category: NO_EFFECT
-        risk_level: none
-        mechanism: 'Zero force applied — no acceleration (F=ma, F=0)'
-    subtherapeutic:
-      type: return
-      value:
-        response_category: SUBTHERAPEUTIC
-        risk_level: low
-        mechanism: 'Force below detection limit — insufficient to overcome inertial mass'
-    toxic_narrow:
-      type: return
-      value:
-        response_category: TOXIC
-        risk_level: critical
-        mechanism: 'High force with narrow TI — exceeds safe acceleration boundary'
-    therapeutic_narrow_caution:
-      type: return
-      value:
-        response_category: THERAPEUTIC_CAUTION
-        risk_level: high
-        mechanism: 'Therapeutic range but narrow TI — near boundary between effect and toxicity'
-    therapeutic_low:
-      type: return
-      value:
-        response_category: THERAPEUTIC_LOW
-        risk_level: low
-        mechanism: 'Low force with narrow TI — within safe range but monitor closely'
     supratherapeutic_wide:
       type: return
       value:
         response_category: SUPRATHERAPEUTIC
         risk_level: medium
-        mechanism: 'Excessive force but wide TI provides safety margin'
-    therapeutic_safe:
-      type: return
-      value:
-        response_category: THERAPEUTIC_SAFE
-        risk_level: low
-        mechanism: 'Proportional force-response within wide TI — optimal acceleration'
-    supratherapeutic_moderate:
-      type: return
-      value:
-        response_category: SUPRATHERAPEUTIC
-        risk_level: high
-        mechanism: 'Force exceeds proportional range with moderate TI'
-    therapeutic_elevated:
-      type: return
-      value:
-        response_category: THERAPEUTIC
-        risk_level: medium
-        mechanism: 'Elevated force-mass ratio with moderate TI — within range but above standard dosing'
-    therapeutic_standard:
-      type: return
-      value:
-        response_category: THERAPEUTIC
-        risk_level: low
-        mechanism: 'Standard force-mass ratio within expected acceleration range'
+        mechanism: Excessive force but wide TI provides safety margin
 tests:
 - input:
-    dose_mg: 0
-    body_weight_kg: 70
     dose_per_kg: 0
     therapeutic_index: 5.0
+    body_weight_kg: 70
+    dose_mg: 0
   expect:
     response_category: NO_EFFECT
     risk_level: none
 - input:
+    therapeutic_index: 10.0
     dose_mg: 5
     body_weight_kg: 80
     dose_per_kg: 0.0625
-    therapeutic_index: 10.0
   expect:
-    response_category: SUBTHERAPEUTIC
     risk_level: low
+    response_category: SUBTHERAPEUTIC
 - input:
     dose_mg: 500
     body_weight_kg: 70
     dose_per_kg: 7.14
     therapeutic_index: 1.5
   expect:
-    response_category: TOXIC
     risk_level: critical
+    response_category: TOXIC
 - input:
-    dose_mg: 150
-    body_weight_kg: 70
     dose_per_kg: 2.14
     therapeutic_index: 1.8
+    dose_mg: 150
+    body_weight_kg: 70
   expect:
-    response_category: THERAPEUTIC_CAUTION
     risk_level: high
+    response_category: THERAPEUTIC_CAUTION
 - input:
+    dose_per_kg: 0.71
     dose_mg: 50
     body_weight_kg: 70
-    dose_per_kg: 0.71
     therapeutic_index: 1.5
   expect:
-    response_category: THERAPEUTIC_LOW
     risk_level: low
+    response_category: THERAPEUTIC_LOW
 - input:
     dose_mg: 1000
-    body_weight_kg: 70
-    dose_per_kg: 14.3
     therapeutic_index: 15.0
+    dose_per_kg: 14.3
+    body_weight_kg: 70
   expect:
-    response_category: SUPRATHERAPEUTIC
     risk_level: medium
+    response_category: SUPRATHERAPEUTIC
 - input:
     dose_mg: 200
-    body_weight_kg: 70
     dose_per_kg: 2.86
+    body_weight_kg: 70
     therapeutic_index: 12.0
   expect:
-    response_category: THERAPEUTIC_SAFE
     risk_level: low
+    response_category: THERAPEUTIC_SAFE
 - input:
-    dose_mg: 400
     body_weight_kg: 70
     dose_per_kg: 5.71
+    dose_mg: 400
     therapeutic_index: 5.0
   expect:
     response_category: THERAPEUTIC
     risk_level: medium
 - input:
-    dose_mg: 500
-    body_weight_kg: 70
     dose_per_kg: 7.14
     therapeutic_index: 3.3
+    dose_mg: 500
+    body_weight_kg: 70
   expect:
-    response_category: THERAPEUTIC
     risk_level: medium
+    response_category: THERAPEUTIC
 - input:
     dose_mg: 200
     body_weight_kg: 70
     dose_per_kg: 2.86
     therapeutic_index: 5.0
   expect:
+    risk_level: low
+    response_category: THERAPEUTIC
+- input:
+    therapeutic_index: 9.999
+  expect:
+    risk_level: low
+    response_category: THERAPEUTIC
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input:
+    therapeutic_index: 10.001
+  expect:
+    mechanism: Proportional force-response within wide TI — optimal acceleration
+    response_category: THERAPEUTIC_SAFE
+    risk_level: low
+- input: {}
+  expect:
+    mechanism: Standard force-mass ratio within expected acceleration range
     response_category: THERAPEUTIC
     risk_level: low
+- input:
+    dose_per_kg: 0.099
+  expect:
+    response_category: SUBTHERAPEUTIC
+    mechanism: Force below detection limit — insufficient to overcome inertial mass
+    risk_level: low
+- input:
+    dose_per_kg: 0.101
+  expect:
+    mechanism: Standard force-mass ratio within expected acceleration range
+    response_category: THERAPEUTIC
+    risk_level: low
+- input: {}
+  expect:
+    risk_level: low
+    response_category: THERAPEUTIC
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input:
+    dose_per_kg: 9.999
+  expect:
+    response_category: THERAPEUTIC
+    mechanism: Elevated force-mass ratio with moderate TI — within range but above standard dosing
+    risk_level: medium
+- input:
+    dose_per_kg: 10.001
+  expect:
+    response_category: SUPRATHERAPEUTIC
+    risk_level: high
+    mechanism: Force exceeds proportional range with moderate TI
+- input: {}
+  expect:
+    mechanism: Standard force-mass ratio within expected acceleration range
+    response_category: THERAPEUTIC
+    risk_level: low
+- input:
+    therapeutic_index: 1.999
+  expect:
+    response_category: THERAPEUTIC_LOW
+    mechanism: Low force with narrow TI — within safe range but monitor closely
+    risk_level: low
+- input:
+    therapeutic_index: 2.001
+  expect:
+    response_category: THERAPEUTIC
+    risk_level: low
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input: {}
+  expect:
+    response_category: THERAPEUTIC
+    risk_level: low
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input:
+    dose_per_kg: 9.999
+  expect:
+    risk_level: medium
+    mechanism: Elevated force-mass ratio with moderate TI — within range but above standard dosing
+    response_category: THERAPEUTIC
+- input:
+    dose_per_kg: 10.001
+  expect:
+    response_category: SUPRATHERAPEUTIC
+    risk_level: high
+    mechanism: Force exceeds proportional range with moderate TI
+- input: {}
+  expect:
+    mechanism: Standard force-mass ratio within expected acceleration range
+    response_category: THERAPEUTIC
+    risk_level: low
+- input:
+    dose_mg: -1
+  expect:
+    response_category: THERAPEUTIC
+    risk_level: low
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input:
+    dose_mg: -1
+  expect:
+    response_category: THERAPEUTIC
+    risk_level: low
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input:
+    dose_mg: 1
+  expect:
+    risk_level: low
+    response_category: THERAPEUTIC
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input: {}
+  expect:
+    risk_level: low
+    response_category: THERAPEUTIC
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input:
+    dose_per_kg: 4.999
+  expect:
+    response_category: THERAPEUTIC
+    risk_level: low
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input:
+    dose_per_kg: 5.001
+  expect:
+    mechanism: Elevated force-mass ratio with moderate TI — within range but above standard dosing
+    response_category: THERAPEUTIC
+    risk_level: medium
+- input: {}
+  expect:
+    risk_level: low
+    mechanism: Standard force-mass ratio within expected acceleration range
+    response_category: THERAPEUTIC
+- input:
+    dose_per_kg: 0.999
+  expect:
+    risk_level: low
+    response_category: THERAPEUTIC
+    mechanism: Standard force-mass ratio within expected acceleration range
+- input:
+    dose_per_kg: 1.001
+  expect:
+    response_category: THERAPEUTIC
+    mechanism: Standard force-mass ratio within expected acceleration range
+    risk_level: low
+- input: {}
+  expect:
+    mechanism: Standard force-mass ratio within expected acceleration range
+    risk_level: low
+    response_category: THERAPEUTIC
+- input:
+    dose_per_kg: 4.999
+  expect:
+    mechanism: Standard force-mass ratio within expected acceleration range
+    response_category: THERAPEUTIC
+    risk_level: low
+- input:
+    dose_per_kg: 5.001
+  expect:
+    mechanism: Elevated force-mass ratio with moderate TI — within range but above standard dosing
+    risk_level: medium
+    response_category: THERAPEUTIC
+- input: {}
+  expect:
+    mechanism: Standard force-mass ratio within expected acceleration range
+    risk_level: low
+    response_category: THERAPEUTIC
+interface:
+  inputs:
+    dose_mg:
+      type: number
+      required: true
+    dose_per_kg:
+      type: number
+      required: true
+    body_weight_kg:
+      type: number
+      required: true
+    therapeutic_index:
+      type: number
+      required: true
+  outputs:
+    response_category:
+      type: string
+      required: false
+    mechanism:
+      type: string
+      required: false
+    risk_level:
+      type: string
+      required: false
+  aliases: {}

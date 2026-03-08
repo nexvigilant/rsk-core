@@ -56,14 +56,14 @@ pub fn scan_directory(path: &Path, max_depth: usize, policy: &PolicyFile) -> Sca
         .into_iter()
         .filter_entry(|e| {
             // Skip hidden directories and known skip dirs (but not the root path)
-            if e.file_type().is_dir() && e.depth() > 0 {
-                if let Some(name) = e.file_name().to_str() {
-                    if name.starts_with('.') {
-                        return false;
-                    }
-                    if SKIP_DIRS.contains(&name) {
-                        return false;
-                    }
+            if e.file_type().is_dir() && e.depth() > 0
+                && let Some(name) = e.file_name().to_str()
+            {
+                if name.starts_with('.') {
+                    return false;
+                }
+                if SKIP_DIRS.contains(&name) {
+                    return false;
                 }
             }
             true
@@ -164,14 +164,14 @@ pub fn scan_with_options(path: &Path, options: &ScanOptions, policy: &PolicyFile
         .follow_links(false)
         .into_iter()
         .filter_entry(|e| {
-            if e.file_type().is_dir() {
-                if let Some(name) = e.file_name().to_str() {
-                    if name.starts_with('.') && name != "." {
-                        return false;
-                    }
-                    if skip_set.contains(&name) {
-                        return false;
-                    }
+            if e.file_type().is_dir()
+                && let Some(name) = e.file_name().to_str()
+            {
+                if name.starts_with('.') && name != "." {
+                    return false;
+                }
+                if skip_set.contains(&name) {
+                    return false;
                 }
             }
             true

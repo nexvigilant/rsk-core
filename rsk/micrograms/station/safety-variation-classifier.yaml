@@ -1,5 +1,7 @@
 name: safety-variation-classifier
-description: Classifies the type of regulatory variation needed for safety-related changes. Determines variation tier (IA, IB, II, or urgent) based on scope and urgency of safety modifications.
+description: Classifies the type of regulatory variation needed for safety-related
+  changes. Determines variation tier (IA, IB, II, or urgent) based on scope and urgency
+  of safety modifications.
 version: 0.1.0
 interface:
   inputs:
@@ -101,47 +103,63 @@ tree:
         variation_type: type_II
         timeline: 60_days
 tests:
-  - input:
-      is_urgent: true
-      new_adverse_reaction: true
-      frequency_change: true
-      contraindication_change: true
-    expect:
-      variation_type: urgent_safety_restriction
-      timeline: immediate
-  - input:
-      is_urgent: false
-      new_adverse_reaction: true
-      frequency_change: true
-      contraindication_change: false
-    expect:
-      variation_type: type_IB
-      timeline: 30_days
-  - input:
-      is_urgent: false
-      new_adverse_reaction: false
-      frequency_change: true
-      contraindication_change: false
-    expect:
-      variation_type: type_IA
-      timeline: annual_submission
-  - input:
-      is_urgent: false
-      new_adverse_reaction: true
-      frequency_change: false
-      contraindication_change: false
-    expect:
-      variation_type: type_IA
-      timeline: annual_submission
-  - input:
-      is_urgent: false
-      new_adverse_reaction: false
-      frequency_change: false
-      contraindication_change: true
-    expect:
-      variation_type: type_IB
-      timeline: 30_days
-  - input: {}
-    expect:
-      variation_type: type_II
-      timeline: 60_days
+- input:
+    contraindication_change: false
+    frequency_change: false
+    is_urgent: false
+    new_adverse_reaction: false
+  expect:
+    variation_type: type_II
+    timeline: 60_days
+- input:
+    contraindication_change: false
+    frequency_change: false
+    is_urgent: false
+    new_adverse_reaction: true
+  expect:
+    variation_type: type_IA
+    timeline: annual_submission
+- input:
+    contraindication_change: false
+    frequency_change: false
+    is_urgent: true
+    new_adverse_reaction: false
+  expect:
+    variation_type: urgent_safety_restriction
+    timeline: immediate
+- input:
+    contraindication_change: false
+    frequency_change: true
+    is_urgent: false
+    new_adverse_reaction: false
+  expect:
+    variation_type: type_IA
+    timeline: annual_submission
+- input:
+    contraindication_change: false
+    frequency_change: true
+    is_urgent: false
+    new_adverse_reaction: true
+  expect:
+    variation_type: type_IB
+    timeline: 30_days
+- input:
+    contraindication_change: true
+    frequency_change: false
+    is_urgent: false
+    new_adverse_reaction: false
+  expect:
+    variation_type: type_IB
+    timeline: 30_days
+- input:
+    contraindication_change: true
+    frequency_change: false
+    is_urgent: false
+    new_adverse_reaction: true
+  expect:
+    variation_type: type_IB
+    timeline: 30_days
+- input: {}
+  expect:
+    variation_type: type_II
+    timeline: 60_days

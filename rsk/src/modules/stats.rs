@@ -23,7 +23,7 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
-use statrs::distribution::{Continuous, ContinuousCDF, Normal};
+use statrs::distribution::{ContinuousCDF, Normal};
 use std::f64::consts::PI;
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -36,12 +36,6 @@ fn normal_cdf(x: f64) -> f64 {
     n.cdf(x)
 }
 
-/// Standard normal PDF using statrs
-fn normal_pdf(x: f64) -> f64 {
-    let n = Normal::new(0.0, 1.0).unwrap();
-    n.pdf(x)
-}
-
 /// Student's t-distribution CDF
 fn t_cdf(t: f64, df: f64) -> f64 {
     use statrs::distribution::StudentsT;
@@ -50,77 +44,6 @@ fn t_cdf(t: f64, df: f64) -> f64 {
     }
     let dist = StudentsT::new(0.0, 1.0, df).unwrap();
     dist.cdf(t)
-}
-
-/// Incomplete beta function approximation using continued fraction
-fn incomplete_beta(x: f64, a: f64, b: f64) -> f64 {
-    if x == 0.0 {
-        return 0.0;
-    }
-    if x == 1.0 {
-        return 1.0;
-    }
-
-    // Use continued fraction (Lentz's algorithm)
-    let lbeta = ln_gamma(a) + ln_gamma(b) - ln_gamma(a + b);
-    let front = (x.ln() * a + (1.0 - x).ln() * b - lbeta).exp() / a;
-
-    // Continued fraction
-    let eps = 1e-10;
-    let max_iter = 200;
-
-    let mut cf = 1.0;
-    let mut c = 1.0;
-    let mut d = 0.0;
-
-    for m in 1..=max_iter {
-        let m_f = m as f64;
-
-        // Even step
-        let numerator = if m == 1 {
-            1.0
-        } else {
-            let m1 = (m - 1) as f64;
-            (m1 * (b - m1) * x) / ((a + 2.0 * m1 - 1.0) * (a + 2.0 * m1))
-        };
-
-        d = 1.0 + numerator * d;
-        if d.abs() < 1e-30 {
-            d = 1e-30;
-        }
-        d = 1.0 / d;
-
-        c = 1.0 + numerator / c;
-        if c.abs() < 1e-30 {
-            c = 1e-30;
-        }
-
-        cf *= c * d;
-
-        // Odd step
-        let numerator =
-            -((a + m_f) * (a + b + m_f) * x) / ((a + 2.0 * m_f) * (a + 2.0 * m_f + 1.0));
-
-        d = 1.0 + numerator * d;
-        if d.abs() < 1e-30 {
-            d = 1e-30;
-        }
-        d = 1.0 / d;
-
-        c = 1.0 + numerator / c;
-        if c.abs() < 1e-30 {
-            c = 1e-30;
-        }
-
-        let delta = c * d;
-        cf *= delta;
-
-        if (delta - 1.0).abs() < eps {
-            break;
-        }
-    }
-
-    front * cf
 }
 
 /// Log gamma function (Stirling's approximation for larger values)
@@ -137,21 +60,21 @@ fn ln_gamma(x: f64) -> f64 {
     // Lanczos approximation coefficients
     let g = 7.0;
     let c = [
-        0.99999999999980993,
-        676.5203681218851,
-        -1259.1392167224028,
-        771.32342877765313,
-        -176.61502916214059,
-        12.507343278686905,
-        -0.13857109526572012,
-        9.9843695780195716e-6,
-        1.5056327351493116e-7,
+        0.999_999_999_999_809_9,
+        676.520_368_121_885_1,
+        -1_259.139_216_722_402_8,
+        771.323_428_777_653_1,
+        -176.615_029_162_140_6,
+        12.507_343_278_686_905,
+        -0.138_571_095_265_720_12,
+        9.984_369_578_019_572e-6,
+        1.505_632_735_149_311_6e-7,
     ];
 
     let x = x - 1.0;
     let mut ag = c[0];
-    for i in 1..c.len() {
-        ag += c[i] / (x + i as f64);
+    for (i, ci) in c.iter().enumerate().skip(1) {
+        ag += ci / (x + i as f64);
     }
 
     let t = x + g + 0.5;

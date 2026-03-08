@@ -52,5 +52,5 @@ pub fn coverage(mg: &Microgram) -> CoverageResult {
 /// Coverage for all micrograms in a directory
 pub fn coverage_all(dir: &Path) -> Result<Vec<CoverageResult>, String> {
     let all = load_all(dir)?;
-    Ok(all.iter().map(|mg| coverage(mg)).collect())
+    Ok(all.iter().map(coverage).collect())
 }

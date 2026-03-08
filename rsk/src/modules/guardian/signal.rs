@@ -3,9 +3,9 @@
 //! Implements signal detection and pattern analysis from IAIRs,
 //! using ToV signal equation S = U × R × T.
 
-use super::iair::{IAIR, IncidentCategory, OutcomeType};
+use super::iair::{IAIR, IncidentCategory};
 use crate::tov::{ACACase, case_propagation_factor};
-use chrono::{DateTime, Duration, Utc};
+use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -199,7 +199,7 @@ impl SignalDetector {
             1.0
         };
 
-        let drift_detected = drift_ratio > 1.5 || drift_ratio < 0.5;
+        let drift_detected = !(0.5..=1.5).contains(&drift_ratio);
 
         DriftAnalysis {
             baseline_incident_rate: baseline_rate,
@@ -245,7 +245,7 @@ pub fn signal_propagation_factor(case: ACACase) -> f64 {
 }
 
 /// Aggregate signals with propagation weights
-pub fn aggregate_signals_with_propagation(signals: &[Signal], iairs: &[IAIR]) -> f64 {
+pub fn aggregate_signals_with_propagation(_signals: &[Signal], iairs: &[IAIR]) -> f64 {
     let mut total_weighted = 0.0;
     let mut total_weight = 0.0;
 
@@ -272,7 +272,7 @@ pub fn aggregate_signals_with_propagation(signals: &[Signal], iairs: &[IAIR]) ->
 mod tests {
     use super::*;
     use crate::modules::guardian::iair::{
-        CheckabilityLevel, ExpertiseLevel, IAIRBuilder, OutputTreatment, StakesLevel,
+        CheckabilityLevel, ExpertiseLevel, IAIRBuilder, OutcomeType, OutputTreatment, StakesLevel,
     };
 
     fn create_test_iair(category: IncidentCategory, severity: f64, domain: &str) -> IAIR {

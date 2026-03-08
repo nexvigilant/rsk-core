@@ -1,54 +1,17 @@
 name: hub-orchestration-schema
-description: 'Component: Hub (Nucleus) — Spec §2.2. Schema validator for hub orchestration data completeness. Validates that module coordination metrics exist before attempting health classification.'
+description: 'Component: Hub (Nucleus) — Spec §2.2. Schema validator for hub orchestration
+  data completeness. Validates that module coordination metrics exist before attempting
+  health classification.'
 version: 0.1.0
-interface:
-  inputs:
-    active_modules:
-      type: int
-      required: false
-    event_bus_depth:
-      type: int
-      required: false
-    cross_module_calls_30d:
-      type: int
-      required: false
-    failed_handoffs_30d:
-      type: int
-      required: false
-    orchestration_latency_ms:
-      type: float
-      required: false
-  outputs:
-    data_complete:
-      type: bool
-    missing_fields:
-      type: string
-    can_compute_hub:
-      type: bool
 tree:
   start: check_modules
   nodes:
-    check_modules:
-      type: condition
-      variable: active_modules
-      operator: gt
-      value: 0
-      true_next: check_event_bus
-      false_next: missing_modules
-    check_event_bus:
-      type: condition
-      variable: event_bus_depth
-      operator: is_not_null
-      value: true
-      true_next: check_cross_module
-      false_next: missing_event_bus
-    check_cross_module:
-      type: condition
-      variable: cross_module_calls_30d
-      operator: is_not_null
-      value: true
-      true_next: check_handoffs
-      false_next: missing_cross_module
+    missing_latency:
+      type: return
+      value:
+        can_compute_hub: false
+        data_complete: false
+        missing_fields: orchestration_latency_ms
     check_handoffs:
       type: condition
       variable: failed_handoffs_30d
@@ -56,6 +19,45 @@ tree:
       value: true
       true_next: check_latency
       false_next: missing_handoffs
+    check_modules:
+      type: condition
+      variable: active_modules
+      operator: gt
+      value: 0
+      true_next: check_event_bus
+      false_next: missing_modules
+    missing_modules:
+      type: return
+      value:
+        missing_fields: active_modules
+        data_complete: false
+        can_compute_hub: false
+    check_cross_module:
+      type: condition
+      variable: cross_module_calls_30d
+      operator: is_not_null
+      value: true
+      true_next: check_handoffs
+      false_next: missing_cross_module
+    missing_event_bus:
+      type: return
+      value:
+        missing_fields: event_bus_depth
+        data_complete: false
+        can_compute_hub: false
+    check_event_bus:
+      type: condition
+      variable: event_bus_depth
+      operator: is_not_null
+      value: true
+      true_next: check_cross_module
+      false_next: missing_event_bus
+    complete:
+      type: return
+      value:
+        missing_fields: none
+        can_compute_hub: true
+        data_complete: true
     check_latency:
       type: condition
       variable: orchestration_latency_ms
@@ -63,85 +65,106 @@ tree:
       value: 0.0
       true_next: complete
       false_next: missing_latency
-    complete:
-      type: return
-      value:
-        data_complete: true
-        missing_fields: none
-        can_compute_hub: true
-    missing_modules:
-      type: return
-      value:
-        data_complete: false
-        missing_fields: active_modules
-        can_compute_hub: false
-    missing_event_bus:
-      type: return
-      value:
-        data_complete: false
-        missing_fields: event_bus_depth
-        can_compute_hub: false
     missing_cross_module:
       type: return
       value:
         data_complete: false
-        missing_fields: cross_module_calls_30d
         can_compute_hub: false
+        missing_fields: cross_module_calls_30d
     missing_handoffs:
       type: return
       value:
         data_complete: false
         missing_fields: failed_handoffs_30d
         can_compute_hub: false
-    missing_latency:
-      type: return
-      value:
-        data_complete: false
-        missing_fields: orchestration_latency_ms
-        can_compute_hub: false
 tests:
 - input:
-    active_modules: 8
-    event_bus_depth: 12
-    cross_module_calls_30d: 500
-    failed_handoffs_30d: 2
-    orchestration_latency_ms: 45.0
+    active_modules: -0.5
+    cross_module_calls_30d: false
+    event_bus_depth: false
+    failed_handoffs_30d: false
+    orchestration_latency_ms: -0.5
   expect:
-    data_complete: true
-    missing_fields: none
-    can_compute_hub: true
-- input:
-    active_modules: 0
-    event_bus_depth: 12
-    cross_module_calls_30d: 500
-    failed_handoffs_30d: 2
-    orchestration_latency_ms: 45.0
-  expect:
-    data_complete: false
     missing_fields: active_modules
+    data_complete: false
     can_compute_hub: false
 - input:
-    active_modules: 8
-    event_bus_depth: 12
-    cross_module_calls_30d: 500
-    failed_handoffs_30d: 2
-    orchestration_latency_ms: 0.0
+    active_modules: 0.5
+    cross_module_calls_30d: false
+    event_bus_depth: false
+    failed_handoffs_30d: false
+    orchestration_latency_ms: -0.5
   expect:
+    can_compute_hub: false
     data_complete: false
     missing_fields: orchestration_latency_ms
-    can_compute_hub: false
-- input: {}
-  expect:
-    data_complete: false
-    missing_fields: active_modules
-    can_compute_hub: false
 - input:
-    active_modules: 3
-    event_bus_depth: 0
-    cross_module_calls_30d: 100
-    failed_handoffs_30d: 0
-    orchestration_latency_ms: 10.0
+    active_modules: 0.5
+    cross_module_calls_30d: false
+    event_bus_depth: false
+    failed_handoffs_30d: false
+    orchestration_latency_ms: 0.5
   expect:
-    data_complete: true
     missing_fields: none
     can_compute_hub: true
+    data_complete: true
+- input:
+    active_modules: 0.5
+    cross_module_calls_30d: false
+    event_bus_depth: false
+    orchestration_latency_ms: -0.5
+  expect:
+    data_complete: false
+    missing_fields: failed_handoffs_30d
+    can_compute_hub: false
+- input:
+    active_modules: 0.5
+    cross_module_calls_30d: false
+    failed_handoffs_30d: false
+    orchestration_latency_ms: -0.5
+  expect:
+    missing_fields: event_bus_depth
+    data_complete: false
+    can_compute_hub: false
+- input:
+    active_modules: 0.5
+    event_bus_depth: false
+    failed_handoffs_30d: false
+    orchestration_latency_ms: -0.5
+  expect:
+    data_complete: false
+    can_compute_hub: false
+    missing_fields: cross_module_calls_30d
+- input: {}
+  expect:
+    missing_fields: active_modules
+    data_complete: false
+    can_compute_hub: false
+interface:
+  inputs:
+    orchestration_latency_ms:
+      type: float
+      required: false
+    event_bus_depth:
+      type: int
+      required: false
+    cross_module_calls_30d:
+      type: int
+      required: false
+    active_modules:
+      type: int
+      required: false
+    failed_handoffs_30d:
+      type: int
+      required: false
+  outputs:
+    data_complete:
+      type: bool
+      required: false
+    can_compute_hub:
+      type: bool
+      required: false
+    missing_fields:
+      type: string
+      required: false
+  aliases: {}

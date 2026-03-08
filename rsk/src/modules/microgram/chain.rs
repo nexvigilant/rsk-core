@@ -11,10 +11,10 @@ use std::path::Path;
 fn apply_aliases(input: &mut HashMap<String, Value>, target: &Microgram) {
     let Some(iface) = &target.interface else { return };
     for (alias, canonical) in &iface.aliases {
-        if input.contains_key(alias) && !input.contains_key(canonical) {
-            if let Some(val) = input.get(alias).cloned() {
-                input.insert(canonical.clone(), val);
-            }
+        if input.contains_key(alias) && !input.contains_key(canonical)
+            && let Some(val) = input.get(alias).cloned()
+        {
+            input.insert(canonical.clone(), val);
         }
     }
 }

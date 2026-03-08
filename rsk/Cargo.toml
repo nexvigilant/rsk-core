@@ -62,7 +62,8 @@ pyo3 = { version = "0.27", features = ["extension-module"], optional = true }
 [features]
 default = []
 python = ["pyo3"]
-# forge = ["forge-spec"]
+# forge-spec dependency not yet available — stub declared so cfg(feature = "forge") is valid
+forge = []
 
 [dev-dependencies]
 tempfile = "3.15"

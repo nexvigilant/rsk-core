@@ -4,12 +4,11 @@
 //! for AI/algorithm incidents, adapted from ToV §55.
 
 use crate::tov::{
-    ACACase, ACACausalityCategory, AlgorithmCorrectness, ClinicalOutcome, ClinicianResponse,
-    HarmType, categorize_aca_score, determine_aca_case,
+    ACACase, ACACausalityCategory,
+    HarmType,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 // ============================================================================
 // INCIDENT CATEGORY CODES (Claude-Specific)

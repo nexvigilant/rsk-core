@@ -230,8 +230,6 @@ enum YamlStep {
 
 #[derive(Debug, Deserialize)]
 struct YamlNamedStep {
-    #[serde(default)]
-    name: Option<String>,
     skill: String,
     #[serde(default)]
     args: Option<String>,

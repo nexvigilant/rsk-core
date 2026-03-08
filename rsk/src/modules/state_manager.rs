@@ -51,9 +51,10 @@ use std::path::PathBuf;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Execution status for a context
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum ExecutionStatus {
     /// Created but not started
+    #[default]
     Created,
     /// Currently running
     Running,
@@ -65,12 +66,6 @@ pub enum ExecutionStatus {
     Failed(String),
     /// Cancelled by user
     Cancelled,
-}
-
-impl Default for ExecutionStatus {
-    fn default() -> Self {
-        Self::Created
-    }
 }
 
 /// Result of a single step execution
@@ -144,15 +139,11 @@ impl ExecutionContext {
 
     /// Get the next step to execute (first non-completed, non-failed, non-skipped)
     pub fn next_step(&self) -> Option<usize> {
-        for i in 0..self.total_steps {
-            if !self.completed_steps.contains(&i)
+        (0..self.total_steps).find(|&i| {
+            !self.completed_steps.contains(&i)
                 && !self.failed_steps.contains(&i)
                 && !self.skipped_steps.contains(&i)
-            {
-                return Some(i);
-            }
-        }
-        None
+        })
     }
 
     /// Check if execution is complete (all steps processed)
@@ -329,15 +320,15 @@ impl CheckpointManager {
 
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.extension().map(|e| e == "json").unwrap_or(false) {
-                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                    // Our deterministic naming: [id].json
-                    // If it follows the old naming [name]-[id].json, we try to extract the ID
-                    if let Some(id) = stem.split('-').last() {
-                        self.id_map.insert(id.to_string(), path.clone());
-                    } else {
-                        self.id_map.insert(stem.to_string(), path.clone());
-                    }
+            if path.extension().map(|e| e == "json").unwrap_or(false)
+                && let Some(stem) = path.file_stem().and_then(|s| s.to_str())
+            {
+                // Our deterministic naming: [id].json
+                // If it follows the old naming [name]-[id].json, we try to extract the ID
+                if let Some(id) = stem.split('-').next_back() {
+                    self.id_map.insert(id.to_string(), path.clone());
+                } else {
+                    self.id_map.insert(stem.to_string(), path.clone());
                 }
             }
         }
@@ -369,16 +360,16 @@ impl CheckpointManager {
     /// Load a context by ID (O(1) lookup via cache)
     pub fn load(&self, id: &str) -> Result<Option<ExecutionContext>, StateError> {
         // Use the cache for O(1) lookup
-        if let Some(path) = self.id_map.get(id) {
-            if path.exists() {
-                let content = std::fs::read_to_string(path)
-                    .map_err(|e| StateError::IoError(e.to_string()))?;
+        if let Some(path) = self.id_map.get(id)
+            && path.exists()
+        {
+            let content = std::fs::read_to_string(path)
+                .map_err(|e| StateError::IoError(e.to_string()))?;
 
-                let context: ExecutionContext = serde_json::from_str(&content)
-                    .map_err(|e| StateError::DeserializeError(e.to_string()))?;
+            let context: ExecutionContext = serde_json::from_str(&content)
+                .map_err(|e| StateError::DeserializeError(e.to_string()))?;
 
-                return Ok(Some(context));
-            }
+            return Ok(Some(context));
         }
 
         // Fallback for safety (though refresh_id_map should handle it)
@@ -444,11 +435,11 @@ impl CheckpointManager {
 
     /// Delete a context by ID
     pub fn delete(&mut self, id: &str) -> Result<bool, StateError> {
-        if let Some(path) = self.id_map.remove(id) {
-            if path.exists() {
-                std::fs::remove_file(&path).map_err(|e| StateError::IoError(e.to_string()))?;
-                return Ok(true);
-            }
+        if let Some(path) = self.id_map.remove(id)
+            && path.exists()
+        {
+            std::fs::remove_file(&path).map_err(|e| StateError::IoError(e.to_string()))?;
+            return Ok(true);
         }
         Ok(false)
     }
@@ -484,8 +475,10 @@ impl CheckpointManager {
     pub fn stats(&self) -> Result<CheckpointStats, StateError> {
         let contexts = self.list()?;
 
-        let mut stats = CheckpointStats::default();
-        stats.total = contexts.len();
+        let mut stats = CheckpointStats {
+            total: contexts.len(),
+            ..Default::default()
+        };
 
         for ctx in contexts {
             match ctx.status {
@@ -752,7 +745,7 @@ mod tests {
 
     #[test]
     fn test_load_nonexistent() {
-        let (mut manager, _temp) = create_test_manager();
+        let (manager, _temp) = create_test_manager();
         let result = manager.load("nonexistent-id").unwrap();
         assert!(result.is_none());
     }

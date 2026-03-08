@@ -256,21 +256,21 @@ fn execute_step(
         context.step_outputs.insert(index, result.output.clone());
 
         // Auto-flow: if output has a "result" object, unpack its fields into context variables
-        if let Some(obj) = result.output.as_object() {
-            if let Some(Value::Object(result_fields)) = obj.get("result") {
-                for (key, val) in result_fields {
-                    context.set_var(key, val.clone());
-                }
+        if let Some(obj) = result.output.as_object()
+            && let Some(Value::Object(result_fields)) = obj.get("result")
+        {
+            for (key, val) in result_fields {
+                context.set_var(key, val.clone());
             }
         }
 
         // If step has named outputs, store them as variables (explicit override)
-        if !step.outputs.is_empty() && result.output.is_object() {
-            if let Some(obj) = result.output.as_object() {
-                for output_name in &step.outputs {
-                    if let Some(val) = obj.get(output_name) {
-                        context.set_var(output_name, val.clone());
-                    }
+        if !step.outputs.is_empty() && result.output.is_object()
+            && let Some(obj) = result.output.as_object()
+        {
+            for output_name in &step.outputs {
+                if let Some(val) = obj.get(output_name) {
+                    context.set_var(output_name, val.clone());
                 }
             }
         }

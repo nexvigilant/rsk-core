@@ -44,7 +44,7 @@ use std::path::Path;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Routing strategy to use for skill discovery
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum RoutingStrategy {
     /// Graph-based routing using adjacency weights
     Adjacency,
@@ -53,18 +53,13 @@ pub enum RoutingStrategy {
     /// Keyword similarity using Levenshtein distance
     Semantic,
     /// Weighted combination of all strategies
+    #[default]
     Hybrid,
-}
-
-impl Default for RoutingStrategy {
-    fn default() -> Self {
-        Self::Hybrid
-    }
 }
 
 impl RoutingStrategy {
     /// Parse from string
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
             "adjacency" | "adj" | "graph" => Some(Self::Adjacency),
             "capability" | "cap" | "pattern" => Some(Self::Capability),
@@ -299,24 +294,24 @@ impl RoutingEngine {
         let mut scores = Vec::new();
 
         // If source is specified and exists, use its adjacencies
-        if !request.source.is_empty() {
-            if let Some(node) = graph.nodes.get(&request.source) {
-                for adj in &node.adjacencies {
-                    scores.push(RoutingScore {
-                        target: adj.target.clone(),
-                        score: adj.weight,
-                        confidence: 0.9, // High confidence for explicit edges
-                        reasoning: format!(
-                            "Adjacent to {} with weight {:.2}",
-                            request.source, adj.weight
-                        ),
-                        strategy_scores: {
-                            let mut m = HashMap::new();
-                            m.insert("adjacency".to_string(), adj.weight);
-                            m
-                        },
-                    });
-                }
+        if !request.source.is_empty()
+            && let Some(node) = graph.nodes.get(&request.source)
+        {
+            for adj in &node.adjacencies {
+                scores.push(RoutingScore {
+                    target: adj.target.clone(),
+                    score: adj.weight,
+                    confidence: 0.9, // High confidence for explicit edges
+                    reasoning: format!(
+                        "Adjacent to {} with weight {:.2}",
+                        request.source, adj.weight
+                    ),
+                    strategy_scores: {
+                        let mut m = HashMap::new();
+                        m.insert("adjacency".to_string(), adj.weight);
+                        m
+                    },
+                });
             }
         }
 
@@ -721,13 +716,13 @@ mod tests {
     #[test]
     fn test_strategy_from_str() {
         assert_eq!(
-            RoutingStrategy::from_str("adjacency"),
+            RoutingStrategy::parse_str("adjacency"),
             Some(RoutingStrategy::Adjacency)
         );
         assert_eq!(
-            RoutingStrategy::from_str("HYBRID"),
+            RoutingStrategy::parse_str("HYBRID"),
             Some(RoutingStrategy::Hybrid)
         );
-        assert_eq!(RoutingStrategy::from_str("invalid"), None);
+        assert_eq!(RoutingStrategy::parse_str("invalid"), None);
     }
 }

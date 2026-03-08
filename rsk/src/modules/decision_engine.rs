@@ -287,12 +287,10 @@ impl DecisionEngine {
         for (i, part) in parts.iter().enumerate() {
             if i == 0 {
                 current = self.resolve_part(part, ctx, None);
+            } else if let Some(val) = current {
+                current = self.resolve_part(part, ctx, Some(val));
             } else {
-                if let Some(val) = current {
-                    current = self.resolve_part(part, ctx, Some(val));
-                } else {
-                    return Value::Null;
-                }
+                return Value::Null;
             }
         }
         current.unwrap_or(Value::Null)
@@ -323,15 +321,13 @@ impl DecisionEngine {
             } else {
                 None
             }
-        } else {
-            if let Some(b) = base {
-                match b {
-                    Value::Object(map) => map.get(part).cloned(),
-                    _ => None,
-                }
-            } else {
-                ctx.variables.get(part).cloned()
+        } else if let Some(b) = base {
+            match b {
+                Value::Object(map) => map.get(part).cloned(),
+                _ => None,
             }
+        } else {
+            ctx.variables.get(part).cloned()
         }
     }
 

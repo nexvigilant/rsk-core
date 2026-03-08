@@ -230,6 +230,7 @@ pub type Not<P> = fn(P) -> Void;
 ///
 /// In logic: P |- NOT NOT P
 #[inline]
+#[allow(unreachable_code)]
 pub fn double_neg_intro<P>(p: P) -> impl FnOnce(Not<P>) -> Void {
     move |not_p: Not<P>| not_p(p)
 }
@@ -238,6 +239,7 @@ pub fn double_neg_intro<P>(p: P) -> impl FnOnce(Not<P>) -> Void {
 ///
 /// In logic: P, NOT P |- bottom
 #[inline]
+#[allow(unreachable_code)]
 pub fn contradiction<P>(p: P, not_p: Not<P>) -> Void {
     not_p(p)
 }
@@ -381,6 +383,7 @@ pub fn hypothetical_syllogism<P, Q, R>(
 ///
 /// If Q is false and P implies Q, then P must be false.
 #[inline]
+#[allow(unreachable_code)]
 pub fn modus_tollens<P, Q>(
     not_q: Not<Q>,
     p_implies_q: impl FnOnce(P) -> Q,
@@ -392,6 +395,7 @@ pub fn modus_tollens<P, Q>(
 ///
 /// If P or Q holds and P is false, then Q must be true.
 #[inline]
+#[allow(unreachable_code)]
 pub fn disjunctive_syllogism<P, Q>(p_or_q: Or<P, Q>, not_p: Not<P>) -> Q {
     match p_or_q {
         Or::Left(p) => not_p(p).absurd(),
@@ -404,6 +408,7 @@ pub fn disjunctive_syllogism<P, Q>(p_or_q: Or<P, Q>, not_p: Not<P>) -> Q {
 /// Given an implication and the negation of its consequent,
 /// derive the negation of its antecedent.
 #[inline]
+#[allow(unreachable_code)]
 pub fn contraposition<P, Q>(
     p_implies_q: impl FnOnce(P) -> Q,
     not_q: Not<Q>,
@@ -419,11 +424,13 @@ pub fn contraposition<P, Q>(
 ///
 /// This direction is intuitionistically valid.
 #[inline]
+#[allow(unreachable_code)]
 pub fn de_morgan_nor_left<P, Q>(not_p_or_q: Not<Or<P, Q>>, p: P) -> Void {
     not_p_or_q(Or::Left(p))
 }
 
 #[inline]
+#[allow(unreachable_code)]
 pub fn de_morgan_nor_right<P, Q>(not_p_or_q: Not<Or<P, Q>>, q: Q) -> Void {
     not_p_or_q(Or::Right(q))
 }
@@ -432,6 +439,7 @@ pub fn de_morgan_nor_right<P, Q>(not_p_or_q: Not<Or<P, Q>>, q: Q) -> Void {
 ///
 /// This direction is intuitionistically valid.
 #[inline]
+#[allow(unreachable_code)]
 pub fn de_morgan_nor_converse<P, Q>(
     not_p_and_not_q: And<Not<P>, Not<Q>>,
     p_or_q: Or<P, Q>,

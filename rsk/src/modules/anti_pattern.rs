@@ -35,19 +35,14 @@ use std::collections::HashMap;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Type of symptom to match
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum SymptomType {
     Structural, // Code/design structure metrics
     Behavioral, // Process patterns
     Textual,    // Keyword matching
+    #[default]
     Metric,     // Numeric thresholds
-}
-
-impl Default for SymptomType {
-    fn default() -> Self {
-        SymptomType::Metric
-    }
 }
 
 /// Severity of detected anti-pattern
@@ -273,7 +268,7 @@ fn match_structural_symptom(
 fn match_behavioral_symptom(
     symptom: &Symptom,
     features: &HashMap<String, f64>,
-    context: &HashMap<String, bool>,
+    _context: &HashMap<String, bool>,
 ) -> Option<SymptomMatch> {
     let pattern = &symptom.pattern;
     let threshold = symptom.threshold.unwrap_or(1.0);
@@ -496,10 +491,10 @@ pub fn detect_anti_patterns(
 
     for pattern in patterns {
         // Filter by category if specified
-        if let Some(ref cats) = config.categories {
-            if !cats.contains(&pattern.category) {
-                continue;
-            }
+        if let Some(ref cats) = config.categories
+            && !cats.contains(&pattern.category)
+        {
+            continue;
         }
 
         categories_checked.insert(pattern.category.clone());

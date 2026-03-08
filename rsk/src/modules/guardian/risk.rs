@@ -255,20 +255,18 @@ impl TherapeuticWindow {
     /// Check if context is within therapeutic window
     pub fn contains(&self, params: &ContextRiskParams) -> bool {
         let risk_ok = params.risk_score() <= self.max_risk_score;
-        let expertise_ok = match (&params.expertise, &self.min_expertise) {
-            (ExpertiseLevel::High, _) => true,
-            (ExpertiseLevel::Moderate, ExpertiseLevel::Moderate | ExpertiseLevel::Low) => true,
-            (ExpertiseLevel::Low, ExpertiseLevel::Low) => true,
-            _ => false,
-        };
-        let checkability_ok = match (&params.checkability, &self.min_checkability) {
-            (CheckabilityLevel::High, _) => true,
-            (CheckabilityLevel::Moderate, CheckabilityLevel::Moderate | CheckabilityLevel::Low) => {
-                true
-            }
-            (CheckabilityLevel::Low, CheckabilityLevel::Low) => true,
-            _ => false,
-        };
+        let expertise_ok = matches!(
+            (&params.expertise, &self.min_expertise),
+            (ExpertiseLevel::High, _)
+                | (ExpertiseLevel::Moderate, ExpertiseLevel::Moderate | ExpertiseLevel::Low)
+                | (ExpertiseLevel::Low, ExpertiseLevel::Low)
+        );
+        let checkability_ok = matches!(
+            (&params.checkability, &self.min_checkability),
+            (CheckabilityLevel::High, _)
+                | (CheckabilityLevel::Moderate, CheckabilityLevel::Moderate | CheckabilityLevel::Low)
+                | (CheckabilityLevel::Low, CheckabilityLevel::Low)
+        );
         let treatment_ok = self.allowed_treatments.contains(&params.output_treatment);
 
         risk_ok && expertise_ok && checkability_ok && treatment_ok

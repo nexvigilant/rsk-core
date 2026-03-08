@@ -1,5 +1,7 @@
 name: meddra-severity-classifier
-description: Classifies adverse event severity based on MedDRA SOC, fatality status, seriousness criteria (hospitalization, fatality). Assigns both clinical severity and regulatory priority.
+description: Classifies adverse event severity based on MedDRA SOC, fatality status,
+  seriousness criteria (hospitalization, fatality). Assigns both clinical severity
+  and regulatory priority.
 version: 0.1.0
 interface:
   inputs:
@@ -46,7 +48,7 @@ tree:
       type: condition
       variable: soc
       operator: matches
-      value: "Cardiac|Neoplasms|Immune|Nervous|Respiratory|Blood"
+      value: Cardiac|Neoplasms|Immune|Nervous|Respiratory|Blood
       true_next: severe_with_hospitalization
       false_next: moderate_with_hospitalization
     severe_with_hospitalization:
@@ -70,7 +72,7 @@ tree:
       type: condition
       variable: soc
       operator: matches
-      value: "Cardiac|Neoplasms|Immune|Nervous|Respiratory|Blood"
+      value: Cardiac|Neoplasms|Immune|Nervous|Respiratory|Blood
       true_next: severe_non_hospitalized
       false_next: moderate_non_hospitalized
     severe_non_hospitalized:
@@ -89,47 +91,55 @@ tree:
         severity: mild
         priority: P3
 tests:
-  - input:
-      soc: Cardiac disorders
-      is_serious: true
-      is_fatal: true
-      is_hospitalization: true
-    expect:
-      severity: fatal
-      priority: P0
-  - input:
-      soc: Nervous system disorders
-      is_serious: true
-      is_fatal: false
-      is_hospitalization: true
-    expect:
-      severity: severe
-      priority: P1
-  - input:
-      soc: Gastrointestinal disorders
-      is_serious: true
-      is_fatal: false
-      is_hospitalization: true
-    expect:
-      severity: moderate
-      priority: P2
-  - input:
-      soc: Immune system disorders
-      is_serious: true
-      is_fatal: false
-      is_hospitalization: false
-    expect:
-      severity: severe
-      priority: P1
-  - input:
-      soc: Skin and subcutaneous tissue disorders
-      is_serious: false
-      is_fatal: false
-      is_hospitalization: false
-    expect:
-      severity: mild
-      priority: P3
-  - input: {}
-    expect:
-      severity: mild
-      priority: P3
+- input:
+    is_fatal: false
+    is_hospitalization: false
+    is_serious: false
+    soc: Cardiac
+  expect:
+    severity: mild
+    priority: P3
+- input:
+    is_fatal: false
+    is_hospitalization: false
+    is_serious: true
+    soc: Cardiac
+  expect:
+    severity: severe
+    priority: P1
+- input:
+    is_fatal: false
+    is_hospitalization: false
+    is_serious: true
+    soc: ZZZZZ_NO_MATCH
+  expect:
+    severity: moderate
+    priority: P2
+- input:
+    is_fatal: false
+    is_hospitalization: true
+    is_serious: false
+    soc: Cardiac
+  expect:
+    severity: severe
+    priority: P1
+- input:
+    is_fatal: false
+    is_hospitalization: true
+    is_serious: false
+    soc: ZZZZZ_NO_MATCH
+  expect:
+    severity: moderate
+    priority: P2
+- input:
+    is_fatal: true
+    is_hospitalization: false
+    is_serious: false
+    soc: Cardiac
+  expect:
+    severity: fatal
+    priority: P0
+- input: {}
+  expect:
+    severity: mild
+    priority: P3

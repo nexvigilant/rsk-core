@@ -43,10 +43,10 @@ pub(crate) fn output_fields(mg: &Microgram) -> Vec<String> {
 pub(crate) fn input_variables(mg: &Microgram) -> Vec<String> {
     let mut vars = Vec::new();
     for node in mg.tree.nodes.values() {
-        if let DecisionNode::Condition { variable, .. } = node {
-            if !vars.contains(variable) {
-                vars.push(variable.clone());
-            }
+        if let DecisionNode::Condition { variable, .. } = node
+            && !vars.contains(variable)
+        {
+            vars.push(variable.clone());
         }
     }
     vars

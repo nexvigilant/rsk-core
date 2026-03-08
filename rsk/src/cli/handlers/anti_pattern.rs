@@ -35,8 +35,10 @@ pub fn handle_anti_pattern(action: &AntiPatternAction) {
                 }
             };
 
-            let mut feat = Features::default();
-            feat.numeric = numeric;
+            let feat = Features {
+                numeric,
+                ..Default::default()
+            };
 
             let context = HashMap::new();
             let config = DetectionConfig {

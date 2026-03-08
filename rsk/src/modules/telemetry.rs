@@ -214,14 +214,14 @@ impl OperationTimer {
         let elapsed = self.start.elapsed();
         let ms = elapsed.as_millis();
 
-        if let Some(threshold) = self.threshold_warn_ms {
-            if ms > threshold as u128 {
-                tracing::warn!(
-                    target: "rsk",
-                    "Operation '{}' exceeded threshold: {}ms > {}ms",
-                    self.name, ms, threshold
-                );
-            }
+        if let Some(threshold) = self.threshold_warn_ms
+            && ms > threshold as u128
+        {
+            tracing::warn!(
+                target: "rsk",
+                "Operation '{}' exceeded threshold: {}ms > {}ms",
+                self.name, ms, threshold
+            );
         }
 
         tracing::debug!(target: "rsk", "Timer stopped: {} ({}ms)", self.name, ms);

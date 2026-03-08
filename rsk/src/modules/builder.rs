@@ -137,16 +137,16 @@ pub fn build_skill(path: &Path, dry_run: bool) -> BuildResult {
 
     // 3. Generate test_scaffold.rs
     let tests_dir = path.join("tests");
-    if !tests_dir.exists() {
-        if let Err(e) = fs::create_dir_all(&tests_dir) {
-            return BuildResult {
-                skill_name: skill_name.clone(),
-                path: path.to_path_buf(),
-                artifacts_created,
-                status: "failed".to_string(),
-                error: Some(format!("Failed to create tests directory: {}", e)),
-            };
-        }
+    if !tests_dir.exists()
+        && let Err(e) = fs::create_dir_all(&tests_dir)
+    {
+        return BuildResult {
+            skill_name: skill_name.clone(),
+            path: path.to_path_buf(),
+            artifacts_created,
+            status: "failed".to_string(),
+            error: Some(format!("Failed to create tests directory: {}", e)),
+        };
     }
     let test_scaffold = generate_test_scaffold(&smst);
     let scaffold_path = tests_dir.join("scaffold.rs");
@@ -348,11 +348,11 @@ pub fn verify_skill(path: &Path) -> VerifyResult {
         ];
 
         if let Some(verify_path) = verify_paths.iter().find(|p| p.exists()) {
-            let mut cmd = if verify_path.extension().map_or(false, |ext| ext == "py") {
+            let mut cmd = if verify_path.extension().is_some_and(|ext| ext == "py") {
                 let mut c = std::process::Command::new("python3");
                 c.arg(verify_path);
                 c
-            } else if verify_path.extension().map_or(false, |ext| ext == "sh") {
+            } else if verify_path.extension().is_some_and(|ext| ext == "sh") {
                 let mut c = std::process::Command::new("bash");
                 c.arg(verify_path);
                 c

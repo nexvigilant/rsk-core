@@ -248,11 +248,11 @@ pub fn handle_microgram(action: &MicrogramAction) {
 
             // Write to file
             let dir = Path::new(out_dir);
-            if !dir.exists() {
-                if let Err(e) = std::fs::create_dir_all(dir) {
-                    eprintln!("{}", json!({"status": "error", "message": format!("Cannot create dir: {e}")}));
-                    std::process::exit(1);
-                }
+            if !dir.exists()
+                && let Err(e) = std::fs::create_dir_all(dir)
+            {
+                eprintln!("{}", json!({"status": "error", "message": format!("Cannot create dir: {e}")}));
+                std::process::exit(1);
             }
 
             let file_path = dir.join(format!("{}.yaml", name));

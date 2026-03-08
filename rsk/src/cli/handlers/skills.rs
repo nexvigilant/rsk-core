@@ -20,57 +20,54 @@ fn registry_executor(
     _args: Option<&str>,
     ctx: &ExecutionContext,
 ) -> SkillExecutionResult {
-    if let Some(reg) = registry {
-        if let Some(entry) = reg.get(skill_name) {
-            if let Some(logic_path) = &entry.logic_path {
-                if let Ok(content) = fs::read_to_string(logic_path) {
-                    if let Ok(tree) = serde_yaml::from_str::<DecisionTree>(&content) {
-                        let engine = DecisionEngine::new(tree);
-                        let variables: HashMap<String, RskValue> = ctx
-                            .variables
-                            .iter()
-                            .filter_map(|(k, v)| {
-                                serde_json::from_value::<RskValue>(v.clone())
-                                    .ok()
-                                    .map(|rv| (k.clone(), rv))
-                            })
-                            .collect();
-                        let mut dctx = DecisionContext {
-                            variables,
-                            execution_path: Vec::new(),
-                        };
-                        let exec_result = engine.execute(&mut dctx);
-                        return match exec_result {
-                            ExecutionResult::Value(v) => SkillExecutionResult {
-                                success: true,
-                                output: json!({
-                                    "skill": skill_name,
-                                    "path": dctx.execution_path,
-                                    "result": v,
-                                }),
-                                error: None,
-                                duration_ms: 0,
-                            },
-                            ExecutionResult::Error(e) => SkillExecutionResult {
-                                success: false,
-                                output: Value::Null,
-                                error: Some(e),
-                                duration_ms: 0,
-                            },
-                            ExecutionResult::LlmRequest { prompt, .. } => SkillExecutionResult {
-                                success: true,
-                                output: json!({
-                                    "skill": skill_name,
-                                    "llm_fallback": prompt,
-                                }),
-                                error: None,
-                                duration_ms: 0,
-                            },
-                        };
-                    }
-                }
-            }
-        }
+    if let Some(reg) = registry
+        && let Some(entry) = reg.get(skill_name)
+        && let Some(logic_path) = &entry.logic_path
+        && let Ok(content) = fs::read_to_string(logic_path)
+        && let Ok(tree) = serde_yaml::from_str::<DecisionTree>(&content)
+    {
+        let engine = DecisionEngine::new(tree);
+        let variables: HashMap<String, RskValue> = ctx
+            .variables
+            .iter()
+            .filter_map(|(k, v)| {
+                serde_json::from_value::<RskValue>(v.clone())
+                    .ok()
+                    .map(|rv| (k.clone(), rv))
+            })
+            .collect();
+        let mut dctx = DecisionContext {
+            variables,
+            execution_path: Vec::new(),
+        };
+        let exec_result = engine.execute(&mut dctx);
+        return match exec_result {
+            ExecutionResult::Value(v) => SkillExecutionResult {
+                success: true,
+                output: json!({
+                    "skill": skill_name,
+                    "path": dctx.execution_path,
+                    "result": v,
+                }),
+                error: None,
+                duration_ms: 0,
+            },
+            ExecutionResult::Error(e) => SkillExecutionResult {
+                success: false,
+                output: Value::Null,
+                error: Some(e),
+                duration_ms: 0,
+            },
+            ExecutionResult::LlmRequest { prompt, .. } => SkillExecutionResult {
+                success: true,
+                output: json!({
+                    "skill": skill_name,
+                    "llm_fallback": prompt,
+                }),
+                error: None,
+                duration_ms: 0,
+            },
+        };
     }
     // Fallback: skill not in registry or has no logic tree
     SkillExecutionResult {
@@ -358,7 +355,7 @@ pub fn handle_chain(action: &ChainAction) {
         }
         ChainAction::RunYaml { path, dry_run } => {
             use rsk::modules::chain::{
-                ExecutorConfig, SkillExecutionResult, execute_chain_with_fn, parse_yaml,
+                ExecutorConfig, execute_chain_with_fn, parse_yaml,
             };
 
             let content = match fs::read_to_string(path) {

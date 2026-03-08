@@ -17,7 +17,7 @@ pub fn handle_route(action: &RouteAction) {
             // Note: In production, engine would be loaded with skill capabilities
             // For now, show what the interface would return
 
-            let strat = RoutingStrategy::from_str(strategy).unwrap_or(RoutingStrategy::Hybrid);
+            let strat = RoutingStrategy::parse_str(strategy).unwrap_or(RoutingStrategy::Hybrid);
             let request = RoutingRequest {
                 source: source.clone().unwrap_or_default(),
                 context: query.clone(),

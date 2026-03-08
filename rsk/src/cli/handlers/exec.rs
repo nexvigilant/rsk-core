@@ -50,7 +50,7 @@ pub fn handle_exec(action: &ExecAction) {
                         .unwrap_or_default();
                     let effort = m["effort"]
                         .as_str()
-                        .and_then(EffortSize::from_str)
+                        .and_then(EffortSize::parse_str)
                         .unwrap_or(EffortSize::M);
                     let risk = m["risk"].as_f64().unwrap_or(0.3) as f32;
 

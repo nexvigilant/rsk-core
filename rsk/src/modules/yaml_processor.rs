@@ -339,26 +339,6 @@ pub fn parse_yaml_frontmatter(content: &str) -> Result<JsonValue, ConfigError> {
 
 // === HELPER FUNCTIONS ===
 
-fn toml_to_json(value: toml::Value) -> JsonValue {
-    match value {
-        toml::Value::String(s) => JsonValue::String(s),
-        toml::Value::Integer(i) => JsonValue::Number(serde_json::Number::from(i)),
-        toml::Value::Float(f) => serde_json::Number::from_f64(f)
-            .map(JsonValue::Number)
-            .unwrap_or(JsonValue::Null),
-        toml::Value::Boolean(b) => JsonValue::Bool(b),
-        toml::Value::Datetime(dt) => JsonValue::String(dt.to_string()),
-        toml::Value::Array(arr) => JsonValue::Array(arr.into_iter().map(toml_to_json).collect()),
-        toml::Value::Table(table) => {
-            let map: serde_json::Map<String, JsonValue> = table
-                .into_iter()
-                .map(|(k, v)| (k, toml_to_json(v)))
-                .collect();
-            JsonValue::Object(map)
-        }
-    }
-}
-
 fn extract_top_level_keys(data: &JsonValue) -> Vec<String> {
     match data {
         JsonValue::Object(map) => map.keys().cloned().collect(),

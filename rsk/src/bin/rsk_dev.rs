@@ -89,14 +89,12 @@ fn extract_doc_comments(attrs: &[syn::Attribute]) -> String {
     attrs
         .iter()
         .filter_map(|attr| {
-            if attr.path().is_ident("doc") {
-                if let syn::Meta::NameValue(nv) = &attr.meta {
-                    if let syn::Expr::Lit(expr_lit) = &nv.value {
-                        if let syn::Lit::Str(lit_str) = &expr_lit.lit {
-                            return Some(lit_str.value().trim().to_string());
-                        }
-                    }
-                }
+            if attr.path().is_ident("doc")
+                && let syn::Meta::NameValue(nv) = &attr.meta
+                && let syn::Expr::Lit(expr_lit) = &nv.value
+                && let syn::Lit::Str(lit_str) = &expr_lit.lit
+            {
+                return Some(lit_str.value().trim().to_string());
             }
             None
         })
@@ -110,23 +108,23 @@ fn parse_module(path: &Path) -> Result<Vec<RustFunction>> {
     let mut functions = Vec::new();
 
     for item in file.items {
-        if let Item::Fn(func) = item {
-            if matches!(func.vis, syn::Visibility::Public(_)) {
-                let name = func.sig.ident.to_string();
-                let doc = extract_doc_comments(&func.attrs);
-                let mut params = Vec::new();
-                for arg in func.sig.inputs {
-                    if let FnArg::Typed(pat_type) = arg {
-                        let param_name = pat_type.pat.to_token_stream().to_string();
-                        params.push((param_name, parse_rust_type(&pat_type.ty)));
-                    }
+        if let Item::Fn(func) = item
+            && matches!(func.vis, syn::Visibility::Public(_))
+        {
+            let name = func.sig.ident.to_string();
+            let doc = extract_doc_comments(&func.attrs);
+            let mut params = Vec::new();
+            for arg in func.sig.inputs {
+                if let FnArg::Typed(pat_type) = arg {
+                    let param_name = pat_type.pat.to_token_stream().to_string();
+                    params.push((param_name, parse_rust_type(&pat_type.ty)));
                 }
-                let return_type = match &func.sig.output {
-                    ReturnType::Default => "None".to_string(),
-                    ReturnType::Type(_, ty) => parse_rust_type(ty),
-                };
-                functions.push(RustFunction { name, params, return_type, doc });
             }
+            let return_type = match &func.sig.output {
+                ReturnType::Default => "None".to_string(),
+                ReturnType::Type(_, ty) => parse_rust_type(ty),
+            };
+            functions.push(RustFunction { name, params, return_type, doc });
         }
     }
     Ok(functions)
@@ -145,18 +143,16 @@ fn parse_pyo3_bindings(path: &Path) -> Result<Vec<PyO3Function>> {
                 let mut python_name = rust_name.clone();
                 
                 for attr in &func.attrs {
-                    if attr.path().is_ident("pyo3") {
-                        if let Ok(list) = attr.parse_args_with(syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated) {
-                            for meta in list {
-                                if let Meta::NameValue(nv) = meta {
-                                    if nv.path.is_ident("name") {
-                                        if let syn::Expr::Lit(expr_lit) = &nv.value {
-                                            if let syn::Lit::Str(lit_str) = &expr_lit.lit {
-                                                python_name = lit_str.value();
-                                            }
-                                        }
-                                    }
-                                }
+                    if attr.path().is_ident("pyo3")
+                        && let Ok(list) = attr.parse_args_with(syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated)
+                    {
+                        for meta in list {
+                            if let Meta::NameValue(nv) = meta
+                                && nv.path.is_ident("name")
+                                && let syn::Expr::Lit(expr_lit) = &nv.value
+                                && let syn::Lit::Str(lit_str) = &expr_lit.lit
+                            {
+                                python_name = lit_str.value();
                             }
                         }
                     }

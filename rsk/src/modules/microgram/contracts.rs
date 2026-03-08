@@ -118,18 +118,30 @@ pub fn validate_contracts(dir: &Path) -> Result<ContractValidation, String> {
     })
 }
 
+/// Normalize type aliases to canonical forms used by the decision engine.
+fn canonical_type(t: &str) -> &str {
+    match t {
+        "boolean" => "bool",
+        "number" => "float",
+        _ => t,
+    }
+}
+
 /// Check if two types are compatible for chaining.
 /// int → float is allowed (widening), same types always match.
+/// Aliases: boolean ↔ bool, number ↔ float/int.
 fn types_compatible(output_type: &str, input_type: &str) -> bool {
-    if output_type == input_type {
+    let out = canonical_type(output_type);
+    let inp = canonical_type(input_type);
+    if out == inp {
         return true;
     }
     // int → float is a safe widening
-    if output_type == "int" && input_type == "float" {
+    if out == "int" && inp == "float" {
         return true;
     }
     // string accepts anything (loose)
-    if input_type == "string" {
+    if inp == "string" {
         return true;
     }
     false

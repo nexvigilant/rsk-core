@@ -39,13 +39,13 @@ impl StalenessResult {
 
 /// Get the age of a file in days
 pub fn get_file_age_days(path: &Path) -> u64 {
-    if let Ok(metadata) = fs::metadata(path) {
-        if let Ok(modified) = metadata.modified() {
-            let duration = SystemTime::now()
-                .duration_since(modified)
-                .unwrap_or_default();
-            return duration.as_secs() / 86400;
-        }
+    if let Ok(metadata) = fs::metadata(path)
+        && let Ok(modified) = metadata.modified()
+    {
+        let duration = SystemTime::now()
+            .duration_since(modified)
+            .unwrap_or_default();
+        return duration.as_secs() / 86400;
     }
     0
 }
@@ -63,14 +63,14 @@ pub fn check_staleness(path: &Path, policy: &PolicyFile) -> StalenessResult {
     result.threshold_days = policy.default_staleness_days();
 
     // Check category-specific staleness from placement rules
-    if let Some(rules) = &policy.placement_rules {
-        if let Some(rule) = rules.get(&category) {
-            if let Some(hours) = rule.staleness_hours {
-                result.threshold_days = (hours / 24).max(1);
-            }
-            if let Some(days) = rule.staleness_days {
-                result.threshold_days = days;
-            }
+    if let Some(rules) = &policy.placement_rules
+        && let Some(rule) = rules.get(&category)
+    {
+        if let Some(hours) = rule.staleness_hours {
+            result.threshold_days = (hours / 24).max(1);
+        }
+        if let Some(days) = rule.staleness_days {
+            result.threshold_days = days;
         }
     }
 

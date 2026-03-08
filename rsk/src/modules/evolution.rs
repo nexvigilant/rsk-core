@@ -105,7 +105,7 @@ fn generate_node_code(node_id: &str, tree: &DecisionTree, indent_level: usize) -
             code.push_str(&indent);
             code.push_str("if var_val ");
             code.push_str(op);
-            code.push_str(" ");
+            code.push(' ');
             code.push_str(&val);
             code.push_str(" {\n");
 

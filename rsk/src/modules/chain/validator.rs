@@ -281,10 +281,10 @@ fn validate_parallel_resources(chain: &Chain, result: &mut ValidationResult) {
     let mut groups: HashMap<u32, Vec<(usize, &ChainStep)>> = HashMap::new();
 
     for (i, step) in chain.steps.iter().enumerate() {
-        if let StepType::Regular(chain_step) = step {
-            if let Some(group) = chain_step.parallel_group {
-                groups.entry(group).or_default().push((i, chain_step));
-            }
+        if let StepType::Regular(chain_step) = step
+            && let Some(group) = chain_step.parallel_group
+        {
+            groups.entry(group).or_default().push((i, chain_step));
         }
     }
 
@@ -315,6 +315,7 @@ fn validate_parallel_resources(chain: &Chain, result: &mut ValidationResult) {
 
 /// Validate conditional steps.
 fn validate_conditionals(chain: &Chain, result: &mut ValidationResult) {
+    let name_regex = regex::Regex::new(r"^[a-z][a-z0-9-]*$").unwrap();
     for (i, step) in chain.steps.iter().enumerate() {
         if let StepType::Conditional(cond) = step {
             // Condition must not be empty
@@ -329,7 +330,6 @@ fn validate_conditionals(chain: &Chain, result: &mut ValidationResult) {
             }
 
             // Validate then step skill name
-            let name_regex = regex::Regex::new(r"^[a-z][a-z0-9-]*$").unwrap();
             if !name_regex.is_match(&cond.then_step.skill) {
                 result.add(
                     ValidationIssue::error(
@@ -344,16 +344,16 @@ fn validate_conditionals(chain: &Chain, result: &mut ValidationResult) {
             }
 
             // Validate else step if present
-            if let Some(else_step) = &cond.else_step {
-                if !name_regex.is_match(&else_step.skill) {
-                    result.add(
-                        ValidationIssue::error(
-                            "INVALID_ELSE_SKILL",
-                            format!("Else branch skill '{}' has invalid name", else_step.skill),
-                        )
-                        .at_step(i, &else_step.skill),
-                    );
-                }
+            if let Some(else_step) = &cond.else_step
+                && !name_regex.is_match(&else_step.skill)
+            {
+                result.add(
+                    ValidationIssue::error(
+                        "INVALID_ELSE_SKILL",
+                        format!("Else branch skill '{}' has invalid name", else_step.skill),
+                    )
+                    .at_step(i, &else_step.skill),
+                );
             }
 
             // Warn if no else branch

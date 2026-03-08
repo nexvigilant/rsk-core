@@ -210,10 +210,10 @@ pub fn matches_glob(path: &str, pattern: &str) -> bool {
 
 /// Expand ~ to home directory
 pub fn expand_path(path: &str) -> String {
-    if path.starts_with("~/") {
-        if let Some(home) = dirs::home_dir() {
-            return path.replacen("~", home.to_str().unwrap_or(""), 1);
-        }
+    if path.starts_with("~/")
+        && let Some(home) = dirs::home_dir()
+    {
+        return path.replacen("~", home.to_str().unwrap_or(""), 1);
     }
     path.to_string()
 }
@@ -224,15 +224,15 @@ pub fn is_in_path(file_path: &str, check_path: &str) -> bool {
     let expanded_check = expand_path(check_path);
 
     // Handle home directory root special case
-    if check_path == "~/" {
-        if let Some(home) = dirs::home_dir() {
-            let home_str = home.to_str().unwrap_or("");
-            let parent = Path::new(&expanded_file)
-                .parent()
-                .and_then(|p| p.to_str())
-                .unwrap_or("");
-            return parent == home_str;
-        }
+    if check_path == "~/"
+        && let Some(home) = dirs::home_dir()
+    {
+        let home_str = home.to_str().unwrap_or("");
+        let parent = Path::new(&expanded_file)
+            .parent()
+            .and_then(|p| p.to_str())
+            .unwrap_or("");
+        return parent == home_str;
     }
 
     // Handle ** for recursive matching

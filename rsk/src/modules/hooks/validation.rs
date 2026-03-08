@@ -1,6 +1,6 @@
 //! File validation against policy rules.
 
-use super::policy::{PolicyFile, expand_path, is_in_path, matches_glob};
+use super::policy::{PolicyFile, is_in_path, matches_glob};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
@@ -120,77 +120,77 @@ pub fn validate_file(path: &Path, policy: &PolicyFile) -> ValidationResult {
     let mut result = ValidationResult::new(path_str, &category);
 
     // Check forbidden zones
-    if let Some(forbidden) = &policy.forbidden_zones {
-        if let Some(paths) = &forbidden.paths {
-            for forbidden_path in paths {
-                if is_in_path(path_str, forbidden_path) {
-                    // Check exceptions
-                    let is_exception = forbidden
-                        .exceptions
-                        .as_ref()
-                        .map(|exc| exc.iter().any(|e| matches_glob(path_str, e)))
-                        .unwrap_or(false);
+    if let Some(forbidden) = &policy.forbidden_zones
+        && let Some(paths) = &forbidden.paths
+    {
+        for forbidden_path in paths {
+            if is_in_path(path_str, forbidden_path) {
+                // Check exceptions
+                let is_exception = forbidden
+                    .exceptions
+                    .as_ref()
+                    .map(|exc| exc.iter().any(|e| matches_glob(path_str, e)))
+                    .unwrap_or(false);
 
-                    if !is_exception {
-                        result.add_warning(
-                            "warning",
-                            &format!("File in forbidden zone: {}", forbidden_path),
-                            "forbidden_zones",
-                        );
-                        result
-                            .add_suggestion("Move to a project directory or appropriate location");
-                    }
+                if !is_exception {
+                    result.add_warning(
+                        "warning",
+                        &format!("File in forbidden zone: {}", forbidden_path),
+                        "forbidden_zones",
+                    );
+                    result
+                        .add_suggestion("Move to a project directory or appropriate location");
                 }
             }
         }
     }
 
     // Check placement rules for this category
-    if let Some(rules) = &policy.placement_rules {
-        if let Some(rule) = rules.get(&category) {
-            // Check forbidden paths
-            for forbidden in &rule.forbidden_paths {
-                if is_in_path(path_str, forbidden) {
-                    let is_exception = rule.exceptions.iter().any(|e| matches_glob(path_str, e));
+    if let Some(rules) = &policy.placement_rules
+        && let Some(rule) = rules.get(&category)
+    {
+        // Check forbidden paths
+        for forbidden in &rule.forbidden_paths {
+            if is_in_path(path_str, forbidden) {
+                let is_exception = rule.exceptions.iter().any(|e| matches_glob(path_str, e));
 
-                    if !is_exception {
-                        let level = rule
-                            .severity
-                            .as_ref()
-                            .map(|s| if s == "high" { "security" } else { "warning" })
-                            .unwrap_or("warning");
+                if !is_exception {
+                    let level = rule
+                        .severity
+                        .as_ref()
+                        .map(|s| if s == "high" { "security" } else { "warning" })
+                        .unwrap_or("warning");
 
-                        result.add_warning(
-                            level,
-                            rule.message
-                                .as_deref()
-                                .unwrap_or("File in forbidden location"),
-                            &category,
-                        );
+                    result.add_warning(
+                        level,
+                        rule.message
+                            .as_deref()
+                            .unwrap_or("File in forbidden location"),
+                        &category,
+                    );
 
-                        if !rule.recommended_paths.is_empty() {
-                            result.add_suggestion(&format!(
-                                "Recommended locations: {}",
-                                rule.recommended_paths.join(", ")
-                            ));
-                        }
+                    if !rule.recommended_paths.is_empty() {
+                        result.add_suggestion(&format!(
+                            "Recommended locations: {}",
+                            rule.recommended_paths.join(", ")
+                        ));
                     }
                 }
             }
+        }
 
-            // Suggest recommended paths if not already in one
-            if result.warnings.is_empty() && !rule.recommended_paths.is_empty() {
-                let in_recommended = rule
-                    .recommended_paths
-                    .iter()
-                    .any(|rp| is_in_path(path_str, rp));
+        // Suggest recommended paths if not already in one
+        if result.warnings.is_empty() && !rule.recommended_paths.is_empty() {
+            let in_recommended = rule
+                .recommended_paths
+                .iter()
+                .any(|rp| is_in_path(path_str, rp));
 
-                if !in_recommended {
-                    result.add_suggestion(&format!(
-                        "Consider placing in: {}",
-                        rule.recommended_paths.join(", ")
-                    ));
-                }
+            if !in_recommended {
+                result.add_suggestion(&format!(
+                    "Consider placing in: {}",
+                    rule.recommended_paths.join(", ")
+                ));
             }
         }
     }

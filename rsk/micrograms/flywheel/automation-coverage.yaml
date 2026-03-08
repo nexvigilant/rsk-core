@@ -1,66 +1,21 @@
 name: automation-coverage
 description: 'Loop 3 FlywheelVitals: Friction measurement. Classifies automation vs manual process ratio and overhead trajectory. Produces net_drain input for friction-dissipation. Spec §3.3: countermeasure is eliminating contact surfaces, not managing heat.'
 version: 0.1.0
-interface:
-  inputs:
-    automated_processes:
-      type: int
-      required: true
-    manual_processes:
-      type: int
-      required: true
-    overhead_ratio:
-      type: float
-      required: true
-    overhead_trend:
-      type: string
-      required: true
-  outputs:
-    coverage_class:
-      type: string
-    friction_risk:
-      type: string
-    action:
-      type: string
 tree:
   start: check_overhead_critical
   nodes:
-    # Check overhead trend first — rising overhead is the leading indicator
-    check_overhead_critical:
-      type: condition
-      variable: overhead_ratio
-      operator: gte
-      value: 0.5
-      true_next: critical_overhead
-      false_next: check_overhead_rising
-    check_overhead_rising:
-      type: condition
-      variable: overhead_trend
-      operator: eq
-      value: rising
-      true_next: check_overhead_moderate
-      false_next: check_automation_ratio
-    check_overhead_moderate:
-      type: condition
-      variable: overhead_ratio
-      operator: gte
-      value: 0.3
-      true_next: warning_rising
-      false_next: check_automation_ratio
-    check_automation_ratio:
-      type: condition
-      variable: automated_processes
-      operator: gte
-      value: 1
-      true_next: check_ratio_high
-      false_next: check_manual_zero
-    check_manual_zero:
-      type: condition
-      variable: manual_processes
-      operator: eq
-      value: 0
-      true_next: idle
-      false_next: no_automation
+    high_automation:
+      type: return
+      value:
+        friction_risk: minimal
+        coverage_class: HIGH
+        action: maintain_and_monitor
+    warning_rising:
+      type: return
+      value:
+        friction_risk: drag_increasing
+        action: automate_next_manual_process
+        coverage_class: WARNING
     check_ratio_high:
       type: condition
       variable: overhead_ratio
@@ -68,6 +23,64 @@ tree:
       value: 0.15
       true_next: high_automation
       false_next: check_ratio_adequate
+    critical_overhead:
+      type: return
+      value:
+        coverage_class: CRITICAL
+        friction_risk: bearing_seizure
+        action: emergency_automate_top3_manual
+    adequate_automation:
+      type: return
+      value:
+        friction_risk: moderate
+        action: target_highest_touchpoint_manual
+        coverage_class: ADEQUATE
+    check_overhead_critical:
+      type: condition
+      variable: overhead_ratio
+      operator: gte
+      value: 0.5
+      true_next: critical_overhead
+      false_next: check_overhead_rising
+    idle:
+      type: return
+      value:
+        coverage_class: IDLE
+        action: no_processes_to_evaluate
+        friction_risk: none
+    check_overhead_rising:
+      type: condition
+      variable: overhead_trend
+      operator: eq
+      value: rising
+      true_next: check_overhead_moderate
+      false_next: check_automation_ratio
+    low_automation:
+      type: return
+      value:
+        coverage_class: LOW
+        friction_risk: high
+        action: prioritize_automation_sprint
+    check_automation_ratio:
+      type: condition
+      variable: automated_processes
+      operator: gte
+      value: 1
+      true_next: check_ratio_high
+      false_next: check_manual_zero
+    check_overhead_moderate:
+      type: condition
+      variable: overhead_ratio
+      operator: gte
+      value: 0.3
+      true_next: warning_rising
+      false_next: check_automation_ratio
+    no_automation:
+      type: return
+      value:
+        coverage_class: NONE
+        friction_risk: maximum
+        action: bootstrap_first_automation
     check_ratio_adequate:
       type: condition
       variable: overhead_ratio
@@ -75,50 +88,14 @@ tree:
       value: 0.3
       true_next: adequate_automation
       false_next: low_automation
-    critical_overhead:
-      type: return
-      value:
-        coverage_class: CRITICAL
-        friction_risk: bearing_seizure
-        action: emergency_automate_top3_manual
-    warning_rising:
-      type: return
-      value:
-        coverage_class: WARNING
-        friction_risk: drag_increasing
-        action: automate_next_manual_process
-    high_automation:
-      type: return
-      value:
-        coverage_class: HIGH
-        friction_risk: minimal
-        action: maintain_and_monitor
-    adequate_automation:
-      type: return
-      value:
-        coverage_class: ADEQUATE
-        friction_risk: moderate
-        action: target_highest_touchpoint_manual
-    low_automation:
-      type: return
-      value:
-        coverage_class: LOW
-        friction_risk: high
-        action: prioritize_automation_sprint
-    no_automation:
-      type: return
-      value:
-        coverage_class: NONE
-        friction_risk: maximum
-        action: bootstrap_first_automation
-    idle:
-      type: return
-      value:
-        coverage_class: IDLE
-        friction_risk: none
-        action: no_processes_to_evaluate
+    check_manual_zero:
+      type: condition
+      variable: manual_processes
+      operator: eq
+      value: 0
+      true_next: idle
+      false_next: no_automation
 tests:
-# HIGH automation, low overhead
 - input:
     automated_processes: 20
     manual_processes: 2
@@ -126,85 +103,215 @@ tests:
     overhead_trend: stable
   expect:
     coverage_class: HIGH
-    friction_risk: minimal
     action: maintain_and_monitor
-# ADEQUATE automation
+    friction_risk: minimal
 - input:
-    automated_processes: 10
+    overhead_trend: stable
     manual_processes: 5
     overhead_ratio: 0.25
-    overhead_trend: stable
+    automated_processes: 10
   expect:
-    coverage_class: ADEQUATE
-    friction_risk: moderate
     action: target_highest_touchpoint_manual
-# LOW automation
+    friction_risk: moderate
+    coverage_class: ADEQUATE
 - input:
+    overhead_trend: stable
     automated_processes: 3
     manual_processes: 15
     overhead_ratio: 0.35
+  expect:
+    friction_risk: high
+    action: prioritize_automation_sprint
+    coverage_class: LOW
+- input:
+    overhead_trend: rising
+    automated_processes: 5
+    manual_processes: 20
+    overhead_ratio: 0.6
+  expect:
+    friction_risk: bearing_seizure
+    action: emergency_automate_top3_manual
+    coverage_class: CRITICAL
+- input:
+    overhead_ratio: 0.35
+    manual_processes: 8
+    overhead_trend: rising
+    automated_processes: 8
+  expect:
+    friction_risk: drag_increasing
+    action: automate_next_manual_process
+    coverage_class: WARNING
+- input:
+    manual_processes: 10
+    overhead_ratio: 0.8
+    automated_processes: 0
+    overhead_trend: rising
+  expect:
+    action: emergency_automate_top3_manual
+    friction_risk: bearing_seizure
+    coverage_class: CRITICAL
+- input:
+    manual_processes: 0
+    automated_processes: 0
     overhead_trend: stable
+    overhead_ratio: 0.0
+  expect:
+    coverage_class: IDLE
+    action: no_processes_to_evaluate
+    friction_risk: none
+- input:
+    overhead_trend: rising
+    manual_processes: 3
+    automated_processes: 15
+    overhead_ratio: 0.1
+  expect:
+    friction_risk: minimal
+    action: maintain_and_monitor
+    coverage_class: HIGH
+- input:
+    manual_processes: 10
+    overhead_ratio: 0.3
+    automated_processes: 5
+    overhead_trend: rising
+  expect:
+    coverage_class: WARNING
+    friction_risk: drag_increasing
+    action: automate_next_manual_process
+- input:
+    overhead_ratio: 0.149
+  expect:
+    action: bootstrap_first_automation
+    friction_risk: maximum
+    coverage_class: NONE
+- input:
+    overhead_ratio: 0.151
+  expect:
+    coverage_class: NONE
+    action: bootstrap_first_automation
+    friction_risk: maximum
+- input: {}
+  expect:
+    coverage_class: NONE
+    friction_risk: maximum
+    action: bootstrap_first_automation
+- input:
+    overhead_ratio: 0.499
+  expect:
+    action: bootstrap_first_automation
+    coverage_class: NONE
+    friction_risk: maximum
+- input:
+    overhead_ratio: 0.501
+  expect:
+    friction_risk: bearing_seizure
+    coverage_class: CRITICAL
+    action: emergency_automate_top3_manual
+- input: {}
+  expect:
+    friction_risk: maximum
+    coverage_class: NONE
+    action: bootstrap_first_automation
+- input: {}
+  expect:
+    coverage_class: NONE
+    friction_risk: maximum
+    action: bootstrap_first_automation
+- input:
+    automated_processes: -1
+  expect:
+    friction_risk: maximum
+    action: bootstrap_first_automation
+    coverage_class: NONE
+- input:
+    automated_processes: 2
   expect:
     coverage_class: LOW
     friction_risk: high
     action: prioritize_automation_sprint
-# CRITICAL: overhead exceeds 50%
-- input:
-    automated_processes: 5
-    manual_processes: 20
-    overhead_ratio: 0.6
-    overhead_trend: rising
+- input: {}
   expect:
-    coverage_class: CRITICAL
-    friction_risk: bearing_seizure
-    action: emergency_automate_top3_manual
-# WARNING: moderate overhead but rising
+    friction_risk: maximum
+    coverage_class: NONE
+    action: bootstrap_first_automation
 - input:
-    automated_processes: 8
-    manual_processes: 8
-    overhead_ratio: 0.35
-    overhead_trend: rising
+    overhead_ratio: 0.299
   expect:
-    coverage_class: WARNING
-    friction_risk: drag_increasing
-    action: automate_next_manual_process
-# NONE: zero automation
+    action: bootstrap_first_automation
+    friction_risk: maximum
+    coverage_class: NONE
 - input:
-    automated_processes: 0
-    manual_processes: 10
-    overhead_ratio: 0.8
-    overhead_trend: rising
+    overhead_ratio: 0.301
   expect:
-    coverage_class: CRITICAL
-    friction_risk: bearing_seizure
-    action: emergency_automate_top3_manual
-# IDLE: no processes at all
+    coverage_class: NONE
+    friction_risk: maximum
+    action: bootstrap_first_automation
+- input: {}
+  expect:
+    action: bootstrap_first_automation
+    coverage_class: NONE
+    friction_risk: maximum
 - input:
-    automated_processes: 0
-    manual_processes: 0
-    overhead_ratio: 0.0
-    overhead_trend: stable
+    overhead_ratio: 0.299
   expect:
-    coverage_class: IDLE
-    friction_risk: none
-    action: no_processes_to_evaluate
-# Edge: rising trend but low overhead — just classify by ratio
+    action: bootstrap_first_automation
+    coverage_class: NONE
+    friction_risk: maximum
 - input:
-    automated_processes: 15
-    manual_processes: 3
-    overhead_ratio: 0.1
-    overhead_trend: rising
+    overhead_ratio: 0.301
   expect:
-    coverage_class: HIGH
-    friction_risk: minimal
-    action: maintain_and_monitor
-# Edge: overhead exactly at 0.3 and rising
+    action: bootstrap_first_automation
+    coverage_class: NONE
+    friction_risk: maximum
+- input: {}
+  expect:
+    action: bootstrap_first_automation
+    friction_risk: maximum
+    coverage_class: NONE
 - input:
-    automated_processes: 5
-    manual_processes: 10
-    overhead_ratio: 0.3
-    overhead_trend: rising
+    manual_processes: -1
   expect:
-    coverage_class: WARNING
-    friction_risk: drag_increasing
-    action: automate_next_manual_process
+    action: bootstrap_first_automation
+    coverage_class: NONE
+    friction_risk: maximum
+- input:
+    manual_processes: -1
+  expect:
+    coverage_class: NONE
+    friction_risk: maximum
+    action: bootstrap_first_automation
+- input:
+    manual_processes: 1
+  expect:
+    action: bootstrap_first_automation
+    friction_risk: maximum
+    coverage_class: NONE
+- input: {}
+  expect:
+    coverage_class: NONE
+    action: bootstrap_first_automation
+    friction_risk: maximum
+interface:
+  inputs:
+    overhead_ratio:
+      type: float
+      required: true
+    automated_processes:
+      type: int
+      required: true
+    overhead_trend:
+      type: string
+      required: true
+    manual_processes:
+      type: int
+      required: true
+  outputs:
+    coverage_class:
+      type: string
+      required: false
+    friction_risk:
+      type: string
+      required: false
+    action:
+      type: string
+      required: false
+  aliases: {}

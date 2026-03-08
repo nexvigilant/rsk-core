@@ -202,10 +202,10 @@ pub fn resolve_value(expr: &str, context: &Value) -> Value {
     if let Ok(n) = expr.parse::<i64>() {
         return Value::Number(n.into());
     }
-    if let Ok(n) = expr.parse::<f64>() {
-        if let Some(num) = serde_json::Number::from_f64(n) {
-            return Value::Number(num);
-        }
+    if let Ok(n) = expr.parse::<f64>()
+        && let Some(num) = serde_json::Number::from_f64(n)
+    {
+        return Value::Number(num);
     }
 
     // Dot notation path resolution

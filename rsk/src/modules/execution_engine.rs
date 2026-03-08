@@ -38,22 +38,17 @@ use std::collections::HashMap;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Effort size estimation for modules
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum EffortSize {
     /// Small: < 30 minutes
     S,
     /// Medium: 30 min - 2 hours
+    #[default]
     M,
     /// Large: 2-8 hours
     L,
     /// Extra Large: > 8 hours
     XL,
-}
-
-impl Default for EffortSize {
-    fn default() -> Self {
-        Self::M
-    }
 }
 
 impl EffortSize {
@@ -68,7 +63,7 @@ impl EffortSize {
     }
 
     /// Parse from string
-    pub fn from_str(s: &str) -> Option<Self> {
+    pub fn parse_str(s: &str) -> Option<Self> {
         match s.to_uppercase().as_str() {
             "S" | "SMALL" => Some(Self::S),
             "M" | "MEDIUM" => Some(Self::M),
@@ -80,9 +75,10 @@ impl EffortSize {
 }
 
 /// Module execution status
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum ModuleStatus {
     /// Not yet started
+    #[default]
     Pending,
     /// Currently executing
     InProgress,
@@ -92,12 +88,6 @@ pub enum ModuleStatus {
     Failed(String),
     /// Skipped (e.g., due to dependency failure)
     Skipped,
-}
-
-impl Default for ModuleStatus {
-    fn default() -> Self {
-        Self::Pending
-    }
 }
 
 /// Andon signal for progress tracking (from Toyota Production System)
@@ -225,9 +215,10 @@ pub struct ExecutionPlan {
 }
 
 /// Overall plan execution status
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum PlanStatus {
     /// Plan created but not started
+    #[default]
     Created,
     /// Currently executing
     Running,
@@ -239,12 +230,6 @@ pub enum PlanStatus {
     Failed,
     /// Plan was cancelled
     Cancelled,
-}
-
-impl Default for PlanStatus {
-    fn default() -> Self {
-        Self::Created
-    }
 }
 
 /// Error types for execution engine
@@ -447,11 +432,11 @@ fn compute_critical_path(
         let mut best_pred: Option<String> = None;
 
         for dep in &module.dependencies {
-            if let Some(&dep_finish) = earliest_finish.get(dep) {
-                if dep_finish > max_dep_finish {
-                    max_dep_finish = dep_finish;
-                    best_pred = Some(dep.clone());
-                }
+            if let Some(&dep_finish) = earliest_finish.get(dep)
+                && dep_finish > max_dep_finish
+            {
+                max_dep_finish = dep_finish;
+                best_pred = Some(dep.clone());
             }
         }
 
@@ -509,18 +494,18 @@ fn calculate_estimated_duration(
 /// dependencies completed.
 pub fn get_next_module(plan: &ExecutionPlan) -> Option<&ExecutionModule> {
     for id in &plan.execution_order {
-        if let Some(module) = plan.modules.get(id) {
-            if module.status == ModuleStatus::Pending {
-                // Check if all dependencies are completed
-                let deps_complete = module.dependencies.iter().all(|dep_id| {
-                    plan.modules
-                        .get(dep_id)
-                        .map(|dep| dep.status == ModuleStatus::Completed)
-                        .unwrap_or(false)
-                });
-                if deps_complete {
-                    return Some(module);
-                }
+        if let Some(module) = plan.modules.get(id)
+            && module.status == ModuleStatus::Pending
+        {
+            // Check if all dependencies are completed
+            let deps_complete = module.dependencies.iter().all(|dep_id| {
+                plan.modules
+                    .get(dep_id)
+                    .map(|dep| dep.status == ModuleStatus::Completed)
+                    .unwrap_or(false)
+            });
+            if deps_complete {
+                return Some(module);
             }
         }
     }

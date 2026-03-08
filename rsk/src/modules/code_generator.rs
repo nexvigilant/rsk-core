@@ -352,7 +352,7 @@ fn parse_failure_modes_to_rules(skill_name: &str, failure_modes: &str) -> Vec<Va
             } else {
                 line.trim_matches('|')
                     .split('|')
-                    .last()
+                    .next_back()
                     .unwrap_or("")
                     .trim()
             };
@@ -1032,7 +1032,7 @@ pub fn generate_attestation_code(intent: &crate::modules::intent::StructuredInte
     ));
     code.push_str("    let actual_pattern = env!(\"SKILL_PATTERN\");\n");
     code.push_str("    assert_eq!(actual_pattern, claimed_pattern, \"Intent Breach: implementation pattern does not match claim\");\n");
-    code.push_str("\n");
+    code.push('\n');
     code.push_str("    // PROOF: Verify required kernel modules are linked\n");
     for module in &intent.rsk_modules {
         code.push_str(&format!("    assert!(cfg!(feature = \"{}\"), \"Capability Gap: required module '{}' not available\");\n", module, module));

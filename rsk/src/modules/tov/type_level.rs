@@ -202,6 +202,12 @@ pub struct ValidatedRarity<const BITS: u64> {
     _private: (),
 }
 
+impl<const BITS: u64> Default for ValidatedRarity<BITS> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const BITS: u64> ValidatedRarity<BITS> {
     pub const fn new() -> Self {
         Self { _private: () }
@@ -227,6 +233,12 @@ impl<const BITS: u64> ValidatedRarity<BITS> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ValidatedHarmTypeIndex<const T: u8> {
     _private: (),
+}
+
+impl<const T: u8> Default for ValidatedHarmTypeIndex<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<const T: u8> ValidatedHarmTypeIndex<T> {
@@ -266,6 +278,12 @@ pub struct BoundedProbability<const NUM: u32, const DEN: u32> {
     _private: (),
 }
 
+impl<const NUM: u32, const DEN: u32> Default for BoundedProbability<NUM, DEN> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const NUM: u32, const DEN: u32> BoundedProbability<NUM, DEN> {
     /// Create a bounded probability. Only compiles if NUM < DEN (probability < 1).
     pub const fn new() -> Self {
@@ -298,6 +316,12 @@ pub type Prob1Pct = BoundedProbability<1, 100>; // 0.01
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ValidatedDomainIndex<const D: u8> {
     _private: (),
+}
+
+impl<const D: u8> Default for ValidatedDomainIndex<D> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<const D: u8> ValidatedDomainIndex<D> {
