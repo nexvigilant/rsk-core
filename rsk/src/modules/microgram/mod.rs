@@ -33,9 +33,10 @@ pub use catalog::{
     Catalog, CatalogEntry, alias_check, catalog,
 };
 pub use chain::{
-    ChainResult, ChainStatus, ResilientChainResult,
+    ChainResult, ChainStatus, LoopHalt, LoopResult, ResilientChainResult,
     chain, chain_accumulate, chain_accumulate_by_names,
-    chain_by_names, chain_resilient, chain_resilient_by_names,
+    chain_by_names, chain_loop, chain_loop_by_names,
+    chain_resilient, chain_resilient_by_names,
 };
 pub use clone::clone_mutated;
 pub use compose::{

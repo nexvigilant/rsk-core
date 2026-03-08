@@ -519,6 +519,26 @@ pub enum MicrogramAction {
         #[arg(long)]
         accumulate: bool,
     },
+    /// Loop a chain: run repeatedly, feeding output back as input
+    Loop {
+        /// Microgram names separated by ->
+        chain: String,
+        /// Directory containing microgram YAML files
+        #[arg(short, long, default_value = "micrograms")]
+        dir: String,
+        /// Initial input JSON
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+        /// Maximum iterations (default: 10)
+        #[arg(short = 'n', long, default_value = "10")]
+        max_iterations: usize,
+        /// Field to check for halt condition
+        #[arg(long)]
+        halt_field: Option<String>,
+        /// Value that triggers halt (JSON)
+        #[arg(long)]
+        halt_value: Option<String>,
+    },
     /// Generate a microgram from a spec
     Generate {
         /// Microgram name

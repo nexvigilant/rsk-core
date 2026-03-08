@@ -3,7 +3,8 @@
 use crate::cli::actions::MicrogramAction;
 use rsk::modules::decision_engine::Value as RskValue;
 use rsk::modules::microgram::{
-    alias_check, auto_execute, bench_all, catalog, chain_resilient_by_names, clone_mutated,
+    alias_check, auto_execute, bench_all, catalog, chain_loop_by_names,
+    chain_resilient_by_names, clone_mutated,
     compose, coverage_all, diff, evolve_tests, load_all, matrix, merge, pipe, pipe_chain, shrink,
     snapshot_restore, snapshot_save, stress_all, test_all, test_chains, validate_contracts,
     CompositionGoal, Microgram, MicrogramSpec,
@@ -222,6 +223,51 @@ pub fn handle_microgram(action: &MicrogramAction) {
                     .unwrap_or_default()
                 );
             }
+        }
+        MicrogramAction::Loop { chain, dir, input, max_iterations, halt_field, halt_value } => {
+            let names: Vec<&str> = chain.split("->").map(|s| s.trim()).collect();
+
+            let variables: HashMap<String, RskValue> = match serde_json::from_str(input) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Invalid input JSON: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let hv: Option<RskValue> = halt_value.as_ref().and_then(|v| serde_json::from_str(v).ok());
+
+            let result = match chain_loop_by_names(
+                Path::new(dir),
+                &names,
+                variables,
+                *max_iterations,
+                halt_field.as_deref(),
+                hv.as_ref(),
+            ) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "mode": "loop",
+                    "success": result.success,
+                    "iterations": result.iterations,
+                    "halt_reason": result.halt_reason,
+                    "final_state": result.final_state,
+                    "total_duration_us": result.total_duration_us,
+                    "trajectory": result.trajectory,
+                }))
+                .unwrap_or_default()
+            );
         }
         MicrogramAction::Generate {
             name, desc, var, op, threshold, true_label, false_label, out_dir,
