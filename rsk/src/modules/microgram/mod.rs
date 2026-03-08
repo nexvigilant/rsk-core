@@ -37,10 +37,11 @@ pub use catalog::{
 pub use chain::{
     ChainResult, ChainStatus, ChainValidationResult, LoopHalt, LoopResult,
     PathMismatch, PathSnapshotResult, ResilientChainResult, StepValidationError,
+    ValidatedChainResult,
     chain, chain_accumulate, chain_accumulate_by_names,
     chain_by_names, chain_loop, chain_loop_by_names,
     chain_resilient, chain_resilient_by_names,
-    chain_validate_all, chain_verify_paths,
+    chain_validate_all, chain_validated, chain_verify_paths,
 };
 pub use hygiene::{
     BoundaryReport, FieldGap, HygieneReport,
@@ -61,7 +62,11 @@ pub use merge::merge;
 pub use pipe::{PipeEntry, PipeResult, filter_results, map_field, pipe, pipe_chain, reduce_count};
 pub use shrink::shrink;
 pub use snapshot::{Snapshot, snapshot_restore, snapshot_save};
-pub use stress::{StressResult, stress, stress_all};
+pub use stress::{
+    BaselineEntry, RegressionEntry, RegressionResult, StressResult, ValidatedStressResult,
+    check_regression, load_baseline, save_baseline,
+    stress, stress_all, stress_typed, stress_all_typed, stress_validated,
+};
 pub use chain_registry::{
     ChainDefinition, ChainTestCase, ChainTestResult, SingleChainTestResult,
     ProcessDefinition, ProcessTestCase, ProcessTestResult, SingleProcessTestResult,
@@ -160,6 +165,26 @@ pub struct MicrogramResult {
     pub duration_us: u64,
 }
 
+/// Result of running a microgram with boundary validation.
+/// Wraps a normal `MicrogramResult` with ingress/egress error lists.
+/// When both error lists are empty and `result.success` is true,
+/// the full intout pipeline passed: input schema → transform → output schema.
+#[derive(Debug, Clone, Serialize)]
+pub struct ValidatedResult {
+    pub result: MicrogramResult,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub ingress_errors: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub egress_errors: Vec<String>,
+}
+
+impl ValidatedResult {
+    /// True when ingress passed, transform succeeded, and egress passed.
+    pub fn is_valid(&self) -> bool {
+        self.result.success && self.ingress_errors.is_empty() && self.egress_errors.is_empty()
+    }
+}
+
 /// Result of running self-tests
 #[derive(Debug, Clone, Serialize)]
 pub struct TestResult {
@@ -182,6 +207,40 @@ pub struct SingleTestResult {
     pub mismatch: Option<String>,
 }
 
+/// Canonicalize interface type names to the 5 recognized forms.
+/// Handles common aliases: boolean→bool, integer/number→int (number→float
+/// when the field clearly holds decimals, but at the type-compatibility
+/// level number is treated as numeric — same as int/float coercion).
+fn canonicalize_type(t: &str) -> &str {
+    match t {
+        "boolean" => "bool",
+        "integer" => "int",
+        "number" => "float",
+        other => other,
+    }
+}
+
+/// Check if an actual value type is compatible with a declared type.
+/// Permits numeric coercion (int↔float) since the decision engine
+/// routinely compares across numeric types. Canonicalizes type aliases
+/// before comparison (boolean→bool, integer→int, number→float).
+fn types_compatible(actual: &str, declared: &str) -> bool {
+    let actual = canonicalize_type(actual);
+    let declared = canonicalize_type(declared);
+    if actual == declared {
+        return true;
+    }
+    // Numeric coercion: int and float are interchangeable
+    if (actual == "int" || actual == "float") && (declared == "int" || declared == "float") {
+        return true;
+    }
+    // "any" in the declared type means no constraint
+    if declared == "any" {
+        return true;
+    }
+    false
+}
+
 impl Microgram {
     /// Load from a YAML file
     pub fn load(path: &Path) -> Result<Self, String> {
@@ -197,19 +256,61 @@ impl Microgram {
 
     /// Validate input against declared interface.
     /// Returns a list of validation errors (empty = valid).
+    /// Checks both required-field presence and type compatibility.
     pub fn validate_input(&self, input: &HashMap<String, Value>) -> Vec<String> {
         let mut errors = Vec::new();
-        if let Some(ref iface) = self.interface {
-            for (field_name, field_spec) in &iface.inputs {
-                if field_spec.required {
-                    match input.get(field_name) {
-                        None | Some(Value::Null) => {
-                            errors.push(format!(
-                                "Missing required field '{}' (type: {})",
-                                field_name, field_spec.field_type
-                            ));
-                        }
-                        _ => {}
+        let Some(ref iface) = self.interface else {
+            return errors;
+        };
+        for (field_name, field_spec) in &iface.inputs {
+            match input.get(field_name) {
+                None | Some(Value::Null) => {
+                    if field_spec.required {
+                        errors.push(format!(
+                            "Missing required input '{field_name}' (expected: {})",
+                            field_spec.field_type
+                        ));
+                    }
+                }
+                Some(val) => {
+                    let actual_type = interface::value_type_name(val);
+                    if !types_compatible(actual_type, &field_spec.field_type) {
+                        errors.push(format!(
+                            "Input '{field_name}': expected type '{}', got '{actual_type}'",
+                            field_spec.field_type
+                        ));
+                    }
+                }
+            }
+        }
+        errors
+    }
+
+    /// Validate output against declared interface.
+    /// Returns a list of validation errors (empty = valid).
+    /// Checks that declared output fields are present with correct types.
+    pub fn validate_output(&self, output: &HashMap<String, Value>) -> Vec<String> {
+        let mut errors = Vec::new();
+        let Some(ref iface) = self.interface else {
+            return errors;
+        };
+        for (field_name, field_spec) in &iface.outputs {
+            match output.get(field_name) {
+                None => {
+                    if field_spec.required {
+                        errors.push(format!(
+                            "Missing required output '{field_name}' (expected: {})",
+                            field_spec.field_type
+                        ));
+                    }
+                }
+                Some(val) => {
+                    let actual_type = interface::value_type_name(val);
+                    if !types_compatible(actual_type, &field_spec.field_type) {
+                        errors.push(format!(
+                            "Output '{field_name}': expected type '{}', got '{actual_type}'",
+                            field_spec.field_type
+                        ));
                     }
                 }
             }
@@ -238,6 +339,59 @@ impl Microgram {
             };
         }
         self.run(input)
+    }
+
+    /// Execute with full ingress and egress boundary validation.
+    ///
+    /// Validates input types and required fields against the declared interface
+    /// before execution (ingress), then validates output types and required
+    /// fields after execution (egress). If no interface is declared, behaves
+    /// identically to `run()`.
+    ///
+    /// Returns a `ValidatedResult` containing the normal `MicrogramResult`
+    /// plus any ingress/egress validation errors.
+    pub fn run_validated(&self, input: HashMap<String, Value>) -> ValidatedResult {
+        let ingress_errors = self.validate_input(&input);
+        if !ingress_errors.is_empty() {
+            let mut output = HashMap::new();
+            output.insert(
+                "_error".to_string(),
+                Value::String(format!("Ingress: {}", ingress_errors.join("; "))),
+            );
+            output.insert("_valid".to_string(), Value::Bool(false));
+            return ValidatedResult {
+                result: MicrogramResult {
+                    name: self.name.clone(),
+                    success: false,
+                    path: vec!["ingress_validation".to_string()],
+                    output,
+                    duration_us: 0,
+                },
+                ingress_errors,
+                egress_errors: Vec::new(),
+            };
+        }
+
+        let result = self.run(input);
+
+        let egress_errors = if result.success {
+            self.validate_output(&result.output)
+        } else {
+            // Don't validate output on execution errors — the tree failed,
+            // not the boundary contract.
+            Vec::new()
+        };
+
+        let success = result.success && egress_errors.is_empty();
+
+        ValidatedResult {
+            result: MicrogramResult {
+                success,
+                ..result
+            },
+            ingress_errors: Vec::new(),
+            egress_errors,
+        }
     }
 
     /// Execute with given input variables
@@ -1236,6 +1390,108 @@ tests:
     }
 
     // ═════════════════════════════════════════════════════════════════════
+    // T7b: CTVP stress / chain validation tests
+    // ═════════════════════════════════════════════════════════════════════
+
+    const TYPED_MG: &str = r#"
+name: typed-gate
+description: "Typed threshold gate for CTVP tests"
+interface:
+  inputs:
+    score:
+      type: float
+  outputs:
+    result:
+      type: string
+tree:
+  start: check
+  nodes:
+    check:
+      type: condition
+      variable: score
+      operator: gte
+      value: 5.0
+      true_next: pass
+      false_next: fail
+    pass:
+      type: return
+      value:
+        result: "above"
+    fail:
+      type: return
+      value:
+        result: "below"
+tests:
+  - input: { score: 8.0 }
+    expect: { result: "above" }
+  - input: { score: 2.0 }
+    expect: { result: "below" }
+  - input: {}
+    expect: { result: "below" }
+"#;
+
+    #[test]
+    fn test_stress_typed() {
+        let mg = Microgram::parse(TYPED_MG).unwrap();
+        let result = stress_typed(&mg, 1000, 42);
+        assert_eq!(result.iterations, 1000);
+        assert_eq!(result.succeeded + result.errored, 1000);
+        assert!(result.avg_us < 100.0, "avg={}us", result.avg_us);
+    }
+
+    #[test]
+    fn test_stress_typed_falls_back_without_interface() {
+        let mg = Microgram::parse(IS_POSITIVE).unwrap();
+        assert!(mg.interface.is_none());
+        let result = stress_typed(&mg, 500, 42);
+        assert_eq!(result.iterations, 500);
+        assert_eq!(result.errored, 0);
+    }
+
+    #[test]
+    fn test_stress_validated() {
+        let mg = Microgram::parse(TYPED_MG).unwrap();
+        let result = stress_validated(&mg, 500, 42);
+        assert_eq!(result.base.iterations, 500);
+        assert_eq!(result.base.succeeded + result.base.errored, 500);
+        // Boundary validation should catch type mismatches
+        assert!(result.ingress_failures + result.egress_failures <= 500);
+    }
+
+    #[test]
+    fn test_chain_validated() {
+        let mg1 = Microgram::parse(TYPED_MG).unwrap();
+        let mg2 = Microgram::parse(IS_POSITIVE).unwrap();
+        let mut input = HashMap::new();
+        input.insert("score".to_string(), Value::Float(8.0));
+        input.insert("threshold".to_string(), Value::Float(5.0));
+
+        let result = chain_validated(&[mg1, mg2], input, true);
+        assert_eq!(result.steps.len(), 2);
+        assert!(result.total_duration_us > 0);
+    }
+
+    #[test]
+    fn test_baseline_save_load_regression() {
+        let mg = Microgram::parse(IS_POSITIVE).unwrap();
+        let results = vec![stress(&mg, 100, 42)];
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("baseline.json");
+
+        save_baseline(&results, &path).unwrap();
+        let loaded = load_baseline(&path).unwrap();
+        assert_eq!(loaded.len(), 1);
+        assert_eq!(loaded[0].name, "is-positive");
+        assert_eq!(loaded[0].iterations, 100);
+
+        // Same results should show no regression
+        let reg = check_regression(&results, &loaded, 50.0);
+        assert_eq!(reg.total_checked, 1);
+        assert!(reg.regressions.is_empty());
+    }
+
+    // ═════════════════════════════════════════════════════════════════════
     // T7: TRANSFORM tests
     // ═════════════════════════════════════════════════════════════════════
 
@@ -1937,5 +2193,217 @@ tests:
 
         // No stale config entries should exist
         assert_eq!(report.stale, 0, "patrol.yaml should not contain stale entries");
+    }
+
+    // ───────────────────────────────────────────────────────────
+    // run_validated / ingress / egress tests
+    // ───────────────────────────────────────────────────────────
+
+    const TYPED_MICROGRAM: &str = r#"
+name: typed-gate
+description: "Gate with full interface"
+interface:
+  inputs:
+    score:
+      type: float
+      required: true
+    label:
+      type: string
+      required: false
+  outputs:
+    passed:
+      type: bool
+      required: true
+    grade:
+      type: string
+      required: true
+tree:
+  start: check
+  nodes:
+    check:
+      type: condition
+      variable: score
+      operator: gte
+      value: 70
+      true_next: pass
+      false_next: fail
+    pass:
+      type: return
+      value:
+        passed: true
+        grade: "PASS"
+    fail:
+      type: return
+      value:
+        passed: false
+        grade: "FAIL"
+tests:
+  - input: { score: 85 }
+    expect: { passed: true, grade: "PASS" }
+  - input: { score: 50 }
+    expect: { passed: false, grade: "FAIL" }
+"#;
+
+    #[test]
+    fn test_run_validated_happy_path() {
+        let mg = Microgram::parse(TYPED_MICROGRAM).unwrap();
+        let mut input = HashMap::new();
+        input.insert("score".to_string(), Value::Float(90.0));
+
+        let vr = mg.run_validated(input);
+        assert!(vr.is_valid());
+        assert!(vr.ingress_errors.is_empty());
+        assert!(vr.egress_errors.is_empty());
+        assert_eq!(vr.result.output.get("grade"), Some(&Value::String("PASS".to_string())));
+    }
+
+    #[test]
+    fn test_run_validated_int_float_coercion() {
+        // Interface declares float, input provides int — should pass via numeric coercion
+        let mg = Microgram::parse(TYPED_MICROGRAM).unwrap();
+        let mut input = HashMap::new();
+        input.insert("score".to_string(), Value::Int(85));
+
+        let vr = mg.run_validated(input);
+        assert!(vr.is_valid(), "int→float coercion should be accepted");
+    }
+
+    #[test]
+    fn test_run_validated_missing_required_input() {
+        let mg = Microgram::parse(TYPED_MICROGRAM).unwrap();
+        let input = HashMap::new(); // empty — missing required 'score'
+
+        let vr = mg.run_validated(input);
+        assert!(!vr.is_valid());
+        assert_eq!(vr.ingress_errors.len(), 1);
+        assert!(vr.ingress_errors[0].contains("Missing required input 'score'"));
+        assert!(!vr.result.success);
+    }
+
+    #[test]
+    fn test_run_validated_wrong_type_input() {
+        let mg = Microgram::parse(TYPED_MICROGRAM).unwrap();
+        let mut input = HashMap::new();
+        input.insert("score".to_string(), Value::String("not_a_number".to_string()));
+
+        let vr = mg.run_validated(input);
+        assert!(!vr.is_valid());
+        assert_eq!(vr.ingress_errors.len(), 1);
+        assert!(vr.ingress_errors[0].contains("expected type 'float'"));
+        assert!(vr.ingress_errors[0].contains("got 'string'"));
+    }
+
+    #[test]
+    fn test_run_validated_optional_field_absent() {
+        // 'label' is optional — omitting it should be fine
+        let mg = Microgram::parse(TYPED_MICROGRAM).unwrap();
+        let mut input = HashMap::new();
+        input.insert("score".to_string(), Value::Float(75.0));
+
+        let vr = mg.run_validated(input);
+        assert!(vr.is_valid());
+    }
+
+    #[test]
+    fn test_run_validated_optional_field_wrong_type() {
+        // 'label' is optional but if provided must be a string
+        let mg = Microgram::parse(TYPED_MICROGRAM).unwrap();
+        let mut input = HashMap::new();
+        input.insert("score".to_string(), Value::Float(75.0));
+        input.insert("label".to_string(), Value::Int(42));
+
+        let vr = mg.run_validated(input);
+        assert!(!vr.is_valid());
+        assert_eq!(vr.ingress_errors.len(), 1);
+        assert!(vr.ingress_errors[0].contains("Input 'label'"));
+    }
+
+    #[test]
+    fn test_run_validated_no_interface_passthrough() {
+        // Microgram without interface should behave identically to run()
+        let mg = Microgram::parse(IS_POSITIVE).unwrap();
+        let mut input = HashMap::new();
+        input.insert("n".to_string(), Value::Int(5));
+
+        let vr = mg.run_validated(input);
+        assert!(vr.is_valid());
+        assert_eq!(vr.result.output.get("positive"), Some(&Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_validate_output_type_mismatch() {
+        // Test egress validation directly: construct a microgram whose output
+        // disagrees with its declared interface
+        let yaml = r#"
+name: bad-output
+description: "Returns int where string is declared"
+interface:
+  inputs:
+    x:
+      type: int
+      required: true
+  outputs:
+    result:
+      type: string
+      required: true
+tree:
+  start: go
+  nodes:
+    go:
+      type: return
+      value:
+        result: 42
+tests:
+  - input: { x: 1 }
+    expect: { result: 42 }
+"#;
+        let mg = Microgram::parse(yaml).unwrap();
+        let mut input = HashMap::new();
+        input.insert("x".to_string(), Value::Int(1));
+
+        let vr = mg.run_validated(input);
+        // Ingress passes, egress fails (output 'result' is int, declared string)
+        assert!(vr.ingress_errors.is_empty());
+        assert_eq!(vr.egress_errors.len(), 1);
+        assert!(vr.egress_errors[0].contains("Output 'result'"));
+        assert!(!vr.is_valid());
+    }
+
+    #[test]
+    fn test_types_compatible() {
+        assert!(types_compatible("int", "int"));
+        assert!(types_compatible("int", "float"));
+        assert!(types_compatible("float", "int"));
+        assert!(types_compatible("string", "any"));
+        assert!(!types_compatible("string", "int"));
+        assert!(!types_compatible("bool", "string"));
+    }
+
+    #[test]
+    fn test_type_canonicalization() {
+        // boolean → bool
+        assert!(types_compatible("bool", "boolean"));
+        assert!(types_compatible("boolean", "bool"));
+        // integer → int
+        assert!(types_compatible("int", "integer"));
+        assert!(types_compatible("integer", "int"));
+        // number → float (numeric coercion)
+        assert!(types_compatible("float", "number"));
+        assert!(types_compatible("int", "number"));
+        assert!(types_compatible("number", "int"));
+        assert!(types_compatible("number", "float"));
+        // Non-canonical still rejects cross-type
+        assert!(!types_compatible("boolean", "integer"));
+        assert!(!types_compatible("number", "string"));
+    }
+
+    #[test]
+    fn test_canonicalize_type() {
+        assert_eq!(canonicalize_type("boolean"), "bool");
+        assert_eq!(canonicalize_type("integer"), "int");
+        assert_eq!(canonicalize_type("number"), "float");
+        assert_eq!(canonicalize_type("string"), "string");
+        assert_eq!(canonicalize_type("float"), "float");
+        assert_eq!(canonicalize_type("unknown"), "unknown");
     }
 }

@@ -121,22 +121,27 @@ pub fn validate_contracts(dir: &Path) -> Result<ContractValidation, String> {
 fn canonical_type(t: &str) -> &str {
     match t {
         "boolean" => "bool",
+        "integer" => "int",
         "number" => "float",
         _ => t,
     }
 }
 
 /// Check if two types are compatible for chaining.
-/// int → float is allowed (widening), same types always match.
-/// Aliases: boolean ↔ bool, number ↔ float/int.
+/// Aliases: boolean ↔ bool, integer ↔ int, number ↔ float.
+/// Numeric coercion: int ↔ float. `any` accepts everything.
 fn types_compatible(output_type: &str, input_type: &str) -> bool {
     let out = canonical_type(output_type);
     let inp = canonical_type(input_type);
     if out == inp {
         return true;
     }
-    // int → float is a safe widening
-    if out == "int" && inp == "float" {
+    // numeric coercion: int ↔ float
+    if (out == "int" || out == "float") && (inp == "int" || inp == "float") {
+        return true;
+    }
+    // `any` accepts everything
+    if inp == "any" {
         return true;
     }
     // string accepts anything (loose)

@@ -228,6 +228,105 @@ pub fn chain_accumulate(micrograms: &[Microgram], initial_input: HashMap<String,
     }
 }
 
+/// Result of a validated chain execution
+#[derive(Debug, Clone, Serialize)]
+pub struct ValidatedChainResult {
+    pub success: bool,
+    pub steps: Vec<super::ValidatedResult>,
+    pub final_output: HashMap<String, Value>,
+    pub total_duration_us: u64,
+    /// Cumulative ingress/egress errors across all steps
+    pub boundary_errors: Vec<String>,
+}
+
+/// Chain micrograms with ingress/egress validation at every step.
+///
+/// Each step runs through `run_validated()`: ingress checks types against
+/// declared interface before execution, egress checks output types after.
+/// Micrograms without interfaces pass through unchanged (backward compatible).
+///
+/// On ingress failure: halts the chain (invalid input = can't proceed).
+/// On egress failure: records the violation but continues (output exists, just wrong type).
+/// When `accumulate` is true, uses accumulate semantics (merge outputs into context).
+pub fn chain_validated(
+    micrograms: &[Microgram],
+    initial_input: HashMap<String, Value>,
+    accumulate: bool,
+) -> ValidatedChainResult {
+    let mut context = initial_input;
+    let mut steps = Vec::with_capacity(micrograms.len());
+    let mut total_us = 0u64;
+    let mut boundary_errors = Vec::new();
+
+    for (i, mg) in micrograms.iter().enumerate() {
+        let mut step_input = context.clone();
+        apply_aliases(&mut step_input, mg);
+
+        let vr = mg.run_validated(step_input);
+        total_us += vr.result.duration_us;
+
+        // Collect boundary errors with step context
+        for err in &vr.ingress_errors {
+            boundary_errors.push(format!("Step {} ({}): ingress: {err}", i, mg.name));
+        }
+        for err in &vr.egress_errors {
+            boundary_errors.push(format!("Step {} ({}): egress: {err}", i, mg.name));
+        }
+
+        // Ingress failure: halt the chain
+        if !vr.ingress_errors.is_empty() {
+            let final_output = vr.result.output.clone();
+            steps.push(vr);
+            return ValidatedChainResult {
+                success: false,
+                steps,
+                final_output,
+                total_duration_us: total_us,
+                boundary_errors,
+            };
+        }
+
+        // Execution failure: halt the chain
+        if !vr.result.success {
+            let final_output = vr.result.output.clone();
+            steps.push(vr);
+            return ValidatedChainResult {
+                success: false,
+                steps,
+                final_output,
+                total_duration_us: total_us,
+                boundary_errors,
+            };
+        }
+
+        // Update context for next step
+        if accumulate {
+            for (k, v) in &vr.result.output {
+                context.insert(k.clone(), v.clone());
+            }
+        } else {
+            context = vr.result.output.clone();
+        }
+
+        steps.push(vr);
+    }
+
+    let final_output: HashMap<String, Value> = if accumulate {
+        context.into_iter().filter(|(k, _)| !k.starts_with('_')).collect()
+    } else {
+        steps.last().map(|s| s.result.output.clone()).unwrap_or_default()
+    };
+
+    let success = boundary_errors.is_empty();
+    ValidatedChainResult {
+        success,
+        steps,
+        final_output,
+        total_duration_us: total_us,
+        boundary_errors,
+    }
+}
+
 /// Load micrograms by name and chain them with context accumulation
 pub fn chain_accumulate_by_names(
     dir: &Path,
