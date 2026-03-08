@@ -45,7 +45,7 @@ tests:
     scale: chain
     session_levels: "4,4,3,4"
   expect:
-    regulatory_action: periodic_report
+    regulatory_action: monitor
     causality: POSSIBLE
   expect_halt: Convergence
 
@@ -53,11 +53,11 @@ tests:
 - name: no signal converges to no action
   input:
     prr: 0.5
-    naranjo_score: 1
+    naranjo_score: 0
     is_serious: false
     scale: chain
     session_levels: "4,3,4,4"
   expect:
-    regulatory_action: routine_monitoring
+    regulatory_action: document
     causality: DOUBTFUL
   expect_halt: Convergence

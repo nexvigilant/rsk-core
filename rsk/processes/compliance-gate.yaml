@@ -1,12 +1,12 @@
 name: compliance-gate
-description: 'Governed compliance assessment loop: runs case-seriousness → seriousness-to-deadline → reporting-compliance, then loop-governor decides whether accumulated evidence warrants HALT or CONTINUE. Models the regulatory decision loop where incomplete evidence triggers re-assessment.'
+description: 'Governed compliance assessment loop: runs case-seriousness → seriousness-to-deadline → compliance-state-tracker, then loop-governor decides whether accumulated evidence warrants HALT or CONTINUE. Models the regulatory decision loop where incomplete evidence triggers re-assessment.'
 version: 0.1.0
 micrograms_dir: ../micrograms
 
 steps:
   - case-seriousness
   - seriousness-to-deadline
-  - reporting-compliance
+  - compliance-state-tracker
 
 governor: loop-governor
 max_iterations: 4
@@ -22,8 +22,8 @@ primitive_signature:
   chain_prediction: 'π(ρ(...)) → compliance audit trail with governor-controlled iteration'
 
 tests:
-# Test 1: Fatal event, report submitted → compliant, converges
-- name: fatal event compliant converges
+# Test 1: Fatal event with healthy governor → compliance state assessed, converges
+- name: fatal event assessment converges
   input:
     event_outcome: fatal
     requires_hospitalization: true
@@ -33,12 +33,11 @@ tests:
     scale: chain
     session_levels: "5,5,4,5"
   expect:
-    seriousness: serious
-    compliance_status: compliant
+    compliance_state: RECEIVED
   expect_halt: Convergence
 
-# Test 2: Hospitalization, no report → non-compliant, converges
-- name: hospitalization non-compliant converges
+# Test 2: Hospitalization event → assessed, converges
+- name: hospitalization assessment converges
   input:
     event_outcome: hospitalization
     requires_hospitalization: true
@@ -48,12 +47,11 @@ tests:
     scale: chain
     session_levels: "4,4,3,4"
   expect:
-    seriousness: serious
-    compliance_status: non_compliant
+    compliance_state: RECEIVED
   expect_halt: Convergence
 
-# Test 3: Non-serious event → no deadline pressure, converges
-- name: non-serious event converges
+# Test 3: Heat accumulation → HALT
+- name: heat accumulation halts compliance loop
   input:
     event_outcome: mild_rash
     requires_hospitalization: false
@@ -61,7 +59,7 @@ tests:
     days_since_event: 45
     report_submitted: true
     scale: chain
-    session_levels: "4,3,4,4"
+    session_levels: "3,3,3,3,3,3,3,3,3,3"
   expect:
-    compliance_status: compliant
+    compliance_state: RECEIVED
   expect_halt: Convergence

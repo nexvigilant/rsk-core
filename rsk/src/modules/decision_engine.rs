@@ -55,6 +55,7 @@ impl Value {
         match self {
             Value::Int(i) => Some(*i as f64),
             Value::Float(f) => Some(*f),
+            Value::String(s) => s.parse::<f64>().ok(),
             _ => None,
         }
     }
@@ -383,8 +384,27 @@ impl DecisionEngine {
 
     fn evaluate_condition(&self, actual: &Value, op: &Operator, target: Option<&Value>) -> bool {
         match op {
-            Operator::Eq => actual == target.unwrap_or(&Value::Null),
-            Operator::Neq => actual != target.unwrap_or(&Value::Null),
+            Operator::Eq => {
+                let t = target.unwrap_or(&Value::Null);
+                if actual == t {
+                    return true;
+                }
+                // Cross-type numeric equality: Float(5.0) == String("5") == Int(5)
+                match (actual.as_f64(), t.as_f64()) {
+                    (Some(a), Some(b)) => a == b,
+                    _ => false,
+                }
+            }
+            Operator::Neq => {
+                let t = target.unwrap_or(&Value::Null);
+                if actual == t {
+                    return false;
+                }
+                match (actual.as_f64(), t.as_f64()) {
+                    (Some(a), Some(b)) => a != b,
+                    _ => true,
+                }
+            }
             Operator::IsNull => matches!(actual, Value::Null),
             Operator::IsNotNull => !matches!(actual, Value::Null),
             Operator::Gt => {
