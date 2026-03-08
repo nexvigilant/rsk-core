@@ -1,0 +1,63 @@
+name: pv-signal-detection
+description: 'Governed PV signal detection loop: runs prr-signal → signal-to-causality → naranjo-quick → causality-to-action, then loop-governor decides whether to continue investigating or halt. Enables iterative signal refinement where each pass can update thresholds based on accumulated evidence.'
+version: 0.1.0
+micrograms_dir: ../micrograms
+
+steps:
+  - prr-signal
+  - signal-to-causality
+  - naranjo-quick
+  - causality-to-action
+
+governor: loop-governor
+max_iterations: 3
+detect_convergence: true
+accumulate: true
+trajectory: true
+
+primitive_signature:
+  dominant: 'ρ'
+  expression: 'ρ(κ(PRR) → μ(causality) → ∂(action)) at ∂(governor) — looped signal detection with governor boundary'
+  primes: ['ρ', 'κ', 'μ', '∂', 'N', '→']
+  arguments: ['prr', 'naranjo_score', 'is_serious']
+  chain_prediction: 'π(ρ(...)) → persisted signal detection with governor-controlled depth'
+
+tests:
+# Test 1: Strong signal, serious case → expedited, converges quickly (deterministic)
+- name: strong signal converges to expedited
+  input:
+    prr: 8.5
+    naranjo_score: 7
+    is_serious: true
+    scale: chain
+    session_levels: "5,5,4,5"
+  expect:
+    regulatory_action: expedited_report
+    causality: PROBABLE
+  expect_halt: Convergence
+
+# Test 2: Weak signal, non-serious → periodic report, converges
+- name: weak signal converges to periodic
+  input:
+    prr: 1.2
+    naranjo_score: 3
+    is_serious: false
+    scale: chain
+    session_levels: "4,4,3,4"
+  expect:
+    regulatory_action: periodic_report
+    causality: POSSIBLE
+  expect_halt: Convergence
+
+# Test 3: No signal → no action, converges immediately
+- name: no signal converges to no action
+  input:
+    prr: 0.5
+    naranjo_score: 1
+    is_serious: false
+    scale: chain
+    session_levels: "4,3,4,4"
+  expect:
+    regulatory_action: routine_monitoring
+    causality: DOUBTFUL
+  expect_halt: Convergence

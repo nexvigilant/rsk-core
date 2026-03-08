@@ -724,6 +724,20 @@ pub enum MicrogramAction {
         #[arg(default_value = "chains")]
         dir: String,
     },
+    /// Run a process (looped chain with governor)
+    Process {
+        /// Path to process YAML definition
+        path: String,
+        /// Initial input JSON
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+    /// Run end-to-end tests for process definitions
+    ProcessTest {
+        /// Directory containing process YAML definitions
+        #[arg(default_value = "processes")]
+        dir: String,
+    },
     /// Run the full CI gate (tests + contracts + interfaces + coverage + chains)
     Ci {
         /// Directory containing micrograms

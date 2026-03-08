@@ -1,0 +1,63 @@
+name: governed-momentum
+description: 'Governed session momentum process: scores sessions, compounds verdicts, and halts when heat accumulates. The governor prevents runaway loops by reading the compound verdict and deciding HALT/CONTINUE.'
+version: 0.1.0
+micrograms_dir: ../micrograms
+
+# Chain body: compound multi-session data → governor decides
+# session-scorecard scores ONE session; scorecard-compound aggregates MANY.
+# The process takes pre-scored session_levels (from prior scorecard runs)
+# and feeds them through compound → governor.
+steps:
+  - scorecard-compound
+
+# ∂ — Governor gate
+governor: loop-governor
+
+# ρ — Loop configuration
+max_iterations: 5
+detect_convergence: true
+
+# ∂ — Halt condition (governor outputs loop_action: HALT)
+halt_field: loop_action
+halt_value: HALT
+
+# π — Trajectory
+trajectory: true
+
+# Accumulate mode (required for loops)
+accumulate: true
+
+primitive_signature:
+  dominant: 'ρ'
+  expression: 'ρ(Σ(levels) + ∂(governor)) — looped aggregation with governor boundary'
+  primes: ['ρ', 'Σ', '∂', 'κ', 'N', 'ν']
+  arguments: ['session_levels', 'compound_verdict', 'governor_signal']
+  chain_prediction: 'ν(ρ(...)) — when run periodically, becomes frequency-governed recursion'
+
+tests:
+# Test 1: Healthy sessions (mix of levels, good persistence) → CONTINUE → converges
+- name: healthy sessions continue
+  input:
+    session_levels: "4,5,3,4,5,4"
+    scale: chain
+  expect:
+    loop_action: CONTINUE
+  expect_halt: Convergence
+
+# Test 2: All sparks (every session stuck at L3) → HALT
+- name: heat accumulation halts
+  input:
+    session_levels: "3,3,3,3,3,3,3,3,3,3"
+    scale: chain
+  expect:
+    loop_action: HALT
+  expect_halt: HaltCondition
+
+# Test 3: Mixed with some persistence → CONSOLIDATE → CONTINUE
+- name: mixed persistence consolidates
+  input:
+    session_levels: "3,4,3,2,4,3"
+    scale: chain
+  expect:
+    loop_action: CONTINUE
+  expect_halt: Convergence

@@ -6,8 +6,9 @@ use rsk::modules::microgram::{
     alias_check, auto_execute, bench_all, catalog, chain_loop_by_names,
     chain_resilient_by_names, clone_mutated,
     compose, coverage_all, diff, evolve_tests, load_all, matrix, merge, pipe, pipe_chain, shrink,
-    snapshot_restore, snapshot_save, stress_all, test_all, test_chains, validate_contracts,
-    CompositionGoal, Microgram, MicrogramSpec,
+    snapshot_restore, snapshot_save, stress_all, test_all, test_chains, test_processes,
+    validate_contracts,
+    CompositionGoal, Microgram, MicrogramSpec, ProcessDefinition,
 };
 use serde_json::json;
 use std::collections::HashMap;
@@ -1027,6 +1028,95 @@ pub fn handle_microgram(action: &MicrogramAction) {
             );
 
             if gates_failed > 0 {
+                std::process::exit(1);
+            }
+        }
+        MicrogramAction::Process { path, input } => {
+            let def = match ProcessDefinition::load(Path::new(path)) {
+                Ok(d) => d,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let mcg_dir = def.resolve_mcg_dir(Path::new(path));
+            let micrograms = match load_all(&mcg_dir) {
+                Ok(m) => m,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let input_map: HashMap<String, RskValue> = match serde_json::from_str(input) {
+                Ok(m) => m,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": format!("Invalid input JSON: {e}")}));
+                    std::process::exit(1);
+                }
+            };
+
+            match def.run(&micrograms, input_map) {
+                Ok(result) => {
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&json!({
+                            "process": def.name,
+                            "success": result.success,
+                            "iterations": result.iterations,
+                            "halt_reason": format!("{:?}", result.halt_reason),
+                            "final_state": result.final_state,
+                            "total_duration_us": result.total_duration_us,
+                            "trajectory_length": result.trajectory.len(),
+                        }))
+                        .unwrap_or_default()
+                    );
+                }
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            }
+        }
+        MicrogramAction::ProcessTest { dir } => {
+            let results = match test_processes(Path::new(dir)) {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let total_processes = results.len();
+            let total_tests: usize = results.iter().map(|r| r.total).sum();
+            let total_passed: usize = results.iter().map(|r| r.passed).sum();
+            let total_failed: usize = results.iter().map(|r| r.failed).sum();
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "processes": total_processes,
+                    "total_tests": total_tests,
+                    "passed": total_passed,
+                    "failed": total_failed,
+                    "results": results.iter().map(|r| json!({
+                        "process": r.process_name,
+                        "passed": r.passed,
+                        "failed": r.failed,
+                        "tests": r.results.iter().map(|t| json!({
+                            "name": t.name,
+                            "passed": t.passed,
+                            "iterations": t.iterations,
+                            "halt_reason": t.halt_reason,
+                            "mismatch": t.mismatch,
+                        })).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                }))
+                .unwrap_or_default()
+            );
+
+            if total_failed > 0 {
                 std::process::exit(1);
             }
         }

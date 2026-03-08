@@ -56,7 +56,8 @@ pub use snapshot::{Snapshot, snapshot_restore, snapshot_save};
 pub use stress::{StressResult, stress, stress_all};
 pub use chain_registry::{
     ChainDefinition, ChainTestCase, ChainTestResult, SingleChainTestResult,
-    load_chains, test_chains,
+    ProcessDefinition, ProcessTestCase, ProcessTestResult, SingleProcessTestResult,
+    load_chains, load_processes, test_chains, test_processes,
 };
 
 use crate::modules::decision_engine::{

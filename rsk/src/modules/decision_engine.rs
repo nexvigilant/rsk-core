@@ -195,7 +195,8 @@ impl DecisionEngine {
                     false_next,
                 } => {
                     let var_val = ctx.get(variable).unwrap_or(&Value::Null);
-                    let result = self.evaluate_condition(var_val, operator, value.as_ref());
+                    let resolved_value = value.as_ref().map(|v| self.interpolate_value(v, &ctx));
+                    let result = self.evaluate_condition(var_val, operator, resolved_value.as_ref());
                     current_id = if result {
                         true_next.clone()
                     } else {
