@@ -835,6 +835,167 @@ pub enum AntiPatternAction {
     Stats,
 }
 
+#[derive(Subcommand)]
+pub enum JsonAction {
+    /// Parse a JSON string and analyze its structure
+    Parse {
+        /// JSON string to parse
+        input: String,
+    },
+    /// Query a value at a JSON path (dot/bracket notation: "a.b.c" or "a[0].b")
+    Query {
+        /// JSON string to query
+        input: String,
+        /// Path to query (e.g. "users[0].name")
+        path: String,
+    },
+    /// Diff two JSON values — show added, removed, modified, unchanged
+    Diff {
+        /// Left JSON string
+        left: String,
+        /// Right JSON string
+        right: String,
+    },
+    /// Deep merge two JSON objects (source overwrites target)
+    Merge {
+        /// Target JSON string
+        target: String,
+        /// Source JSON string (overwrites target on conflict)
+        source: String,
+    },
+    /// Flatten nested JSON to dot-notation keys
+    Flatten {
+        /// JSON string to flatten
+        input: String,
+    },
+    /// Get top-level keys from a JSON object
+    Keys {
+        /// JSON string
+        input: String,
+    },
+    /// Validate JSON value type (object, array, string, number, integer, float, boolean, null)
+    TypeCheck {
+        /// JSON string to check
+        input: String,
+        /// Expected type name
+        expected: String,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum SessionAction {
+    /// Load session state from a JSON file
+    Load {
+        /// Path to session state file (default: ~/.claude/skills/default/session-state.json)
+        #[arg(short, long)]
+        path: Option<String>,
+    },
+    /// Track a skill execution
+    Track {
+        /// Skill name
+        skill: String,
+        /// Optional context/notes
+        #[arg(short, long)]
+        context: Option<String>,
+        /// Path to state file
+        #[arg(short, long)]
+        path: Option<String>,
+    },
+    /// Mark the last execution as completed
+    Complete {
+        /// Duration in milliseconds
+        #[arg(short, long)]
+        duration_ms: Option<u64>,
+        /// Path to state file
+        #[arg(short, long)]
+        path: Option<String>,
+    },
+    /// Mark the last execution as failed
+    Fail {
+        /// Error message
+        #[arg(short, long)]
+        error: Option<String>,
+        /// Path to state file
+        #[arg(short, long)]
+        path: Option<String>,
+    },
+    /// Append a message to the execution log
+    Log {
+        /// Skill name
+        skill: String,
+        /// Log message
+        message: String,
+        /// Path to log file (default: ~/.claude/skills/skill-execution.log)
+        #[arg(short, long)]
+        path: Option<String>,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum EpistemicAction {
+    /// Validate a claim for epistemic rigor (overconfident language, missing citations)
+    Validate {
+        /// Claim text to validate
+        claim: String,
+    },
+    /// Batch validate multiple claims (separated by |||)
+    Batch {
+        /// Claims separated by |||
+        claims: String,
+    },
+    /// Show hedging suggestions for overconfident words
+    Suggestions,
+}
+
+#[derive(Subcommand)]
+pub enum StatsAction {
+    /// Chi-square test for independence (2x2 contingency table)
+    ChiSquare {
+        /// Cell a: exposed + event
+        #[arg(long)]
+        a: i64,
+        /// Cell b: exposed + no event
+        #[arg(long)]
+        b: i64,
+        /// Cell c: not exposed + event
+        #[arg(long)]
+        c: i64,
+        /// Cell d: not exposed + no event
+        #[arg(long)]
+        d: i64,
+    },
+    /// Welch's independent samples t-test
+    TTest {
+        /// Group 1 values (comma-separated)
+        #[arg(long)]
+        group1: String,
+        /// Group 2 values (comma-separated)
+        #[arg(long)]
+        group2: String,
+    },
+    /// One-sample proportion z-test
+    Proportion {
+        /// Number of successes
+        #[arg(long)]
+        successes: i64,
+        /// Total sample size
+        #[arg(long)]
+        n: i64,
+        /// Null hypothesis proportion (default: 0.5)
+        #[arg(long)]
+        null: Option<f64>,
+    },
+    /// Pearson correlation with significance test
+    Correlation {
+        /// X values (comma-separated)
+        #[arg(long)]
+        x: String,
+        /// Y values (comma-separated)
+        #[arg(long)]
+        y: String,
+    },
+}
+
 #[cfg(feature = "forge")]
 #[derive(Subcommand)]
 pub enum ForgeAction {

@@ -8,9 +8,10 @@ use clap::{Parser, Subcommand};
 mod cli;
 
 use cli::{
-    AntiPatternAction, ChainAction, CompressAction, ExecAction, GenerateAction, GraphAction,
-    GuardianAction, HooksAction, MicrogramAction, RouteAction, Sha256Action, SkillsAction,
-    StateAction, TaxonomyAction, TelemetryAction, TextAction, TovAction, YamlAction,
+    AntiPatternAction, ChainAction, CompressAction, EpistemicAction, ExecAction, GenerateAction,
+    GraphAction, GuardianAction, HooksAction, JsonAction, MicrogramAction, RouteAction,
+    SessionAction, Sha256Action, SkillsAction, StateAction, StatsAction, TaxonomyAction,
+    TelemetryAction, TextAction, TovAction, YamlAction,
 };
 
 #[cfg(feature = "forge")]
@@ -212,6 +213,26 @@ enum Commands {
         #[command(subcommand)]
         action: GuardianAction,
     },
+    /// JSON processing (parse, query, diff, merge, flatten)
+    Json {
+        #[command(subcommand)]
+        action: JsonAction,
+    },
+    /// Session tracking (execution history, logging)
+    Session {
+        #[command(subcommand)]
+        action: SessionAction,
+    },
+    /// Epistemic rigor validation (overconfident language detection)
+    Epistemic {
+        #[command(subcommand)]
+        action: EpistemicAction,
+    },
+    /// Statistical inference with epistemic interpretation
+    Stats {
+        #[command(subcommand)]
+        action: StatsAction,
+    },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -299,6 +320,12 @@ fn main() {
                 }
             });
         }
+
+        // Newly wired modules
+        Commands::Json { action } => cli::handlers::json::handle_json(&action),
+        Commands::Session { action } => cli::handlers::session::handle_session(&action),
+        Commands::Epistemic { action } => cli::handlers::epistemic::handle_epistemic(&action),
+        Commands::Stats { action } => cli::handlers::stats::handle_stats(&action),
 
         // Forge (feature-gated)
         #[cfg(feature = "forge")]

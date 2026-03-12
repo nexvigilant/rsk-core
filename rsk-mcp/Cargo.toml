@@ -1,0 +1,39 @@
+[package]
+name = "rsk-mcp"
+version = "0.1.0"
+edition = "2024"
+authors = ["Matthew Campion"]
+description = "MCP server exposing RSK microgram runtime and computation kernel to AI agents"
+license = "MIT"
+rust-version = "1.85"
+
+[[bin]]
+name = "rsk-mcp"
+path = "src/main.rs"
+
+[dependencies]
+# RSK computation kernel (library)
+rsk = { path = "../rsk" }
+
+# MCP server framework (official Rust SDK)
+rmcp = { version = "1.1", features = ["server", "transport-io", "macros"] }
+
+# Schema generation for tool parameters
+schemars = { version = "1.0", features = ["chrono04"] }
+
+# Async runtime
+tokio = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[lints]
+workspace = true
