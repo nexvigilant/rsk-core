@@ -1,6 +1,12 @@
 name: causality-to-action
 description: 'Bridge: routes causality assessment results to regulatory action with ICH E2B deadlines. Chains from naranjo-quick output.'
-version: 0.1.0
+version: 0.2.0
+primitive_signature:
+  dominant: 'π'
+  expression: 'π(→) at ∂(regulatory) — persists restored causality into regulatory action'
+  primes: ['π', '→', '∂', 'N']
+  arguments: ['causality', 'is_serious']
+  chain_prediction: 'Completes the handoff chain: → fires (causality assessed) → ∃ catches (causality level named) → π holds (regulatory action persisted with deadline). This is the terminal step — it converts → into π. The deadline_days field IS N(π) — quantified persistence with temporal boundary. REJECTED output enforces chain integrity: causality-to-action refuses input that bypassed the κ→→ restoration step.'
 interface:
   inputs:
     causality:

@@ -1,6 +1,12 @@
 name: signal-to-causality
 description: 'Bridge: routes signal detection results to causality assessment recommendation. Chains from prr-signal output.'
-version: 0.1.0
+version: 0.2.0
+primitive_signature:
+  dominant: 'μ'
+  expression: 'μ(κ → →) — mapping from correlation domain to causation domain'
+  primes: ['μ', '→', 'κ']
+  arguments: ['signal_detected', 'prr']
+  chain_prediction: 'Detects that → has collapsed to κ (missing temporal ordering + boundary). Routes to the tool that restores them. This IS the failure mode table read as a routing decision: if → = κ, then dispatch to Naranjo/WHO-UMC.'
 interface:
   inputs:
     signal_detected:

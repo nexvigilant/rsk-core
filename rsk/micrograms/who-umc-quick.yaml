@@ -1,6 +1,12 @@
 name: who-umc-quick
 description: 'WHO-UMC causality assessment scale: international standard alternative to Naranjo, used in VigiBase/VigiAccess reporting'
-version: 0.1.0
+version: 0.2.0
+primitive_signature:
+  dominant: '→'
+  expression: '→(κ + N(ς₁ < ς₂) + ∂) — restores causality via sequential condition gates'
+  primes: ['→', 'κ', 'N', 'ς', '∂']
+  arguments: ['time_plausible', 'known_reaction', 'no_alternative_explanation', 'dechallenge_positive', 'rechallenge_positive']
+  chain_prediction: 'Restores → from κ via explicit condition checklist. time_plausible restores N(ς₁ < ς₂) — temporal ordering. dechallenge/rechallenge restore ∂ — this specific drug boundary. no_alternative_explanation sharpens ∂ — excludes competing causes. known_reaction is κ(drug, reaction_database) — prior comparison evidence. Each input restores one → condition; CERTAIN requires all three restored.'
 interface:
   inputs:
     dechallenge_positive:

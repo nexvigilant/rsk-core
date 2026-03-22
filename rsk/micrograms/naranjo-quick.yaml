@@ -1,6 +1,12 @@
 name: naranjo-quick
 description: Quick Naranjo causality classification from total score
-version: 0.1.0
+version: 0.2.0
+primitive_signature:
+  dominant: '→'
+  expression: '→(κ + N(ς₁ < ς₂) + ∂) — restores causality from correlation by scoring temporal ordering and drug-event boundary'
+  primes: ['→', 'κ', 'N', 'ς', '∂']
+  arguments: ['naranjo_score']
+  chain_prediction: 'Restores → from κ. The Naranjo 10 questions collectively assess: (1) temporal ordering — Q3 "did the ADR appear after the drug?" restores N: ς₁ < ς₂, (2) boundary — Q8 dechallenge, Q9 rechallenge restore ∂ (this specific drug caused this specific event). Output: → with confidence level (DEFINITE/PROBABLE/POSSIBLE/DOUBTFUL).'
 interface:
   inputs:
     naranjo_score:

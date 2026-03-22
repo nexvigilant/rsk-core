@@ -1,6 +1,12 @@
 name: prr-signal
 description: PRR signal detection threshold gate (PRR >= 2.0 = signal)
-version: 0.1.0
+version: 0.2.0
+primitive_signature:
+  dominant: 'κ'
+  expression: 'κ(observed, expected) at ∂(threshold=2.0) — comparison without temporal ordering'
+  primes: ['κ', '∂', 'N']
+  arguments: ['prr', 'threshold']
+  chain_prediction: 'κ (NOT →). Signal detection is correlation, not causation. Missing: temporal ordering (N: ς₁ < ς₂) and boundary (∂: this drug, this event). Requires causality assessment to promote κ → →. Source: primitives.ipynb Cell 10, → failure mode table row 2.'
 interface:
   inputs:
     prr:
