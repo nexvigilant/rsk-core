@@ -28,6 +28,7 @@ pub mod snapshot;
 pub mod stress;
 pub mod patrol;
 pub mod chain_registry;
+pub mod signature_validator;
 
 // Re-export all public items from submodules
 pub use catalog::{

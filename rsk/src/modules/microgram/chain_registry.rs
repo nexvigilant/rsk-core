@@ -53,6 +53,9 @@ pub struct ChainTestResult {
     pub passed: usize,
     pub failed: usize,
     pub results: Vec<SingleChainTestResult>,
+    /// Primitive signature chain validation (conservation law check)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub signature_validation: Option<super::signature_validator::SignatureValidation>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -109,6 +112,7 @@ impl ChainDefinition {
                     actual: HashMap::new(),
                     mismatch: Some(format!("Missing micrograms: {missing:?}")),
                 }).collect(),
+                signature_validation: None,
             };
         }
 
@@ -180,6 +184,7 @@ impl ChainDefinition {
             passed,
             failed: self.tests.len() - passed,
             results,
+            signature_validation: None,
         }
     }
 }
@@ -492,7 +497,21 @@ pub fn test_chains(chains_dir: &Path) -> Result<Vec<ChainTestResult>, String> {
     for (def, path) in &chains {
         let mcg_dir = def.resolve_mcg_dir(path);
         let micrograms = load_all(&mcg_dir)?;
-        results.push(def.test(&micrograms));
+        let mut result = def.test(&micrograms);
+
+        // Primitive signature chain validation
+        let chain_mgs: Vec<_> = def.steps.iter()
+            .filter_map(|name| micrograms.iter().find(|m| m.name == *name))
+            .cloned()
+            .collect();
+        if !chain_mgs.is_empty() {
+            let sig_validation = super::signature_validator::validate_chain_signatures(
+                &def.name, &chain_mgs
+            );
+            result.signature_validation = Some(sig_validation);
+        }
+
+        results.push(result);
     }
 
     Ok(results)
