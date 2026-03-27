@@ -145,3 +145,8 @@ tests:
   expect: { primary_loop: L3_friction, secondary_loop: L5_elastic, loop_role: operational_friction_and_founder_stress }
 - input: { module: unknown_module }
   expect: { primary_loop: unknown, secondary_loop: unknown, loop_role: module_not_recognized }
+- input: {}
+  expect:
+    loop_role: module_not_recognized
+    primary_loop: unknown
+    secondary_loop: unknown

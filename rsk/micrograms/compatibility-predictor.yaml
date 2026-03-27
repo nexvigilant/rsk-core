@@ -372,3 +372,9 @@ tests:
   expect:
     compatibility_score: MEDIUM
     predicted_ratio: '~28%'
+- input: {}
+  expect:
+    compatibility_score: HIGH
+    dominant_factor: "Different operators (empirical avg 43%)"
+    predicted_ratio: "~43%"
+    recommendation: Complementary operators — strong chain candidate. Different operators means division of labor.

@@ -218,3 +218,12 @@ tests:
 # Media — complexity exactly 3 (not > 3) → no simplification
 - input: { audience_type: "media", technical_complexity: 3, safety_urgency: false }
   expect: { simplification_needed: false, format: "press_statement" }
+- input: {}
+  expect:
+    action_required: false
+    detail_level: medium
+    format: general_summary
+    key_framing: "Describe safety finding, impact, and recommended action"
+    language_level: plain
+    simplification_needed: false
+    teaching_point: Unrecognised audience type. Default to plain language at medium detail. Identify your audience before communicating — the same safety message lands differently for different stakeholders.

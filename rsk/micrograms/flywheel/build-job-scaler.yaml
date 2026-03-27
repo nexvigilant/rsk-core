@@ -144,3 +144,7 @@ tests:
   expect:
     jobs: 2
     strategy: minimal_parallel
+- input: {}
+  expect:
+    jobs: 2
+    strategy: minimal_parallel

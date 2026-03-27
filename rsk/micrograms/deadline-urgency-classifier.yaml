@@ -85,3 +85,6 @@ tests:
     days_remaining: 30
   expect:
     traffic_level: green
+- input: {}
+  expect:
+    traffic_level: green

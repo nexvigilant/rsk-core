@@ -78,3 +78,7 @@ tests:
   expect:
     relevance: ARCHIVED
     description: FSM inactive for more than 30 days - history archived for audit purposes
+- input: {}
+  expect:
+    description: FSM inactive for more than 30 days - history archived for audit purposes
+    relevance: ARCHIVED

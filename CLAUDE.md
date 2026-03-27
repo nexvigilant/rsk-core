@@ -60,12 +60,23 @@ Chain mode: step₁.output merges into step₂.input (accumulate: true preserves
 
 **Adding a new CLI subcommand:** Add variant to `cli/actions.rs`, create handler in `cli/handlers/`, wire in `cli/handlers/mod.rs`.
 
+## Ecosystem Scale
+
+464 micrograms, 5,146 self-tests, 0 failures (measured 2026-03-26). 23 chains. Subdirectories: `pdc/`, `flywheel/`, `dev/`, root.
+
+Key microgram families:
+- **PV signal**: `prr-signal`, `naranjo-quick`, `case-seriousness`, `causality-to-action`
+- **Session lifecycle**: `session-inhale`, `session-breathhold`, `session-kpi-score`
+- **Strategy**: `disney-creative-loop`, `workflow-router`, `benefit-risk-assessment`
+
 ## Microgram Conventions
 
+- **Two node types only**: `condition` (branching) and `return` (terminal output). No compute, no action.
 - Operators: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `contains`, `not_contains`, `matches`, `is_null`, `is_not_null`
 - Null safety: missing/null inputs must produce safe defaults. Every microgram needs a test with `input: {}`
 - Chains reference micrograms by **name** (not path), resolved from `micrograms_dir`
 - `accumulate: true` in chains preserves all upstream outputs; without it, only the last step's output passes forward
+- Optional `primitive_signature` block: `dominant`, `expression`, `primes`, `arguments`, `chain_prediction`
 
 ## Conventions
 

@@ -290,3 +290,12 @@ tests:
   expect:
     nexcore_stamp: "NV-REJECTED"
     verification_level: none
+- name: null_input_safety
+  input: {}
+  expect:
+    denominator_class: absent
+    nexcore_stamp: NV-REJECTED
+    pipeline_summary: "Pipeline blocked: no data streams. Cannot thread any boundary."
+    publishable: false
+    regulatory_submittable: false
+    verification_level: none

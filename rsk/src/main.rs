@@ -9,7 +9,7 @@ mod cli;
 
 use cli::{
     AntiPatternAction, ChainAction, CompressAction, EpistemicAction, ExecAction, GenerateAction,
-    GraphAction, GuardianAction, HooksAction, JsonAction, MicrogramAction, RouteAction,
+    GraphAction, GuardianAction, HeligramAction, HooksAction, JsonAction, MicrogramAction, RouteAction,
     SessionAction, Sha256Action, SkillsAction, StateAction, StatsAction, TaxonomyAction,
     TelemetryAction, TextAction, TovAction, YamlAction,
 };
@@ -190,6 +190,12 @@ enum Commands {
         #[command(subcommand)]
         action: MicrogramAction,
     },
+    /// Heligram: helical dual-strand decision programs
+    #[command(name = "heligram")]
+    Heligram {
+        #[command(subcommand)]
+        action: HeligramAction,
+    },
     /// Evolve a skill from logic.yaml to Rust intrinsic
     Evolve {
         /// Skill name to evolve
@@ -298,6 +304,7 @@ fn main() {
             cli::handlers::anti_pattern::handle_anti_pattern(&action)
         }
         Commands::Microgram { action } => cli::handlers::microgram::handle_microgram(&action),
+        Commands::Heligram { action } => cli::handlers::heligram::handle_heligram(&action),
         Commands::Evolve { name, registry } => {
             cli::handlers::skills::handle_evolve(&name, &registry)
         }

@@ -38,3 +38,7 @@ tests:
   expect: { threat: false }
 - input: { therapeutic_index: 10.0 }
   expect: { threat: false }
+- input: {}
+  expect:
+    response: PASS
+    threat: false

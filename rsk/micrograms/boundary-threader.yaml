@@ -309,3 +309,12 @@ tests:
   expect:
     verification_level: high
     denominator_type: counted
+- name: null_input_safety
+  input: {}
+  expect:
+    analytical_capability: none
+    denominator_type: absent
+    precision_tier: unusable
+    threading_status: no_streams
+    verification_level: none
+    warning: No data streams available. NexCore requires at least 1 stream to thread.

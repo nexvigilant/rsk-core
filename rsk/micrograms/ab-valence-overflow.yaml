@@ -41,3 +41,7 @@ tests:
   expect: { threat: false }
 - input: { valence_excess: 3 }
   expect: { threat: true }
+- input: {}
+  expect:
+    response: PASS
+    threat: false

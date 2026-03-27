@@ -144,3 +144,8 @@ tests:
   expect:
     decision: PASS
     threshold_mb: 1000
+- input: {}
+  expect:
+    decision: BLOCK
+    headroom_pct: 0
+    threshold_mb: 1000

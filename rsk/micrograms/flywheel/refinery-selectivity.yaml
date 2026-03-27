@@ -58,3 +58,8 @@ tests:
     expect: { selectivity_class: LOW }
   - input: { products_out: 0, selectivity_pct: 0 }
     expect: { selectivity_class: NO_PRODUCTS }
+  - input: {}
+    expect:
+      action: No products to evaluate
+      refinery_analog: No reaction products; check reactor conditions
+      selectivity_class: NO_PRODUCTS

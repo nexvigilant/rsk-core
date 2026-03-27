@@ -180,3 +180,9 @@ tests:
     severity: OTHER
     sla_hours: 720
     escalate: false
+- input: {}
+  expect:
+    escalate: false
+    protocol: PERIODIC_PSUR
+    severity: OTHER
+    sla_hours: 720

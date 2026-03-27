@@ -193,3 +193,10 @@ tests:
 # Edge: boundary between DEVELOPING and BEGINNING (reg=2 exactly)
 - input: { regulatory_knowledge: 2, communication_effectiveness: 3, integration_quality: 4 }
   expect: { rubric_level: DEVELOPING, score: 2.0 }
+- input: {}
+  expect:
+    descriptor: "Minimal knowledge, significant development needed"
+    improvement_focus: Focus on ICH E2A/E2B regulatory framework fundamentals
+    rubric_level: BEGINNING
+    score: 1.0
+    weakest_dimension: regulatory_knowledge

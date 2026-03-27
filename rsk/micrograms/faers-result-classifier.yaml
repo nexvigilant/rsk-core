@@ -121,3 +121,8 @@ tests:
     category: ROUTINE
     action: periodic_review
     priority: 4
+- input: {}
+  expect:
+    action: periodic_review
+    category: ROUTINE
+    priority: 4

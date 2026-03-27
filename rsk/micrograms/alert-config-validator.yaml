@@ -118,3 +118,7 @@ tests:
   expect:
     status: INVALID_SEVERITY
     description: Alert severity must be critical/high/medium/low
+- input: {}
+  expect:
+    description: Alert configuration missing threshold - cannot trigger without a threshold value
+    status: MISSING_THRESHOLD

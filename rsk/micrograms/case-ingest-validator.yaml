@@ -97,3 +97,7 @@ tests:
   expect:
     status: REJECTED
     description: Missing drug information - case rejected without suspect drug
+- input: {}
+  expect:
+    description: Missing drug information - case rejected without suspect drug
+    status: REJECTED

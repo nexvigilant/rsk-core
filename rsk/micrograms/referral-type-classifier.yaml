@@ -86,3 +86,8 @@ tests:
 
   - input: { reason: null }
     expect: { article_type: null, procedure_type: null, typical_timeline_months: null }
+  - input: {}
+    expect:
+      article_type: null
+      procedure_type: null
+      typical_timeline_months: null

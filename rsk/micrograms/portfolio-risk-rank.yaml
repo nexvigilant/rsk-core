@@ -176,3 +176,7 @@ tests:
   expect:
     tier: high
     reason: Elevated signal count or signal ratio exceeds 40%
+- input: {}
+  expect:
+    reason: Minimal signal activity
+    tier: low

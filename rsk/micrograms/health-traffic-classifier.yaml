@@ -65,3 +65,6 @@ tests:
     status: ""
   expect:
     traffic_level: red
+- input: {}
+  expect:
+    traffic_level: red

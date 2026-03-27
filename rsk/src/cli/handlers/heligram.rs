@@ -1,0 +1,261 @@
+//! Heligram CLI handler.
+
+use crate::cli::actions::HeligramAction;
+use rsk::modules::decision_engine::Value as RskValue;
+use rsk::modules::heligram::{Heligram, chain, dna, load_all};
+use serde_json::json;
+use std::collections::HashMap;
+use std::path::Path;
+
+pub fn handle_heligram(action: &HeligramAction) {
+    match action {
+        HeligramAction::Run { path, input } => {
+            let h = match Heligram::load(Path::new(path)) {
+                Ok(h) => h,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let variables: HashMap<String, RskValue> = match serde_json::from_str(input) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Invalid input JSON: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let result = h.run(variables);
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "name": result.name,
+                    "success": result.success,
+                    "agreement": result.agreement,
+                    "sense": result.sense_output,
+                    "antisense": result.antisense_output,
+                    "output": result.resolved_output,
+                    "duration_us": result.duration_us,
+                }))
+                .unwrap_or_default()
+            );
+        }
+        HeligramAction::Test { path } => {
+            let h = match Heligram::load(Path::new(path)) {
+                Ok(h) => h,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let result = h.test();
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "name": result.name,
+                    "total": result.total,
+                    "passed": result.passed,
+                    "failed": result.failed,
+                    "results": result.results,
+                }))
+                .unwrap_or_default()
+            );
+
+            if result.failed > 0 {
+                std::process::exit(1);
+            }
+        }
+        HeligramAction::TestAll { dir } => {
+            let heligrams = match load_all(Path::new(dir)) {
+                Ok(h) => h,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            if heligrams.is_empty() {
+                println!("{}", json!({"status": "ok", "message": "No heligrams found", "total": 0}));
+                return;
+            }
+
+            let mut total_pass = 0usize;
+            let mut total_fail = 0usize;
+            let mut total_tests = 0usize;
+            let mut results = Vec::new();
+
+            for h in &heligrams {
+                let r = h.test();
+                total_pass += r.passed;
+                total_fail += r.failed;
+                total_tests += r.total;
+                results.push(json!({
+                    "name": r.name,
+                    "total": r.total,
+                    "passed": r.passed,
+                    "failed": r.failed,
+                }));
+            }
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "status": if total_fail == 0 { "ok" } else { "fail" },
+                    "heligrams": heligrams.len(),
+                    "total_tests": total_tests,
+                    "passed": total_pass,
+                    "failed": total_fail,
+                    "results": results,
+                }))
+                .unwrap_or_default()
+            );
+
+            if total_fail > 0 {
+                std::process::exit(1);
+            }
+        }
+        HeligramAction::List { dir } => {
+            let heligrams = match load_all(Path::new(dir)) {
+                Ok(h) => h,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let entries: Vec<_> = heligrams
+                .iter()
+                .map(|h| {
+                    json!({
+                        "name": h.name,
+                        "version": h.version,
+                        "description": h.description,
+                        "twist_rate": h.helix.twist_rate,
+                        "base_pairs": h.helix.base_pairs.len(),
+                        "tests": h.tests.len(),
+                    })
+                })
+                .collect();
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "count": entries.len(),
+                    "heligrams": entries,
+                }))
+                .unwrap_or_default()
+            );
+        }
+        HeligramAction::Encode { path } => {
+            let yaml_bytes = match std::fs::read(path) {
+                Ok(b) => b,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": format!("Cannot read {path}: {e}")}));
+                    std::process::exit(1);
+                }
+            };
+
+            let result = dna::encode_heligram(&yaml_bytes);
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "sense": result.sense,
+                    "antisense": result.antisense,
+                    "nucleotides": result.nucleotides,
+                    "codons": result.codons,
+                    "bytes": result.bytes,
+                    "complement_verified": dna::complement(&result.sense) == result.antisense,
+                }))
+                .unwrap_or_default()
+            );
+        }
+        HeligramAction::Decode { dna: dna_str } => {
+            match dna::decode(dna_str) {
+                Ok(bytes) => {
+                    let yaml = String::from_utf8_lossy(&bytes);
+                    // Try to parse as heligram to verify
+                    match Heligram::parse(&yaml) {
+                        Ok(h) => {
+                            println!(
+                                "{}",
+                                serde_json::to_string_pretty(&json!({
+                                    "status": "ok",
+                                    "name": h.name,
+                                    "type": h.heligram_type,
+                                    "tests": h.tests.len(),
+                                    "yaml_preview": &yaml[..yaml.len().min(200)],
+                                }))
+                                .unwrap_or_default()
+                            );
+                        }
+                        Err(e) => {
+                            println!(
+                                "{}",
+                                serde_json::to_string_pretty(&json!({
+                                    "status": "decoded_but_invalid_heligram",
+                                    "error": e,
+                                    "yaml_preview": &yaml[..yaml.len().min(200)],
+                                    "bytes": bytes.len(),
+                                }))
+                                .unwrap_or_default()
+                            );
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            }
+        }
+        HeligramAction::Chain { chain: chain_str, dir, input } => {
+            let names: Vec<&str> = chain_str.split("->").map(|s| s.trim()).collect();
+
+            let variables: HashMap<String, RskValue> = match serde_json::from_str(input) {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Invalid input JSON: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            match chain(&names, Path::new(dir), variables) {
+                Ok(result) => {
+                    let step_summaries: Vec<_> = result.steps.iter().map(|s| {
+                        json!({
+                            "name": s.name,
+                            "agreement": s.agreement,
+                            "verdict": s.resolved_output.get("verdict"),
+                            "confidence": s.resolved_output.get("confidence"),
+                            "duration_us": s.duration_us,
+                        })
+                    }).collect();
+
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&json!({
+                            "success": result.success,
+                            "steps": step_summaries,
+                            "consensus_ratio": result.consensus_ratio,
+                            "final_output": result.final_output,
+                            "total_duration_us": result.total_duration_us,
+                        }))
+                        .unwrap_or_default()
+                    );
+                }
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            }
+        }
+    }
+}

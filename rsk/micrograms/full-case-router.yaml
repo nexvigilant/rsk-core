@@ -182,3 +182,9 @@ tests:
     priority: P1
     tool_path: /vigilance/reporting
     reason: Serious case with causality assessed - proceed to expedited regulatory filing
+- input: {}
+  expect:
+    next_action: ROUTINE_MONITORING
+    priority: P3
+    reason: No serious criteria and no signal - continue routine pharmacovigilance monitoring
+    tool_path: /vigilance/signals

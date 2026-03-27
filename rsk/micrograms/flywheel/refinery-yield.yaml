@@ -80,3 +80,8 @@ tests:
     expect: { yield_class: CRITICAL }
   - input: { crude_in: 0, products_out: 0, yield_pct: 0 }
     expect: { yield_class: NO_INPUT }
+  - input: {}
+    expect:
+      action: No crude feedstock; flywheel idle
+      refinery_analog: Refinery shutdown; no feedstock in pipeline
+      yield_class: NO_INPUT

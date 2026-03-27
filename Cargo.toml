@@ -4,15 +4,13 @@ members = [
     "rsk",
     "rsk-mcp",
 ]
-# rust-forge crates not yet populated
-# exclude = ["rust-forge/fuzz"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
 authors = ["Matthew Campion"]
 license = "MIT"
-repository = "https://github.com/nexvigilant/rust-forge"
+repository = "https://github.com/nexvigilant/rsk-core"
 rust-version = "1.85"
 
 [workspace.dependencies]

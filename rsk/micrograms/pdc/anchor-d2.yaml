@@ -242,3 +242,8 @@ tests:
     level: L4
     anchor_count: 7
     bloom_tier: 4
+- input: {}
+  expect:
+    domain: 2
+    error: Level must be 1-7
+    level: INVALID

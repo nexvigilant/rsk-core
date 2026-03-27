@@ -175,3 +175,8 @@ tests:
     algorithm: UNKNOWN
     method: error
     description: Unrecognized algorithm - choose PRR/ROR/IC/EBGM/Chi2/Fisher
+- input: {}
+  expect:
+    algorithm: NONE
+    description: No contingency table available - cannot run signal detection
+    method: error

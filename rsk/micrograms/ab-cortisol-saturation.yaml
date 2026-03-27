@@ -52,3 +52,7 @@ tests:
   expect: { threat: true }
 - input: { cortisol_level: 1.0 }
   expect: { threat: true }
+- input: {}
+  expect:
+    response: PASS
+    threat: false

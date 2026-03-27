@@ -93,3 +93,8 @@ tests:
 
   - input: { event_term: "sepsis", outcome: "admitted" }
     expect: { seriousness_category: "serious_other", meddra_soc_guess: "general_disorders", requires_followup: true }
+  - input: {}
+    expect:
+      meddra_soc_guess: null
+      requires_followup: true
+      seriousness_category: unknown

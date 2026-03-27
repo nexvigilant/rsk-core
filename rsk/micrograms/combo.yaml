@@ -114,3 +114,7 @@ tests:
   expect:
     gate: PASS
     passed: true
+- input: {}
+  expect:
+    gate: FAIL
+    passed: false

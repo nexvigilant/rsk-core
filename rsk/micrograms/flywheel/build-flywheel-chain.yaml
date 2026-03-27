@@ -208,3 +208,9 @@ tests:
     jobs: 4
     prune_cache: true
     strategy: half_parallel_with_prune
+- input: {}
+  expect:
+    decision: BLOCK
+    jobs: 0
+    prune_cache: false
+    strategy: wait_for_memory

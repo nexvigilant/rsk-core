@@ -275,3 +275,12 @@ tests:
   expect:
     layer_number: "5"
     information_content: "LOW — this is where most AE reports live; one shadow of a 3D object"
+- name: null_input_safety
+  input: {}
+  expect:
+    information_content: LOW — no evidence source specified; defaulting to organ-level (most PV data lives here)
+    layer: L5 — Organ Manifestation (assumed)
+    layer_number: "5"
+    primitive: ∂ (Boundary)
+    recommendation: "Classify the evidence source. Without knowing which layer this observation represents, you cannot determine how much mechanistic information it carries."
+    reconstruction_difficulty: VERY HIGH — insufficient information to determine perturbation layer

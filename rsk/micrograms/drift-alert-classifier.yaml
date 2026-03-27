@@ -134,3 +134,8 @@ tests:
     severity: MODERATE_DRIFT
     alert_level: P2
     description: Significant signal drift (>25% PRR change in <14 days) - schedule review
+- input: {}
+  expect:
+    alert_level: NONE
+    description: Signal within normal variation - no drift alert needed
+    severity: STABLE

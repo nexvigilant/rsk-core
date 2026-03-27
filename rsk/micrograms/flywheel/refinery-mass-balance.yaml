@@ -46,3 +46,9 @@ tests:
     expect: { balance_class: LEAK, balance_valid: false }
   - input: { imbalance: -5 }
     expect: { balance_class: PHANTOM, balance_valid: false }
+  - input: {}
+    expect:
+      action: More output than input; phantom signals appearing mid-pipeline
+      balance_class: PHANTOM
+      balance_valid: false
+      refinery_analog: Mass appearing from nowhere; metering error or contaminated feedstock

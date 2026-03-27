@@ -196,3 +196,8 @@ tests:
     rim_health: STRONG
     tensile_class: high_moat
     action: expand_radius
+- input: {}
+  expect:
+    action: rebuild_from_core
+    rim_health: HOLLOW
+    tensile_class: no_moat

@@ -183,3 +183,7 @@ tests:
   expect:
     readiness: ready
     next_step: You are ready for independent PV work — explore the full toolkit
+- input: {}
+  expect:
+    next_step: Continue the onboarding modules from where you left off
+    readiness: beginner

@@ -358,3 +358,11 @@ tests:
   expect:
     composition_rule: 'IDENTITY — same dominant composes to recursive self-application'
     confidence: high
+- input: {}
+  expect:
+    collider_note: "No specific composition rule matched. Default: the downstream microgram dominant because it processes last. This is the weakest prediction — more rules needed."
+    composition_rule: DEFAULT — downstream dominant absorbs upstream
+    confidence: low
+    predicted_dominant: "null"
+    predicted_expression: "null(null) — B wraps A (default: downstream dominant wins)"
+    typed_sum: false

@@ -149,3 +149,8 @@ tests:
     expect:
       identity_confidence: uncertain
       resolved: false
+  - name: null_input_safety
+    input: {}
+    expect:
+      identity_confidence: mismatch
+      resolved: false

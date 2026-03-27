@@ -38,3 +38,7 @@ tests:
   expect: { threat: true }
 - input: { frequency: -1.0 }
   expect: { threat: true }
+- input: {}
+  expect:
+    response: PASS
+    threat: false

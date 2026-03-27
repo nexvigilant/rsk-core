@@ -138,3 +138,7 @@ tests:
   expect:
     decision: BLOCKED
     approved: false
+- input: {}
+  expect:
+    approved: false
+    decision: ALREADY_LIVE

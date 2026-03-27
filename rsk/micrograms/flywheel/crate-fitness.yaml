@@ -189,3 +189,8 @@ tests:
     fitness: split
     violations: 2
     action: plan_decomposition
+- input: {}
+  expect:
+    action: none
+    fitness: fit
+    violations: 0

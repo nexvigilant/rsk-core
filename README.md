@@ -1,49 +1,78 @@
-# Gemini Rust Workspace
+# rsk-core
 
-Establishing a robust Rust development environment for exponential capability development.
+Microgram decision tree runtime and chain composition engine. Sub-millisecond deterministic decision programs with built-in self-testing.
 
-## Project Structure
+## Workspace
 
-- **rsk (Rust Skill Kernel)**: High-performance computation kernel for Claude Code skills.
-  - `decision_engine`: Deterministic execution engine for logic trees.
-  - `skill_registry`: Automated discovery and routing for 250+ skills.
-  - `intrinsics`: High-performance Rust implementations of core algorithms.
-  - `python_bindings`: Seamless integration with existing Python runtime via PyO3.
-- **rust-forge**: Pipeline compilation framework for high-throughput data processing.
+| Crate | What |
+|-------|------|
+| `rsk` | CLI binary + library: microgram runtime, decision engine, chain executor, graph ops, statistics |
+| `rsk-mcp` | MCP server exposing 16 tools for AI agent consumption (stdio transport) |
 
-## Current State
+## Quick Start
 
-- **Unit Tests**: 300+ passing.
-- **Integration Tests**: 16 passing (including full skill migration flows).
-- **Toolchain**: Pinned to Rust 1.92.0.
-- **Migration Progress**: 255 skills analyzed; `is-prime` migrated to 100% Rust deterministic execution.
-
-## Usage
-
-### Skill Registry & Execution
 ```bash
-# Scan all skills
-rsk skills scan ~/.claude/skills --output registry.json
+# Build
+cargo build -p rsk --release
 
-# List skills with deterministic logic
-rsk skills list --registry registry.json --strategy Deterministic
+# Run a microgram
+./target/release/rsk mcg run rsk/micrograms/prr-signal.yaml -i '{"a": 50, "b": 1000, "c": 200, "d": 50000}'
 
-# Execute a skill natively in Rust
-rsk skills execute is-prime --input '{"n": 17}' --registry registry.json
+# Self-test all micrograms
+./target/release/rsk mcg test-all rsk/micrograms
+
+# Test chain definitions
+./target/release/rsk mcg chain-test rsk/chains
 ```
 
-### Python Integration
-```python
-import rsk
+## Micrograms
 
-# Generate logic from Markdown
-logic = rsk.generate_logic(skill_md_content)
+460 atomic decision programs in `rsk/micrograms/`. Each is a YAML file with a decision tree, typed interface, and embedded test cases. Sub-microsecond execution.
 
-# Execute logic tree
-result = rsk.execute_logic(logic, {"input": "data"})
 ```
+rsk/micrograms/
+  ├── *.yaml          (279 top-level programs)
+  ├── academy/        (2)
+  ├── dd/             (3)
+  ├── dev/            (3)
+  ├── flywheel/       (41)
+  ├── pdc/            (92)
+  └── station/        (46)
+```
+
+34 chain definitions in `rsk/chains/` compose micrograms into multi-step workflows.
+
+## Testing
+
+```bash
+cargo test -p rsk --lib              # 559 unit tests
+./target/release/rsk mcg test-all rsk/micrograms  # 5113 microgram self-tests
+./target/release/rsk mcg chain-test rsk/chains     # Chain integration tests
+cargo bench -p rsk                   # Criterion benchmarks
+```
+
+## MCP Server
+
+`rsk-mcp` exposes the runtime via MCP (stdio transport, rmcp SDK):
+
+- `mcg_run`, `mcg_test`, `mcg_test_all`, `mcg_chain`, `mcg_chain_test`, `mcg_list`, `mcg_info`, `mcg_coverage`
+- `stats_chi_square`, `stats_t_test`, `stats_proportion_test`, `stats_correlation`
+- `decision_tree_run`
+- `graph_topsort`, `graph_parallel_levels`
+- `rsk_health`
 
 ## Performance
-- **Decision Evaluation**: < 0.1ms per node.
-- **Topological Sort**: 60x faster than Python.
-- **Levenshtein**: 63x faster than Python.
+
+| Operation | Latency |
+|-----------|---------|
+| Microgram evaluation | < 0.1ms per node |
+| Topological sort | 60x faster than Python |
+| Levenshtein distance | 63x faster than Python |
+
+## Toolchain
+
+Rust 1.85+ (Edition 2024). Strict clippy: `unwrap_used`, `expect_used`, `as_conversions` denied.
+
+## License
+
+MIT License. Copyright (c) 2026 Matthew Campion / NexVigilant.

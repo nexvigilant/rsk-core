@@ -54,3 +54,7 @@ tests:
   expect: { threat: true }
 - input: { hormone_level: -0.1 }
   expect: { threat: true }
+- input: {}
+  expect:
+    response: PASS
+    threat: false

@@ -102,3 +102,7 @@ tests:
   expect:
     status: FAILED
     description: Workflow has a failed step - requires investigation and remediation
+- input: {}
+  expect:
+    description: No steps completed - workflow has not begun execution
+    status: NOT_STARTED

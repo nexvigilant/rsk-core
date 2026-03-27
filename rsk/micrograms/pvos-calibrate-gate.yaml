@@ -71,3 +71,7 @@ tests:
   expect:
     decision: CALIBRATE
     description: Sufficient data and feedback - proceed with threshold calibration
+- input: {}
+  expect:
+    decision: INSUFFICIENT_DATA
+    description: Sample size below 100 - collect more cases before calibrating thresholds

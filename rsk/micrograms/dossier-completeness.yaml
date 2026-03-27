@@ -225,3 +225,8 @@ tests:
     completeness: comprehensive
     score: 95
     gaps: none
+- input: {}
+  expect:
+    completeness: empty
+    gaps: "All sections — FAERS, guidelines, and competitors"
+    score: 0

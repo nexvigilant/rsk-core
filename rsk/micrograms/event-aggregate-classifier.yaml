@@ -99,3 +99,6 @@ tests:
     yellow_count: 5
   expect:
     traffic_level: yellow
+- input: {}
+  expect:
+    traffic_level: green

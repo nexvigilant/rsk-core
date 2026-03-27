@@ -280,3 +280,7 @@ tests:
   expect:
     classification: on_track
     action: Status noted — monitor for changes
+- input: {}
+  expect:
+    action: Status noted — monitor for changes
+    classification: on_track

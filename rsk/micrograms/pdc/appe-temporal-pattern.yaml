@@ -186,3 +186,11 @@ tests:
 # Subacute boundary: drug_started exactly 90 — check_subacute_upper is <= 90, so passes → SUBACUTE
 - input: { onset_hours: 48, drug_started_days_ago: 90, drug_stopped: false, resolved_after_stop: false, rechallenge_positive: false }
   expect: { pattern: "SUBACUTE", causality_signal: "MODERATE" }
+- input: {}
+  expect:
+    causality_signal: WEAK
+    dechallenge: NOT_ASSESSED
+    pattern: UNCLEAR
+    rechallenge: NOT_ASSESSED
+    teaching_point: "Temporal relationship is unclear. Collect precise drug start date and event onset time. Without these, causality assessment cannot proceed reliably."
+    temporal_plausibility: LOW

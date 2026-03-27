@@ -153,3 +153,9 @@ tests:
     deadline_days: 90
     report_type: PSUR_PBRER
     rationale: Non-serious ADR included in routine periodic safety reporting
+- input: {}
+  expect:
+    deadline_days: 90
+    priority: P3_ROUTINE
+    rationale: Non-serious ADR included in routine periodic safety reporting
+    report_type: PSUR_PBRER

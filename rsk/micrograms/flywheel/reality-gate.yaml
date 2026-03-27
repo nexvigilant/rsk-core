@@ -94,3 +94,7 @@ tests:
   expect:
     verdict: APPROVED
     executable: true
+- input: {}
+  expect:
+    executable: false
+    verdict: BLOCKED

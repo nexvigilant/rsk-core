@@ -1,5 +1,6 @@
 name: null-check
 description: "Verify a required field is present"
+version: 0.1.0
 interface:
   inputs:
     field:

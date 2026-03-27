@@ -127,3 +127,7 @@ tests:
   expect:
     status: WIRING
     promotable: false
+- input: {}
+  expect:
+    promotable: false
+    status: DORMANT

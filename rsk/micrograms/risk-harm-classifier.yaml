@@ -180,3 +180,8 @@ tests:
     harm_level: "F — Critical"
     harm_description: "All metrics point to a very strong drug-event association. Immediate safety review warranted."
     traffic_level: red
+- input: {}
+  expect:
+    harm_description: No meaningful risk signal detected. This drug-event pair looks unremarkable in the data.
+    harm_level: A — Negligible
+    traffic_level: green

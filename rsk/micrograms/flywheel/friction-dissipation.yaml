@@ -107,3 +107,6 @@ tests:
     net_drain: 58.0
   expect:
     classification: critical
+- input: {}
+  expect:
+    classification: critical

@@ -104,3 +104,8 @@ tests:
 
   - input: { search_type: null }
     expect: { search_endpoint: null, query_format: null, result_type: null }
+  - input: {}
+    expect:
+      query_format: null
+      result_type: null
+      search_endpoint: null

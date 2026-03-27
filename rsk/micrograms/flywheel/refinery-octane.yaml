@@ -58,3 +58,8 @@ tests:
     expect: { octane_class: SUBSTANDARD }
   - input: { octane_rating: 20 }
     expect: { octane_class: OFF_SPEC }
+  - input: {}
+    expect:
+      action: Product fails spec; do not ship — reprocess or discard
+      octane_class: OFF_SPEC
+      refinery_analog: Off-specification; must be reblended or downgraded

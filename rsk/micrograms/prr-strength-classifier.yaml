@@ -75,3 +75,6 @@ tests:
     prr: 16.553
   expect:
     strength: critical
+- input: {}
+  expect:
+    strength: subthreshold

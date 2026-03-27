@@ -159,3 +159,8 @@ tests:
   expect:
     drift_detected: false
     severity: NONE
+- input: {}
+  expect:
+    action: No drift detected — thresholds appear well-calibrated
+    drift_detected: false
+    severity: NONE

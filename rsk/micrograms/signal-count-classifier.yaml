@@ -70,3 +70,6 @@ tests:
     signal_count: 5
   expect:
     traffic_level: red
+- input: {}
+  expect:
+    traffic_level: red

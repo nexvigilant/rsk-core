@@ -104,3 +104,8 @@ tests:
 
   - input: { query_type: null }
     expect: { epar_section: null, module_number: null, relevance_to_pv: null }
+  - input: {}
+    expect:
+      epar_section: null
+      module_number: null
+      relevance_to_pv: null

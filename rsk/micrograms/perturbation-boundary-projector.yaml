@@ -239,3 +239,11 @@ tests:
     has_qsp_model: false
   expect:
     data_regime: "data-rich"
+- name: null_input_safety
+  input: {}
+  expect:
+    confidence_basis: Transfer from structurally similar boundaries + mechanistic plausibility
+    data_regime: zero-shot
+    evaluation_strategy: "PROJECTION — no historical data, use learned perturbation pattern"
+    framework_advantage: MAXIMUM — QSP/AOP cannot evaluate at boundaries with no historical data. This is the only approach that can.
+    recommendation: "This is the framework's unique value. Project the perturbation pattern onto the novel boundary. Flag predictions with high uncertainty — they are hypotheses, not measurements. But they are better than the alternative (no prediction at all)."

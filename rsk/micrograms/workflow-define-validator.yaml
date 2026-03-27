@@ -97,3 +97,7 @@ tests:
   expect:
     status: TOO_SHORT
     description: Workflow must have at least 2 steps to be registered
+- input: {}
+  expect:
+    description: Workflow must have at least 2 steps to be registered
+    status: TOO_SHORT

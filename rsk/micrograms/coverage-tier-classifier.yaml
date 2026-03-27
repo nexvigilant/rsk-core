@@ -111,3 +111,7 @@ tests:
   expect:
     tier: CRITICAL_GAP
     color: red
+- input: {}
+  expect:
+    color: red
+    tier: CRITICAL_GAP

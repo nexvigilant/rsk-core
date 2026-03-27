@@ -210,3 +210,8 @@ tests:
   expect:
     gate_result: PASS
     lipinski_mw_pass: true
+- input: {}
+  expect:
+    gate_result: PASS
+    lipinski_mw_pass: true
+    risk_flags: Minor charge within acceptable range

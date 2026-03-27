@@ -238,3 +238,8 @@ tests:
     differential: A_WORSE
     confidence: high
     reason: Drug A has at least double the signal count of Drug B
+- input: {}
+  expect:
+    confidence: medium
+    differential: SIMILAR
+    reason: Both drugs have comparable safety profiles

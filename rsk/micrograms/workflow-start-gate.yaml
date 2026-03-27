@@ -113,3 +113,8 @@ tests:
     gate: BLOCKED
     workflow: none
     description: Unknown workflow type - choose signal_investigation/case_processing/periodic_review
+- input: {}
+  expect:
+    description: Data not ready - workflow cannot start without prerequisite data
+    gate: BLOCKED
+    workflow: none

@@ -166,3 +166,8 @@ tests:
 
   - input: { step_complete: false, blocker_found: false }
     expect: { next_step: "retry", action: "retry", requires_human: false }
+  - input: {}
+    expect:
+      action: retry
+      next_step: retry
+      requires_human: false

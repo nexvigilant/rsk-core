@@ -89,3 +89,7 @@ tests:
   expect:
     health: YELLOW
     action: drain_consumers
+- input: {}
+  expect:
+    action: wire_emitters
+    health: RED

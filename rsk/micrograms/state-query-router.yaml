@@ -93,3 +93,7 @@ tests:
   expect:
     repository: error
     description: Unknown entity type - choose case/signal/workflow/alert
+- input: {}
+  expect:
+    description: Unknown entity type - choose case/signal/workflow/alert
+    repository: error

@@ -72,3 +72,7 @@ tests:
   expect:
     health: CRITICAL
     description: Metric exceeds critical threshold - immediate action required
+- input: {}
+  expect:
+    description: Metric within normal range - no action required
+    health: HEALTHY

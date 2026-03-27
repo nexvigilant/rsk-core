@@ -11,6 +11,7 @@ pub mod exec;
 pub mod forge;
 pub mod generate;
 pub mod graph;
+pub mod heligram;
 pub mod guardian;
 pub mod hooks;
 pub mod json;

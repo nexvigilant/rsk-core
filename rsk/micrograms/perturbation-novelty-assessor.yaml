@@ -243,3 +243,11 @@ tests:
     boundary_parameterized: true
   expect:
     innovation_count: "3"
+- name: null_input_safety
+  input: {}
+  expect:
+    advantage_over_qsp: "None. This is standard endpoint-specific safety modeling. QSP, AOP, or network pharmacology with different notation."
+    falsifiability_test: N/A — no novel claims to falsify.
+    innovation_count: "0"
+    novelty_class: CONVENTIONAL — no framework innovations present
+    recommendation: "The perturbation pattern concept without the three architectural innovations is a repackaging with better notation. Implement at least two of: decouple, learn, parameterize boundary."

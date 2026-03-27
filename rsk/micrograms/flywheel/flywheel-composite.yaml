@@ -37,7 +37,7 @@ tree:
       variable: velocity_band
       operator: eq
       value: SLOW
-      true_next: red
+      true_next: yellow
       false_next: check_live_nodes
     check_live_nodes:
       type: condition
@@ -119,9 +119,9 @@ tests:
     live_node_count: 2
     staging_node_count: 2
   expect:
-    composite_health: RED
-    flywheel_operational: false
-    action: intervene
+    composite_health: YELLOW
+    flywheel_operational: true
+    action: monitor
 - input:
     event_health: GREEN
     velocity_band: TARGET
@@ -173,6 +173,11 @@ tests:
     live_node_count: 2
     staging_node_count: 2
   expect:
+    composite_health: YELLOW
+    flywheel_operational: true
+    action: monitor
+- input: {}
+  expect:
+    action: intervene
     composite_health: RED
     flywheel_operational: false
-    action: intervene

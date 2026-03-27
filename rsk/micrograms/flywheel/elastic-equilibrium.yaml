@@ -117,3 +117,6 @@ tests:
     stress_exceeded: 0
   expect:
     state: nominal
+- input: {}
+  expect:
+    state: nominal

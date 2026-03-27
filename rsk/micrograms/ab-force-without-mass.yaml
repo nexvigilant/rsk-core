@@ -55,3 +55,7 @@ tests:
   expect: { threat: true }
 - input: { force: -5, mass: -1 }
   expect: { threat: true }
+- input: {}
+  expect:
+    response: PASS
+    threat: false

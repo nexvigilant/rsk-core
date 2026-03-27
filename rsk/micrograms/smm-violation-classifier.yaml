@@ -190,3 +190,10 @@ tests:
     expect: { class: m, label: MINOR }
   - input: { post_hoc_endpoint: false, suppressed_hypothesis: false, fabricated_data: false, undocumented_deviation: false, post_hoc_analysis_criteria: false, missing_negative_results: false, undisclosed_coi: false, criterion_drift: false, uses_proves_confirms: false, missing_power_calculation: false, imprecise_significant: false, has_minor_deficiency: false }
     expect: { class: none, label: COMPLIANT }
+  - input: {}
+    expect:
+      chemistry_analog: Clean reaction — full yield
+      class: none
+      cs_effect: CS = 1.00
+      description: No violations detected.
+      label: COMPLIANT

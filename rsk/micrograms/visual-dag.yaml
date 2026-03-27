@@ -255,3 +255,11 @@ tests:
     render_format: mermaid
     layout_direction: TD
     complexity: linear
+- name: null_input_safety
+  input: {}
+  expect:
+    complexity: linear
+    layout_direction: TD
+    notebook_cell_type: markdown
+    render_format: mermaid
+    warning: none

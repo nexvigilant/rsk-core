@@ -86,3 +86,8 @@ tests:
 
   - input: { regulatory_decision: "monitor" }
     expect: { labeling_action: "add_monitoring_requirement", section_affected: "patient_monitoring", urgency_level: "routine" }
+  - input: {}
+    expect:
+      labeling_action: add_monitoring_requirement
+      section_affected: patient_monitoring
+      urgency_level: routine

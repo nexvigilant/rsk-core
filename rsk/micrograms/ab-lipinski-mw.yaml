@@ -40,3 +40,7 @@ tests:
   expect: { threat: true }
 - input: { molecular_weight: 1200 }
   expect: { threat: true }
+- input: {}
+  expect:
+    response: PASS
+    threat: false

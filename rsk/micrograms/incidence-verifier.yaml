@@ -242,3 +242,12 @@ tests:
   expect:
     verification_status: screening_only
     nexcore_stamp: "NV-SCREENING"
+- name: null_input_safety
+  input: {}
+  expect:
+    action: BLOCKED. This is the FAERS paradigm. NexCore cannot verify. Acquire a counted denominator.
+    nexcore_stamp: NV-REJECTED
+    publishable: false
+    rate_class: "no rate — denominator unknown, FAERS-class uncertainty"
+    regulatory_submittable: false
+    verification_status: rejected

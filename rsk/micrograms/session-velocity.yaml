@@ -98,6 +98,11 @@ tree:
         velocity_class: SLOW
         feeds_momentum: true
 
+primitive_signature:
+  dominant: 'ς'
+  expression: 'ς — state monitoring or drift detection'
+  primes: ['ς']
+  arguments: []
 tests:
   - name: "exceptional - both thresholds exceeded"
     input:
@@ -162,3 +167,8 @@ tests:
     expect:
       velocity_class: SLOW
       feeds_momentum: true
+  - name: null_input_safety
+    input: {}
+    expect:
+      feeds_momentum: true
+      velocity_class: SLOW

@@ -50,3 +50,7 @@ tests:
   expect: { threat: true }
 - input: { dopamine_level: 0.9, reward_count_consecutive: 10 }
   expect: { threat: true }
+- input: {}
+  expect:
+    response: PASS
+    threat: false

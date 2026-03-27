@@ -99,3 +99,7 @@ tests:
   expect:
     direction: rising
     traffic_level: red
+- input: {}
+  expect:
+    direction: stable
+    traffic_level: green

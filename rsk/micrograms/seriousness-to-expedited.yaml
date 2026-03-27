@@ -89,3 +89,8 @@ tests:
 
   - input: { seriousness_level: "unknown" }
     expect: { requires_expedited: false, reporting_window_days: 90, rationale: "Non-serious cases follow standard reporting timelines of 90 days" }
+  - input: {}
+    expect:
+      rationale: Non-serious cases follow standard reporting timelines of 90 days
+      reporting_window_days: 90
+      requires_expedited: false

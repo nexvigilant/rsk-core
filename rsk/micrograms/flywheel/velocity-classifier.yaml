@@ -127,3 +127,8 @@ tests:
     band: EXCEPTIONAL
     velocity_inverse: very_high
     action: maintain_pace
+- input: {}
+  expect:
+    action: escalate_blockers
+    band: SLOW
+    velocity_inverse: low

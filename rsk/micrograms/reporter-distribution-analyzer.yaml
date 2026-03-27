@@ -80,3 +80,8 @@ tests:
 
   - input: { hcp_percent: -10, consumer_percent: 110 }
     expect: { reporter_quality: "unknown", weight_adjustment: 0.5, rationale: null }
+  - input: {}
+    expect:
+      rationale: null
+      reporter_quality: unknown
+      weight_adjustment: 0.5

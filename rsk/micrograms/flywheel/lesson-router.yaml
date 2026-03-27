@@ -191,3 +191,8 @@ tests:
     mechanism: memory
     priority: urgent
     action: update_memory_and_claude_md
+- input: {}
+  expect:
+    action: note_in_memory
+    mechanism: memory
+    priority: low

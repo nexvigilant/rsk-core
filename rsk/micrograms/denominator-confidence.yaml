@@ -249,3 +249,11 @@ tests:
   expect:
     confidence_tier: low
     denominator_class: modeled
+- name: null_input_safety
+  input: {}
+  expect:
+    confidence_tier: unusable
+    denominator_class: unknown
+    epistemic_status: insufficient — denominator is effectively unknown
+    usable_for: nothing — this is the FAERS paradigm (unknown denominator)
+    warning: "Capture below 30%. This is not a denominator, it is a guess. Do not compute rates."

@@ -205,3 +205,8 @@ tests:
     health: YELLOW
     risk_factor: fatigue_building
     action: reduce_cycle_frequency
+- input: {}
+  expect:
+    action: maintain_pace
+    health: GREEN
+    risk_factor: none

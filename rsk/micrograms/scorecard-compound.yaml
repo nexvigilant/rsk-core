@@ -202,3 +202,12 @@ tests:
     session_levels: '4'
   expect:
     compound_verdict: single_session
+- input: {}
+  expect:
+    chain_expression: single unit — use session-scorecard directly
+    compound_level: "null"
+    compound_verdict: single_session
+    deficit: 0
+    governor_signal: N/A
+    persistence_ratio: 1.0
+    spark_count: 0

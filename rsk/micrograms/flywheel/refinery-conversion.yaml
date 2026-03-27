@@ -58,3 +58,8 @@ tests:
     expect: { conversion_class: POOR }
   - input: { crude_in: 0, conversion_pct: 0 }
     expect: { conversion_class: NO_INPUT }
+  - input: {}
+    expect:
+      action: No crude feedstock
+      conversion_class: NO_INPUT
+      refinery_analog: Refinery idle

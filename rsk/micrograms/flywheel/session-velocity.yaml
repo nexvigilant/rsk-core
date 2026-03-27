@@ -159,3 +159,8 @@ tests:
     session_band: RESEARCH
     estimated_fix_time_ms: 86400000
     contributes_to: maintenance
+- input: {}
+  expect:
+    contributes_to: deceleration
+    estimated_fix_time_ms: 604800000
+    session_band: STALLED

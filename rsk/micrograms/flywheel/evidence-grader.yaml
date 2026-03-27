@@ -175,3 +175,7 @@ tests:
   expect:
     quality: MODERATE
     score: 66.0
+- input: {}
+  expect:
+    quality: WEAK
+    score: 33.0

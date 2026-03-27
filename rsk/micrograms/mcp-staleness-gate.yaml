@@ -135,3 +135,10 @@ tests:
     expect:
       status: CRITICAL_STALE
       action: reconnect_needed
+  - name: null_input_safety
+    input: {}
+    expect:
+      action: none
+      feeds_momentum: false
+      message: No build detected
+      status: SKIPPED

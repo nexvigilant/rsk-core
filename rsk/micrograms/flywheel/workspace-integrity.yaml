@@ -149,3 +149,8 @@ tests:
     state: degraded
     issues: 2
     action: fix_workspace
+- input: {}
+  expect:
+    action: none
+    issues: 0
+    state: healthy

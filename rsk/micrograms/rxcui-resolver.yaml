@@ -86,3 +86,8 @@ tests:
 
   - input: { name_type: null }
     expect: { search_strategy: null, api_endpoint: null, expected_result_type: null }
+  - input: {}
+    expect:
+      api_endpoint: null
+      expected_result_type: null
+      search_strategy: null

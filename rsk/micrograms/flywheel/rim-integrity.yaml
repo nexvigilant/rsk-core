@@ -87,3 +87,6 @@ tests:
     force_ratio: 0.5
   expect:
     state: disintegrated
+- input: {}
+  expect:
+    state: disintegrated

@@ -142,3 +142,8 @@ tests:
 
   - input: { drug_identified: false }
     expect: { sufficient: false, missing: "Drug identification incomplete", recommendation: "insufficient" }
+  - input: {}
+    expect:
+      missing: Insufficient reports and no dechallenge information
+      recommendation: gather_more
+      sufficient: false

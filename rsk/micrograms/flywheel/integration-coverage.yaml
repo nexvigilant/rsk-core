@@ -189,3 +189,8 @@ tests:
     coverage: partial
     layers_wired: 1
     missing: mcp_tool+nucleus_page
+- input: {}
+  expect:
+    coverage: gap
+    layers_wired: 0
+    missing: all

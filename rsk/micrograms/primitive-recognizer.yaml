@@ -382,3 +382,11 @@ tests:
       confidence: 30
       ner_tag: "O"
       action: "investigate"
+  - input: {}
+    expect:
+      action: investigate
+      composition: emptyset
+      confidence: 30
+      ner_tag: O
+      primary_primitive: Void (emptyset)
+      secondary_primitive: Void (emptyset)

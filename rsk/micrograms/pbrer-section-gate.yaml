@@ -273,3 +273,7 @@ tests:
   expect:
     status: missing
     missing_elements: All prerequisite sections incomplete
+- input: {}
+  expect:
+    missing_elements: All prerequisite sections incomplete
+    status: missing

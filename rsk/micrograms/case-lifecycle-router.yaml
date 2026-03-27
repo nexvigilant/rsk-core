@@ -194,3 +194,7 @@ tests:
   expect:
     action: ERROR_UNKNOWN_STATE
     description: Unrecognized case state - manual review required
+- input: {}
+  expect:
+    action: ERROR_UNKNOWN_STATE
+    description: Unrecognized case state - manual review required

@@ -180,3 +180,10 @@ tests:
       - audit_node_registry
       - rebuild_missing_bridges
       - force_promote_if_emitters_exist
+- input: {}
+  expect:
+    steps:
+      - audit_node_registry
+      - rebuild_missing_bridges
+      - force_promote_if_emitters_exist
+    strategy: INTERVENE_COVERAGE

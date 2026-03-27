@@ -93,3 +93,10 @@ tests:
     expect: { rating: RED, weight: 0.25 }
   - input: { cs: 0.60, suspended: false }
     expect: { rating: AMBER, weight: 0.60 }
+  - input: {}
+    expect:
+      action: Minor violations annotated; no workflow impact
+      chemistry_analog: Full activation; quantitative yield
+      disposition: Integrated at full weight
+      rating: GREEN
+      weight: 1.0

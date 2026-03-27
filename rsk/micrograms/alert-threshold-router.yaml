@@ -109,3 +109,8 @@ tests:
     action: MONITOR
     requires_review: false
     next_step: continue_surveillance
+- input: {}
+  expect:
+    action: MONITOR
+    next_step: continue_surveillance
+    requires_review: false

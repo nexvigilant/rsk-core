@@ -75,3 +75,6 @@ tests:
     value: 100
   expect:
     tier: high
+- input: {}
+  expect:
+    tier: low

@@ -135,19 +135,16 @@ pub fn validate_chain_signatures(
     }
 
     // Check terminal condition
-    if let Some(last) = signature_sequence.last() {
-        if last != CAUSALITY && last != PERSISTENCE && last != MAPPING {
+    if let Some(last) = signature_sequence.last().filter(|l| *l != CAUSALITY && *l != PERSISTENCE && *l != MAPPING) {
             findings.push(SignatureFinding {
                 severity: FindingSeverity::Info,
                 step_index: micrograms.len() - 1,
                 step_name: micrograms.last().map_or("?".into(), |m| m.name.clone()),
                 message: format!(
-                    "Chain ends with '{}'-dominant step. Expected → (causality established) \
-                     or π (action persisted) as terminal.",
-                    last
+                    "Chain ends with '{last}'-dominant step. Expected → (causality established) \
+                     or π (action persisted) as terminal."
                 ),
             });
-        }
     }
 
     // Handoff completeness: did the chain implement → fires → ∃ catches → π holds?

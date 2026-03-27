@@ -60,3 +60,6 @@ tests:
     level: unknown
   expect:
     strength: none
+- input: {}
+  expect:
+    strength: none

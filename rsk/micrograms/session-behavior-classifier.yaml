@@ -274,3 +274,10 @@ tests:
 
   - input: { activity: something_new }
     expect: { risk_level: "high", failure_expected: true }
+  - input: {}
+    expect:
+      behavior_type: convergence
+      failure_expected: true
+      primitive_profile: emptyset
+      risk_level: high
+      session_contribution: unknown

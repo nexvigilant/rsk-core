@@ -184,3 +184,8 @@ tests:
     alignment: ALIGNED
     stability_input: stable
     action: maintain_course
+- input: {}
+  expect:
+    action: build_momentum_first
+    alignment: NO_AXIS
+    stability_input: no_stability

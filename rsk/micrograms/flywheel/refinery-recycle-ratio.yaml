@@ -58,3 +58,8 @@ tests:
     expect: { recycle_class: EXCESSIVE }
   - input: { total_output: 0, recycle_pct: 0 }
     expect: { recycle_class: NO_OUTPUT }
+  - input: {}
+    expect:
+      action: No output to evaluate
+      recycle_class: NO_OUTPUT
+      refinery_analog: No reaction products or recycle

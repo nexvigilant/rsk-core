@@ -97,3 +97,7 @@ tests:
     is_fifth_evaluation: false
   expect:
     loop_type: SINGLE
+- input: {}
+  expect:
+    action: Fix execution errors — identify and correct the most recent failure
+    loop_type: SINGLE

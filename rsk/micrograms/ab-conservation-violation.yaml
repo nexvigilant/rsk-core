@@ -63,3 +63,7 @@ tests:
   expect: { threat: false }
 - input: { absolute_delta: 5.0, tolerance: 0.01 }
   expect: { threat: true }
+- input: {}
+  expect:
+    response: "BLOCK: conservation violated — delta > 1.0"
+    threat: true

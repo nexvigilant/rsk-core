@@ -131,3 +131,7 @@ tests:
   expect:
     classification: high
     above_critical: true
+- input: {}
+  expect:
+    above_critical: false
+    classification: stalled

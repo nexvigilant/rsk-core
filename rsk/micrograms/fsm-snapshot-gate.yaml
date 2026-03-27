@@ -66,3 +66,7 @@ tests:
   expect:
     decision: SNAPSHOT
     description: State changed or 60+ minutes elapsed - create FSM snapshot
+- input: {}
+  expect:
+    decision: SKIP
+    description: State unchanged and snapshot recent - skip redundant snapshot

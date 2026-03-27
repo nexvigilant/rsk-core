@@ -108,3 +108,9 @@ tests:
     estimated_reporting_pct: '>10%'
     description: Reporting rate within acceptable range for spontaneous reporting systems
     recommendation: Continue routine monitoring
+- input: {}
+  expect:
+    category: ACCEPTABLE_REPORTING
+    description: Reporting rate within acceptable range for spontaneous reporting systems
+    estimated_reporting_pct: ">10%"
+    recommendation: Continue routine monitoring

@@ -198,3 +198,8 @@ tests:
     state: yellow
     stressed_count: 1
     action: prune_target
+- input: {}
+  expect:
+    action: emergency_stop
+    state: red
+    stressed_count: 3

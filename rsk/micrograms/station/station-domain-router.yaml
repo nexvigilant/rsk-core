@@ -168,3 +168,8 @@ tests:
 
   - input: { question_type: "" }
     expect: { domain: "unknown", tool_prefix: "unknown", confidence: "low" }
+  - input: {}
+    expect:
+      confidence: low
+      domain: unknown
+      tool_prefix: unknown

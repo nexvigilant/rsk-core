@@ -124,3 +124,7 @@ tests:
     stability_ratio: 1.2
   expect:
     state: precessing
+- input: {}
+  expect:
+    score: 0.0
+    state: gimbal_lock

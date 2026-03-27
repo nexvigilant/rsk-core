@@ -165,3 +165,9 @@ tests:
     age_group: Standard assessment applicable
     special_monitoring: Routine pharmacovigilance monitoring per standard protocols
     rationale: No pediatric-specific risk factors identified requiring special monitoring
+- input: {}
+  expect:
+    age_group: Standard assessment applicable
+    flag: STANDARD
+    rationale: No pediatric-specific risk factors identified requiring special monitoring
+    special_monitoring: Routine pharmacovigilance monitoring per standard protocols

@@ -307,3 +307,9 @@ tests:
     primary_hormone: melatonin
     hormone_delta: 0.1
     behavioral_shift: focused
+- input: {}
+  expect:
+    behavioral_shift: focused
+    hormone_delta: 0.1
+    primary_hormone: melatonin
+    risk_tolerance_direction: stable

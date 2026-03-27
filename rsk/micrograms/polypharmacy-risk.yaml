@@ -130,3 +130,8 @@ tests:
     risk_level: LOW_RISK
     recommendation: Routine medication reconciliation at next scheduled visit
     monitoring_frequency: Standard monitoring per disease management protocol
+- input: {}
+  expect:
+    monitoring_frequency: Standard monitoring per disease management protocol
+    recommendation: Routine medication reconciliation at next scheduled visit
+    risk_level: LOW_RISK

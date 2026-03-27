@@ -93,3 +93,7 @@ tests:
   expect:
     action: ERROR
     description: Unknown lifecycle state - manual intervention required
+- input: {}
+  expect:
+    action: ERROR
+    description: Unknown lifecycle state - manual intervention required

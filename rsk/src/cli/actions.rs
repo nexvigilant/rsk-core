@@ -1151,3 +1151,53 @@ pub enum TovAction {
     /// Show all conservation laws
     ConservationLaws,
 }
+
+#[derive(Subcommand)]
+pub enum HeligramAction {
+    /// Run a heligram with input JSON
+    Run {
+        /// Path to heligram YAML file
+        path: String,
+        /// Input JSON (e.g. '{"prr": 3.5, "total_reports": 50}')
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+    /// Run self-tests for a heligram
+    Test {
+        /// Path to heligram YAML file
+        path: String,
+    },
+    /// Run all self-tests in a directory
+    TestAll {
+        /// Path to heligrams directory
+        #[arg(default_value = "heligrams")]
+        dir: String,
+    },
+    /// List heligrams in a directory
+    List {
+        /// Path to heligrams directory
+        #[arg(default_value = "heligrams")]
+        dir: String,
+    },
+    /// Encode a heligram as DNA (sense + antisense strands)
+    Encode {
+        /// Path to heligram YAML file
+        path: String,
+    },
+    /// Decode a DNA strand back to heligram YAML
+    Decode {
+        /// DNA strand string (sense strand)
+        dna: String,
+    },
+    /// Chain heligrams: output of N flows into input of N+1
+    Chain {
+        /// Heligram names separated by -> (e.g. "prr-signal-helix -> ror-signal-helix")
+        chain: String,
+        /// Directory containing heligram YAML files
+        #[arg(short, long, default_value = "heligrams")]
+        dir: String,
+        /// Initial input JSON
+        #[arg(short, long, default_value = "{}")]
+        input: String,
+    },
+}

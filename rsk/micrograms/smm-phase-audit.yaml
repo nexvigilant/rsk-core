@@ -109,3 +109,10 @@ tests:
   # Phase V (Design) — fatal if absent, present
   - input: { phase: "V", phase_name: "Design", fatal_if_absent: true, documentation_present: true, violation_class: F }
     expect: { compliant: true, violation_class: none, label: COMPLIANT }
+  - input: {}
+    expect:
+      action: Methodological gap. Advisory flag on integration.
+      chemistry_analog: Signal quantifiable but imprecise — wide confidence interval
+      compliant: false
+      label: MAJOR
+      violation_class: M

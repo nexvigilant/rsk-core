@@ -124,3 +124,8 @@ tests:
     scope: error
     table: none
     description: Unknown operation type - choose ingest/detect/triage/report/all
+- input: {}
+  expect:
+    description: Unknown operation type - choose ingest/detect/triage/report/all
+    scope: error
+    table: none

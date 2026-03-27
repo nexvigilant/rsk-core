@@ -96,3 +96,9 @@ tests:
     color: green
     score_min: 66
     score_max: 100
+- input: {}
+  expect:
+    color: green
+    score_max: 100
+    score_min: 66
+    zone: SAFE

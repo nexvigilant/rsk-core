@@ -157,3 +157,11 @@ tests:
     expect: { integrated: true, weight: 0.25, effective_rating: RED }
   - input: { rating: AMBER, has_independent_replication: true, positive_citation_pct: 50 }
     expect: { integrated: true, weight: 0.60, effective_rating: AMBER }
+  - input: {}
+    expect:
+      action: High-scrutiny integration. Corroboration required.
+      chemistry_analog: Equilibrium favors substrate — trace product only
+      effective_rating: RED
+      integrated: true
+      k_bias_flag: none
+      weight: 0.25

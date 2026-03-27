@@ -214,3 +214,12 @@ tests:
     verdict: LESSON
     pv_meaning: "Regulatory submission — a Marketing Authorization Application (MAA) or New Drug Application (NDA)"
     common_meaning: "A software program, or a job application, or the act of applying something"
+- name: null_input_safety
+  input: {}
+  expect:
+    common_meaning: "A software program, or a job application, or the act of applying something"
+    correct: false
+    lesson: "The word 'application' started this entire investigation. At the amusement park, two people present different 'applications'. In PV, the same word means a regulatory submission. This is the founding example of perspective divergence as a safety diagnostic."
+    pv_meaning: Regulatory submission — a Marketing Authorization Application (MAA) or New Drug Application (NDA)
+    risk_if_confused: "The original comic strip insight: one person brings a paper application (resume), another brings a software application (app). In PV, 'application' means a formal regulatory submission. Confusing this with software or employment applications is how signals get lost in translation."
+    verdict: LESSON

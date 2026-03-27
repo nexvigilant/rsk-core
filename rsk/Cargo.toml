@@ -3,12 +3,11 @@ name = "rsk"
 version = "0.5.1"
 edition = "2024"
 authors = ["Matthew Campion"]
-description = "Rust Skill Kernel - High-performance computation kernel for Claude Code skills"
-documentation = "https://docs.rs/rsk"
+description = "Microgram decision tree runtime and chain composition engine"
 readme = "README.md"
 license = "MIT"
-keywords = ["claude", "skills", "kernel", "algorithms", "validation"]
-categories = ["algorithms", "text-processing", "command-line-utilities"]
+keywords = ["microgram", "decision-tree", "pharmacovigilance", "mcp", "signal-detection"]
+categories = ["algorithms", "command-line-utilities"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

@@ -189,3 +189,11 @@ tests:
 # Edge: onset exactly 30 — not > 30 so goes to ambiguous
 - input: { reaction_predictable: false, dose_dependent: false, mechanism_known: false, immunological: false, onset_days: 30 }
   expect: { adr_type: "UNKNOWN", confidence: "LOW" }
+- input: {}
+  expect:
+    adr_type: UNKNOWN
+    classification: Ambiguous
+    confidence: LOW
+    explanation: "Reaction characteristics do not clearly map to Type A, B, or C. Further clinical and mechanistic data needed."
+    needs_review: true
+    teaching_point: "When classification is unclear, document all features (onset, dose relationship, immunological markers, rechallenge) and seek expert causality assessment. Consider Naranjo or WHO-UMC scoring."
