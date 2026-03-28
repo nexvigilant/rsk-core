@@ -2,7 +2,7 @@
 
 use crate::cli::actions::HeligramAction;
 use rsk::modules::decision_engine::Value as RskValue;
-use rsk::modules::heligram::{Heligram, chain, dna, load_all};
+use rsk::modules::heligram::{Heligram, chain, dna, load_all, promote};
 use serde_json::json;
 use std::collections::HashMap;
 use std::path::Path;
@@ -210,6 +210,77 @@ pub fn handle_heligram(action: &HeligramAction) {
                 Err(e) => {
                     eprintln!("{}", json!({"status": "error", "message": e}));
                     std::process::exit(1);
+                }
+            }
+        }
+        HeligramAction::Promote { path, output } => {
+            let mg_yaml = match std::fs::read_to_string(path) {
+                Ok(s) => s,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Cannot read {path}: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let mg: rsk::modules::microgram::Microgram = match serde_yaml::from_str(&mg_yaml) {
+                Ok(m) => m,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Parse error: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let heligram = match promote::promote(&mg) {
+                Ok(h) => h,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Promotion failed: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            let yaml_out = match promote::to_yaml(&heligram) {
+                Ok(y) => y,
+                Err(e) => {
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Serialization failed: {e}")})
+                    );
+                    std::process::exit(1);
+                }
+            };
+
+            match output {
+                Some(out_path) => {
+                    if let Err(e) = std::fs::write(out_path, &yaml_out) {
+                        eprintln!(
+                            "{}",
+                            json!({"status": "error", "message": format!("Cannot write {out_path}: {e}")})
+                        );
+                        std::process::exit(1);
+                    }
+                    println!(
+                        "{}",
+                        json!({
+                            "status": "ok",
+                            "promoted": heligram.name,
+                            "output": out_path,
+                            "base_pairs": heligram.helix.base_pairs.len(),
+                            "resolution_rules": heligram.resolution.rules.len(),
+                            "tests": heligram.tests.len(),
+                        })
+                    );
+                }
+                None => {
+                    print!("{yaml_out}");
                 }
             }
         }

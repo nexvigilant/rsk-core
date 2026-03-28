@@ -11,6 +11,7 @@
 //! - **Backward-compatible**: minor groove output is microgram-compatible
 
 pub mod dna;
+pub mod promote;
 
 use crate::modules::decision_engine::{
     DecisionContext, DecisionEngine, DecisionTree, Value,

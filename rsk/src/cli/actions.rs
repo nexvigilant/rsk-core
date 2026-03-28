@@ -1189,6 +1189,14 @@ pub enum HeligramAction {
         /// DNA strand string (sense strand)
         dna: String,
     },
+    /// Promote a microgram to a heligram (auto-generate antisense + resolution)
+    Promote {
+        /// Path to microgram YAML file
+        path: String,
+        /// Output path for the generated heligram YAML (default: stdout)
+        #[arg(short, long)]
+        output: Option<String>,
+    },
     /// Chain heligrams: output of N flows into input of N+1
     Chain {
         /// Heligram names separated by -> (e.g. "prr-signal-helix -> ror-signal-helix")
