@@ -396,10 +396,7 @@ pub fn query_taxonomy(query_type: &str, key: &str) -> TaxonomyQueryResult {
                     query_type: "compliance".to_string(),
                     key: key.to_string(),
                     found: true,
-                    // SAFETY: ComplianceLevel derives Serialize with only primitive fields;
-                    // serde_json::to_value on a fully-Serialize type cannot fail.
-                    #[allow(clippy::unwrap_used)]
-                    data: Some(serde_json::to_value(level).unwrap()),
+                    data: serde_json::to_value(level).ok(),
                 }
             } else {
                 TaxonomyQueryResult {
@@ -416,10 +413,7 @@ pub fn query_taxonomy(query_type: &str, key: &str) -> TaxonomyQueryResult {
                     query_type: "smst".to_string(),
                     key: key.to_string(),
                     found: true,
-                    // SAFETY: SmstComponent derives Serialize with only primitive fields;
-                    // serde_json::to_value on a fully-Serialize type cannot fail.
-                    #[allow(clippy::unwrap_used)]
-                    data: Some(serde_json::to_value(component).unwrap()),
+                    data: serde_json::to_value(component).ok(),
                 }
             } else {
                 TaxonomyQueryResult {
@@ -436,10 +430,7 @@ pub fn query_taxonomy(query_type: &str, key: &str) -> TaxonomyQueryResult {
                     query_type: "category".to_string(),
                     key: key.to_string(),
                     found: true,
-                    // SAFETY: SkillCategory derives Serialize with only primitive fields;
-                    // serde_json::to_value on a fully-Serialize type cannot fail.
-                    #[allow(clippy::unwrap_used)]
-                    data: Some(serde_json::to_value(category).unwrap()),
+                    data: serde_json::to_value(category).ok(),
                 }
             } else {
                 TaxonomyQueryResult {
@@ -456,10 +447,7 @@ pub fn query_taxonomy(query_type: &str, key: &str) -> TaxonomyQueryResult {
                     query_type: "node_type".to_string(),
                     key: key.to_string(),
                     found: true,
-                    // SAFETY: NodeType derives Serialize with only primitive fields;
-                    // serde_json::to_value on a fully-Serialize type cannot fail.
-                    #[allow(clippy::unwrap_used)]
-                    data: Some(serde_json::to_value(node).unwrap()),
+                    data: serde_json::to_value(node).ok(),
                 }
             } else {
                 TaxonomyQueryResult {
@@ -494,12 +482,9 @@ pub struct TaxonomyListResult {
 pub fn list_taxonomy(taxonomy_type: &str) -> TaxonomyListResult {
     match taxonomy_type.to_lowercase().as_str() {
         "compliance" | "levels" => {
-            // SAFETY: ComplianceLevel derives Serialize with only primitive fields;
-            // serde_json::to_value on a fully-Serialize type cannot fail.
-            #[allow(clippy::unwrap_used)]
             let entries: Vec<_> = all_compliance_levels()
                 .iter()
-                .map(|l| serde_json::to_value(l).unwrap())
+                .filter_map(|l| serde_json::to_value(l).ok())
                 .collect();
             TaxonomyListResult {
                 taxonomy_type: "compliance".to_string(),
@@ -508,12 +493,9 @@ pub fn list_taxonomy(taxonomy_type: &str) -> TaxonomyListResult {
             }
         }
         "smst" | "components" => {
-            // SAFETY: SmstComponent derives Serialize with only primitive fields;
-            // serde_json::to_value on a fully-Serialize type cannot fail.
-            #[allow(clippy::unwrap_used)]
             let entries: Vec<_> = all_smst_components()
                 .iter()
-                .map(|c| serde_json::to_value(c).unwrap())
+                .filter_map(|c| serde_json::to_value(c).ok())
                 .collect();
             TaxonomyListResult {
                 taxonomy_type: "smst".to_string(),
@@ -522,12 +504,9 @@ pub fn list_taxonomy(taxonomy_type: &str) -> TaxonomyListResult {
             }
         }
         "category" | "categories" => {
-            // SAFETY: SkillCategory derives Serialize with only primitive fields;
-            // serde_json::to_value on a fully-Serialize type cannot fail.
-            #[allow(clippy::unwrap_used)]
             let entries: Vec<_> = all_skill_categories()
                 .iter()
-                .map(|c| serde_json::to_value(c).unwrap())
+                .filter_map(|c| serde_json::to_value(c).ok())
                 .collect();
             TaxonomyListResult {
                 taxonomy_type: "category".to_string(),
@@ -536,12 +515,9 @@ pub fn list_taxonomy(taxonomy_type: &str) -> TaxonomyListResult {
             }
         }
         "node" | "node_types" => {
-            // SAFETY: NodeType derives Serialize with only primitive fields;
-            // serde_json::to_value on a fully-Serialize type cannot fail.
-            #[allow(clippy::unwrap_used)]
             let entries: Vec<_> = NODE_TYPES
                 .values()
-                .map(|n| serde_json::to_value(n).unwrap())
+                .filter_map(|n| serde_json::to_value(n).ok())
                 .collect();
             TaxonomyListResult {
                 taxonomy_type: "node_type".to_string(),

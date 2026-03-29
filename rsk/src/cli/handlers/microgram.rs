@@ -1064,19 +1064,21 @@ pub fn handle_microgram(action: &MicrogramAction) {
                             })).collect::<Vec<_>>(),
                         });
                         if let Some(sv) = &r.signature_validation {
-                            entry.as_object_mut().unwrap().insert(
-                                "signature_validation".to_string(),
-                                json!({
-                                    "valid": sv.valid,
-                                    "handoff_complete": sv.handoff_complete,
-                                    "sequence": sv.signature_sequence,
-                                    "findings": sv.findings.iter().map(|f| json!({
-                                        "severity": f.severity,
-                                        "step": f.step_name,
-                                        "message": f.message,
-                                    })).collect::<Vec<_>>(),
-                                })
-                            );
+                            if let Some(obj) = entry.as_object_mut() {
+                                obj.insert(
+                                    "signature_validation".to_string(),
+                                    json!({
+                                        "valid": sv.valid,
+                                        "handoff_complete": sv.handoff_complete,
+                                        "sequence": sv.signature_sequence,
+                                        "findings": sv.findings.iter().map(|f| json!({
+                                            "severity": f.severity,
+                                            "step": f.step_name,
+                                            "message": f.message,
+                                        })).collect::<Vec<_>>(),
+                                    })
+                                );
+                            }
                         }
                         entry
                     }).collect::<Vec<_>>(),

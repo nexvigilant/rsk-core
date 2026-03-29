@@ -754,6 +754,11 @@ fn triggering_value(operator: &Operator, threshold: &Value) -> Value {
         (Operator::Gt, Value::Int(n)) => Value::Int(*n + 1),
         (Operator::Gte, Value::Int(n)) => Value::Int(*n),
         (Operator::Eq, v) => v.clone(),
+        // Neq triggers when the value is DIFFERENT from threshold
+        (Operator::Neq, Value::Bool(b)) => Value::Bool(!b),
+        (Operator::Neq, Value::Int(n)) => Value::Int(*n + 1),
+        (Operator::Neq, Value::String(_)) => Value::String("__negated__".to_string()),
+        (Operator::Neq, Value::Float(f)) => Value::Float(*f + 1.0),
         _ => threshold.clone(),
     }
 }

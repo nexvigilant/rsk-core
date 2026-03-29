@@ -192,9 +192,9 @@ fn validate_structure(chain: &Chain, result: &mut ValidationResult) {
 
 /// Validate skill name format.
 fn validate_skill_names(chain: &Chain, result: &mut ValidationResult) {
-    // Safety: compile-time literal pattern — Regex::new cannot fail
-    #[allow(clippy::unwrap_used)]
-    let name_regex = regex::Regex::new(r"^[a-z][a-z0-9-]*$").unwrap();
+    let Ok(name_regex) = regex::Regex::new(r"^[a-z][a-z0-9-]*$") else {
+        return; // pattern is a compile-time literal; this branch is unreachable
+    };
 
     for (i, step) in chain.steps.iter().enumerate() {
         let skill_name = step.skill_name();
@@ -314,9 +314,9 @@ fn validate_parallel_resources(chain: &Chain, result: &mut ValidationResult) {
 
 /// Validate conditional steps.
 fn validate_conditionals(chain: &Chain, result: &mut ValidationResult) {
-    // Safety: compile-time literal pattern — Regex::new cannot fail
-    #[allow(clippy::unwrap_used)]
-    let name_regex = regex::Regex::new(r"^[a-z][a-z0-9-]*$").unwrap();
+    let Ok(name_regex) = regex::Regex::new(r"^[a-z][a-z0-9-]*$") else {
+        return; // pattern is a compile-time literal; this branch is unreachable
+    };
     for (i, step) in chain.steps.iter().enumerate() {
         if let StepType::Conditional(cond) = step {
             // Condition must not be empty

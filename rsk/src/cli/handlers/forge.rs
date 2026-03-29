@@ -56,7 +56,10 @@ pub fn handle_forge(action: &ForgeAction) {
         ForgeAction::Parse { path } => match fs::read_to_string(path) {
             Ok(content) => match parse_spec(&content) {
                 Ok(spec) => {
-                    println!("{}", serde_json::to_string_pretty(&spec).unwrap());
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&spec).unwrap_or_default()
+                    );
                 }
                 Err(e) => {
                     println!("{}", json!({"status": "error", "message": e.to_string()}));
@@ -127,7 +130,7 @@ pub fn handle_forge(action: &ForgeAction) {
                             "nodes": nodes,
                             "edges": edges,
                         }))
-                        .unwrap()
+                        .unwrap_or_default()
                     );
                 }
                 Err(e) => {
@@ -262,9 +265,15 @@ pub fn handle_forge(action: &ForgeAction) {
                         // Output to sink
                         if sink.is_some_and(|s| matches!(s.sink_type, forge_spec::SinkType::Stdout))
                         {
-                            io::stdout().write_all(result.as_bytes()).unwrap();
+                            if let Err(e) = io::stdout().write_all(result.as_bytes()) {
+                                eprintln!("stdout write error: {e}");
+                                std::process::exit(1);
+                            }
                             if !result.ends_with('\n') {
-                                io::stdout().write_all(b"\n").unwrap();
+                                if let Err(e) = io::stdout().write_all(b"\n") {
+                                    eprintln!("stdout write error: {e}");
+                                    std::process::exit(1);
+                                }
                             }
                         } else if let Some(s) = sink {
                             match &s.sink_type {

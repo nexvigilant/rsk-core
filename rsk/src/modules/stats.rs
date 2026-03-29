@@ -32,9 +32,9 @@ use std::f64::consts::PI;
 
 /// Standard normal CDF using statrs
 fn normal_cdf(x: f64) -> f64 {
-    #[allow(clippy::unwrap_used)] // Normal::new(0.0, 1.0) uses compile-time constants and cannot fail
-    let n = Normal::new(0.0, 1.0).unwrap();
-    n.cdf(x)
+    Normal::new(0.0, 1.0)
+        .map(|n| n.cdf(x))
+        .unwrap_or(if x < 0.0 { 0.0 } else { 1.0 })
 }
 
 /// Student's t-distribution CDF
@@ -43,9 +43,9 @@ fn t_cdf(t: f64, df: f64) -> f64 {
     if df <= 0.0 {
         return if t < 0.0 { 0.0 } else { 1.0 };
     }
-    #[allow(clippy::unwrap_used)] // df > 0.0 is guaranteed by the guard above; StudentsT::new cannot fail
-    let dist = StudentsT::new(0.0, 1.0, df).unwrap();
-    dist.cdf(t)
+    StudentsT::new(0.0, 1.0, df)
+        .map(|dist| dist.cdf(t))
+        .unwrap_or(if t < 0.0 { 0.0 } else { 1.0 })
 }
 
 /// Log gamma function (Stirling's approximation for larger values)

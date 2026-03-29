@@ -89,17 +89,16 @@ impl std::error::Error for ParseError {}
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Valid skill name pattern: lowercase letters, digits, hyphens
-#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
-static SKILL_NAME_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^[a-z][a-z0-9-]*$").unwrap());
+static SKILL_NAME_REGEX: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"^[a-z][a-z0-9-]*$").ok());
 
 /// Sequential operator
-#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
-static SEQUENTIAL_SPLIT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*->\s*").unwrap());
+static SEQUENTIAL_SPLIT: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\s*->\s*").ok());
 
 /// Parallel operator
-#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
-static PARALLEL_SPLIT: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s*\|\s*").unwrap());
+static PARALLEL_SPLIT: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\s*\|\s*").ok());
 
 // ═══════════════════════════════════════════════════════════════════════════
 // INLINE PARSER
@@ -125,15 +124,17 @@ pub fn parse_inline(input: &str) -> Result<Chain, ParseError> {
 
     // Detect composition type by operator presence
     let (composition, parts) = if input.contains(" -> ") {
-        (
-            CompositionType::Sequential,
-            SEQUENTIAL_SPLIT.split(input).collect::<Vec<_>>(),
-        )
+        let parts = SEQUENTIAL_SPLIT
+            .as_ref()
+            .map(|re| re.split(input).collect::<Vec<_>>())
+            .unwrap_or_else(|| input.split("->").map(str::trim).collect());
+        (CompositionType::Sequential, parts)
     } else if input.contains(" | ") {
-        (
-            CompositionType::Parallel,
-            PARALLEL_SPLIT.split(input).collect::<Vec<_>>(),
-        )
+        let parts = PARALLEL_SPLIT
+            .as_ref()
+            .map(|re| re.split(input).collect::<Vec<_>>())
+            .unwrap_or_else(|| input.split('|').map(str::trim).collect());
+        (CompositionType::Parallel, parts)
     } else {
         // Single skill
         (CompositionType::Sequential, vec![input])
@@ -151,7 +152,11 @@ pub fn parse_inline(input: &str) -> Result<Chain, ParseError> {
         // Parse skill with optional args: "skill-name --arg1 --arg2"
         let (skill_name, args) = parse_skill_with_args(part)?;
 
-        if !SKILL_NAME_REGEX.is_match(&skill_name) {
+        let name_valid = SKILL_NAME_REGEX
+            .as_ref()
+            .map(|re| re.is_match(&skill_name))
+            .unwrap_or(true); // if regex failed to compile, skip validation
+        if !name_valid {
             return Err(ParseError::new(&format!(
                 "Invalid skill name '{skill_name}': must be lowercase letters, digits, and hyphens"
             ))
@@ -317,7 +322,11 @@ pub fn parse_yaml(content: &str) -> Result<Chain, ParseError> {
     for yaml_step in yaml_chain.steps {
         match yaml_step {
             YamlStep::Simple(skill_name) => {
-                if !SKILL_NAME_REGEX.is_match(&skill_name) {
+                let name_valid = SKILL_NAME_REGEX
+                    .as_ref()
+                    .map(|re| re.is_match(&skill_name))
+                    .unwrap_or(true);
+                if !name_valid {
                     return Err(ParseError::new(&format!(
                         "Invalid skill name '{skill_name}': must be lowercase letters, digits, and hyphens"
                     )));
@@ -326,7 +335,11 @@ pub fn parse_yaml(content: &str) -> Result<Chain, ParseError> {
                 in_parallel = false;
             }
             YamlStep::Named(named) => {
-                if !SKILL_NAME_REGEX.is_match(&named.skill) {
+                let name_valid = SKILL_NAME_REGEX
+                    .as_ref()
+                    .map(|re| re.is_match(&named.skill))
+                    .unwrap_or(true);
+                if !name_valid {
                     return Err(ParseError::new(&format!(
                         "Invalid skill name '{}': must be lowercase letters, digits, and hyphens",
                         named.skill

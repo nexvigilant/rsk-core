@@ -240,8 +240,13 @@ pub fn set_path(data: &mut Value, path: &str, value: Value) -> Result<(), JsonEr
                 if !current.is_object() {
                     *current = Value::Object(Map::new());
                 }
-                #[allow(clippy::unwrap_used)] // guarded: *current was just set to Object above if it wasn't already
-                let obj = current.as_object_mut().unwrap();
+                let type_name = get_value_type(current);
+                let Some(obj) = current.as_object_mut() else {
+                    return Err(JsonError::TypeMismatch {
+                        expected: "object".to_string(),
+                        actual: type_name,
+                    });
+                };
                 obj.entry(key.clone()).or_insert_with(|| {
                     if next_is_index {
                         Value::Array(vec![])
@@ -254,8 +259,13 @@ pub fn set_path(data: &mut Value, path: &str, value: Value) -> Result<(), JsonEr
                 if !current.is_array() {
                     *current = Value::Array(vec![]);
                 }
-                #[allow(clippy::unwrap_used)] // guarded: *current was just set to Array above if it wasn't already
-                let arr = current.as_array_mut().unwrap();
+                let type_name = get_value_type(current);
+                let Some(arr) = current.as_array_mut() else {
+                    return Err(JsonError::TypeMismatch {
+                        expected: "array".to_string(),
+                        actual: type_name,
+                    });
+                };
                 while arr.len() <= *idx {
                     arr.push(if next_is_index {
                         Value::Array(vec![])

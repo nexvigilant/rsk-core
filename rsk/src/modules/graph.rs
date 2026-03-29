@@ -214,9 +214,9 @@ impl SkillGraph {
                     for v in neighbors {
                         if on_stack.contains(v) {
                             // Cycle found!
-                            #[allow(clippy::unwrap_used)] // guarded: on_stack.contains(v) is true in this branch
-                            let pos = on_stack.iter().position(|x| x == v).unwrap();
-                            *cycle = on_stack[pos..].to_vec();
+                            if let Some(pos) = on_stack.iter().position(|x| x == v) {
+                                *cycle = on_stack[pos..].to_vec();
+                            }
                             return true;
                         }
                         if !visited.contains(v) && find_cycle(v, adj, visited, on_stack, cycle) {

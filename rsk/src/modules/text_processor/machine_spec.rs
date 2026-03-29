@@ -20,14 +20,12 @@ macro_rules! f {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Next header pattern for section parsing
-#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
-pub(crate) static RE_NEXT_HEADER: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?m)^###|^##").unwrap());
+pub(crate) static RE_NEXT_HEADER: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"(?m)^###|^##").ok());
 
 /// Skill name extraction pattern
-#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
-pub(crate) static RE_SKILL_NAME: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?m)^name:\s*([a-zA-Z0-9_-]+)").unwrap());
+pub(crate) static RE_SKILL_NAME: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"(?m)^name:\s*([a-zA-Z0-9_-]+)").ok());
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -87,7 +85,8 @@ pub fn parse_skill_md(content: &str) -> ParsingResult {
 
     // Extract skill name from frontmatter or first H1 using precompiled regex
     let skill_name = RE_SKILL_NAME
-        .captures(content)
+        .as_ref()
+        .and_then(|re| re.captures(content))
         .map(|cap| cap[1].to_string())
         .unwrap_or_else(|| "unknown".to_string());
 
@@ -114,12 +113,11 @@ pub fn parse_skill_md(content: &str) -> ParsingResult {
                 // Use regex to match optional numbering and extra text like "### 1. INPUTS (Extra)"
                 // Note: These section-specific patterns are compiled per-call but this is acceptable
                 // since the number of iterations is bounded (8 sections max).
-                // Safety: `section_name` values are compile-time string literals (INPUTS, OUTPUTS,
-                // etc.) containing only ASCII word characters — the interpolated pattern is always
-                // a valid regex and Regex::new cannot fail.
-                #[allow(clippy::unwrap_used)]
-                let re = Regex::new(&format!(r"(?im)^###\s*(?:\d+\.\s*)?{section_name}\b"))
-                    .unwrap();
+                let Ok(re) =
+                    Regex::new(&format!(r"(?im)^###\s*(?:\d+\.\s*)?{section_name}\b"))
+                else {
+                    continue;
+                };
 
                 if let Some(mat) = re.find(spec_content) {
                     let start: usize = mat.start();
@@ -143,7 +141,8 @@ pub fn parse_skill_md(content: &str) -> ParsingResult {
                     // Content ends at next ### or next ## (major section)
                     let remaining = &spec_content[content_start..];
                     let next_section = RE_NEXT_HEADER
-                        .find(remaining)
+                        .as_ref()
+                        .and_then(|re| re.find(remaining))
                         .map(|m: regex::Match| content_start + m.start())
                         .unwrap_or(spec_content.len());
 

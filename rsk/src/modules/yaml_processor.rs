@@ -308,8 +308,8 @@ pub fn extract_taxonomy_schema(content: &str) -> Result<TaxonomySchema, ConfigEr
 /// Parse YAML frontmatter from SKILL.md content (proper YAML parsing)
 pub fn parse_yaml_frontmatter(content: &str) -> Result<JsonValue, ConfigError> {
     use regex::Regex;
-    #[allow(clippy::unwrap_used)] // compile-time literal regex pattern cannot fail to compile
-    let re = Regex::new(r"(?s)^---\s*\n(.*?)\n---\s*\n").unwrap();
+    let re = Regex::new(r"(?s)^---\s*\n(.*?)\n---\s*\n")
+        .map_err(|e| ConfigError::YamlParse(e.to_string()))?;
 
     if let Some(caps) = re.captures(content) {
         let frontmatter_content = &caps[1];

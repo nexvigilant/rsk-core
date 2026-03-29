@@ -77,9 +77,8 @@ static OVERCONFIDENT_PATTERNS: LazyLock<Vec<(String, Regex)>> = LazyLock::new(||
 });
 
 /// Citation pattern (looks for [citations] or explicit "source" mentions)
-static CITATION_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-    #[allow(clippy::unwrap_used)] // compile-time literal regex pattern cannot fail to compile
-    Regex::new(r"\[|\bsource\b|\bcitation\b|\breference\b|\baccording to\b").unwrap()
+static CITATION_PATTERN: LazyLock<Option<Regex>> = LazyLock::new(|| {
+    Regex::new(r"\[|\bsource\b|\bcitation\b|\breference\b|\baccording to\b").ok()
 });
 
 /// Validate a claim for epistemic rigor.
@@ -118,7 +117,11 @@ pub fn validate_claim(claim: &str) -> EpistemicResult {
     }
 
     // Check for citation markers
-    if !CITATION_PATTERN.is_match(claim) {
+    let has_citation = CITATION_PATTERN
+        .as_ref()
+        .map(|re| re.is_match(claim))
+        .unwrap_or(false);
+    if !has_citation {
         suggestions.push("Consider adding citations or sources".to_string());
     }
 

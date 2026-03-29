@@ -16,17 +16,16 @@ use std::sync::LazyLock;
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Tokenizer pattern - matches word characters
-#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
-pub(crate) static RE_TOKENIZE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[\w]+").unwrap());
+pub(crate) static RE_TOKENIZE: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"[\w]+").ok());
 
 /// Whitespace collapse pattern
-#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
-pub(crate) static RE_WHITESPACE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"\s+").unwrap());
+pub(crate) static RE_WHITESPACE: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\s+").ok());
 
 /// Slug cleanup pattern
-#[allow(clippy::unwrap_used)] // Safety: compile-time literal pattern — Regex::new cannot fail
-pub(crate) static RE_SLUG_SPECIAL: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"[^a-z0-9\s-]").unwrap());
+pub(crate) static RE_SLUG_SPECIAL: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"[^a-z0-9\s-]").ok());
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TEXT PROCESSING TYPES
@@ -75,9 +74,13 @@ pub struct CompressionAnalysis {
 /// Splits on whitespace and punctuation, filters empty tokens.
 pub fn tokenize(text: &str) -> TokenizeResult {
     let tokens: Vec<String> = RE_TOKENIZE
-        .find_iter(text)
-        .map(|m: regex::Match| m.as_str().to_string())
-        .collect();
+        .as_ref()
+        .map(|re| {
+            re.find_iter(text)
+                .map(|m: regex::Match| m.as_str().to_string())
+                .collect()
+        })
+        .unwrap_or_default();
 
     let unique: std::collections::HashSet<_> = tokens.iter().collect();
 
@@ -107,9 +110,9 @@ pub fn normalize(text: &str, remove_punctuation: bool) -> NormalizeResult {
 
     // Collapse whitespace using precompiled regex
     normalized = RE_WHITESPACE
-        .replace_all(&normalized, " ")
-        .trim()
-        .to_string();
+        .as_ref()
+        .map(|re| re.replace_all(&normalized, " ").trim().to_string())
+        .unwrap_or_else(|| normalized.split_whitespace().collect::<Vec<_>>().join(" "));
 
     NormalizeResult {
         normalized_length: normalized.len(),
@@ -236,10 +239,14 @@ pub fn truncate(text: &str, max_len: usize, ellipsis: &str) -> String {
 /// Converts to lowercase, replaces spaces with dashes, removes special chars.
 pub fn slugify(text: &str) -> String {
     let normalized = text.to_lowercase();
-    let cleaned = RE_SLUG_SPECIAL.replace_all(&normalized, "");
+    let cleaned = RE_SLUG_SPECIAL
+        .as_ref()
+        .map(|re| re.replace_all(&normalized, "").into_owned())
+        .unwrap_or(normalized);
     RE_WHITESPACE
-        .replace_all(&cleaned, "-")
-        .trim_matches('-')
+        .as_ref()
+        .map(|re| re.replace_all(&cleaned, "-").trim_matches('-').to_string())
+        .unwrap_or_else(|| cleaned.split_whitespace().collect::<Vec<_>>().join("-"))
         .to_string()
 }
 

@@ -304,12 +304,12 @@ impl DecisionEngine {
         base: Option<Value>,
     ) -> Option<Value> {
         if part.contains('[') && part.contains(']') {
-            // SAFETY: The enclosing `if` guarantees `part` contains `[`, so
-            // `split('[')` yields at least two items; `.next()` and `.nth(1)` cannot be None.
-            #[allow(clippy::unwrap_used)]
-            let base_key = part.split('[').next().unwrap();
-            #[allow(clippy::unwrap_used)]
-            let idx_str = part.split('[').nth(1).unwrap().trim_end_matches(']');
+            let base_key = part.split('[').next().unwrap_or("");
+            let idx_str = part
+                .split('[')
+                .nth(1)
+                .map(|s| s.trim_end_matches(']'))
+                .unwrap_or("");
 
             let array_val = if let Some(b) = base {
                 if let Value::Object(map) = b {
@@ -366,23 +366,22 @@ impl DecisionEngine {
                         .get("tactics")
                         .cloned()
                         .unwrap_or(Value::Array(Vec::new()));
-                    // SAFETY: `Value` (and `StrategicField`/`WinTactic`) all derive
-                    // Serialize; serde_json::to_string on a fully-Serialize type cannot fail.
-                    #[allow(clippy::unwrap_used)]
                     let fields: Vec<crate::modules::strategy::StrategicField> =
-                        serde_json::from_str(&serde_json::to_string(&fields_val).unwrap())
+                        serde_json::to_string(&fields_val)
+                            .ok()
+                            .and_then(|s| serde_json::from_str(&s).ok())
                             .unwrap_or_default();
-                    #[allow(clippy::unwrap_used)]
                     let tactics: Vec<crate::modules::strategy::WinTactic> =
-                        serde_json::from_str(&serde_json::to_string(&tactics_val).unwrap())
+                        serde_json::to_string(&tactics_val)
+                            .ok()
+                            .and_then(|s| serde_json::from_str(&s).ok())
                             .unwrap_or_default();
                     let results = crate::modules::strategy::StrategyOptimizer::new(fields, tactics)
                         .optimize();
-                    // SAFETY: `results` derives Serialize; serde_json::to_string cannot fail.
-                    // The outer from_str uses unwrap_or_default as fallback for deserialization.
-                    #[allow(clippy::unwrap_used)]
-                    let res_val: Vec<Value> =
-                        serde_json::from_str(&serde_json::to_string(&results).unwrap()).unwrap_or_default();
+                    let res_val: Vec<Value> = serde_json::to_string(&results)
+                        .ok()
+                        .and_then(|s| serde_json::from_str(&s).ok())
+                        .unwrap_or_default();
                     Value::Array(res_val)
                 } else {
                     Value::Null
