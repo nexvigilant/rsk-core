@@ -139,19 +139,16 @@ fn build_antisense(
                 let inverted = invert_return_value(value, &mut seen_fields);
 
                 // Collect field pairs for base_pairs
-                if let Value::Object(sense_map) = value {
-                    if let Value::Object(anti_map) = &inverted {
-                        for sense_key in sense_map.keys() {
-                            let anti_key =
-                                antisense_field_name(sense_key);
-                            if !seen_fields.contains_key(sense_key) {
-                                seen_fields
-                                    .insert(sense_key.clone(), anti_key.clone());
-                                field_pairs.push((sense_key.clone(), anti_key));
-                            }
+                if let Value::Object(sense_map) = value
+                    && let Value::Object(_anti_map) = &inverted
+                {
+                    for sense_key in sense_map.keys() {
+                        let anti_key = antisense_field_name(sense_key);
+                        if !seen_fields.contains_key(sense_key) {
+                            seen_fields
+                                .insert(sense_key.clone(), anti_key.clone());
+                            field_pairs.push((sense_key.clone(), anti_key));
                         }
-                        // Ensure anti_map keys are used (suppress unused warning)
-                        let _ = anti_map;
                     }
                 }
 

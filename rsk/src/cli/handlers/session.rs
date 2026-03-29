@@ -22,7 +22,7 @@ pub fn handle_session(action: &SessionAction) {
         SessionAction::Track { skill, context, path } => {
             let state_path = path
                 .as_deref()
-                .map(|p| std::path::PathBuf::from(p))
+                .map(std::path::PathBuf::from)
                 .unwrap_or_else(|| session_tracker::default_state_path(skill));
             match session_tracker::track_execution(&state_path, skill, context.as_deref()) {
                 Ok(state) => println!("{}", json!(state)),
@@ -32,7 +32,7 @@ pub fn handle_session(action: &SessionAction) {
         SessionAction::Complete { duration_ms, path } => {
             let state_path = path
                 .as_deref()
-                .map(|p| std::path::PathBuf::from(p))
+                .map(std::path::PathBuf::from)
                 .unwrap_or_else(|| session_tracker::default_state_path("default"));
             match session_tracker::track_completion(&state_path, *duration_ms) {
                 Ok(state) => println!("{}", json!(state)),
@@ -42,7 +42,7 @@ pub fn handle_session(action: &SessionAction) {
         SessionAction::Fail { error, path } => {
             let state_path = path
                 .as_deref()
-                .map(|p| std::path::PathBuf::from(p))
+                .map(std::path::PathBuf::from)
                 .unwrap_or_else(|| session_tracker::default_state_path("default"));
             match session_tracker::track_failure(&state_path, error.as_deref()) {
                 Ok(state) => println!("{}", json!(state)),
@@ -52,7 +52,7 @@ pub fn handle_session(action: &SessionAction) {
         SessionAction::Log { skill, message, path } => {
             let log_path = path
                 .as_deref()
-                .map(|p| std::path::PathBuf::from(p))
+                .map(std::path::PathBuf::from)
                 .unwrap_or_else(session_tracker::default_log_path);
             match session_tracker::append_log(&log_path, skill, message) {
                 Ok(()) => println!("{}", json!({"status": "success"})),

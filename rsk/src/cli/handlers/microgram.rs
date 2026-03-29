@@ -1063,22 +1063,22 @@ pub fn handle_microgram(action: &MicrogramAction) {
                                 "mismatch": t.mismatch,
                             })).collect::<Vec<_>>(),
                         });
-                        if let Some(sv) = &r.signature_validation {
-                            if let Some(obj) = entry.as_object_mut() {
-                                obj.insert(
-                                    "signature_validation".to_string(),
-                                    json!({
-                                        "valid": sv.valid,
-                                        "handoff_complete": sv.handoff_complete,
-                                        "sequence": sv.signature_sequence,
-                                        "findings": sv.findings.iter().map(|f| json!({
-                                            "severity": f.severity,
-                                            "step": f.step_name,
-                                            "message": f.message,
-                                        })).collect::<Vec<_>>(),
-                                    })
-                                );
-                            }
+                        if let Some(sv) = &r.signature_validation
+                            && let Some(obj) = entry.as_object_mut()
+                        {
+                            obj.insert(
+                                "signature_validation".to_string(),
+                                json!({
+                                    "valid": sv.valid,
+                                    "handoff_complete": sv.handoff_complete,
+                                    "sequence": sv.signature_sequence,
+                                    "findings": sv.findings.iter().map(|f| json!({
+                                        "severity": f.severity,
+                                        "step": f.step_name,
+                                        "message": f.message,
+                                    })).collect::<Vec<_>>(),
+                                })
+                            );
                         }
                         entry
                     }).collect::<Vec<_>>(),

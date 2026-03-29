@@ -236,28 +236,28 @@ impl Heligram {
         for rule in &self.resolution.rules {
             if let Some(ref when) = rule.when {
                 let matches = when.iter().all(|(key, expected)| {
-                    combined.get(key).map_or(false, |actual| values_match(actual, expected))
+                    combined.get(key).is_some_and(|actual| values_match(actual, expected))
                 });
-                if matches {
-                    if let Some(ref emit) = rule.emit {
-                        let mut output = emit.clone();
-                        // Template substitution: replace {{field}} with actual values
-                        resolve_templates(&mut output, &combined);
-                        // Inject agreement flag
-                        let agreement = self.check_agreement(sense, antisense);
-                        output.insert("agreement".to_string(), Value::Bool(agreement));
-                        return output;
-                    }
-                }
-            }
-            // Default rule (no `when` clause)
-            if rule.when.is_none() {
-                if let Some(ref default) = rule.default {
-                    let mut output = default.clone();
+                if matches
+                    && let Some(ref emit) = rule.emit
+                {
+                    let mut output = emit.clone();
+                    // Template substitution: replace {{field}} with actual values
+                    resolve_templates(&mut output, &combined);
+                    // Inject agreement flag
                     let agreement = self.check_agreement(sense, antisense);
                     output.insert("agreement".to_string(), Value::Bool(agreement));
                     return output;
                 }
+            }
+            // Default rule (no `when` clause)
+            if rule.when.is_none()
+                && let Some(ref default) = rule.default
+            {
+                let mut output = default.clone();
+                let agreement = self.check_agreement(sense, antisense);
+                output.insert("agreement".to_string(), Value::Bool(agreement));
+                return output;
             }
         }
 
@@ -363,7 +363,9 @@ fn values_match(actual: &Value, expected: &Value) -> bool {
         (Value::Int(a), Value::Int(b)) => a == b,
         (Value::Float(a), Value::Float(b)) => (a - b).abs() < f64::EPSILON,
         (Value::Int(a), Value::Float(b)) | (Value::Float(b), Value::Int(a)) => {
-            (*a as f64 - b).abs() < f64::EPSILON
+            #[allow(clippy::as_conversions)]
+            let a_f: f64 = *a as f64;
+            (a_f - b).abs() < f64::EPSILON
         }
         (Value::String(a), Value::String(b)) => a == b,
         (Value::Null, Value::Null) => true,
@@ -375,24 +377,24 @@ fn values_match(actual: &Value, expected: &Value) -> bool {
 fn resolve_templates(output: &mut HashMap<String, Value>, source: &HashMap<String, Value>) {
     let snapshot: Vec<(String, Value)> = output.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
     for (key, val) in snapshot {
-        if let Value::String(s) = &val {
-            if s.contains("{{") {
-                let mut resolved = s.clone();
-                for (src_key, src_val) in source {
-                    let placeholder = format!("{{{{{src_key}}}}}");
-                    if resolved.contains(&placeholder) {
-                        let replacement = match src_val {
-                            Value::String(s) => s.clone(),
-                            Value::Int(n) => n.to_string(),
-                            Value::Float(f) => f.to_string(),
-                            Value::Bool(b) => b.to_string(),
-                            _ => String::new(),
-                        };
-                        resolved = resolved.replace(&placeholder, &replacement);
-                    }
+        if let Value::String(s) = &val
+            && s.contains("{{")
+        {
+            let mut resolved = s.clone();
+            for (src_key, src_val) in source {
+                let placeholder = format!("{{{{{src_key}}}}}");
+                if resolved.contains(&placeholder) {
+                    let replacement = match src_val {
+                        Value::String(s) => s.clone(),
+                        Value::Int(n) => n.to_string(),
+                        Value::Float(f) => f.to_string(),
+                        Value::Bool(b) => b.to_string(),
+                        _ => String::new(),
+                    };
+                    resolved = resolved.replace(&placeholder, &replacement);
                 }
-                output.insert(key, Value::String(resolved));
             }
+            output.insert(key, Value::String(resolved));
         }
     }
 }
@@ -448,7 +450,12 @@ pub fn chain(
         steps.push(result);
     }
 
-    let consensus = if steps.is_empty() { 1.0 } else { agree_count as f64 / steps.len() as f64 };
+    #[allow(clippy::as_conversions)]
+    let consensus = if steps.is_empty() {
+        1.0
+    } else {
+        agree_count as f64 / steps.len() as f64
+    };
 
     Ok(HelixChainResult {
         success: true,
@@ -475,7 +482,7 @@ fn load_all_recursive(dir: &Path, out: &mut Vec<Heligram>) -> Result<(), String>
         let path = entry.path();
         if path.is_dir() {
             load_all_recursive(&path, out)?;
-        } else if path.extension().map_or(false, |ext| ext == "yaml" || ext == "yml") {
+        } else if path.extension().is_some_and(|ext| ext == "yaml" || ext == "yml") {
             match Heligram::load(&path) {
                 Ok(h) => out.push(h),
                 Err(e) => {

@@ -47,6 +47,7 @@ struct Confounder {
     /// Variable name in the antisense tree
     name: String,
     /// What this confounder tests
+    #[allow(dead_code)]
     description: String,
     /// Condition: variable, operator, threshold
     variable: String,
@@ -637,8 +638,7 @@ fn forge_signature(
             .map(|s| s.arguments.clone())
             .unwrap_or_default(),
         chain_prediction: Some(format!(
-            "Forged heligram. Domain: {}. Chains as dual-strand verifier before downstream consumers.",
-            domain_str
+            "Forged heligram. Domain: {domain_str}. Chains as dual-strand verifier before downstream consumers."
         )),
     })
 }
@@ -649,34 +649,23 @@ fn forge_signature(
 fn collect_variables(tree: &DecisionTree) -> Vec<String> {
     let mut vars = Vec::new();
     for node in tree.nodes.values() {
-        if let DecisionNode::Condition { variable, .. } = node {
-            if !vars.contains(variable) {
-                vars.push(variable.clone());
-            }
+        if let DecisionNode::Condition { variable, .. } = node
+            && !vars.contains(variable)
+        {
+            vars.push(variable.clone());
         }
     }
     vars
-}
-
-/// Check if the sense key is known to be boolean.
-fn is_bool_field(sense_key: &str, _base_pairs: &HashMap<String, String>) -> bool {
-    // Known boolean output fields across PV domains
-    matches!(sense_key,
-        "signal_detected" | "is_serious" | "is_fatal" | "is_life_threatening"
-        | "reportable" | "expedited" | "positive" | "on_label" | "is_expected"
-    )
 }
 
 /// Collect boolean output field names from return nodes (preferred for pairing).
 fn collect_bool_output_fields(tree: &DecisionTree) -> Vec<String> {
     let mut fields = Vec::new();
     for node in tree.nodes.values() {
-        if let DecisionNode::Return { value } = node {
-            if let Value::Object(map) = value {
-                for (key, val) in map {
-                    if matches!(val, Value::Bool(_)) && !fields.contains(key) {
-                        fields.push(key.clone());
-                    }
+        if let DecisionNode::Return { value: Value::Object(map) } = node {
+            for (key, val) in map {
+                if matches!(val, Value::Bool(_)) && !fields.contains(key) {
+                    fields.push(key.clone());
                 }
             }
         }
@@ -688,12 +677,10 @@ fn collect_bool_output_fields(tree: &DecisionTree) -> Vec<String> {
 fn collect_output_fields(tree: &DecisionTree) -> Vec<String> {
     let mut fields = Vec::new();
     for node in tree.nodes.values() {
-        if let DecisionNode::Return { value } = node {
-            if let Value::Object(map) = value {
-                for key in map.keys() {
-                    if !fields.contains(key) {
-                        fields.push(key.clone());
-                    }
+        if let DecisionNode::Return { value: Value::Object(map) } = node {
+            for key in map.keys() {
+                if !fields.contains(key) {
+                    fields.push(key.clone());
                 }
             }
         }
@@ -708,23 +695,23 @@ fn has_any(vars: &[String], targets: &[&str]) -> bool {
 
 /// Get the inverted operator of the first condition node.
 fn invert_first_operator(tree: &DecisionTree) -> Operator {
-    if let Some(node) = tree.nodes.get(&tree.start) {
-        if let DecisionNode::Condition { operator, .. } = node {
-            return invert_operator(operator);
-        }
+    if let Some(node) = tree.nodes.get(&tree.start)
+        && let DecisionNode::Condition { operator, .. } = node
+    {
+        return invert_operator(operator);
     }
     Operator::Eq
 }
 
 /// Get the threshold of the first condition node.
 fn first_threshold(tree: &DecisionTree) -> Value {
-    if let Some(node) = tree.nodes.get(&tree.start) {
-        if let DecisionNode::Condition { value, .. } = node {
-            return match value {
-                Some(v) => v.clone(),
-                None => Value::Null,
-            };
-        }
+    if let Some(node) = tree.nodes.get(&tree.start)
+        && let DecisionNode::Condition { value, .. } = node
+    {
+        return match value {
+            Some(v) => v.clone(),
+            None => Value::Null,
+        };
     }
     Value::Null
 }
