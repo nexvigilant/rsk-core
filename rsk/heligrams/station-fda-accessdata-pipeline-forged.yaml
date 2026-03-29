@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    route: falsified
+    priority: falsified
 sense:
   tree:
     start: check_source
@@ -13,17 +13,17 @@ sense:
       orange_book:
         type: return
         value:
-          route: archive
-          reason: Orange Book data — patent/exclusivity reference
           priority: low
           action: reference
-      check_source:
-        type: condition
-        variable: data_type
-        operator: eq
-        value: rems
-        true_next: rems_path
-        false_next: check_approval
+          route: archive
+          reason: Orange Book data — patent/exclusivity reference
+      accelerated_approval:
+        type: return
+        value:
+          action: flag
+          route: pmr_tracking
+          priority: high
+          reason: Accelerated approval — postmarket commitments required, enhanced monitoring
       standard_approval:
         type: return
         value:
@@ -31,20 +31,13 @@ sense:
           priority: low
           action: reference
           reason: Standard approval — baseline safety profile established
-      approval_path:
+      check_source:
         type: condition
-        variable: accelerated
+        variable: data_type
         operator: eq
-        value: true
-        true_next: accelerated_approval
-        false_next: standard_approval
-      accelerated_approval:
-        type: return
-        value:
-          priority: high
-          route: pmr_tracking
-          reason: Accelerated approval — postmarket commitments required, enhanced monitoring
-          action: flag
+        value: rems
+        true_next: rems_path
+        false_next: check_approval
       check_approval:
         type: condition
         variable: data_type
@@ -52,24 +45,24 @@ sense:
         value: approval
         true_next: approval_path
         false_next: orange_book
+      approval_path:
+        type: condition
+        variable: accelerated
+        operator: eq
+        value: true
+        true_next: accelerated_approval
+        false_next: standard_approval
       rems_path:
         type: return
         value:
-          action: escalate
           priority: high
           route: risk_management
           reason: REMS program data — restricted distribution with safety requirements
+          action: escalate
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: data_type
-        operator: neq
-        value: rems
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: data_type
@@ -77,16 +70,23 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      check_negation:
+        type: condition
+        variable: data_type
+        operator: neq
+        value: rems
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -94,21 +94,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence: high
       verdict: confirmed
       confidence_score: 0.7
-      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -117,13 +117,13 @@ interface:
         type: string
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
       verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -133,8 +133,8 @@ tests:
   input:
     data_type: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     data_type: __negated__

@@ -5,18 +5,18 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    priority: falsified
+    severity: falsified
 sense:
   tree:
     start: check_serious
     nodes:
-      check_serious:
-        type: condition
-        variable: is_serious
-        operator: eq
-        value: true
-        true_next: check_fatal
-        false_next: non_serious
+      serious:
+        type: return
+        value:
+          severity: serious
+          soc: Renal and urinary
+          priority: high
+          route: signal_investigation
       check_fatal:
         type: condition
         variable: is_fatal
@@ -24,41 +24,41 @@ sense:
         value: true
         true_next: fatal
         false_next: serious
-      fatal:
-        type: return
-        value:
-          priority: critical
-          soc: Renal and urinary
-          severity: fatal
-          route: causality_assessment
+      check_serious:
+        type: condition
+        variable: is_serious
+        operator: eq
+        value: true
+        true_next: check_fatal
+        false_next: non_serious
       non_serious:
         type: return
         value:
-          severity: non_serious
-          priority: low
           soc: Renal and urinary
+          severity: non_serious
           route: periodic_review
-      serious:
+          priority: low
+      fatal:
         type: return
         value:
-          severity: serious
-          route: signal_investigation
+          severity: fatal
           soc: Renal and urinary
-          priority: high
+          priority: critical
+          route: causality_assessment
 antisense:
   tree:
     start: null_guard_negation
     nodes:
       null_guard_negation:
         type: condition
-        variable: is_serious
+        variable: is_fatal
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
       check_negation:
         type: condition
-        variable: is_serious
+        variable: is_fatal
         operator: neq
         value: true
         true_next: falsified
@@ -71,8 +71,8 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -87,9 +87,9 @@ resolution:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
       confidence: medium
@@ -99,17 +99,17 @@ resolution:
 interface:
   major_groove:
     inputs:
-      is_serious:
+      is_fatal:
         type: bool
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
       verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -117,15 +117,13 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    is_fatal: true
-    is_serious: null
+    is_fatal: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    is_fatal: true
-    is_serious: false
+    is_fatal: false
   expect:
     confidence: low
     verdict: contested

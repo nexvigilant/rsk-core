@@ -5,66 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    persistence_primitive: falsified
+    ich_reference: falsified
 sense:
   tree:
     start: check_permanent
     nodes:
-      return_short_term:
-        type: return
-        value:
-          persistence_primitive: π — does the outcome endure
-          persistence_class: SHORT_TERM
-          ich_reference: ICH E2A Section 3.1 — duration is a modifier of seriousness
-          chemistry_analog: Intermediate half-life decay (T_half 1–7 days)
-          action: Outcome resolved within 1 month. Moderate clinical significance.
-      return_medium_term:
-        type: return
-        value:
-          ich_reference: ICH E2A Section 3.1 — persistent effects indicate seriousness
-          chemistry_analog: Long half-life decay (T_half 7–30 days)
-          persistence_class: MEDIUM_TERM
-          action: Outcome resolved within 3 months. High clinical significance — escalate for further review.
-          persistence_primitive: π — does the outcome endure
-      return_ongoing:
-        type: return
-        value:
-          persistence_primitive: π — does the outcome endure
-          ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-          action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-          persistence_class: ONGOING
-          chemistry_analog: Intermediate reaction (substrate still converting)
-      return_irreversible:
-        type: return
-        value:
-          action: Permanent outcome — regulatory notification required. No recovery expected.
-          ich_reference: ICH E2A Section 3.1 — persistent or significant disability
-          persistence_primitive: π — does the outcome endure
-          chemistry_analog: Covalent bond (permanent modification of tissue/organ function)
-          persistence_class: IRREVERSIBLE
-      return_transient:
-        type: return
-        value:
-          persistence_primitive: π — does the outcome endure
-          persistence_class: TRANSIENT
-          action: Brief outcome resolved within 1 week. Low regulatory priority unless serious.
-          ich_reference: ICH E2A Section 3.3 — mild outcomes with rapid resolution
-          chemistry_analog: Short half-life decay (T_half < 12 hours)
-      return_chronic:
-        type: return
-        value:
-          persistence_class: CHRONIC
-          action: Outcome took >3 months to resolve. Severe persistence — likely serious or unexpected.
-          persistence_primitive: π — does the outcome endure
-          chemistry_analog: Very long half-life decay (T_half > 30 days)
-          ich_reference: ICH E2A Section 3.1 — prolonged course suggests causality strength
-      check_30_days:
-        type: condition
-        variable: days_to_resolution
-        operator: lte
-        value: 30
-        true_next: return_short_term
-        false_next: check_90_days
       classify_by_days:
         type: condition
         variable: days_to_resolution
@@ -72,6 +17,22 @@ sense:
         value: 7
         true_next: return_transient
         false_next: check_30_days
+      return_transient:
+        type: return
+        value:
+          ich_reference: ICH E2A Section 3.3 — mild outcomes with rapid resolution
+          chemistry_analog: Short half-life decay (T_half < 12 hours)
+          persistence_primitive: π — does the outcome endure
+          persistence_class: TRANSIENT
+          action: Brief outcome resolved within 1 week. Low regulatory priority unless serious.
+      return_medium_term:
+        type: return
+        value:
+          chemistry_analog: Long half-life decay (T_half 7–30 days)
+          ich_reference: ICH E2A Section 3.1 — persistent effects indicate seriousness
+          persistence_class: MEDIUM_TERM
+          persistence_primitive: π — does the outcome endure
+          action: Outcome resolved within 3 months. High clinical significance — escalate for further review.
       check_resolved:
         type: condition
         variable: outcome_resolved
@@ -79,6 +40,13 @@ sense:
         value: true
         true_next: classify_by_days
         false_next: return_ongoing
+      check_30_days:
+        type: condition
+        variable: days_to_resolution
+        operator: lte
+        value: 30
+        true_next: return_short_term
+        false_next: check_90_days
       check_90_days:
         type: condition
         variable: days_to_resolution
@@ -86,6 +54,30 @@ sense:
         value: 90
         true_next: return_medium_term
         false_next: return_chronic
+      return_short_term:
+        type: return
+        value:
+          action: Outcome resolved within 1 month. Moderate clinical significance.
+          chemistry_analog: Intermediate half-life decay (T_half 1–7 days)
+          persistence_primitive: π — does the outcome endure
+          persistence_class: SHORT_TERM
+          ich_reference: ICH E2A Section 3.1 — duration is a modifier of seriousness
+      return_chronic:
+        type: return
+        value:
+          ich_reference: ICH E2A Section 3.1 — prolonged course suggests causality strength
+          persistence_primitive: π — does the outcome endure
+          persistence_class: CHRONIC
+          chemistry_analog: Very long half-life decay (T_half > 30 days)
+          action: Outcome took >3 months to resolve. Severe persistence — likely serious or unexpected.
+      return_ongoing:
+        type: return
+        value:
+          persistence_class: ONGOING
+          chemistry_analog: Intermediate reaction (substrate still converting)
+          persistence_primitive: π — does the outcome endure
+          action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+          ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
       check_permanent:
         type: condition
         variable: is_permanent
@@ -93,20 +85,18 @@ sense:
         value: true
         true_next: return_irreversible
         false_next: check_resolved
+      return_irreversible:
+        type: return
+        value:
+          ich_reference: ICH E2A Section 3.1 — persistent or significant disability
+          action: Permanent outcome — regulatory notification required. No recovery expected.
+          persistence_class: IRREVERSIBLE
+          persistence_primitive: π — does the outcome endure
+          chemistry_analog: Covalent bond (permanent modification of tissue/organ function)
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       null_guard_negation:
         type: condition
         variable: days_to_resolution
@@ -121,6 +111,16 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -135,14 +135,14 @@ resolution:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -166,16 +166,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     days_to_resolution: null
-    outcome_resolved: false
-    is_permanent: true
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     days_to_resolution: false
-    outcome_resolved: false
-    is_permanent: true
   expect:
     verdict: contested
     confidence: low

@@ -5,23 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    recommended_depth: falsified
+    portfolio_tier: falsified
 sense:
   tree:
     start: check_large
     nodes:
-      return_large:
-        type: return
-        value:
-          recommended_depth: deep
-          portfolio_tier: large_portfolio
-      check_large:
-        type: condition
-        variable: portfolio_size
-        operator: gte
-        value: 50
-        true_next: return_large
-        false_next: check_mid
       check_mid:
         type: condition
         variable: portfolio_size
@@ -34,11 +22,23 @@ sense:
         value:
           portfolio_tier: mid_portfolio
           recommended_depth: standard
+      check_large:
+        type: condition
+        variable: portfolio_size
+        operator: gte
+        value: 50
+        true_next: return_large
+        false_next: check_mid
       return_niche:
         type: return
         value:
-          recommended_depth: focused
           portfolio_tier: niche_portfolio
+          recommended_depth: focused
+      return_large:
+        type: return
+        value:
+          recommended_depth: deep
+          portfolio_tier: large_portfolio
 antisense:
   tree:
     start: null_guard_negation
@@ -65,8 +65,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -74,9 +74,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence: high
       confidence_score: 0.7
-      verdict: confirmed
   - when:
       falsified: true
     default: null
@@ -86,9 +86,9 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -100,8 +100,11 @@ interface:
         type: string
         required: false
     outputs:
-      recommended_depth:
+      confidence:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
       verdict:
         type: string
@@ -109,25 +112,20 @@ interface:
       portfolio_tier:
         type: string
         required: false
-      confidence:
+      recommended_depth:
         type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    company_key: pfizer
     portfolio_size: 60
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    company_key: pfizer
     portfolio_size: 49
   expect:
     verdict: contested

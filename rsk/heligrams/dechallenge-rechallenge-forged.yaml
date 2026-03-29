@@ -5,25 +5,11 @@ type: heligram
 helix:
   twist_rate: 2
   base_pairs:
-    evidence_strength: falsified
+    causality_support: falsified
 sense:
   tree:
     start: check_dechallenge_done
     nodes:
-      both_positive:
-        type: return
-        value:
-          evidence_strength: STRONG
-          recommendation: Classify as probable or definite causality
-          naranjo_points: 5
-          causality_support: Strongly supports causal relationship
-      check_rechallenge_result:
-        type: condition
-        variable: rechallenge_positive
-        operator: eq
-        value: true
-        true_next: both_positive
-        false_next: mixed_evidence
       check_dechallenge_done:
         type: condition
         variable: dechallenge_performed
@@ -31,27 +17,6 @@ sense:
         value: true
         true_next: check_dechallenge_result
         false_next: no_dechallenge
-      positive_dechallenge_only:
-        type: return
-        value:
-          causality_support: Supports causal relationship — rechallenge data would strengthen
-          recommendation: Classify as possible or probable causality
-          evidence_strength: MODERATE
-          naranjo_points: 2
-      negative_dechallenge:
-        type: return
-        value:
-          recommendation: Evaluate alternative causes and temporal relationship
-          evidence_strength: WEAK
-          naranjo_points: 0
-          causality_support: Does not support causal relationship via dechallenge
-      check_rechallenge_done:
-        type: condition
-        variable: rechallenge_performed
-        operator: eq
-        value: true
-        true_next: check_rechallenge_result
-        false_next: positive_dechallenge_only
       check_dechallenge_result:
         type: condition
         variable: dechallenge_positive
@@ -59,31 +24,66 @@ sense:
         value: true
         true_next: check_rechallenge_done
         false_next: negative_dechallenge
+      positive_dechallenge_only:
+        type: return
+        value:
+          causality_support: Supports causal relationship — rechallenge data would strengthen
+          recommendation: Classify as possible or probable causality
+          evidence_strength: MODERATE
+          naranjo_points: 2
       mixed_evidence:
         type: return
         value:
-          recommendation: Expert review needed — consider confounding factors
+          causality_support: Positive dechallenge but negative rechallenge — conflicting evidence
           naranjo_points: 1
           evidence_strength: CONFLICTING
-          causality_support: Positive dechallenge but negative rechallenge — conflicting evidence
+          recommendation: Expert review needed — consider confounding factors
+      both_positive:
+        type: return
+        value:
+          evidence_strength: STRONG
+          causality_support: Strongly supports causal relationship
+          naranjo_points: 5
+          recommendation: Classify as probable or definite causality
+      check_rechallenge_done:
+        type: condition
+        variable: rechallenge_performed
+        operator: eq
+        value: true
+        true_next: check_rechallenge_result
+        false_next: positive_dechallenge_only
+      check_rechallenge_result:
+        type: condition
+        variable: rechallenge_positive
+        operator: eq
+        value: true
+        true_next: both_positive
+        false_next: mixed_evidence
+      negative_dechallenge:
+        type: return
+        value:
+          recommendation: Evaluate alternative causes and temporal relationship
+          evidence_strength: WEAK
+          naranjo_points: 0
+          causality_support: Does not support causal relationship via dechallenge
       no_dechallenge:
         type: return
         value:
-          recommendation: Rely on temporal relationship and alternative cause assessment
-          evidence_strength: INSUFFICIENT
           naranjo_points: 0
           causality_support: No dechallenge data available
+          evidence_strength: INSUFFICIENT
+          recommendation: Rely on temporal relationship and alternative cause assessment
 antisense:
   tree:
     start: null_guard_alternative_cause
     nodes:
-      null_guard_alternative_cause:
+      null_guard_no_dechallenge:
         type: condition
-        variable: alternative_causes
+        variable: dechallenge_positive
         operator: is_null
         value: null
-        true_next: null_guard_temporal_implausible
-        false_next: check_alternative_cause
+        true_next: not_falsified
+        false_next: check_no_dechallenge
       check_alternative_cause:
         type: condition
         variable: alternative_causes
@@ -91,16 +91,13 @@ antisense:
         value: likely
         true_next: falsified
         false_next: null_guard_temporal_implausible
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
+      null_guard_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: is_null
+        value: null
+        true_next: null_guard_temporal_implausible
+        false_next: check_alternative_cause
       check_temporal_implausible:
         type: condition
         variable: temporal_plausible
@@ -115,6 +112,11 @@ antisense:
         value: null
         true_next: null_guard_no_dechallenge
         false_next: check_temporal_implausible
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       check_no_dechallenge:
         type: condition
         variable: dechallenge_positive
@@ -122,13 +124,11 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      null_guard_no_dechallenge:
-        type: condition
-        variable: dechallenge_positive
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_no_dechallenge
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -136,46 +136,46 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
       confidence: high
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence_score: 0.27999999999999997
       confidence: low
-      verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      temporal_plausible:
-        type: bool
-        required: false
       rechallenge_performed:
-        type: bool
-        required: false
-      dechallenge_performed:
         type: bool
         required: false
       alternative_causes:
         type: string
         required: false
-      dechallenge_positive:
-        type: bool
-        required: false
       rechallenge_positive:
         type: bool
         required: false
+      dechallenge_positive:
+        type: bool
+        required: false
+      temporal_plausible:
+        type: bool
+        required: false
+      dechallenge_performed:
+        type: bool
+        required: false
     outputs:
-      confidence:
-        type: string
+      confidence_score:
+        type: float
         required: false
       evidence_strength:
         type: string
@@ -183,17 +183,17 @@ interface:
       causality_support:
         type: string
         required: false
-      recommendation:
-        type: string
-        required: false
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
         required: false
       naranjo_points:
         type: int
+        required: false
+      recommendation:
+        type: string
+        required: false
+      confidence:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -201,24 +201,24 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     temporal_plausible: true
-    dechallenge_performed: true
+    alternative_causes: none
     dechallenge_positive: true
+    dechallenge_performed: true
     rechallenge_performed: true
     rechallenge_positive: true
-    alternative_causes: none
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, alternative_cause active'
   input:
-    dechallenge_performed: true
+    alternative_causes: likely
     dechallenge_positive: true
+    dechallenge_performed: true
     rechallenge_performed: true
     rechallenge_positive: true
-    alternative_causes: likely
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

@@ -5,39 +5,11 @@ type: heligram
 helix:
   twist_rate: 2
   base_pairs:
-    causality: falsified
+    regulatory_use: falsified
 sense:
   tree:
     start: time_plausible_check
     nodes:
-      certain:
-        type: return
-        value:
-          causality: CERTAIN
-          regulatory_use: Highest confidence for regulatory action
-          who_score: 6
-          description: All criteria met including positive rechallenge
-      known_reaction_check:
-        type: condition
-        variable: known_reaction
-        operator: eq
-        value: true
-        true_next: no_alternative_check
-        false_next: unlikely
-      unclassified:
-        type: return
-        value:
-          who_score: 1
-          regulatory_use: Collect more information before assessment
-          causality: UNCLASSIFIED
-          description: Temporal relationship not established or insufficient information
-      time_plausible_check:
-        type: condition
-        variable: time_plausible
-        operator: eq
-        value: true
-        true_next: known_reaction_check
-        false_next: unclassified
       no_alternative_check:
         type: condition
         variable: no_alternative_explanation
@@ -45,6 +17,34 @@ sense:
         value: true
         true_next: dechallenge_check
         false_next: possible_low
+      unclassified:
+        type: return
+        value:
+          regulatory_use: Collect more information before assessment
+          causality: UNCLASSIFIED
+          who_score: 1
+          description: Temporal relationship not established or insufficient information
+      unlikely:
+        type: return
+        value:
+          who_score: 2
+          description: Plausible time but reaction not previously known to drug
+          causality: UNLIKELY
+          regulatory_use: Low priority for regulatory action
+      time_plausible_check:
+        type: condition
+        variable: time_plausible
+        operator: eq
+        value: true
+        true_next: known_reaction_check
+        false_next: unclassified
+      certain:
+        type: return
+        value:
+          description: All criteria met including positive rechallenge
+          regulatory_use: Highest confidence for regulatory action
+          causality: CERTAIN
+          who_score: 6
       rechallenge_check:
         type: condition
         variable: rechallenge_positive
@@ -52,13 +52,27 @@ sense:
         value: true
         true_next: certain
         false_next: probable
+      known_reaction_check:
+        type: condition
+        variable: known_reaction
+        operator: eq
+        value: true
+        true_next: no_alternative_check
+        false_next: unlikely
       probable:
         type: return
         value:
+          regulatory_use: Strong signal for further investigation
+          description: Plausible time, known reaction, no alternative, positive dechallenge
           who_score: 5
           causality: PROBABLE
-          description: Plausible time, known reaction, no alternative, positive dechallenge
-          regulatory_use: Strong signal for further investigation
+      possible_low:
+        type: return
+        value:
+          regulatory_use: Monitor and collect additional information
+          causality: POSSIBLE
+          description: Plausible time and known reaction but alternative explanations exist
+          who_score: 3
       dechallenge_check:
         type: condition
         variable: dechallenge_positive
@@ -66,20 +80,6 @@ sense:
         value: true
         true_next: rechallenge_check
         false_next: probable
-      unlikely:
-        type: return
-        value:
-          who_score: 2
-          causality: UNLIKELY
-          description: Plausible time but reaction not previously known to drug
-          regulatory_use: Low priority for regulatory action
-      possible_low:
-        type: return
-        value:
-          description: Plausible time and known reaction but alternative explanations exist
-          who_score: 3
-          causality: POSSIBLE
-          regulatory_use: Monitor and collect additional information
 antisense:
   tree:
     start: null_guard_alternative_cause
@@ -89,6 +89,13 @@ antisense:
         value:
           falsified: true
           confounder_count: 1
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_no_dechallenge
       null_guard_alternative_cause:
         type: condition
         variable: alternative_causes
@@ -103,13 +110,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_no_dechallenge
-      check_temporal_implausible:
-        type: condition
-        variable: temporal_plausible
-        operator: eq
-        value: false
-        true_next: falsified
-        false_next: null_guard_no_dechallenge
       check_no_dechallenge:
         type: condition
         variable: dechallenge_positive
@@ -120,8 +120,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
       check_alternative_cause:
         type: condition
         variable: alternative_causes
@@ -143,30 +143,39 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       confidence: high
       verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
       verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
       verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
+      dechallenge_positive:
+        type: bool
+        required: false
       time_plausible:
+        type: bool
+        required: false
+      no_alternative_explanation:
         type: bool
         required: false
       known_reaction:
         type: bool
+        required: false
+      alternative_causes:
+        type: string
         required: false
       rechallenge_positive:
         type: bool
@@ -174,35 +183,26 @@ interface:
       temporal_plausible:
         type: bool
         required: false
-      no_alternative_explanation:
-        type: bool
+    outputs:
+      confidence_score:
+        type: float
         required: false
-      alternative_causes:
+      causality:
         type: string
         required: false
-      dechallenge_positive:
-        type: bool
+      who_score:
+        type: int
         required: false
-    outputs:
-      confidence:
+      verdict:
+        type: string
+        required: false
+      regulatory_use:
         type: string
         required: false
       description:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
-      who_score:
-        type: int
-        required: false
-      regulatory_use:
-        type: string
-        required: false
-      causality:
-        type: string
-        required: false
-      verdict:
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -210,27 +210,27 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    known_reaction: true
-    dechallenge_positive: true
-    rechallenge_positive: true
+    no_alternative_explanation: false
     temporal_plausible: true
-    alternative_causes: none
-    no_alternative_explanation: true
+    known_reaction: true
     time_plausible: true
+    rechallenge_positive: true
+    dechallenge_positive: true
+    alternative_causes: none
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, alternative_cause active'
   input:
-    alternative_causes: likely
-    known_reaction: true
-    no_alternative_explanation: true
-    dechallenge_positive: true
     time_plausible: true
+    no_alternative_explanation: false
+    dechallenge_positive: true
     rechallenge_positive: true
+    known_reaction: true
+    alternative_causes: likely
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

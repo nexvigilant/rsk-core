@@ -10,17 +10,50 @@ sense:
   tree:
     start: check_high_drug_count
     nodes:
+      moderate_risk_interaction:
+        type: return
+        value:
+          recommendation: Pharmacist review of drug interactions within 48 hours
+          risk_level: MODERATE_RISK
+          monitoring_frequency: Weekly monitoring for adverse drug reactions
       moderate_risk_elderly:
         type: return
         value:
-          recommendation: Geriatric medication review using Beers Criteria within 72 hours
           risk_level: MODERATE_RISK
+          recommendation: Geriatric medication review using Beers Criteria within 72 hours
           monitoring_frequency: Weekly monitoring for adverse drug reactions
+      low_risk:
+        type: return
+        value:
+          recommendation: Routine medication reconciliation at next scheduled visit
+          monitoring_frequency: Standard monitoring per disease management protocol
+          risk_level: LOW_RISK
+      check_elderly_high:
+        type: condition
+        variable: patient_age_over_65
+        operator: eq
+        value: true
+        true_next: high_risk
+        false_next: moderate_risk_interaction
+      check_high_drug_count:
+        type: condition
+        variable: drug_count
+        operator: gt
+        value: 5
+        true_next: check_interaction_high
+        false_next: check_moderate_drug_count
+      check_moderate_drug_count:
+        type: condition
+        variable: drug_count
+        operator: gt
+        value: 3
+        true_next: check_elderly_moderate
+        false_next: low_risk
       high_risk:
         type: return
         value:
-          risk_level: HIGH_RISK
           recommendation: Immediate medication review by clinical pharmacist and prescriber
+          risk_level: HIGH_RISK
           monitoring_frequency: Daily clinical monitoring required
       check_elderly_moderate:
         type: condition
@@ -29,33 +62,6 @@ sense:
         value: true
         true_next: moderate_risk_elderly
         false_next: low_risk
-      moderate_risk_interaction:
-        type: return
-        value:
-          recommendation: Pharmacist review of drug interactions within 48 hours
-          monitoring_frequency: Weekly monitoring for adverse drug reactions
-          risk_level: MODERATE_RISK
-      check_high_drug_count:
-        type: condition
-        variable: drug_count
-        operator: gt
-        value: 5
-        true_next: check_interaction_high
-        false_next: check_moderate_drug_count
-      check_elderly_high:
-        type: condition
-        variable: patient_age_over_65
-        operator: eq
-        value: true
-        true_next: high_risk
-        false_next: moderate_risk_interaction
-      check_moderate_drug_count:
-        type: condition
-        variable: drug_count
-        operator: gt
-        value: 3
-        true_next: check_elderly_moderate
-        false_next: low_risk
       check_interaction_high:
         type: condition
         variable: has_known_interaction
@@ -63,21 +69,10 @@ sense:
         value: true
         true_next: check_elderly_high
         false_next: check_moderate_drug_count
-      low_risk:
-        type: return
-        value:
-          recommendation: Routine medication reconciliation at next scheduled visit
-          monitoring_frequency: Standard monitoring per disease management protocol
-          risk_level: LOW_RISK
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       check_negation:
         type: condition
         variable: patient_age_over_65
@@ -85,6 +80,16 @@ antisense:
         value: 5
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       null_guard_negation:
         type: condition
         variable: patient_age_over_65
@@ -92,11 +97,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -104,9 +104,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence_score: 0.7
       confidence: high
-      verdict: confirmed
   - when:
       falsified: true
     default: null
@@ -116,9 +116,9 @@ resolution:
       confidence: low
   - when: null
     default:
-      verdict: indeterminate
       confidence_score: 0.5
       confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -126,23 +126,20 @@ interface:
       patient_age_over_65:
         type: bool
         required: false
-      has_known_interaction:
-        type: bool
-        required: false
       drug_count:
         type: int
         required: false
+      has_known_interaction:
+        type: bool
+        required: false
     outputs:
-      monitoring_frequency:
-        type: string
-        required: false
-      risk_level:
-        type: string
-        required: false
       recommendation:
         type: string
         required: false
       verdict:
+        type: string
+        required: false
+      risk_level:
         type: string
         required: false
       confidence:
@@ -151,21 +148,20 @@ interface:
       confidence_score:
         type: float
         required: false
+      monitoring_frequency:
+        type: string
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    drug_count: 6
-    has_known_interaction: true
     patient_age_over_65: 15
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    drug_count: 6
-    has_known_interaction: true
     patient_age_over_65: 5
   expect:
     verdict: contested

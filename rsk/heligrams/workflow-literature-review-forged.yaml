@@ -5,11 +5,17 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    chain: falsified
+    strategy: falsified
 sense:
   tree:
     start: check_type
     nodes:
+      exploratory_chain:
+        type: return
+        value:
+          strategy: exploratory_search
+          chain: pubmed → wikipedia → drugbank
+          query_type: broad
       check_type:
         type: condition
         variable: question_type
@@ -27,21 +33,15 @@ sense:
       case_chain:
         type: return
         value:
-          chain: pubmed → meddra → who-umc
           query_type: case_report
           strategy: case_report_mining
-      exploratory_chain:
-        type: return
-        value:
-          query_type: broad
-          strategy: exploratory_search
-          chain: pubmed → wikipedia → drugbank
+          chain: pubmed → meddra → who-umc
       systematic_chain:
         type: return
         value:
+          query_type: review
           strategy: systematic_review
           chain: pubmed → clinicaltrials → epidemiology → ich
-          query_type: review
 antisense:
   tree:
     start: null_guard_negation
@@ -53,16 +53,11 @@ antisense:
         value: case_report
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
       null_guard_negation:
         type: condition
         variable: question_type
@@ -70,6 +65,11 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -77,20 +77,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
       verdict: indeterminate
     emit: null
 interface:
@@ -100,14 +100,14 @@ interface:
         type: string
         required: false
     outputs:
-      verdict:
-        type: string
+      confidence_score:
+        type: float
         required: false
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -122,8 +122,8 @@ tests:
   input:
     question_type: __negated__
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

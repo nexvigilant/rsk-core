@@ -17,16 +17,11 @@ sense:
         value: 1.2
         true_next: a_higher
         false_next: check_b_higher
-      a_higher:
-        type: return
-        value:
-          differential: A
-          label: Drug A has higher rate
       b_higher:
         type: return
         value:
-          label: Drug B has higher rate
           differential: B
+          label: Drug B has higher rate
       check_b_higher:
         type: condition
         variable: ratio
@@ -34,6 +29,11 @@ sense:
         value: 0.833
         true_next: b_higher
         false_next: equal
+      a_higher:
+        type: return
+        value:
+          differential: A
+          label: Drug A has higher rate
       equal:
         type: return
         value:
@@ -43,18 +43,16 @@ antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: ratio
-        operator: lte
-        value: 1.2
-        true_next: falsified
-        false_next: not_falsified
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       null_guard_negation:
         type: condition
         variable: ratio
@@ -62,11 +60,13 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
+      check_negation:
+        type: condition
+        variable: ratio
+        operator: lte
+        value: 1.2
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -75,20 +75,20 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
       confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -97,20 +97,20 @@ interface:
         type: float
         required: true
     outputs:
-      confidence:
+      verdict:
         type: string
         required: false
       label:
         type: string
         required: false
-      verdict:
-        type: string
+      confidence_score:
+        type: float
         required: false
       differential:
         type: string
         required: false
-      confidence_score:
-        type: float
+      confidence:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -119,14 +119,14 @@ tests:
   input:
     ratio: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     ratio: 1.2
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

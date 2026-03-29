@@ -5,11 +5,18 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action_if_exceeded: falsified
+    regulatory_reference: falsified
 sense:
   tree:
     start: check_compound
     nodes:
+      ndma_limit:
+        type: return
+        value:
+          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1; ICH M7(R2)'
+          compound_name: N-Nitrosodimethylamine (NDMA)
+          ai_limit_ng_per_day: 96
+          action_if_exceeded: Immediate batch recall. Root cause investigation. Reformulate or implement process controls.
       check_ndea:
         type: condition
         variable: nitrosamine_type
@@ -17,20 +24,13 @@ sense:
         value: ndea
         true_next: ndea_limit
         false_next: check_nmba
-      check_nmpa:
+      check_nipea:
         type: condition
         variable: nitrosamine_type
         operator: eq
-        value: nmpa
-        true_next: nmpa_limit
-        false_next: check_nipea
-      check_ndba:
-        type: condition
-        variable: nitrosamine_type
-        operator: eq
-        value: ndba
-        true_next: ndba_limit
-        false_next: check_mni
+        value: nipea
+        true_next: nipea_limit
+        false_next: check_ndipa
       check_compound:
         type: condition
         variable: nitrosamine_type
@@ -42,79 +42,37 @@ sense:
         type: return
         value:
           action_if_exceeded: Batch recall. Assess manufacturing process for amine + nitrite contact.
-          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
-          ai_limit_ng_per_day: 26
           compound_name: N-Nitroso-N-methyl-phenylamine (NMPA)
-      check_ndipa:
-        type: condition
-        variable: nitrosamine_type
-        operator: eq
-        value: ndipa
-        true_next: ndipa_limit
-        false_next: check_ndba
-      ndba_limit:
-        type: return
-        value:
-          compound_name: N-Nitrosodibutylamine (NDBA)
-          action_if_exceeded: Batch recall. Assess rubber stopper and packaging contact.
-          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
           ai_limit_ng_per_day: 26
-      check_nipea:
-        type: condition
-        variable: nitrosamine_type
-        operator: eq
-        value: nipea
-        true_next: nipea_limit
-        false_next: check_ndipa
+          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
       ndipa_limit:
         type: return
         value:
-          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
           ai_limit_ng_per_day: 26
           compound_name: N-Nitrosodiisopropylamine (NDIPA)
-          action_if_exceeded: Batch recall. Investigate solvent and reagent contamination.
-      ndea_limit:
-        type: return
-        value:
-          action_if_exceeded: Immediate batch recall. More potent carcinogen than NDMA — lower limit.
-          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1; ICH M7(R2)'
-          ai_limit_ng_per_day: 26
-          compound_name: N-Nitrosodiethylamine (NDEA)
-      mni_limit:
-        type: return
-        value:
           regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
+          action_if_exceeded: Batch recall. Investigate solvent and reagent contamination.
+      nipea_limit:
+        type: return
+        value:
           ai_limit_ng_per_day: 26
-          action_if_exceeded: Batch recall. Evaluate piperazine-containing API synthesis.
-          compound_name: 1-Methyl-4-nitrosopiperazine (MNI)
+          action_if_exceeded: Batch recall. Review synthesis and degradation pathways.
+          compound_name: N-Nitrosoisopropylethylamine (NIPEA)
+          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
       nmba_limit:
         type: return
         value:
           action_if_exceeded: Batch recall if exceeds limit. Investigate synthesis pathway for nitrosation sources.
-          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
           ai_limit_ng_per_day: 96
+          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
           compound_name: N-Nitroso-N-methyl-4-aminobutyric acid (NMBA)
-      nipea_limit:
+      ndba_limit:
         type: return
         value:
-          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
-          compound_name: N-Nitrosoisopropylethylamine (NIPEA)
-          action_if_exceeded: Batch recall. Review synthesis and degradation pathways.
           ai_limit_ng_per_day: 26
-      ndma_limit:
-        type: return
-        value:
-          ai_limit_ng_per_day: 96
-          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1; ICH M7(R2)'
-          compound_name: N-Nitrosodimethylamine (NDMA)
-          action_if_exceeded: Immediate batch recall. Root cause investigation. Reformulate or implement process controls.
-      check_mni:
-        type: condition
-        variable: nitrosamine_type
-        operator: eq
-        value: mni
-        true_next: mni_limit
-        false_next: ndsri_default
+          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
+          compound_name: N-Nitrosodibutylamine (NDBA)
+          action_if_exceeded: Batch recall. Assess rubber stopper and packaging contact.
       check_nmba:
         type: condition
         variable: nitrosamine_type
@@ -125,10 +83,52 @@ sense:
       ndsri_default:
         type: return
         value:
-          action_if_exceeded: Apply default 18 ng/day AI for uncharacterized NDSRIs. Conduct Ames mutagenicity test. Derive compound-specific AI if negative.
           compound_name: Generic NDSRI (drug substance-related nitrosamine)
-          regulatory_reference: 'FDA Guidance: NDSRI AI Limits (2023), Section III — Default AI for NDSRIs; ICH M7(R2) TTC'
           ai_limit_ng_per_day: 18
+          regulatory_reference: 'FDA Guidance: NDSRI AI Limits (2023), Section III — Default AI for NDSRIs; ICH M7(R2) TTC'
+          action_if_exceeded: Apply default 18 ng/day AI for uncharacterized NDSRIs. Conduct Ames mutagenicity test. Derive compound-specific AI if negative.
+      check_ndba:
+        type: condition
+        variable: nitrosamine_type
+        operator: eq
+        value: ndba
+        true_next: ndba_limit
+        false_next: check_mni
+      check_ndipa:
+        type: condition
+        variable: nitrosamine_type
+        operator: eq
+        value: ndipa
+        true_next: ndipa_limit
+        false_next: check_ndba
+      check_nmpa:
+        type: condition
+        variable: nitrosamine_type
+        operator: eq
+        value: nmpa
+        true_next: nmpa_limit
+        false_next: check_nipea
+      check_mni:
+        type: condition
+        variable: nitrosamine_type
+        operator: eq
+        value: mni
+        true_next: mni_limit
+        false_next: ndsri_default
+      mni_limit:
+        type: return
+        value:
+          action_if_exceeded: Batch recall. Evaluate piperazine-containing API synthesis.
+          compound_name: 1-Methyl-4-nitrosopiperazine (MNI)
+          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1'
+          ai_limit_ng_per_day: 26
+      ndea_limit:
+        type: return
+        value:
+          action_if_exceeded: Immediate batch recall. More potent carcinogen than NDMA — lower limit.
+          regulatory_reference: 'FDA Guidance: Nitrosamine AI Limits (2023), Table 1; ICH M7(R2)'
+          compound_name: N-Nitrosodiethylamine (NDEA)
+          ai_limit_ng_per_day: 26
 antisense:
   tree:
     start: null_guard_negation
@@ -136,20 +136,8 @@ antisense:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      check_negation:
-        type: condition
-        variable: nitrosamine_type
-        operator: neq
-        value: ndma
-        true_next: falsified
-        false_next: not_falsified
+          confounder_count: 1
       null_guard_negation:
         type: condition
         variable: nitrosamine_type
@@ -157,6 +145,18 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      check_negation:
+        type: condition
+        variable: nitrosamine_type
+        operator: neq
+        value: ndma
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -164,54 +164,54 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       verdict: confirmed
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
+      confidence: low
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
       confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      product_type:
-        type: string
-        required: false
       nitrosamine_type:
         type: string
         required: true
+      product_type:
+        type: string
+        required: false
       duration_of_use:
         type: string
         required: false
     outputs:
-      compound_name:
-        type: string
-        required: false
-      confidence:
-        type: string
-        required: false
       action_if_exceeded:
         type: string
         required: false
-      ai_limit_ng_per_day:
-        type: int
-        required: false
-      verdict:
+      regulatory_reference:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      regulatory_reference:
+      ai_limit_ng_per_day:
+        type: int
+        required: false
+      compound_name:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -221,8 +221,8 @@ tests:
   input:
     nitrosamine_type: null
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     nitrosamine_type: __negated__

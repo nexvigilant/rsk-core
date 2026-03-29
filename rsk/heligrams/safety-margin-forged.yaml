@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    color: falsified
+    score_min: falsified
 sense:
   tree:
     start: check_danger
@@ -13,10 +13,24 @@ sense:
       caution:
         type: return
         value:
-          color: yellow
           score_min: 33
           zone: CAUTION
+          color: yellow
           score_max: 66
+      safe:
+        type: return
+        value:
+          color: green
+          score_min: 66
+          score_max: 100
+          zone: SAFE
+      danger:
+        type: return
+        value:
+          color: red
+          score_max: 33
+          zone: DANGER
+          score_min: 0
       check_danger:
         type: condition
         variable: d
@@ -24,20 +38,6 @@ sense:
         value: 0
         true_next: danger
         false_next: check_caution
-      danger:
-        type: return
-        value:
-          zone: DANGER
-          score_max: 33
-          score_min: 0
-          color: red
-      safe:
-        type: return
-        value:
-          score_min: 66
-          score_max: 100
-          color: green
-          zone: SAFE
       check_caution:
         type: condition
         variable: d
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       confidence_score: 0.7
+      confidence: high
       verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
-      verdict: contested
       confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
   - when: null
     default:
-      verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -103,10 +103,16 @@ interface:
         type: float
         required: true
     outputs:
-      verdict:
+      zone:
         type: string
         required: false
       score_max:
+        type: int
+        required: false
+      verdict:
+        type: string
+        required: false
+      score_min:
         type: int
         required: false
       color:
@@ -117,12 +123,6 @@ interface:
         required: false
       confidence_score:
         type: float
-        required: false
-      score_min:
-        type: int
-        required: false
-      zone:
-        type: string
         required: false
     aliases: {}
   minor_groove: null

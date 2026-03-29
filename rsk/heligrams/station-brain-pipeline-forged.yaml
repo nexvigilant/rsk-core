@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    priority: falsified
+    action: falsified
 sense:
   tree:
     start: check_verdict
@@ -13,24 +13,17 @@ sense:
       artifact_bloat:
         type: return
         value:
-          priority: moderate
-          route: artifact_cleanup
           action: prune
+          priority: moderate
           reason: 20+ stale artifacts — archive or resolve
-      healthy:
+          route: artifact_cleanup
+      sync_broken:
         type: return
         value:
-          route: archive
-          reason: Brain healthy — verdicts flowing, stores synced, artifacts fresh
-          priority: low
-          action: certify
-      check_sync:
-        type: condition
-        variable: dual_store_synced
-        operator: eq
-        value: true
-        true_next: check_artifacts
-        false_next: sync_broken
+          action: repair
+          reason: Dual-store divergence — JSON and SQLite disagree
+          route: brain_reconcile
+          priority: critical
       check_artifacts:
         type: condition
         variable: stale_artifact_count
@@ -45,48 +38,55 @@ sense:
         value: 50
         true_next: check_sync
         false_next: low_verdicts
-      sync_broken:
-        type: return
-        value:
-          priority: critical
-          action: repair
-          reason: Dual-store divergence — JSON and SQLite disagree
-          route: brain_reconcile
       low_verdicts:
         type: return
         value:
-          reason: Model verdict rate <50% — most sessions unmeasured
           priority: high
-          route: session_discipline
           action: alert
+          route: session_discipline
+          reason: Model verdict rate <50% — most sessions unmeasured
+      healthy:
+        type: return
+        value:
+          priority: low
+          action: certify
+          route: archive
+          reason: Brain healthy — verdicts flowing, stores synced, artifacts fresh
+      check_sync:
+        type: condition
+        variable: dual_store_synced
+        operator: eq
+        value: true
+        true_next: check_artifacts
+        false_next: sync_broken
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
+      null_guard_negation:
         type: condition
-        variable: dual_store_synced
-        operator: lt
-        value: 50
-        true_next: falsified
-        false_next: not_falsified
+        variable: stale_artifact_count
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       not_falsified:
         type: return
         value:
           falsified: false
           confounder_count: 0
+      check_negation:
+        type: condition
+        variable: stale_artifact_count
+        operator: lt
+        value: 50
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
-      null_guard_negation:
-        type: condition
-        variable: dual_store_synced
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -95,32 +95,32 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
+      verdict: indeterminate
       confidence_score: 0.5
       confidence: medium
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      dual_store_synced:
+      stale_artifact_count:
         type: integer
         required: false
     outputs:
-      confidence:
+      verdict:
         type: string
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
       confidence_score:
@@ -131,20 +131,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    dual_store_synced: 60
-    stale_artifact_count: 5
-    verdict_rate_pct: 30
+    stale_artifact_count: 60
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    dual_store_synced: 49
-    stale_artifact_count: 5
-    verdict_rate_pct: 30
+    stale_artifact_count: 49
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

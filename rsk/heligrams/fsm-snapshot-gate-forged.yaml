@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    description: falsified
+    decision: falsified
 sense:
   tree:
     start: check_state_changed
@@ -24,32 +24,20 @@ sense:
         value: true
         true_next: snapshot
         false_next: check_time_elapsed
-      skip:
-        type: return
-        value:
-          description: State unchanged and snapshot recent - skip redundant snapshot
-          decision: SKIP
       snapshot:
         type: return
         value:
           decision: SNAPSHOT
           description: State changed or 60+ minutes elapsed - create FSM snapshot
+      skip:
+        type: return
+        value:
+          decision: SKIP
+          description: State unchanged and snapshot recent - skip redundant snapshot
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: minutes_since_last_snapshot
-        operator: neq
-        value: true
-        true_next: falsified
-        false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       null_guard_negation:
         type: condition
         variable: minutes_since_last_snapshot
@@ -60,8 +48,20 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: minutes_since_last_snapshot
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -69,21 +69,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
       verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -95,10 +95,13 @@ interface:
         type: bool
         required: false
     outputs:
+      confidence:
+        type: string
+        required: false
       description:
         type: string
         required: false
-      confidence:
+      decision:
         type: string
         required: false
       confidence_score:
@@ -107,26 +110,21 @@ interface:
       verdict:
         type: string
         required: false
-      decision:
-        type: string
-        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     minutes_since_last_snapshot: null
-    state_changed: true
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     minutes_since_last_snapshot: false
-    state_changed: true
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

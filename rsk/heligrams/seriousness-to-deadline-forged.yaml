@@ -10,34 +10,41 @@ sense:
   tree:
     start: check_fatal
     nodes:
-      check_serious_expected_fatal:
-        type: return
-        value:
-          report_category: periodic
-          regulatory_basis: ICH E2B - fatal but expected reaction included in periodic safety update
-          deadline_days: 90
-          deadline_type: PERIODIC_PSUR
-      check_serious_unexpected:
-        type: condition
-        variable: is_unexpected
-        operator: eq
-        value: true
-        true_next: fifteen_day_expedited
-        false_next: periodic_psur
       fifteen_day_expedited:
         type: return
         value:
-          deadline_type: 15_DAY_EXPEDITED
           report_category: expedited
-          deadline_days: 15
           regulatory_basis: ICH E2B - serious unexpected reaction requires 15-day expedited report
-      check_fatal:
-        type: condition
-        variable: is_fatal
-        operator: eq
-        value: true
-        true_next: check_fatal_unexpected
-        false_next: check_life_threatening
+          deadline_days: 15
+          deadline_type: 15_DAY_EXPEDITED
+      periodic_standard:
+        type: return
+        value:
+          deadline_days: 180
+          regulatory_basis: ICH E2B - non-serious reaction included in standard periodic reporting
+          report_category: periodic
+          deadline_type: PERIODIC_STANDARD
+      periodic_psur:
+        type: return
+        value:
+          deadline_type: PERIODIC_PSUR
+          report_category: periodic
+          regulatory_basis: ICH E2B - serious expected reaction included in PSUR/PBRER cycle
+          deadline_days: 90
+      check_serious_expected_fatal:
+        type: return
+        value:
+          deadline_type: PERIODIC_PSUR
+          regulatory_basis: ICH E2B - fatal but expected reaction included in periodic safety update
+          deadline_days: 90
+          report_category: periodic
+      seven_day_expedited:
+        type: return
+        value:
+          deadline_type: 7_DAY_EXPEDITED
+          report_category: expedited
+          regulatory_basis: ICH E2B - fatal/life-threatening unexpected reaction requires 7-day expedited report
+          deadline_days: 7
       check_lt_unexpected:
         type: condition
         variable: is_unexpected
@@ -52,34 +59,13 @@ sense:
         value: true
         true_next: check_serious_unexpected
         false_next: periodic_standard
-      check_life_threatening:
+      check_serious_unexpected:
         type: condition
-        variable: is_life_threatening
+        variable: is_unexpected
         operator: eq
         value: true
-        true_next: check_lt_unexpected
-        false_next: check_serious
-      periodic_psur:
-        type: return
-        value:
-          regulatory_basis: ICH E2B - serious expected reaction included in PSUR/PBRER cycle
-          deadline_type: PERIODIC_PSUR
-          deadline_days: 90
-          report_category: periodic
-      periodic_standard:
-        type: return
-        value:
-          regulatory_basis: ICH E2B - non-serious reaction included in standard periodic reporting
-          deadline_type: PERIODIC_STANDARD
-          deadline_days: 180
-          report_category: periodic
-      seven_day_expedited:
-        type: return
-        value:
-          report_category: expedited
-          deadline_type: 7_DAY_EXPEDITED
-          deadline_days: 7
-          regulatory_basis: ICH E2B - fatal/life-threatening unexpected reaction requires 7-day expedited report
+        true_next: fifteen_day_expedited
+        false_next: periodic_psur
       check_fatal_unexpected:
         type: condition
         variable: is_unexpected
@@ -90,10 +76,24 @@ sense:
       check_serious_expected_lt:
         type: return
         value:
+          report_category: periodic
           regulatory_basis: ICH E2B - life-threatening but expected reaction included in periodic safety update
           deadline_days: 90
           deadline_type: PERIODIC_PSUR
-          report_category: periodic
+      check_fatal:
+        type: condition
+        variable: is_fatal
+        operator: eq
+        value: true
+        true_next: check_fatal_unexpected
+        false_next: check_life_threatening
+      check_life_threatening:
+        type: condition
+        variable: is_life_threatening
+        operator: eq
+        value: true
+        true_next: check_lt_unexpected
+        false_next: check_serious
 antisense:
   tree:
     start: null_guard_negation
@@ -108,8 +108,8 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
       null_guard_negation:
         type: condition
         variable: is_unexpected
@@ -129,21 +129,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7
       verdict: confirmed
-      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence_score: 0.27999999999999997
       confidence: low
+      verdict: contested
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -154,32 +154,32 @@ interface:
       is_fatal:
         type: bool
         required: false
-      is_unexpected:
-        type: bool
-        required: false
       is_life_threatening:
         type: bool
         required: false
+      is_unexpected:
+        type: bool
+        required: false
     outputs:
-      confidence_score:
-        type: float
-        required: false
-      report_category:
-        type: string
-        required: false
-      regulatory_basis:
-        type: string
-        required: false
       deadline_days:
         type: int
         required: false
-      deadline_type:
+      confidence_score:
+        type: float
+        required: false
+      regulatory_basis:
         type: string
         required: false
       verdict:
         type: string
         required: false
+      deadline_type:
+        type: string
+        required: false
       confidence:
+        type: string
+        required: false
+      report_category:
         type: string
         required: false
     aliases: {}
@@ -187,19 +187,13 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    is_serious: true
-    is_fatal: true
     is_unexpected: null
-    is_life_threatening: false
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    is_serious: true
-    is_fatal: true
     is_unexpected: false
-    is_life_threatening: false
   expect:
     confidence: low
     verdict: contested

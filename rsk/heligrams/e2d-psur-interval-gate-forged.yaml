@@ -5,81 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    submission_interval_months: falsified
+    regulatory_reference: falsified
 sense:
   tree:
     start: check_signal_identified
     nodes:
-      check_signal_identified:
-        type: condition
-        variable: signal_identified
-        operator: eq
-        value: true
-        true_next: return_signal_triggered
-        false_next: check_additional_monitoring
-      check_ibdd:
-        type: condition
-        variable: ibdd_defined
-        operator: eq
-        value: true
-        true_next: check_years_since_approval
-        false_next: check_eu_registered
-      return_6_monthly:
-        type: return
-        value:
-          submission_interval_months: 6
-          regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
-          trigger: IBDD_EARLY_PHASE_OR_ADDITIONAL_MONITORING
-          report_type: PSUR_PBRER
-      check_years_since_approval:
-        type: condition
-        variable: years_since_first_approval
-        operator: lte
-        value: 2
-        true_next: return_6_monthly
-        false_next: check_years_5
-      return_annual_eu:
-        type: return
-        value:
-          submission_interval_months: 12
-          report_type: PSUR_EU_SINGLE_ASSESSMENT
-          regulatory_reference: ICH E2C(R2) Section 4 / EU 726-2004 Article 107e
-          trigger: EU_EURD_LIST
-      return_annual:
-        type: return
-        value:
-          submission_interval_months: 12
-          trigger: IBDD_STANDARD_INTERVAL
-          report_type: PSUR_PBRER
-          regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
-      check_eu_registered:
-        type: condition
-        variable: eu_registered
-        operator: eq
-        value: true
-        true_next: return_annual_eu
-        false_next: return_annual
-      return_triennial:
-        type: return
-        value:
-          regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
-          report_type: PSUR_PBRER
-          trigger: IBDD_MATURE_PRODUCT
-          submission_interval_months: 36
-      return_signal_triggered:
-        type: return
-        value:
-          submission_interval_months: 0
-          report_type: SIGNAL_TRIGGERED_PSUR
-          trigger: SAFETY_SIGNAL_DETECTED
-          regulatory_reference: ICH E2D Section 6 / ICH E2C(R2) Appendix
-      check_years_5:
-        type: condition
-        variable: years_since_first_approval
-        operator: lte
-        value: 5
-        true_next: return_annual
-        false_next: return_triennial
       check_additional_monitoring:
         type: condition
         variable: under_additional_monitoring
@@ -87,34 +17,104 @@ sense:
         value: true
         true_next: return_6_monthly
         false_next: check_ibdd
+      return_6_monthly:
+        type: return
+        value:
+          regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
+          report_type: PSUR_PBRER
+          trigger: IBDD_EARLY_PHASE_OR_ADDITIONAL_MONITORING
+          submission_interval_months: 6
+      check_signal_identified:
+        type: condition
+        variable: signal_identified
+        operator: eq
+        value: true
+        true_next: return_signal_triggered
+        false_next: check_additional_monitoring
+      check_eu_registered:
+        type: condition
+        variable: eu_registered
+        operator: eq
+        value: true
+        true_next: return_annual_eu
+        false_next: return_annual
+      return_annual:
+        type: return
+        value:
+          regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
+          submission_interval_months: 12
+          report_type: PSUR_PBRER
+          trigger: IBDD_STANDARD_INTERVAL
+      return_signal_triggered:
+        type: return
+        value:
+          submission_interval_months: 0
+          trigger: SAFETY_SIGNAL_DETECTED
+          regulatory_reference: ICH E2D Section 6 / ICH E2C(R2) Appendix
+          report_type: SIGNAL_TRIGGERED_PSUR
+      check_years_5:
+        type: condition
+        variable: years_since_first_approval
+        operator: lte
+        value: 5
+        true_next: return_annual
+        false_next: return_triennial
+      check_ibdd:
+        type: condition
+        variable: ibdd_defined
+        operator: eq
+        value: true
+        true_next: check_years_since_approval
+        false_next: check_eu_registered
+      return_annual_eu:
+        type: return
+        value:
+          regulatory_reference: ICH E2C(R2) Section 4 / EU 726-2004 Article 107e
+          submission_interval_months: 12
+          report_type: PSUR_EU_SINGLE_ASSESSMENT
+          trigger: EU_EURD_LIST
+      return_triennial:
+        type: return
+        value:
+          submission_interval_months: 36
+          regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
+          report_type: PSUR_PBRER
+          trigger: IBDD_MATURE_PRODUCT
+      check_years_since_approval:
+        type: condition
+        variable: years_since_first_approval
+        operator: lte
+        value: 2
+        true_next: return_6_monthly
+        false_next: check_years_5
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
-      check_negation:
-        type: condition
-        variable: signal_identified
-        operator: neq
-        value: true
-        true_next: falsified
-        false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       null_guard_negation:
         type: condition
-        variable: signal_identified
+        variable: under_additional_monitoring
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
+      check_negation:
+        type: condition
+        variable: under_additional_monitoring
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -122,35 +122,35 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       confidence: high
       verdict: confirmed
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
       verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      under_additional_monitoring:
-        type: bool
-        required: false
-      signal_identified:
-        type: bool
-        required: false
       years_since_first_approval:
         type: int
         required: false
       ibdd_defined:
+        type: bool
+        required: false
+      under_additional_monitoring:
+        type: bool
+        required: false
+      signal_identified:
         type: bool
         required: false
       eu_registered:
@@ -163,44 +163,36 @@ interface:
       report_type:
         type: string
         required: false
-      trigger:
-        type: string
-        required: false
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      submission_interval_months:
-        type: int
+      trigger:
+        type: string
         required: false
       verdict:
         type: string
+        required: false
+      submission_interval_months:
+        type: int
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    signal_identified: null
-    ibdd_defined: true
-    eu_registered: false
-    under_additional_monitoring: false
-    years_since_first_approval: 1
+    under_additional_monitoring: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    signal_identified: false
-    ibdd_defined: true
-    eu_registered: false
     under_additional_monitoring: false
-    years_since_first_approval: 1
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

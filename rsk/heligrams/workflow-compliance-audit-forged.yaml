@@ -10,18 +10,6 @@ sense:
   tree:
     start: check_framework
     nodes:
-      fda_audit:
-        type: return
-        value:
-          scope: us
-          audit: fda_compliance
-          chain: fda-safety → fda-accessdata → compliance
-      ich_audit:
-        type: return
-        value:
-          scope: global
-          chain: ich → compliance → cioms
-          audit: ich_compliance
       check_framework:
         type: condition
         variable: framework
@@ -29,6 +17,12 @@ sense:
         value: ich
         true_next: ich_audit
         false_next: check_fda
+      fda_audit:
+        type: return
+        value:
+          scope: us
+          chain: fda-safety → fda-accessdata → compliance
+          audit: fda_compliance
       check_fda:
         type: condition
         variable: framework
@@ -39,9 +33,15 @@ sense:
       ema_audit:
         type: return
         value:
-          chain: ema → eudravigilance → compliance
           scope: eu
+          chain: ema → eudravigilance → compliance
           audit: ema_compliance
+      ich_audit:
+        type: return
+        value:
+          scope: global
+          audit: ich_compliance
+          chain: ich → compliance → cioms
 antisense:
   tree:
     start: null_guard_negation
@@ -89,9 +89,9 @@ resolution:
       confidence: low
   - when: null
     default:
-      verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -100,14 +100,14 @@ interface:
         type: string
         required: false
     outputs:
-      confidence_score:
-        type: float
+      verdict:
+        type: string
         required: false
       confidence:
         type: string
         required: false
-      verdict:
-        type: string
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -122,8 +122,8 @@ tests:
   input:
     framework: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

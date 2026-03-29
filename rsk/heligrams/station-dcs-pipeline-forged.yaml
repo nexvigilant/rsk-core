@@ -5,39 +5,18 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action: falsified
+    route: falsified
 sense:
   tree:
     start: check_load
     nodes:
-      partitioned:
-        type: return
-        value:
-          action: failover
-          reason: Network partition detected — activate failover
-          route: partition_recovery
-          priority: critical
-      overloaded:
-        type: return
-        value:
-          reason: CPU ≥80% — horizontal scaling needed
-          route: autoscale
-          action: scale
-          priority: high
       nominal:
         type: return
         value:
-          reason: Load normal, no partitions — nominal operation
-          priority: low
           route: archive
+          priority: low
           action: proceed
-      check_partition:
-        type: condition
-        variable: partition_detected
-        operator: eq
-        value: true
-        true_next: partitioned
-        false_next: nominal
+          reason: Load normal, no partitions — nominal operation
       check_load:
         type: condition
         variable: cpu_pct
@@ -45,17 +24,45 @@ sense:
         value: 80
         true_next: overloaded
         false_next: check_partition
+      overloaded:
+        type: return
+        value:
+          priority: high
+          reason: CPU ≥80% — horizontal scaling needed
+          action: scale
+          route: autoscale
+      partitioned:
+        type: return
+        value:
+          action: failover
+          priority: critical
+          route: partition_recovery
+          reason: Network partition detected — activate failover
+      check_partition:
+        type: condition
+        variable: partition_detected
+        operator: eq
+        value: true
+        true_next: partitioned
+        false_next: nominal
 antisense:
   tree:
     start: null_guard_negation
     nodes:
       check_negation:
         type: condition
-        variable: partition_detected
+        variable: cpu_pct
         operator: lt
         value: 80
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: cpu_pct
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       not_falsified:
         type: return
         value:
@@ -66,13 +73,6 @@ antisense:
         value:
           confounder_count: 1
           falsified: true
-      null_guard_negation:
-        type: condition
-        variable: partition_detected
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -93,42 +93,40 @@ resolution:
   - when: null
     default:
       confidence: medium
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      partition_detected:
+      cpu_pct:
         type: integer
         required: false
     outputs:
-      confidence_score:
-        type: float
+      confidence:
+        type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence:
-        type: string
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    partition_detected: 90
     cpu_pct: 90
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    partition_detected: 79
-    cpu_pct: 90
+    cpu_pct: 79
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

@@ -10,22 +10,29 @@ sense:
   tree:
     start: check_serious
     nodes:
-      return_serious_expected:
+      return_15_day_study:
         type: return
         value:
-          regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
-          report_type: PERIODIC_PSUR
-          reporting_category: periodic
-          action_required: false
-          deadline_days: 90
+          deadline_days: 15
+          regulatory_reference: ICH E2D Section 4.3 - Post-Approval Study Reporting
+          action_required: true
+          reporting_category: post_approval_study_expedited
+          report_type: EXPEDITED_15_DAY_STUDY
+      check_unexpected:
+        type: condition
+        variable: is_unexpected
+        operator: eq
+        value: true
+        true_next: check_fatal
+        false_next: return_serious_expected
       return_non_serious:
         type: return
         value:
-          regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
           report_type: PERIODIC_LINE_LISTING
-          reporting_category: periodic
           action_required: false
           deadline_days: 90
+          reporting_category: periodic
+          regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
       check_serious:
         type: condition
         variable: is_serious
@@ -36,26 +43,11 @@ sense:
       return_15_day_spontaneous:
         type: return
         value:
-          reporting_category: post_approval_expedited
-          regulatory_reference: ICH E2D Section 4.1 - Expedited Reporting Requirements
+          action_required: true
           report_type: EXPEDITED_15_DAY
-          action_required: true
+          regulatory_reference: ICH E2D Section 4.1 - Expedited Reporting Requirements
+          reporting_category: post_approval_expedited
           deadline_days: 15
-      return_15_day_study:
-        type: return
-        value:
-          regulatory_reference: ICH E2D Section 4.3 - Post-Approval Study Reporting
-          deadline_days: 15
-          action_required: true
-          report_type: EXPEDITED_15_DAY_STUDY
-          reporting_category: post_approval_study_expedited
-      check_unexpected:
-        type: condition
-        variable: is_unexpected
-        operator: eq
-        value: true
-        true_next: check_fatal
-        false_next: return_serious_expected
       check_life_threatening:
         type: condition
         variable: is_life_threatening
@@ -63,13 +55,14 @@ sense:
         value: true
         true_next: return_7_day
         false_next: check_study_postapproval
-      check_fatal:
-        type: condition
-        variable: is_fatal
-        operator: eq
-        value: true
-        true_next: return_7_day
-        false_next: check_life_threatening
+      return_7_day:
+        type: return
+        value:
+          reporting_category: post_approval_expedited
+          regulatory_reference: ICH E2D Section 4.1 - Expedited Reporting Requirements
+          action_required: true
+          report_type: EXPEDITED_7_DAY
+          deadline_days: 7
       check_study_postapproval:
         type: condition
         variable: study_type
@@ -77,14 +70,21 @@ sense:
         value: postapproval_study
         true_next: return_15_day_study
         false_next: return_15_day_spontaneous
-      return_7_day:
+      check_fatal:
+        type: condition
+        variable: is_fatal
+        operator: eq
+        value: true
+        true_next: return_7_day
+        false_next: check_life_threatening
+      return_serious_expected:
         type: return
         value:
-          action_required: true
-          regulatory_reference: ICH E2D Section 4.1 - Expedited Reporting Requirements
-          deadline_days: 7
-          reporting_category: post_approval_expedited
-          report_type: EXPEDITED_7_DAY
+          regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
+          deadline_days: 90
+          report_type: PERIODIC_PSUR
+          action_required: false
+          reporting_category: periodic
 antisense:
   tree:
     start: null_guard_incomplete_info
@@ -94,6 +94,18 @@ antisense:
         value:
           confounder_count: 0
           falsified: false
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_coding_error
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       null_guard_coding_error:
         type: condition
         variable: coding_verified
@@ -108,20 +120,6 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      null_guard_incomplete_info:
-        type: condition
-        variable: follow_up_complete
-        operator: is_null
-        value: null
-        true_next: null_guard_comorbidity_confound
-        false_next: check_incomplete_info
-      null_guard_comorbidity_confound:
-        type: condition
-        variable: comorbidity_explains
-        operator: is_null
-        value: null
-        true_next: null_guard_coding_error
-        false_next: check_comorbidity_confound
       check_incomplete_info:
         type: condition
         variable: follow_up_complete
@@ -129,18 +127,20 @@ antisense:
         value: false
         true_next: falsified
         false_next: null_guard_comorbidity_confound
-      check_comorbidity_confound:
+      null_guard_comorbidity_confound:
         type: condition
         variable: comorbidity_explains
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: null_guard_coding_error
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
+        operator: is_null
+        value: null
+        true_next: null_guard_coding_error
+        false_next: check_comorbidity_confound
+      null_guard_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: is_null
+        value: null
+        true_next: null_guard_comorbidity_confound
+        false_next: check_incomplete_info
 resolution:
   mode: base_pair
   rules:
@@ -149,24 +149,24 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       confidence: high
       verdict: confirmed
-      confidence_score: 0.7
   - when:
-      falsified: true
       action_required: true
+      falsified: true
     default: null
     emit:
       confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
   - when:
-      falsified: false
       action_required: false
+      falsified: false
     default: null
     emit:
-      verdict: absent
       confidence: high
+      verdict: absent
       confidence_score: 0.7
   - when: null
     default:
@@ -177,13 +177,13 @@ resolution:
 interface:
   major_groove:
     inputs:
-      comorbidity_explains:
-        type: bool
-        required: false
       is_serious:
         type: bool
         required: false
       is_fatal:
+        type: bool
+        required: false
+      comorbidity_explains:
         type: bool
         required: false
       coding_verified:
@@ -192,25 +192,16 @@ interface:
       follow_up_complete:
         type: bool
         required: false
+      study_type:
+        type: string
+        required: false
       is_unexpected:
         type: bool
         required: false
       is_life_threatening:
         type: bool
         required: false
-      study_type:
-        type: string
-        required: false
     outputs:
-      confidence_score:
-        type: float
-        required: false
-      deadline_days:
-        type: int
-        required: false
-      report_type:
-        type: string
-        required: false
       action_required:
         type: bool
         required: false
@@ -220,10 +211,19 @@ interface:
       reporting_category:
         type: string
         required: false
+      deadline_days:
+        type: int
+        required: false
+      verdict:
+        type: string
+        required: false
       confidence:
         type: string
         required: false
-      verdict:
+      confidence_score:
+        type: float
+        required: false
+      report_type:
         type: string
         required: false
     aliases: {}
@@ -231,28 +231,28 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
+    follow_up_complete: true
+    is_unexpected: true
+    is_serious: true
     is_fatal: true
     is_life_threatening: false
-    comorbidity_explains: false
     study_type: spontaneous
-    follow_up_complete: true
-    is_serious: true
-    is_unexpected: true
+    comorbidity_explains: false
     coding_verified: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, incomplete_info active'
   input:
+    follow_up_complete: false
+    is_unexpected: true
+    is_serious: true
     is_fatal: true
     is_life_threatening: false
-    follow_up_complete: false
     study_type: spontaneous
-    is_serious: true
-    is_unexpected: true
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

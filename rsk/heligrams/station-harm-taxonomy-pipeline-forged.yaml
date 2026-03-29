@@ -5,18 +5,39 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    reason: falsified
+    route: falsified
 sense:
   tree:
     start: check_type
     nodes:
-      type_b:
+      other_type:
         type: return
         value:
-          reason: Type B (bizarre/idiosyncratic) — unpredictable, potentially fatal, needs genetic workup
-          action: investigate
-          route: causality_assessment
-          priority: high
+          route: specialist_review
+          action: classify
+          priority: moderate
+          reason: Type D-H harm — delayed/end-of-use/failure/genetic/hypersensitivity
+      check_b_d:
+        type: condition
+        variable: harm_type
+        operator: eq
+        value: B
+        true_next: type_b
+        false_next: check_c
+      type_c:
+        type: return
+        value:
+          action: monitor
+          priority: moderate
+          reason: Type C (chronic/cumulative) — long-term exposure effect, monitor over time
+          route: long_term_monitoring
+      type_a:
+        type: return
+        value:
+          reason: Type A (augmented pharmacology) — dose-dependent, predictable, high incidence
+          action: escalate
+          priority: critical
+          route: dose_adjustment
       check_c:
         type: condition
         variable: harm_type
@@ -31,45 +52,17 @@ sense:
         value: A
         true_next: type_a
         false_next: check_b_d
-      type_a:
+      type_b:
         type: return
         value:
-          reason: Type A (augmented pharmacology) — dose-dependent, predictable, high incidence
-          action: escalate
-          route: dose_adjustment
-          priority: critical
-      check_b_d:
-        type: condition
-        variable: harm_type
-        operator: eq
-        value: B
-        true_next: type_b
-        false_next: check_c
-      other_type:
-        type: return
-        value:
-          action: classify
-          route: specialist_review
-          priority: moderate
-          reason: Type D-H harm — delayed/end-of-use/failure/genetic/hypersensitivity
-      type_c:
-        type: return
-        value:
-          action: monitor
-          priority: moderate
-          reason: Type C (chronic/cumulative) — long-term exposure effect, monitor over time
-          route: long_term_monitoring
+          route: causality_assessment
+          reason: Type B (bizarre/idiosyncratic) — unpredictable, potentially fatal, needs genetic workup
+          priority: high
+          action: investigate
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: harm_type
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
         variable: harm_type
@@ -77,11 +70,18 @@ antisense:
         value: A
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: harm_type
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
       not_falsified:
         type: return
         value:
@@ -94,21 +94,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
       verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
+      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
-      confidence_score: 0.27999999999999997
   - when: null
     default:
       confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -117,11 +117,11 @@ interface:
         type: string
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
       confidence_score:
         type: float
+        required: false
+      verdict:
+        type: string
         required: false
       confidence:
         type: string
@@ -139,8 +139,8 @@ tests:
   input:
     harm_type: __negated__
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

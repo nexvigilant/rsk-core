@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action: falsified
+    target: falsified
 sense:
   tree:
     start: check_severe
@@ -13,24 +13,17 @@ sense:
       severe:
         type: return
         value:
-          action: discontinue
-          severity: severe
           target: heart
+          severity: severe
           organ: cardiac
-      mild:
+          action: discontinue
+      normal:
         type: return
         value:
-          severity: mild
           organ: cardiac
           target: heart
-          action: monitor_closely
-      check_mild:
-        type: condition
-        variable: qtc_ms
-        operator: gte
-        value: 450
-        true_next: mild
-        false_next: normal
+          severity: normal
+          action: continue
       check_severe:
         type: condition
         variable: qtc_ms
@@ -38,22 +31,24 @@ sense:
         value: 500
         true_next: severe
         false_next: check_mild
-      normal:
+      check_mild:
+        type: condition
+        variable: qtc_ms
+        operator: gte
+        value: 450
+        true_next: mild
+        false_next: normal
+      mild:
         type: return
         value:
+          severity: mild
           target: heart
+          action: monitor_closely
           organ: cardiac
-          action: continue
-          severity: normal
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       check_negation:
         type: condition
         variable: qtc_ms
@@ -71,8 +66,13 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -81,20 +81,20 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -103,14 +103,14 @@ interface:
         type: integer
         required: false
     outputs:
+      verdict:
+        type: string
+        required: false
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
-        required: false
-      verdict:
-        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -125,8 +125,8 @@ tests:
   input:
     qtc_ms: 499
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

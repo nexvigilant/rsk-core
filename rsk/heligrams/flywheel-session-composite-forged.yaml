@@ -10,18 +10,6 @@ sense:
   tree:
     start: check_verdict
     nodes:
-      high_velocity_low_momentum:
-        type: return
-        value:
-          flywheel_assessment: High output but momentum below critical — sustain pace to build inertia
-          status: GREEN
-          velocity: FAST
-      degraded_session:
-        type: return
-        value:
-          status: YELLOW
-          velocity: SLOW
-          flywheel_assessment: Reality gate warning with low output — flywheel losing momentum
       check_above_critical:
         type: condition
         variable: above_critical
@@ -29,64 +17,24 @@ sense:
         value: true
         true_next: low_band_good_momentum
         false_next: stalled_session
-      check_momentum_high:
-        type: condition
-        variable: above_critical
-        operator: eq
-        value: true
-        true_next: optimal_session
-        false_next: high_velocity_low_momentum
+      high_velocity_low_momentum:
+        type: return
+        value:
+          flywheel_assessment: High output but momentum below critical — sustain pace to build inertia
+          status: GREEN
+          velocity: FAST
       moderate_session:
         type: return
         value:
           velocity: MODERATE
           status: GREEN
           flywheel_assessment: Moderate velocity with approved reality gate — steady progress
-      warn_but_productive:
+      degraded_session:
         type: return
         value:
-          status: YELLOW
-          flywheel_assessment: Reality gate warning but high output — address gate issues to sustain velocity
-          velocity: MODERATE
-      optimal_session:
-        type: return
-        value:
-          status: GREEN
-          velocity: FAST
-          flywheel_assessment: High velocity with strong momentum — flywheel fully engaged
-      stalled_session:
-        type: return
-        value:
-          velocity: STALLED
-          flywheel_assessment: Low output and momentum below critical — flywheel stalling
-          status: RED
-      check_verdict:
-        type: condition
-        variable: verdict
-        operator: eq
-        value: BLOCKED
-        true_next: blocked_session
-        false_next: check_verdict_warn
-      check_band_moderate:
-        type: condition
-        variable: session_band
-        operator: eq
-        value: MODERATE
-        true_next: moderate_session
-        false_next: check_above_critical
-      check_band_high:
-        type: condition
-        variable: session_band
-        operator: eq
-        value: HIGH
-        true_next: check_momentum_high
-        false_next: check_band_moderate
-      low_band_good_momentum:
-        type: return
-        value:
-          flywheel_assessment: Low session output but momentum preserved — temporary slowdown
-          status: YELLOW
           velocity: SLOW
+          flywheel_assessment: Reality gate warning with low output — flywheel losing momentum
+          status: YELLOW
       check_band_warn:
         type: condition
         variable: session_band
@@ -94,12 +42,13 @@ sense:
         value: HIGH
         true_next: warn_but_productive
         false_next: degraded_session
-      blocked_session:
-        type: return
-        value:
-          flywheel_assessment: Session blocked by reality gate — no forward progress possible
-          status: RED
-          velocity: STALLED
+      check_momentum_high:
+        type: condition
+        variable: above_critical
+        operator: eq
+        value: true
+        true_next: optimal_session
+        false_next: high_velocity_low_momentum
       check_verdict_warn:
         type: condition
         variable: verdict
@@ -107,20 +56,71 @@ sense:
         value: WARN
         true_next: check_band_warn
         false_next: check_band_high
+      stalled_session:
+        type: return
+        value:
+          status: RED
+          flywheel_assessment: Low output and momentum below critical — flywheel stalling
+          velocity: STALLED
+      check_band_high:
+        type: condition
+        variable: session_band
+        operator: eq
+        value: HIGH
+        true_next: check_momentum_high
+        false_next: check_band_moderate
+      check_verdict:
+        type: condition
+        variable: verdict
+        operator: eq
+        value: BLOCKED
+        true_next: blocked_session
+        false_next: check_verdict_warn
+      optimal_session:
+        type: return
+        value:
+          flywheel_assessment: High velocity with strong momentum — flywheel fully engaged
+          status: GREEN
+          velocity: FAST
+      blocked_session:
+        type: return
+        value:
+          flywheel_assessment: Session blocked by reality gate — no forward progress possible
+          status: RED
+          velocity: STALLED
+      check_band_moderate:
+        type: condition
+        variable: session_band
+        operator: eq
+        value: MODERATE
+        true_next: moderate_session
+        false_next: check_above_critical
+      warn_but_productive:
+        type: return
+        value:
+          velocity: MODERATE
+          status: YELLOW
+          flywheel_assessment: Reality gate warning but high output — address gate issues to sustain velocity
+      low_band_good_momentum:
+        type: return
+        value:
+          status: YELLOW
+          velocity: SLOW
+          flywheel_assessment: Low session output but momentum preserved — temporary slowdown
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       null_guard_negation:
         type: condition
         variable: above_critical
@@ -150,61 +150,57 @@ resolution:
     default: null
     emit:
       verdict: contested
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      verdict:
-        type: string
-        required: false
       above_critical:
         type: bool
+        required: false
+      verdict:
+        type: string
         required: false
       session_band:
         type: string
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
-      velocity:
-        type: string
-        required: true
-      confidence_score:
-        type: float
-        required: false
       status:
         type: string
         required: true
+      verdict:
+        type: string
+        required: false
       flywheel_assessment:
         type: string
         required: true
       confidence:
         type: string
         required: false
+      confidence_score:
+        type: float
+        required: false
+      velocity:
+        type: string
+        required: true
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    session_band: HIGH
     above_critical: null
-    verdict: BLOCKED
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    session_band: HIGH
     above_critical: __negated__
-    verdict: BLOCKED
   expect:
     confidence: low
     verdict: contested

@@ -5,18 +5,28 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action: falsified
+    classification: falsified
 sense:
   tree:
     start: check_fulfilled
     nodes:
-      check_days_overdue_critical:
+      on_track_terminated:
+        type: return
+        value:
+          classification: on_track
+          action: No action required — commitment terminated
+      critical_overdue:
+        type: return
+        value:
+          classification: critical
+          action: Immediate escalation — overdue by 180+ days
+      check_pending_overdue:
         type: condition
         variable: days_overdue
-        operator: gte
-        value: 180
-        true_next: critical_overdue
-        false_next: check_days_overdue_90
+        operator: gt
+        value: 0
+        true_next: at_risk_pending
+        false_next: on_track_pending
       check_terminated:
         type: condition
         variable: status
@@ -31,117 +41,11 @@ sense:
         value: Ongoing
         true_next: check_ongoing_due
         false_next: on_track_other
-      on_track_terminated:
+      on_track_released:
         type: return
         value:
-          action: No action required — commitment terminated
+          action: No action required — requirement released
           classification: on_track
-      at_risk_pending:
-        type: return
-        value:
-          classification: at_risk
-          action: Pending commitment past due date — initiate work
-      delayed_significant:
-        type: return
-        value:
-          classification: delayed
-          action: Submit progress report to FDA — overdue 90+ days
-      check_fulfilled:
-        type: condition
-        variable: status
-        operator: eq
-        value: Fulfilled
-        true_next: on_track_fulfilled
-        false_next: check_released
-      delayed_recent:
-        type: return
-        value:
-          action: Review timeline and submit updated schedule
-          classification: delayed
-      on_track_pending:
-        type: return
-        value:
-          action: Commitment pending — monitor due date
-          classification: on_track
-      on_track_ongoing:
-        type: return
-        value:
-          action: On track — continue per schedule
-          classification: on_track
-      critical_overdue:
-        type: return
-        value:
-          action: Immediate escalation — overdue by 180+ days
-          classification: critical
-      on_track_other:
-        type: return
-        value:
-          classification: on_track
-          action: Status noted — monitor for changes
-      on_track_fulfilled:
-        type: return
-        value:
-          action: No action required — commitment fulfilled
-          classification: on_track
-      check_pending_due:
-        type: condition
-        variable: has_due_date
-        operator: eq
-        value: true
-        true_next: check_pending_overdue
-        false_next: pending_no_date
-      check_released:
-        type: condition
-        variable: status
-        operator: eq
-        value: Released
-        true_next: on_track_released
-        false_next: check_terminated
-      pending_no_date:
-        type: return
-        value:
-          action: Pending without due date — request timeline from FDA
-          classification: on_track
-      check_ongoing_overdue:
-        type: condition
-        variable: days_overdue
-        operator: gt
-        value: 0
-        true_next: at_risk_ongoing
-        false_next: on_track_ongoing
-      at_risk_ongoing:
-        type: return
-        value:
-          classification: at_risk
-          action: Ongoing but past due — accelerate completion
-      check_delayed:
-        type: condition
-        variable: status
-        operator: eq
-        value: Delayed
-        true_next: check_days_overdue_critical
-        false_next: check_pending
-      check_pending_overdue:
-        type: condition
-        variable: days_overdue
-        operator: gt
-        value: 0
-        true_next: at_risk_pending
-        false_next: on_track_pending
-      check_pending:
-        type: condition
-        variable: status
-        operator: eq
-        value: Pending
-        true_next: check_pending_due
-        false_next: check_ongoing
-      check_days_overdue_90:
-        type: condition
-        variable: days_overdue
-        operator: gte
-        value: 90
-        true_next: delayed_significant
-        false_next: delayed_recent
       check_ongoing_due:
         type: condition
         variable: has_due_date
@@ -149,20 +53,116 @@ sense:
         value: true
         true_next: check_ongoing_overdue
         false_next: on_track_ongoing
-      on_track_released:
+      check_days_overdue_critical:
+        type: condition
+        variable: days_overdue
+        operator: gte
+        value: 180
+        true_next: critical_overdue
+        false_next: check_days_overdue_90
+      pending_no_date:
         type: return
         value:
           classification: on_track
-          action: No action required — requirement released
+          action: Pending without due date — request timeline from FDA
+      delayed_recent:
+        type: return
+        value:
+          action: Review timeline and submit updated schedule
+          classification: delayed
+      check_released:
+        type: condition
+        variable: status
+        operator: eq
+        value: Released
+        true_next: on_track_released
+        false_next: check_terminated
+      on_track_fulfilled:
+        type: return
+        value:
+          action: No action required — commitment fulfilled
+          classification: on_track
+      check_delayed:
+        type: condition
+        variable: status
+        operator: eq
+        value: Delayed
+        true_next: check_days_overdue_critical
+        false_next: check_pending
+      check_pending:
+        type: condition
+        variable: status
+        operator: eq
+        value: Pending
+        true_next: check_pending_due
+        false_next: check_ongoing
+      delayed_significant:
+        type: return
+        value:
+          action: Submit progress report to FDA — overdue 90+ days
+          classification: delayed
+      at_risk_ongoing:
+        type: return
+        value:
+          classification: at_risk
+          action: Ongoing but past due — accelerate completion
+      check_fulfilled:
+        type: condition
+        variable: status
+        operator: eq
+        value: Fulfilled
+        true_next: on_track_fulfilled
+        false_next: check_released
+      on_track_pending:
+        type: return
+        value:
+          classification: on_track
+          action: Commitment pending — monitor due date
+      at_risk_pending:
+        type: return
+        value:
+          classification: at_risk
+          action: Pending commitment past due date — initiate work
+      on_track_other:
+        type: return
+        value:
+          classification: on_track
+          action: Status noted — monitor for changes
+      on_track_ongoing:
+        type: return
+        value:
+          classification: on_track
+          action: On track — continue per schedule
+      check_days_overdue_90:
+        type: condition
+        variable: days_overdue
+        operator: gte
+        value: 90
+        true_next: delayed_significant
+        false_next: delayed_recent
+      check_pending_due:
+        type: condition
+        variable: has_due_date
+        operator: eq
+        value: true
+        true_next: check_pending_overdue
+        false_next: pending_no_date
+      check_ongoing_overdue:
+        type: condition
+        variable: days_overdue
+        operator: gt
+        value: 0
+        true_next: at_risk_ongoing
+        false_next: on_track_ongoing
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
+      falsified:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
+          falsified: true
+          confounder_count: 1
       check_negation:
         type: condition
         variable: days_overdue
@@ -170,11 +170,11 @@ antisense:
         value: Fulfilled
         true_next: falsified
         false_next: not_falsified
-      falsified:
+      not_falsified:
         type: return
         value:
-          falsified: true
-          confounder_count: 1
+          confounder_count: 0
+          falsified: false
       null_guard_negation:
         type: condition
         variable: days_overdue
@@ -189,9 +189,9 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
@@ -201,31 +201,28 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
       confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      days_overdue:
-        type: number
-        required: false
-      status:
-        type: string
-        required: true
-      has_due_date:
-        type: bool
-        required: true
       delay_rate:
         type: number
         required: false
-    outputs:
-      action:
-        type: string
+      days_overdue:
+        type: number
         required: false
-      verdict:
+      has_due_date:
+        type: bool
+        required: true
+      status:
         type: string
+        required: true
+    outputs:
+      confidence_score:
+        type: float
         required: false
       classification:
         type: string
@@ -233,25 +230,24 @@ interface:
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
+      verdict:
+        type: string
+        required: false
+      action:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    status: Fulfilled
     days_overdue: null
-    has_due_date: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    status: Fulfilled
     days_overdue: __negated__
-    has_due_date: true
   expect:
     confidence: low
     verdict: contested

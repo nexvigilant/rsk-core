@@ -10,20 +10,20 @@ sense:
   tree:
     start: check_stage
     nodes:
+      onboard:
+        type: return
+        value:
+          priority: high
+          reason: User reached onboard stage — convert to active user
+          route: user_activation
+          action: activate
       demo:
         type: return
         value:
-          priority: moderate
           reason: User at demo stage — show value through live signal detection
           route: demo_pipeline
+          priority: moderate
           action: engage
-      discover:
-        type: return
-        value:
-          action: attract
-          reason: User at discover stage — surface capabilities and courses
-          priority: low
-          route: capability_display
       check_stage:
         type: condition
         variable: funnel_stage
@@ -31,13 +31,13 @@ sense:
         value: onboard
         true_next: onboard
         false_next: check_demo
-      onboard:
+      discover:
         type: return
         value:
-          action: activate
-          route: user_activation
-          priority: high
-          reason: User reached onboard stage — convert to active user
+          route: capability_display
+          action: attract
+          priority: low
+          reason: User at discover stage — surface capabilities and courses
       check_demo:
         type: condition
         variable: funnel_stage
@@ -49,6 +49,11 @@ antisense:
   tree:
     start: null_guard_negation
     nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       check_negation:
         type: condition
         variable: funnel_stage
@@ -56,11 +61,6 @@ antisense:
         value: onboard
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       null_guard_negation:
         type: condition
         variable: funnel_stage
@@ -71,8 +71,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -87,14 +87,14 @@ resolution:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
+      confidence: low
   - when: null
     default:
-      confidence_score: 0.5
-      confidence: medium
       verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -103,14 +103,14 @@ interface:
         type: string
         required: false
     outputs:
+      confidence:
+        type: string
+        required: false
       verdict:
         type: string
         required: false
       confidence_score:
         type: float
-        required: false
-      confidence:
-        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -125,8 +125,8 @@ tests:
   input:
     funnel_stage: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

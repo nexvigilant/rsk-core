@@ -10,32 +10,18 @@ sense:
   tree:
     start: check_refuted
     nodes:
-      result_missing_collect:
+      result_identified:
         type: return
         value:
-          action: collect_data
+          action: characterize_and_minimize
+          risk_category: IDENTIFIED_RISK
           regulatory_reference: ICH E2E Section 3 - Safety Specification
-          risk_category: MISSING_INFORMATION
-      check_population_exposed:
-        type: condition
-        variable: population_exposed
-        operator: eq
-        value: true
-        true_next: result_missing_collect
-        false_next: result_missing_plan
-      check_confirmed:
-        type: condition
-        variable: evidence_level
-        operator: eq
-        value: confirmed
-        true_next: check_cases
-        false_next: check_theoretical
       result_none:
         type: return
         value:
+          risk_category: NONE
           action: close_signal
           regulatory_reference: ICH E2E Section 3 - Safety Specification
-          risk_category: NONE
       check_nonclinical:
         type: condition
         variable: evidence_level
@@ -43,24 +29,12 @@ sense:
         value: nonclinical_signal
         true_next: result_potential
         false_next: check_no_data
-      result_missing_plan:
+      result_identified_no_cases:
         type: return
         value:
-          risk_category: MISSING_INFORMATION
-          action: plan_study
-          regulatory_reference: ICH E2E Section 3 - Safety Specification
-      result_identified:
-        type: return
-        value:
-          regulatory_reference: ICH E2E Section 3 - Safety Specification
           risk_category: IDENTIFIED_RISK
-          action: characterize_and_minimize
-      result_unknown:
-        type: return
-        value:
-          risk_category: NONE
-          action: close_signal
           regulatory_reference: ICH E2E Section 3 - Safety Specification
+          action: characterize_and_minimize
       result_potential:
         type: return
         value:
@@ -74,26 +48,6 @@ sense:
         value: refuted
         true_next: result_none
         false_next: check_confirmed
-      check_cases:
-        type: condition
-        variable: cases
-        operator: gt
-        value: 0
-        true_next: result_identified
-        false_next: result_identified_no_cases
-      check_no_data:
-        type: condition
-        variable: evidence_level
-        operator: eq
-        value: no_data
-        true_next: check_population_exposed
-        false_next: result_unknown
-      result_identified_no_cases:
-        type: return
-        value:
-          regulatory_reference: ICH E2E Section 3 - Safety Specification
-          risk_category: IDENTIFIED_RISK
-          action: characterize_and_minimize
       check_theoretical:
         type: condition
         variable: evidence_level
@@ -101,34 +55,80 @@ sense:
         value: theoretical
         true_next: result_potential
         false_next: check_nonclinical
+      result_missing_collect:
+        type: return
+        value:
+          risk_category: MISSING_INFORMATION
+          action: collect_data
+          regulatory_reference: ICH E2E Section 3 - Safety Specification
+      result_missing_plan:
+        type: return
+        value:
+          regulatory_reference: ICH E2E Section 3 - Safety Specification
+          risk_category: MISSING_INFORMATION
+          action: plan_study
+      result_unknown:
+        type: return
+        value:
+          risk_category: NONE
+          action: close_signal
+          regulatory_reference: ICH E2E Section 3 - Safety Specification
+      check_confirmed:
+        type: condition
+        variable: evidence_level
+        operator: eq
+        value: confirmed
+        true_next: check_cases
+        false_next: check_theoretical
+      check_population_exposed:
+        type: condition
+        variable: population_exposed
+        operator: eq
+        value: true
+        true_next: result_missing_collect
+        false_next: result_missing_plan
+      check_no_data:
+        type: condition
+        variable: evidence_level
+        operator: eq
+        value: no_data
+        true_next: check_population_exposed
+        false_next: result_unknown
+      check_cases:
+        type: condition
+        variable: cases
+        operator: gt
+        value: 0
+        true_next: result_identified
+        false_next: result_identified_no_cases
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       check_negation:
         type: condition
-        variable: population_exposed
+        variable: evidence_level
         operator: neq
         value: refuted
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       null_guard_negation:
         type: condition
-        variable: population_exposed
+        variable: evidence_level
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -136,9 +136,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence: high
       confidence_score: 0.7
-      verdict: confirmed
   - when:
       falsified: true
     default: null
@@ -148,39 +148,39 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
       verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      evidence_level:
-        type: string
-        required: true
-      cases:
-        type: integer
-        required: false
       population_exposed:
         type: bool
         required: false
+      cases:
+        type: integer
+        required: false
+      evidence_level:
+        type: string
+        required: true
     outputs:
-      regulatory_reference:
+      confidence:
         type: string
         required: false
       action:
         type: string
         required: false
-      confidence_score:
-        type: float
+      regulatory_reference:
+        type: string
         required: false
       verdict:
         type: string
         required: false
-      risk_category:
-        type: string
+      confidence_score:
+        type: float
         required: false
-      confidence:
+      risk_category:
         type: string
         required: false
     aliases: {}
@@ -188,20 +188,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    population_exposed: null
-    cases: 15
-    evidence_level: confirmed
+    evidence_level: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    population_exposed: __negated__
-    cases: 15
-    evidence_level: confirmed
+    evidence_level: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

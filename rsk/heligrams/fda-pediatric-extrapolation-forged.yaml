@@ -5,11 +5,43 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    pk_study_needed: falsified
+    efficacy_trial_needed: falsified
 sense:
   tree:
     start: check_disease_similarity
     nodes:
+      partial_extrapolation_trial:
+        type: return
+        value:
+          efficacy_trial_needed: true
+          extrapolation_approach: PARTIAL_EXTRAPOLATION
+          study_requirement: Conduct PK study plus reduced efficacy trial (fewer patients, modified endpoints). Exposure-response analysis to bridge remaining uncertainty.
+          pk_study_needed: true
+          regulatory_reference: ICH E11A (2024), Section 3.3 — Partial Extrapolation with Exposure-Response
+      no_extrapolation:
+        type: return
+        value:
+          pk_study_needed: true
+          study_requirement: Disease progression differs between adults and pediatrics. Full independent efficacy and safety program required.
+          efficacy_trial_needed: true
+          extrapolation_approach: NO_EXTRAPOLATION
+          regulatory_reference: ICH E11A (2024), Section 2 — Extrapolation Not Justified
+      neonate_full_trial:
+        type: return
+        value:
+          regulatory_reference: ICH E11A (2024), Section 4 — Special Considerations for Neonates
+          study_requirement: Neonates with uncertain drug response require full efficacy and safety trials. Maturational physiology differences preclude extrapolation.
+          pk_study_needed: true
+          efficacy_trial_needed: true
+          extrapolation_approach: NO_EXTRAPOLATION_NEONATAL
+      full_extrapolation:
+        type: return
+        value:
+          efficacy_trial_needed: false
+          regulatory_reference: ICH E11A (2024), Section 3.1 — Full Extrapolation Framework
+          pk_study_needed: false
+          extrapolation_approach: FULL_EXTRAPOLATION
+          study_requirement: PK bridging study to confirm exposure. No separate efficacy trial required. Safety data from PK study.
       check_response_similarity:
         type: condition
         variable: response_similar_adults
@@ -17,21 +49,6 @@ sense:
         value: true
         true_next: check_pk_data
         false_next: partial_extrapolation
-      neonate_full_trial:
-        type: return
-        value:
-          extrapolation_approach: NO_EXTRAPOLATION_NEONATAL
-          study_requirement: Neonates with uncertain drug response require full efficacy and safety trials. Maturational physiology differences preclude extrapolation.
-          regulatory_reference: ICH E11A (2024), Section 4 — Special Considerations for Neonates
-          pk_study_needed: true
-          efficacy_trial_needed: true
-      check_pk_data:
-        type: condition
-        variable: pk_data_available
-        operator: eq
-        value: true
-        true_next: full_extrapolation
-        false_next: pk_study_needed
       check_disease_similarity:
         type: condition
         variable: disease_similar_adults
@@ -39,13 +56,20 @@ sense:
         value: true
         true_next: check_response_similarity
         false_next: no_extrapolation
+      check_pk_data:
+        type: condition
+        variable: pk_data_available
+        operator: eq
+        value: true
+        true_next: full_extrapolation
+        false_next: pk_study_needed
       pk_study_needed:
         type: return
         value:
-          efficacy_trial_needed: false
           regulatory_reference: ICH E11A (2024), Section 3.2 — PK Bridging
           extrapolation_approach: FULL_EXTRAPOLATION_WITH_PK
           study_requirement: Conduct PK study in target pediatric population to establish dose. Efficacy extrapolated from adult data.
+          efficacy_trial_needed: false
           pk_study_needed: true
       partial_extrapolation:
         type: condition
@@ -54,30 +78,6 @@ sense:
         value: neonate
         true_next: neonate_full_trial
         false_next: partial_extrapolation_trial
-      partial_extrapolation_trial:
-        type: return
-        value:
-          extrapolation_approach: PARTIAL_EXTRAPOLATION
-          pk_study_needed: true
-          regulatory_reference: ICH E11A (2024), Section 3.3 — Partial Extrapolation with Exposure-Response
-          efficacy_trial_needed: true
-          study_requirement: Conduct PK study plus reduced efficacy trial (fewer patients, modified endpoints). Exposure-response analysis to bridge remaining uncertainty.
-      no_extrapolation:
-        type: return
-        value:
-          extrapolation_approach: NO_EXTRAPOLATION
-          study_requirement: Disease progression differs between adults and pediatrics. Full independent efficacy and safety program required.
-          efficacy_trial_needed: true
-          regulatory_reference: ICH E11A (2024), Section 2 — Extrapolation Not Justified
-          pk_study_needed: true
-      full_extrapolation:
-        type: return
-        value:
-          study_requirement: PK bridging study to confirm exposure. No separate efficacy trial required. Safety data from PK study.
-          pk_study_needed: false
-          extrapolation_approach: FULL_EXTRAPOLATION
-          regulatory_reference: ICH E11A (2024), Section 3.1 — Full Extrapolation Framework
-          efficacy_trial_needed: false
 antisense:
   tree:
     start: null_guard_negation
@@ -92,8 +92,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
       check_negation:
         type: condition
         variable: response_similar_adults
@@ -104,65 +104,62 @@ antisense:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
   - when:
-      pk_study_needed: true
       falsified: false
+      efficacy_trial_needed: true
     default: null
     emit:
       confidence: high
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
   - when:
-      pk_study_needed: true
+      efficacy_trial_needed: true
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
       verdict: contested
   - when:
-      pk_study_needed: false
+      efficacy_trial_needed: false
       falsified: false
     default: null
     emit:
-      verdict: absent
       confidence: high
       confidence_score: 0.7
+      verdict: absent
   - when: null
     default:
       verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      pk_data_available:
-        type: bool
-        required: false
       age_group:
         type: string
         required: false
-      disease_similar_adults:
-        type: bool
-        required: true
       response_similar_adults:
         type: bool
         required: true
+      disease_similar_adults:
+        type: bool
+        required: true
+      pk_data_available:
+        type: bool
+        required: false
     outputs:
-      confidence:
-        type: string
-        required: false
-      verdict:
-        type: string
-        required: false
       regulatory_reference:
         type: string
+        required: false
+      pk_study_needed:
+        type: bool
         required: false
       study_requirement:
         type: string
@@ -170,8 +167,8 @@ interface:
       confidence_score:
         type: float
         required: false
-      pk_study_needed:
-        type: bool
+      confidence:
+        type: string
         required: false
       extrapolation_approach:
         type: string
@@ -179,25 +176,28 @@ interface:
       efficacy_trial_needed:
         type: bool
         required: false
+      verdict:
+        type: string
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    disease_similar_adults: true
     response_similar_adults: null
-    pk_data_available: true
+    disease_similar_adults: true
+    pk_data_available: false
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    disease_similar_adults: true
     response_similar_adults: false
-    pk_data_available: true
+    disease_similar_adults: true
+    pk_data_available: false
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

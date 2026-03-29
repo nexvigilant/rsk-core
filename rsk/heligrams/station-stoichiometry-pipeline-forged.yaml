@@ -5,18 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    route: falsified
+    action: falsified
 sense:
   tree:
     start: check_balanced
     nodes:
-      clean:
-        type: return
-        value:
-          route: archive
-          reason: Balanced, no isomer ambiguity — proceed
-          action: pass
-          priority: low
       check_isomer:
         type: condition
         variable: has_isomers
@@ -27,17 +20,17 @@ sense:
       unbalanced:
         type: return
         value:
-          reason: Unbalanced formula — stoichiometric error in reaction
           action: reject
-          priority: high
           route: chemistry_review
-      isomer_alert:
+          reason: Unbalanced formula — stoichiometric error in reaction
+          priority: high
+      clean:
         type: return
         value:
-          route: isomer_review
-          priority: moderate
-          action: flag
-          reason: Isomers detected — verify correct stereoisomer for safety profile
+          action: pass
+          reason: Balanced, no isomer ambiguity — proceed
+          priority: low
+          route: archive
       check_balanced:
         type: condition
         variable: is_balanced
@@ -45,6 +38,13 @@ sense:
         value: true
         true_next: check_isomer
         false_next: unbalanced
+      isomer_alert:
+        type: return
+        value:
+          route: isomer_review
+          priority: moderate
+          action: flag
+          reason: Isomers detected — verify correct stereoisomer for safety profile
 antisense:
   tree:
     start: null_guard_negation
@@ -54,11 +54,6 @@ antisense:
         value:
           confounder_count: 1
           falsified: true
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       null_guard_negation:
         type: condition
         variable: has_isomers
@@ -66,6 +61,11 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       check_negation:
         type: condition
         variable: has_isomers
@@ -80,20 +80,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
       confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
       verdict: contested
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
       verdict: indeterminate
     emit: null
 interface:
@@ -118,14 +118,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     has_isomers: null
-    is_balanced: false
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     has_isomers: false
-    is_balanced: false
   expect:
     confidence: low
     verdict: contested

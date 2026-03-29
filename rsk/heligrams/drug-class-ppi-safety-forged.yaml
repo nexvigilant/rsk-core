@@ -5,16 +5,17 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    risk_level: falsified
+    supplementation: falsified
 sense:
   tree:
     start: check_duration
     nodes:
-      standard_dosing:
+      hypomagnesemia:
         type: return
         value:
-          risk_level: low
-          message: Standard PPI dosing appropriate
+          supplementation: required
+          risk_level: high
+          message: Hypomagnesemia detected; magnesium supplementation recommended
       check_magnesium:
         type: condition
         variable: serum_magnesium_mg_dl
@@ -22,13 +23,6 @@ sense:
         value: 1.7
         true_next: hypomagnesemia
         false_next: check_b12
-      long_term_assessment:
-        type: return
-        value:
-          magnesium_monitoring: required
-          risk_level: moderate
-          bone_density_screening: required
-          message: Long-term PPI use; monitor magnesium, vitamin B12, and bone health
       check_b12:
         type: condition
         variable: vitamin_b12_pg_ml
@@ -36,18 +30,6 @@ sense:
         value: 200
         true_next: b12_deficiency
         false_next: standard_dosing
-      hypomagnesemia:
-        type: return
-        value:
-          supplementation: required
-          message: Hypomagnesemia detected; magnesium supplementation recommended
-          risk_level: high
-      b12_deficiency:
-        type: return
-        value:
-          supplementation: required
-          message: B12 deficiency detected; supplementation recommended
-          risk_level: moderate
       check_duration:
         type: condition
         variable: ppi_duration_months
@@ -55,15 +37,38 @@ sense:
         value: 12
         true_next: long_term_assessment
         false_next: check_magnesium
+      long_term_assessment:
+        type: return
+        value:
+          message: Long-term PPI use; monitor magnesium, vitamin B12, and bone health
+          magnesium_monitoring: required
+          risk_level: moderate
+          bone_density_screening: required
+      b12_deficiency:
+        type: return
+        value:
+          risk_level: moderate
+          supplementation: required
+          message: B12 deficiency detected; supplementation recommended
+      standard_dosing:
+        type: return
+        value:
+          message: Standard PPI dosing appropriate
+          risk_level: low
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
       null_guard_negation:
         type: condition
         variable: serum_magnesium_mg_dl
@@ -71,11 +76,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       check_negation:
         type: condition
         variable: serum_magnesium_mg_dl
@@ -90,9 +90,9 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       verdict: confirmed
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
@@ -102,9 +102,9 @@ resolution:
       verdict: contested
   - when: null
     default:
-      verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -113,14 +113,14 @@ interface:
         type: integer
         required: false
     outputs:
-      verdict:
-        type: string
+      confidence_score:
+        type: float
         required: false
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -128,19 +128,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     serum_magnesium_mg_dl: 22
-    vitamin_b12_pg_ml: 250
-    ppi_duration_months: 24
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     serum_magnesium_mg_dl: 11
-    vitamin_b12_pg_ml: 250
-    ppi_duration_months: 24
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

@@ -5,81 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    benefit_risk_ratio: falsified
+    decision: falsified
 sense:
   tree:
     start: negative_check
     nodes:
-      favorable_benefit_check:
-        type: condition
-        variable: benefit_score
-        operator: gte
-        value: 80
-        true_next: favorable_risk_check
-        false_next: acceptable_benefit_check
-      acceptable_risk_check:
-        type: condition
-        variable: risk_score
-        operator: lte
-        value: 40
-        true_next: acceptable
-        false_next: conditional_benefit_check
-      conditional_unmet_check:
-        type: condition
-        variable: unmet_need
-        operator: eq
-        value: true
-        true_next: conditional
-        false_next: conditional_alt_check
-      conditional_alt_check:
-        type: condition
-        variable: alternative_available
-        operator: eq
-        value: true
-        true_next: unfavorable
-        false_next: conditional
-      acceptable_benefit_check:
-        type: condition
-        variable: benefit_score
-        operator: gte
-        value: 60
-        true_next: acceptable_risk_check
-        false_next: conditional_benefit_check
-      favorable_risk_check:
-        type: condition
-        variable: risk_score
-        operator: lte
-        value: 20
-        true_next: favorable
-        false_next: acceptable_benefit_check
-      acceptable:
-        type: return
-        value:
-          benefit_risk_ratio: acceptable
-          decision: ACCEPTABLE
-          action: standard_risk_management
-          recommendation: Benefit outweighs risk with standard risk management plan
-      conditional_risk_check:
-        type: condition
-        variable: risk_score
-        operator: lte
-        value: 60
-        true_next: conditional_unmet_check
-        false_next: unfavorable
-      unfavorable:
-        type: return
-        value:
-          action: risk_mitigation_required
-          decision: UNFAVORABLE
-          benefit_risk_ratio: unfavorable
-          recommendation: Implement risk minimization measures before continuation
-      negative_check:
-        type: condition
-        variable: risk_score
-        operator: gt
-        value: 80
-        true_next: negative
-        false_next: unfavorable_risk_check
       unfavorable_risk_check:
         type: condition
         variable: risk_score
@@ -87,20 +17,97 @@ sense:
         value: 60
         true_next: unfavorable
         false_next: favorable_benefit_check
+      conditional_risk_check:
+        type: condition
+        variable: risk_score
+        operator: lte
+        value: 60
+        true_next: conditional_unmet_check
+        false_next: unfavorable
+      acceptable:
+        type: return
+        value:
+          decision: ACCEPTABLE
+          action: standard_risk_management
+          benefit_risk_ratio: acceptable
+          recommendation: Benefit outweighs risk with standard risk management plan
+      conditional_unmet_check:
+        type: condition
+        variable: unmet_need
+        operator: eq
+        value: true
+        true_next: conditional
+        false_next: conditional_alt_check
       favorable:
         type: return
         value:
           decision: FAVORABLE
           action: continue_monitoring
-          benefit_risk_ratio: favorable
           recommendation: Benefit clearly outweighs risk; maintain standard surveillance
+          benefit_risk_ratio: favorable
+      negative_check:
+        type: condition
+        variable: risk_score
+        operator: gt
+        value: 80
+        true_next: negative
+        false_next: unfavorable_risk_check
+      conditional_alt_check:
+        type: condition
+        variable: alternative_available
+        operator: eq
+        value: true
+        true_next: unfavorable
+        false_next: conditional
+      unfavorable:
+        type: return
+        value:
+          decision: UNFAVORABLE
+          benefit_risk_ratio: unfavorable
+          recommendation: Implement risk minimization measures before continuation
+          action: risk_mitigation_required
+      conditional:
+        type: return
+        value:
+          action: enhanced_monitoring_with_rmp
+          benefit_risk_ratio: conditional
+          decision: CONDITIONAL
+          recommendation: Benefit marginal; enhanced monitoring and RMP required
+      favorable_risk_check:
+        type: condition
+        variable: risk_score
+        operator: lte
+        value: 20
+        true_next: favorable
+        false_next: acceptable_benefit_check
       negative:
         type: return
         value:
-          decision: NEGATIVE
-          action: consider_withdrawal
           benefit_risk_ratio: negative
           recommendation: Immediate review required; benefit no longer outweighs risk
+          action: consider_withdrawal
+          decision: NEGATIVE
+      favorable_benefit_check:
+        type: condition
+        variable: benefit_score
+        operator: gte
+        value: 80
+        true_next: favorable_risk_check
+        false_next: acceptable_benefit_check
+      acceptable_benefit_check:
+        type: condition
+        variable: benefit_score
+        operator: gte
+        value: 60
+        true_next: acceptable_risk_check
+        false_next: conditional_benefit_check
+      acceptable_risk_check:
+        type: condition
+        variable: risk_score
+        operator: lte
+        value: 40
+        true_next: acceptable
+        false_next: conditional_benefit_check
       conditional_benefit_check:
         type: condition
         variable: benefit_score
@@ -108,32 +115,13 @@ sense:
         value: 40
         true_next: conditional_risk_check
         false_next: unfavorable
-      conditional:
-        type: return
-        value:
-          benefit_risk_ratio: conditional
-          action: enhanced_monitoring_with_rmp
-          decision: CONDITIONAL
-          recommendation: Benefit marginal; enhanced monitoring and RMP required
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: benefit_score
-        operator: lte
-        value: 80
-        true_next: falsified
-        false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       null_guard_negation:
         type: condition
-        variable: benefit_score
+        variable: risk_score
         operator: is_null
         value: null
         true_next: not_falsified
@@ -143,6 +131,18 @@ antisense:
         value:
           falsified: true
           confounder_count: 1
+      check_negation:
+        type: condition
+        variable: risk_score
+        operator: lte
+        value: 80
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -151,44 +151,41 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      unmet_need:
-        type: bool
-        required: false
       alternative_available:
         type: bool
         required: false
-      benefit_score:
-        type: int
+      unmet_need:
+        type: bool
         required: false
       risk_score:
         type: int
         required: false
-    outputs:
-      benefit_risk_ratio:
-        type: string
+      benefit_score:
+        type: int
         required: false
+    outputs:
       action:
         type: string
         required: false
-      verdict:
+      decision:
         type: string
         required: false
       confidence:
@@ -197,10 +194,13 @@ interface:
       confidence_score:
         type: float
         required: false
-      decision:
+      recommendation:
         type: string
         required: false
-      recommendation:
+      benefit_risk_ratio:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -208,22 +208,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    alternative_available: false
-    risk_score: 15
-    benefit_score: 90
-    unmet_need: false
+    risk_score: 90
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    alternative_available: false
-    risk_score: 15
-    benefit_score: 80
-    unmet_need: false
+    risk_score: 80
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

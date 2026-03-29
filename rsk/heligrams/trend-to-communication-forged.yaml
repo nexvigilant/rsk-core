@@ -10,64 +10,6 @@ sense:
   tree:
     start: check_direction
     nodes:
-      stable_large:
-        type: return
-        value:
-          communication_level: routine
-          urgency: 90_days
-      decreasing_large:
-        type: return
-        value:
-          communication_level: none
-          urgency: deferred
-      stable_other:
-        type: return
-        value:
-          urgency: deferred
-          communication_level: routine
-      check_magnitude_inc_moderate:
-        type: condition
-        variable: magnitude
-        operator: eq
-        value: moderate
-        true_next: increasing_moderate
-        false_next: increasing_small
-      check_magnitude_stable:
-        type: condition
-        variable: magnitude
-        operator: eq
-        value: large
-        true_next: stable_large
-        false_next: stable_other
-      decreasing_other:
-        type: return
-        value:
-          urgency: deferred
-          communication_level: none
-      check_direction:
-        type: condition
-        variable: trend_direction
-        operator: eq
-        value: increasing
-        true_next: check_magnitude_increasing
-        false_next: check_stable
-      increasing_moderate:
-        type: return
-        value:
-          communication_level: label_update
-          urgency: 30_days
-      check_stable:
-        type: condition
-        variable: trend_direction
-        operator: eq
-        value: stable
-        true_next: check_magnitude_stable
-        false_next: decreasing_path
-      increasing_small:
-        type: return
-        value:
-          communication_level: routine
-          urgency: 90_days
       decreasing_path:
         type: condition
         variable: magnitude
@@ -75,6 +17,40 @@ sense:
         value: large
         true_next: decreasing_large
         false_next: decreasing_other
+      increasing_moderate:
+        type: return
+        value:
+          communication_level: label_update
+          urgency: 30_days
+      decreasing_other:
+        type: return
+        value:
+          urgency: deferred
+          communication_level: none
+      check_magnitude_stable:
+        type: condition
+        variable: magnitude
+        operator: eq
+        value: large
+        true_next: stable_large
+        false_next: stable_other
+      stable_large:
+        type: return
+        value:
+          communication_level: routine
+          urgency: 90_days
+      increasing_small:
+        type: return
+        value:
+          communication_level: routine
+          urgency: 90_days
+      check_stable:
+        type: condition
+        variable: trend_direction
+        operator: eq
+        value: stable
+        true_next: check_magnitude_stable
+        false_next: decreasing_path
       check_magnitude_increasing:
         type: condition
         variable: magnitude
@@ -87,15 +63,46 @@ sense:
         value:
           communication_level: dhpc
           urgency: immediate
+      stable_other:
+        type: return
+        value:
+          urgency: deferred
+          communication_level: routine
+      check_direction:
+        type: condition
+        variable: trend_direction
+        operator: eq
+        value: increasing
+        true_next: check_magnitude_increasing
+        false_next: check_stable
+      check_magnitude_inc_moderate:
+        type: condition
+        variable: magnitude
+        operator: eq
+        value: moderate
+        true_next: increasing_moderate
+        false_next: increasing_small
+      decreasing_large:
+        type: return
+        value:
+          communication_level: none
+          urgency: deferred
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      null_guard_negation:
+        type: condition
+        variable: magnitude
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
       check_negation:
         type: condition
         variable: magnitude
@@ -106,15 +113,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
-      null_guard_negation:
-        type: condition
-        variable: magnitude
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -123,8 +123,8 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
@@ -148,12 +148,6 @@ interface:
         type: string
         required: true
     outputs:
-      confidence_score:
-        type: float
-        required: false
-      verdict:
-        type: string
-        required: false
       communication_level:
         type: string
         required: false
@@ -163,19 +157,23 @@ interface:
       confidence:
         type: string
         required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    trend_direction: ''
     magnitude: null
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    trend_direction: ''
     magnitude: __negated__
   expect:
     verdict: contested

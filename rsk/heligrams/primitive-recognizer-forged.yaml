@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    secondary_primitive: falsified
+    ner_tag: falsified
 sense:
   tree:
     start: classify_behavior
@@ -13,177 +13,30 @@ sense:
       boundary_without_transition:
         type: return
         value:
-          secondary_primitive: Void (emptyset)
-          primary_primitive: Boundary (partial)
-          composition: partial(emptyset)
-          confidence: 75
           ner_tag: B-BOUNDARY
           action: check_measurement_point
-      check_comparison:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: comparison
-        true_next: comparison_span
-        false_next: check_transformation
-      check_accumulation:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: accumulation
-        true_next: accumulation_span
-        false_next: check_decay
-      measurement_span:
-        type: return
-        value:
-          secondary_primitive: Boundary (partial)
-          primary_primitive: State (varsigma)
-          ner_tag: B-STATE
-          composition: varsigma(partial(x))
-          confidence: 90
-          action: observe
-      check_oscillation:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: oscillation
-        true_next: oscillation_span
-        false_next: check_state_change
-      productive_convergence:
-        type: return
-        value:
-          secondary_primitive: Persistence (pi)
-          composition: rho(pi(output))
-          confidence: 85
-          action: ship_result
-          ner_tag: B-CONVERGE
-          primary_primitive: Self-reference (rho)
-      state_change_span:
-        type: return
-        value:
-          composition: arrow(varsigma_old, varsigma_new)
-          secondary_primitive: Causality (arrow)
-          ner_tag: B-STATE
-          confidence: 85
-          primary_primitive: State (varsigma)
-          action: record_transition
-      persistence_span:
-        type: return
-        value:
-          confidence: 95
-          action: commit_and_verify
-          secondary_primitive: State (varsigma)
-          composition: pi(varsigma)
-          ner_tag: B-PERSIST
-          primary_primitive: Persistence (pi)
-      accumulation_span:
-        type: return
-        value:
-          secondary_primitive: Persistence (pi)
-          primary_primitive: Quantity (N)
-          composition: N(pi(varsigma)) [growing]
-          confidence: 80
-          ner_tag: B-ACCUMULATE
-          action: monitor_growth_rate
+          confidence: 75
+          primary_primitive: Boundary (partial)
+          secondary_primitive: Void (emptyset)
+          composition: partial(emptyset)
       comparison_span:
         type: return
         value:
-          ner_tag: B-COMPARISON
-          action: evaluate_delta
-          confidence: 85
-          composition: kappa(varsigma_a, varsigma_b)
-          primary_primitive: Comparison (kappa)
           secondary_primitive: State (varsigma)
-      check_state_change:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: state_change
-        true_next: state_change_span
-        false_next: check_accumulation
-      check_convergence:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: convergence
-        true_next: convergence_span
-        false_next: unknown_behavior
-      boundary_span:
-        type: condition
-        variable: has_state_change
-        operator: eq
-        value: true
-        true_next: boundary_with_transition
-        false_next: boundary_without_transition
-      convergence_span:
-        type: condition
-        variable: produces_output
-        operator: eq
-        value: true
-        true_next: productive_convergence
-        false_next: false_convergence
+          confidence: 85
+          action: evaluate_delta
+          primary_primitive: Comparison (kappa)
+          composition: kappa(varsigma_a, varsigma_b)
+          ner_tag: B-COMPARISON
       false_convergence:
         type: return
         value:
-          confidence: 70
-          secondary_primitive: Void (emptyset)
           composition: rho(emptyset) [false convergence]
-          primary_primitive: Self-reference (rho)
-          action: apply_convergence_guard
           ner_tag: B-CONVERGE
-      irreversible_transform:
-        type: return
-        value:
-          confidence: 90
-          action: gate_before_applying
-          secondary_primitive: Causality (arrow)
-          ner_tag: B-IRREVERSIBLE
-          primary_primitive: Irreversibility (proportional)
-          composition: proportional(arrow(varsigma))
-      oscillation_span:
-        type: return
-        value:
-          primary_primitive: Frequency (nu)
-          composition: nu(varsigma) [periodic]
-          ner_tag: B-FREQUENCY
-          secondary_primitive: State (varsigma)
-          action: measure_period
-          confidence: 85
-      check_boundary:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: boundary_crossing
-        true_next: boundary_span
-        false_next: check_oscillation
-      check_persistence:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: persistence
-        true_next: persistence_span
-        false_next: check_boundary
-      classify_behavior:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: measurement
-        true_next: measurement_span
-        false_next: check_comparison
-      check_transformation:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: transformation
-        true_next: transformation_span
-        false_next: check_persistence
-      check_decay:
-        type: condition
-        variable: behavior_type
-        operator: eq
-        value: decay
-        true_next: decay_span
-        false_next: check_convergence
+          primary_primitive: Self-reference (rho)
+          secondary_primitive: Void (emptyset)
+          confidence: 70
+          action: apply_convergence_guard
       transformation_span:
         type: condition
         variable: is_reversible
@@ -191,70 +44,217 @@ sense:
         value: true
         true_next: reversible_transform
         false_next: irreversible_transform
+      unknown_behavior:
+        type: return
+        value:
+          composition: emptyset
+          confidence: 30
+          primary_primitive: Void (emptyset)
+          ner_tag: O
+          action: investigate
+          secondary_primitive: Void (emptyset)
+      check_oscillation:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: oscillation
+        true_next: oscillation_span
+        false_next: check_state_change
+      state_change_span:
+        type: return
+        value:
+          composition: arrow(varsigma_old, varsigma_new)
+          action: record_transition
+          secondary_primitive: Causality (arrow)
+          ner_tag: B-STATE
+          confidence: 85
+          primary_primitive: State (varsigma)
+      check_decay:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: decay
+        true_next: decay_span
+        false_next: check_convergence
+      classify_behavior:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: measurement
+        true_next: measurement_span
+        false_next: check_comparison
+      check_persistence:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: persistence
+        true_next: persistence_span
+        false_next: check_boundary
+      irreversible_transform:
+        type: return
+        value:
+          composition: proportional(arrow(varsigma))
+          confidence: 90
+          action: gate_before_applying
+          primary_primitive: Irreversibility (proportional)
+          ner_tag: B-IRREVERSIBLE
+          secondary_primitive: Causality (arrow)
+      boundary_with_transition:
+        type: return
+        value:
+          primary_primitive: Boundary (partial)
+          composition: partial(times(varsigma, emptyset)) = exists
+          action: validate_at_consumer
+          ner_tag: B-BOUNDARY
+          confidence: 90
+          secondary_primitive: Existence (exists)
+      check_convergence:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: convergence
+        true_next: convergence_span
+        false_next: unknown_behavior
+      check_state_change:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: state_change
+        true_next: state_change_span
+        false_next: check_accumulation
+      persistence_span:
+        type: return
+        value:
+          confidence: 95
+          primary_primitive: Persistence (pi)
+          ner_tag: B-PERSIST
+          secondary_primitive: State (varsigma)
+          action: commit_and_verify
+          composition: pi(varsigma)
+      decay_span:
+        type: return
+        value:
+          confidence: 80
+          ner_tag: B-DECAY
+          composition: N(varsigma) * e^(-nu*t)
+          secondary_primitive: Frequency (nu)
+          action: check_half_life
+          primary_primitive: Quantity (N)
+      check_boundary:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: boundary_crossing
+        true_next: boundary_span
+        false_next: check_oscillation
       reversible_transform:
         type: return
         value:
           action: apply_and_verify
-          composition: arrow(varsigma) [reversible]
-          primary_primitive: Causality (arrow)
+          confidence: 80
           secondary_primitive: State (varsigma)
-          confidence: 80
+          primary_primitive: Causality (arrow)
+          composition: arrow(varsigma) [reversible]
           ner_tag: B-TRANSFORM
-      decay_span:
+      measurement_span:
         type: return
         value:
-          secondary_primitive: Frequency (nu)
-          confidence: 80
-          composition: N(varsigma) * e^(-nu*t)
-          primary_primitive: Quantity (N)
-          action: check_half_life
-          ner_tag: B-DECAY
-      boundary_with_transition:
-        type: return
-        value:
+          composition: varsigma(partial(x))
           confidence: 90
-          action: validate_at_consumer
-          secondary_primitive: Existence (exists)
-          composition: partial(times(varsigma, emptyset)) = exists
-          primary_primitive: Boundary (partial)
-          ner_tag: B-BOUNDARY
-      unknown_behavior:
+          ner_tag: B-STATE
+          secondary_primitive: Boundary (partial)
+          primary_primitive: State (varsigma)
+          action: observe
+      check_transformation:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: transformation
+        true_next: transformation_span
+        false_next: check_persistence
+      check_accumulation:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: accumulation
+        true_next: accumulation_span
+        false_next: check_decay
+      convergence_span:
+        type: condition
+        variable: produces_output
+        operator: eq
+        value: true
+        true_next: productive_convergence
+        false_next: false_convergence
+      oscillation_span:
         type: return
         value:
-          primary_primitive: Void (emptyset)
-          confidence: 30
-          ner_tag: O
-          action: investigate
-          secondary_primitive: Void (emptyset)
-          composition: emptyset
+          ner_tag: B-FREQUENCY
+          action: measure_period
+          confidence: 85
+          primary_primitive: Frequency (nu)
+          composition: nu(varsigma) [periodic]
+          secondary_primitive: State (varsigma)
+      productive_convergence:
+        type: return
+        value:
+          composition: rho(pi(output))
+          confidence: 85
+          action: ship_result
+          secondary_primitive: Persistence (pi)
+          ner_tag: B-CONVERGE
+          primary_primitive: Self-reference (rho)
+      check_comparison:
+        type: condition
+        variable: behavior_type
+        operator: eq
+        value: comparison
+        true_next: comparison_span
+        false_next: check_transformation
+      accumulation_span:
+        type: return
+        value:
+          secondary_primitive: Persistence (pi)
+          ner_tag: B-ACCUMULATE
+          action: monitor_growth_rate
+          primary_primitive: Quantity (N)
+          confidence: 80
+          composition: N(pi(varsigma)) [growing]
+      boundary_span:
+        type: condition
+        variable: has_state_change
+        operator: eq
+        value: true
+        true_next: boundary_with_transition
+        false_next: boundary_without_transition
 antisense:
   tree:
     start: null_guard_negation
     nodes:
       check_negation:
         type: condition
-        variable: behavior_type
+        variable: is_reversible
         operator: neq
         value: measurement
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
       null_guard_negation:
         type: condition
-        variable: behavior_type
+        variable: is_reversible
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -263,15 +263,15 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
       confidence: medium
@@ -281,35 +281,32 @@ resolution:
 interface:
   major_groove:
     inputs:
+      has_state_change:
+        type: bool
+        required: false
       has_boundary:
         type: bool
         required: false
-      has_state_change:
+      produces_output:
         type: bool
         required: false
       behavior_type:
         type: string
         required: true
-      frequency:
-        type: string
-        required: false
-      produces_output:
-        type: bool
-        required: false
       is_reversible:
         type: bool
+        required: false
+      frequency:
+        type: string
         required: false
     outputs:
       action:
         type: string
         required: false
-      verdict:
+      secondary_primitive:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
-      secondary_primitive:
+      ner_tag:
         type: string
         required: false
       confidence:
@@ -318,7 +315,10 @@ interface:
       composition:
         type: string
         required: false
-      ner_tag:
+      confidence_score:
+        type: float
+        required: false
+      verdict:
         type: string
         required: false
       primary_primitive:
@@ -329,16 +329,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    behavior_type: null
+    is_reversible: null
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    behavior_type: __negated__
+    is_reversible: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

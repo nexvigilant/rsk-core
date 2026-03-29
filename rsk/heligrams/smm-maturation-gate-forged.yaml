@@ -5,32 +5,25 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    maturation_level: falsified
+    integration_weight: falsified
 sense:
   tree:
     start: check_exemplary
     nodes:
-      premature:
+      conditional_maturation:
         type: return
         value:
-          maturation_level: PREMATURE
-          integration_weight: exclude
-          ms_range: 0.00-0.29
-          advancement_action: Framework structurally unprepared for testing. Return to workshop. Exclude from active K-state.
-      check_low:
-        type: condition
-        variable: severity_band
-        operator: eq
-        value: LOW
-        true_next: immature
-        false_next: premature
-      mature:
+          integration_weight: conditional
+          advancement_action: Eligible for exploratory protocol development with additional maturation. Address critical gaps first.
+          ms_range: 0.50-0.69
+          maturation_level: CONDITIONAL
+      immature:
         type: return
         value:
-          advancement_action: Fully eligible for protocol development under SMM-001. Consider publishing maturation process.
-          integration_weight: full
-          maturation_level: MATURE
-          ms_range: 0.90-1.00
+          advancement_action: Not eligible for protocol development. Significant maturation work needed. Integrate at 0.10x with scrutiny flag.
+          ms_range: 0.30-0.49
+          integration_weight: low
+          maturation_level: IMMATURE
       check_high:
         type: condition
         variable: severity_band
@@ -38,27 +31,6 @@ sense:
         value: HIGH
         true_next: developing
         false_next: check_moderate
-      immature:
-        type: return
-        value:
-          integration_weight: low
-          advancement_action: Not eligible for protocol development. Significant maturation work needed. Integrate at 0.10x with scrutiny flag.
-          ms_range: 0.30-0.49
-          maturation_level: IMMATURE
-      check_exemplary:
-        type: condition
-        variable: severity_band
-        operator: eq
-        value: EXEMPLARY
-        true_next: mature
-        false_next: check_high
-      developing:
-        type: return
-        value:
-          maturation_level: DEVELOPING
-          integration_weight: high
-          advancement_action: Eligible for protocol development. Minor maturation gaps to address during protocol design.
-          ms_range: 0.70-0.89
       check_moderate:
         type: condition
         variable: severity_band
@@ -66,13 +38,41 @@ sense:
         value: MODERATE
         true_next: conditional_maturation
         false_next: check_low
-      conditional_maturation:
+      developing:
         type: return
         value:
-          ms_range: 0.50-0.69
-          integration_weight: conditional
-          maturation_level: CONDITIONAL
-          advancement_action: Eligible for exploratory protocol development with additional maturation. Address critical gaps first.
+          maturation_level: DEVELOPING
+          integration_weight: high
+          ms_range: 0.70-0.89
+          advancement_action: Eligible for protocol development. Minor maturation gaps to address during protocol design.
+      check_low:
+        type: condition
+        variable: severity_band
+        operator: eq
+        value: LOW
+        true_next: immature
+        false_next: premature
+      premature:
+        type: return
+        value:
+          advancement_action: Framework structurally unprepared for testing. Return to workshop. Exclude from active K-state.
+          maturation_level: PREMATURE
+          ms_range: 0.00-0.29
+          integration_weight: exclude
+      check_exemplary:
+        type: condition
+        variable: severity_band
+        operator: eq
+        value: EXEMPLARY
+        true_next: mature
+        false_next: check_high
+      mature:
+        type: return
+        value:
+          integration_weight: full
+          advancement_action: Fully eligible for protocol development under SMM-001. Consider publishing maturation process.
+          ms_range: 0.90-1.00
+          maturation_level: MATURE
 antisense:
   tree:
     start: null_guard_negation
@@ -80,15 +80,8 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
-      null_guard_negation:
-        type: condition
-        variable: severity_band
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
+          falsified: true
       check_negation:
         type: condition
         variable: severity_band
@@ -101,6 +94,13 @@ antisense:
         value:
           falsified: false
           confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: severity_band
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -109,20 +109,20 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       verdict: contested
       confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -131,25 +131,25 @@ interface:
         type: string
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
-      integration_weight:
+      ms_range:
         type: string
         required: false
       advancement_action:
         type: string
         required: false
-      ms_range:
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      integration_weight:
         type: string
         required: false
       maturation_level:
-        type: string
-        required: false
-      verdict:
         type: string
         required: false
     aliases: {}
@@ -159,14 +159,14 @@ tests:
   input:
     severity_band: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     severity_band: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

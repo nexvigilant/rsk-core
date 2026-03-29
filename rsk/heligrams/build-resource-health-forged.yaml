@@ -5,11 +5,53 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    severity: falsified
+    status: falsified
 sense:
   tree:
     start: check_headroom_critical
     nodes:
+      healthy_needs_maintenance:
+        type: return
+        value:
+          status: GREEN
+          severity: LOW
+          resource_action: Resources adequate but cache prune recommended
+          score: 75
+      check_prune_needed:
+        type: condition
+        variable: prune_cache
+        operator: eq
+        value: true
+        true_next: low_with_prune
+        false_next: low_resources
+      low_resources:
+        type: return
+        value:
+          severity: HIGH
+          score: 30
+          resource_action: Reduce build parallelism — approaching memory limits
+          status: YELLOW
+      moderate_resources:
+        type: return
+        value:
+          resource_action: Monitor memory usage — consider sequential builds for heavy crates
+          severity: MODERATE
+          status: YELLOW
+          score: 55
+      healthy_resources:
+        type: return
+        value:
+          status: GREEN
+          severity: LOW
+          score: 90
+          resource_action: Resources healthy — full parallel build capacity available
+      critical_resources:
+        type: return
+        value:
+          score: 10
+          status: RED
+          resource_action: Halt non-essential builds — memory critically low
+          severity: CRITICAL
       check_healthy_prune:
         type: condition
         variable: prune_cache
@@ -17,20 +59,13 @@ sense:
         value: true
         true_next: healthy_needs_maintenance
         false_next: healthy_resources
-      healthy_resources:
-        type: return
-        value:
-          severity: LOW
-          status: GREEN
-          resource_action: Resources healthy — full parallel build capacity available
-          score: 90
       low_with_prune:
         type: return
         value:
-          score: 25
-          resource_action: Prune build cache and reduce parallel jobs immediately
           status: RED
           severity: HIGH
+          resource_action: Prune build cache and reduce parallel jobs immediately
+          score: 25
       check_headroom_low:
         type: condition
         variable: headroom_pct
@@ -45,13 +80,6 @@ sense:
         value: 50
         true_next: moderate_resources
         false_next: check_healthy_prune
-      moderate_resources:
-        type: return
-        value:
-          severity: MODERATE
-          status: YELLOW
-          score: 55
-          resource_action: Monitor memory usage — consider sequential builds for heavy crates
       check_headroom_critical:
         type: condition
         variable: headroom_pct
@@ -59,50 +87,10 @@ sense:
         value: 10
         true_next: critical_resources
         false_next: check_headroom_low
-      healthy_needs_maintenance:
-        type: return
-        value:
-          resource_action: Resources adequate but cache prune recommended
-          severity: LOW
-          status: GREEN
-          score: 75
-      critical_resources:
-        type: return
-        value:
-          severity: CRITICAL
-          status: RED
-          resource_action: Halt non-essential builds — memory critically low
-          score: 10
-      check_prune_needed:
-        type: condition
-        variable: prune_cache
-        operator: eq
-        value: true
-        true_next: low_with_prune
-        false_next: low_resources
-      low_resources:
-        type: return
-        value:
-          resource_action: Reduce build parallelism — approaching memory limits
-          severity: HIGH
-          status: YELLOW
-          score: 30
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: prune_cache
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       check_negation:
         type: condition
         variable: prune_cache
@@ -115,6 +103,18 @@ antisense:
         value:
           confounder_count: 1
           falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: prune_cache
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -129,43 +129,43 @@ resolution:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
       verdict: contested
   - when: null
     default:
       verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      prune_cache:
-        type: bool
-        required: false
       headroom_pct:
         type: int
         required: true
-    outputs:
-      verdict:
-        type: string
+      prune_cache:
+        type: bool
         required: false
+    outputs:
+      resource_action:
+        type: string
+        required: true
+      status:
+        type: string
+        required: true
       score:
         type: int
         required: true
-      status:
+      verdict:
+        type: string
+        required: false
+      severity:
         type: string
         required: true
       confidence_score:
         type: float
         required: false
-      resource_action:
-        type: string
-        required: true
-      severity:
-        type: string
-        required: true
       confidence:
         type: string
         required: false
@@ -174,18 +174,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    headroom_pct: 5
     prune_cache: 0
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    headroom_pct: 5
     prune_cache: 10
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

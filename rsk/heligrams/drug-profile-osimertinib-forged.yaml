@@ -1,68 +1,38 @@
-name: patient-medication-error-helix
-description: 'Forged from microgram ''patient-medication-error''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
+name: drug-profile-osimertinib-helix
+description: 'Forged from microgram ''drug-profile-osimertinib''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
 version: 0.1.0
 type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    patient_safety_compliant: falsified
+    signal: falsified
 sense:
   tree:
-    start: validate_error_report
+    start: check_prr
     nodes:
-      error_unknown:
+      signal:
         type: return
         value:
-          immediate_action: null
-          patient_safety_compliant: false
-          patient_safety_risk: null
-          error_category: null
-          regulatory_reporting: null
-      check_error_severity:
+          harm_type: B
+          action: investigate
+          drug: osimertinib
+          signal: true
+          expected_prr: 4.4
+      check_prr:
         type: condition
-        variable: error_severity
-        operator: eq
-        value: serious_harm
-        true_next: serious_error
-        false_next: check_moderate_error
-      serious_error:
+        variable: prr
+        operator: gte
+        value: 5.0
+        true_next: signal
+        false_next: no_signal
+      no_signal:
         type: return
         value:
-          immediate_action: notify_patients_and_healthcare_providers
-          patient_safety_risk: high
-          error_category: serious_medication_error
-          regulatory_reporting: required
-          patient_safety_compliant: true
-      moderate_error:
-        type: return
-        value:
-          immediate_action: monitor_patient_closely
-          regulatory_reporting: recommended
-          patient_safety_risk: moderate
-          error_category: moderate_medication_error
-          patient_safety_compliant: true
-      validate_error_report:
-        type: condition
-        variable: error_type
-        operator: is_not_null
-        value: null
-        true_next: check_error_severity
-        false_next: error_unknown
-      minor_error:
-        type: return
-        value:
-          patient_safety_risk: low
-          regulatory_reporting: not_required
-          error_category: minor_medication_error
-          immediate_action: document_and_review
-          patient_safety_compliant: true
-      check_moderate_error:
-        type: condition
-        variable: error_severity
-        operator: eq
-        value: moderate
-        true_next: moderate_error
-        false_next: minor_error
+          harm_type: B
+          signal: false
+          action: monitor
+          expected_prr: 4.4
+          drug: osimertinib
 antisense:
   tree:
     start: null_guard_insufficient_n
@@ -74,18 +44,11 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
+      falsified:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
-      check_notoriety_bias:
-        type: condition
-        variable: notoriety_bias
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: null_guard_weber_effect
+          falsified: true
+          confounder_count: 1
       check_insufficient_n:
         type: condition
         variable: case_count
@@ -93,11 +56,11 @@ antisense:
         value: 3
         true_next: falsified
         false_next: null_guard_notoriety_bias
-      falsified:
+      not_falsified:
         type: return
         value:
-          confounder_count: 1
-          falsified: true
+          falsified: false
+          confounder_count: 0
       null_guard_weber_effect:
         type: condition
         variable: years_on_market
@@ -105,20 +68,6 @@ antisense:
         value: null
         true_next: null_guard_channeling_bias
         false_next: check_weber_effect
-      null_guard_channeling_bias:
-        type: condition
-        variable: channeling_bias
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_channeling_bias
-      null_guard_insufficient_n:
-        type: condition
-        variable: case_count
-        operator: is_null
-        value: null
-        true_next: null_guard_notoriety_bias
-        false_next: check_insufficient_n
       check_weber_effect:
         type: condition
         variable: years_on_market
@@ -126,6 +75,13 @@ antisense:
         value: 5
         true_next: falsified
         false_next: null_guard_channeling_bias
+      null_guard_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_channeling_bias
       null_guard_notoriety_bias:
         type: condition
         variable: notoriety_bias
@@ -133,60 +89,74 @@ antisense:
         value: null
         true_next: null_guard_weber_effect
         false_next: check_notoriety_bias
+      null_guard_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: is_null
+        value: null
+        true_next: null_guard_notoriety_bias
+        false_next: check_insufficient_n
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_weber_effect
 resolution:
   mode: base_pair
   rules:
   - when:
-      patient_safety_compliant: true
+      signal: true
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
       confidence_score: 0.7000000000000001
+      verdict: confirmed
   - when:
-      patient_safety_compliant: true
+      signal: true
       falsified: true
     default: null
     emit:
       confidence_score: 0.28
-      confidence: low
       verdict: contested
+      confidence: low
   - when:
       falsified: false
-      patient_safety_compliant: false
+      signal: false
     default: null
     emit:
-      confidence: high
       verdict: absent
       confidence_score: 0.7000000000000001
+      confidence: high
   - when: null
     default:
+      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
-      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      years_on_market:
-        type: integer
-        required: false
-      channeling_bias:
-        type: bool
-        required: false
       case_count:
         type: integer
         required: false
       notoriety_bias:
         type: bool
         required: false
-    outputs:
-      confidence:
-        type: string
+      channeling_bias:
+        type: bool
         required: false
+      years_on_market:
+        type: integer
+        required: false
+    outputs:
       confidence_score:
         type: float
+        required: false
+      confidence:
+        type: string
         required: false
       verdict:
         type: string
@@ -196,20 +166,18 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    case_count: 13
-    error_type: dose_error
-    error_severity: serious_harm
+    prr: 5.001
     notoriety_bias: false
     years_on_market: 0
+    case_count: 13
     channeling_bias: false
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, insufficient_n active'
   input:
+    prr: 5.001
     case_count: 2
-    error_type: dose_error
-    error_severity: serious_harm
   expect:
     verdict: contested
     confidence: low

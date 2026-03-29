@@ -5,36 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    message: falsified
+    adjustment_factor: falsified
 sense:
   tree:
     start: check_age_years
     nodes:
-      weight_based_calculation:
-        type: return
-        value:
-          message: 'Pediatric dosing: use weight-based dosing'
-          adjustment_factor: mg/kg dosing recommended
-          dosing_method: weight_based
-      check_age_years:
-        type: condition
-        variable: age_years
-        operator: lt
-        value: 18
-        true_next: check_weight_based
-        false_next: adult_dosing
-      age_based_calculation:
-        type: return
-        value:
-          dosing_method: age_based
-          adjustment_factor: Young's rule or Clark's rule
-          message: Use age-based adjustment if weight unavailable
-      adult_dosing:
-        type: return
-        value:
-          dosing_method: adult
-          adjustment_factor: 1.0
-          message: 'Age 18+: use standard adult dosing'
       check_weight_based:
         type: condition
         variable: weight_kg
@@ -42,34 +17,59 @@ sense:
         value: 0
         true_next: weight_based_calculation
         false_next: age_based_calculation
+      age_based_calculation:
+        type: return
+        value:
+          adjustment_factor: Young's rule or Clark's rule
+          message: Use age-based adjustment if weight unavailable
+          dosing_method: age_based
+      adult_dosing:
+        type: return
+        value:
+          adjustment_factor: 1.0
+          message: 'Age 18+: use standard adult dosing'
+          dosing_method: adult
+      check_age_years:
+        type: condition
+        variable: age_years
+        operator: lt
+        value: 18
+        true_next: check_weight_based
+        false_next: adult_dosing
+      weight_based_calculation:
+        type: return
+        value:
+          dosing_method: weight_based
+          message: 'Pediatric dosing: use weight-based dosing'
+          adjustment_factor: mg/kg dosing recommended
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
+      check_negation:
         type: condition
-        variable: age_years
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
+        variable: weight_kg
+        operator: gte
+        value: 18
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
           confounder_count: 1
           falsified: true
-      check_negation:
+      null_guard_negation:
         type: condition
-        variable: age_years
-        operator: gte
-        value: 18
-        true_next: falsified
-        false_next: not_falsified
+        variable: weight_kg
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -89,43 +89,41 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
       verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      age_years:
+      weight_kg:
         type: integer
         required: false
     outputs:
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
         required: false
       confidence:
         type: string
         required: false
+      confidence_score:
+        type: float
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    age_years: 8
-    weight_kg: 25
+    weight_kg: 8
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    age_years: 18
-    weight_kg: 25
+    weight_kg: 18
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

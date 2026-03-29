@@ -5,11 +5,24 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action: falsified
+    organ: falsified
 sense:
   tree:
     start: check_severe
     nodes:
+      check_severe:
+        type: condition
+        variable: lymphocyte_pct
+        operator: lte
+        value: 20
+        true_next: severe
+        false_next: check_mild
+      mild:
+        type: return
+        value:
+          organ: immunological
+          severity: mild
+          action: monitor_closely
       severe:
         type: return
         value:
@@ -23,19 +36,6 @@ sense:
         value: 50
         true_next: mild
         false_next: normal
-      mild:
-        type: return
-        value:
-          action: monitor_closely
-          organ: immunological
-          severity: mild
-      check_severe:
-        type: condition
-        variable: lymphocyte_pct
-        operator: lte
-        value: 20
-        true_next: severe
-        false_next: check_mild
       normal:
         type: return
         value:
@@ -53,6 +53,11 @@ antisense:
         value: 20
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
       null_guard_negation:
         type: condition
         variable: lymphocyte_pct
@@ -60,16 +65,11 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -77,21 +77,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       verdict: confirmed
+      confidence_score: 0.7
       confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
+      verdict: contested
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -103,10 +103,10 @@ interface:
       confidence_score:
         type: float
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -122,8 +122,8 @@ tests:
   input:
     lymphocyte_pct: 21
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

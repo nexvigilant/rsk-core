@@ -5,66 +5,24 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    phase_count: falsified
+    routing_basis: falsified
 sense:
   tree:
     start: check_override
     nodes:
+      pre_empirical_route:
+        type: return
+        value:
+          routing_basis: pre_empirical_default
+          study_type: pre_empirical
+          standard: NVG-SMM-002
+          phase_count: 6
       check_hypothesis_only:
         type: condition
         variable: has_hypothesis
         operator: eq
         value: true
         true_next: check_has_stats_no_data
-        false_next: pre_empirical_route
-      empirical_route:
-        type: return
-        value:
-          phase_count: 10
-          routing_basis: empirical_signals_detected
-          study_type: empirical
-          standard: NVG-SMM-001
-      check_framework:
-        type: condition
-        variable: is_framework
-        operator: eq
-        value: true
-        true_next: pre_empirical_route
-        false_next: check_empirical_data
-      check_empirical_data:
-        type: condition
-        variable: has_empirical_data
-        operator: eq
-        value: true
-        true_next: check_stats
-        false_next: check_hypothesis_only
-      check_hypothesis_with_data:
-        type: condition
-        variable: has_hypothesis
-        operator: eq
-        value: true
-        true_next: empirical_route
-        false_next: pre_empirical_route
-      check_override_pre:
-        type: condition
-        variable: study_type_override
-        operator: eq
-        value: pre_empirical
-        true_next: pre_empirical_route
-        false_next: check_framework
-      check_stats:
-        type: condition
-        variable: has_statistical_analysis
-        operator: eq
-        value: true
-        true_next: empirical_route
-        false_next: check_hypothesis_with_data
-      check_has_stats_no_data:
-        type: condition
-        variable: has_statistical_analysis
-        operator: eq
-        value: true
-        true_next: empirical_route
         false_next: pre_empirical_route
       check_override:
         type: condition
@@ -73,31 +31,59 @@ sense:
         value: empirical
         true_next: empirical_route
         false_next: check_override_pre
-      pre_empirical_route:
+      check_override_pre:
+        type: condition
+        variable: study_type_override
+        operator: eq
+        value: pre_empirical
+        true_next: pre_empirical_route
+        false_next: check_framework
+      check_hypothesis_with_data:
+        type: condition
+        variable: has_hypothesis
+        operator: eq
+        value: true
+        true_next: empirical_route
+        false_next: pre_empirical_route
+      check_has_stats_no_data:
+        type: condition
+        variable: has_statistical_analysis
+        operator: eq
+        value: true
+        true_next: empirical_route
+        false_next: pre_empirical_route
+      check_framework:
+        type: condition
+        variable: is_framework
+        operator: eq
+        value: true
+        true_next: pre_empirical_route
+        false_next: check_empirical_data
+      check_stats:
+        type: condition
+        variable: has_statistical_analysis
+        operator: eq
+        value: true
+        true_next: empirical_route
+        false_next: check_hypothesis_with_data
+      check_empirical_data:
+        type: condition
+        variable: has_empirical_data
+        operator: eq
+        value: true
+        true_next: check_stats
+        false_next: check_hypothesis_only
+      empirical_route:
         type: return
         value:
-          routing_basis: pre_empirical_default
-          study_type: pre_empirical
-          standard: NVG-SMM-002
-          phase_count: 6
+          standard: NVG-SMM-001
+          routing_basis: empirical_signals_detected
+          study_type: empirical
+          phase_count: 10
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: has_hypothesis
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      check_negation:
-        type: condition
-        variable: has_hypothesis
-        operator: neq
-        value: empirical
-        true_next: falsified
-        false_next: not_falsified
       falsified:
         type: return
         value:
@@ -108,6 +94,20 @@ antisense:
         value:
           falsified: false
           confounder_count: 0
+      check_negation:
+        type: condition
+        variable: has_hypothesis
+        operator: neq
+        value: empirical
+        true_next: falsified
+        false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: has_hypothesis
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -115,8 +115,8 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
       confidence_score: 0.7
   - when:
       falsified: true
@@ -127,43 +127,34 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      has_statistical_analysis:
-        type: bool
-        required: false
-      is_framework:
-        type: bool
-        required: false
-      study_type_override:
-        type: string
-        required: false
       has_empirical_data:
         type: bool
         required: false
       has_hypothesis:
         type: bool
         required: false
+      study_type_override:
+        type: string
+        required: false
+      has_statistical_analysis:
+        type: bool
+        required: false
+      is_framework:
+        type: bool
+        required: false
     outputs:
-      standard:
+      confidence:
         type: string
         required: false
       phase_count:
         type: int
-        required: false
-      verdict:
-        type: string
-        required: false
-      confidence:
-        type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
       study_type:
         type: string
@@ -171,23 +162,36 @@ interface:
       routing_basis:
         type: string
         required: false
+      verdict:
+        type: string
+        required: false
+      standard:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
+    study_type_override: unknown
+    has_statistical_analysis: true
+    has_empirical_data: true
     has_hypothesis: null
-    study_type_override: empirical
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
+    study_type_override: unknown
+    has_statistical_analysis: true
+    has_empirical_data: true
     has_hypothesis: __negated__
-    study_type_override: empirical
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

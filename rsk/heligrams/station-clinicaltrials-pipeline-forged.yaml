@@ -5,25 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    priority: falsified
+    reason: falsified
 sense:
   tree:
     start: check_phase
     nodes:
-      standard_signal:
-        type: return
-        value:
-          priority: moderate
-          route: signal_detection
-          reason: Multiple SAEs in Phase 3+ trial — standard signal triage
-          action: investigate
-      early_phase:
-        type: return
-        value:
-          action: monitor
-          priority: low
-          reason: Early phase trial — insufficient population for signal detection
-          route: archive
       check_sae_count:
         type: condition
         variable: sae_count
@@ -31,27 +17,6 @@ sense:
         value: 5
         true_next: check_fatal
         false_next: low_sae
-      check_phase:
-        type: condition
-        variable: trial_phase
-        operator: gte
-        value: 3
-        true_next: check_sae_count
-        false_next: early_phase
-      urgent_signal:
-        type: return
-        value:
-          reason: Fatal SAE in Phase 3+ trial — immediate signal investigation
-          action: investigate
-          route: signal_detection
-          priority: critical
-      low_sae:
-        type: return
-        value:
-          priority: low
-          route: periodic_review
-          action: monitor
-          reason: Phase 3+ with fewer than 5 SAEs — continue monitoring
       check_fatal:
         type: condition
         variable: has_fatal
@@ -59,20 +24,50 @@ sense:
         value: true
         true_next: urgent_signal
         false_next: standard_signal
+      check_phase:
+        type: condition
+        variable: trial_phase
+        operator: gte
+        value: 3
+        true_next: check_sae_count
+        false_next: early_phase
+      low_sae:
+        type: return
+        value:
+          reason: Phase 3+ with fewer than 5 SAEs — continue monitoring
+          priority: low
+          route: periodic_review
+          action: monitor
+      urgent_signal:
+        type: return
+        value:
+          priority: critical
+          action: investigate
+          reason: Fatal SAE in Phase 3+ trial — immediate signal investigation
+          route: signal_detection
+      standard_signal:
+        type: return
+        value:
+          route: signal_detection
+          action: investigate
+          reason: Multiple SAEs in Phase 3+ trial — standard signal triage
+          priority: moderate
+      early_phase:
+        type: return
+        value:
+          action: monitor
+          priority: low
+          route: archive
+          reason: Early phase trial — insufficient population for signal detection
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
       null_guard_negation:
         type: condition
         variable: sae_count
@@ -87,6 +82,11 @@ antisense:
         value: 3
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -102,8 +102,8 @@ resolution:
     default: null
     emit:
       verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
       verdict: indeterminate
@@ -117,34 +117,30 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence_score:
-        type: float
+      confidence:
+        type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence:
-        type: string
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    trial_phase: 1
     sae_count: 13
-    has_fatal: false
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    trial_phase: 1
     sae_count: 2
-    has_fatal: false
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

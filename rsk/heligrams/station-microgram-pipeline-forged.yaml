@@ -5,32 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    route: falsified
+    reason: falsified
 sense:
   tree:
     start: check_failures
     nodes:
-      check_coverage:
-        type: condition
-        variable: path_coverage_pct
-        operator: gte
-        value: 80
-        true_next: healthy
-        false_next: low_coverage
-      has_failures:
-        type: return
-        value:
-          route: microgram_repair
-          action: fix
-          reason: Microgram test failures detected — decision logic may be wrong
-          priority: critical
-      healthy:
-        type: return
-        value:
-          route: archive
-          action: certify
-          priority: low
-          reason: All tests pass, coverage ≥80% — ecosystem healthy
       check_failures:
         type: condition
         variable: failure_count
@@ -38,27 +17,41 @@ sense:
         value: 1
         true_next: has_failures
         false_next: check_coverage
+      has_failures:
+        type: return
+        value:
+          reason: Microgram test failures detected — decision logic may be wrong
+          route: microgram_repair
+          priority: critical
+          action: fix
+      check_coverage:
+        type: condition
+        variable: path_coverage_pct
+        operator: gte
+        value: 80
+        true_next: healthy
+        false_next: low_coverage
       low_coverage:
         type: return
         value:
           priority: moderate
-          route: microgram_evolve
           reason: Path coverage <80% — untested decision branches exist
           action: evolve
+          route: microgram_evolve
+      healthy:
+        type: return
+        value:
+          action: certify
+          priority: low
+          reason: All tests pass, coverage ≥80% — ecosystem healthy
+          route: archive
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: path_coverage_pct
-        operator: lt
-        value: 1
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
-        variable: path_coverage_pct
+        variable: failure_count
         operator: is_null
         value: null
         true_next: not_falsified
@@ -66,13 +59,20 @@ antisense:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: failure_count
+        operator: lt
+        value: 1
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -81,8 +81,8 @@ resolution:
     default: null
     emit:
       confidence: high
-      confidence_score: 0.7
       verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
@@ -99,14 +99,14 @@ resolution:
 interface:
   major_groove:
     inputs:
-      path_coverage_pct:
+      failure_count:
         type: integer
         required: false
     outputs:
-      confidence:
+      verdict:
         type: string
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
       confidence_score:
@@ -117,18 +117,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    path_coverage_pct: 11
-    failure_count: 3
+    failure_count: 11
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    path_coverage_pct: 0
-    failure_count: 3
+    failure_count: 0
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

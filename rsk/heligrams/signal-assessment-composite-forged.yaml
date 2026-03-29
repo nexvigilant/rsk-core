@@ -5,88 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    assessment: falsified
+    urgency: falsified
 sense:
   tree:
     start: check_evans
     nodes:
-      check_no_signal_trend:
-        type: condition
-        variable: trend
-        operator: eq
-        value: RISING
-        true_next: possible_emerging
-        false_next: no_signal
-      evans_confirmed:
-        type: return
-        value:
-          assessment: Evans criteria met with stable or declining trend — confirmed signal
-          overall_signal: CONFIRMED
-          urgency: MODERATE
-          signal_confidence: HIGH
-      possible_emerging:
-        type: return
-        value:
-          urgency: LOW
-          assessment: No current signal but rising trend — possible emerging signal, monitor closely
-          signal_confidence: LOW
-          overall_signal: POSSIBLE
-      high_confidence_accelerating:
-        type: return
-        value:
-          urgency: CRITICAL
-          overall_signal: CONFIRMED
-          signal_confidence: VERY_HIGH
-          assessment: Evans criteria met with rapidly accelerating trend — confirmed signal requiring immediate action
-      check_trend_rising:
-        type: condition
-        variable: trend
-        operator: eq
-        value: RISING
-        true_next: check_rapid
-        false_next: evans_confirmed
-      probable_stable:
-        type: return
-        value:
-          overall_signal: PROBABLE
-          assessment: PRR signal detected but trend stable or declining — further evaluation needed
-          urgency: LOW
-          signal_confidence: MODERATE
-      check_rapid:
-        type: condition
-        variable: velocity
-        operator: eq
-        value: RAPID
-        true_next: high_confidence_accelerating
-        false_next: high_confidence_rising
-      probable_rising:
-        type: return
-        value:
-          urgency: MODERATE
-          overall_signal: PROBABLE
-          signal_confidence: MODERATE
-          assessment: PRR signal detected with rising trend — probable signal, Evans criteria not met
-      no_signal:
-        type: return
-        value:
-          urgency: NONE
-          signal_confidence: NONE
-          assessment: No signal detected, no concerning trend
-          overall_signal: NO_SIGNAL
-      check_evans:
-        type: condition
-        variable: evans_signal
-        operator: eq
-        value: true
-        true_next: check_trend_rising
-        false_next: check_prr_only
-      check_prr_trend:
-        type: condition
-        variable: trend
-        operator: eq
-        value: RISING
-        true_next: probable_rising
-        false_next: probable_stable
       check_prr_only:
         type: condition
         variable: signal_detected
@@ -94,13 +17,90 @@ sense:
         value: true
         true_next: check_prr_trend
         false_next: check_no_signal_trend
+      probable_stable:
+        type: return
+        value:
+          urgency: LOW
+          overall_signal: PROBABLE
+          signal_confidence: MODERATE
+          assessment: PRR signal detected but trend stable or declining — further evaluation needed
+      possible_emerging:
+        type: return
+        value:
+          urgency: LOW
+          assessment: No current signal but rising trend — possible emerging signal, monitor closely
+          overall_signal: POSSIBLE
+          signal_confidence: LOW
+      high_confidence_accelerating:
+        type: return
+        value:
+          urgency: CRITICAL
+          signal_confidence: VERY_HIGH
+          overall_signal: CONFIRMED
+          assessment: Evans criteria met with rapidly accelerating trend — confirmed signal requiring immediate action
       high_confidence_rising:
         type: return
         value:
-          signal_confidence: HIGH
           overall_signal: CONFIRMED
           assessment: Evans criteria met with rising trend — confirmed signal
           urgency: HIGH
+          signal_confidence: HIGH
+      probable_rising:
+        type: return
+        value:
+          overall_signal: PROBABLE
+          urgency: MODERATE
+          signal_confidence: MODERATE
+          assessment: PRR signal detected with rising trend — probable signal, Evans criteria not met
+      check_evans:
+        type: condition
+        variable: evans_signal
+        operator: eq
+        value: true
+        true_next: check_trend_rising
+        false_next: check_prr_only
+      evans_confirmed:
+        type: return
+        value:
+          overall_signal: CONFIRMED
+          signal_confidence: HIGH
+          urgency: MODERATE
+          assessment: Evans criteria met with stable or declining trend — confirmed signal
+      no_signal:
+        type: return
+        value:
+          overall_signal: NO_SIGNAL
+          assessment: No signal detected, no concerning trend
+          signal_confidence: NONE
+          urgency: NONE
+      check_no_signal_trend:
+        type: condition
+        variable: trend
+        operator: eq
+        value: RISING
+        true_next: possible_emerging
+        false_next: no_signal
+      check_rapid:
+        type: condition
+        variable: velocity
+        operator: eq
+        value: RAPID
+        true_next: high_confidence_accelerating
+        false_next: high_confidence_rising
+      check_prr_trend:
+        type: condition
+        variable: trend
+        operator: eq
+        value: RISING
+        true_next: probable_rising
+        false_next: probable_stable
+      check_trend_rising:
+        type: condition
+        variable: trend
+        operator: eq
+        value: RISING
+        true_next: check_rapid
+        false_next: evans_confirmed
 antisense:
   tree:
     start: null_guard_measurement_stale
@@ -112,6 +112,18 @@ antisense:
         value: 60
         true_next: falsified
         false_next: null_guard_single_source
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      check_single_source:
+        type: condition
+        variable: probe_count
+        operator: lt
+        value: 2
+        true_next: falsified
+        false_next: not_falsified
       null_guard_single_source:
         type: condition
         variable: probe_count
@@ -124,11 +136,6 @@ antisense:
         value:
           confounder_count: 1
           falsified: true
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       null_guard_measurement_stale:
         type: condition
         variable: measurement_age_minutes
@@ -136,13 +143,6 @@ antisense:
         value: null
         true_next: null_guard_single_source
         false_next: check_measurement_stale
-      check_single_source:
-        type: condition
-        variable: probe_count
-        operator: lt
-        value: 2
-        true_next: falsified
-        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -150,8 +150,8 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       verdict: confirmed
+      confidence: high
       confidence_score: 0.7
   - when:
       falsified: true
@@ -162,51 +162,51 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      velocity:
-        type: string
-        required: false
-      signal_detected:
-        type: bool
-        required: false
       measurement_age_minutes:
         type: integer
         required: false
-      probe_count:
-        type: integer
+      trend:
+        type: string
         required: false
       evans_signal:
         type: bool
         required: false
-      trend:
+      signal_detected:
+        type: bool
+        required: false
+      probe_count:
+        type: integer
+        required: false
+      velocity:
         type: string
         required: false
     outputs:
       confidence_score:
         type: float
         required: false
+      assessment:
+        type: string
+        required: false
       signal_confidence:
         type: string
         required: false
-      confidence:
-        type: string
-        required: false
-      verdict:
-        type: string
-        required: false
-      assessment:
+      urgency:
         type: string
         required: false
       overall_signal:
         type: string
         required: false
-      urgency:
+      verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -214,22 +214,14 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    velocity: RAPID
-    measurement_age_minutes: 50
     probe_count: 12
-    signal_detected: true
-    trend: RISING
-    evans_signal: true
+    measurement_age_minutes: 50
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, measurement_stale active'
   input:
-    velocity: RAPID
     measurement_age_minutes: 61
-    signal_detected: true
-    trend: RISING
-    evans_signal: true
   expect:
     confidence: low
     verdict: contested

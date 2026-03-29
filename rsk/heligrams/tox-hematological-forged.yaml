@@ -5,18 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    organ: falsified
+    action: falsified
 sense:
   tree:
     start: check_severe
     nodes:
-      check_mild:
-        type: condition
-        variable: anc_cells_uL
-        operator: lte
-        value: 1500
-        true_next: mild
-        false_next: normal
       check_severe:
         type: condition
         variable: anc_cells_uL
@@ -27,25 +20,44 @@ sense:
       severe:
         type: return
         value:
-          organ: hematological
-          severity: severe
           action: discontinue
-      mild:
-        type: return
-        value:
-          severity: mild
+          severity: severe
           organ: hematological
-          action: monitor_closely
+      check_mild:
+        type: condition
+        variable: anc_cells_uL
+        operator: lte
+        value: 1500
+        true_next: mild
+        false_next: normal
       normal:
         type: return
         value:
           action: continue
-          organ: hematological
           severity: normal
+          organ: hematological
+      mild:
+        type: return
+        value:
+          action: monitor_closely
+          organ: hematological
+          severity: mild
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      null_guard_negation:
+        type: condition
+        variable: anc_cells_uL
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       falsified:
         type: return
         value:
@@ -58,18 +70,6 @@ antisense:
         value: 500
         true_next: falsified
         false_next: not_falsified
-      null_guard_negation:
-        type: condition
-        variable: anc_cells_uL
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -77,21 +77,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       verdict: confirmed
       confidence: high
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
       confidence: low
-      verdict: contested
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
-      confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -100,10 +100,10 @@ interface:
         type: integer
         required: false
     outputs:
-      verdict:
+      confidence:
         type: string
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
       confidence_score:
@@ -122,8 +122,8 @@ tests:
   input:
     anc_cells_uL: 501
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

@@ -5,74 +5,25 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    guardian_source: falsified
+    guardian_severity: falsified
 sense:
   tree:
     start: check_timeline
     nodes:
-      check_periodic:
-        type: condition
-        variable: timeline
-        operator: eq
-        value: PERIODIC
-        true_next: check_serious_periodic
-        false_next: check_risk_score
-      check_risk_score:
-        type: condition
-        variable: risk_score
-        operator: gte
-        value: 80
-        true_next: critical_risk
-        false_next: default_severity
-      check_serious_periodic:
-        type: condition
-        variable: serious
-        operator: eq
-        value: true
-        true_next: monitor_serious
-        false_next: document_severity
-      high_signal:
-        type: return
-        value:
-          guardian_source: pv
-          guardian_severity: 0.8
-          guardian_pattern: expedited_high
-          guardian_context: Expedited 15-day report required - serious unexpected ADR
-      monitor_serious:
-        type: return
-        value:
-          guardian_pattern: monitor_serious
-          guardian_source: pv
-          guardian_severity: 0.55
-          guardian_context: Serious expected case - periodic PSUR/DSUR reporting
       document_severity:
         type: return
         value:
-          guardian_source: pv
           guardian_severity: 0.15
-          guardian_context: Non-serious case - line listing periodic report
+          guardian_source: pv
           guardian_pattern: document_only
-      default_severity:
+          guardian_context: Non-serious case - line listing periodic report
+      critical_risk:
         type: return
         value:
           guardian_source: pv
-          guardian_pattern: routine
-          guardian_context: Routine case - no elevated risk indicators
-          guardian_severity: 0.1
-      check_15day:
-        type: condition
-        variable: timeline
-        operator: eq
-        value: 15_CALENDAR_DAYS
-        true_next: high_signal
-        false_next: check_periodic
-      critical_signal:
-        type: return
-        value:
-          guardian_pattern: expedited_critical
-          guardian_source: pv
-          guardian_severity: 0.95
-          guardian_context: Expedited 7-day report required - fatal/life-threatening SUSAR
+          guardian_context: Critical risk score from signal detection pipeline
+          guardian_pattern: risk_critical
+          guardian_severity: 0.9
       check_timeline:
         type: condition
         variable: timeline
@@ -80,13 +31,62 @@ sense:
         value: 7_CALENDAR_DAYS
         true_next: critical_signal
         false_next: check_15day
-      critical_risk:
+      check_risk_score:
+        type: condition
+        variable: risk_score
+        operator: gte
+        value: 80
+        true_next: critical_risk
+        false_next: default_severity
+      check_15day:
+        type: condition
+        variable: timeline
+        operator: eq
+        value: 15_CALENDAR_DAYS
+        true_next: high_signal
+        false_next: check_periodic
+      check_periodic:
+        type: condition
+        variable: timeline
+        operator: eq
+        value: PERIODIC
+        true_next: check_serious_periodic
+        false_next: check_risk_score
+      monitor_serious:
         type: return
         value:
-          guardian_severity: 0.9
-          guardian_context: Critical risk score from signal detection pipeline
+          guardian_pattern: monitor_serious
+          guardian_severity: 0.55
+          guardian_context: Serious expected case - periodic PSUR/DSUR reporting
           guardian_source: pv
-          guardian_pattern: risk_critical
+      default_severity:
+        type: return
+        value:
+          guardian_context: Routine case - no elevated risk indicators
+          guardian_pattern: routine
+          guardian_severity: 0.1
+          guardian_source: pv
+      check_serious_periodic:
+        type: condition
+        variable: serious
+        operator: eq
+        value: true
+        true_next: monitor_serious
+        false_next: document_severity
+      critical_signal:
+        type: return
+        value:
+          guardian_severity: 0.95
+          guardian_source: pv
+          guardian_pattern: expedited_critical
+          guardian_context: Expedited 7-day report required - fatal/life-threatening SUSAR
+      high_signal:
+        type: return
+        value:
+          guardian_severity: 0.8
+          guardian_context: Expedited 15-day report required - serious unexpected ADR
+          guardian_source: pv
+          guardian_pattern: expedited_high
 antisense:
   tree:
     start: null_guard_negation
@@ -94,8 +94,13 @@ antisense:
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       check_negation:
         type: condition
         variable: timeline
@@ -110,11 +115,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -122,21 +122,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       verdict: confirmed
       confidence: high
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
+      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
-      confidence_score: 0.27999999999999997
   - when: null
     default:
       confidence_score: 0.5
-      confidence: medium
       verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -150,32 +150,32 @@ interface:
       timeline:
         type: string
         required: false
-      days_from_awareness:
-        type: int
-        required: false
       serious:
         type: bool
         required: false
-    outputs:
-      guardian_source:
-        type: string
+      days_from_awareness:
+        type: int
         required: false
+    outputs:
       guardian_severity:
         type: float
         required: false
-      verdict:
-        type: string
-        required: false
-      confidence:
-        type: string
-        required: false
-      guardian_pattern:
+      guardian_context:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      guardian_context:
+      guardian_pattern:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      guardian_source:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -183,22 +183,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    serious: true
     timeline: null
-    days_from_awareness: 7
-    report_type: IND_SAFETY
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    serious: true
     timeline: __negated__
-    days_from_awareness: 7
-    report_type: IND_SAFETY
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

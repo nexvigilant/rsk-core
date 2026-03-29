@@ -5,11 +5,32 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    organ: falsified
+    target: falsified
 sense:
   tree:
     start: check_severe
     nodes:
+      severe:
+        type: return
+        value:
+          target: ear
+          severity: severe
+          action: discontinue
+          organ: ototoxic
+      check_severe:
+        type: condition
+        variable: hearing_loss_db
+        operator: gte
+        value: 25
+        true_next: severe
+        false_next: check_mild
+      mild:
+        type: return
+        value:
+          action: monitor_closely
+          severity: mild
+          organ: ototoxic
+          target: ear
       check_mild:
         type: condition
         variable: hearing_loss_db
@@ -21,48 +42,13 @@ sense:
         type: return
         value:
           organ: ototoxic
+          severity: normal
           target: ear
           action: continue
-          severity: normal
-      severe:
-        type: return
-        value:
-          severity: severe
-          organ: ototoxic
-          action: discontinue
-          target: ear
-      mild:
-        type: return
-        value:
-          severity: mild
-          organ: ototoxic
-          target: ear
-          action: monitor_closely
-      check_severe:
-        type: condition
-        variable: hearing_loss_db
-        operator: gte
-        value: 25
-        true_next: severe
-        false_next: check_mild
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: hearing_loss_db
-        operator: lt
-        value: 25
-        true_next: falsified
-        false_next: not_falsified
-      null_guard_negation:
-        type: condition
-        variable: hearing_loss_db
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       falsified:
         type: return
         value:
@@ -73,6 +59,20 @@ antisense:
         value:
           falsified: false
           confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: hearing_loss_db
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: hearing_loss_db
+        operator: lt
+        value: 25
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -80,20 +80,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       verdict: confirmed
       confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
       verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
       confidence: medium
     emit: null
 interface:

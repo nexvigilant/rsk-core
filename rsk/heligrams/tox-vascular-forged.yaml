@@ -10,20 +10,6 @@ sense:
   tree:
     start: check_severe
     nodes:
-      mild:
-        type: return
-        value:
-          target: vessel
-          organ: vascular
-          severity: mild
-          action: monitor_closely
-      severe:
-        type: return
-        value:
-          target: vessel
-          action: discontinue
-          severity: severe
-          organ: vascular
       check_mild:
         type: condition
         variable: thrombosis_risk
@@ -31,6 +17,20 @@ sense:
         value: 2
         true_next: mild
         false_next: normal
+      mild:
+        type: return
+        value:
+          target: vessel
+          action: monitor_closely
+          organ: vascular
+          severity: mild
+      severe:
+        type: return
+        value:
+          severity: severe
+          organ: vascular
+          target: vessel
+          action: discontinue
       check_severe:
         type: condition
         variable: thrombosis_risk
@@ -41,14 +41,26 @@ sense:
       normal:
         type: return
         value:
-          severity: normal
-          target: vessel
           organ: vascular
           action: continue
+          target: vessel
+          severity: normal
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: thrombosis_risk
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
         variable: thrombosis_risk
@@ -59,20 +71,8 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
-      null_guard_negation:
-        type: condition
-        variable: thrombosis_risk
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       confidence_score: 0.7
       verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       confidence: low
       verdict: contested
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
       verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -106,11 +106,11 @@ interface:
       confidence:
         type: string
         required: false
-      verdict:
-        type: string
-        required: false
       confidence_score:
         type: float
+        required: false
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -119,8 +119,8 @@ tests:
   input:
     thrombosis_risk: 15
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     thrombosis_risk: 4

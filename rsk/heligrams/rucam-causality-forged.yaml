@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    classification: falsified
+    next_action: falsified
 sense:
   tree:
     start: highly_probable_check
@@ -17,25 +17,6 @@ sense:
         value: 9
         true_next: highly_probable
         false_next: probable_check
-      possible_check:
-        type: condition
-        variable: rucam_score
-        operator: gte
-        value: 3
-        true_next: possible
-        false_next: unlikely_check
-      probable:
-        type: return
-        value:
-          classification: PROBABLE
-          next_action: investigate_dechallenge
-          confidence: 75
-      unlikely:
-        type: return
-        value:
-          confidence: 25
-          next_action: evaluate_alternatives
-          classification: UNLIKELY
       probable_check:
         type: condition
         variable: rucam_score
@@ -43,18 +24,25 @@ sense:
         value: 6
         true_next: probable
         false_next: possible_check
+      possible_check:
+        type: condition
+        variable: rucam_score
+        operator: gte
+        value: 3
+        true_next: possible
+        false_next: unlikely_check
       possible:
         type: return
         value:
-          confidence: 50
-          classification: POSSIBLE
           next_action: monitor_collect_data
-      highly_probable:
+          classification: POSSIBLE
+          confidence: 50
+      excluded:
         type: return
         value:
           confidence: 95
-          next_action: confirm_hepatotoxicity
-          classification: HIGHLY_PROBABLE
+          next_action: rule_out_drug
+          classification: EXCLUDED
       unlikely_check:
         type: condition
         variable: rucam_score
@@ -62,23 +50,33 @@ sense:
         value: 1
         true_next: unlikely
         false_next: excluded
-      excluded:
+      highly_probable:
         type: return
         value:
-          next_action: rule_out_drug
-          classification: EXCLUDED
           confidence: 95
+          classification: HIGHLY_PROBABLE
+          next_action: confirm_hepatotoxicity
+      probable:
+        type: return
+        value:
+          confidence: 75
+          next_action: investigate_dechallenge
+          classification: PROBABLE
+      unlikely:
+        type: return
+        value:
+          classification: UNLIKELY
+          confidence: 25
+          next_action: evaluate_alternatives
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: rucam_score
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       check_negation:
         type: condition
         variable: rucam_score
@@ -86,16 +84,18 @@ antisense:
         value: 9
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: rucam_score
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -104,20 +104,20 @@ resolution:
     default: null
     emit:
       confidence: high
-      confidence_score: 0.7
       verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
-      verdict: contested
       confidence: low
+      verdict: contested
+      confidence_score: 0.27999999999999997
   - when: null
     default:
       confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -132,14 +132,14 @@ interface:
       confidence:
         type: string
         required: false
+      confidence_score:
+        type: float
+        required: false
       classification:
         type: string
         required: false
       next_action:
         type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -148,8 +148,8 @@ tests:
   input:
     rucam_score: 19
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     rucam_score: 8

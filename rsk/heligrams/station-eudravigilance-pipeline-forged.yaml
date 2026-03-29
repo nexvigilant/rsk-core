@@ -5,11 +5,25 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    priority: falsified
+    route: falsified
 sense:
   tree:
     start: check_case_count
     nodes:
+      multi_region:
+        type: return
+        value:
+          route: signal_investigation
+          priority: high
+          reason: Reports across 3+ EU regions — geographically distributed signal
+          action: investigate
+      low_volume:
+        type: return
+        value:
+          reason: Fewer than 50 EV cases — insufficient for disproportionality analysis
+          action: monitor
+          priority: low
+          route: periodic_review
       check_fatal_pct:
         type: condition
         variable: fatal_percentage
@@ -17,13 +31,20 @@ sense:
         value: 5
         true_next: high_fatality
         false_next: check_geographic
+      high_fatality:
+        type: return
+        value:
+          reason: Fatal outcome ≥5% in EudraVigilance — immediate signal investigation
+          route: signal_detection
+          action: escalate
+          priority: critical
       single_region:
         type: return
         value:
-          priority: moderate
           route: signal_validation
-          reason: Reports concentrated in 1-2 regions — may be reporting artifact
           action: validate
+          reason: Reports concentrated in 1-2 regions — may be reporting artifact
+          priority: moderate
       check_case_count:
         type: condition
         variable: case_count
@@ -38,31 +59,15 @@ sense:
         value: 3
         true_next: multi_region
         false_next: single_region
-      high_fatality:
-        type: return
-        value:
-          action: escalate
-          reason: Fatal outcome ≥5% in EudraVigilance — immediate signal investigation
-          route: signal_detection
-          priority: critical
-      multi_region:
-        type: return
-        value:
-          reason: Reports across 3+ EU regions — geographically distributed signal
-          route: signal_investigation
-          action: investigate
-          priority: high
-      low_volume:
-        type: return
-        value:
-          priority: low
-          action: monitor
-          reason: Fewer than 50 EV cases — insufficient for disproportionality analysis
-          route: periodic_review
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       check_negation:
         type: condition
         variable: fatal_percentage
@@ -70,11 +75,6 @@ antisense:
         value: 50
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       null_guard_negation:
         type: condition
         variable: fatal_percentage
@@ -85,8 +85,8 @@ antisense:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -95,20 +95,20 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
+      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
-      confidence: low
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -117,14 +117,14 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
         required: false
       confidence:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -132,16 +132,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     fatal_percentage: 60
-    region_count: 1
-    case_count: 20
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     fatal_percentage: 49
-    region_count: 1
-    case_count: 20
   expect:
     verdict: contested
     confidence: low

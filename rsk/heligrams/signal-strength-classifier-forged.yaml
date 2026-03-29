@@ -10,17 +10,6 @@ sense:
   tree:
     start: check_red
     nodes:
-      strong:
-        type: return
-        value:
-          strength: strong
-      check_yellow:
-        type: condition
-        variable: level
-        operator: eq
-        value: yellow
-        true_next: moderate
-        false_next: none_strength
       check_red:
         type: condition
         variable: level
@@ -36,10 +25,33 @@ sense:
         type: return
         value:
           strength: none
+      strong:
+        type: return
+        value:
+          strength: strong
+      check_yellow:
+        type: condition
+        variable: level
+        operator: eq
+        value: yellow
+        true_next: moderate
+        false_next: none_strength
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: level
+        operator: neq
+        value: red
+        true_next: falsified
+        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: level
@@ -50,20 +62,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      check_negation:
-        type: condition
-        variable: level
-        operator: neq
-        value: red
-        true_next: falsified
-        false_next: not_falsified
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -71,20 +71,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
       verdict: indeterminate
     emit: null
 interface:
@@ -94,16 +94,16 @@ interface:
         type: string
         required: true
     outputs:
+      strength:
+        type: string
+        required: false
       confidence_score:
         type: float
-        required: false
-      confidence:
-        type: string
         required: false
       verdict:
         type: string
         required: false
-      strength:
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -119,8 +119,8 @@ tests:
   input:
     level: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

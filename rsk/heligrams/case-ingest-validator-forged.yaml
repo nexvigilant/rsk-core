@@ -10,23 +10,6 @@ sense:
   tree:
     start: check_drug
     nodes:
-      check_reporter:
-        type: condition
-        variable: has_reporter
-        operator: eq
-        value: true
-        true_next: valid
-        false_next: incomplete_no_reporter
-      incomplete_no_reporter:
-        type: return
-        value:
-          status: INCOMPLETE
-          description: Missing reporter information - cannot ingest without reporter data
-      rejected_no_drug:
-        type: return
-        value:
-          description: Missing drug information - case rejected without suspect drug
-          status: REJECTED
       check_drug:
         type: condition
         variable: has_drug
@@ -34,16 +17,6 @@ sense:
         value: true
         true_next: check_event
         false_next: rejected_no_drug
-      valid:
-        type: return
-        value:
-          description: Case data complete - drug, event, and reporter all present
-          status: VALID
-      incomplete_no_event:
-        type: return
-        value:
-          status: INCOMPLETE
-          description: Missing adverse event - cannot ingest without event data
       check_event:
         type: condition
         variable: has_event
@@ -51,34 +24,61 @@ sense:
         value: true
         true_next: check_reporter
         false_next: incomplete_no_event
+      incomplete_no_event:
+        type: return
+        value:
+          status: INCOMPLETE
+          description: Missing adverse event - cannot ingest without event data
+      rejected_no_drug:
+        type: return
+        value:
+          description: Missing drug information - case rejected without suspect drug
+          status: REJECTED
+      incomplete_no_reporter:
+        type: return
+        value:
+          status: INCOMPLETE
+          description: Missing reporter information - cannot ingest without reporter data
+      valid:
+        type: return
+        value:
+          description: Case data complete - drug, event, and reporter all present
+          status: VALID
+      check_reporter:
+        type: condition
+        variable: has_reporter
+        operator: eq
+        value: true
+        true_next: valid
+        false_next: incomplete_no_reporter
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       check_negation:
         type: condition
-        variable: has_reporter
+        variable: has_drug
         operator: neq
         value: true
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: has_drug
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
           confounder_count: 1
           falsified: true
-      null_guard_negation:
-        type: condition
-        variable: has_reporter
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -86,21 +86,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       verdict: confirmed
       confidence: high
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       confidence: low
       verdict: contested
+      confidence_score: 0.27999999999999997
   - when: null
     default:
       confidence_score: 0.5
-      confidence: medium
       verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -108,17 +108,17 @@ interface:
       has_drug:
         type: bool
         required: false
-      has_event:
-        type: bool
-        required: false
       has_reporter:
         type: bool
         required: false
+      has_event:
+        type: bool
+        required: false
     outputs:
-      description:
+      verdict:
         type: string
         required: false
-      verdict:
+      description:
         type: string
         required: false
       confidence:
@@ -135,17 +135,13 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    has_event: true
-    has_drug: true
-    has_reporter: null
+    has_drug: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    has_event: true
-    has_drug: true
-    has_reporter: false
+    has_drug: false
   expect:
     verdict: contested
     confidence: low

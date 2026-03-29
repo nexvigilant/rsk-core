@@ -10,26 +10,6 @@ sense:
   tree:
     start: check_source
     nodes:
-      faers_path:
-        type: return
-        value:
-          chain: openfda → calculation → signal-theory → vigilance
-          steps:
-          - station-openfda-pipeline
-          - station-calculation-pipeline
-          - station-signal-theory-pipeline
-          - station-vigilance-pipeline
-          hop_count: 4
-      eu_path:
-        type: return
-        value:
-          chain: ema → eudravigilance → compliance → benefit-risk
-          hop_count: 4
-          steps:
-          - station-ema-pipeline
-          - station-eudravigilance-pipeline
-          - station-compliance-pipeline
-          - station-benefit-risk-pipeline
       check_eu:
         type: condition
         variable: source
@@ -37,16 +17,6 @@ sense:
         value: eudravigilance
         true_next: eu_path
         false_next: global_path
-      global_path:
-        type: return
-        value:
-          steps:
-          - station-vigiaccess-pipeline
-          - station-who-umc-pipeline
-          - station-harm-taxonomy-pipeline
-          - station-preemptive-pv-pipeline
-          hop_count: 4
-          chain: vigiaccess → who-umc → harm-taxonomy → preemptive-pv
       check_source:
         type: condition
         variable: source
@@ -54,27 +24,40 @@ sense:
         value: faers
         true_next: faers_path
         false_next: check_eu
+      eu_path:
+        type: return
+        value:
+          chain: ema → eudravigilance → compliance → benefit-risk
+          steps:
+          - station-ema-pipeline
+          - station-eudravigilance-pipeline
+          - station-compliance-pipeline
+          - station-benefit-risk-pipeline
+          hop_count: 4
+      global_path:
+        type: return
+        value:
+          hop_count: 4
+          chain: vigiaccess → who-umc → harm-taxonomy → preemptive-pv
+          steps:
+          - station-vigiaccess-pipeline
+          - station-who-umc-pipeline
+          - station-harm-taxonomy-pipeline
+          - station-preemptive-pv-pipeline
+      faers_path:
+        type: return
+        value:
+          chain: openfda → calculation → signal-theory → vigilance
+          hop_count: 4
+          steps:
+          - station-openfda-pipeline
+          - station-calculation-pipeline
+          - station-signal-theory-pipeline
+          - station-vigilance-pipeline
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      null_guard_negation:
-        type: condition
-        variable: source
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       check_negation:
         type: condition
         variable: source
@@ -82,6 +65,23 @@ antisense:
         value: faers
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: source
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -89,9 +89,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       verdict: confirmed
       confidence: high
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
@@ -101,9 +101,9 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -115,11 +115,11 @@ interface:
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -128,14 +128,14 @@ tests:
   input:
     source: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     source: __negated__
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

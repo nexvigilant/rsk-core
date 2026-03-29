@@ -10,21 +10,14 @@ sense:
   tree:
     start: check_report_type
     nodes:
-      default_format:
+      annual_format:
         type: return
         value:
-          regulatory_reference: 'FDA Guidance: Providing Submissions in Electronic Format - Postmarketing Safety Reports (2022)'
-          submission_gateway: FDA Electronic Submissions Gateway (ESG)
-          message_type: ichicsr
+          required_format: eCTD or paper (NDA/BLA dependent)
+          submission_gateway: FDA ESG via eCTD or paper to CDER/CBER
+          message_type: ectd
+          regulatory_reference: 21 CFR 314.81(b)(2) (NDA) / 21 CFR 601.70 (BLA)
           acknowledgment_expected: true
-          required_format: E2B(R3) ICH ICSR XML
-      check_field_alert:
-        type: condition
-        variable: report_type
-        operator: eq
-        value: field_alert
-        true_next: field_alert_format
-        false_next: check_vaccine
       check_annual:
         type: condition
         variable: report_type
@@ -32,36 +25,13 @@ sense:
         value: annual_report
         true_next: annual_format
         false_next: check_field_alert
-      check_vaccine:
+      check_report_type:
         type: condition
         variable: report_type
         operator: eq
-        value: vaccine_ae
-        true_next: vaccine_format
-        false_next: default_format
-      expedited_product_check:
-        type: condition
-        variable: product_type
-        operator: eq
-        value: vaccine
-        true_next: vaccine_expedited
-        false_next: standard_expedited
-      periodic_format:
-        type: return
-        value:
-          required_format: eCTD Module 2.7.4 / E2C(R2) format
-          submission_gateway: FDA ESG via eCTD submission
-          regulatory_reference: 'FDA Guidance: Providing Postmarket Periodic Safety Reports in ICH E2C(R2) Format (2016)'
-          message_type: ectd
-          acknowledgment_expected: true
-      vaccine_expedited:
-        type: return
-        value:
-          submission_gateway: FDA ESG for E2B(R3) + VAERS online portal
-          required_format: E2B(R3) ICH ICSR XML + VAERS
-          message_type: ichicsr
-          acknowledgment_expected: true
-          regulatory_reference: FDA Guidance (2022); 21 CFR 600.80; VAERS reporting per National Childhood Vaccine Injury Act
+        value: expedited_15day
+        true_next: expedited_product_check
+        false_next: check_periodic
       check_periodic:
         type: condition
         variable: report_type
@@ -72,42 +42,72 @@ sense:
       standard_expedited:
         type: return
         value:
-          required_format: E2B(R3) ICH ICSR XML
-          acknowledgment_expected: true
           message_type: ichicsr
           regulatory_reference: 'FDA Guidance: Providing Submissions in Electronic Format - Postmarketing Safety Reports (2022); E2B(R3) Regional Implementation Guide (2024)'
           submission_gateway: FDA Electronic Submissions Gateway (ESG)
-      field_alert_format:
+          required_format: E2B(R3) ICH ICSR XML
+          acknowledgment_expected: true
+      vaccine_expedited:
         type: return
         value:
-          submission_gateway: FDA ESG or direct submission to district office
-          message_type: field_alert
-          acknowledgment_expected: false
-          regulatory_reference: 21 CFR 314.81(b)(1); FDA Guidance (2022)
-          required_format: FDA Form 3331 + E2B(R3) if ICSR
+          submission_gateway: FDA ESG for E2B(R3) + VAERS online portal
+          required_format: E2B(R3) ICH ICSR XML + VAERS
+          acknowledgment_expected: true
+          regulatory_reference: FDA Guidance (2022); 21 CFR 600.80; VAERS reporting per National Childhood Vaccine Injury Act
+          message_type: ichicsr
       vaccine_format:
         type: return
         value:
-          regulatory_reference: National Childhood Vaccine Injury Act; 21 CFR 600.80
-          required_format: VAERS online form + E2B(R3)
-          message_type: vaers
-          acknowledgment_expected: true
           submission_gateway: VAERS portal (vaers.hhs.gov) + FDA ESG
-      check_report_type:
+          acknowledgment_expected: true
+          message_type: vaers
+          required_format: VAERS online form + E2B(R3)
+          regulatory_reference: National Childhood Vaccine Injury Act; 21 CFR 600.80
+      expedited_product_check:
+        type: condition
+        variable: product_type
+        operator: eq
+        value: vaccine
+        true_next: vaccine_expedited
+        false_next: standard_expedited
+      check_field_alert:
         type: condition
         variable: report_type
         operator: eq
-        value: expedited_15day
-        true_next: expedited_product_check
-        false_next: check_periodic
-      annual_format:
+        value: field_alert
+        true_next: field_alert_format
+        false_next: check_vaccine
+      default_format:
         type: return
         value:
-          required_format: eCTD or paper (NDA/BLA dependent)
-          submission_gateway: FDA ESG via eCTD or paper to CDER/CBER
-          message_type: ectd
+          submission_gateway: FDA Electronic Submissions Gateway (ESG)
           acknowledgment_expected: true
-          regulatory_reference: 21 CFR 314.81(b)(2) (NDA) / 21 CFR 601.70 (BLA)
+          regulatory_reference: 'FDA Guidance: Providing Submissions in Electronic Format - Postmarketing Safety Reports (2022)'
+          message_type: ichicsr
+          required_format: E2B(R3) ICH ICSR XML
+      check_vaccine:
+        type: condition
+        variable: report_type
+        operator: eq
+        value: vaccine_ae
+        true_next: vaccine_format
+        false_next: default_format
+      periodic_format:
+        type: return
+        value:
+          regulatory_reference: 'FDA Guidance: Providing Postmarket Periodic Safety Reports in ICH E2C(R2) Format (2016)'
+          submission_gateway: FDA ESG via eCTD submission
+          required_format: eCTD Module 2.7.4 / E2C(R2) format
+          acknowledgment_expected: true
+          message_type: ectd
+      field_alert_format:
+        type: return
+        value:
+          regulatory_reference: 21 CFR 314.81(b)(1); FDA Guidance (2022)
+          required_format: FDA Form 3331 + E2B(R3) if ICSR
+          submission_gateway: FDA ESG or direct submission to district office
+          message_type: field_alert
+          acknowledgment_expected: false
 antisense:
   tree:
     start: null_guard_negation
@@ -115,8 +115,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
       null_guard_negation:
         type: condition
         variable: report_type
@@ -124,11 +124,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       check_negation:
         type: condition
         variable: report_type
@@ -136,20 +131,25 @@ antisense:
         value: expedited_15day
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
   - when:
-      acknowledgment_expected: true
       falsified: false
+      acknowledgment_expected: true
     default: null
     emit:
+      verdict: confirmed
       confidence: high
       confidence_score: 0.7
-      verdict: confirmed
   - when:
-      falsified: true
       acknowledgment_expected: true
+      falsified: true
     default: null
     emit:
       verdict: contested
@@ -160,9 +160,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       verdict: absent
       confidence: high
-      confidence_score: 0.7
   - when: null
     default:
       confidence_score: 0.5
@@ -172,38 +172,38 @@ resolution:
 interface:
   major_groove:
     inputs:
+      submission_format:
+        type: string
+        required: false
       report_type:
         type: string
         required: true
       product_type:
         type: string
         required: true
-      submission_format:
-        type: string
-        required: false
     outputs:
-      regulatory_reference:
-        type: string
-        required: false
-      verdict:
-        type: string
-        required: false
       acknowledgment_expected:
         type: bool
         required: false
-      submission_gateway:
+      regulatory_reference:
         type: string
         required: false
       required_format:
         type: string
         required: false
+      message_type:
+        type: string
+        required: false
       confidence:
+        type: string
+        required: false
+      submission_gateway:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      message_type:
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -212,14 +212,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     report_type: null
-    product_type: drug_nda
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     report_type: __negated__
-    product_type: drug_nda
   expect:
     verdict: contested
     confidence: low

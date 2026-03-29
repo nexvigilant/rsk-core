@@ -5,39 +5,18 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action: falsified
+    route: falsified
 sense:
   tree:
     start: check_charge
     nodes:
-      check_charge:
-        type: condition
-        variable: energy_charge_pct
-        operator: gte
-        value: 70
-        true_next: high_charge
-        false_next: check_low
-      moderate:
-        type: return
-        value:
-          action: budget
-          priority: moderate
-          route: energy_budgeting
-          reason: Energy 20-70% — allocate tokens deliberately
       high_charge:
         type: return
         value:
-          action: proceed
           route: archive
           reason: Energy charge ≥70% — full capacity for complex work
+          action: proceed
           priority: low
-      depleted:
-        type: return
-        value:
-          action: conserve
-          priority: critical
-          reason: Energy ≤20% — compress output, skip optional phases
-          route: energy_conservation
       check_low:
         type: condition
         variable: energy_charge_pct
@@ -45,6 +24,27 @@ sense:
         value: 20
         true_next: depleted
         false_next: moderate
+      moderate:
+        type: return
+        value:
+          priority: moderate
+          action: budget
+          reason: Energy 20-70% — allocate tokens deliberately
+          route: energy_budgeting
+      depleted:
+        type: return
+        value:
+          reason: Energy ≤20% — compress output, skip optional phases
+          priority: critical
+          action: conserve
+          route: energy_conservation
+      check_charge:
+        type: condition
+        variable: energy_charge_pct
+        operator: gte
+        value: 70
+        true_next: high_charge
+        false_next: check_low
 antisense:
   tree:
     start: null_guard_negation
@@ -61,11 +61,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       check_negation:
         type: condition
         variable: energy_charge_pct
@@ -73,6 +68,11 @@ antisense:
         value: 70
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -81,8 +81,8 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
@@ -92,8 +92,8 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
       verdict: indeterminate
     emit: null
 interface:
@@ -119,14 +119,14 @@ tests:
   input:
     energy_charge_pct: 80
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     energy_charge_pct: 69
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

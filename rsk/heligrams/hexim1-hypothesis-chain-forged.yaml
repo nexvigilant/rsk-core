@@ -5,33 +5,19 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    development_stage: falsified
+    next_action: falsified
 sense:
   tree:
     start: check_no_data
     nodes:
-      check_signal_strength:
-        type: condition
-        variable: signal_score
-        operator: gte
-        value: 0.6
-        true_next: check_convergence_strong
-        false_next: check_signal_moderate
-      check_signal_weak:
-        type: condition
-        variable: signal_score
-        operator: gte
-        value: 0.2
-        true_next: weak_signal_path
-        false_next: halt_noise
-      fast_track:
+      moderate_partial:
         type: return
         value:
-          development_stage: clinical_validation
-          priority: P0
-          recommendation: FAST TRACK for clinical development
-          next_action: Design Phase I PD endpoint study using HEXIM1 as primary biomarker
-          risk_flags: none
+          next_action: Track for signal strengthening. Generate new data if resources available.
+          risk_flags: moderate_signal_and_incomplete_convergence
+          recommendation: MONITOR — moderate signal with partial convergence
+          priority: P3
+          development_stage: discovery
       check_convergence_strong:
         type: condition
         variable: convergence_verdict
@@ -39,21 +25,97 @@ sense:
         value: CONVERGED
         true_next: check_evidence_converged
         false_next: check_partial_strong
+      check_insufficient:
+        type: condition
+        variable: convergence_verdict
+        operator: eq
+        value: INSUFFICIENT
+        true_next: halt_insufficient
+        false_next: check_signal_strength
+      develop_with_replication_risk:
+        type: return
+        value:
+          recommendation: DEVELOP with replication monitoring
+          risk_flags: replication_failure
+          development_stage: pre_clinical_expansion
+          priority: P1
+          next_action: Replicate failed experiment with updated protocol before clinical submission
+      weak_signal_path:
+        type: condition
+        variable: convergence_verdict
+        operator: eq
+        value: CONVERGED
+        true_next: weak_but_converged
+        false_next: deprioritize
+      develop_need_proteomics:
+        type: return
+        value:
+          next_action: Query PRIDE/ProteomeXchange for protein-level confirmation. Design targeted proteomics experiment.
+          recommendation: DEVELOP — proteomics validation required
+          priority: P1
+          risk_flags: missing_proteomics
+          development_stage: validation
       moderate_converged:
         type: return
         value:
-          development_stage: validation
-          risk_flags: moderate_signal
           priority: P2
-          recommendation: INVESTIGATE — convergence exceeds signal
+          development_stage: validation
           next_action: Convergence is strong but signal is moderate. Publish to refresh temporal score or advance clinical stage.
-      check_replication_partial:
+          risk_flags: moderate_signal
+          recommendation: INVESTIGATE — convergence exceeds signal
+      halt_no_data:
+        type: return
+        value:
+          next_action: No omics data available. Generate initial evidence in at least 2 dimensions.
+          priority: P5
+          recommendation: CANNOT ASSESS
+          risk_flags: no_data
+          development_stage: pre_discovery
+      moderate_signal_path:
+        type: condition
+        variable: convergence_verdict
+        operator: eq
+        value: CONVERGED
+        true_next: moderate_converged
+        false_next: moderate_not_converged
+      check_no_data:
+        type: condition
+        variable: convergence_verdict
+        operator: eq
+        value: NO_DATA
+        true_next: halt_no_data
+        false_next: check_insufficient
+      develop_with_evidence_gap:
+        type: return
+        value:
+          priority: P1
+          recommendation: DEVELOP — strengthen evidence base
+          risk_flags: evidence_quality
+          development_stage: validation
+          next_action: Upgrade evidence quality through dose-response characterization and additional cell lines
+      partial_with_replication_risk:
+        type: return
+        value:
+          recommendation: HOLD — resolve replication + convergence gaps
+          next_action: Replicate failed experiment AND address missing omics dimension before proceeding.
+          risk_flags: replication_failure_and_incomplete_convergence
+          priority: P2
+          development_stage: investigation
+      weak_but_converged:
+        type: return
+        value:
+          next_action: Convergence suggests mechanism is real but signal is weak. May be well-established (low novelty) or aging. Re-evaluate uniqueness and temporal.
+          risk_flags: weak_signal
+          development_stage: discovery
+          recommendation: MONITOR — weak signal despite convergence
+          priority: P3
+      check_replication_top:
         type: condition
         variable: has_replication_failure
         operator: eq
         value: true
-        true_next: partial_with_replication_risk
-        false_next: partial_develop
+        true_next: develop_with_replication_risk
+        false_next: fast_track
       emerging_strong_signal:
         type: return
         value:
@@ -62,6 +124,35 @@ sense:
           next_action: Expand to 3+ omics dimensions. Strong signal justifies investment in evidence generation.
           development_stage: discovery
           recommendation: INVESTIGATE — strong signal needs broader validation
+      check_signal_strength:
+        type: condition
+        variable: signal_score
+        operator: gte
+        value: 0.6
+        true_next: check_convergence_strong
+        false_next: check_signal_moderate
+      check_partial_strong:
+        type: condition
+        variable: convergence_verdict
+        operator: eq
+        value: PARTIAL_CONVERGENCE
+        true_next: check_replication_partial
+        false_next: emerging_strong_signal
+      moderate_emerging:
+        type: return
+        value:
+          recommendation: MONITOR — early stage hypothesis
+          risk_flags: early_stage
+          priority: P3
+          next_action: Expand evidence base. Not ready for development investment.
+          development_stage: discovery
+      check_signal_weak:
+        type: condition
+        variable: signal_score
+        operator: gte
+        value: 0.2
+        true_next: weak_signal_path
+        false_next: halt_noise
       check_signal_moderate:
         type: condition
         variable: signal_score
@@ -69,21 +160,14 @@ sense:
         value: 0.4
         true_next: moderate_signal_path
         false_next: check_signal_weak
-      weak_signal_path:
-        type: condition
-        variable: convergence_verdict
-        operator: eq
-        value: CONVERGED
-        true_next: weak_but_converged
-        false_next: deprioritize
-      halt_no_data:
+      halt_noise:
         type: return
         value:
-          recommendation: CANNOT ASSESS
-          risk_flags: no_data
-          development_stage: pre_discovery
+          recommendation: DISCARD
           priority: P5
-          next_action: No omics data available. Generate initial evidence in at least 2 dimensions.
+          next_action: Signal below noise threshold. Do not invest resources.
+          risk_flags: noise
+          development_stage: rejected
       partial_develop:
         type: condition
         variable: weakest_dimension
@@ -94,49 +178,26 @@ sense:
       develop_need_other:
         type: return
         value:
-          risk_flags: incomplete_convergence
-          next_action: Address weakest convergence dimension before advancing to clinical.
           recommendation: DEVELOP — expand omics coverage
           priority: P2
+          next_action: Address weakest convergence dimension before advancing to clinical.
+          risk_flags: incomplete_convergence
           development_stage: validation
-      develop_need_proteomics:
+      fast_track:
         type: return
         value:
-          next_action: Query PRIDE/ProteomeXchange for protein-level confirmation. Design targeted proteomics experiment.
-          development_stage: validation
-          recommendation: DEVELOP — proteomics validation required
-          risk_flags: missing_proteomics
-          priority: P1
-      halt_noise:
-        type: return
-        value:
-          development_stage: rejected
-          recommendation: DISCARD
-          next_action: Signal below noise threshold. Do not invest resources.
-          priority: P5
-          risk_flags: noise
-      check_partial_strong:
+          risk_flags: none
+          recommendation: FAST TRACK for clinical development
+          next_action: Design Phase I PD endpoint study using HEXIM1 as primary biomarker
+          priority: P0
+          development_stage: clinical_validation
+      check_replication_partial:
         type: condition
-        variable: convergence_verdict
+        variable: has_replication_failure
         operator: eq
-        value: PARTIAL_CONVERGENCE
-        true_next: check_replication_partial
-        false_next: emerging_strong_signal
-      moderate_not_converged:
-        type: condition
-        variable: dimensions_active
-        operator: gte
-        value: 3
-        true_next: moderate_partial
-        false_next: moderate_emerging
-      develop_with_replication_risk:
-        type: return
-        value:
-          next_action: Replicate failed experiment with updated protocol before clinical submission
-          risk_flags: replication_failure
-          development_stage: pre_clinical_expansion
-          recommendation: DEVELOP with replication monitoring
-          priority: P1
+        value: true
+        true_next: partial_with_replication_risk
+        false_next: partial_develop
       check_evidence_converged:
         type: condition
         variable: evidence_grade
@@ -144,102 +205,36 @@ sense:
         value: strong
         true_next: check_replication_top
         false_next: develop_with_evidence_gap
-      deprioritize:
-        type: return
-        value:
-          priority: P4
-          development_stage: archived
-          recommendation: DEPRIORITIZE
-          risk_flags: weak_signal_no_convergence
-          next_action: Weak signal without convergence. Archive and monitor for new evidence.
-      moderate_partial:
-        type: return
-        value:
-          development_stage: discovery
-          risk_flags: moderate_signal_and_incomplete_convergence
-          recommendation: MONITOR — moderate signal with partial convergence
-          priority: P3
-          next_action: Track for signal strengthening. Generate new data if resources available.
-      moderate_signal_path:
-        type: condition
-        variable: convergence_verdict
-        operator: eq
-        value: CONVERGED
-        true_next: moderate_converged
-        false_next: moderate_not_converged
-      weak_but_converged:
-        type: return
-        value:
-          development_stage: discovery
-          priority: P3
-          recommendation: MONITOR — weak signal despite convergence
-          next_action: Convergence suggests mechanism is real but signal is weak. May be well-established (low novelty) or aging. Re-evaluate uniqueness and temporal.
-          risk_flags: weak_signal
-      moderate_emerging:
-        type: return
-        value:
-          priority: P3
-          next_action: Expand evidence base. Not ready for development investment.
-          risk_flags: early_stage
-          development_stage: discovery
-          recommendation: MONITOR — early stage hypothesis
-      develop_with_evidence_gap:
-        type: return
-        value:
-          development_stage: validation
-          recommendation: DEVELOP — strengthen evidence base
-          next_action: Upgrade evidence quality through dose-response characterization and additional cell lines
-          risk_flags: evidence_quality
-          priority: P1
-      check_replication_top:
-        type: condition
-        variable: has_replication_failure
-        operator: eq
-        value: true
-        true_next: develop_with_replication_risk
-        false_next: fast_track
       halt_insufficient:
         type: return
         value:
-          recommendation: CANNOT ASSESS
-          development_stage: pre_discovery
-          priority: P5
-          next_action: Insufficient omics dimensions. Expand to minimum required dimensions.
           risk_flags: insufficient_dimensions
-      check_insufficient:
+          development_stage: pre_discovery
+          recommendation: CANNOT ASSESS
+          next_action: Insufficient omics dimensions. Expand to minimum required dimensions.
+          priority: P5
+      moderate_not_converged:
         type: condition
-        variable: convergence_verdict
-        operator: eq
-        value: INSUFFICIENT
-        true_next: halt_insufficient
-        false_next: check_signal_strength
-      partial_with_replication_risk:
+        variable: dimensions_active
+        operator: gte
+        value: 3
+        true_next: moderate_partial
+        false_next: moderate_emerging
+      deprioritize:
         type: return
         value:
-          development_stage: investigation
-          recommendation: HOLD — resolve replication + convergence gaps
-          next_action: Replicate failed experiment AND address missing omics dimension before proceeding.
-          risk_flags: replication_failure_and_incomplete_convergence
-          priority: P2
-      check_no_data:
-        type: condition
-        variable: convergence_verdict
-        operator: eq
-        value: NO_DATA
-        true_next: halt_no_data
-        false_next: check_insufficient
+          risk_flags: weak_signal_no_convergence
+          priority: P4
+          development_stage: archived
+          recommendation: DEPRIORITIZE
+          next_action: Weak signal without convergence. Archive and monitor for new evidence.
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       null_guard_negation:
         type: condition
-        variable: signal_score
+        variable: convergence_verdict
         operator: is_null
         value: null
         true_next: not_falsified
@@ -247,11 +242,16 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       check_negation:
         type: condition
-        variable: signal_score
+        variable: convergence_verdict
         operator: neq
         value: NO_DATA
         true_next: falsified
@@ -263,30 +263,33 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
-      confidence_score: 0.7
       verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
       confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      dimensions_active:
-        type: number
+      convergence_verdict:
+        type: string
         required: true
       weakest_dimension:
         type: string
+        required: true
+      dimensions_active:
+        type: number
         required: true
       evidence_grade:
         type: string
@@ -297,32 +300,29 @@ interface:
       signal_score:
         type: number
         required: true
-      convergence_verdict:
-        type: string
-        required: true
     outputs:
-      next_action:
-        type: string
-        required: false
-      priority:
-        type: string
-        required: false
-      verdict:
-        type: string
-        required: false
-      confidence_score:
-        type: float
-        required: false
-      development_stage:
-        type: string
-        required: false
       recommendation:
+        type: string
+        required: false
+      next_action:
         type: string
         required: false
       confidence:
         type: string
         required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+      priority:
+        type: string
+        required: false
       risk_flags:
+        type: string
+        required: false
+      development_stage:
         type: string
         required: false
     aliases: {}
@@ -330,26 +330,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    has_replication_failure: false
-    evidence_grade: ''
-    signal_score: null
-    weakest_dimension: ''
-    convergence_verdict: ''
-    dimensions_active: 0
+    convergence_verdict: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    has_replication_failure: false
-    evidence_grade: ''
-    signal_score: __negated__
-    weakest_dimension: ''
-    convergence_verdict: ''
-    dimensions_active: 0
+    convergence_verdict: __negated__
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

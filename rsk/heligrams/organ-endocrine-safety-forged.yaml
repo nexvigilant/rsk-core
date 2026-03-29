@@ -10,6 +10,34 @@ sense:
   tree:
     start: check_baseline_glucose
     nodes:
+      severe_hyperglycemia:
+        type: return
+        value:
+          risk_level: high
+          message: Severe hyperglycemia; glucose-elevating drugs contraindicated
+          glucose_monitoring: required
+          organ: endocrine
+      check_baseline_glucose:
+        type: condition
+        variable: baseline_fasting_glucose_mg_dl
+        operator: gte
+        value: 300
+        true_next: severe_hyperglycemia
+        false_next: check_diabetes
+      thyroid_alert:
+        type: return
+        value:
+          organ: endocrine
+          risk_level: moderate
+          message: Abnormal baseline TSH; monitor thyroid function
+          thyroid_monitoring: required
+      diabetes_alert:
+        type: return
+        value:
+          glucose_monitoring: required
+          message: Diabetic patient; monitor for hyperglycemia or hypoglycemia
+          organ: endocrine
+          risk_level: moderate
       check_thyroid:
         type: condition
         variable: abnormal_tsh
@@ -17,27 +45,6 @@ sense:
         value: true
         true_next: thyroid_alert
         false_next: standard_dosing
-      thyroid_alert:
-        type: return
-        value:
-          risk_level: moderate
-          organ: endocrine
-          thyroid_monitoring: required
-          message: Abnormal baseline TSH; monitor thyroid function
-      severe_hyperglycemia:
-        type: return
-        value:
-          glucose_monitoring: required
-          organ: endocrine
-          risk_level: high
-          message: Severe hyperglycemia; glucose-elevating drugs contraindicated
-      diabetes_alert:
-        type: return
-        value:
-          organ: endocrine
-          message: Diabetic patient; monitor for hyperglycemia or hypoglycemia
-          risk_level: moderate
-          glucose_monitoring: required
       standard_dosing:
         type: return
         value:
@@ -50,41 +57,34 @@ sense:
         value: true
         true_next: diabetes_alert
         false_next: check_thyroid
-      check_baseline_glucose:
-        type: condition
-        variable: baseline_fasting_glucose_mg_dl
-        operator: gte
-        value: 300
-        true_next: severe_hyperglycemia
-        false_next: check_diabetes
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      check_negation:
-        type: condition
-        variable: abnormal_tsh
-        operator: lt
-        value: 300
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
-        variable: abnormal_tsh
+        variable: baseline_fasting_glucose_mg_dl
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
+      check_negation:
+        type: condition
+        variable: baseline_fasting_glucose_mg_dl
+        operator: lt
+        value: 300
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -92,54 +92,50 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence: high
       confidence_score: 0.7
-      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
+      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
-      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
       verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      abnormal_tsh:
+      baseline_fasting_glucose_mg_dl:
         type: integer
         required: false
     outputs:
-      confidence_score:
-        type: float
-        required: false
       confidence:
         type: string
         required: false
       verdict:
         type: string
         required: false
+      confidence_score:
+        type: float
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    baseline_fasting_glucose_mg_dl: 350
-    abnormal_tsh: 310
-    has_type2_diabetes: false
+    baseline_fasting_glucose_mg_dl: 310
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    baseline_fasting_glucose_mg_dl: 350
-    abnormal_tsh: 299
-    has_type2_diabetes: false
+    baseline_fasting_glucose_mg_dl: 299
   expect:
     confidence: low
     verdict: contested

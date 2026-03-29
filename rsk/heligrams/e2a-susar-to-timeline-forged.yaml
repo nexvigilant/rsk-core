@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    timeline_category: falsified
+    deadline_days: falsified
 sense:
   tree:
     start: check_susar
@@ -20,17 +20,17 @@ sense:
       seven_day_report:
         type: return
         value:
-          timeline_category: 7_DAY_EXPEDITED
           deadline_days: 7
           report_type: SUSAR_INITIAL_7DAY
           regulatory_reference: 'ICH E2A Section III.B.1 - Fatal/life-threatening SUSAR: 7-day initial report required'
+          timeline_category: 7_DAY_EXPEDITED
       no_susar_deadline:
         type: return
         value:
           deadline_days: 90
+          regulatory_reference: ICH E2A Section III.B.3 - Non-SUSAR cases in annual safety reports/line listings
           report_type: ANNUAL_SAFETY_REPORT
           timeline_category: PERIODIC_OR_ANNUAL
-          regulatory_reference: ICH E2A Section III.B.3 - Non-SUSAR cases in annual safety reports/line listings
       check_susar:
         type: condition
         variable: report_as_susar
@@ -41,10 +41,10 @@ sense:
       fifteen_day_report:
         type: return
         value:
-          report_type: SUSAR_INITIAL_15DAY
           deadline_days: 15
           regulatory_reference: 'ICH E2A Section III.B.2 - Serious unexpected SUSAR (non-fatal/non-LT): 15-day initial report required'
           timeline_category: 15_DAY_EXPEDITED
+          report_type: SUSAR_INITIAL_15DAY
       check_life_threatening:
         type: condition
         variable: is_life_threatening
@@ -56,18 +56,6 @@ antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: is_fatal
-        operator: neq
-        value: true
-        true_next: falsified
-        false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       null_guard_negation:
         type: condition
         variable: is_fatal
@@ -75,11 +63,23 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: is_fatal
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -87,9 +87,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7
       verdict: confirmed
-      confidence: high
   - when:
       falsified: true
     default: null
@@ -99,27 +99,33 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      is_fatal:
-        type: bool
-        required: false
-      is_life_threatening:
+      is_unexpected:
         type: bool
         required: false
       report_as_susar:
         type: bool
         required: false
-      is_unexpected:
+      is_life_threatening:
+        type: bool
+        required: false
+      is_fatal:
         type: bool
         required: false
     outputs:
-      confidence:
+      deadline_days:
+        type: int
+        required: false
+      timeline_category:
+        type: string
+        required: false
+      regulatory_reference:
         type: string
         required: false
       confidence_score:
@@ -128,16 +134,10 @@ interface:
       report_type:
         type: string
         required: false
-      deadline_days:
-        type: int
-        required: false
-      timeline_category:
+      confidence:
         type: string
         required: false
       verdict:
-        type: string
-        required: false
-      regulatory_reference:
         type: string
         required: false
     aliases: {}
@@ -146,21 +146,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     is_fatal: null
-    is_life_threatening: false
-    report_as_susar: true
-    is_unexpected: true
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     is_fatal: false
-    is_life_threatening: false
-    report_as_susar: true
-    is_unexpected: true
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

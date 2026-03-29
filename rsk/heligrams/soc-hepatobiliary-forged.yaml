@@ -10,13 +10,20 @@ sense:
   tree:
     start: check_serious
     nodes:
+      fatal:
+        type: return
+        value:
+          severity: fatal
+          soc: Hepatobiliary
+          route: causality_assessment
+          priority: critical
       non_serious:
         type: return
         value:
-          severity: non_serious
-          priority: low
           route: periodic_review
           soc: Hepatobiliary
+          priority: low
+          severity: non_serious
       check_serious:
         type: condition
         variable: is_serious
@@ -24,20 +31,6 @@ sense:
         value: true
         true_next: check_fatal
         false_next: non_serious
-      fatal:
-        type: return
-        value:
-          route: causality_assessment
-          priority: critical
-          soc: Hepatobiliary
-          severity: fatal
-      serious:
-        type: return
-        value:
-          priority: high
-          soc: Hepatobiliary
-          route: signal_investigation
-          severity: serious
       check_fatal:
         type: condition
         variable: is_fatal
@@ -45,10 +38,22 @@ sense:
         value: true
         true_next: fatal
         false_next: serious
+      serious:
+        type: return
+        value:
+          soc: Hepatobiliary
+          priority: high
+          severity: serious
+          route: signal_investigation
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       null_guard_negation:
         type: condition
         variable: is_serious
@@ -56,11 +61,11 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
+      falsified:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
+          confounder_count: 1
+          falsified: true
       check_negation:
         type: condition
         variable: is_serious
@@ -68,11 +73,6 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -80,15 +80,15 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7
       verdict: confirmed
-      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
       verdict: contested
   - when: null
     default:
@@ -106,29 +106,27 @@ interface:
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    is_fatal: true
     is_serious: null
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    is_fatal: true
     is_serious: false
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

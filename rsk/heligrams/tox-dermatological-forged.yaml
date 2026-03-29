@@ -21,16 +21,9 @@ sense:
         type: return
         value:
           organ: dermatological
-          target: skin
-          severity: mild
           action: monitor_closely
-      severe:
-        type: return
-        value:
+          severity: mild
           target: skin
-          action: discontinue
-          severity: severe
-          organ: dermatological
       check_mild:
         type: condition
         variable: bsa_pct
@@ -38,34 +31,29 @@ sense:
         value: 10
         true_next: mild
         false_next: normal
+      severe:
+        type: return
+        value:
+          organ: dermatological
+          target: skin
+          action: discontinue
+          severity: severe
       normal:
         type: return
         value:
-          action: continue
-          severity: normal
-          organ: dermatological
           target: skin
+          severity: normal
+          action: continue
+          organ: dermatological
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
-      check_negation:
-        type: condition
-        variable: bsa_pct
-        operator: lt
-        value: 30
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: bsa_pct
@@ -73,6 +61,18 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      check_negation:
+        type: condition
+        variable: bsa_pct
+        operator: lt
+        value: 30
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -88,13 +88,13 @@ resolution:
     default: null
     emit:
       confidence: low
-      verdict: contested
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
-      confidence: medium
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -103,13 +103,13 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence:
+      verdict:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -119,14 +119,14 @@ tests:
   input:
     bsa_pct: 40
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     bsa_pct: 29
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

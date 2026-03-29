@@ -17,34 +17,6 @@ sense:
         value: inn
         true_next: inn_route
         false_next: unknown_route
-      generic_route:
-        type: return
-        value:
-          normalized_name: generic
-          resolution_source: rxnorm
-          needs_resolution: false
-          confidence: high
-      inn_route:
-        type: return
-        value:
-          resolution_source: who_dd
-          needs_resolution: false
-          normalized_name: inn
-          confidence: high
-      check_generic:
-        type: condition
-        variable: name_type
-        operator: eq
-        value: generic
-        true_next: generic_route
-        false_next: check_brand
-      check_brand:
-        type: condition
-        variable: name_type
-        operator: eq
-        value: brand
-        true_next: brand_route
-        false_next: check_inn
       brand_route:
         type: return
         value:
@@ -52,6 +24,13 @@ sense:
           needs_resolution: false
           confidence: high
           normalized_name: brand
+      inn_route:
+        type: return
+        value:
+          confidence: high
+          resolution_source: who_dd
+          normalized_name: inn
+          needs_resolution: false
       unknown_route:
         type: return
         value:
@@ -59,6 +38,27 @@ sense:
           resolution_source: multi_source
           needs_resolution: true
           normalized_name: unknown
+      check_brand:
+        type: condition
+        variable: name_type
+        operator: eq
+        value: brand
+        true_next: brand_route
+        false_next: check_inn
+      check_generic:
+        type: condition
+        variable: name_type
+        operator: eq
+        value: generic
+        true_next: generic_route
+        false_next: check_brand
+      generic_route:
+        type: return
+        value:
+          normalized_name: generic
+          needs_resolution: false
+          resolution_source: rxnorm
+          confidence: high
 antisense:
   tree:
     start: null_guard_negation
@@ -70,11 +70,16 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
       check_negation:
         type: condition
         variable: name_type
@@ -82,86 +87,81 @@ antisense:
         value: generic
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
   - when:
-      needs_resolution: true
       falsified: false
+      needs_resolution: true
     default: null
     emit:
       confidence: high
-      confidence_score: 0.7
       verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
       needs_resolution: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
       confidence: low
   - when:
-      needs_resolution: false
       falsified: false
+      needs_resolution: false
     default: null
     emit:
-      verdict: absent
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
+      verdict: absent
   - when: null
     default:
+      confidence: medium
       verdict: indeterminate
       confidence_score: 0.5
-      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      name_type:
-        type: string
-        required: false
       drug_name:
         type: string
         required: false
+      name_type:
+        type: string
+        required: false
     outputs:
-      verdict:
+      confidence:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      needs_resolution:
-        type: bool
+      resolution_source:
+        type: string
         required: false
       normalized_name:
         type: string
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
-      resolution_source:
-        type: string
+      needs_resolution:
+        type: bool
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
+    drug_name: mystery_drug
     name_type: null
-    drug_name: metformin
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
+    drug_name: mystery_drug
     name_type: __negated__
-    drug_name: metformin
   expect:
     confidence: low
     verdict: contested

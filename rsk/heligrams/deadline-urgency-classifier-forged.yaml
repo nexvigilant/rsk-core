@@ -10,10 +10,6 @@ sense:
   tree:
     start: check_critical
     nodes:
-      critical:
-        type: return
-        value:
-          traffic_level: red
       check_warning:
         type: condition
         variable: days_remaining
@@ -21,6 +17,14 @@ sense:
         value: 7
         true_next: warning
         false_next: normal
+      warning:
+        type: return
+        value:
+          traffic_level: yellow
+      critical:
+        type: return
+        value:
+          traffic_level: red
       check_critical:
         type: condition
         variable: days_remaining
@@ -32,10 +36,6 @@ sense:
         type: return
         value:
           traffic_level: green
-      warning:
-        type: return
-        value:
-          traffic_level: yellow
 antisense:
   tree:
     start: null_guard_negation
@@ -52,11 +52,6 @@ antisense:
         value:
           falsified: false
           confounder_count: 0
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       null_guard_negation:
         type: condition
         variable: days_remaining
@@ -64,6 +59,11 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -78,14 +78,14 @@ resolution:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
+      confidence: low
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -94,17 +94,17 @@ interface:
         type: number
         required: true
     outputs:
-      traffic_level:
-        type: string
-        required: false
       confidence:
-        type: string
-        required: false
-      verdict:
         type: string
         required: false
       confidence_score:
         type: float
+        required: false
+      traffic_level:
+        type: string
+        required: false
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -113,14 +113,14 @@ tests:
   input:
     days_remaining: 0
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     days_remaining: 4
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

@@ -10,6 +10,20 @@ sense:
   tree:
     start: validate_closure_readiness
     nodes:
+      check_resolution:
+        type: condition
+        variable: resolution_status
+        operator: is_not_null
+        value: null
+        true_next: closure_approved
+        false_next: resolution_pending
+      validate_closure_readiness:
+        type: condition
+        variable: investigation_complete
+        operator: eq
+        value: true
+        true_next: check_documentation
+        false_next: not_ready_for_closure
       check_documentation:
         type: condition
         variable: documentation_complete
@@ -20,73 +34,59 @@ sense:
       closure_approved:
         type: return
         value:
-          closure_status: approved
           requires_further_monitoring: false
-          closure_compliant: true
           signal_status: resolved
-      validate_closure_readiness:
-        type: condition
-        variable: investigation_complete
-        operator: eq
-        value: true
-        true_next: check_documentation
-        false_next: not_ready_for_closure
-      check_resolution:
-        type: condition
-        variable: resolution_status
-        operator: is_not_null
-        value: null
-        true_next: closure_approved
-        false_next: resolution_pending
+          closure_compliant: true
+          closure_status: approved
+      not_ready_for_closure:
+        type: return
+        value:
+          closure_compliant: true
+          closure_status: not_ready
+          signal_status: investigation_ongoing
+          requires_further_monitoring: true
       documentation_incomplete:
         type: return
         value:
-          requires_further_monitoring: true
-          signal_status: pending_documentation
           closure_status: deferred
+          signal_status: pending_documentation
+          requires_further_monitoring: true
           closure_compliant: false
       resolution_pending:
         type: return
         value:
-          closure_compliant: true
-          requires_further_monitoring: true
           closure_status: pending
           signal_status: awaiting_resolution
-      not_ready_for_closure:
-        type: return
-        value:
-          requires_further_monitoring: true
           closure_compliant: true
-          signal_status: investigation_ongoing
-          closure_status: not_ready
+          requires_further_monitoring: true
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       null_guard_negation:
         type: condition
-        variable: documentation_complete
+        variable: resolution_status
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
-      check_negation:
-        type: condition
-        variable: documentation_complete
-        operator: neq
-        value: true
-        true_next: falsified
-        false_next: not_falsified
       falsified:
         type: return
         value:
           confounder_count: 1
           falsified: true
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: resolution_status
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -99,62 +99,58 @@ resolution:
       verdict: confirmed
       confidence: high
   - when:
-      requires_further_monitoring: true
       falsified: true
+      requires_further_monitoring: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
+      confidence_score: 0.27999999999999997
   - when:
       falsified: false
       requires_further_monitoring: false
     default: null
     emit:
       confidence: high
-      verdict: absent
       confidence_score: 0.7
+      verdict: absent
   - when: null
     default:
+      verdict: indeterminate
       confidence_score: 0.5
       confidence: medium
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      documentation_complete:
+      resolution_status:
         type: bool
         required: false
     outputs:
+      confidence_score:
+        type: float
+        required: false
       confidence:
         type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    documentation_complete: null
-    resolution_status: resolved
-    investigation_complete: true
+    resolution_status: null
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    documentation_complete: false
-    resolution_status: resolved
-    investigation_complete: true
+    resolution_status: false
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

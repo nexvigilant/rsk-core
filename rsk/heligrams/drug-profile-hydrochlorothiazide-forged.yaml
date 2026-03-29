@@ -1,120 +1,42 @@
-name: signal-validate-helix
-description: 'Forged from microgram ''signal-validate''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
+name: drug-profile-hydrochlorothiazide-helix
+description: 'Forged from microgram ''drug-profile-hydrochlorothiazide''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
 version: 0.1.0
 type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    validation_compliant: falsified
+    signal: falsified
 sense:
   tree:
-    start: validate_signal_data
+    start: check_prr
     nodes:
-      check_prr_threshold:
+      check_prr:
         type: condition
-        variable: prr_value
+        variable: prr
         operator: gte
-        value: 2
-        true_next: check_case_count
-        false_next: validation_failed
-      signal_validated:
+        value: 2.0
+        true_next: signal
+        false_next: no_signal
+      signal:
         type: return
         value:
-          validation_status: valid_signal
-          validation_compliant: true
-          signal_strength: confirmed
-          requires_further_investigation: true
-      check_confidence:
-        type: condition
-        variable: lower_ci_95
-        operator: gte
-        value: 1
-        true_next: signal_validated
-        false_next: validation_failed
-      validation_failed:
+          expected_prr: 1.6
+          signal: true
+          action: investigate
+          drug: hydrochlorothiazide
+          harm_type: A
+      no_signal:
         type: return
         value:
-          signal_strength: weak
-          requires_further_investigation: false
-          validation_status: signal_not_validated
-          validation_compliant: true
-      validate_signal_data:
-        type: condition
-        variable: prr_value
-        operator: is_not_null
-        value: null
-        true_next: check_prr_threshold
-        false_next: validation_unknown
-      validation_unknown:
-        type: return
-        value:
-          requires_further_investigation: null
-          validation_compliant: false
-          signal_strength: null
-          validation_status: validation_inconclusive
-      check_case_count:
-        type: condition
-        variable: case_count
-        operator: gte
-        value: 3
-        true_next: check_confidence
-        false_next: validation_failed
+          harm_type: A
+          expected_prr: 1.6
+          drug: hydrochlorothiazide
+          action: monitor
+          signal: false
 antisense:
   tree:
     start: null_guard_insufficient_n
     nodes:
-      null_guard_notoriety_bias:
-        type: condition
-        variable: notoriety_bias
-        operator: is_null
-        value: null
-        true_next: null_guard_weber_effect
-        false_next: check_notoriety_bias
-      check_insufficient_n:
-        type: condition
-        variable: case_count
-        operator: lt
-        value: 3
-        true_next: falsified
-        false_next: null_guard_notoriety_bias
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      null_guard_weber_effect:
-        type: condition
-        variable: years_on_market
-        operator: is_null
-        value: null
-        true_next: null_guard_channeling_bias
-        false_next: check_weber_effect
-      check_notoriety_bias:
-        type: condition
-        variable: notoriety_bias
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: null_guard_weber_effect
-      null_guard_channeling_bias:
-        type: condition
-        variable: channeling_bias
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_channeling_bias
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      check_channeling_bias:
-        type: condition
-        variable: channeling_bias
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: not_falsified
       check_weber_effect:
         type: condition
         variable: years_on_market
@@ -122,6 +44,51 @@ antisense:
         value: 5
         true_next: falsified
         false_next: null_guard_channeling_bias
+      null_guard_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: is_null
+        value: null
+        true_next: null_guard_weber_effect
+        false_next: check_notoriety_bias
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_weber_effect
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      null_guard_weber_effect:
+        type: condition
+        variable: years_on_market
+        operator: is_null
+        value: null
+        true_next: null_guard_channeling_bias
+        false_next: check_weber_effect
+      null_guard_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_channeling_bias
+      check_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
       null_guard_insufficient_n:
         type: condition
         variable: case_count
@@ -129,20 +96,27 @@ antisense:
         value: null
         true_next: null_guard_notoriety_bias
         false_next: check_insufficient_n
+      check_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: null_guard_notoriety_bias
 resolution:
   mode: base_pair
   rules:
   - when:
       falsified: false
-      validation_compliant: true
+      signal: true
     default: null
     emit:
       confidence: high
-      confidence_score: 0.7000000000000001
       verdict: confirmed
+      confidence_score: 0.7000000000000001
   - when:
-      validation_compliant: true
       falsified: true
+      signal: true
     default: null
     emit:
       confidence_score: 0.28
@@ -150,7 +124,7 @@ resolution:
       confidence: low
   - when:
       falsified: false
-      validation_compliant: false
+      signal: false
     default: null
     emit:
       confidence: high
@@ -159,56 +133,54 @@ resolution:
   - when: null
     default:
       confidence_score: 0.5
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      channeling_bias:
-        type: bool
+      years_on_market:
+        type: integer
         required: false
-      notoriety_bias:
+      channeling_bias:
         type: bool
         required: false
       case_count:
         type: integer
         required: false
-      years_on_market:
-        type: integer
+      notoriety_bias:
+        type: bool
         required: false
     outputs:
       confidence:
         type: string
         required: false
-      verdict:
-        type: string
-        required: false
       confidence_score:
         type: float
+        required: false
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    notoriety_bias: false
-    case_count: 13
     channeling_bias: false
-    prr_value: 3.5
+    prr: 2.001
+    notoriety_bias: false
     years_on_market: 0
-    lower_ci_95: 1.2
+    case_count: 13
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, insufficient_n active'
   input:
+    prr: 2.001
     case_count: 2
-    prr_value: 3.5
-    lower_ci_95: 1.2
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

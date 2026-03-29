@@ -10,18 +10,6 @@ sense:
   tree:
     start: check_zero
     nodes:
-      clean:
-        type: return
-        value:
-          threat: false
-          response: PASS
-      check_tolerance:
-        type: condition
-        variable: magnitude_delta
-        operator: lte
-        value: 0.01
-        true_next: clean
-        false_next: violation
       check_zero:
         type: condition
         variable: magnitude_delta
@@ -29,22 +17,32 @@ sense:
         value: 0
         true_next: clean
         false_next: check_tolerance
+      check_tolerance:
+        type: condition
+        variable: magnitude_delta
+        operator: lte
+        value: 0.01
+        true_next: clean
+        false_next: violation
       violation:
         type: return
         value:
           threat: true
           response: 'BLOCK: action-reaction imbalance — Newton third law violated'
+      clean:
+        type: return
+        value:
+          threat: false
+          response: PASS
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: magnitude_delta
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       check_negation:
         type: condition
         variable: magnitude_delta
@@ -52,16 +50,18 @@ antisense:
         value: 0
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: magnitude_delta
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
           confounder_count: 1
           falsified: true
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -70,16 +70,16 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
       confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
       threat: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
       confidence: low
   - when:
       threat: false
@@ -91,8 +91,8 @@ resolution:
       confidence: high
   - when: null
     default:
-      confidence: medium
       verdict: indeterminate
+      confidence: medium
       confidence_score: 0.5
     emit: null
 interface:
@@ -105,20 +105,20 @@ interface:
         type: number
         required: true
     outputs:
-      confidence_score:
-        type: float
-        required: false
-      threat:
-        type: boolean
+      response:
+        type: string
         required: false
       verdict:
         type: string
         required: false
-      response:
-        type: string
+      confidence_score:
+        type: float
         required: false
       confidence:
         type: string
+        required: false
+      threat:
+        type: boolean
         required: false
     aliases: {}
   minor_groove: null

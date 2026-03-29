@@ -10,11 +10,6 @@ sense:
   tree:
     start: check_critical
     nodes:
-      warning:
-        type: return
-        value:
-          health: WARNING
-          description: Metric exceeds warning threshold - monitor and investigate
       check_critical:
         type: condition
         variable: metric_value
@@ -22,6 +17,16 @@ sense:
         value: 90
         true_next: critical
         false_next: check_warn
+      critical:
+        type: return
+        value:
+          health: CRITICAL
+          description: Metric exceeds critical threshold - immediate action required
+      warning:
+        type: return
+        value:
+          health: WARNING
+          description: Metric exceeds warning threshold - monitor and investigate
       check_warn:
         type: condition
         variable: metric_value
@@ -32,34 +37,17 @@ sense:
       healthy:
         type: return
         value:
-          description: Metric within normal range - no action required
           health: HEALTHY
-      critical:
-        type: return
-        value:
-          health: CRITICAL
-          description: Metric exceeds critical threshold - immediate action required
+          description: Metric within normal range - no action required
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: metric_value
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       falsified:
         type: return
         value:
           confounder_count: 1
           falsified: true
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       check_negation:
         type: condition
         variable: metric_value
@@ -67,6 +55,18 @@ antisense:
         value: 90
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: metric_value
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -74,16 +74,16 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       confidence: high
       verdict: confirmed
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
       confidence: medium
@@ -97,16 +97,16 @@ interface:
         type: int
         required: false
     outputs:
-      health:
+      description:
         type: string
         required: false
-      confidence:
+      health:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      description:
+      confidence:
         type: string
         required: false
       verdict:
@@ -118,16 +118,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     metric_value: 100
-    threshold_critical: 90
-    threshold_warn: 70
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     metric_value: 89
-    threshold_critical: 90
-    threshold_warn: 70
   expect:
     verdict: contested
     confidence: low

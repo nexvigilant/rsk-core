@@ -5,39 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    organ: falsified
+    action: falsified
 sense:
   tree:
     start: check_severe
     nodes:
-      check_mild:
-        type: condition
-        variable: ALT_ULN
-        operator: gte
-        value: 3
-        true_next: mild
-        false_next: normal
-      mild:
-        type: return
-        value:
-          organ: hepatic
-          severity: mild
-          target: liver
-          action: monitor_closely
-      normal:
-        type: return
-        value:
-          severity: normal
-          action: continue
-          organ: hepatic
-          target: liver
-      severe:
-        type: return
-        value:
-          severity: severe
-          target: liver
-          action: discontinue
-          organ: hepatic
       check_severe:
         type: condition
         variable: ALT_ULN
@@ -45,15 +17,43 @@ sense:
         value: 10
         true_next: severe
         false_next: check_mild
+      mild:
+        type: return
+        value:
+          action: monitor_closely
+          organ: hepatic
+          severity: mild
+          target: liver
+      check_mild:
+        type: condition
+        variable: ALT_ULN
+        operator: gte
+        value: 3
+        true_next: mild
+        false_next: normal
+      normal:
+        type: return
+        value:
+          severity: normal
+          target: liver
+          organ: hepatic
+          action: continue
+      severe:
+        type: return
+        value:
+          action: discontinue
+          target: liver
+          organ: hepatic
+          severity: severe
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
+      not_falsified:
         type: return
         value:
-          falsified: true
-          confounder_count: 1
+          confounder_count: 0
+          falsified: false
       null_guard_negation:
         type: condition
         variable: ALT_ULN
@@ -68,11 +68,11 @@ antisense:
         value: 10
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
+      falsified:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence_score: 0.27999999999999997
+      verdict: contested
       confidence: low
   - when: null
     default:
       verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:

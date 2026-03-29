@@ -10,13 +10,13 @@ sense:
   tree:
     start: check_severe
     nodes:
-      check_mild:
-        type: condition
-        variable: vision_change_grade
-        operator: gte
-        value: 1
-        true_next: mild
-        false_next: normal
+      mild:
+        type: return
+        value:
+          action: monitor_closely
+          organ: ocular
+          target: eye
+          severity: mild
       check_severe:
         type: condition
         variable: vision_change_grade
@@ -24,48 +24,31 @@ sense:
         value: 3
         true_next: severe
         false_next: check_mild
-      normal:
-        type: return
-        value:
-          action: continue
-          organ: ocular
-          target: eye
-          severity: normal
       severe:
         type: return
         value:
-          target: eye
+          severity: severe
           organ: ocular
           action: discontinue
-          severity: severe
-      mild:
+          target: eye
+      normal:
         type: return
         value:
           target: eye
           organ: ocular
-          action: monitor_closely
-          severity: mild
+          severity: normal
+          action: continue
+      check_mild:
+        type: condition
+        variable: vision_change_grade
+        operator: gte
+        value: 1
+        true_next: mild
+        false_next: normal
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      check_negation:
-        type: condition
-        variable: vision_change_grade
-        operator: lt
-        value: 3
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: vision_change_grade
@@ -73,6 +56,23 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_negation:
+        type: condition
+        variable: vision_change_grade
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -80,9 +80,9 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       confidence_score: 0.7
       verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
@@ -92,9 +92,9 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -106,11 +106,11 @@ interface:
       verdict:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
       confidence:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -125,8 +125,8 @@ tests:
   input:
     vision_change_grade: 2
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

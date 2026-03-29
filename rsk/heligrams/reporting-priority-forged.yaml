@@ -10,13 +10,6 @@ sense:
   tree:
     start: check_serious
     nodes:
-      check_causality_probable:
-        type: condition
-        variable: causality_category
-        operator: eq
-        value: PROBABLE
-        true_next: p0_immediate
-        false_next: p1_expedited
       check_serious:
         type: condition
         variable: is_serious
@@ -24,41 +17,6 @@ sense:
         value: true
         true_next: check_unexpected_serious
         false_next: p3_routine
-      p0_immediate:
-        type: return
-        value:
-          priority: P0_IMMEDIATE
-          rationale: Serious unexpected ADR with definite or probable causality requires 7-day expedited reporting per ICH E2A
-          report_type: 7-day_expedited
-          deadline_days: 7
-      p1_expedited:
-        type: return
-        value:
-          priority: P1_EXPEDITED
-          rationale: Serious unexpected ADR with possible or doubtful causality requires 15-day expedited reporting per ICH E2A
-          deadline_days: 15
-          report_type: 15-day_expedited
-      p2_periodic:
-        type: return
-        value:
-          rationale: Serious expected ADR included in periodic safety update report
-          priority: P2_PERIODIC
-          report_type: PSUR_PBRER
-          deadline_days: 90
-      check_unexpected_serious:
-        type: condition
-        variable: is_unexpected
-        operator: eq
-        value: true
-        true_next: check_causality_strong
-        false_next: p2_periodic
-      p3_routine:
-        type: return
-        value:
-          deadline_days: 90
-          priority: P3_ROUTINE
-          report_type: PSUR_PBRER
-          rationale: Non-serious ADR included in routine periodic safety reporting
       check_causality_strong:
         type: condition
         variable: causality_category
@@ -66,22 +24,62 @@ sense:
         value: DEFINITE
         true_next: p0_immediate
         false_next: check_causality_probable
+      p0_immediate:
+        type: return
+        value:
+          priority: P0_IMMEDIATE
+          deadline_days: 7
+          report_type: 7-day_expedited
+          rationale: Serious unexpected ADR with definite or probable causality requires 7-day expedited reporting per ICH E2A
+      p2_periodic:
+        type: return
+        value:
+          priority: P2_PERIODIC
+          rationale: Serious expected ADR included in periodic safety update report
+          report_type: PSUR_PBRER
+          deadline_days: 90
+      p3_routine:
+        type: return
+        value:
+          report_type: PSUR_PBRER
+          priority: P3_ROUTINE
+          deadline_days: 90
+          rationale: Non-serious ADR included in routine periodic safety reporting
+      check_unexpected_serious:
+        type: condition
+        variable: is_unexpected
+        operator: eq
+        value: true
+        true_next: check_causality_strong
+        false_next: p2_periodic
+      check_causality_probable:
+        type: condition
+        variable: causality_category
+        operator: eq
+        value: PROBABLE
+        true_next: p0_immediate
+        false_next: p1_expedited
+      p1_expedited:
+        type: return
+        value:
+          deadline_days: 15
+          priority: P1_EXPEDITED
+          rationale: Serious unexpected ADR with possible or doubtful causality requires 15-day expedited reporting per ICH E2A
+          report_type: 15-day_expedited
 antisense:
   tree:
     start: null_guard_alternative_cause
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
-      check_temporal_implausible:
-        type: condition
-        variable: temporal_plausible
-        operator: eq
-        value: false
-        true_next: falsified
-        false_next: null_guard_no_dechallenge
+          falsified: true
       check_alternative_cause:
         type: condition
         variable: alternative_causes
@@ -89,18 +87,6 @@ antisense:
         value: likely
         true_next: falsified
         false_next: null_guard_temporal_implausible
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
-      check_no_dechallenge:
-        type: condition
-        variable: dechallenge_positive
-        operator: eq
-        value: false
-        true_next: falsified
-        false_next: not_falsified
       null_guard_temporal_implausible:
         type: condition
         variable: temporal_plausible
@@ -115,6 +101,13 @@ antisense:
         value: null
         true_next: null_guard_temporal_implausible
         false_next: check_alternative_cause
+      check_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
       null_guard_no_dechallenge:
         type: condition
         variable: dechallenge_positive
@@ -122,6 +115,13 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_no_dechallenge
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_no_dechallenge
 resolution:
   mode: base_pair
   rules:
@@ -136,48 +136,48 @@ resolution:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
       verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      temporal_plausible:
+      is_serious:
         type: bool
         required: false
       dechallenge_positive:
         type: bool
         required: false
-      alternative_causes:
+      causality_category:
         type: string
         required: false
-      is_serious:
-        type: bool
+      alternative_causes:
+        type: string
         required: false
       is_unexpected:
         type: bool
         required: false
-      causality_category:
-        type: string
+      temporal_plausible:
+        type: bool
         required: false
     outputs:
+      confidence_score:
+        type: float
+        required: false
       priority:
         type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence:
+      rationale:
         type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
       deadline_days:
         type: int
@@ -185,7 +185,7 @@ interface:
       report_type:
         type: string
         required: false
-      rationale:
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -193,20 +193,14 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    is_serious: true
-    is_unexpected: true
-    temporal_plausible: true
-    causality_category: DEFINITE
     alternative_causes: none
     dechallenge_positive: true
+    temporal_plausible: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, alternative_cause active'
   input:
-    is_serious: true
-    is_unexpected: true
-    causality_category: DEFINITE
     alternative_causes: likely
   expect:
     confidence: low

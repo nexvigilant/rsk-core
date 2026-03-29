@@ -5,21 +5,11 @@ type: heligram
 helix:
   twist_rate: 5
   base_pairs:
-    signal_tier: falsified
+    monitoring_frequency: falsified
 sense:
   tree:
     start: check_high_reports
     nodes:
-      return_low:
-        type: return
-        value:
-          signal_tier: low_signal_volume
-          monitoring_frequency: monthly
-      return_high:
-        type: return
-        value:
-          signal_tier: high_signal_volume
-          monitoring_frequency: continuous
       check_high_reactions:
         type: condition
         variable: top_reaction_count
@@ -27,6 +17,16 @@ sense:
         value: 100000
         true_next: return_high
         false_next: return_moderate
+      return_moderate:
+        type: return
+        value:
+          monitoring_frequency: weekly
+          signal_tier: moderate_signal_volume
+      return_high:
+        type: return
+        value:
+          signal_tier: high_signal_volume
+          monitoring_frequency: continuous
       check_high_reports:
         type: condition
         variable: total_faers_reports
@@ -34,6 +34,11 @@ sense:
         value: 1000000
         true_next: check_high_reactions
         false_next: check_moderate_reports
+      return_low:
+        type: return
+        value:
+          monitoring_frequency: monthly
+          signal_tier: low_signal_volume
       check_moderate_reports:
         type: condition
         variable: total_faers_reports
@@ -41,32 +46,10 @@ sense:
         value: 100000
         true_next: return_moderate
         false_next: return_low
-      return_moderate:
-        type: return
-        value:
-          signal_tier: moderate_signal_volume
-          monitoring_frequency: weekly
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      null_guard_negation:
-        type: condition
-        variable: top_reaction_count
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
         variable: top_reaction_count
@@ -74,6 +57,23 @@ antisense:
         value: 1000000
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: top_reaction_count
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -94,8 +94,8 @@ resolution:
   - when: null
     default:
       confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -107,20 +107,20 @@ interface:
         type: int
         required: false
     outputs:
-      confidence:
+      verdict:
         type: string
         required: false
       signal_tier:
         type: string
         required: false
-      verdict:
+      monitoring_frequency:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
       confidence_score:
         type: float
-        required: false
-      monitoring_frequency:
-        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -128,14 +128,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     top_reaction_count: 1000010
-    total_faers_reports: 2500000
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     top_reaction_count: 999999
-    total_faers_reports: 2500000
   expect:
     verdict: contested
     confidence: low

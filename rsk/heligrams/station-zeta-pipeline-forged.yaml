@@ -10,27 +10,13 @@ sense:
   tree:
     start: check_zeros
     nodes:
-      check_zeros:
-        type: condition
-        variable: on_critical_line
-        operator: eq
-        value: true
-        true_next: rh_consistent
-        false_next: rh_violation
-      low_zero:
-        type: return
-        value:
-          reason: Known low zero — verify against Odlyzko tables
-          action: verify
-          route: archive
-          priority: low
       rh_violation:
         type: return
         value:
-          priority: critical
-          route: precision_verification
           reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
+          priority: critical
           action: alert
+          route: precision_verification
       rh_consistent:
         type: condition
         variable: imaginary_part
@@ -38,20 +24,46 @@ sense:
         value: 1000
         true_next: high_zero
         false_next: low_zero
+      check_zeros:
+        type: condition
+        variable: on_critical_line
+        operator: eq
+        value: true
+        true_next: rh_consistent
+        false_next: rh_violation
       high_zero:
         type: return
         value:
-          action: catalog
           route: zero_catalog
-          reason: High zero on critical line — add to catalog for distribution analysis
           priority: moderate
+          reason: High zero on critical line — add to catalog for distribution analysis
+          action: catalog
+      low_zero:
+        type: return
+        value:
+          route: archive
+          priority: low
+          action: verify
+          reason: Known low zero — verify against Odlyzko tables
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: imaginary_part
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
       null_guard_negation:
         type: condition
-        variable: on_critical_line
+        variable: imaginary_part
         operator: is_null
         value: null
         true_next: not_falsified
@@ -59,20 +71,8 @@ antisense:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      check_negation:
-        type: condition
-        variable: on_critical_line
-        operator: neq
-        value: true
-        true_next: falsified
-        false_next: not_falsified
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -81,51 +81,49 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
       verdict: contested
   - when: null
     default:
       confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      on_critical_line:
+      imaginary_part:
         type: bool
         required: false
     outputs:
+      verdict:
+        type: string
+        required: false
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      verdict:
-        type: string
-        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    on_critical_line: null
-    imaginary_part: 14.13
+    imaginary_part: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    on_critical_line: false
-    imaginary_part: 14.13
+    imaginary_part: false
   expect:
     confidence: low
     verdict: contested

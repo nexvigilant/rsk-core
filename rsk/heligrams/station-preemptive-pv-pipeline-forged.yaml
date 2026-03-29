@@ -5,25 +5,25 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action: falsified
+    priority: falsified
 sense:
   tree:
     start: check_trajectory
     nodes:
-      critical_trajectory:
+      narrow_window:
         type: return
         value:
-          action: intervene
-          priority: critical
-          route: preemptive_action
-          reason: Predicted critical trajectory — preemptive intervention required NOW
-      check_window:
-        type: condition
-        variable: intervention_window_days
-        operator: lte
-        value: 7
-        true_next: narrow_window
-        false_next: wide_window
+          priority: high
+          route: risk_management
+          reason: Intervention window ≤7 days — prepare risk minimization measures
+          action: prepare
+      wide_window:
+        type: return
+        value:
+          action: monitor
+          route: enhanced_monitoring
+          priority: moderate
+          reason: Intervention window >7 days — time to gather more data
       check_trajectory:
         type: condition
         variable: trajectory_severity
@@ -31,20 +31,20 @@ sense:
         value: critical
         true_next: critical_trajectory
         false_next: check_window
-      narrow_window:
+      check_window:
+        type: condition
+        variable: intervention_window_days
+        operator: lte
+        value: 7
+        true_next: narrow_window
+        false_next: wide_window
+      critical_trajectory:
         type: return
         value:
-          route: risk_management
-          action: prepare
-          priority: high
-          reason: Intervention window ≤7 days — prepare risk minimization measures
-      wide_window:
-        type: return
-        value:
-          action: monitor
-          reason: Intervention window >7 days — time to gather more data
-          route: enhanced_monitoring
-          priority: moderate
+          priority: critical
+          reason: Predicted critical trajectory — preemptive intervention required NOW
+          route: preemptive_action
+          action: intervene
 antisense:
   tree:
     start: null_guard_negation
@@ -54,25 +54,25 @@ antisense:
         value:
           falsified: false
           confounder_count: 0
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       null_guard_negation:
         type: condition
-        variable: intervention_window_days
+        variable: trajectory_severity
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
       check_negation:
         type: condition
-        variable: intervention_window_days
+        variable: trajectory_severity
         operator: neq
         value: critical
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -80,52 +80,50 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       verdict: confirmed
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
-      confidence: low
       verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
       confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      intervention_window_days:
+      trajectory_severity:
         type: string
         required: false
     outputs:
-      verdict:
-        type: string
+      confidence_score:
+        type: float
         required: false
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    intervention_window_days: null
-    trajectory_severity: critical
+    trajectory_severity: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    intervention_window_days: __negated__
-    trajectory_severity: critical
+    trajectory_severity: __negated__
   expect:
     verdict: contested
     confidence: low

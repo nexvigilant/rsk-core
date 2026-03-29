@@ -10,6 +10,12 @@ sense:
   tree:
     start: check_action
     nodes:
+      critical_score:
+        type: return
+        value:
+          risk_score: 9.0
+          bridge: calculation-to-vigilance
+          source_priority: critical
       check_action:
         type: condition
         variable: action
@@ -17,18 +23,6 @@ sense:
         value: investigate
         true_next: check_priority
         false_next: archive_input
-      critical_score:
-        type: return
-        value:
-          risk_score: 9.0
-          source_priority: critical
-          bridge: calculation-to-vigilance
-      high_score:
-        type: return
-        value:
-          bridge: calculation-to-vigilance
-          risk_score: 7.0
-          source_priority: high
       check_priority:
         type: condition
         variable: priority
@@ -39,25 +33,19 @@ sense:
       archive_input:
         type: return
         value:
+          risk_score: 2.0
           bridge: calculation-to-vigilance
           source_priority: low
-          risk_score: 2.0
+      high_score:
+        type: return
+        value:
+          risk_score: 7.0
+          bridge: calculation-to-vigilance
+          source_priority: high
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
-      check_negation:
-        type: condition
-        variable: action
-        operator: neq
-        value: investigate
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: action
@@ -65,11 +53,23 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      check_negation:
+        type: condition
+        variable: action
+        operator: neq
+        value: investigate
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -77,21 +77,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
       confidence: low
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -115,17 +115,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     action: null
-    priority: critical
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     action: __negated__
-    priority: critical
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

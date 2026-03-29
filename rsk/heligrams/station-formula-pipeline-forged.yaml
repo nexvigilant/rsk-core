@@ -14,30 +14,9 @@ sense:
         type: return
         value:
           reason: Signal strength formula — feed to signal-theory pipeline
+          priority: moderate
+          action: route
           route: signal_detection
-          priority: moderate
-          action: route
-      check_type:
-        type: condition
-        variable: formula_type
-        operator: eq
-        value: signal_strength
-        true_next: signal
-        false_next: check_flywheel
-      generic:
-        type: return
-        value:
-          reason: Generic formula computation — return result
-          action: compute
-          route: archive
-          priority: low
-      flywheel:
-        type: return
-        value:
-          priority: moderate
-          action: route
-          reason: Flywheel velocity — feed to session health metrics
-          route: session_metrics
       check_flywheel:
         type: condition
         variable: formula_type
@@ -45,6 +24,27 @@ sense:
         value: flywheel_velocity
         true_next: flywheel
         false_next: generic
+      check_type:
+        type: condition
+        variable: formula_type
+        operator: eq
+        value: signal_strength
+        true_next: signal
+        false_next: check_flywheel
+      flywheel:
+        type: return
+        value:
+          route: session_metrics
+          action: route
+          priority: moderate
+          reason: Flywheel velocity — feed to session health metrics
+      generic:
+        type: return
+        value:
+          route: archive
+          action: compute
+          reason: Generic formula computation — return result
+          priority: low
 antisense:
   tree:
     start: null_guard_negation
@@ -56,11 +56,6 @@ antisense:
         value: signal_strength
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       null_guard_negation:
         type: condition
         variable: formula_type
@@ -71,8 +66,13 @@ antisense:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
       confidence: low
   - when: null
     default:
-      verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -103,14 +103,14 @@ interface:
         type: string
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       verdict:
         type: string
         required: false
       confidence_score:
         type: float
+        required: false
+      confidence:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -119,14 +119,14 @@ tests:
   input:
     formula_type: null
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     formula_type: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

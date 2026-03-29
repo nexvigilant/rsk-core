@@ -10,31 +10,6 @@ sense:
   tree:
     start: check_category
     nodes:
-      potential_risk:
-        type: return
-        value:
-          chain: preemptive-pv → vigilance → epidemiology
-          approach: additional_monitoring
-          actions:
-          - PASS
-          - registry
-          - study
-      identified_risk:
-        type: return
-        value:
-          chain: compliance → benefit-risk → ema
-          actions:
-          - labeling
-          - PIL
-          - training
-          approach: routine_minimization
-      check_potential:
-        type: condition
-        variable: risk_category
-        operator: eq
-        value: potential
-        true_next: potential_risk
-        false_next: missing_info
       check_category:
         type: condition
         variable: risk_category
@@ -42,28 +17,43 @@ sense:
         value: identified
         true_next: identified_risk
         false_next: check_potential
+      potential_risk:
+        type: return
+        value:
+          chain: preemptive-pv → vigilance → epidemiology
+          actions:
+          - PASS
+          - registry
+          - study
+          approach: additional_monitoring
+      check_potential:
+        type: condition
+        variable: risk_category
+        operator: eq
+        value: potential
+        true_next: potential_risk
+        false_next: missing_info
       missing_info:
         type: return
         value:
-          chain: pubmed → clinicaltrials → epidemiology
           actions:
           - literature_review
           - observational_study
+          chain: pubmed → clinicaltrials → epidemiology
           approach: information_gathering
+      identified_risk:
+        type: return
+        value:
+          chain: compliance → benefit-risk → ema
+          approach: routine_minimization
+          actions:
+          - labeling
+          - PIL
+          - training
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       null_guard_negation:
         type: condition
         variable: risk_category
@@ -78,6 +68,16 @@ antisense:
         value: identified
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -92,14 +92,14 @@ resolution:
       falsified: true
     default: null
     emit:
+      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
-      confidence: low
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -108,10 +108,10 @@ interface:
         type: string
         required: false
     outputs:
-      verdict:
+      confidence:
         type: string
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
       confidence_score:

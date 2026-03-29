@@ -5,49 +5,16 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    missing_elements: falsified
+    status: falsified
 sense:
   tree:
     start: check_section_intro
     nodes:
-      safety_check_faers:
-        type: condition
-        variable: has_faers_data
-        operator: eq
-        value: true
-        true_next: safety_complete
-        false_next: safety_missing
-      check_section_intro:
-        type: condition
-        variable: section_id
-        operator: eq
-        value: intro
-        true_next: intro_check_faers
-        false_next: check_section_safety
-      br_check_faers:
-        type: condition
-        variable: has_faers_data
-        operator: eq
-        value: true
-        true_next: br_check_assessment
-        false_next: br_no_faers
-      check_section_signals:
-        type: condition
-        variable: section_id
-        operator: eq
-        value: signals
-        true_next: signals_check_faers
-        false_next: check_section_benefit_risk
-      br_no_faers:
+      safety_complete:
         type: return
         value:
-          missing_elements: FAERS data and benefit-risk assessment
-          status: missing
-      conclusions_no_data:
-        type: return
-        value:
-          missing_elements: All prerequisite sections incomplete
-          status: missing
+          status: complete
+          missing_elements: none
       signals_check_count:
         type: condition
         variable: signal_count
@@ -55,23 +22,11 @@ sense:
         value: 0
         true_next: signals_complete
         false_next: signals_complete
-      signals_check_faers:
-        type: condition
-        variable: has_faers_data
-        operator: eq
-        value: true
-        true_next: signals_check_count
-        false_next: signals_no_data
-      conclusions_partial:
+      br_partial:
         type: return
         value:
           status: partial
-          missing_elements: benefit-risk assessment for final conclusions
-      intro_missing:
-        type: return
-        value:
-          status: partial
-          missing_elements: FAERS exposure data
+          missing_elements: benefit-risk assessment
       check_section_safety:
         type: condition
         variable: section_id
@@ -79,16 +34,99 @@ sense:
         value: safety
         true_next: safety_check_faers
         false_next: check_section_signals
+      br_check_assessment:
+        type: condition
+        variable: has_benefit_risk
+        operator: eq
+        value: true
+        true_next: br_complete
+        false_next: br_partial
+      conclusions_complete:
+        type: return
+        value:
+          status: complete
+          missing_elements: none
+      check_section_intro:
+        type: condition
+        variable: section_id
+        operator: eq
+        value: intro
+        true_next: intro_check_faers
+        false_next: check_section_safety
+      safety_check_faers:
+        type: condition
+        variable: has_faers_data
+        operator: eq
+        value: true
+        true_next: safety_complete
+        false_next: safety_missing
+      conclusions_check:
+        type: condition
+        variable: has_faers_data
+        operator: eq
+        value: true
+        true_next: conclusions_check_br
+        false_next: conclusions_no_data
+      br_no_faers:
+        type: return
+        value:
+          missing_elements: FAERS data and benefit-risk assessment
+          status: missing
+      signals_check_faers:
+        type: condition
+        variable: has_faers_data
+        operator: eq
+        value: true
+        true_next: signals_check_count
+        false_next: signals_no_data
+      check_section_signals:
+        type: condition
+        variable: section_id
+        operator: eq
+        value: signals
+        true_next: signals_check_faers
+        false_next: check_section_benefit_risk
+      signals_no_data:
+        type: return
+        value:
+          missing_elements: FAERS signal detection data required
+          status: missing
+      conclusions_check_br:
+        type: condition
+        variable: has_benefit_risk
+        operator: eq
+        value: true
+        true_next: conclusions_complete
+        false_next: conclusions_partial
+      conclusions_partial:
+        type: return
+        value:
+          missing_elements: benefit-risk assessment for final conclusions
+          status: partial
+      check_section_benefit_risk:
+        type: condition
+        variable: section_id
+        operator: eq
+        value: benefit-risk
+        true_next: br_check_faers
+        false_next: conclusions_check
+      br_check_faers:
+        type: condition
+        variable: has_faers_data
+        operator: eq
+        value: true
+        true_next: br_check_assessment
+        false_next: br_no_faers
       signals_complete:
         type: return
         value:
           status: complete
           missing_elements: none
-      safety_missing:
+      intro_missing:
         type: return
         value:
-          missing_elements: FAERS safety data required
-          status: missing
+          status: partial
+          missing_elements: FAERS exposure data
       intro_check_faers:
         type: condition
         variable: has_faers_data
@@ -101,87 +139,49 @@ sense:
         value:
           status: complete
           missing_elements: none
-      signals_no_data:
+      safety_missing:
         type: return
         value:
-          missing_elements: FAERS signal detection data required
           status: missing
-      safety_complete:
-        type: return
-        value:
-          missing_elements: none
-          status: complete
+          missing_elements: FAERS safety data required
       br_complete:
         type: return
         value:
           missing_elements: none
           status: complete
-      check_section_benefit_risk:
-        type: condition
-        variable: section_id
-        operator: eq
-        value: benefit-risk
-        true_next: br_check_faers
-        false_next: conclusions_check
-      br_partial:
+      conclusions_no_data:
         type: return
         value:
-          missing_elements: benefit-risk assessment
-          status: partial
-      conclusions_complete:
-        type: return
-        value:
-          status: complete
-          missing_elements: none
-      conclusions_check:
-        type: condition
-        variable: has_faers_data
-        operator: eq
-        value: true
-        true_next: conclusions_check_br
-        false_next: conclusions_no_data
-      conclusions_check_br:
-        type: condition
-        variable: has_benefit_risk
-        operator: eq
-        value: true
-        true_next: conclusions_complete
-        false_next: conclusions_partial
-      br_check_assessment:
-        type: condition
-        variable: has_benefit_risk
-        operator: eq
-        value: true
-        true_next: br_complete
-        false_next: br_partial
+          missing_elements: All prerequisite sections incomplete
+          status: missing
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       null_guard_negation:
         type: condition
-        variable: has_faers_data
+        variable: signal_count
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       check_negation:
         type: condition
-        variable: has_faers_data
+        variable: signal_count
         operator: neq
         value: intro
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -189,21 +189,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
+      confidence: low
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -211,12 +211,12 @@ interface:
       has_guidelines:
         type: bool
         required: false
-      has_faers_data:
-        type: bool
-        required: true
       has_benefit_risk:
         type: bool
         required: false
+      has_faers_data:
+        type: bool
+        required: true
       section_id:
         type: string
         required: true
@@ -224,19 +224,19 @@ interface:
         type: number
         required: true
     outputs:
-      verdict:
+      status:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      missing_elements:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      missing_elements:
-        type: string
-        required: false
-      status:
-        type: string
-        required: false
-      confidence:
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -244,20 +244,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    has_faers_data: null
-    signal_count: 0
-    section_id: intro
+    signal_count: null
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    has_faers_data: __negated__
-    signal_count: 0
-    section_id: intro
+    signal_count: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

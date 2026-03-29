@@ -10,20 +10,6 @@ sense:
   tree:
     start: check_valid
     nodes:
-      invalid:
-        type: return
-        value:
-          route: encoding_repair
-          priority: high
-          reason: Invalid DNA encoding — non-ACGT characters or length mismatch
-          action: reject
-      lossy:
-        type: return
-        value:
-          route: encoding_review
-          action: flag
-          priority: moderate
-          reason: Encoding valid but not bijective — information loss on decode
       certified:
         type: return
         value:
@@ -38,6 +24,20 @@ sense:
         value: true
         true_next: check_bijective
         false_next: invalid
+      lossy:
+        type: return
+        value:
+          reason: Encoding valid but not bijective — information loss on decode
+          action: flag
+          route: encoding_review
+          priority: moderate
+      invalid:
+        type: return
+        value:
+          priority: high
+          reason: Invalid DNA encoding — non-ACGT characters or length mismatch
+          action: reject
+          route: encoding_repair
       check_bijective:
         type: condition
         variable: is_bijective
@@ -56,6 +56,11 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
       check_negation:
         type: condition
         variable: encoding_valid
@@ -63,16 +68,11 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -81,20 +81,20 @@ resolution:
     default: null
     emit:
       confidence: high
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
       confidence: low
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -103,13 +103,13 @@ interface:
         type: bool
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
       verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -117,14 +117,12 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    is_bijective: false
     encoding_valid: null
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    is_bijective: false
     encoding_valid: false
   expect:
     confidence: low

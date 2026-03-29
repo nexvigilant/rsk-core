@@ -10,27 +10,27 @@ sense:
   tree:
     start: check_pv
     nodes:
-      high_engagement:
-        type: return
-        value:
-          action: amplify
-          reason: PV-relevant with high engagement potential — amplify reach
-          priority: moderate
-          route: content_distribution
-      low_engagement:
-        type: return
-        value:
-          route: content_publication
-          reason: PV-relevant, niche audience — publish for domain authority
-          priority: low
-          action: publish
       non_pv:
         type: return
         value:
-          reason: Not PV-relevant content — skip
-          priority: low
           action: skip
           route: archive
+          reason: Not PV-relevant content — skip
+          priority: low
+      high_engagement:
+        type: return
+        value:
+          priority: moderate
+          action: amplify
+          route: content_distribution
+          reason: PV-relevant with high engagement potential — amplify reach
+      low_engagement:
+        type: return
+        value:
+          priority: low
+          action: publish
+          reason: PV-relevant, niche audience — publish for domain authority
+          route: content_publication
       pv_content:
         type: condition
         variable: engagement_score
@@ -49,13 +49,6 @@ antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: engagement_score
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
         variable: engagement_score
@@ -63,16 +56,23 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: engagement_score
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
+      verdict: contested
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -103,28 +103,26 @@ interface:
         type: bool
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
+      verdict:
+        type: string
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    pv_relevant: false
     engagement_score: null
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    pv_relevant: false
     engagement_score: false
   expect:
     verdict: contested

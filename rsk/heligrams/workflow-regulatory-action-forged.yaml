@@ -5,43 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    chain: falsified
+    timeline_days: falsified
 sense:
   tree:
     start: check_severity
     nodes:
-      eu_critical:
-        type: return
-        value:
-          chain: ema → compliance → benefit-risk
-          action: referral
-          timeline_days: 60
-      us_critical:
-        type: return
-        value:
-          timeline_days: 30
-          action: boxed_warning
-          chain: fda-safety → fda-accessdata → compliance
-      labeling:
-        type: return
-        value:
-          chain: fda-safety → dailymed → compliance
-          timeline_days: 90
-          action: labeling_change
-      check_jurisdiction_critical:
-        type: condition
-        variable: jurisdiction
-        operator: eq
-        value: US
-        true_next: us_critical
-        false_next: eu_critical
-      check_severity:
-        type: condition
-        variable: signal_severity
-        operator: eq
-        value: critical
-        true_next: check_jurisdiction_critical
-        false_next: check_moderate
       check_moderate:
         type: condition
         variable: signal_severity
@@ -49,19 +17,63 @@ sense:
         value: high
         true_next: labeling
         false_next: monitor
+      check_severity:
+        type: condition
+        variable: signal_severity
+        operator: eq
+        value: critical
+        true_next: check_jurisdiction_critical
+        false_next: check_moderate
+      check_jurisdiction_critical:
+        type: condition
+        variable: jurisdiction
+        operator: eq
+        value: US
+        true_next: us_critical
+        false_next: eu_critical
+      labeling:
+        type: return
+        value:
+          timeline_days: 90
+          action: labeling_change
+          chain: fda-safety → dailymed → compliance
       monitor:
         type: return
         value:
-          timeline_days: 180
           action: enhanced_monitoring
           chain: vigilance → preemptive-pv → epidemiology
+          timeline_days: 180
+      us_critical:
+        type: return
+        value:
+          chain: fda-safety → fda-accessdata → compliance
+          timeline_days: 30
+          action: boxed_warning
+      eu_critical:
+        type: return
+        value:
+          timeline_days: 60
+          action: referral
+          chain: ema → compliance → benefit-risk
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: signal_severity
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
-        variable: jurisdiction
+        variable: signal_severity
         operator: neq
         value: critical
         true_next: falsified
@@ -71,18 +83,6 @@ antisense:
         value:
           falsified: true
           confounder_count: 1
-      null_guard_negation:
-        type: condition
-        variable: jurisdiction
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -90,36 +90,36 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
       confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
+      confidence: low
   - when: null
     default:
       verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      jurisdiction:
+      signal_severity:
         type: string
         required: false
     outputs:
       confidence_score:
         type: float
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -127,18 +127,18 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    jurisdiction: null
-    signal_severity: critical
+    jurisdiction: US
+    signal_severity: null
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    jurisdiction: __negated__
-    signal_severity: critical
+    jurisdiction: US
+    signal_severity: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

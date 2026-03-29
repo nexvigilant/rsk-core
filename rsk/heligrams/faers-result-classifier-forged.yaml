@@ -5,18 +5,29 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    priority: falsified
+    action: falsified
 sense:
   tree:
     start: check_high_volume_serious
     nodes:
-      check_moderate_volume:
-        type: condition
-        variable: report_count
-        operator: gte
-        value: 50
-        true_next: investigate
-        false_next: check_high_serious_pct
+      monitor:
+        type: return
+        value:
+          action: add_to_watchlist
+          category: MONITOR
+          priority: 3
+      routine:
+        type: return
+        value:
+          priority: 4
+          category: ROUTINE
+          action: periodic_review
+      investigate:
+        type: return
+        value:
+          category: INVESTIGATE
+          action: detailed_case_review
+          priority: 2
       check_serious_pct_high:
         type: condition
         variable: serious_pct
@@ -24,38 +35,6 @@ sense:
         value: 50
         true_next: high_alert
         false_next: investigate
-      check_low_volume:
-        type: condition
-        variable: report_count
-        operator: gte
-        value: 10
-        true_next: monitor
-        false_next: routine
-      routine:
-        type: return
-        value:
-          priority: 4
-          action: periodic_review
-          category: ROUTINE
-      check_high_volume_serious:
-        type: condition
-        variable: report_count
-        operator: gte
-        value: 100
-        true_next: check_serious_pct_high
-        false_next: check_moderate_volume
-      high_alert:
-        type: return
-        value:
-          category: HIGH_ALERT
-          priority: 1
-          action: immediate_safety_review
-      investigate:
-        type: return
-        value:
-          priority: 2
-          action: detailed_case_review
-          category: INVESTIGATE
       check_high_serious_pct:
         type: condition
         variable: serious_pct
@@ -63,40 +42,61 @@ sense:
         value: 70
         true_next: investigate
         false_next: check_low_volume
-      monitor:
+      check_low_volume:
+        type: condition
+        variable: report_count
+        operator: gte
+        value: 10
+        true_next: monitor
+        false_next: routine
+      high_alert:
         type: return
         value:
-          category: MONITOR
-          action: add_to_watchlist
-          priority: 3
+          action: immediate_safety_review
+          priority: 1
+          category: HIGH_ALERT
+      check_moderate_volume:
+        type: condition
+        variable: report_count
+        operator: gte
+        value: 50
+        true_next: investigate
+        false_next: check_high_serious_pct
+      check_high_volume_serious:
+        type: condition
+        variable: report_count
+        operator: gte
+        value: 100
+        true_next: check_serious_pct_high
+        false_next: check_moderate_volume
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      check_negation:
-        type: condition
-        variable: report_count
-        operator: lt
-        value: 100
-        true_next: falsified
-        false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       null_guard_negation:
         type: condition
-        variable: report_count
+        variable: serious_pct
         operator: is_null
         value: null
         true_next: not_falsified
         false_next: check_negation
+      check_negation:
+        type: condition
+        variable: serious_pct
+        operator: lt
+        value: 100
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -105,8 +105,8 @@ resolution:
     default: null
     emit:
       confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
   - when:
       falsified: true
     default: null
@@ -117,33 +117,33 @@ resolution:
   - when: null
     default:
       confidence: medium
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      serious_pct:
+      report_count:
         type: int
         required: false
-      report_count:
+      serious_pct:
         type: int
         required: false
     outputs:
       confidence:
         type: string
         required: false
-      action:
-        type: string
+      priority:
+        type: int
         required: false
       category:
         type: string
         required: false
+      action:
+        type: string
+        required: false
       confidence_score:
         type: float
-        required: false
-      priority:
-        type: int
         required: false
       verdict:
         type: string
@@ -153,18 +153,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    serious_pct: 60
-    report_count: 110
+    serious_pct: 110
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    serious_pct: 60
-    report_count: 99
+    serious_pct: 99
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

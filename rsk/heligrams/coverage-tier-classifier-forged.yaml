@@ -5,23 +5,16 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    color: falsified
+    tier: falsified
 sense:
   tree:
     start: check_high
     nodes:
-      high_coverage:
+      low_coverage:
         type: return
         value:
-          color: emerald
-          tier: HIGH
-      check_high:
-        type: condition
-        variable: coverage_pct
-        operator: gte
-        value: 75
-        true_next: high_coverage
-        false_next: check_moderate
+          tier: LOW
+          color: orange
       check_low:
         type: condition
         variable: coverage_pct
@@ -29,21 +22,21 @@ sense:
         value: 25
         true_next: low_coverage
         false_next: critical_gap
-      moderate_coverage:
-        type: return
-        value:
-          color: amber
-          tier: MODERATE
-      low_coverage:
-        type: return
-        value:
-          color: orange
-          tier: LOW
       critical_gap:
         type: return
         value:
-          color: red
           tier: CRITICAL_GAP
+          color: red
+      high_coverage:
+        type: return
+        value:
+          color: emerald
+          tier: HIGH
+      moderate_coverage:
+        type: return
+        value:
+          tier: MODERATE
+          color: amber
       check_moderate:
         type: condition
         variable: coverage_pct
@@ -51,15 +44,17 @@ sense:
         value: 50
         true_next: moderate_coverage
         false_next: check_low
+      check_high:
+        type: condition
+        variable: coverage_pct
+        operator: gte
+        value: 75
+        true_next: high_coverage
+        false_next: check_moderate
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       not_falsified:
         type: return
         value:
@@ -79,6 +74,11 @@ antisense:
         value: 75
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -86,20 +86,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       verdict: confirmed
+      confidence: high
       confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
       confidence_score: 0.5
     emit: null
 interface:
@@ -109,10 +109,13 @@ interface:
         type: number
         required: true
     outputs:
-      tier:
+      verdict:
         type: string
         required: false
-      verdict:
+      confidence_score:
+        type: float
+        required: false
+      tier:
         type: string
         required: false
       color:
@@ -121,9 +124,6 @@ interface:
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
     aliases: {}
   minor_groove: null
 tests:
@@ -131,8 +131,8 @@ tests:
   input:
     coverage_pct: 85
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     coverage_pct: 74

@@ -5,88 +5,18 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    labeling_risk: falsified
+    next_step: falsified
 sense:
   tree:
     start: check_boxed_warning
     nodes:
-      check_adr_low:
-        type: condition
-        variable: adr_count
-        operator: gte
-        value: 5
-        true_next: low_risk
-        false_next: minimal_risk
-      check_boxed_warning:
-        type: condition
-        variable: has_boxed_warning
-        operator: eq
-        value: true
-        true_next: boxed_warning_present
-        false_next: check_contraindications
-      check_contraindications:
-        type: condition
-        variable: contraindication_count
-        operator: is_not_null
-        value: true
-        true_next: check_contra_count
-        false_next: check_adr_only
-      check_adr_only:
-        type: condition
-        variable: adr_count
-        operator: gte
-        value: 20
-        true_next: moderate_risk
-        false_next: check_adr_low
-      moderate_risk:
-        type: return
-        value:
-          labeling_risk: moderate
-          risk_factors: 20+ documented ADRs
-          next_step: routine_monitoring
-          recommended_action: Standard pharmacovigilance monitoring
-      critical_risk:
-        type: return
-        value:
-          next_step: signal_investigation
-          risk_factors: Boxed warning with 10+ documented ADRs
-          labeling_risk: critical
-          recommended_action: Immediate causality assessment and enhanced pharmacovigilance
-      minimal_risk:
-        type: return
-        value:
-          recommended_action: Standard post-market surveillance
-          risk_factors: Fewer than 5 documented ADRs
-          next_step: routine_monitoring
-          labeling_risk: minimal
-      high_risk_no_box:
-        type: return
-        value:
-          next_step: contraindication_review
-          recommended_action: Review contraindication scope and monitor for signal emergence
-          labeling_risk: high
-          risk_factors: 5+ contraindications without boxed warning
       high_risk:
         type: return
         value:
-          risk_factors: Boxed warning present
+          next_step: rems_review
           labeling_risk: high
           recommended_action: Prioritize signal monitoring and REMS compliance check
-          next_step: rems_review
-      check_adr_with_contra:
-        type: condition
-        variable: adr_count
-        operator: gte
-        value: 20
-        true_next: moderate_risk
-        false_next: check_adr_low
-      boxed_warning_present:
-        type: condition
-        variable: adr_count
-        operator: gte
-        value: 10
-        true_next: critical_risk
-        false_next: high_risk
+          risk_factors: Boxed warning present
       check_contra_count:
         type: condition
         variable: contraindication_count
@@ -94,41 +24,111 @@ sense:
         value: 5
         true_next: high_risk_no_box
         false_next: check_adr_with_contra
+      critical_risk:
+        type: return
+        value:
+          risk_factors: Boxed warning with 10+ documented ADRs
+          next_step: signal_investigation
+          recommended_action: Immediate causality assessment and enhanced pharmacovigilance
+          labeling_risk: critical
+      check_adr_only:
+        type: condition
+        variable: adr_count
+        operator: gte
+        value: 20
+        true_next: moderate_risk
+        false_next: check_adr_low
+      check_boxed_warning:
+        type: condition
+        variable: has_boxed_warning
+        operator: eq
+        value: true
+        true_next: boxed_warning_present
+        false_next: check_contraindications
+      minimal_risk:
+        type: return
+        value:
+          labeling_risk: minimal
+          recommended_action: Standard post-market surveillance
+          next_step: routine_monitoring
+          risk_factors: Fewer than 5 documented ADRs
+      check_adr_low:
+        type: condition
+        variable: adr_count
+        operator: gte
+        value: 5
+        true_next: low_risk
+        false_next: minimal_risk
+      moderate_risk:
+        type: return
+        value:
+          risk_factors: 20+ documented ADRs
+          next_step: routine_monitoring
+          recommended_action: Standard pharmacovigilance monitoring
+          labeling_risk: moderate
+      check_adr_with_contra:
+        type: condition
+        variable: adr_count
+        operator: gte
+        value: 20
+        true_next: moderate_risk
+        false_next: check_adr_low
+      high_risk_no_box:
+        type: return
+        value:
+          labeling_risk: high
+          risk_factors: 5+ contraindications without boxed warning
+          recommended_action: Review contraindication scope and monitor for signal emergence
+          next_step: contraindication_review
+      boxed_warning_present:
+        type: condition
+        variable: adr_count
+        operator: gte
+        value: 10
+        true_next: critical_risk
+        false_next: high_risk
       low_risk:
         type: return
         value:
           next_step: routine_monitoring
-          risk_factors: 5-19 documented ADRs
-          labeling_risk: low
           recommended_action: Routine safety monitoring
+          labeling_risk: low
+          risk_factors: 5-19 documented ADRs
+      check_contraindications:
+        type: condition
+        variable: contraindication_count
+        operator: is_not_null
+        value: true
+        true_next: check_contra_count
+        false_next: check_adr_only
 antisense:
   tree:
     start: null_guard_negation
     nodes:
       check_negation:
         type: condition
-        variable: adr_count
+        variable: contraindication_count
         operator: neq
         value: true
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: contraindication_count
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       not_falsified:
         type: return
         value:
           falsified: false
           confounder_count: 0
-      null_guard_negation:
-        type: condition
-        variable: adr_count
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -143,32 +143,44 @@ resolution:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
+      verdict: contested
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      has_boxed_warning:
-        type: bool
-        required: false
       adr_count:
         type: int
         required: false
-      contraindication_count:
-        type: int
+      has_boxed_warning:
+        type: bool
         required: false
       drug_name:
         type: string
         required: false
+      contraindication_count:
+        type: int
+        required: false
     outputs:
+      recommended_action:
+        type: string
+        required: false
+      labeling_risk:
+        type: string
+        required: false
+      risk_factors:
+        type: string
+        required: false
       verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
       confidence_score:
@@ -177,39 +189,21 @@ interface:
       next_step:
         type: string
         required: false
-      recommended_action:
-        type: string
-        required: false
-      confidence:
-        type: string
-        required: false
-      risk_factors:
-        type: string
-        required: false
-      labeling_risk:
-        type: string
-        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    drug_name: metformin
-    contraindication_count: 3
-    has_boxed_warning: true
-    adr_count: null
+    contraindication_count: null
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    drug_name: metformin
-    contraindication_count: 3
-    has_boxed_warning: true
-    adr_count: false
+    contraindication_count: false
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

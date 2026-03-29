@@ -5,32 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    topology: falsified
+    center: falsified
 sense:
   tree:
     start: check_density
     nodes:
-      ring:
-        type: return
-        value:
-          topology: ring
-          center: relay
-          reason: High density, few regions — ring with relay
-          max_hops: 2
-      check_density:
-        type: condition
-        variable: signal_count
-        operator: gte
-        value: 5
-        true_next: check_spread
-        false_next: star
-      star:
-        type: return
-        value:
-          max_hops: 1
-          center: collector
-          reason: Low signal count — single collector hub
-          topology: star
       check_spread:
         type: condition
         variable: region_count
@@ -41,38 +20,59 @@ sense:
       mesh:
         type: return
         value:
-          topology: full_mesh
-          reason: High density + multi-region — full mesh for gossip
           center: distributed
           max_hops: 3
+          reason: High density + multi-region — full mesh for gossip
+          topology: full_mesh
+      star:
+        type: return
+        value:
+          reason: Low signal count — single collector hub
+          max_hops: 1
+          center: collector
+          topology: star
+      ring:
+        type: return
+        value:
+          center: relay
+          reason: High density, few regions — ring with relay
+          topology: ring
+          max_hops: 2
+      check_density:
+        type: condition
+        variable: signal_count
+        operator: gte
+        value: 5
+        true_next: check_spread
+        false_next: star
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      null_guard_negation:
+        type: condition
+        variable: region_count
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: region_count
+        operator: lt
+        value: 5
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
           confounder_count: 1
           falsified: true
-      check_negation:
-        type: condition
-        variable: signal_count
-        operator: lt
-        value: 5
-        true_next: falsified
-        false_next: not_falsified
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
-      null_guard_negation:
-        type: condition
-        variable: signal_count
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -81,35 +81,35 @@ resolution:
     default: null
     emit:
       confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
+      verdict: contested
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      signal_count:
+      region_count:
         type: integer
         required: false
     outputs:
+      verdict:
+        type: string
+        required: false
       confidence_score:
         type: float
         required: false
       confidence:
-        type: string
-        required: false
-      verdict:
         type: string
         required: false
     aliases: {}
@@ -117,15 +117,15 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    signal_count: 15
-    region_count: 1
+    signal_count: 6
+    region_count: 15
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    signal_count: 4
-    region_count: 1
+    signal_count: 6
+    region_count: 4
   expect:
     confidence: low
     verdict: contested

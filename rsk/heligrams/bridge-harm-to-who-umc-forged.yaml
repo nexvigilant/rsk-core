@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 5
   base_pairs:
-    causality_category: falsified
+    bridge: falsified
 sense:
   tree:
     start: check_action
@@ -17,11 +17,18 @@ sense:
         value: investigate
         true_next: probable
         false_next: possible
+      check_action:
+        type: condition
+        variable: action
+        operator: eq
+        value: escalate
+        true_next: certain
+        false_next: check_investigate
       possible:
         type: return
         value:
-          causality_category: possible
           bridge: harm-to-who-umc
+          causality_category: possible
       probable:
         type: return
         value:
@@ -30,31 +37,12 @@ sense:
       certain:
         type: return
         value:
-          bridge: harm-to-who-umc
           causality_category: certain
-      check_action:
-        type: condition
-        variable: action
-        operator: eq
-        value: escalate
-        true_next: certain
-        false_next: check_investigate
+          bridge: harm-to-who-umc
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: action
-        operator: neq
-        value: escalate
-        true_next: falsified
-        false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       null_guard_negation:
         type: condition
         variable: action
@@ -67,6 +55,18 @@ antisense:
         value:
           confounder_count: 1
           falsified: true
+      check_negation:
+        type: condition
+        variable: action
+        operator: neq
+        value: escalate
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -81,14 +81,14 @@ resolution:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence_score: 0.27999999999999997
       confidence: low
+      verdict: contested
   - when: null
     default:
-      verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -100,11 +100,11 @@ interface:
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -112,14 +112,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     action: null
-    priority: critical
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     action: __negated__
-    priority: critical
   expect:
     verdict: contested
     confidence: low

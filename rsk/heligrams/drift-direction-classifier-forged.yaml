@@ -5,11 +5,21 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    direction: falsified
+    traffic_level: falsified
 sense:
   tree:
     start: check_rising
     nodes:
+      falling:
+        type: return
+        value:
+          traffic_level: green
+          direction: falling
+      rising:
+        type: return
+        value:
+          direction: rising
+          traffic_level: red
       check_rising:
         type: condition
         variable: change_pct
@@ -17,11 +27,6 @@ sense:
         value: 5
         true_next: rising
         false_next: check_falling
-      stable:
-        type: return
-        value:
-          direction: stable
-          traffic_level: green
       check_falling:
         type: condition
         variable: change_pct
@@ -29,20 +34,22 @@ sense:
         value: -5
         true_next: falling
         false_next: stable
-      rising:
-        type: return
-        value:
-          traffic_level: red
-          direction: rising
-      falling:
+      stable:
         type: return
         value:
           traffic_level: green
-          direction: falling
+          direction: stable
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      check_negation:
+        type: condition
+        variable: change_pct
+        operator: lte
+        value: 5
+        true_next: falsified
+        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: change_pct
@@ -53,20 +60,13 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
-      check_negation:
-        type: condition
-        variable: change_pct
-        operator: lte
-        value: 5
-        true_next: falsified
-        false_next: not_falsified
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -74,21 +74,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence: high
       verdict: confirmed
       confidence_score: 0.7
-      confidence: high
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -97,16 +97,16 @@ interface:
         type: number
         required: true
     outputs:
-      verdict:
+      traffic_level:
         type: string
         required: false
-      direction:
+      verdict:
         type: string
         required: false
       confidence:
         type: string
         required: false
-      traffic_level:
+      direction:
         type: string
         required: false
       confidence_score:

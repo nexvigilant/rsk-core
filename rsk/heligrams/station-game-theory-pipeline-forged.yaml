@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    priority: falsified
+    reason: falsified
 sense:
   tree:
     start: check_equilibrium
@@ -17,6 +17,20 @@ sense:
         value: true
         true_next: dominant
         false_next: mixed
+      no_equilibrium:
+        type: return
+        value:
+          reason: No Nash equilibrium — mixed strategy needed, run simulation
+          action: simulate
+          priority: moderate
+          route: strategy_simulation
+      dominant:
+        type: return
+        value:
+          reason: Dominant strategy exists — clear competitive advantage path
+          route: strategy_execution
+          action: execute
+          priority: high
       check_equilibrium:
         type: condition
         variable: has_nash
@@ -24,27 +38,13 @@ sense:
         value: true
         true_next: check_dominant
         false_next: no_equilibrium
-      no_equilibrium:
-        type: return
-        value:
-          priority: moderate
-          reason: No Nash equilibrium — mixed strategy needed, run simulation
-          route: strategy_simulation
-          action: simulate
-      dominant:
-        type: return
-        value:
-          priority: high
-          reason: Dominant strategy exists — clear competitive advantage path
-          action: execute
-          route: strategy_execution
       mixed:
         type: return
         value:
+          action: analyze
           reason: Nash exists but no dominance — analyze mixed strategy probabilities
           route: strategy_analysis
           priority: moderate
-          action: analyze
 antisense:
   tree:
     start: null_guard_negation
@@ -52,8 +52,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
       falsified:
         type: return
         value:
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
       verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
+      confidence: medium
       confidence_score: 0.5
       verdict: indeterminate
-      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -118,17 +118,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     dominant_strategy_exists: null
-    has_nash: false
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     dominant_strategy_exists: false
-    has_nash: false
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

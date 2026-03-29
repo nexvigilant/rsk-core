@@ -10,6 +10,18 @@ sense:
   tree:
     start: check_stage
     nodes:
+      ongoing:
+        type: return
+        value:
+          assessors: 2
+          depth: signal_triggered
+          chain: benefit-risk → vigilance
+      full_review:
+        type: return
+        value:
+          depth: comprehensive
+          assessors: 4
+          chain: benefit-risk → epidemiology → compliance → ema
       check_stage:
         type: condition
         variable: lifecycle_stage
@@ -17,12 +29,6 @@ sense:
         value: approval
         true_next: full_review
         false_next: check_psur
-      ongoing:
-        type: return
-        value:
-          assessors: 2
-          depth: signal_triggered
-          chain: benefit-risk → vigilance
       check_psur:
         type: condition
         variable: lifecycle_stage
@@ -33,36 +39,13 @@ sense:
       periodic_review:
         type: return
         value:
+          assessors: 3
           depth: periodic
           chain: benefit-risk → ema → compliance
-          assessors: 3
-      full_review:
-        type: return
-        value:
-          assessors: 4
-          depth: comprehensive
-          chain: benefit-risk → epidemiology → compliance → ema
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      check_negation:
-        type: condition
-        variable: lifecycle_stage
-        operator: neq
-        value: approval
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: lifecycle_stage
@@ -70,6 +53,23 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: lifecycle_stage
+        operator: neq
+        value: approval
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -78,19 +78,19 @@ resolution:
     default: null
     emit:
       confidence_score: 0.7
-      confidence: high
       verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       confidence: low
       verdict: contested
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
       confidence: medium
     emit: null
 interface:
@@ -100,10 +100,10 @@ interface:
         type: string
         required: false
     outputs:
-      verdict:
+      confidence:
         type: string
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
       confidence_score:

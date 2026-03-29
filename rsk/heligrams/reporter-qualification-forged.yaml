@@ -10,6 +10,13 @@ sense:
   tree:
     start: type_check
     nodes:
+      other_result:
+        type: return
+        value:
+          can_submit_medwatch: true
+          qualification_level: other
+          regulatory_reference: ICH E2A Section III.A.1 (Other)
+          weight_in_causality: 0.3
       consumer_check:
         type: condition
         variable: reporter_type
@@ -17,13 +24,6 @@ sense:
         value: consumer
         true_next: consumer_result
         false_next: lawyer_check
-      lawyer_check:
-        type: condition
-        variable: reporter_type
-        operator: eq
-        value: lawyer
-        true_next: other_result
-        false_next: other_result
       type_check:
         type: condition
         variable: reporter_type
@@ -31,27 +31,20 @@ sense:
         value: physician
         true_next: healthcare_professional_result
         false_next: pharmacist_check
-      nurse_check:
-        type: condition
-        variable: reporter_type
-        operator: eq
-        value: nurse
-        true_next: healthcare_professional_result
-        false_next: consumer_check
-      other_result:
-        type: return
-        value:
-          weight_in_causality: 0.3
-          qualification_level: other
-          can_submit_medwatch: true
-          regulatory_reference: ICH E2A Section III.A.1 (Other)
       consumer_result:
         type: return
         value:
-          qualification_level: consumer
-          weight_in_causality: 0.5
           can_submit_medwatch: true
+          weight_in_causality: 0.5
           regulatory_reference: ICH E2A Section III.A.1 (Consumer)
+          qualification_level: consumer
+      lawyer_check:
+        type: condition
+        variable: reporter_type
+        operator: eq
+        value: lawyer
+        true_next: other_result
+        false_next: other_result
       pharmacist_check:
         type: condition
         variable: reporter_type
@@ -59,29 +52,34 @@ sense:
         value: pharmacist
         true_next: healthcare_professional_result
         false_next: nurse_check
+      nurse_check:
+        type: condition
+        variable: reporter_type
+        operator: eq
+        value: nurse
+        true_next: healthcare_professional_result
+        false_next: consumer_check
       healthcare_professional_result:
         type: return
         value:
-          can_submit_medwatch: true
           qualification_level: healthcare_professional
+          can_submit_medwatch: true
           regulatory_reference: ICH E2A Section III.A.1 (Healthcare Professional)
           weight_in_causality: 1.0
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
-      null_guard_negation:
-        type: condition
-        variable: reporter_type
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
         variable: reporter_type
@@ -89,11 +87,13 @@ antisense:
         value: physician
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: reporter_type
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -102,25 +102,25 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
   - when:
-      falsified: true
       can_submit_medwatch: true
+      falsified: true
     default: null
     emit:
       verdict: contested
       confidence_score: 0.27999999999999997
       confidence: low
   - when:
-      falsified: false
       can_submit_medwatch: false
+      falsified: false
     default: null
     emit:
-      verdict: absent
       confidence: high
       confidence_score: 0.7
+      verdict: absent
   - when: null
     default:
       confidence_score: 0.5
@@ -137,23 +137,23 @@ interface:
       can_submit_medwatch:
         type: bool
         required: false
-      weight_in_causality:
-        type: float
-        required: false
-      qualification_level:
-        type: string
-        required: false
       regulatory_reference:
         type: string
+        required: false
+      weight_in_causality:
+        type: float
         required: false
       verdict:
         type: string
         required: false
+      confidence_score:
+        type: float
+        required: false
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
+      qualification_level:
+        type: string
         required: false
     aliases: {}
   minor_groove: null

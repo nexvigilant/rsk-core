@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    defensibility: falsified
+    authority_class: falsified
 sense:
   tree:
     start: check_evidence_basis
@@ -13,18 +13,11 @@ sense:
       sovereign_authority:
         type: return
         value:
-          defensibility: MAXIMUM
           authority_class: SOVEREIGN
-          recommendation: Accepted as definitive. Challenge only with evidence_basis >= 4 AND consensus_level >= 4.
-          vulnerability: Slow to update — consensus cycles of 5-10 years can lag behind frontier movement
           authority_score: 95
-      check_credential_low:
-        type: condition
-        variable: credential_strength
-        operator: gte
-        value: 2
-        true_next: emerging_authority
-        false_next: contested_authority
+          recommendation: Accepted as definitive. Challenge only with evidence_basis >= 4 AND consensus_level >= 4.
+          defensibility: MAXIMUM
+          vulnerability: Slow to update — consensus cycles of 5-10 years can lag behind frontier movement
       check_sovereign:
         type: condition
         variable: institutional_backing
@@ -39,21 +32,6 @@ sense:
         value: 4
         true_next: sovereign_authority
         false_next: check_established
-      naked_assertion:
-        type: return
-        value:
-          vulnerability: Pure assertion — no evidence, no consensus, no institutional backing. The definition of indefensible authority.
-          recommendation: Reject immediately. This is opinion presented as standard. Flag as Takeda-pattern violation.
-          authority_score: 0
-          authority_class: ASSERTION
-          defensibility: NONE
-      check_assertion_only:
-        type: condition
-        variable: evidence_basis
-        operator: lte
-        value: 1
-        true_next: naked_assertion
-        false_next: weak_evidence
       check_evidence_basis:
         type: condition
         variable: evidence_basis
@@ -61,6 +39,60 @@ sense:
         value: 3
         true_next: check_consensus
         false_next: check_assertion_only
+      established_authority:
+        type: return
+        value:
+          authority_class: ESTABLISHED
+          recommendation: Strong but verify cross-jurisdictional. Accepted for single-market decisions.
+          vulnerability: Regional bias — may reflect one regulatory tradition over another. Check cross-jurisdictional alignment.
+          defensibility: HIGH
+          authority_score: 75
+      emerging_authority:
+        type: return
+        value:
+          recommendation: Provisional. Monitor for consensus convergence. Do not use as sole basis for standard-setting.
+          authority_class: EMERGING
+          defensibility: MODERATE
+          vulnerability: Credential-evidence gap — authority may exceed evidence base. Verify evidence_basis independently.
+          authority_score: 50
+      naked_assertion:
+        type: return
+        value:
+          recommendation: Reject immediately. This is opinion presented as standard. Flag as Takeda-pattern violation.
+          defensibility: NONE
+          authority_class: ASSERTION
+          authority_score: 0
+          vulnerability: Pure assertion — no evidence, no consensus, no institutional backing. The definition of indefensible authority.
+      lone_authority:
+        type: return
+        value:
+          vulnerability: Single-source authority — no consensus check, no peer validation. Maximum Takeda risk.
+          recommendation: Reject as threshold authority. Individual expertise informs but cannot define frontier.
+          authority_score: 10
+          defensibility: MINIMAL
+          authority_class: LONE
+      weak_evidence:
+        type: return
+        value:
+          vulnerability: Case-based only — insufficient evidence to establish authority claim. Anecdote is not frontier.
+          defensibility: NONE
+          authority_score: 5
+          recommendation: Reject. Authority claims require minimum observational evidence (level 3).
+          authority_class: UNGROUNDED
+      check_assertion_only:
+        type: condition
+        variable: evidence_basis
+        operator: lte
+        value: 1
+        true_next: naked_assertion
+        false_next: weak_evidence
+      check_credential_low:
+        type: condition
+        variable: credential_strength
+        operator: gte
+        value: 2
+        true_next: emerging_authority
+        false_next: contested_authority
       check_credential_mid:
         type: condition
         variable: credential_strength
@@ -68,52 +100,6 @@ sense:
         value: 3
         true_next: established_authority
         false_next: check_credential_low
-      check_local_consensus:
-        type: condition
-        variable: consensus_level
-        operator: gte
-        value: 2
-        true_next: check_credential_mid
-        false_next: lone_authority
-      check_consensus:
-        type: condition
-        variable: consensus_level
-        operator: gte
-        value: 4
-        true_next: check_sovereign
-        false_next: check_local_consensus
-      established_authority:
-        type: return
-        value:
-          recommendation: Strong but verify cross-jurisdictional. Accepted for single-market decisions.
-          authority_score: 75
-          defensibility: HIGH
-          vulnerability: Regional bias — may reflect one regulatory tradition over another. Check cross-jurisdictional alignment.
-          authority_class: ESTABLISHED
-      weak_evidence:
-        type: return
-        value:
-          authority_class: UNGROUNDED
-          defensibility: NONE
-          vulnerability: Case-based only — insufficient evidence to establish authority claim. Anecdote is not frontier.
-          authority_score: 5
-          recommendation: Reject. Authority claims require minimum observational evidence (level 3).
-      lone_authority:
-        type: return
-        value:
-          authority_score: 10
-          defensibility: MINIMAL
-          vulnerability: Single-source authority — no consensus check, no peer validation. Maximum Takeda risk.
-          authority_class: LONE
-          recommendation: Reject as threshold authority. Individual expertise informs but cannot define frontier.
-      contested_authority:
-        type: return
-        value:
-          recommendation: Do not accept as threshold authority. Require evidence_basis >= 3 AND consensus_level >= 3 before recognition.
-          defensibility: LOW
-          vulnerability: 'Consensus deficit — local agreement without broad validation. Takeda-pattern risk: authority asserted without defensible criteria.'
-          authority_score: 25
-          authority_class: CONTESTED
       check_established:
         type: condition
         variable: credential_strength
@@ -121,14 +107,28 @@ sense:
         value: 3
         true_next: established_authority
         false_next: emerging_authority
-      emerging_authority:
+      check_local_consensus:
+        type: condition
+        variable: consensus_level
+        operator: gte
+        value: 2
+        true_next: check_credential_mid
+        false_next: lone_authority
+      contested_authority:
         type: return
         value:
-          recommendation: Provisional. Monitor for consensus convergence. Do not use as sole basis for standard-setting.
-          defensibility: MODERATE
-          authority_class: EMERGING
-          vulnerability: Credential-evidence gap — authority may exceed evidence base. Verify evidence_basis independently.
-          authority_score: 50
+          authority_class: CONTESTED
+          vulnerability: 'Consensus deficit — local agreement without broad validation. Takeda-pattern risk: authority asserted without defensible criteria.'
+          defensibility: LOW
+          recommendation: Do not accept as threshold authority. Require evidence_basis >= 3 AND consensus_level >= 3 before recognition.
+          authority_score: 25
+      check_consensus:
+        type: condition
+        variable: consensus_level
+        operator: gte
+        value: 4
+        true_next: check_sovereign
+        false_next: check_local_consensus
 antisense:
   tree:
     start: null_guard_negation
@@ -143,20 +143,20 @@ antisense:
         value:
           confounder_count: 0
           falsified: false
-      null_guard_negation:
-        type: condition
-        variable: credential_strength
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
-        variable: credential_strength
+        variable: institutional_backing
         operator: lt
         value: 3
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: institutional_backing
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -164,39 +164,51 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       verdict: confirmed
       confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence_score: 0.27999999999999997
       confidence: low
+      verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      consensus_level:
+      evidence_basis:
         type: int
         required: true
       institutional_backing:
         type: int
         required: true
+      consensus_level:
+        type: int
+        required: true
       credential_strength:
         type: int
         required: true
-      evidence_basis:
-        type: int
-        required: true
     outputs:
+      authority_score:
+        type: int
+        required: false
+      defensibility:
+        type: string
+        required: false
       vulnerability:
+        type: string
+        required: false
+      recommendation:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
       authority_class:
@@ -204,18 +216,6 @@ interface:
         required: false
       verdict:
         type: string
-        required: false
-      defensibility:
-        type: string
-        required: false
-      confidence:
-        type: string
-        required: false
-      recommendation:
-        type: string
-        required: false
-      authority_score:
-        type: int
         required: false
       confidence_score:
         type: float
@@ -225,22 +225,22 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    institutional_backing: 5
+    institutional_backing: 13
     consensus_level: 5
-    evidence_basis: 5
-    credential_strength: 13
+    credential_strength: 5
+    evidence_basis: 1
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    institutional_backing: 5
+    institutional_backing: 2
     consensus_level: 5
-    evidence_basis: 5
-    credential_strength: 2
+    credential_strength: 5
+    evidence_basis: 1
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

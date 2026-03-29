@@ -5,32 +5,32 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    organ: falsified
+    target: falsified
 sense:
   tree:
     start: check_severe
     nodes:
+      mild:
+        type: return
+        value:
+          target: bone
+          organ: musculoskeletal
+          action: monitor_closely
+          severity: mild
       severe:
         type: return
         value:
-          organ: musculoskeletal
-          severity: severe
           action: discontinue
+          severity: severe
+          organ: musculoskeletal
           target: bone
       normal:
         type: return
         value:
           target: bone
-          action: continue
-          organ: musculoskeletal
           severity: normal
-      check_severe:
-        type: condition
-        variable: cpk_ratio
-        operator: gte
-        value: 10
-        true_next: severe
-        false_next: check_mild
+          organ: musculoskeletal
+          action: continue
       check_mild:
         type: condition
         variable: cpk_ratio
@@ -38,27 +38,27 @@ sense:
         value: 5
         true_next: mild
         false_next: normal
-      mild:
-        type: return
-        value:
-          action: monitor_closely
-          severity: mild
-          organ: musculoskeletal
-          target: bone
+      check_severe:
+        type: condition
+        variable: cpk_ratio
+        operator: gte
+        value: 10
+        true_next: severe
+        false_next: check_mild
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       null_guard_negation:
         type: condition
         variable: cpk_ratio
@@ -81,20 +81,20 @@ resolution:
     default: null
     emit:
       confidence: high
-      confidence_score: 0.7
       verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
       confidence: low
-      verdict: contested
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
       verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -103,13 +103,13 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence:
+      verdict:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
     aliases: {}

@@ -20,27 +20,27 @@ sense:
       serious_overdose:
         type: return
         value:
-          outcome: recovery_with_sequelae
-          overdose_compliant: true
-          medical_intervention: intensive_care_required
           patient_safety_priority: 2
+          medical_intervention: intensive_care_required
+          outcome: recovery_with_sequelae
           overdose_severity: serious
-      mild_overdose:
-        type: return
-        value:
-          outcome: full_recovery
-          patient_safety_priority: 3
           overdose_compliant: true
-          overdose_severity: mild
-          medical_intervention: supportive_care
       no_overdose:
         type: return
         value:
-          overdose_severity: no_overdose
-          patient_safety_priority: null
-          overdose_compliant: true
           outcome: not_applicable
+          patient_safety_priority: null
           medical_intervention: null
+          overdose_compliant: true
+          overdose_severity: no_overdose
+      mild_overdose:
+        type: return
+        value:
+          overdose_severity: mild
+          medical_intervention: supportive_care
+          patient_safety_priority: 3
+          outcome: full_recovery
+          overdose_compliant: true
       check_serious_outcome:
         type: condition
         variable: outcome_type
@@ -48,14 +48,6 @@ sense:
         value: serious
         true_next: serious_overdose
         false_next: mild_overdose
-      fatal_overdose:
-        type: return
-        value:
-          outcome: death
-          overdose_severity: fatal
-          patient_safety_priority: 1
-          overdose_compliant: true
-          medical_intervention: resuscitation_attempted
       validate_overdose_report:
         type: condition
         variable: overdose_reported
@@ -63,6 +55,14 @@ sense:
         value: true
         true_next: check_outcome
         false_next: no_overdose
+      fatal_overdose:
+        type: return
+        value:
+          overdose_severity: fatal
+          patient_safety_priority: 1
+          outcome: death
+          overdose_compliant: true
+          medical_intervention: resuscitation_attempted
 antisense:
   tree:
     start: null_guard_negation
@@ -70,15 +70,8 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
-      check_negation:
-        type: condition
-        variable: outcome_type
-        operator: neq
-        value: true
-        true_next: falsified
-        false_next: not_falsified
+          falsified: true
       null_guard_negation:
         type: condition
         variable: outcome_type
@@ -91,6 +84,13 @@ antisense:
         value:
           falsified: false
           confounder_count: 0
+      check_negation:
+        type: condition
+        variable: outcome_type
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -99,29 +99,29 @@ resolution:
       overdose_compliant: true
     default: null
     emit:
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
       confidence_score: 0.7
   - when:
-      falsified: true
       overdose_compliant: true
+      falsified: true
     default: null
     emit:
-      verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
   - when:
-      falsified: false
       overdose_compliant: false
+      falsified: false
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7
       verdict: absent
-      confidence: high
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
       confidence_score: 0.5
     emit: null
 interface:
@@ -131,13 +131,13 @@ interface:
         type: bool
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
       verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -146,17 +146,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     outcome_type: null
-    overdose_reported: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     outcome_type: false
-    overdose_reported: true
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

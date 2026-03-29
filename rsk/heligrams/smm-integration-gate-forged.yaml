@@ -17,104 +17,6 @@ sense:
         value: SUSPENDED
         true_next: exclude
         false_next: check_replication
-      replication_downgrade:
-        type: return
-        value:
-          action: Integrated at 0.60x regardless of CS; replication needed
-          effective_rating: AMBER
-          k_bias_flag: Replication gap — AMBER floor applied per Section 6.2
-          weight: 0.6
-          chemistry_analog: K_eq downgraded — insufficient equilibrium data for confident K
-          integrated: true
-      amber_integrate:
-        type: return
-        value:
-          effective_rating: AMBER
-          integrated: true
-          k_bias_flag: none
-          action: Reduced weight integration. Violation summary appended.
-          weight: 0.6
-          chemistry_analog: Mixed equilibrium — partial yield
-      apply_replication_floor:
-        type: condition
-        variable: rating
-        operator: eq
-        value: GREEN
-        true_next: replication_downgrade
-        false_next: check_citation_asymmetry
-      check_amber:
-        type: condition
-        variable: rating
-        operator: eq
-        value: AMBER
-        true_next: amber_integrate
-        false_next: red_integrate
-      citation_elevated:
-        type: return
-        value:
-          chemistry_analog: Le Chatelier shift — equilibrium pushed by one-sided input
-          effective_rating: AMBER
-          k_bias_flag: Citation asymmetry (>80% positive) — elevated scrutiny
-          action: Violation summary + citation asymmetry flag appended
-          integrated: true
-          weight: 0.6
-      integrate_normal:
-        type: condition
-        variable: rating
-        operator: eq
-        value: GREEN
-        true_next: green_integrate
-        false_next: check_amber
-      exclude:
-        type: return
-        value:
-          integrated: false
-          effective_rating: SUSPENDED
-          weight: 0.0
-          k_bias_flag: FATAL violation — excluded from K
-          action: Mandatory PV scientist review. CAPA initiated.
-          chemistry_analog: No reaction — activation energy not met
-      citation_flag:
-        type: condition
-        variable: rating
-        operator: eq
-        value: RED
-        true_next: citation_red
-        false_next: citation_elevated
-      red_integrate:
-        type: return
-        value:
-          effective_rating: RED
-          integrated: true
-          action: High-scrutiny integration. Corroboration required.
-          k_bias_flag: none
-          weight: 0.25
-          chemistry_analog: Equilibrium favors substrate — trace product only
-      citation_red:
-        type: return
-        value:
-          action: Corroboration required; K-bias surveillance triggered
-          weight: 0.25
-          integrated: true
-          effective_rating: RED
-          k_bias_flag: Citation asymmetry (>80% positive) + RED score — high K-bias risk
-          chemistry_analog: Catalyst poisoning suspected — reaction selectivity compromised
-      green_integrate:
-        type: return
-        value:
-          k_bias_flag: none
-          integrated: true
-          action: Full weight integration. Minor violations annotated.
-          chemistry_analog: Equilibrium favors product — full yield integration
-          weight: 1.0
-          effective_rating: GREEN
-      check_citation_asymmetry:
-        type: condition
-        variable: positive_citation_pct
-        operator: gt
-        value: 80
-        true_next: citation_flag
-        false_next: integrate_normal
       check_replication:
         type: condition
         variable: has_independent_replication
@@ -122,17 +24,113 @@ sense:
         value: false
         true_next: apply_replication_floor
         false_next: check_citation_asymmetry
+      citation_flag:
+        type: condition
+        variable: rating
+        operator: eq
+        value: RED
+        true_next: citation_red
+        false_next: citation_elevated
+      citation_red:
+        type: return
+        value:
+          action: Corroboration required; K-bias surveillance triggered
+          integrated: true
+          weight: 0.25
+          k_bias_flag: Citation asymmetry (>80% positive) + RED score — high K-bias risk
+          effective_rating: RED
+          chemistry_analog: Catalyst poisoning suspected — reaction selectivity compromised
+      check_amber:
+        type: condition
+        variable: rating
+        operator: eq
+        value: AMBER
+        true_next: amber_integrate
+        false_next: red_integrate
+      integrate_normal:
+        type: condition
+        variable: rating
+        operator: eq
+        value: GREEN
+        true_next: green_integrate
+        false_next: check_amber
+      amber_integrate:
+        type: return
+        value:
+          weight: 0.6
+          effective_rating: AMBER
+          integrated: true
+          k_bias_flag: none
+          action: Reduced weight integration. Violation summary appended.
+          chemistry_analog: Mixed equilibrium — partial yield
+      check_citation_asymmetry:
+        type: condition
+        variable: positive_citation_pct
+        operator: gt
+        value: 80
+        true_next: citation_flag
+        false_next: integrate_normal
+      red_integrate:
+        type: return
+        value:
+          effective_rating: RED
+          integrated: true
+          k_bias_flag: none
+          action: High-scrutiny integration. Corroboration required.
+          chemistry_analog: Equilibrium favors substrate — trace product only
+          weight: 0.25
+      replication_downgrade:
+        type: return
+        value:
+          effective_rating: AMBER
+          integrated: true
+          weight: 0.6
+          k_bias_flag: Replication gap — AMBER floor applied per Section 6.2
+          action: Integrated at 0.60x regardless of CS; replication needed
+          chemistry_analog: K_eq downgraded — insufficient equilibrium data for confident K
+      exclude:
+        type: return
+        value:
+          effective_rating: SUSPENDED
+          action: Mandatory PV scientist review. CAPA initiated.
+          k_bias_flag: FATAL violation — excluded from K
+          integrated: false
+          chemistry_analog: No reaction — activation energy not met
+          weight: 0.0
+      citation_elevated:
+        type: return
+        value:
+          weight: 0.6
+          integrated: true
+          action: Violation summary + citation asymmetry flag appended
+          chemistry_analog: Le Chatelier shift — equilibrium pushed by one-sided input
+          effective_rating: AMBER
+          k_bias_flag: Citation asymmetry (>80% positive) — elevated scrutiny
+      green_integrate:
+        type: return
+        value:
+          weight: 1.0
+          action: Full weight integration. Minor violations annotated.
+          effective_rating: GREEN
+          integrated: true
+          k_bias_flag: none
+          chemistry_analog: Equilibrium favors product — full yield integration
+      apply_replication_floor:
+        type: condition
+        variable: rating
+        operator: eq
+        value: GREEN
+        true_next: replication_downgrade
+        false_next: check_citation_asymmetry
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: rating
-        operator: neq
-        value: SUSPENDED
-        true_next: falsified
-        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       null_guard_negation:
         type: condition
         variable: rating
@@ -140,78 +138,77 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
+      check_negation:
+        type: condition
+        variable: rating
+        operator: neq
+        value: SUSPENDED
+        true_next: falsified
+        false_next: not_falsified
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
   - when:
-      integrated: true
       falsified: false
+      integrated: true
     default: null
     emit:
-      verdict: confirmed
       confidence_score: 0.7
       confidence: high
+      verdict: confirmed
   - when:
-      integrated: true
       falsified: true
+      integrated: true
     default: null
     emit:
+      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
-      confidence_score: 0.27999999999999997
   - when:
-      integrated: false
       falsified: false
+      integrated: false
     default: null
     emit:
       confidence: high
-      confidence_score: 0.7
       verdict: absent
+      confidence_score: 0.7
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
+      positive_citation_pct:
+        type: int
+        required: true
       has_independent_replication:
         type: bool
         required: true
       rating:
         type: string
         required: true
-      positive_citation_pct:
-        type: int
-        required: true
     outputs:
-      integrated:
-        type: bool
-        required: false
       confidence:
-        type: string
-        required: false
-      k_bias_flag:
-        type: string
-        required: false
-      action:
         type: string
         required: false
       verdict:
         type: string
         required: false
+      k_bias_flag:
+        type: string
+        required: false
       chemistry_analog:
+        type: string
+        required: false
+      action:
         type: string
         required: false
       effective_rating:
@@ -223,25 +220,28 @@ interface:
       weight:
         type: float
         required: false
+      integrated:
+        type: bool
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     rating: null
-    has_independent_replication: false
     positive_citation_pct: 50
+    has_independent_replication: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     rating: __negated__
-    has_independent_replication: false
     positive_citation_pct: 50
+    has_independent_replication: true
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

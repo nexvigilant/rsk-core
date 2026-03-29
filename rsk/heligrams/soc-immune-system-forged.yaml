@@ -5,11 +5,18 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    soc: falsified
+    priority: falsified
 sense:
   tree:
     start: check_serious
     nodes:
+      non_serious:
+        type: return
+        value:
+          priority: low
+          severity: non_serious
+          route: periodic_review
+          soc: Immune system
       check_serious:
         type: condition
         variable: is_serious
@@ -17,20 +24,6 @@ sense:
         value: true
         true_next: check_fatal
         false_next: non_serious
-      fatal:
-        type: return
-        value:
-          soc: Immune system
-          priority: critical
-          route: causality_assessment
-          severity: fatal
-      non_serious:
-        type: return
-        value:
-          soc: Immune system
-          priority: low
-          severity: non_serious
-          route: periodic_review
       check_fatal:
         type: condition
         variable: is_fatal
@@ -38,13 +31,20 @@ sense:
         value: true
         true_next: fatal
         false_next: serious
+      fatal:
+        type: return
+        value:
+          route: causality_assessment
+          soc: Immune system
+          severity: fatal
+          priority: critical
       serious:
         type: return
         value:
-          soc: Immune system
           severity: serious
           priority: high
           route: signal_investigation
+          soc: Immune system
 antisense:
   tree:
     start: null_guard_negation
@@ -52,8 +52,8 @@ antisense:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
       null_guard_negation:
         type: condition
         variable: is_serious
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       confidence: high
       verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
       confidence: low
-      verdict: contested
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -103,13 +103,13 @@ interface:
         type: bool
         required: false
     outputs:
+      confidence:
+        type: string
+        required: false
       confidence_score:
         type: float
         required: false
       verdict:
-        type: string
-        required: false
-      confidence:
         type: string
         required: false
     aliases: {}
@@ -118,17 +118,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     is_serious: null
-    is_fatal: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     is_serious: false
-    is_fatal: true
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

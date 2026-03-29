@@ -10,53 +10,6 @@ sense:
   tree:
     start: check_default
     nodes:
-      check_failure_stalled:
-        type: condition
-        variable: state
-        operator: eq
-        value: stalled
-        true_next: strong_failure
-        false_next: check_failure_gimbal
-      check_failure_gimbal:
-        type: condition
-        variable: state
-        operator: eq
-        value: gimbal_lock
-        true_next: strong_failure
-        false_next: check_failure_fatigue
-      none:
-        type: return
-        value:
-          achieved_target: false
-          score: 0
-          quality: none
-      check_margin_strong:
-        type: condition
-        variable: margin_ratio
-        operator: gte
-        value: 50
-        true_next: strong_healthy
-        false_next: check_margin_moderate
-      check_margin_moderate:
-        type: condition
-        variable: margin_ratio
-        operator: gte
-        value: 10
-        true_next: moderate_healthy
-        false_next: weak_healthy
-      check_failure_disintegrated:
-        type: condition
-        variable: state
-        operator: eq
-        value: disintegrated
-        true_next: strong_failure
-        false_next: check_failure_stalled
-      strong_failure:
-        type: return
-        value:
-          score: 1.0
-          quality: strong
-          achieved_target: false
       check_warning:
         type: condition
         variable: state
@@ -64,18 +17,60 @@ sense:
         value: warning
         true_next: moderate
         false_next: check_margin_strong
+      check_failure_stalled:
+        type: condition
+        variable: state
+        operator: eq
+        value: stalled
+        true_next: strong_failure
+        false_next: check_failure_gimbal
+      check_failure_fatigue:
+        type: condition
+        variable: state
+        operator: eq
+        value: fatigue_failure_imminent
+        true_next: strong_failure
+        false_next: check_weak_critical
+      check_failure_disintegrated:
+        type: condition
+        variable: state
+        operator: eq
+        value: disintegrated
+        true_next: strong_failure
+        false_next: check_failure_stalled
       moderate:
         type: return
         value:
-          score: 0.66
           achieved_target: true
+          score: 0.66
           quality: moderate
-      strong_healthy:
+      check_weak_nostability:
+        type: condition
+        variable: state
+        operator: eq
+        value: no_stability
+        true_next: weak
+        false_next: check_warning
+      check_margin_strong:
+        type: condition
+        variable: margin_ratio
+        operator: gte
+        value: 50
+        true_next: strong_healthy
+        false_next: check_margin_moderate
+      none:
         type: return
         value:
-          score: 1.0
-          achieved_target: true
-          quality: strong
+          quality: none
+          score: 0
+          achieved_target: false
+      check_weak_low:
+        type: condition
+        variable: state
+        operator: eq
+        value: low
+        true_next: weak
+        false_next: check_weak_nostability
       check_weak_critical:
         type: condition
         variable: state
@@ -86,42 +81,28 @@ sense:
       weak:
         type: return
         value:
-          quality: weak
           score: 0.33
+          quality: weak
           achieved_target: false
-      weak_healthy:
-        type: return
-        value:
-          quality: weak
-          achieved_target: true
-          score: 0.33
-      check_weak_nostability:
-        type: condition
-        variable: state
-        operator: eq
-        value: no_stability
-        true_next: weak
-        false_next: check_warning
-      check_failure_fatigue:
-        type: condition
-        variable: state
-        operator: eq
-        value: fatigue_failure_imminent
-        true_next: strong_failure
-        false_next: check_weak_critical
-      check_weak_low:
-        type: condition
-        variable: state
-        operator: eq
-        value: low
-        true_next: weak
-        false_next: check_weak_nostability
       moderate_healthy:
         type: return
         value:
           score: 0.66
-          quality: moderate
           achieved_target: true
+          quality: moderate
+      strong_failure:
+        type: return
+        value:
+          quality: strong
+          score: 1.0
+          achieved_target: false
+      check_failure_gimbal:
+        type: condition
+        variable: state
+        operator: eq
+        value: gimbal_lock
+        true_next: strong_failure
+        false_next: check_failure_fatigue
       check_default:
         type: condition
         variable: state
@@ -129,27 +110,29 @@ sense:
         value: default
         true_next: none
         false_next: check_failure_disintegrated
+      weak_healthy:
+        type: return
+        value:
+          score: 0.33
+          quality: weak
+          achieved_target: true
+      check_margin_moderate:
+        type: condition
+        variable: margin_ratio
+        operator: gte
+        value: 10
+        true_next: moderate_healthy
+        false_next: weak_healthy
+      strong_healthy:
+        type: return
+        value:
+          quality: strong
+          score: 1.0
+          achieved_target: true
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      null_guard_negation:
-        type: condition
-        variable: state
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
         variable: state
@@ -157,6 +140,23 @@ antisense:
         value: default
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: state
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -165,9 +165,9 @@ resolution:
       achieved_target: true
     default: null
     emit:
+      confidence_score: 0.7
       verdict: confirmed
       confidence: high
-      confidence_score: 0.7
   - when:
       falsified: true
       achieved_target: true
@@ -177,18 +177,18 @@ resolution:
       verdict: contested
       confidence: low
   - when:
-      achieved_target: false
       falsified: false
+      achieved_target: false
     default: null
     emit:
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
       verdict: absent
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -197,10 +197,10 @@ interface:
         type: string
         required: false
     outputs:
-      verdict:
+      confidence:
         type: string
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
       confidence_score:
@@ -211,15 +211,15 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    margin_ratio: 0
     state: null
+    margin_ratio: 30
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    margin_ratio: 0
     state: __negated__
+    margin_ratio: 30
   expect:
     verdict: contested
     confidence: low

@@ -10,34 +10,13 @@ sense:
   tree:
     start: check_enrichment
     nodes:
-      check_rare_complete:
-        type: condition
-        variable: cioms_category
-        operator: eq
-        value: RARE
-        true_next: complete_rare
-        false_next: complete_standard
-      check_cioms_enrichment:
-        type: condition
-        variable: cioms_category
-        operator: eq
-        value: VERY_COMMON
-        true_next: enrichment_high_frequency
-        false_next: check_cioms_common_enrichment
-      complete_standard:
+      enrichment_high_frequency:
         type: return
         value:
-          quality_tier: HIGH
-          completeness_pct: 87
+          completeness_pct: 75
+          quality_tier: GOOD
+          quality_assessment: Data incomplete but high-frequency event — prioritize enrichment
           meets_minimum: true
-          quality_assessment: Complete data — standard quality tier
-      complete_moderate_frequency:
-        type: return
-        value:
-          quality_assessment: Complete data for common event — high quality case
-          quality_tier: HIGH
-          meets_minimum: true
-          completeness_pct: 87
       check_enrichment:
         type: condition
         variable: needs_enrichment
@@ -45,34 +24,6 @@ sense:
         value: true
         true_next: check_cioms_enrichment
         false_next: check_cioms_complete
-      check_cioms_common_enrichment:
-        type: condition
-        variable: cioms_category
-        operator: eq
-        value: COMMON
-        true_next: enrichment_moderate_frequency
-        false_next: enrichment_low_frequency
-      enrichment_low_frequency:
-        type: return
-        value:
-          meets_minimum: true
-          completeness_pct: 50
-          quality_tier: MINIMUM
-          quality_assessment: Incomplete data for rare event — every case matters, request enrichment
-      enrichment_moderate_frequency:
-        type: return
-        value:
-          quality_tier: MINIMUM
-          quality_assessment: Data needs enrichment for common-frequency event — standard follow-up
-          completeness_pct: 50
-          meets_minimum: true
-      enrichment_high_frequency:
-        type: return
-        value:
-          quality_tier: GOOD
-          quality_assessment: Data incomplete but high-frequency event — prioritize enrichment
-          meets_minimum: true
-          completeness_pct: 75
       check_cioms_common_complete:
         type: condition
         variable: cioms_category
@@ -80,13 +31,41 @@ sense:
         value: COMMON
         true_next: complete_moderate_frequency
         false_next: check_rare_complete
-      complete_rare:
+      enrichment_low_frequency:
         type: return
         value:
-          quality_tier: EXCELLENT
-          completeness_pct: 100
-          quality_assessment: Complete data for rare event — high-value case for signal detection
           meets_minimum: true
+          completeness_pct: 50
+          quality_tier: MINIMUM
+          quality_assessment: Incomplete data for rare event — every case matters, request enrichment
+      complete_moderate_frequency:
+        type: return
+        value:
+          meets_minimum: true
+          quality_assessment: Complete data for common event — high quality case
+          completeness_pct: 87
+          quality_tier: HIGH
+      check_cioms_enrichment:
+        type: condition
+        variable: cioms_category
+        operator: eq
+        value: VERY_COMMON
+        true_next: enrichment_high_frequency
+        false_next: check_cioms_common_enrichment
+      enrichment_moderate_frequency:
+        type: return
+        value:
+          meets_minimum: true
+          quality_tier: MINIMUM
+          completeness_pct: 50
+          quality_assessment: Data needs enrichment for common-frequency event — standard follow-up
+      check_cioms_common_enrichment:
+        type: condition
+        variable: cioms_category
+        operator: eq
+        value: COMMON
+        true_next: enrichment_moderate_frequency
+        false_next: enrichment_low_frequency
       complete_high_frequency:
         type: return
         value:
@@ -94,6 +73,13 @@ sense:
           meets_minimum: true
           quality_assessment: Complete data for very common event — ready for automated processing
           completeness_pct: 100
+      check_rare_complete:
+        type: condition
+        variable: cioms_category
+        operator: eq
+        value: RARE
+        true_next: complete_rare
+        false_next: complete_standard
       check_cioms_complete:
         type: condition
         variable: cioms_category
@@ -101,20 +87,39 @@ sense:
         value: VERY_COMMON
         true_next: complete_high_frequency
         false_next: check_cioms_common_complete
+      complete_rare:
+        type: return
+        value:
+          quality_assessment: Complete data for rare event — high-value case for signal detection
+          completeness_pct: 100
+          quality_tier: EXCELLENT
+          meets_minimum: true
+      complete_standard:
+        type: return
+        value:
+          completeness_pct: 87
+          quality_tier: HIGH
+          meets_minimum: true
+          quality_assessment: Complete data — standard quality tier
 antisense:
   tree:
     start: null_guard_negation
     nodes:
       check_negation:
         type: condition
-        variable: cioms_category
+        variable: needs_enrichment
         operator: neq
         value: true
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       null_guard_negation:
         type: condition
-        variable: cioms_category
+        variable: needs_enrichment
         operator: is_null
         value: null
         true_next: not_falsified
@@ -124,11 +129,6 @@ antisense:
         value:
           falsified: true
           confounder_count: 1
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -137,17 +137,17 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       verdict: confirmed
       confidence: high
-      confidence_score: 0.7
   - when:
-      meets_minimum: true
       falsified: true
+      meets_minimum: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when:
       meets_minimum: false
       falsified: false
@@ -172,44 +172,44 @@ interface:
         type: string
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
-      meets_minimum:
-        type: bool
-        required: true
-      confidence_score:
-        type: float
-        required: false
       quality_assessment:
         type: string
         required: true
-      confidence:
+      completeness_pct:
+        type: int
+        required: true
+      verdict:
         type: string
         required: false
       quality_tier:
         type: string
         required: true
-      completeness_pct:
-        type: int
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+      meets_minimum:
+        type: bool
         required: true
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    cioms_category: null
-    needs_enrichment: true
+    needs_enrichment: null
+    cioms_category: VERY_COMMON
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    cioms_category: false
-    needs_enrichment: true
+    needs_enrichment: false
+    cioms_category: VERY_COMMON
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

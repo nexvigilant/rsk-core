@@ -10,13 +10,20 @@ sense:
   tree:
     start: check_serious
     nodes:
-      fatal:
+      non_serious:
         type: return
         value:
-          route: causality_assessment
+          route: periodic_review
           soc: Respiratory
-          priority: critical
-          severity: fatal
+          severity: non_serious
+          priority: low
+      serious:
+        type: return
+        value:
+          severity: serious
+          soc: Respiratory
+          priority: high
+          route: signal_investigation
       check_serious:
         type: condition
         variable: is_serious
@@ -24,20 +31,13 @@ sense:
         value: true
         true_next: check_fatal
         false_next: non_serious
-      non_serious:
+      fatal:
         type: return
         value:
           soc: Respiratory
-          severity: non_serious
-          priority: low
-          route: periodic_review
-      serious:
-        type: return
-        value:
-          severity: serious
-          route: signal_investigation
-          priority: high
-          soc: Respiratory
+          severity: fatal
+          priority: critical
+          route: causality_assessment
       check_fatal:
         type: condition
         variable: is_fatal
@@ -56,11 +56,11 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
-      falsified:
+      not_falsified:
         type: return
         value:
-          confounder_count: 1
-          falsified: true
+          falsified: false
+          confounder_count: 0
       null_guard_negation:
         type: condition
         variable: is_serious
@@ -68,11 +68,11 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
+      falsified:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      confidence: high
       verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
       verdict: contested
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
       verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -103,14 +103,14 @@ interface:
         type: bool
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
+        required: false
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -118,14 +118,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     is_serious: null
-    is_fatal: true
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     is_serious: false
-    is_fatal: true
   expect:
     verdict: contested
     confidence: low

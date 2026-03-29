@@ -14,8 +14,8 @@ sense:
         type: return
         value:
           qbri_score: 1.5
-          risk_level: low
           bridge: vigilance-to-benefit-risk
+          risk_level: low
       check_action:
         type: condition
         variable: action
@@ -23,13 +23,6 @@ sense:
         value: escalate
         true_next: unfavorable
         false_next: check_investigate
-      check_investigate:
-        type: condition
-        variable: action
-        operator: eq
-        value: investigate
-        true_next: marginal
-        false_next: favorable
       marginal:
         type: return
         value:
@@ -42,22 +35,17 @@ sense:
           risk_level: critical
           qbri_score: 0.3
           bridge: vigilance-to-benefit-risk
+      check_investigate:
+        type: condition
+        variable: action
+        operator: eq
+        value: investigate
+        true_next: marginal
+        false_next: favorable
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      check_negation:
-        type: condition
-        variable: action
-        operator: neq
-        value: escalate
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: action
@@ -65,11 +53,23 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      check_negation:
+        type: condition
+        variable: action
+        operator: neq
+        value: escalate
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -77,21 +77,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       verdict: confirmed
       confidence: high
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
+      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
-      confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
       confidence_score: 0.5
       confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -100,14 +100,14 @@ interface:
         type: string
         required: false
     outputs:
+      confidence_score:
+        type: float
+        required: false
       verdict:
         type: string
         required: false
       confidence:
         type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -115,17 +115,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     action: null
-    priority: critical
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     action: __negated__
-    priority: critical
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

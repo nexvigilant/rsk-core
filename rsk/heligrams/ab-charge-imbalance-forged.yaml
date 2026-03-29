@@ -10,6 +10,16 @@ sense:
   tree:
     start: check
     nodes:
+      violation:
+        type: return
+        value:
+          response: 'BLOCK: charge not conserved across reaction'
+          threat: true
+      clean:
+        type: return
+        value:
+          response: PASS
+          threat: false
       check:
         type: condition
         variable: charge_delta
@@ -17,25 +27,17 @@ sense:
         value: 0
         true_next: clean
         false_next: violation
-      clean:
-        type: return
-        value:
-          response: PASS
-          threat: false
-      violation:
-        type: return
-        value:
-          response: 'BLOCK: charge not conserved across reaction'
-          threat: true
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
+      check_negation:
+        type: condition
+        variable: charge_delta
+        operator: neq
+        value: 0
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
@@ -48,13 +50,11 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      check_negation:
-        type: condition
-        variable: charge_delta
-        operator: neq
-        value: 0
-        true_next: falsified
-        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -71,22 +71,22 @@ resolution:
       falsified: true
     default: null
     emit:
+      confidence_score: 0.27999999999999997
       confidence: low
       verdict: contested
-      confidence_score: 0.27999999999999997
   - when:
-      falsified: false
       threat: false
+      falsified: false
     default: null
     emit:
-      confidence: high
       confidence_score: 0.7
       verdict: absent
+      confidence: high
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -98,6 +98,9 @@ interface:
       verdict:
         type: string
         required: false
+      response:
+        type: string
+        required: false
       threat:
         type: boolean
         required: false
@@ -106,9 +109,6 @@ interface:
         required: false
       confidence_score:
         type: float
-        required: false
-      response:
-        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -123,8 +123,8 @@ tests:
   input:
     charge_delta: 1
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

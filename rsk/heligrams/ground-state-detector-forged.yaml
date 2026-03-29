@@ -10,27 +10,27 @@ sense:
   tree:
     start: check_active_channels
     nodes:
+      check_low_activity:
+        type: condition
+        variable: active_channels
+        operator: lte
+        value: 2
+        true_next: low_activity
+        false_next: check_moderate_activity
       minimal_activity:
         type: return
         value:
           system_state: MINIMAL_ACTIVITY
-          chemistry_analog: 'Vacuum with trace particles: near-absolute absence with minimal perturbation'
           nothing_primitive: ∅ — single ripple on still water; ground state remains dominant
+          chemistry_analog: 'Vacuum with trace particles: near-absolute absence with minimal perturbation'
           action: Single low-severity signal detected. Minimal disturbance from ground state.
-      moderate_activity:
+      full_activity:
         type: return
         value:
-          system_state: MODERATE_ACTIVITY
-          nothing_primitive: ∅ — clear deviation from rest; absence no longer the dominant state
-          chemistry_analog: 'Equilibrium with steady-state flow: dynamic balance with ongoing activity'
-          action: Three channels active. Moderate system load. Ground state significantly perturbed.
-      check_moderate_activity:
-        type: condition
-        variable: active_channels
-        operator: lte
-        value: 3
-        true_next: moderate_activity
-        false_next: full_activity
+          system_state: FULL_ACTIVITY
+          chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
+          action: All four channels active. Full system engagement. No ground state advantage.
+          nothing_primitive: ∅ — completely transcended; system fully in motion state
       check_single_channel:
         type: condition
         variable: active_channels
@@ -38,34 +38,6 @@ sense:
         value: 1
         true_next: check_severity_for_single
         false_next: check_low_activity
-      check_severity_for_single:
-        type: condition
-        variable: highest_severity
-        operator: eq
-        value: high
-        true_next: alert_from_rest
-        false_next: minimal_activity
-      ground_state:
-        type: return
-        value:
-          system_state: GROUND_STATE
-          action: No activity detected. System at rest. Ground state established.
-          nothing_primitive: ∅ — absence defines presence; ground state is the reference point
-          chemistry_analog: 'Absolute zero: no molecular motion, complete equilibrium'
-      alert_from_rest:
-        type: return
-        value:
-          action: Critical alert raised from near-ground state. Immediate attention required.
-          system_state: ALERT_FROM_REST
-          nothing_primitive: ∅ — sudden break in silence; ground state violated by high-severity event
-          chemistry_analog: 'Supercooled liquid crystallizing: phase transition from near-inert state'
-      full_activity:
-        type: return
-        value:
-          action: All four channels active. Full system engagement. No ground state advantage.
-          nothing_primitive: ∅ — completely transcended; system fully in motion state
-          system_state: FULL_ACTIVITY
-          chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
       check_active_channels:
         type: condition
         variable: active_channels
@@ -76,21 +48,56 @@ sense:
       low_activity:
         type: return
         value:
-          nothing_primitive: ∅ — limited activity around the ground reference frame
           action: Two channels active. Low overall system load. Ground state partially engaged.
-          chemistry_analog: 'Diffusion at low concentration: minimal but detectable motion'
           system_state: LOW_ACTIVITY
-      check_low_activity:
+          nothing_primitive: ∅ — limited activity around the ground reference frame
+          chemistry_analog: 'Diffusion at low concentration: minimal but detectable motion'
+      moderate_activity:
+        type: return
+        value:
+          system_state: MODERATE_ACTIVITY
+          action: Three channels active. Moderate system load. Ground state significantly perturbed.
+          chemistry_analog: 'Equilibrium with steady-state flow: dynamic balance with ongoing activity'
+          nothing_primitive: ∅ — clear deviation from rest; absence no longer the dominant state
+      check_moderate_activity:
         type: condition
         variable: active_channels
         operator: lte
-        value: 2
-        true_next: low_activity
-        false_next: check_moderate_activity
+        value: 3
+        true_next: moderate_activity
+        false_next: full_activity
+      alert_from_rest:
+        type: return
+        value:
+          system_state: ALERT_FROM_REST
+          action: Critical alert raised from near-ground state. Immediate attention required.
+          nothing_primitive: ∅ — sudden break in silence; ground state violated by high-severity event
+          chemistry_analog: 'Supercooled liquid crystallizing: phase transition from near-inert state'
+      ground_state:
+        type: return
+        value:
+          chemistry_analog: 'Absolute zero: no molecular motion, complete equilibrium'
+          nothing_primitive: ∅ — absence defines presence; ground state is the reference point
+          action: No activity detected. System at rest. Ground state established.
+          system_state: GROUND_STATE
+      check_severity_for_single:
+        type: condition
+        variable: highest_severity
+        operator: eq
+        value: high
+        true_next: alert_from_rest
+        false_next: minimal_activity
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      check_negation:
+        type: condition
+        variable: active_channels
+        operator: neq
+        value: 0
+        true_next: falsified
+        false_next: not_falsified
       not_falsified:
         type: return
         value:
@@ -108,13 +115,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      check_negation:
-        type: condition
-        variable: active_channels
-        operator: neq
-        value: 0
-        true_next: falsified
-        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -130,13 +130,13 @@ resolution:
     default: null
     emit:
       verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -145,14 +145,14 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
         required: false
       confidence:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -160,14 +160,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     active_channels: null
-    highest_severity: none
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     active_channels: 1
-    highest_severity: none
   expect:
     verdict: contested
     confidence: low

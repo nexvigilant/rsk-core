@@ -10,6 +10,20 @@ sense:
   tree:
     start: check_case
     nodes:
+      check_case:
+        type: condition
+        variable: entity_type
+        operator: eq
+        value: case
+        true_next: route_case
+        false_next: check_signal
+      check_signal:
+        type: condition
+        variable: entity_type
+        operator: eq
+        value: signal
+        true_next: route_signal
+        false_next: check_workflow
       check_workflow:
         type: condition
         variable: entity_type
@@ -24,6 +38,11 @@ sense:
         value: alert
         true_next: route_alert
         false_next: unknown_entity
+      route_signal:
+        type: return
+        value:
+          repository: signal_fsm
+          description: Route to signal state machine repository - tracks signal triage states
       route_workflow:
         type: return
         value:
@@ -34,51 +53,20 @@ sense:
         value:
           repository: alert_fsm
           description: Route to alert state machine repository - tracks alert acknowledgment states
-      route_signal:
-        type: return
-        value:
-          repository: signal_fsm
-          description: Route to signal state machine repository - tracks signal triage states
       unknown_entity:
         type: return
         value:
-          repository: error
           description: Unknown entity type - choose case/signal/workflow/alert
+          repository: error
       route_case:
         type: return
         value:
           description: Route to case state machine repository - tracks case lifecycle states
           repository: case_fsm
-      check_signal:
-        type: condition
-        variable: entity_type
-        operator: eq
-        value: signal
-        true_next: route_signal
-        false_next: check_workflow
-      check_case:
-        type: condition
-        variable: entity_type
-        operator: eq
-        value: case
-        true_next: route_case
-        false_next: check_signal
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: entity_type
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       check_negation:
         type: condition
         variable: entity_type
@@ -91,6 +79,18 @@ antisense:
         value:
           confounder_count: 1
           falsified: true
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: entity_type
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -105,13 +105,13 @@ resolution:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
       verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
       confidence: medium
     emit: null
 interface:
@@ -121,20 +121,20 @@ interface:
         type: string
         required: false
     outputs:
-      verdict:
+      confidence:
         type: string
         required: false
-      repository:
+      verdict:
         type: string
         required: false
       description:
         type: string
         required: false
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
+        required: false
+      repository:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -143,8 +143,8 @@ tests:
   input:
     entity_type: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     entity_type: __negated__

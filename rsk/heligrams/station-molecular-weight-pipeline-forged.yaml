@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    reason: falsified
+    route: falsified
 sense:
   tree:
     start: check_mw
@@ -17,13 +17,27 @@ sense:
         value: 500
         true_next: lipinski_fail
         false_next: check_low
+      normal:
+        type: return
+        value:
+          route: archive
+          action: pass
+          reason: MW 100-500 Da — within drug-like range
+          priority: low
       lipinski_fail:
         type: return
         value:
+          priority: moderate
           reason: MW≥500 Da — Lipinski Rule of 5 violation, oral bioavailability concern
           route: admet_review
-          priority: moderate
           action: flag
+      fragment:
+        type: return
+        value:
+          priority: low
+          route: archive
+          reason: MW≤100 Da — molecular fragment, not drug-like
+          action: classify
       check_low:
         type: condition
         variable: molecular_weight
@@ -31,20 +45,6 @@ sense:
         value: 100
         true_next: fragment
         false_next: normal
-      fragment:
-        type: return
-        value:
-          reason: MW≤100 Da — molecular fragment, not drug-like
-          route: archive
-          priority: low
-          action: classify
-      normal:
-        type: return
-        value:
-          action: pass
-          reason: MW 100-500 Da — within drug-like range
-          route: archive
-          priority: low
 antisense:
   tree:
     start: null_guard_negation
@@ -56,11 +56,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       check_negation:
         type: condition
         variable: molecular_weight
@@ -71,8 +66,13 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -81,8 +81,8 @@ resolution:
     default: null
     emit:
       confidence_score: 0.7
-      confidence: high
       verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
@@ -92,9 +92,9 @@ resolution:
       verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
-      confidence: medium
       verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -106,11 +106,11 @@ interface:
       verdict:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
       confidence:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -119,14 +119,14 @@ tests:
   input:
     molecular_weight: 510
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     molecular_weight: 499
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

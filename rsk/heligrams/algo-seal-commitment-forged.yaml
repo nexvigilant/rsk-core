@@ -5,35 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    algorithm: falsified
+    seal_verdict: falsified
 sense:
   tree:
     start: check_defined
     nodes:
-      check_single_cost_trivial:
-        type: condition
-        variable: reversibility_cost
-        operator: eq
-        value: trivial
-        true_next: warn_proceed
-        false_next: check_single_cost_moderate
-      check_single_cost_moderate:
-        type: condition
-        variable: reversibility_cost
-        operator: eq
-        value: moderate
-        true_next: warn_proceed
-        false_next: block_high_stakes_single
-      seal_irreversible:
-        type: return
-        value:
-          algorithm: 'SEAL: ∝(μ(ς → π(ς))) — truly irreversible commitment. No inverse exists.'
-          seal_verdict: SEAL
-      seal_reversible:
-        type: return
-        value:
-          algorithm: 'SEAL: ∝(μ(ς → π(ς))) — commitment executed. Reversal possible but costly.'
-          seal_verdict: SEAL
       check_defined:
         type: condition
         variable: decision_defined
@@ -41,16 +17,35 @@ sense:
         value: false
         true_next: block_undefined
         false_next: check_multi_perspective
+      check_evidence:
+        type: condition
+        variable: evidence_sufficient
+        operator: eq
+        value: true
+        true_next: check_impossible
+        false_next: block_weak_evidence
       block_no_perspective:
         type: return
         value:
           seal_verdict: BLOCK
           algorithm: 'SEAL blocked: zero perspectives — Failure Mode #7 risk'
-      block_high_stakes_single:
+      check_single_cost_trivial:
+        type: condition
+        variable: reversibility_cost
+        operator: eq
+        value: trivial
+        true_next: warn_proceed
+        false_next: check_single_cost_moderate
+      block_undefined:
         type: return
         value:
-          algorithm: 'SEAL blocked: 1 perspective on expensive/impossible reversal — ∝ amplifies perspective collapse'
           seal_verdict: BLOCK
+          algorithm: 'SEAL blocked: DEFINE not applied — cannot seal an unfixed variable'
+      warn_proceed:
+        type: return
+        value:
+          seal_verdict: WARN_PROCEED
+          algorithm: 'SEAL with warning: 1 perspective but low reversal cost — proceed with caution'
       block_weak_evidence:
         type: return
         value:
@@ -63,30 +58,23 @@ sense:
         value: impossible
         true_next: seal_irreversible
         false_next: seal_reversible
-      block_undefined:
+      seal_irreversible:
         type: return
         value:
-          seal_verdict: BLOCK
-          algorithm: 'SEAL blocked: DEFINE not applied — cannot seal an unfixed variable'
-      check_multi_perspective:
+          algorithm: 'SEAL: ∝(μ(ς → π(ς))) — truly irreversible commitment. No inverse exists.'
+          seal_verdict: SEAL
+      seal_reversible:
+        type: return
+        value:
+          seal_verdict: SEAL
+          algorithm: 'SEAL: ∝(μ(ς → π(ς))) — commitment executed. Reversal possible but costly.'
+      check_single_cost_moderate:
         type: condition
-        variable: perspectives_checked
-        operator: gte
-        value: 2
-        true_next: check_evidence
-        false_next: check_single_perspective
-      check_evidence:
-        type: condition
-        variable: evidence_sufficient
+        variable: reversibility_cost
         operator: eq
-        value: true
-        true_next: check_impossible
-        false_next: block_weak_evidence
-      warn_proceed:
-        type: return
-        value:
-          algorithm: 'SEAL with warning: 1 perspective but low reversal cost — proceed with caution'
-          seal_verdict: WARN_PROCEED
+        value: moderate
+        true_next: warn_proceed
+        false_next: block_high_stakes_single
       check_single_perspective:
         type: condition
         variable: perspectives_checked
@@ -94,30 +82,42 @@ sense:
         value: 1
         true_next: check_single_cost_trivial
         false_next: block_no_perspective
+      check_multi_perspective:
+        type: condition
+        variable: perspectives_checked
+        operator: gte
+        value: 2
+        true_next: check_evidence
+        false_next: check_single_perspective
+      block_high_stakes_single:
+        type: return
+        value:
+          seal_verdict: BLOCK
+          algorithm: 'SEAL blocked: 1 perspective on expensive/impossible reversal — ∝ amplifies perspective collapse'
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: reversibility_cost
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       falsified:
         type: return
         value:
           confounder_count: 1
           falsified: true
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: decision_defined
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
-        variable: reversibility_cost
+        variable: decision_defined
         operator: neq
         value: false
         true_next: falsified
@@ -136,9 +136,9 @@ resolution:
       falsified: true
     default: null
     emit:
-      verdict: contested
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
       verdict: indeterminate
@@ -148,25 +148,19 @@ resolution:
 interface:
   major_groove:
     inputs:
-      perspectives_checked:
-        type: integer
-        required: true
       evidence_sufficient:
         type: boolean
         required: true
       reversibility_cost:
         type: string
         required: true
+      perspectives_checked:
+        type: integer
+        required: true
       decision_defined:
         type: boolean
         required: true
     outputs:
-      algorithm:
-        type: string
-        required: false
-      verdict:
-        type: string
-        required: false
       seal_verdict:
         type: string
         required: false
@@ -176,24 +170,24 @@ interface:
       confidence_score:
         type: float
         required: false
+      verdict:
+        type: string
+        required: false
+      algorithm:
+        type: string
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    evidence_sufficient: true
-    decision_defined: true
-    reversibility_cost: null
-    perspectives_checked: 3
+    decision_defined: null
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    evidence_sufficient: true
     decision_defined: true
-    reversibility_cost: true
-    perspectives_checked: 3
   expect:
     verdict: contested
     confidence: low

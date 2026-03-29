@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 5
   base_pairs:
-    trajectory_severity: falsified
+    intervention_window_days: falsified
 sense:
   tree:
     start: check_action
@@ -13,21 +13,8 @@ sense:
       critical_trajectory:
         type: return
         value:
-          trajectory_severity: critical
           intervention_window_days: 3
-          bridge: benefit-risk-to-preemptive
-      check_review:
-        type: condition
-        variable: action
-        operator: eq
-        value: review
-        true_next: moderate_trajectory
-        false_next: safe_trajectory
-      safe_trajectory:
-        type: return
-        value:
-          intervention_window_days: 90
-          trajectory_severity: low
+          trajectory_severity: critical
           bridge: benefit-risk-to-preemptive
       moderate_trajectory:
         type: return
@@ -35,6 +22,19 @@ sense:
           intervention_window_days: 14
           trajectory_severity: moderate
           bridge: benefit-risk-to-preemptive
+      safe_trajectory:
+        type: return
+        value:
+          trajectory_severity: low
+          bridge: benefit-risk-to-preemptive
+          intervention_window_days: 90
+      check_review:
+        type: condition
+        variable: action
+        operator: eq
+        value: review
+        true_next: moderate_trajectory
+        false_next: safe_trajectory
       check_action:
         type: condition
         variable: action
@@ -46,18 +46,6 @@ antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: action
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       check_negation:
         type: condition
         variable: action
@@ -70,6 +58,18 @@ antisense:
         value:
           confounder_count: 0
           falsified: false
+      null_guard_negation:
+        type: condition
+        variable: action
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -77,20 +77,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       verdict: confirmed
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
+      verdict: contested
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
       verdict: indeterminate
+      confidence: medium
       confidence_score: 0.5
     emit: null
 interface:
@@ -115,17 +115,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     action: null
-    priority: critical
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     action: __negated__
-    priority: critical
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

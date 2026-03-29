@@ -10,27 +10,6 @@ sense:
   tree:
     start: check_systematic_reviews
     nodes:
-      limited_evidence_many_cases:
-        type: return
-        value:
-          recommended_action: Case reports exist but limited total literature — expand search to related terms
-          evidence_level: limited
-          next_step: expanded_search
-          literature_strength: low
-      check_any_case_reports:
-        type: condition
-        variable: case_report_count
-        operator: gte
-        value: 1
-        true_next: limited_evidence
-        false_next: insufficient_evidence
-      moderate_evidence:
-        type: return
-        value:
-          next_step: case_series_analysis
-          literature_strength: moderate
-          evidence_level: moderate
-          recommended_action: Substantial case report literature with broad citation base — review for patterns
       check_total_for_moderate:
         type: condition
         variable: total_citations
@@ -38,13 +17,13 @@ sense:
         value: 20
         true_next: moderate_evidence
         false_next: limited_evidence_many_cases
-      strong_evidence_rct:
+      moderate_evidence:
         type: return
         value:
-          recommended_action: RCT data available — extract safety endpoints for signal confirmation
-          next_step: trial_safety_review
-          literature_strength: high
-          evidence_level: strong
+          recommended_action: Substantial case report literature with broad citation base — review for patterns
+          next_step: case_series_analysis
+          literature_strength: moderate
+          evidence_level: moderate
       check_rcts:
         type: condition
         variable: rct_count
@@ -52,20 +31,13 @@ sense:
         value: 1
         true_next: strong_evidence_rct
         false_next: check_case_reports
-      insufficient_evidence:
+      strong_evidence:
         type: return
         value:
-          recommended_action: No relevant literature found — consider alternate search terms or spontaneous reporting data
-          literature_strength: none
-          evidence_level: insufficient
-          next_step: alternate_data_sources
-      limited_evidence:
-        type: return
-        value:
-          literature_strength: low
-          evidence_level: limited
-          next_step: literature_monitoring
-          recommended_action: Few case reports found — monitor for new publications
+          next_step: evidence_synthesis
+          recommended_action: Multiple systematic reviews available — synthesize findings for signal assessment
+          literature_strength: high
+          evidence_level: strong
       check_systematic_reviews:
         type: condition
         variable: systematic_review_count
@@ -73,6 +45,20 @@ sense:
         value: 2
         true_next: strong_evidence
         false_next: check_rcts
+      limited_evidence:
+        type: return
+        value:
+          literature_strength: low
+          recommended_action: Few case reports found — monitor for new publications
+          evidence_level: limited
+          next_step: literature_monitoring
+      limited_evidence_many_cases:
+        type: return
+        value:
+          recommended_action: Case reports exist but limited total literature — expand search to related terms
+          literature_strength: low
+          next_step: expanded_search
+          evidence_level: limited
       check_case_reports:
         type: condition
         variable: case_report_count
@@ -80,41 +66,55 @@ sense:
         value: 5
         true_next: check_total_for_moderate
         false_next: check_any_case_reports
-      strong_evidence:
+      strong_evidence_rct:
         type: return
         value:
-          recommended_action: Multiple systematic reviews available — synthesize findings for signal assessment
-          next_step: evidence_synthesis
+          next_step: trial_safety_review
           literature_strength: high
           evidence_level: strong
+          recommended_action: RCT data available — extract safety endpoints for signal confirmation
+      insufficient_evidence:
+        type: return
+        value:
+          recommended_action: No relevant literature found — consider alternate search terms or spontaneous reporting data
+          evidence_level: insufficient
+          next_step: alternate_data_sources
+          literature_strength: none
+      check_any_case_reports:
+        type: condition
+        variable: case_report_count
+        operator: gte
+        value: 1
+        true_next: limited_evidence
+        false_next: insufficient_evidence
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      null_guard_negation:
+        type: condition
+        variable: total_citations
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
-        variable: case_report_count
+        variable: total_citations
         operator: lt
         value: 2
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
-      null_guard_negation:
-        type: condition
-        variable: case_report_count
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -123,15 +123,15 @@ resolution:
     default: null
     emit:
       confidence_score: 0.7
-      confidence: high
       verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
       verdict: indeterminate
@@ -141,32 +141,26 @@ resolution:
 interface:
   major_groove:
     inputs:
-      rct_count:
+      total_citations:
         type: int
         required: false
       systematic_review_count:
         type: int
         required: false
+      rct_count:
+        type: int
+        required: false
       case_report_count:
         type: int
         required: false
-      total_citations:
-        type: int
-        required: false
     outputs:
-      recommended_action:
+      literature_strength:
         type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
       next_step:
         type: string
         required: false
-      evidence_level:
-        type: string
-        required: false
-      literature_strength:
+      recommended_action:
         type: string
         required: false
       verdict:
@@ -175,24 +169,24 @@ interface:
       confidence:
         type: string
         required: false
+      confidence_score:
+        type: float
+        required: false
+      evidence_level:
+        type: string
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    rct_count: 2
-    case_report_count: 12
-    systematic_review_count: 3
-    total_citations: 50
+    total_citations: 12
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    rct_count: 2
-    case_report_count: 1
-    systematic_review_count: 3
-    total_citations: 50
+    total_citations: 1
   expect:
     confidence: low
     verdict: contested

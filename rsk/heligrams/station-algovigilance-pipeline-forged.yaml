@@ -5,18 +5,32 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    route: falsified
+    action: falsified
 sense:
   tree:
     start: check_drift
     nodes:
+      bias_alert:
+        type: return
+        value:
+          action: investigate
+          reason: Algorithmic bias detected — fairness audit required before continued use
+          route: bias_audit
+          priority: high
+      healthy:
+        type: return
+        value:
+          priority: low
+          reason: No drift or bias detected — algorithm performing within parameters
+          route: archive
+          action: certify
       mild_drift:
         type: return
         value:
-          route: drift_monitoring
-          action: monitor
-          reason: Drift detected but PSI<0.25 — monitor for acceleration
           priority: moderate
+          action: monitor
+          route: drift_monitoring
+          reason: Drift detected but PSI<0.25 — monitor for acceleration
       check_drift:
         type: condition
         variable: drift_detected
@@ -24,13 +38,13 @@ sense:
         value: true
         true_next: drift_severity
         false_next: check_bias
-      healthy:
+      severe_drift:
         type: return
         value:
-          route: archive
-          priority: low
-          reason: No drift or bias detected — algorithm performing within parameters
-          action: certify
+          reason: PSI≥0.25 — significant distribution shift, model output unreliable
+          route: model_retrain
+          priority: critical
+          action: halt
       drift_severity:
         type: condition
         variable: drift_psi
@@ -45,24 +59,15 @@ sense:
         value: true
         true_next: bias_alert
         false_next: healthy
-      severe_drift:
-        type: return
-        value:
-          route: model_retrain
-          action: halt
-          priority: critical
-          reason: PSI≥0.25 — significant distribution shift, model output unreliable
-      bias_alert:
-        type: return
-        value:
-          reason: Algorithmic bias detected — fairness audit required before continued use
-          route: bias_audit
-          action: investigate
-          priority: high
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       check_negation:
         type: condition
         variable: drift_detected
@@ -77,11 +82,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       not_falsified:
         type: return
         value:
@@ -94,16 +94,16 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
       verdict: contested
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
       confidence: medium
@@ -117,11 +117,11 @@ interface:
         type: bool
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
       confidence_score:
         type: float
+        required: false
+      verdict:
+        type: string
         required: false
       confidence:
         type: string
@@ -132,16 +132,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     drift_detected: null
-    bias_detected: false
-    drift_psi: 0.4
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     drift_detected: false
-    bias_detected: false
-    drift_psi: 0.4
   expect:
     verdict: contested
     confidence: low

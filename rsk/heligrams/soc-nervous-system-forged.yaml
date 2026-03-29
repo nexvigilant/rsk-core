@@ -10,13 +10,13 @@ sense:
   tree:
     start: check_serious
     nodes:
-      fatal:
+      non_serious:
         type: return
         value:
-          priority: critical
+          priority: low
           soc: Nervous system
-          severity: fatal
-          route: causality_assessment
+          severity: non_serious
+          route: periodic_review
       check_serious:
         type: condition
         variable: is_serious
@@ -27,10 +27,17 @@ sense:
       serious:
         type: return
         value:
+          priority: high
+          severity: serious
           soc: Nervous system
           route: signal_investigation
-          severity: serious
-          priority: high
+      fatal:
+        type: return
+        value:
+          severity: fatal
+          soc: Nervous system
+          route: causality_assessment
+          priority: critical
       check_fatal:
         type: condition
         variable: is_fatal
@@ -38,13 +45,6 @@ sense:
         value: true
         true_next: fatal
         false_next: serious
-      non_serious:
-        type: return
-        value:
-          priority: low
-          route: periodic_review
-          soc: Nervous system
-          severity: non_serious
 antisense:
   tree:
     start: null_guard_negation
@@ -56,11 +56,6 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       check_negation:
         type: condition
         variable: is_serious
@@ -71,8 +66,13 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -80,16 +80,16 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence: high
       confidence_score: 0.7
-      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
-      confidence: low
       verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
       confidence: medium
@@ -118,17 +118,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     is_serious: null
-    is_fatal: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     is_serious: false
-    is_fatal: true
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

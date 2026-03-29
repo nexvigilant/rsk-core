@@ -17,18 +17,6 @@ sense:
         value: 85
         true_next: f_critical
         false_next: check_serious
-      e_serious:
-        type: return
-        value:
-          harm_level: E — Serious
-          traffic_level: red
-          harm_description: Strong signal across most metrics. Escalate to your safety team and consider regulatory action.
-      b_minor:
-        type: return
-        value:
-          traffic_level: green
-          harm_level: B — Minor
-          harm_description: A faint signal exists but falls well below concern thresholds. Worth noting, not worth losing sleep over.
       check_minor:
         type: condition
         variable: composite_score
@@ -36,12 +24,6 @@ sense:
         value: 20
         true_next: b_minor
         false_next: a_negligible
-      d_significant:
-        type: return
-        value:
-          traffic_level: yellow
-          harm_level: D — Significant
-          harm_description: Multiple metrics cross concern thresholds. A formal signal evaluation is recommended.
       check_serious:
         type: condition
         variable: composite_score
@@ -49,31 +31,12 @@ sense:
         value: 70
         true_next: e_serious
         false_next: check_significant
-      f_critical:
+      b_minor:
         type: return
         value:
-          harm_description: All metrics point to a very strong drug-event association. Immediate safety review warranted.
-          traffic_level: red
-          harm_level: F — Critical
-      a_negligible:
-        type: return
-        value:
-          harm_level: A — Negligible
-          harm_description: No meaningful risk signal detected. This drug-event pair looks unremarkable in the data.
+          harm_level: B — Minor
+          harm_description: A faint signal exists but falls well below concern thresholds. Worth noting, not worth losing sleep over.
           traffic_level: green
-      c_moderate:
-        type: return
-        value:
-          harm_description: Some metrics are elevated. This drug-event pair deserves periodic monitoring.
-          traffic_level: yellow
-          harm_level: C — Moderate
-      check_significant:
-        type: condition
-        variable: composite_score
-        operator: gte
-        value: 55
-        true_next: d_significant
-        false_next: check_moderate
       check_moderate:
         type: condition
         variable: composite_score
@@ -81,6 +44,43 @@ sense:
         value: 40
         true_next: c_moderate
         false_next: check_minor
+      check_significant:
+        type: condition
+        variable: composite_score
+        operator: gte
+        value: 55
+        true_next: d_significant
+        false_next: check_moderate
+      f_critical:
+        type: return
+        value:
+          traffic_level: red
+          harm_description: All metrics point to a very strong drug-event association. Immediate safety review warranted.
+          harm_level: F — Critical
+      d_significant:
+        type: return
+        value:
+          traffic_level: yellow
+          harm_description: Multiple metrics cross concern thresholds. A formal signal evaluation is recommended.
+          harm_level: D — Significant
+      c_moderate:
+        type: return
+        value:
+          traffic_level: yellow
+          harm_level: C — Moderate
+          harm_description: Some metrics are elevated. This drug-event pair deserves periodic monitoring.
+      e_serious:
+        type: return
+        value:
+          harm_level: E — Serious
+          harm_description: Strong signal across most metrics. Escalate to your safety team and consider regulatory action.
+          traffic_level: red
+      a_negligible:
+        type: return
+        value:
+          traffic_level: green
+          harm_level: A — Negligible
+          harm_description: No meaningful risk signal detected. This drug-event pair looks unremarkable in the data.
 antisense:
   tree:
     start: null_guard_negation
@@ -97,6 +97,11 @@ antisense:
         value:
           falsified: true
           confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       check_negation:
         type: condition
         variable: composite_score
@@ -104,11 +109,6 @@ antisense:
         value: 85
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -116,9 +116,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       verdict: confirmed
       confidence: high
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
@@ -128,9 +128,9 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -142,19 +142,19 @@ interface:
       traffic_level:
         type: string
         required: false
-      confidence_score:
-        type: float
+      harm_description:
+        type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence:
-        type: string
+      confidence_score:
+        type: float
         required: false
       harm_level:
         type: string
         required: false
-      harm_description:
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -164,14 +164,14 @@ tests:
   input:
     composite_score: 95
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     composite_score: 84
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

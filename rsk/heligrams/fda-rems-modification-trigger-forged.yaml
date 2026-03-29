@@ -5,138 +5,19 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    timeline: falsified
+    submission_type: falsified
 sense:
   tree:
     start: check_signal_type
     nodes:
-      new_risk_possible:
-        type: return
-        value:
-          timeline: Include in next REMS assessment report
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section V'
-          modification_type: Increase monitoring; prepare contingency modification
-          submission_type: Annual REMS Assessment
-          action_required: MONITOR_AND_ASSESS
-      ineffective_monitor:
-        type: return
-        value:
-          submission_type: Changes Being Effected (CBE-30)
-          action_required: MINOR_MODIFICATION
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.C'
-          modification_type: Adjust implementation; increase compliance monitoring
-          timeline: Submit within 30 days
-      no_action:
-        type: return
-        value:
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019)'
-          action_required: NO_ACTION
-          modification_type: No REMS modification indicated
-          timeline: Continue routine REMS assessment
-          submission_type: N/A
-      check_increased_freq:
-        type: condition
-        variable: signal_type
-        operator: eq
-        value: increased_frequency
-        true_next: increased_freq_evidence
-        false_next: check_new_population
       new_pop_monitor:
         type: return
         value:
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section V'
-          timeline: Include in next REMS assessment report
           submission_type: Annual REMS Assessment
           modification_type: Targeted surveillance for new population; assess at next review
-          action_required: MONITOR_AND_ASSESS
-      ineffective_evidence:
-        type: condition
-        variable: evidence_strength
-        operator: eq
-        value: confirmed
-        true_next: ineffective_confirmed
-        false_next: ineffective_monitor
-      check_signal_type:
-        type: condition
-        variable: signal_type
-        operator: eq
-        value: new_risk
-        true_next: new_risk_evidence
-        false_next: check_increased_freq
-      new_risk_not_confirmed:
-        type: condition
-        variable: evidence_strength
-        operator: eq
-        value: probable
-        true_next: new_risk_probable
-        false_next: new_risk_possible
-      reduced_risk_action:
-        type: return
-        value:
-          timeline: Submit at next REMS assessment or when data supports
-          modification_type: Remove or reduce REMS elements no longer necessary
-          submission_type: Prior Approval Supplement (PAS)
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section VI'
-          action_required: SIMPLIFICATION
-      new_pop_confirmed:
-        type: return
-        value:
-          timeline: Submit within 30 days of confirmation
-          action_required: MAJOR_MODIFICATION
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.A'
-          submission_type: Prior Approval Supplement (PAS)
-          modification_type: Extend REMS to cover new population; update ETASS if applicable
-      increased_freq_evidence:
-        type: condition
-        variable: evidence_strength
-        operator: eq
-        value: confirmed
-        true_next: increased_confirmed
-        false_next: increased_not_confirmed
-      increased_possible:
-        type: return
-        value:
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section V'
           timeline: Include in next REMS assessment report
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section V'
           action_required: MONITOR_AND_ASSESS
-          modification_type: Enhanced surveillance; no REMS change yet
-          submission_type: Annual REMS Assessment
-      check_new_population:
-        type: condition
-        variable: signal_type
-        operator: eq
-        value: new_population
-        true_next: new_population_evidence
-        false_next: check_reduced_risk
-      check_ineffective:
-        type: condition
-        variable: signal_type
-        operator: eq
-        value: ineffective_rems
-        true_next: ineffective_evidence
-        false_next: no_action
-      new_risk_evidence:
-        type: condition
-        variable: evidence_strength
-        operator: eq
-        value: confirmed
-        true_next: new_risk_confirmed
-        false_next: new_risk_not_confirmed
-      new_risk_probable:
-        type: return
-        value:
-          timeline: Submit within 30 days; may implement before approval
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.B'
-          submission_type: Changes Being Effected (CBE-30)
-          action_required: MODERATE_MODIFICATION
-          modification_type: Update Medication Guide and communication plan
-      increased_not_confirmed:
-        type: condition
-        variable: evidence_strength
-        operator: eq
-        value: possible
-        true_next: increased_possible
-        false_next: increased_probable
       new_population_evidence:
         type: condition
         variable: evidence_strength
@@ -144,22 +25,53 @@ sense:
         value: confirmed
         true_next: new_pop_confirmed
         false_next: new_pop_monitor
-      ineffective_confirmed:
+      reduced_risk_action:
         type: return
         value:
+          modification_type: Remove or reduce REMS elements no longer necessary
+          action_required: SIMPLIFICATION
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section VI'
           submission_type: Prior Approval Supplement (PAS)
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.A'
-          action_required: MAJOR_MODIFICATION
-          modification_type: Redesign REMS; current elements failing to meet safety goals
-          timeline: Submit within 30 days; FDA may require meeting
-      new_risk_confirmed:
+          timeline: Submit at next REMS assessment or when data supports
+      ineffective_monitor:
         type: return
         value:
-          modification_type: Add/strengthen REMS elements - new ETASS or communication plan
-          action_required: MAJOR_MODIFICATION
-          timeline: Submit within 30 days of confirmation
-          submission_type: Prior Approval Supplement (PAS)
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.A'
+          action_required: MINOR_MODIFICATION
+          timeline: Submit within 30 days
+          modification_type: Adjust implementation; increase compliance monitoring
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.C'
+          submission_type: Changes Being Effected (CBE-30)
+      no_action:
+        type: return
+        value:
+          action_required: NO_ACTION
+          modification_type: No REMS modification indicated
+          timeline: Continue routine REMS assessment
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019)'
+          submission_type: N/A
+      new_risk_not_confirmed:
+        type: condition
+        variable: evidence_strength
+        operator: eq
+        value: probable
+        true_next: new_risk_probable
+        false_next: new_risk_possible
+      increased_possible:
+        type: return
+        value:
+          modification_type: Enhanced surveillance; no REMS change yet
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section V'
+          timeline: Include in next REMS assessment report
+          action_required: MONITOR_AND_ASSESS
+          submission_type: Annual REMS Assessment
+      new_risk_probable:
+        type: return
+        value:
+          modification_type: Update Medication Guide and communication plan
+          action_required: MODERATE_MODIFICATION
+          submission_type: Changes Being Effected (CBE-30)
+          timeline: Submit within 30 days; may implement before approval
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.B'
       check_reduced_risk:
         type: condition
         variable: signal_type
@@ -167,29 +79,117 @@ sense:
         value: reduced_risk
         true_next: reduced_risk_action
         false_next: check_ineffective
+      ineffective_evidence:
+        type: condition
+        variable: evidence_strength
+        operator: eq
+        value: confirmed
+        true_next: ineffective_confirmed
+        false_next: ineffective_monitor
+      ineffective_confirmed:
+        type: return
+        value:
+          submission_type: Prior Approval Supplement (PAS)
+          modification_type: Redesign REMS; current elements failing to meet safety goals
+          action_required: MAJOR_MODIFICATION
+          timeline: Submit within 30 days; FDA may require meeting
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.A'
+      check_ineffective:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: ineffective_rems
+        true_next: ineffective_evidence
+        false_next: no_action
+      new_risk_possible:
+        type: return
+        value:
+          action_required: MONITOR_AND_ASSESS
+          timeline: Include in next REMS assessment report
+          submission_type: Annual REMS Assessment
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section V'
+          modification_type: Increase monitoring; prepare contingency modification
+      check_signal_type:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: new_risk
+        true_next: new_risk_evidence
+        false_next: check_increased_freq
+      increased_confirmed:
+        type: return
+        value:
+          modification_type: Strengthen existing REMS elements; consider adding ETASS
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.B'
+          action_required: MODERATE_MODIFICATION
+          submission_type: Changes Being Effected (CBE-30)
+          timeline: Submit within 30 days
+      increased_freq_evidence:
+        type: condition
+        variable: evidence_strength
+        operator: eq
+        value: confirmed
+        true_next: increased_confirmed
+        false_next: increased_not_confirmed
       increased_probable:
         type: return
         value:
           modification_type: Update Medication Guide frequency/severity language
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.C'
+          action_required: MINOR_MODIFICATION
           submission_type: Changes Being Effected (CBE-0)
           timeline: Implement immediately; notify FDA
-          action_required: MINOR_MODIFICATION
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.C'
-      increased_confirmed:
+      check_increased_freq:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: increased_frequency
+        true_next: increased_freq_evidence
+        false_next: check_new_population
+      new_risk_evidence:
+        type: condition
+        variable: evidence_strength
+        operator: eq
+        value: confirmed
+        true_next: new_risk_confirmed
+        false_next: new_risk_not_confirmed
+      new_risk_confirmed:
         type: return
         value:
-          submission_type: Changes Being Effected (CBE-30)
-          timeline: Submit within 30 days
-          action_required: MODERATE_MODIFICATION
-          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.B'
-          modification_type: Strengthen existing REMS elements; consider adding ETASS
+          action_required: MAJOR_MODIFICATION
+          modification_type: Add/strengthen REMS elements - new ETASS or communication plan
+          submission_type: Prior Approval Supplement (PAS)
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.A'
+          timeline: Submit within 30 days of confirmation
+      new_pop_confirmed:
+        type: return
+        value:
+          action_required: MAJOR_MODIFICATION
+          submission_type: Prior Approval Supplement (PAS)
+          regulatory_reference: 'FDA Guidance: REMS Modifications and Revisions (2019), Section IV.A'
+          modification_type: Extend REMS to cover new population; update ETASS if applicable
+          timeline: Submit within 30 days of confirmation
+      check_new_population:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: new_population
+        true_next: new_population_evidence
+        false_next: check_reduced_risk
+      increased_not_confirmed:
+        type: condition
+        variable: evidence_strength
+        operator: eq
+        value: possible
+        true_next: increased_possible
+        false_next: increased_probable
 antisense:
   tree:
     start: null_guard_negation
     nodes:
       null_guard_negation:
         type: condition
-        variable: signal_type
+        variable: evidence_strength
         operator: is_null
         value: null
         true_next: not_falsified
@@ -199,18 +199,18 @@ antisense:
         value:
           confounder_count: 0
           falsified: false
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       check_negation:
         type: condition
-        variable: signal_type
+        variable: evidence_strength
         operator: neq
         value: new_risk
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -218,8 +218,8 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       verdict: confirmed
+      confidence: high
       confidence_score: 0.7
   - when:
       falsified: true
@@ -230,37 +230,28 @@ resolution:
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
       confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
+      signal_type:
+        type: string
+        required: true
       current_rems_elements:
         type: string
         required: false
       evidence_strength:
         type: string
         required: true
-      signal_type:
-        type: string
-        required: true
     outputs:
-      timeline:
-        type: string
+      confidence_score:
+        type: float
         required: false
       submission_type:
         type: string
-        required: false
-      action_required:
-        type: string
-        required: false
-      verdict:
-        type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
       modification_type:
         type: string
@@ -268,7 +259,16 @@ interface:
       regulatory_reference:
         type: string
         required: false
+      timeline:
+        type: string
+        required: false
       confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      action_required:
         type: string
         required: false
     aliases: {}
@@ -276,15 +276,13 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    signal_type: null
-    evidence_strength: confirmed
+    evidence_strength: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    signal_type: __negated__
-    evidence_strength: confirmed
+    evidence_strength: __negated__
   expect:
     verdict: contested
     confidence: low

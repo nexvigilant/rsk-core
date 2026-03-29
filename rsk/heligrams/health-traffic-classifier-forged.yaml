@@ -10,21 +10,6 @@ sense:
   tree:
     start: check_healthy
     nodes:
-      yellow:
-        type: return
-        value:
-          traffic_level: yellow
-      check_healthy:
-        type: condition
-        variable: status
-        operator: eq
-        value: healthy
-        true_next: green
-        false_next: check_degraded
-      red:
-        type: return
-        value:
-          traffic_level: red
       check_degraded:
         type: condition
         variable: status
@@ -32,6 +17,21 @@ sense:
         value: degraded
         true_next: yellow
         false_next: red
+      check_healthy:
+        type: condition
+        variable: status
+        operator: eq
+        value: healthy
+        true_next: green
+        false_next: check_degraded
+      yellow:
+        type: return
+        value:
+          traffic_level: yellow
+      red:
+        type: return
+        value:
+          traffic_level: red
       green:
         type: return
         value:
@@ -40,18 +40,11 @@ antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: status
-        operator: neq
-        value: healthy
-        true_next: falsified
-        false_next: not_falsified
-      falsified:
+      not_falsified:
         type: return
         value:
-          falsified: true
-          confounder_count: 1
+          falsified: false
+          confounder_count: 0
       null_guard_negation:
         type: condition
         variable: status
@@ -59,11 +52,18 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
-      not_falsified:
+      falsified:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
+          falsified: true
+          confounder_count: 1
+      check_negation:
+        type: condition
+        variable: status
+        operator: neq
+        value: healthy
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -72,20 +72,20 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
-      confidence: low
       verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -113,14 +113,14 @@ tests:
   input:
     status: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     status: __negated__
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

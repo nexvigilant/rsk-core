@@ -10,13 +10,20 @@ sense:
   tree:
     start: check_form
     nodes:
+      standard_report:
+        type: return
+        value:
+          priority: moderate
+          route: case_submission
+          reason: CIOMS I form within deadline — standard submission workflow
+          action: submit
       cioms_ii:
         type: return
         value:
           priority: moderate
-          route: periodic_review
           action: review
           reason: CIOMS II periodic safety report — aggregate analysis
+          route: periodic_review
       check_form_ii:
         type: condition
         variable: form_type
@@ -24,27 +31,13 @@ sense:
         value: II
         true_next: cioms_ii
         false_next: other_form
-      urgent_report:
-        type: return
-        value:
-          route: expedited_reporting
-          action: expedite
-          priority: critical
-          reason: CIOMS I form with ≤3 days to deadline — expedited submission required
-      cioms_i:
-        type: condition
-        variable: days_to_deadline
-        operator: lte
-        value: 3
-        true_next: urgent_report
-        false_next: standard_report
       other_form:
         type: return
         value:
-          route: archive
           reason: CIOMS working group reference — informational
-          action: reference
+          route: archive
           priority: low
+          action: reference
       check_form:
         type: condition
         variable: form_type
@@ -52,24 +45,24 @@ sense:
         value: I
         true_next: cioms_i
         false_next: check_form_ii
-      standard_report:
+      cioms_i:
+        type: condition
+        variable: days_to_deadline
+        operator: lte
+        value: 3
+        true_next: urgent_report
+        false_next: standard_report
+      urgent_report:
         type: return
         value:
-          route: case_submission
-          reason: CIOMS I form within deadline — standard submission workflow
-          action: submit
-          priority: moderate
+          reason: CIOMS I form with ≤3 days to deadline — expedited submission required
+          priority: critical
+          route: expedited_reporting
+          action: expedite
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: form_type
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
         variable: form_type
@@ -80,8 +73,15 @@ antisense:
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: form_type
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
@@ -101,14 +101,14 @@ resolution:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
+      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
-      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -117,13 +117,13 @@ interface:
         type: string
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
       confidence:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -131,18 +131,16 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    days_to_deadline: 2
     form_type: null
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    days_to_deadline: 2
     form_type: __negated__
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

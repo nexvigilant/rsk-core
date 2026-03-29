@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    reason: falsified
+    priority: falsified
 sense:
   tree:
     start: check_n
@@ -20,10 +20,10 @@ sense:
       large_n:
         type: return
         value:
-          reason: n≥20 — exact computation may overflow, use Stirling approximation
-          action: approximate
-          route: approximation
           priority: moderate
+          route: approximation
+          action: approximate
+          reason: n≥20 — exact computation may overflow, use Stirling approximation
       check_type:
         type: condition
         variable: problem_type
@@ -41,21 +41,14 @@ sense:
       derangement:
         type: return
         value:
-          action: compute
           reason: Derangement computation — subfactorial formula
+          action: compute
           priority: low
           route: exact_compute
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: n
-        operator: lt
-        value: 20
-        true_next: falsified
-        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: n
@@ -63,16 +56,23 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      check_negation:
+        type: condition
+        variable: n
+        operator: lt
+        value: 20
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
       verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
-      confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -103,10 +103,10 @@ interface:
         type: integer
         required: false
     outputs:
-      verdict:
+      confidence:
         type: string
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
       confidence_score:
@@ -118,17 +118,15 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     n: 30
-    problem_type: binomial
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     n: 19
-    problem_type: binomial
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

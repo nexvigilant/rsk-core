@@ -5,53 +5,18 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    age_group: falsified
+    special_monitoring: falsified
 sense:
   tree:
     start: check_neonatal
     nodes:
-      check_neonatal:
+      check_dev_impact_only:
         type: condition
-        variable: patient_age
-        operator: lt
-        value: 2
-        true_next: neonatal_flag
-        false_next: check_pediatric_age
-      standard:
-        type: return
-        value:
-          age_group: Standard assessment applicable
-          special_monitoring: Routine pharmacovigilance monitoring per standard protocols
-          flag: STANDARD
-          rationale: No pediatric-specific risk factors identified requiring special monitoring
-      check_pediatric_age:
-        type: condition
-        variable: patient_age
-        operator: lt
-        value: 12
-        true_next: check_developmental_impact
-        false_next: check_adolescent_age
-      neonatal_flag:
-        type: return
-        value:
-          special_monitoring: Mandatory neonatal specialist review and weight-based dosing verification
-          rationale: Neonates have immature organ systems requiring specialist PV oversight per ICH E11
-          flag: NEONATAL_FLAG
-          age_group: Neonate (0-23 months)
-      check_pediatric_label_teen:
-        type: condition
-        variable: drug_has_pediatric_label
-        operator: eq
-        value: true
-        true_next: standard
-        false_next: pediatric_review
-      check_developmental_impact:
-        type: condition
-        variable: has_growth_impact
+        variable: has_developmental_impact
         operator: eq
         value: true
         true_next: pediatric_urgent
-        false_next: check_dev_impact_only
+        false_next: check_pediatric_label_child
       check_pediatric_label_child:
         type: condition
         variable: drug_has_pediatric_label
@@ -66,41 +31,69 @@ sense:
         value: 18
         true_next: check_pediatric_label_teen
         false_next: standard
-      check_dev_impact_only:
+      check_developmental_impact:
         type: condition
-        variable: has_developmental_impact
+        variable: has_growth_impact
         operator: eq
         value: true
         true_next: pediatric_urgent
-        false_next: check_pediatric_label_child
+        false_next: check_dev_impact_only
+      neonatal_flag:
+        type: return
+        value:
+          special_monitoring: Mandatory neonatal specialist review and weight-based dosing verification
+          flag: NEONATAL_FLAG
+          age_group: Neonate (0-23 months)
+          rationale: Neonates have immature organ systems requiring specialist PV oversight per ICH E11
       pediatric_urgent:
         type: return
         value:
-          special_monitoring: Urgent pediatric endocrinology or developmental specialist review within 48 hours
           age_group: Child (2-11 years)
-          flag: PEDIATRIC_URGENT
           rationale: Growth or developmental impact in pediatric patient requires urgent specialist evaluation
+          special_monitoring: Urgent pediatric endocrinology or developmental specialist review within 48 hours
+          flag: PEDIATRIC_URGENT
       pediatric_review:
         type: return
         value:
+          age_group: Pediatric (under 18 years)
           special_monitoring: Pediatric PV review required - off-label use in population without approved labeling
           rationale: Drug lacks pediatric labeling - off-label safety monitoring required per ICH E11
           flag: PEDIATRIC_REVIEW
-          age_group: Pediatric (under 18 years)
+      check_neonatal:
+        type: condition
+        variable: patient_age
+        operator: lt
+        value: 2
+        true_next: neonatal_flag
+        false_next: check_pediatric_age
+      check_pediatric_age:
+        type: condition
+        variable: patient_age
+        operator: lt
+        value: 12
+        true_next: check_developmental_impact
+        false_next: check_adolescent_age
+      check_pediatric_label_teen:
+        type: condition
+        variable: drug_has_pediatric_label
+        operator: eq
+        value: true
+        true_next: standard
+        false_next: pediatric_review
+      standard:
+        type: return
+        value:
+          rationale: No pediatric-specific risk factors identified requiring special monitoring
+          special_monitoring: Routine pharmacovigilance monitoring per standard protocols
+          flag: STANDARD
+          age_group: Standard assessment applicable
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      null_guard_negation:
-        type: condition
-        variable: patient_age
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
-        variable: patient_age
+        variable: has_developmental_impact
         operator: gte
         value: 2
         true_next: falsified
@@ -110,6 +103,13 @@ antisense:
         value:
           confounder_count: 0
           falsified: false
+      null_guard_negation:
+        type: condition
+        variable: has_developmental_impact
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
@@ -122,21 +122,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       confidence: medium
       verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -154,25 +154,25 @@ interface:
         type: bool
         required: false
     outputs:
-      confidence:
+      flag:
+        type: string
+        required: false
+      rationale:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      rationale:
-        type: string
-        required: false
       special_monitoring:
         type: string
         required: false
-      flag:
+      confidence:
         type: string
         required: false
       age_group:
-        type: string
-        required: false
-      verdict:
         type: string
         required: false
     aliases: {}
@@ -180,19 +180,13 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    drug_has_pediatric_label: true
-    has_growth_impact: false
-    patient_age: 0
-    has_developmental_impact: false
+    has_developmental_impact: 0
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    drug_has_pediatric_label: true
-    has_growth_impact: false
-    patient_age: 2
-    has_developmental_impact: false
+    has_developmental_impact: 2
   expect:
     verdict: contested
     confidence: low

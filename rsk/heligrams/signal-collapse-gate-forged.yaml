@@ -5,60 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    signal_strength: falsified
+    algorithm: falsified
 sense:
   tree:
     start: check_rarity
     nodes:
-      strong:
-        type: return
-        value:
-          signal_strength: STRONG
-          algorithm: ALG-2025-041
-          collapse_reason: none
-          campion_S: U×R×T all high
-      check_moderate:
-        type: condition
-        variable: rarity_score
-        operator: gte
-        value: 40
-        true_next: check_moderate_recognition
-        false_next: weak
-      weak:
-        type: return
-        value:
-          campion_S: U×R×T present but low
-          signal_strength: WEAK
-          algorithm: ALG-2025-041
-          collapse_reason: none
-      check_recognition:
-        type: condition
-        variable: recognition_score
-        operator: gte
-        value: 10
-        true_next: check_temporal
-        false_next: collapsed_recognition
-      check_temporal:
-        type: condition
-        variable: temporal_score
-        operator: gte
-        value: 10
-        true_next: check_strong
-        false_next: collapsed_temporal
-      check_moderate_recognition:
-        type: condition
-        variable: recognition_score
-        operator: gte
-        value: 40
-        true_next: check_moderate_temporal
-        false_next: weak
-      moderate:
-        type: return
-        value:
-          algorithm: ALG-2025-041
-          collapse_reason: none
-          signal_strength: MODERATE
-          campion_S: U×R×T all adequate
       check_rarity:
         type: condition
         variable: rarity_score
@@ -66,13 +17,20 @@ sense:
         value: 10
         true_next: check_recognition
         false_next: collapsed_rarity
-      collapsed_recognition:
+      collapsed_rarity:
         type: return
         value:
-          signal_strength: COLLAPSED
-          collapse_reason: recognition
-          campion_S: R→0 therefore S→0
           algorithm: ALG-2025-041
+          collapse_reason: rarity
+          campion_S: U→0 therefore S→0
+          signal_strength: COLLAPSED
+      check_moderate_recognition:
+        type: condition
+        variable: recognition_score
+        operator: gte
+        value: 40
+        true_next: check_moderate_temporal
+        false_next: weak
       check_strong_temporal:
         type: condition
         variable: temporal_score
@@ -80,20 +38,6 @@ sense:
         value: 70
         true_next: strong
         false_next: check_moderate
-      check_strong:
-        type: condition
-        variable: rarity_score
-        operator: gte
-        value: 70
-        true_next: check_strong_recognition
-        false_next: check_moderate
-      collapsed_rarity:
-        type: return
-        value:
-          signal_strength: COLLAPSED
-          algorithm: ALG-2025-041
-          campion_S: U→0 therefore S→0
-          collapse_reason: rarity
       collapsed_temporal:
         type: return
         value:
@@ -101,6 +45,20 @@ sense:
           campion_S: T→0 therefore S→0
           algorithm: ALG-2025-041
           signal_strength: COLLAPSED
+      weak:
+        type: return
+        value:
+          collapse_reason: none
+          signal_strength: WEAK
+          campion_S: U×R×T present but low
+          algorithm: ALG-2025-041
+      check_strong:
+        type: condition
+        variable: rarity_score
+        operator: gte
+        value: 70
+        true_next: check_strong_recognition
+        false_next: check_moderate
       check_strong_recognition:
         type: condition
         variable: recognition_score
@@ -108,6 +66,20 @@ sense:
         value: 70
         true_next: check_strong_temporal
         false_next: check_moderate
+      collapsed_recognition:
+        type: return
+        value:
+          collapse_reason: recognition
+          algorithm: ALG-2025-041
+          signal_strength: COLLAPSED
+          campion_S: R→0 therefore S→0
+      check_recognition:
+        type: condition
+        variable: recognition_score
+        operator: gte
+        value: 10
+        true_next: check_temporal
+        false_next: collapsed_recognition
       check_moderate_temporal:
         type: condition
         variable: temporal_score
@@ -115,10 +87,50 @@ sense:
         value: 40
         true_next: moderate
         false_next: weak
+      check_temporal:
+        type: condition
+        variable: temporal_score
+        operator: gte
+        value: 10
+        true_next: check_strong
+        false_next: collapsed_temporal
+      moderate:
+        type: return
+        value:
+          collapse_reason: none
+          algorithm: ALG-2025-041
+          signal_strength: MODERATE
+          campion_S: U×R×T all adequate
+      strong:
+        type: return
+        value:
+          collapse_reason: none
+          algorithm: ALG-2025-041
+          campion_S: U×R×T all high
+          signal_strength: STRONG
+      check_moderate:
+        type: condition
+        variable: rarity_score
+        operator: gte
+        value: 40
+        true_next: check_moderate_recognition
+        false_next: weak
 antisense:
   tree:
     start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: rarity_score
+        operator: lt
+        value: 10
+        true_next: falsified
+        false_next: not_falsified
       null_guard_negation:
         type: condition
         variable: rarity_score
@@ -129,20 +141,8 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
-      check_negation:
-        type: condition
-        variable: rarity_score
-        operator: lt
-        value: 10
-        true_next: falsified
-        false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -150,51 +150,51 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
       verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
       confidence: medium
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      temporal_score:
+      recognition_score:
         type: int
         required: false
       rarity_score:
         type: int
         required: false
-      recognition_score:
+      temporal_score:
         type: int
         required: false
     outputs:
-      signal_strength:
-        type: string
-        required: false
-      collapse_reason:
-        type: string
-        required: false
-      campion_S:
+      confidence:
         type: string
         required: false
       verdict:
         type: string
         required: false
+      signal_strength:
+        type: string
+        required: false
+      campion_S:
+        type: string
+        required: false
       algorithm:
         type: string
         required: false
-      confidence:
+      collapse_reason:
         type: string
         required: false
       confidence_score:
@@ -205,17 +205,17 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
+    recognition_score: 50
     rarity_score: 20
-    recognition_score: 90
-    temporal_score: 85
+    temporal_score: 50
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
+    recognition_score: 50
     rarity_score: 9
-    recognition_score: 90
-    temporal_score: 85
+    temporal_score: 50
   expect:
     confidence: low
     verdict: contested

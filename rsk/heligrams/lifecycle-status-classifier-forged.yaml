@@ -17,6 +17,11 @@ sense:
         value: archived
         true_next: action_audit
         false_next: action_unknown
+      action_unknown:
+        type: return
+        value:
+          description: Unknown lifecycle state - manual intervention required
+          action: ERROR
       check_suspended:
         type: condition
         variable: current_state
@@ -24,11 +29,28 @@ sense:
         value: suspended
         true_next: action_review
         false_next: check_archived
+      action_review:
+        type: return
+        value:
+          action: REVIEW
+          description: Suspended entity - requires manual review before reactivation or archiving
       action_initialize:
         type: return
         value:
-          description: New entity - run initialization and validation before activating
           action: INITIALIZE
+          description: New entity - run initialization and validation before activating
+      action_process:
+        type: return
+        value:
+          description: Active entity - process normally through standard workflow
+          action: PROCESS
+      check_new:
+        type: condition
+        variable: current_state
+        operator: eq
+        value: new
+        true_next: action_initialize
+        false_next: check_active
       action_audit:
         type: return
         value:
@@ -41,49 +63,10 @@ sense:
         value: active
         true_next: action_process
         false_next: check_suspended
-      action_review:
-        type: return
-        value:
-          description: Suspended entity - requires manual review before reactivation or archiving
-          action: REVIEW
-      check_new:
-        type: condition
-        variable: current_state
-        operator: eq
-        value: new
-        true_next: action_initialize
-        false_next: check_active
-      action_process:
-        type: return
-        value:
-          description: Active entity - process normally through standard workflow
-          action: PROCESS
-      action_unknown:
-        type: return
-        value:
-          action: ERROR
-          description: Unknown lifecycle state - manual intervention required
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
-      null_guard_negation:
-        type: condition
-        variable: current_state
-        operator: is_null
-        value: null
-        true_next: not_falsified
-        false_next: check_negation
       check_negation:
         type: condition
         variable: current_state
@@ -91,6 +74,23 @@ antisense:
         value: new
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: current_state
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -98,21 +98,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      confidence: high
       verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
+      confidence: low
   - when: null
     default:
-      confidence_score: 0.5
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -121,19 +121,19 @@ interface:
         type: string
         required: false
     outputs:
-      description:
-        type: string
-        required: false
-      confidence:
+      action:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
-      action:
+      description:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -143,14 +143,14 @@ tests:
   input:
     current_state: null
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     current_state: __negated__
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

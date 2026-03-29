@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action: falsified
+    priority: falsified
 sense:
   tree:
     start: check_result
@@ -17,20 +17,13 @@ sense:
         value: true
         true_next: check_conservation
         false_next: fail
-      weak:
-        type: return
-        value:
-          action: strengthen
-          route: conservation_repair
-          reason: Heligram passes but conservation weak — boundary leakage
-          priority: moderate
       fail:
         type: return
         value:
-          route: heligram_debug
+          priority: moderate
           action: retry
           reason: Heligram execution failed — check input encoding
-          priority: moderate
+          route: heligram_debug
       check_conservation:
         type: condition
         variable: conservation_score
@@ -38,29 +31,24 @@ sense:
         value: 0.8
         true_next: pass
         false_next: weak
+      weak:
+        type: return
+        value:
+          route: conservation_repair
+          reason: Heligram passes but conservation weak — boundary leakage
+          priority: moderate
+          action: strengthen
       pass:
         type: return
         value:
+          action: certify
           reason: Heligram passes with conservation ≥0.8
           priority: low
           route: archive
-          action: certify
 antisense:
   tree:
     start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: heligram_pass
-        operator: neq
-        value: true
-        true_next: falsified
-        false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       null_guard_negation:
         type: condition
         variable: heligram_pass
@@ -68,11 +56,23 @@ antisense:
         value: null
         true_next: not_falsified
         false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: heligram_pass
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -80,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence_score: 0.7
       confidence: high
-      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence_score: 0.27999999999999997
       confidence: low
-      verdict: contested
   - when: null
     default:
+      confidence: medium
       confidence_score: 0.5
       verdict: indeterminate
-      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -118,14 +118,12 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     heligram_pass: null
-    conservation_score: 0.0
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     heligram_pass: false
-    conservation_score: 0.0
   expect:
     confidence: low
     verdict: contested
