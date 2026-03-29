@@ -1197,6 +1197,14 @@ pub enum HeligramAction {
         #[arg(short, long)]
         output: Option<String>,
     },
+    /// Forge a heligram with domain-aware antisense and confidence-weighted resolution
+    Forge {
+        /// Path to microgram YAML file
+        path: String,
+        /// Output path for the generated heligram YAML (default: stdout)
+        #[arg(short, long)]
+        output: Option<String>,
+    },
     /// Chain heligrams: output of N flows into input of N+1
     Chain {
         /// Heligram names separated by -> (e.g. "prr-signal-helix -> ror-signal-helix")
