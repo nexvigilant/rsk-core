@@ -1,0 +1,245 @@
+name: autopilot-pharma-sweep-helix
+description: 'Forged from microgram ''autopilot-pharma-sweep''. Domain: SeriousnessClassification. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    action: falsified
+sense:
+  tree:
+    start: check_deaths_spike
+    nodes:
+      routine_monitor:
+        type: return
+        value:
+          action: periodic_check
+          reason: Standard monitoring — next sweep per scheduled frequency
+          alert_level: ROUTINE
+      no_data:
+        type: return
+        value:
+          alert_level: UNKNOWN
+          action: data_collection
+          reason: No FAERS data available — initiate baseline data collection
+      check_report_surge:
+        type: condition
+        variable: total_reports
+        operator: gt
+        value: 0
+        true_next: check_new_signals
+        false_next: no_data
+      signal_alert:
+        type: return
+        value:
+          alert_level: HIGH
+          reason: New disproportionality signals detected — initiate signal investigation
+          action: signal_investigation
+      check_deaths_spike:
+        type: condition
+        variable: death_count
+        operator: gt
+        value: 0
+        true_next: check_death_delta
+        false_next: check_report_surge
+      check_new_signals:
+        type: condition
+        variable: new_signals
+        operator: gt
+        value: 0
+        true_next: signal_alert
+        false_next: check_volume
+      compute_death_ratio:
+        type: condition
+        variable: death_count
+        operator: gt
+        value: 1000
+        true_next: death_alert
+        false_next: check_report_surge
+      death_alert:
+        type: return
+        value:
+          action: immediate_review
+          reason: Death reports exceed 1000 — immediate pharmacovigilance review required
+          alert_level: CRITICAL
+      check_volume:
+        type: condition
+        variable: total_reports
+        operator: gte
+        value: 1000000
+        true_next: high_volume_watch
+        false_next: routine_monitor
+      check_death_delta:
+        type: condition
+        variable: prior_deaths
+        operator: gt
+        value: 0
+        true_next: compute_death_ratio
+        false_next: check_report_surge
+      high_volume_watch:
+        type: return
+        value:
+          reason: High-volume company (>1M reports) — continuous monitoring active
+          alert_level: WATCH
+          action: continuous_monitor
+antisense:
+  tree:
+    start: check_incomplete_info
+    nodes:
+      check_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_comorbidity_confound
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_coding_error
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      death_count:
+        type: int
+        required: false
+      new_signals:
+        type: int
+        required: false
+      prior_deaths:
+        type: int
+        required: false
+      comorbidity_explains:
+        type: bool
+        required: false
+      company:
+        type: string
+        required: false
+      coding_verified:
+        type: bool
+        required: false
+      follow_up_complete:
+        type: bool
+        required: false
+      total_reports:
+        type: int
+        required: true
+      prior_reports:
+        type: int
+        required: false
+    outputs:
+      alert_level:
+        type: string
+        required: false
+      reason:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      action:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      delta_reports:
+        type: int
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    prior_deaths: 3000
+    coding_verified: true
+    total_reports: 2000000
+    death_count: 5000
+    comorbidity_explains: false
+    new_signals: 0
+    company: test-pharma
+    follow_up_complete: true
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, incomplete_info active'
+  input:
+    death_count: 5000
+    prior_deaths: 3000
+    new_signals: 0
+    company: test-pharma
+    total_reports: 2000000
+    follow_up_complete: false
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: absent
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — seriousness-classification with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - total_reports
+  - prior_reports
+  - death_count
+  - prior_deaths
+  - new_signals
+  chain_prediction: 'Forged heligram. Domain: seriousness-classification. Chains as dual-strand verifier before downstream consumers.'
