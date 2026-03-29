@@ -1,0 +1,218 @@
+name: naranjo-quick-helix
+description: 'Forged from microgram ''naranjo-quick''. Domain: CausalityAssessment. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    confidence: falsified
+sense:
+  tree:
+    start: check_score_present
+    nodes:
+      check_score_present:
+        type: condition
+        variable: naranjo_score
+        operator: is_null
+        value: null
+        true_next: reject_missing
+        false_next: check_upper_bound
+      probable:
+        type: return
+        value:
+          confidence: 75
+          causality: PROBABLE
+          action: investigate
+      probable_check:
+        type: condition
+        variable: naranjo_score
+        operator: gte
+        value: 5
+        true_next: probable
+        false_next: possible_check
+      doubtful:
+        type: return
+        value:
+          action: document
+          causality: DOUBTFUL
+          confidence: 20
+      check_lower_bound:
+        type: condition
+        variable: naranjo_score
+        operator: lt
+        value: -4
+        true_next: reject_out_of_range
+        false_next: definite_check
+      reject_out_of_range:
+        type: return
+        value:
+          confidence: 0
+          action: 'REJECTED: naranjo_score must be in range [-4, 13]. Values outside this range indicate input error (possible PRR or other statistical value used instead of Naranjo score).'
+          causality: REJECTED
+      definite:
+        type: return
+        value:
+          confidence: 95
+          action: withdraw_drug
+          causality: DEFINITE
+      reject_missing:
+        type: return
+        value:
+          causality: REJECTED
+          confidence: 0
+          action: 'REJECTED: naranjo_score is required'
+      possible:
+        type: return
+        value:
+          action: monitor
+          causality: POSSIBLE
+          confidence: 50
+      possible_check:
+        type: condition
+        variable: naranjo_score
+        operator: gte
+        value: 1
+        true_next: possible
+        false_next: doubtful
+      definite_check:
+        type: condition
+        variable: naranjo_score
+        operator: gte
+        value: 9
+        true_next: definite
+        false_next: probable_check
+      check_upper_bound:
+        type: condition
+        variable: naranjo_score
+        operator: gt
+        value: 13
+        true_next: reject_out_of_range
+        false_next: check_lower_bound
+antisense:
+  tree:
+    start: check_alternative_cause
+    nodes:
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: check_temporal_implausible
+      check_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_no_dechallenge
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
+  - when: null
+    default:
+      confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      temporal_plausible:
+        type: bool
+        required: false
+      alternative_causes:
+        type: string
+        required: false
+      naranjo_score:
+        type: int
+        required: true
+      dechallenge_positive:
+        type: bool
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      causality:
+        type: string
+        required: false
+      action:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    naranjo_score: 10
+    temporal_plausible: true
+    dechallenge_positive: true
+    alternative_causes: none
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, alternative_cause active'
+  input:
+    naranjo_score: 10
+    alternative_causes: likely
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — causality-assessment with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - naranjo_score
+  chain_prediction: 'Forged heligram. Domain: causality-assessment. Chains as dual-strand verifier before downstream consumers.'

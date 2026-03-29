@@ -1,5 +1,5 @@
-name: prr-signal-helix
-description: 'Forged from microgram ''prr-signal''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
+name: ror-signal-helix
+description: 'Forged from microgram ''ror-signal''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
 version: 0.1.0
 type: heligram
 helix:
@@ -8,48 +8,71 @@ helix:
     signal_detected: falsified
 sense:
   tree:
-    start: check
+    start: check_strong
     nodes:
-      check:
+      check_weak:
         type: condition
-        variable: prr
+        variable: ror
         operator: gte
-        value: 2
-        true_next: signal
-        false_next: no_signal
-      no_signal:
-        type: return
-        value:
-          signal_detected: false
-          classification: noise
-      signal:
+        value: 1.5
+        true_next: weak_signal
+        false_next: check_none
+      strong_signal:
         type: return
         value:
           signal_detected: true
-          classification: signal
+          action: immediate_review
+          signal: STRONG
+      check_moderate:
+        type: condition
+        variable: ror
+        operator: gte
+        value: 2.0
+        true_next: moderate_signal
+        false_next: check_weak
+      moderate_signal:
+        type: return
+        value:
+          action: standard_review
+          signal_detected: true
+          signal: MODERATE
+      check_none:
+        type: condition
+        variable: ror
+        operator: gte
+        value: 1.0
+        true_next: no_signal
+        false_next: protective_signal
+      no_signal:
+        type: return
+        value:
+          signal: NONE
+          signal_detected: false
+          note: ROR >= 1 but below threshold
+          action: no_action
+      protective_signal:
+        type: return
+        value:
+          signal: PROTECTIVE
+          action: investigate_protective
+          signal_detected: false
+      weak_signal:
+        type: return
+        value:
+          signal_detected: true
+          signal: WEAK
+          action: monitor
+      check_strong:
+        type: condition
+        variable: ror
+        operator: gte
+        value: 4.0
+        true_next: strong_signal
+        false_next: check_moderate
 antisense:
   tree:
     start: check_insufficient_n
     nodes:
-      check_insufficient_n:
-        type: condition
-        variable: case_count
-        operator: lt
-        value: 3
-        true_next: falsified
-        false_next: check_notoriety_bias
-      check_notoriety_bias:
-        type: condition
-        variable: notoriety_bias
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: check_weber_effect
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       check_weber_effect:
         type: condition
         variable: years_on_market
@@ -57,6 +80,11 @@ antisense:
         value: 5
         true_next: falsified
         false_next: check_channeling_bias
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       check_channeling_bias:
         type: condition
         variable: channeling_bias
@@ -64,11 +92,25 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_weber_effect
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
+      check_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: check_notoriety_bias
 resolution:
   mode: base_pair
   rules:
@@ -77,29 +119,29 @@ resolution:
       signal_detected: true
     default: null
     emit:
-      confidence: high
       confidence_score: 0.7000000000000001
       verdict: confirmed
+      confidence: high
   - when:
       signal_detected: true
       falsified: true
     default: null
     emit:
-      verdict: contested
-      confidence: low
       confidence_score: 0.28
+      confidence: low
+      verdict: contested
   - when:
-      signal_detected: false
       falsified: false
+      signal_detected: false
     default: null
     emit:
-      confidence: high
-      confidence_score: 0.7000000000000001
       verdict: absent
+      confidence_score: 0.7000000000000001
+      confidence: high
   - when: null
     default:
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
       confidence: medium
     emit: null
 interface:
@@ -108,51 +150,57 @@ interface:
       channeling_bias:
         type: bool
         required: false
-      notoriety_bias:
-        type: bool
-        required: false
       years_on_market:
         type: integer
         required: false
       case_count:
         type: integer
         required: false
-      prr:
-        type: float
-        required: true
-    outputs:
-      confidence_score:
+      notoriety_bias:
+        type: bool
+        required: false
+      ror:
         type: float
         required: false
+    outputs:
       verdict:
         type: string
         required: false
       confidence:
         type: string
         required: false
-      classification:
+      signal:
+        type: string
+        required: false
+      note:
         type: string
         required: false
       signal_detected:
         type: bool
+        required: false
+      action:
+        type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    channeling_bias: false
-    prr: 3.5
-    case_count: 13
     notoriety_bias: false
+    channeling_bias: false
+    case_count: 13
+    ror: 5.0
     years_on_market: 0
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, insufficient_n active'
   input:
+    ror: 5.0
     case_count: 2
-    prr: 3.5
   expect:
     verdict: contested
     confidence: low
@@ -173,7 +221,5 @@ primitive_signature:
   - →
   - ς
   - ×
-  arguments:
-  - prr
-  - threshold
+  arguments: []
   chain_prediction: 'Forged heligram. Domain: signal-detection. Chains as dual-strand verifier before downstream consumers.'

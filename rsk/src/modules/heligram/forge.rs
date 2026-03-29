@@ -83,13 +83,13 @@ pub fn forge(mg: &Microgram) -> Result<Heligram, String> {
     let base_pairs: HashMap<String, String> = field_pairs.into_iter().collect();
 
     // 6. Confidence-weighted resolution
-    let resolution = build_confidence_resolution(&base_pairs, &confounders);
+    let resolution = build_confidence_resolution(&base_pairs, &confounders, &mg.tree);
 
     // 7. Interface: merge original + confounder inputs
     let interface = build_forge_interface(&mg.interface, &confounders);
 
     // 8. Four-quadrant test generation
-    let tests = generate_quadrant_tests(mg, &confounders, &base_pairs);
+    let tests = generate_quadrant_tests(mg, &confounders, &base_pairs, &domain);
 
     let name = format!("{}-helix", mg.name);
     let description = format!(
@@ -293,27 +293,33 @@ fn build_confounder_tree(
     let mut nodes = HashMap::new();
     let mut field_pairs = Vec::new();
 
-    // Domain-specific primary field selection for deterministic pairing
-    let primary_sense = match domain {
-        Domain::SignalDetection => "signal_detected".to_string(),
-        Domain::SeriousnessClassification => "is_serious".to_string(),
-        Domain::CausalityAssessment => {
-            // Naranjo outputs strings — use first available bool, else first field
-            let bool_fields = collect_bool_output_fields(sense_tree);
-            let sense_fields = collect_output_fields(sense_tree);
-            bool_fields.first()
-                .or(sense_fields.first())
-                .cloned()
-                .unwrap_or_else(|| "causality".to_string())
-        }
-        _ => {
-            let bool_fields = collect_bool_output_fields(sense_tree);
-            let sense_fields = collect_output_fields(sense_tree);
-            bool_fields.first()
-                .or(sense_fields.first())
+    // Domain-specific primary field selection for deterministic pairing.
+    // Critical: verify the candidate field actually exists in sense outputs.
+    let sense_output_fields = collect_output_fields(sense_tree);
+    let sense_bool_fields = collect_bool_output_fields(sense_tree);
+
+    let domain_candidate = match domain {
+        Domain::SignalDetection => Some("signal_detected"),
+        Domain::SeriousnessClassification => Some("is_serious"),
+        _ => None,
+    };
+
+    let primary_sense = if let Some(candidate) = domain_candidate {
+        if sense_output_fields.iter().any(|f| f == candidate) {
+            candidate.to_string()
+        } else {
+            // Domain candidate not in outputs — fall back to heuristic
+            sense_bool_fields.first()
+                .or(sense_output_fields.first())
                 .cloned()
                 .unwrap_or_else(|| "result".to_string())
         }
+    } else {
+        // Causality/Generic: prefer bool fields, else first field
+        sense_bool_fields.first()
+            .or(sense_output_fields.first())
+            .cloned()
+            .unwrap_or_else(|| "result".to_string())
     };
 
     // Chain confounders: each one gates into the next
@@ -376,6 +382,7 @@ fn build_confounder_tree(
 fn build_confidence_resolution(
     base_pairs: &HashMap<String, String>,
     confounders: &[Confounder],
+    sense_tree: &DecisionTree,
 ) -> Resolution {
     let total_weight: f64 = confounders.iter().map(|c| c.weight).sum();
     let max_confidence = if total_weight > 0.0 {
@@ -390,47 +397,66 @@ fn build_confidence_resolution(
 
     let mut rules = Vec::new();
 
-    // Q1: Sense positive, not falsified → confirmed (high confidence)
-    let mut when_confirmed = HashMap::new();
-    when_confirmed.insert(sense_key.clone(), Value::Bool(true));
-    when_confirmed.insert("falsified".to_string(), Value::Bool(false));
-    let mut emit_confirmed = HashMap::new();
-    emit_confirmed.insert("verdict".to_string(), Value::String("confirmed".to_string()));
-    emit_confirmed.insert("confidence".to_string(), Value::String("high".to_string()));
-    emit_confirmed.insert("confidence_score".to_string(), Value::Float(max_confidence));
-    rules.push(ResolutionRule {
-        when: Some(when_confirmed),
-        default: None,
-        emit: Some(emit_confirmed),
-    });
+    // Resolution strategy: match on `falsified` (always boolean from antisense),
+    // and `sense_key` for boolean outputs. For string outputs, sense polarity
+    // is inferred from falsified alone — the sense strand always produces output
+    // when given valid input.
+    // Check if sense_key is actually boolean in the sense tree's return nodes
+    let bool_output_fields = collect_bool_output_fields(sense_tree);
+    let sense_is_bool = bool_output_fields.contains(&sense_key);
 
-    // Q2: Sense positive, falsified → contested (low confidence)
-    let mut when_contested = HashMap::new();
-    when_contested.insert(sense_key.clone(), Value::Bool(true));
-    when_contested.insert("falsified".to_string(), Value::Bool(true));
-    let mut emit_contested = HashMap::new();
-    emit_contested.insert("verdict".to_string(), Value::String("contested".to_string()));
-    emit_contested.insert("confidence".to_string(), Value::String("low".to_string()));
-    emit_contested.insert("confidence_score".to_string(), Value::Float(max_confidence * 0.4));
-    rules.push(ResolutionRule {
-        when: Some(when_contested),
-        default: None,
-        emit: Some(emit_contested),
-    });
+    if sense_is_bool {
+        // Boolean sense: full 2×2 matrix
+        // Q1: Sense true, not falsified → confirmed
+        let mut when_confirmed = HashMap::new();
+        when_confirmed.insert(sense_key.clone(), Value::Bool(true));
+        when_confirmed.insert("falsified".to_string(), Value::Bool(false));
+        let mut emit_confirmed = HashMap::new();
+        emit_confirmed.insert("verdict".to_string(), Value::String("confirmed".to_string()));
+        emit_confirmed.insert("confidence".to_string(), Value::String("high".to_string()));
+        emit_confirmed.insert("confidence_score".to_string(), Value::Float(max_confidence));
+        rules.push(ResolutionRule { when: Some(when_confirmed), default: None, emit: Some(emit_confirmed) });
 
-    // Q3: Sense negative, not falsified → absent (high confidence)
-    let mut when_absent = HashMap::new();
-    when_absent.insert(sense_key.clone(), Value::Bool(false));
-    when_absent.insert("falsified".to_string(), Value::Bool(false));
-    let mut emit_absent = HashMap::new();
-    emit_absent.insert("verdict".to_string(), Value::String("absent".to_string()));
-    emit_absent.insert("confidence".to_string(), Value::String("high".to_string()));
-    emit_absent.insert("confidence_score".to_string(), Value::Float(max_confidence));
-    rules.push(ResolutionRule {
-        when: Some(when_absent),
-        default: None,
-        emit: Some(emit_absent),
-    });
+        // Q2: Sense true, falsified → contested
+        let mut when_contested = HashMap::new();
+        when_contested.insert(sense_key.clone(), Value::Bool(true));
+        when_contested.insert("falsified".to_string(), Value::Bool(true));
+        let mut emit_contested = HashMap::new();
+        emit_contested.insert("verdict".to_string(), Value::String("contested".to_string()));
+        emit_contested.insert("confidence".to_string(), Value::String("low".to_string()));
+        emit_contested.insert("confidence_score".to_string(), Value::Float(max_confidence * 0.4));
+        rules.push(ResolutionRule { when: Some(when_contested), default: None, emit: Some(emit_contested) });
+
+        // Q3: Sense false, not falsified → absent
+        let mut when_absent = HashMap::new();
+        when_absent.insert(sense_key.clone(), Value::Bool(false));
+        when_absent.insert("falsified".to_string(), Value::Bool(false));
+        let mut emit_absent = HashMap::new();
+        emit_absent.insert("verdict".to_string(), Value::String("absent".to_string()));
+        emit_absent.insert("confidence".to_string(), Value::String("high".to_string()));
+        emit_absent.insert("confidence_score".to_string(), Value::Float(max_confidence));
+        rules.push(ResolutionRule { when: Some(when_absent), default: None, emit: Some(emit_absent) });
+    } else {
+        // String/non-boolean sense: match on `falsified` alone.
+        // Sense strand always produces output for valid input → presence = positive.
+        // Q1: Not falsified → confirmed
+        let mut when_confirmed = HashMap::new();
+        when_confirmed.insert("falsified".to_string(), Value::Bool(false));
+        let mut emit_confirmed = HashMap::new();
+        emit_confirmed.insert("verdict".to_string(), Value::String("confirmed".to_string()));
+        emit_confirmed.insert("confidence".to_string(), Value::String("high".to_string()));
+        emit_confirmed.insert("confidence_score".to_string(), Value::Float(max_confidence));
+        rules.push(ResolutionRule { when: Some(when_confirmed), default: None, emit: Some(emit_confirmed) });
+
+        // Q2: Falsified → contested
+        let mut when_contested = HashMap::new();
+        when_contested.insert("falsified".to_string(), Value::Bool(true));
+        let mut emit_contested = HashMap::new();
+        emit_contested.insert("verdict".to_string(), Value::String("contested".to_string()));
+        emit_contested.insert("confidence".to_string(), Value::String("low".to_string()));
+        emit_contested.insert("confidence_score".to_string(), Value::Float(max_confidence * 0.4));
+        rules.push(ResolutionRule { when: Some(when_contested), default: None, emit: Some(emit_contested) });
+    }
 
     // Q4: Default fallback
     let mut default_output = HashMap::new();
@@ -454,6 +480,7 @@ fn generate_quadrant_tests(
     mg: &Microgram,
     confounders: &[Confounder],
     _base_pairs: &HashMap<String, String>,
+    domain: &Domain,
 ) -> Vec<HeligramTest> {
     let mut tests = Vec::new();
 
@@ -494,18 +521,23 @@ fn generate_quadrant_tests(
         });
     }
 
-    // Q3: Absent — null/empty input (microgram defaults to negative)
+    // Q3: Absent/default — null/empty input
+    // For boolean domains: sense=false, falsified=false → absent
+    // For string domains: falsified=false → confirmed (can't distinguish absent)
+    let q3_verdict = match domain {
+        Domain::SignalDetection | Domain::SeriousnessClassification => "absent",
+        _ => "confirmed", // String domains: no falsification = confirmed by default
+    };
     let mut q3_expect = HashMap::new();
-    q3_expect.insert("verdict".to_string(), Value::String("absent".to_string()));
+    q3_expect.insert("verdict".to_string(), Value::String(q3_verdict.to_string()));
     tests.push(HeligramTest {
-        name: Some("Q3: absent — empty input, no confounders".to_string()),
+        name: Some("Q3: default — empty input, no confounders".to_string()),
         input: HashMap::new(),
         expect: q3_expect,
     });
 
     // Q4: Null safety
     let mut q4_expect = HashMap::new();
-    // Empty input with no confounders should resolve cleanly
     q4_expect.insert("confidence".to_string(), Value::String("high".to_string()));
     tests.push(HeligramTest {
         name: Some("Q4: null safety — graceful degradation".to_string()),
@@ -624,6 +656,15 @@ fn collect_variables(tree: &DecisionTree) -> Vec<String> {
         }
     }
     vars
+}
+
+/// Check if the sense key is known to be boolean.
+fn is_bool_field(sense_key: &str, _base_pairs: &HashMap<String, String>) -> bool {
+    // Known boolean output fields across PV domains
+    matches!(sense_key,
+        "signal_detected" | "is_serious" | "is_fatal" | "is_life_threatening"
+        | "reportable" | "expedited" | "positive" | "on_label" | "is_expected"
+    )
 }
 
 /// Collect boolean output field names from return nodes (preferred for pairing).

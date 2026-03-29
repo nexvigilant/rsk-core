@@ -1,0 +1,310 @@
+name: case-seriousness-helix
+description: 'Forged from microgram ''case-seriousness''. Domain: SeriousnessClassification. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    is_serious: falsified
+sense:
+  tree:
+    start: death_check
+    nodes:
+      medically_important_check:
+        type: condition
+        variable: medically_important
+        operator: eq
+        value: true
+        true_next: serious_medically_important
+        false_next: not_serious
+      disability_check:
+        type: condition
+        variable: disability
+        operator: eq
+        value: true
+        true_next: serious_disability
+        false_next: life_threatening_check
+      serious_medically_important:
+        type: return
+        value:
+          is_life_threatening: false
+          seriousness: SERIOUS
+          regulatory_reference: ICH E2A Section II.A.4
+          is_serious: true
+          criterion: MEDICALLY_IMPORTANT
+          reportable: true
+          is_fatal: false
+          expedited: true
+      not_serious:
+        type: return
+        value:
+          seriousness: NON-SERIOUS
+          reportable: false
+          expedited: false
+          regulatory_reference: ICH E2A Section II.B
+          is_serious: false
+          is_fatal: false
+          is_life_threatening: false
+      serious_death:
+        type: return
+        value:
+          regulatory_reference: ICH E2A Section II.B
+          is_serious: true
+          is_life_threatening: false
+          seriousness: SERIOUS
+          criterion: DEATH
+          expedited: true
+          is_fatal: true
+          reportable: true
+      life_threatening_check:
+        type: condition
+        variable: life_threatening
+        operator: eq
+        value: true
+        true_next: serious_life_threatening
+        false_next: congenital_anomaly_check
+      congenital_anomaly_check:
+        type: condition
+        variable: congenital_anomaly
+        operator: eq
+        value: true
+        true_next: serious_congenital
+        false_next: medically_important_check
+      serious_life_threatening:
+        type: return
+        value:
+          seriousness: SERIOUS
+          regulatory_reference: ICH E2A Section II.B
+          criterion: LIFE_THREATENING
+          reportable: true
+          is_serious: true
+          is_fatal: false
+          expedited: true
+          is_life_threatening: true
+      serious_hosp:
+        type: return
+        value:
+          seriousness: SERIOUS
+          criterion: HOSPITALIZATION
+          is_life_threatening: false
+          is_serious: true
+          expedited: true
+          reportable: true
+          regulatory_reference: ICH E2A Section II.B
+          is_fatal: false
+      serious_disability:
+        type: return
+        value:
+          is_serious: true
+          reportable: true
+          seriousness: SERIOUS
+          expedited: true
+          regulatory_reference: ICH E2A Section II.B
+          criterion: DISABILITY
+          is_fatal: false
+          is_life_threatening: false
+      serious_congenital:
+        type: return
+        value:
+          seriousness: SERIOUS
+          is_fatal: false
+          is_life_threatening: false
+          reportable: true
+          criterion: CONGENITAL_ANOMALY
+          regulatory_reference: ICH E2A Section II.B
+          is_serious: true
+          expedited: true
+      death_check:
+        type: condition
+        variable: death
+        operator: eq
+        value: true
+        true_next: serious_death
+        false_next: hosp_check
+      hosp_check:
+        type: condition
+        variable: hospitalization
+        operator: eq
+        value: true
+        true_next: serious_hosp
+        false_next: disability_check
+antisense:
+  tree:
+    start: check_incomplete_info
+    nodes:
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_coding_error
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_comorbidity_confound
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+      is_serious: true
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      is_serious: true
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when:
+      falsified: false
+      is_serious: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      confidence: high
+      verdict: absent
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      follow_up_complete:
+        type: bool
+        required: false
+      congenital_anomaly:
+        type: bool
+        required: false
+      comorbidity_explains:
+        type: bool
+        required: false
+      hospitalization:
+        type: bool
+        required: false
+      life_threatening:
+        type: bool
+        required: false
+      coding_verified:
+        type: bool
+        required: false
+      disability:
+        type: bool
+        required: false
+      death:
+        type: bool
+        required: false
+      medically_important:
+        type: bool
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      is_fatal:
+        type: bool
+        required: false
+      criterion:
+        type: string
+        required: false
+      is_life_threatening:
+        type: bool
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+      is_serious:
+        type: bool
+        required: false
+      reportable:
+        type: bool
+        required: false
+      expedited:
+        type: bool
+        required: false
+      seriousness:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    life_threatening: false
+    hospitalization: false
+    medically_important: false
+    comorbidity_explains: false
+    follow_up_complete: true
+    death: true
+    congenital_anomaly: false
+    disability: false
+    coding_verified: true
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, incomplete_info active'
+  input:
+    life_threatening: false
+    hospitalization: false
+    death: true
+    congenital_anomaly: false
+    disability: false
+    medically_important: false
+    follow_up_complete: false
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: absent
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — seriousness-classification with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: seriousness-classification. Chains as dual-strand verifier before downstream consumers.'
