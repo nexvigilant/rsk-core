@@ -74,7 +74,7 @@ pub fn forge(mg: &Microgram) -> Result<Heligram, String> {
     let confounders = generate_confounders(&domain, mg);
 
     // 4. Build antisense tree from confounders
-    let (antisense_tree, field_pairs) = build_confounder_tree(&confounders, &mg.tree);
+    let (antisense_tree, field_pairs) = build_confounder_tree(&confounders, &mg.tree, &domain);
     let antisense = Strand {
         tree: antisense_tree,
     };
@@ -288,17 +288,33 @@ fn generate_confounders(domain: &Domain, mg: &Microgram) -> Vec<Confounder> {
 fn build_confounder_tree(
     confounders: &[Confounder],
     sense_tree: &DecisionTree,
+    domain: &Domain,
 ) -> (DecisionTree, Vec<(String, String)>) {
     let mut nodes = HashMap::new();
     let mut field_pairs = Vec::new();
 
-    // Collect sense output field names for pairing — prefer boolean fields
-    let sense_fields = collect_output_fields(sense_tree);
-    let bool_fields = collect_bool_output_fields(sense_tree);
-    let primary_sense = bool_fields.first()
-        .or(sense_fields.first())
-        .cloned()
-        .unwrap_or_else(|| "result".to_string());
+    // Domain-specific primary field selection for deterministic pairing
+    let primary_sense = match domain {
+        Domain::SignalDetection => "signal_detected".to_string(),
+        Domain::SeriousnessClassification => "is_serious".to_string(),
+        Domain::CausalityAssessment => {
+            // Naranjo outputs strings — use first available bool, else first field
+            let bool_fields = collect_bool_output_fields(sense_tree);
+            let sense_fields = collect_output_fields(sense_tree);
+            bool_fields.first()
+                .or(sense_fields.first())
+                .cloned()
+                .unwrap_or_else(|| "causality".to_string())
+        }
+        _ => {
+            let bool_fields = collect_bool_output_fields(sense_tree);
+            let sense_fields = collect_output_fields(sense_tree);
+            bool_fields.first()
+                .or(sense_fields.first())
+                .cloned()
+                .unwrap_or_else(|| "result".to_string())
+        }
+    };
 
     // Chain confounders: each one gates into the next
     for (i, conf) in confounders.iter().enumerate() {
