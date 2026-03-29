@@ -21,6 +21,8 @@ MCG_DIR="$PROJECT_DIR/rsk/micrograms"
 COMPANIES=(
   pfizer novartis roche merck abbvie bms jnj lilly
   gsk sanofi astrazeneca amgen gilead bayer novonordisk
+  regeneron biogen moderna vertex alexion takeda boehringer
+  teva astellas daiichi ucb jazz ipsen seagen incyte
 )
 
 MODE="${1:---summary}"

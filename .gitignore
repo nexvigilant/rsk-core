@@ -5,3 +5,4 @@ coverage_*.txt
 .claude/
 notebooks/
 test_*.txt
+*.sig

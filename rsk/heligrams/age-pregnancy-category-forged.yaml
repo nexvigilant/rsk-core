@@ -1,5 +1,5 @@
 name: age-pregnancy-category-helix
-description: 'Forged from microgram ''age-pregnancy-category''. Domain: SystemHealth. 2 confounders. Confidence-weighted resolution.'
+description: 'Forged from microgram ''age-pregnancy-category''. Domain: pregnancy-triage. 4 confounders. Confidence-weighted resolution.'
 version: 0.1.0
 type: heligram
 helix:
@@ -10,26 +10,21 @@ sense:
   tree:
     start: check_pregnancy_status
     nodes:
-      second_trimester:
-        type: return
-        value:
-          risk_level: moderate
-          trimester: 2
-          pregnancy_status: pregnant
-          message: 'Second trimester: organ formation complete; some medications safer'
-      third_trimester:
-        type: return
-        value:
-          message: 'Third trimester: fetal/maternal effects possible near delivery'
-          pregnancy_status: pregnant
-          trimester: 3
-          risk_level: delivery_related
-      not_pregnant:
-        type: return
-        value:
-          risk_level: none
-          pregnancy_status: not_pregnant
-      check_trimester:
+      check_pregnancy_status:
+        type: condition
+        variable: is_pregnant
+        operator: eq
+        value: true
+        true_next: check_trimester_present
+        false_next: not_pregnant
+      check_trimester_present:
+        type: condition
+        variable: trimester
+        operator: gte
+        value: 1
+        true_next: check_first_trimester
+        false_next: trimester_unknown
+      check_first_trimester:
         type: condition
         variable: trimester
         operator: eq
@@ -42,21 +37,61 @@ sense:
         operator: eq
         value: 2
         true_next: second_trimester
-        false_next: third_trimester
+        false_next: check_third_trimester
+      check_third_trimester:
+        type: condition
+        variable: trimester
+        operator: eq
+        value: 3
+        true_next: third_trimester
+        false_next: trimester_unknown
       first_trimester:
         type: return
         value:
-          message: 'First trimester: highest teratogenic risk; most medications contraindicated'
           risk_level: highest
           pregnancy_status: pregnant
           trimester: 1
-      check_pregnancy_status:
-        type: condition
-        variable: is_pregnant
-        operator: eq
-        value: true
-        true_next: check_trimester
-        false_next: not_pregnant
+          gestational_phase: organogenesis
+          clinical_action: avoid_nonessential_exposures
+          regulatory_reference: ICH E2C(R2) Pregnancy Exposure Monitoring
+          message: 'First trimester: highest teratogenic vulnerability during organogenesis'
+      second_trimester:
+        type: return
+        value:
+          risk_level: moderate
+          pregnancy_status: pregnant
+          trimester: 2
+          gestational_phase: fetal_growth
+          clinical_action: assess_benefit_risk_and_monitor
+          regulatory_reference: ICH E2C(R2) Pregnancy Exposure Monitoring
+          message: 'Second trimester: organ formation complete; continue exposure-specific assessment'
+      third_trimester:
+        type: return
+        value:
+          risk_level: delivery_related
+          pregnancy_status: pregnant
+          trimester: 3
+          gestational_phase: late_pregnancy
+          clinical_action: assess_neonatal_and_delivery_risk
+          regulatory_reference: ICH E2C(R2) Pregnancy Exposure Monitoring
+          message: 'Third trimester: delivery and neonatal adaptation effects become more relevant'
+      trimester_unknown:
+        type: return
+        value:
+          risk_level: unknown
+          pregnancy_status: pregnant
+          gestational_phase: unspecified
+          clinical_action: obtain_trimester_before_final_risk_call
+          regulatory_reference: ICH E2C(R2) Pregnancy Exposure Monitoring
+          message: 'Pregnancy confirmed but trimester missing or invalid'
+      not_pregnant:
+        type: return
+        value:
+          risk_level: none
+          pregnancy_status: not_pregnant
+          gestational_phase: not_applicable
+          clinical_action: use_nonpregnancy_risk_path
+          message: 'No current pregnancy flag'
 antisense:
   tree:
     start: check_measurement_stale
@@ -74,6 +109,20 @@ antisense:
         operator: lt
         value: 2
         true_next: falsified
+        false_next: check_invalid_trimester
+      check_invalid_trimester:
+        type: condition
+        variable: trimester
+        operator: gt
+        value: 3
+        true_next: falsified
+        false_next: check_missing_trimester_when_pregnant
+      check_missing_trimester_when_pregnant:
+        type: condition
+        variable: trimester_missing_while_pregnant
+        operator: eq
+        value: true
+        true_next: falsified
         false_next: not_falsified
       falsified:
         type: return
@@ -90,34 +139,97 @@ resolution:
   rules:
   - when:
       falsified: false
+      risk_level: none
+    default: null
+    emit:
+      verdict: absent
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: false
+      risk_level: highest
     default: null
     emit:
       verdict: confirmed
       confidence: high
       confidence_score: 0.7
   - when:
+      falsified: false
+      risk_level: moderate
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: false
+      risk_level: delivery_related
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: false
+      risk_level: unknown
+    default: null
+    emit:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+  - when:
       falsified: true
     default: null
     emit:
       verdict: contested
       confidence: low
-      confidence_score: 0.27999999999999997
+      confidence_score: 0.28
   - when: null
     default:
       verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
+      is_pregnant:
+        type: bool
+        required: false
+      trimester:
+        type: integer
+        required: false
       probe_count:
         type: integer
         required: false
       measurement_age_minutes:
         type: integer
         required: false
+      trimester_missing_while_pregnant:
+        type: bool
+        required: false
     outputs:
+      risk_level:
+        type: string
+        required: false
+      pregnancy_status:
+        type: string
+        required: false
+      trimester:
+        type: integer
+        required: false
+      gestational_phase:
+        type: string
+        required: false
+      clinical_action:
+        type: string
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+      message:
+        type: string
+        required: false
       verdict:
         type: string
         required: false
@@ -130,34 +242,67 @@ interface:
     aliases: {}
   minor_groove: null
 tests:
-- name: 'Q1: confirmed — positive sense, no confounders'
+- name: 'Q1: first trimester pregnancy resolves to highest risk'
   input:
-    trimester: 1
-    measurement_age_minutes: 50
     is_pregnant: true
-    probe_count: 12
+    trimester: 1
+    measurement_age_minutes: 25
+    probe_count: 3
+    trimester_missing_while_pregnant: false
   expect:
-    confidence: high
     verdict: confirmed
-- name: 'Q2: contested — positive sense, measurement_stale active'
+    confidence: high
+- name: 'Q2: second trimester pregnancy resolves to moderate risk'
   input:
+    is_pregnant: true
+    trimester: 2
+    measurement_age_minutes: 30
+    probe_count: 4
+    trimester_missing_while_pregnant: false
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q3: third trimester resolves to delivery-related risk'
+  input:
+    is_pregnant: true
+    trimester: 3
+    measurement_age_minutes: 45
+    probe_count: 5
+    trimester_missing_while_pregnant: false
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q4: not pregnant resolves to absent'
+  input:
+    is_pregnant: false
+    measurement_age_minutes: 20
+    probe_count: 2
+    trimester_missing_while_pregnant: false
+  expect:
+    verdict: absent
+    confidence: high
+- name: 'Q5: stale measurement contests otherwise valid call'
+  input:
+    is_pregnant: true
     trimester: 1
     measurement_age_minutes: 61
-    is_pregnant: true
+    probe_count: 2
+    trimester_missing_while_pregnant: false
   expect:
     verdict: contested
     confidence: low
-- name: 'Q3: default — empty input, no confounders'
-  input: {}
+- name: 'Q6: pregnant without trimester degrades to indeterminate'
+  input:
+    is_pregnant: true
+    measurement_age_minutes: 20
+    probe_count: 3
+    trimester_missing_while_pregnant: false
   expect:
-    verdict: confirmed
-- name: 'Q4: null safety — graceful degradation'
-  input: {}
-  expect:
-    confidence: high
+    verdict: indeterminate
+    confidence: medium
 primitive_signature:
   dominant: ∂
-  expression: ∂(×(κ_sense, →_antisense)) — system-health with 2 confounders
+  expression: ∂(×(κ_sense, →_antisense)) — pregnancy-triage with 4 confounders
   primes:
   - ∂
   - κ
@@ -165,4 +310,4 @@ primitive_signature:
   - ς
   - ×
   arguments: []
-  chain_prediction: 'Forged heligram. Domain: system-health. Chains as dual-strand verifier before downstream consumers.'
+  chain_prediction: 'Forged heligram. Domain: pregnancy-triage. Chains as dual-strand verifier before downstream consumers.'
