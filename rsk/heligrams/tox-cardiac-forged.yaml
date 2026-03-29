@@ -1,0 +1,141 @@
+name: tox-cardiac-helix
+description: 'Forged from microgram ''tox-cardiac''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    target: falsified
+sense:
+  tree:
+    start: check_severe
+    nodes:
+      check_mild:
+        type: condition
+        variable: qtc_ms
+        operator: gte
+        value: 450
+        true_next: mild
+        false_next: normal
+      mild:
+        type: return
+        value:
+          target: heart
+          action: monitor_closely
+          severity: mild
+          organ: cardiac
+      severe:
+        type: return
+        value:
+          action: discontinue
+          severity: severe
+          target: heart
+          organ: cardiac
+      normal:
+        type: return
+        value:
+          organ: cardiac
+          action: continue
+          severity: normal
+          target: heart
+      check_severe:
+        type: condition
+        variable: qtc_ms
+        operator: gte
+        value: 500
+        true_next: severe
+        false_next: check_mild
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: qtc_ms
+        operator: lt
+        value: 500
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      verdict: contested
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      qtc_ms:
+        type: integer
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    qtc_ms: 510
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    qtc_ms: 499
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

@@ -1,0 +1,233 @@
+name: signal-collapse-gate-helix
+description: 'Forged from microgram ''signal-collapse-gate''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    campion_S: falsified
+sense:
+  tree:
+    start: check_rarity
+    nodes:
+      weak:
+        type: return
+        value:
+          campion_S: U×R×T present but low
+          collapse_reason: none
+          signal_strength: WEAK
+          algorithm: ALG-2025-041
+      check_moderate_recognition:
+        type: condition
+        variable: recognition_score
+        operator: gte
+        value: 40
+        true_next: check_moderate_temporal
+        false_next: weak
+      check_temporal:
+        type: condition
+        variable: temporal_score
+        operator: gte
+        value: 10
+        true_next: check_strong
+        false_next: collapsed_temporal
+      collapsed_temporal:
+        type: return
+        value:
+          collapse_reason: temporal
+          campion_S: T→0 therefore S→0
+          signal_strength: COLLAPSED
+          algorithm: ALG-2025-041
+      check_moderate_temporal:
+        type: condition
+        variable: temporal_score
+        operator: gte
+        value: 40
+        true_next: moderate
+        false_next: weak
+      collapsed_recognition:
+        type: return
+        value:
+          campion_S: R→0 therefore S→0
+          signal_strength: COLLAPSED
+          algorithm: ALG-2025-041
+          collapse_reason: recognition
+      check_strong_temporal:
+        type: condition
+        variable: temporal_score
+        operator: gte
+        value: 70
+        true_next: strong
+        false_next: check_moderate
+      moderate:
+        type: return
+        value:
+          collapse_reason: none
+          campion_S: U×R×T all adequate
+          signal_strength: MODERATE
+          algorithm: ALG-2025-041
+      strong:
+        type: return
+        value:
+          campion_S: U×R×T all high
+          algorithm: ALG-2025-041
+          collapse_reason: none
+          signal_strength: STRONG
+      check_strong_recognition:
+        type: condition
+        variable: recognition_score
+        operator: gte
+        value: 70
+        true_next: check_strong_temporal
+        false_next: check_moderate
+      check_strong:
+        type: condition
+        variable: rarity_score
+        operator: gte
+        value: 70
+        true_next: check_strong_recognition
+        false_next: check_moderate
+      collapsed_rarity:
+        type: return
+        value:
+          campion_S: U→0 therefore S→0
+          signal_strength: COLLAPSED
+          algorithm: ALG-2025-041
+          collapse_reason: rarity
+      check_moderate:
+        type: condition
+        variable: rarity_score
+        operator: gte
+        value: 40
+        true_next: check_moderate_recognition
+        false_next: weak
+      check_recognition:
+        type: condition
+        variable: recognition_score
+        operator: gte
+        value: 10
+        true_next: check_temporal
+        false_next: collapsed_recognition
+      check_rarity:
+        type: condition
+        variable: rarity_score
+        operator: gte
+        value: 10
+        true_next: check_recognition
+        false_next: collapsed_rarity
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: recognition_score
+        operator: lt
+        value: 10
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      rarity_score:
+        type: int
+        required: false
+      temporal_score:
+        type: int
+        required: false
+      recognition_score:
+        type: int
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      algorithm:
+        type: string
+        required: false
+      collapse_reason:
+        type: string
+        required: false
+      signal_strength:
+        type: string
+        required: false
+      campion_S:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    recognition_score: 20
+    temporal_score: 85
+    rarity_score: 80
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    recognition_score: 9
+    temporal_score: 85
+    rarity_score: 80
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

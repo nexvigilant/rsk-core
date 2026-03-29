@@ -1,0 +1,242 @@
+name: pregnancy-exposure-helix
+description: 'Forged from microgram ''pregnancy-exposure''. Domain: SystemHealth. 2 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    risk: falsified
+sense:
+  tree:
+    start: known_teratogen_check
+    nodes:
+      no_teratogen_live_birth_check:
+        type: condition
+        variable: live_birth
+        operator: eq
+        value: true
+        true_next: low_live_birth
+        false_next: high_adverse_outcome
+      known_teratogen_check:
+        type: condition
+        variable: known_teratogen
+        operator: eq
+        value: true
+        true_next: teratogen_trimester_check
+        false_next: no_teratogen_outcome_check
+      high_t2t3:
+        type: return
+        value:
+          risk: HIGH
+          action: expedited_report_15day
+          reporting: mandatory
+          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          trimester_context: second_or_third_trimester
+      teratogen_t3_check:
+        type: condition
+        variable: trimester
+        operator: eq
+        value: 3
+        true_next: high_t2t3
+        false_next: moderate_preconception
+      no_teratogen_outcome_check:
+        type: condition
+        variable: outcome_known
+        operator: eq
+        value: true
+        true_next: no_teratogen_live_birth_check
+        false_next: pending_outcome
+      critical_t1:
+        type: return
+        value:
+          trimester_context: first_trimester_organogenesis
+          action: expedited_report_7day
+          risk: CRITICAL
+          reporting: mandatory
+          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+      teratogen_trimester_check:
+        type: condition
+        variable: trimester
+        operator: eq
+        value: 1
+        true_next: critical_t1
+        false_next: teratogen_t2_check
+      moderate_preconception:
+        type: return
+        value:
+          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          action: monitor_conception
+          reporting: recommended
+          trimester_context: preconception
+          risk: MODERATE
+      teratogen_t2_check:
+        type: condition
+        variable: trimester
+        operator: eq
+        value: 2
+        true_next: high_t2t3
+        false_next: teratogen_t3_check
+      high_adverse_outcome:
+        type: return
+        value:
+          reporting: mandatory
+          trimester_context: adverse_outcome_no_teratogen
+          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          risk: HIGH
+          action: investigate_causality
+      low_live_birth:
+        type: return
+        value:
+          risk: LOW
+          action: routine_followup
+          reporting: periodic
+          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          trimester_context: live_birth_no_teratogen
+      pending_outcome:
+        type: return
+        value:
+          action: followup_required
+          trimester_context: outcome_unknown
+          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          reporting: track_outcome
+          risk: PENDING
+antisense:
+  tree:
+    start: check_measurement_stale
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_measurement_stale:
+        type: condition
+        variable: measurement_age_minutes
+        operator: gt
+        value: 60
+        true_next: falsified
+        false_next: check_single_source
+      check_single_source:
+        type: condition
+        variable: probe_count
+        operator: lt
+        value: 2
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      outcome_known:
+        type: bool
+        required: false
+      probe_count:
+        type: integer
+        required: false
+      live_birth:
+        type: bool
+        required: false
+      trimester:
+        type: int
+        required: false
+      measurement_age_minutes:
+        type: integer
+        required: false
+      known_teratogen:
+        type: bool
+        required: false
+    outputs:
+      trimester_context:
+        type: string
+        required: false
+      action:
+        type: string
+        required: false
+      risk:
+        type: string
+        required: false
+      reporting:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    live_birth: false
+    outcome_known: false
+    trimester: 1
+    measurement_age_minutes: 50
+    probe_count: 12
+    known_teratogen: true
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, measurement_stale active'
+  input:
+    live_birth: false
+    outcome_known: false
+    trimester: 1
+    measurement_age_minutes: 61
+    known_teratogen: true
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — system-health with 2 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: system-health. Chains as dual-strand verifier before downstream consumers.'

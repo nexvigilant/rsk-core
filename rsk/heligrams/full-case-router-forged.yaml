@@ -1,0 +1,228 @@
+name: full-case-router-helix
+description: 'Forged from microgram ''full-case-router''. Domain: CausalityAssessment. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    tool_path: falsified
+sense:
+  tree:
+    start: check_death
+    nodes:
+      check_hospitalization:
+        type: condition
+        variable: has_hospitalization
+        operator: eq
+        value: true
+        true_next: serious_causality_check
+        false_next: check_disability
+      check_signal_non_serious:
+        type: condition
+        variable: signal_detected
+        operator: eq
+        value: true
+        true_next: assess_routine
+        false_next: routine_monitoring
+      assess_routine:
+        type: return
+        value:
+          tool_path: /vigilance/causality
+          next_action: ASSESS_CAUSALITY_ROUTINE
+          priority: P2
+          reason: Signal detected in non-serious case - routine causality assessment recommended
+      check_death:
+        type: condition
+        variable: has_death
+        operator: eq
+        value: true
+        true_next: serious_causality_check
+        false_next: check_hospitalization
+      assess_urgent:
+        type: return
+        value:
+          next_action: ASSESS_CAUSALITY_URGENT
+          priority: P0
+          tool_path: /vigilance/causality
+          reason: Serious case criteria met - immediate causality assessment required before expedited filing
+      check_disability:
+        type: condition
+        variable: has_disability
+        operator: eq
+        value: true
+        true_next: serious_causality_check
+        false_next: check_signal_non_serious
+      serious_causality_check:
+        type: condition
+        variable: causality_assessed
+        operator: eq
+        value: true
+        true_next: file_expedited
+        false_next: assess_urgent
+      routine_monitoring:
+        type: return
+        value:
+          reason: No serious criteria and no signal - continue routine pharmacovigilance monitoring
+          priority: P3
+          next_action: ROUTINE_MONITORING
+          tool_path: /vigilance/signals
+      file_expedited:
+        type: return
+        value:
+          tool_path: /vigilance/reporting
+          next_action: FILE_EXPEDITED_REPORT
+          reason: Serious case with causality assessed - proceed to expedited regulatory filing
+          priority: P1
+antisense:
+  tree:
+    start: check_alternative_cause
+    nodes:
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_no_dechallenge
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: check_temporal_implausible
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      signal_detected:
+        type: bool
+        required: false
+      dechallenge_positive:
+        type: bool
+        required: false
+      has_hospitalization:
+        type: bool
+        required: false
+      has_disability:
+        type: bool
+        required: false
+      has_death:
+        type: bool
+        required: false
+      temporal_plausible:
+        type: bool
+        required: false
+      causality_assessed:
+        type: bool
+        required: false
+      alternative_causes:
+        type: string
+        required: false
+    outputs:
+      tool_path:
+        type: string
+        required: false
+      priority:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      reason:
+        type: string
+        required: false
+      next_action:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    has_disability: false
+    temporal_plausible: true
+    alternative_causes: none
+    causality_assessed: false
+    has_hospitalization: false
+    signal_detected: false
+    has_death: true
+    dechallenge_positive: true
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, alternative_cause active'
+  input:
+    has_disability: false
+    has_hospitalization: false
+    causality_assessed: false
+    signal_detected: false
+    has_death: true
+    alternative_causes: likely
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — causality-assessment with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: causality-assessment. Chains as dual-strand verifier before downstream consumers.'

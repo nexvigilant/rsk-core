@@ -1,0 +1,179 @@
+name: workflow-causality-assessment-helix
+description: 'Forged from microgram ''workflow-causality-assessment''. Domain: CausalityAssessment. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    chain: falsified
+sense:
+  tree:
+    start: check_rechallenge
+    nodes:
+      certain:
+        type: return
+        value:
+          chain: who-umc → harm-taxonomy → fda-safety
+          confidence: 0.95
+          causality: certain
+      check_rechallenge:
+        type: condition
+        variable: rechallenge_positive
+        operator: eq
+        value: true
+        true_next: certain
+        false_next: check_temporal
+      check_mechanism:
+        type: condition
+        variable: mechanism_known
+        operator: eq
+        value: true
+        true_next: probable
+        false_next: possible
+      probable:
+        type: return
+        value:
+          causality: probable
+          chain: who-umc → drugbank → calculation
+          confidence: 0.8
+      possible:
+        type: return
+        value:
+          chain: who-umc → meddra → epidemiology
+          causality: possible
+          confidence: 0.5
+      unlikely:
+        type: return
+        value:
+          causality: unlikely
+          chain: who-umc
+          confidence: 0.2
+      check_temporal:
+        type: condition
+        variable: temporal_clear
+        operator: eq
+        value: true
+        true_next: check_mechanism
+        false_next: unlikely
+antisense:
+  tree:
+    start: check_alternative_cause
+    nodes:
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: check_temporal_implausible
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_no_dechallenge
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      alternative_causes:
+        type: string
+        required: false
+      dechallenge_positive:
+        type: bool
+        required: false
+      temporal_plausible:
+        type: bool
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    mechanism_known: true
+    rechallenge_positive: true
+    alternative_causes: none
+    temporal_clear: true
+    temporal_plausible: true
+    dechallenge_positive: true
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, alternative_cause active'
+  input:
+    mechanism_known: true
+    rechallenge_positive: true
+    alternative_causes: likely
+    temporal_clear: true
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — causality-assessment with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: causality-assessment. Chains as dual-strand verifier before downstream consumers.'

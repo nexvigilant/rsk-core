@@ -1,0 +1,143 @@
+name: station-combinatorics-pipeline-helix
+description: 'Forged from microgram ''station-combinatorics-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    route: falsified
+sense:
+  tree:
+    start: check_n
+    nodes:
+      check_n:
+        type: condition
+        variable: n
+        operator: gte
+        value: 20
+        true_next: large_n
+        false_next: check_type
+      check_type:
+        type: condition
+        variable: problem_type
+        operator: eq
+        value: derangement
+        true_next: derangement
+        false_next: exact
+      derangement:
+        type: return
+        value:
+          route: exact_compute
+          action: compute
+          priority: low
+          reason: Derangement computation — subfactorial formula
+      large_n:
+        type: return
+        value:
+          action: approximate
+          priority: moderate
+          reason: n≥20 — exact computation may overflow, use Stirling approximation
+          route: approximation
+      exact:
+        type: return
+        value:
+          action: compute
+          reason: Small n combinatorial — exact computation
+          priority: low
+          route: exact_compute
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: n
+        operator: lt
+        value: 20
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      n:
+        type: integer
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    n: 30
+    problem_type: binomial
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    n: 19
+    problem_type: binomial
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

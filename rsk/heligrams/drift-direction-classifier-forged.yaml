@@ -1,0 +1,141 @@
+name: drift-direction-classifier-helix
+description: 'Forged from microgram ''drift-direction-classifier''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    direction: falsified
+sense:
+  tree:
+    start: check_rising
+    nodes:
+      rising:
+        type: return
+        value:
+          direction: rising
+          traffic_level: red
+      check_rising:
+        type: condition
+        variable: change_pct
+        operator: gt
+        value: 5
+        true_next: rising
+        false_next: check_falling
+      check_falling:
+        type: condition
+        variable: change_pct
+        operator: lt
+        value: -5
+        true_next: falling
+        false_next: stable
+      falling:
+        type: return
+        value:
+          direction: falling
+          traffic_level: green
+      stable:
+        type: return
+        value:
+          direction: stable
+          traffic_level: green
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: change_pct
+        operator: lte
+        value: 5
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      change_pct:
+        type: number
+        required: true
+    outputs:
+      direction:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+      traffic_level:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    change_pct: 15
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    change_pct: 5
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

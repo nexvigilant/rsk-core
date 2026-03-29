@@ -1,0 +1,159 @@
+name: station-brain-pipeline-helix
+description: 'Forged from microgram ''station-brain-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    route: falsified
+sense:
+  tree:
+    start: check_verdict
+    nodes:
+      healthy:
+        type: return
+        value:
+          route: archive
+          reason: Brain healthy — verdicts flowing, stores synced, artifacts fresh
+          action: certify
+          priority: low
+      low_verdicts:
+        type: return
+        value:
+          route: session_discipline
+          priority: high
+          action: alert
+          reason: Model verdict rate <50% — most sessions unmeasured
+      check_artifacts:
+        type: condition
+        variable: stale_artifact_count
+        operator: gte
+        value: 20
+        true_next: artifact_bloat
+        false_next: healthy
+      sync_broken:
+        type: return
+        value:
+          reason: Dual-store divergence — JSON and SQLite disagree
+          route: brain_reconcile
+          action: repair
+          priority: critical
+      artifact_bloat:
+        type: return
+        value:
+          route: artifact_cleanup
+          reason: 20+ stale artifacts — archive or resolve
+          action: prune
+          priority: moderate
+      check_verdict:
+        type: condition
+        variable: verdict_rate_pct
+        operator: gte
+        value: 50
+        true_next: check_sync
+        false_next: low_verdicts
+      check_sync:
+        type: condition
+        variable: dual_store_synced
+        operator: eq
+        value: true
+        true_next: check_artifacts
+        false_next: sync_broken
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: stale_artifact_count
+        operator: lt
+        value: 50
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      stale_artifact_count:
+        type: integer
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    verdict_rate_pct: 30
+    stale_artifact_count: 60
+    dual_store_synced: true
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    verdict_rate_pct: 30
+    stale_artifact_count: 49
+    dual_store_synced: true
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

@@ -1,0 +1,240 @@
+name: signal-assessment-composite-helix
+description: 'Forged from microgram ''signal-assessment-composite''. Domain: SystemHealth. 2 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    signal_confidence: falsified
+sense:
+  tree:
+    start: check_evans
+    nodes:
+      check_no_signal_trend:
+        type: condition
+        variable: trend
+        operator: eq
+        value: RISING
+        true_next: possible_emerging
+        false_next: no_signal
+      probable_rising:
+        type: return
+        value:
+          signal_confidence: MODERATE
+          urgency: MODERATE
+          assessment: PRR signal detected with rising trend — probable signal, Evans criteria not met
+          overall_signal: PROBABLE
+      no_signal:
+        type: return
+        value:
+          signal_confidence: NONE
+          assessment: No signal detected, no concerning trend
+          urgency: NONE
+          overall_signal: NO_SIGNAL
+      evans_confirmed:
+        type: return
+        value:
+          assessment: Evans criteria met with stable or declining trend — confirmed signal
+          urgency: MODERATE
+          signal_confidence: HIGH
+          overall_signal: CONFIRMED
+      check_evans:
+        type: condition
+        variable: evans_signal
+        operator: eq
+        value: true
+        true_next: check_trend_rising
+        false_next: check_prr_only
+      check_prr_only:
+        type: condition
+        variable: signal_detected
+        operator: eq
+        value: true
+        true_next: check_prr_trend
+        false_next: check_no_signal_trend
+      probable_stable:
+        type: return
+        value:
+          assessment: PRR signal detected but trend stable or declining — further evaluation needed
+          urgency: LOW
+          overall_signal: PROBABLE
+          signal_confidence: MODERATE
+      check_prr_trend:
+        type: condition
+        variable: trend
+        operator: eq
+        value: RISING
+        true_next: probable_rising
+        false_next: probable_stable
+      check_trend_rising:
+        type: condition
+        variable: trend
+        operator: eq
+        value: RISING
+        true_next: check_rapid
+        false_next: evans_confirmed
+      high_confidence_accelerating:
+        type: return
+        value:
+          urgency: CRITICAL
+          signal_confidence: VERY_HIGH
+          assessment: Evans criteria met with rapidly accelerating trend — confirmed signal requiring immediate action
+          overall_signal: CONFIRMED
+      high_confidence_rising:
+        type: return
+        value:
+          overall_signal: CONFIRMED
+          signal_confidence: HIGH
+          assessment: Evans criteria met with rising trend — confirmed signal
+          urgency: HIGH
+      possible_emerging:
+        type: return
+        value:
+          overall_signal: POSSIBLE
+          urgency: LOW
+          assessment: No current signal but rising trend — possible emerging signal, monitor closely
+          signal_confidence: LOW
+      check_rapid:
+        type: condition
+        variable: velocity
+        operator: eq
+        value: RAPID
+        true_next: high_confidence_accelerating
+        false_next: high_confidence_rising
+antisense:
+  tree:
+    start: check_measurement_stale
+    nodes:
+      check_measurement_stale:
+        type: condition
+        variable: measurement_age_minutes
+        operator: gt
+        value: 60
+        true_next: falsified
+        false_next: check_single_source
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      check_single_source:
+        type: condition
+        variable: probe_count
+        operator: lt
+        value: 2
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      evans_signal:
+        type: bool
+        required: false
+      signal_detected:
+        type: bool
+        required: false
+      velocity:
+        type: string
+        required: false
+      probe_count:
+        type: integer
+        required: false
+      measurement_age_minutes:
+        type: integer
+        required: false
+      trend:
+        type: string
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      overall_signal:
+        type: string
+        required: false
+      urgency:
+        type: string
+        required: false
+      signal_confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      assessment:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    evans_signal: true
+    signal_detected: true
+    velocity: RAPID
+    trend: RISING
+    measurement_age_minutes: 50
+    probe_count: 12
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, measurement_stale active'
+  input:
+    evans_signal: true
+    signal_detected: true
+    velocity: RAPID
+    trend: RISING
+    measurement_age_minutes: 61
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — system-health with 2 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: system-health. Chains as dual-strand verifier before downstream consumers.'

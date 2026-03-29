@@ -1,0 +1,229 @@
+name: sota-frontier-check-helix
+description: 'Forged from microgram ''sota-frontier-check''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    severity: falsified
+sense:
+  tree:
+    start: check_evidence
+    nodes:
+      insufficient_evidence:
+        type: return
+        value:
+          severity: NONE
+          combined_score: 0
+          action: 'Evidence level too low to assess frontier movement. Minimum: observational study (level 3).'
+          frontier_movement: UNQUALIFIED
+      unrecognized_authority:
+        type: return
+        value:
+          frontier_movement: UNQUALIFIED
+          severity: NONE
+          combined_score: 0
+          action: Finding not yet recognized by threshold authority. Monitor for peer-review acceptance.
+      significant_movement:
+        type: return
+        value:
+          frontier_movement: SIGNIFICANT
+          action: Schedule frontier review within 30 days. Evaluate whether current tools/methods need updating against new standard.
+          combined_score: 75
+          severity: P1
+      check_paradigm_authority:
+        type: condition
+        variable: authority_weight
+        operator: gte
+        value: 4
+        true_next: paradigm_shift
+        false_next: check_significant
+      check_significant:
+        type: condition
+        variable: novelty_score
+        operator: gte
+        value: 50
+        true_next: check_sig_authority
+        false_next: check_incremental
+      check_authority:
+        type: condition
+        variable: authority_weight
+        operator: gte
+        value: 2
+        true_next: check_paradigm_shift
+        false_next: unrecognized_authority
+      check_incremental:
+        type: condition
+        variable: novelty_score
+        operator: gte
+        value: 25
+        true_next: incremental_advance
+        false_next: no_movement
+      check_evidence:
+        type: condition
+        variable: evidence_level
+        operator: gte
+        value: 3
+        true_next: check_authority
+        false_next: insufficient_evidence
+      check_paradigm_shift:
+        type: condition
+        variable: novelty_score
+        operator: gte
+        value: 75
+        true_next: check_paradigm_evidence
+        false_next: check_significant
+      check_paradigm_evidence:
+        type: condition
+        variable: evidence_level
+        operator: gte
+        value: 4
+        true_next: check_paradigm_authority
+        false_next: check_significant
+      paradigm_shift:
+        type: return
+        value:
+          severity: P0
+          frontier_movement: PARADIGM_SHIFT
+          action: Immediate review — domain frontier has fundamentally moved. Update all dependent standards, retrain affected modules, notify stakeholders.
+          combined_score: 100
+      check_sig_authority:
+        type: condition
+        variable: authority_weight
+        operator: gte
+        value: 3
+        true_next: significant_movement
+        false_next: check_incremental
+      incremental_advance:
+        type: return
+        value:
+          severity: P2
+          combined_score: 40
+          frontier_movement: INCREMENTAL
+          action: Log frontier advance. No immediate action required. Include in next periodic SOTA review.
+      no_movement:
+        type: return
+        value:
+          severity: NONE
+          frontier_movement: NONE
+          action: Finding is within current frontier. No SOTA drift detected.
+          combined_score: 0
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: authority_weight
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      authority_weight:
+        type: int
+        required: true
+      evidence_level:
+        type: int
+        required: true
+      novelty_score:
+        type: int
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      combined_score:
+        type: int
+        required: false
+      confidence:
+        type: string
+        required: false
+      action:
+        type: string
+        required: false
+      frontier_movement:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      severity:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    authority_weight: 13
+    novelty_score: 90
+    evidence_level: 5
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    authority_weight: 2
+    novelty_score: 90
+    evidence_level: 5
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - domain
+  - evidence_level
+  - authority_weight
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

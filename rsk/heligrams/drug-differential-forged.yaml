@@ -1,0 +1,141 @@
+name: drug-differential-helix
+description: 'Forged from microgram ''drug-differential''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    differential: falsified
+sense:
+  tree:
+    start: check_a_higher
+    nodes:
+      equal:
+        type: return
+        value:
+          differential: equal
+          label: Rates are comparable
+      check_a_higher:
+        type: condition
+        variable: ratio
+        operator: gt
+        value: 1.2
+        true_next: a_higher
+        false_next: check_b_higher
+      check_b_higher:
+        type: condition
+        variable: ratio
+        operator: lt
+        value: 0.833
+        true_next: b_higher
+        false_next: equal
+      a_higher:
+        type: return
+        value:
+          label: Drug A has higher rate
+          differential: A
+      b_higher:
+        type: return
+        value:
+          label: Drug B has higher rate
+          differential: B
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: ratio
+        operator: lte
+        value: 1.2
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      ratio:
+        type: float
+        required: true
+    outputs:
+      differential:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      label:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    ratio: null
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    ratio: 1.2
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

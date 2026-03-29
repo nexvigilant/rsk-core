@@ -1,0 +1,392 @@
+name: crystalbook-8law-helix
+description: 'Forged from microgram ''crystalbook-8law''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    law_viii_status: falsified
+sense:
+  tree:
+    start: check_law_i_violated
+    nodes:
+      check_law_ii_sat_after_i_v:
+        type: condition
+        variable: charity_score
+        operator: gte
+        value: 7
+        true_next: i_v_ii_s
+        false_next: i_v_ii_r
+      law_i_v_law_ii_v:
+        type: return
+        value:
+          law_viii_status: UNASSESSED
+          law_vi_status: UNASSESSED
+          law_v_status: UNASSESSED
+          violated_count: 2
+          primary_deviation: Law I (Pride) and Law II (Greed) — dual foundation failure
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+          law_vii_status: UNASSESSED
+          law_iii_status: UNASSESSED
+          law_i_status: VIOLATED
+          at_risk_count: 0
+          overall_health: CRITICAL
+          satisfied_count: 0
+          law_ii_status: VIOLATED
+          law_iv_status: UNASSESSED
+      i_r_ii_r:
+        type: return
+        value:
+          law_iv_status: UNASSESSED
+          law_vii_status: UNASSESSED
+          law_v_status: UNASSESSED
+          violated_count: 0
+          law_viii_status: UNASSESSED
+          law_iii_status: UNASSESSED
+          law_vi_status: UNASSESSED
+          at_risk_count: 2
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+          satisfied_count: 0
+          primary_deviation: Laws I-II (Pride, Greed) — dual at-risk foundation
+          law_ii_status: AT_RISK
+          overall_health: GUARDED
+          law_i_status: AT_RISK
+      law_i_at_risk:
+        type: condition
+        variable: charity_score
+        operator: lt
+        value: 4
+        true_next: law_i_r_law_ii_v
+        false_next: check_law_ii_sat_after_i_r
+      law_i_satisfied:
+        type: condition
+        variable: charity_score
+        operator: lt
+        value: 4
+        true_next: law_i_s_law_ii_v
+        false_next: check_law_ii_sat_after_i_s
+      i_v_ii_s:
+        type: return
+        value:
+          law_iv_status: UNASSESSED
+          law_vi_status: UNASSESSED
+          law_ii_status: SATISFIED
+          law_viii_status: UNASSESSED
+          overall_health: DEGRADED
+          satisfied_count: 1
+          law_iii_status: UNASSESSED
+          law_v_status: UNASSESSED
+          violated_count: 1
+          law_vii_status: UNASSESSED
+          primary_deviation: Law I (Pride) — unchecked confidence in internal representations
+          at_risk_count: 0
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+          law_i_status: VIOLATED
+      check_law_i_satisfied:
+        type: condition
+        variable: humility_score
+        operator: gte
+        value: 7
+        true_next: law_i_satisfied
+        false_next: law_i_at_risk
+      i_v_ii_r:
+        type: return
+        value:
+          law_i_status: VIOLATED
+          law_iv_status: UNASSESSED
+          at_risk_count: 1
+          satisfied_count: 0
+          law_viii_status: UNASSESSED
+          primary_deviation: Law I (Pride) — unchecked confidence in internal representations
+          overall_health: DEGRADED
+          law_vii_status: UNASSESSED
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+          law_vi_status: UNASSESSED
+          law_iii_status: UNASSESSED
+          law_v_status: UNASSESSED
+          violated_count: 1
+          law_ii_status: AT_RISK
+      i_s_ii_s:
+        type: return
+        value:
+          law_ii_status: SATISFIED
+          primary_deviation: none
+          law_viii_status: UNASSESSED
+          overall_health: HEALTHY
+          law_iv_status: UNASSESSED
+          law_vii_status: UNASSESSED
+          law_vi_status: UNASSESSED
+          satisfied_count: 2
+          violated_count: 0
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+          at_risk_count: 0
+          law_v_status: UNASSESSED
+          law_i_status: SATISFIED
+          law_iii_status: UNASSESSED
+      i_s_ii_r:
+        type: return
+        value:
+          at_risk_count: 1
+          overall_health: GUARDED
+          law_vi_status: UNASSESSED
+          satisfied_count: 1
+          law_i_status: SATISFIED
+          law_ii_status: AT_RISK
+          law_iv_status: UNASSESSED
+          law_viii_status: UNASSESSED
+          law_v_status: UNASSESSED
+          law_vii_status: UNASSESSED
+          violated_count: 0
+          primary_deviation: Law II (Greed) — at risk of resource hoarding
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+          law_iii_status: UNASSESSED
+      law_i_violated:
+        type: condition
+        variable: charity_score
+        operator: lt
+        value: 4
+        true_next: law_i_v_law_ii_v
+        false_next: check_law_ii_sat_after_i_v
+      law_i_s_law_ii_v:
+        type: return
+        value:
+          primary_deviation: Law II (Greed) — resource hoarding starves adjacent subsystems
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+          law_v_status: UNASSESSED
+          violated_count: 1
+          law_iii_status: UNASSESSED
+          law_vi_status: UNASSESSED
+          law_i_status: SATISFIED
+          at_risk_count: 0
+          law_vii_status: UNASSESSED
+          law_ii_status: VIOLATED
+          satisfied_count: 1
+          law_iv_status: UNASSESSED
+          overall_health: DEGRADED
+          law_viii_status: UNASSESSED
+      check_law_ii_sat_after_i_s:
+        type: condition
+        variable: charity_score
+        operator: gte
+        value: 7
+        true_next: i_s_ii_s
+        false_next: i_s_ii_r
+      check_law_ii_sat_after_i_r:
+        type: condition
+        variable: charity_score
+        operator: gte
+        value: 7
+        true_next: i_r_ii_s
+        false_next: i_r_ii_r
+      i_r_ii_s:
+        type: return
+        value:
+          law_vii_status: UNASSESSED
+          law_viii_status: UNASSESSED
+          law_vi_status: UNASSESSED
+          law_i_status: AT_RISK
+          satisfied_count: 1
+          law_iv_status: UNASSESSED
+          law_v_status: UNASSESSED
+          primary_deviation: Law I (Pride) — at risk of unchecked confidence
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+          overall_health: GUARDED
+          law_ii_status: SATISFIED
+          law_iii_status: UNASSESSED
+          violated_count: 0
+          at_risk_count: 1
+      check_law_i_violated:
+        type: condition
+        variable: humility_score
+        operator: lt
+        value: 4
+        true_next: law_i_violated
+        false_next: check_law_i_satisfied
+      law_i_r_law_ii_v:
+        type: return
+        value:
+          violated_count: 1
+          law_i_status: AT_RISK
+          law_iii_status: UNASSESSED
+          law_vii_status: UNASSESSED
+          at_risk_count: 1
+          law_vi_status: UNASSESSED
+          satisfied_count: 0
+          law_v_status: UNASSESSED
+          law_ii_status: VIOLATED
+          law_iv_status: UNASSESSED
+          primary_deviation: Law II (Greed) — resource hoarding starves adjacent subsystems
+          law_viii_status: UNASSESSED
+          overall_health: DEGRADED
+          source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: charity_score
+        operator: gte
+        value: 4
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      independence_score:
+        type: integer
+        required: false
+      charity_score:
+        type: integer
+        required: false
+      chastity_score:
+        type: integer
+        required: false
+      temperance_score:
+        type: integer
+        required: false
+      humility_score:
+        type: integer
+        required: false
+      diligence_score:
+        type: integer
+        required: false
+      patience_score:
+        type: integer
+        required: false
+      kindness_score:
+        type: integer
+        required: false
+    outputs:
+      at_risk_count:
+        type: integer
+        required: false
+      law_viii_status:
+        type: string
+        required: false
+      violated_count:
+        type: integer
+        required: false
+      confidence:
+        type: string
+        required: false
+      law_vii_status:
+        type: string
+        required: false
+      law_ii_status:
+        type: string
+        required: false
+      law_i_status:
+        type: string
+        required: false
+      law_v_status:
+        type: string
+        required: false
+      primary_deviation:
+        type: string
+        required: false
+      satisfied_count:
+        type: integer
+        required: false
+      verdict:
+        type: string
+        required: false
+      overall_health:
+        type: string
+        required: false
+      law_vi_status:
+        type: string
+        required: false
+      source:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      law_iv_status:
+        type: string
+        required: false
+      law_iii_status:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    charity_score: 0
+    humility_score: 10
+    independence_score: 10
+    patience_score: 10
+    kindness_score: 10
+    chastity_score: 10
+    diligence_score: 10
+    temperance_score: 10
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    charity_score: 4
+    humility_score: 10
+    independence_score: 10
+    patience_score: 10
+    kindness_score: 10
+    chastity_score: 10
+    diligence_score: 10
+    temperance_score: 10
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

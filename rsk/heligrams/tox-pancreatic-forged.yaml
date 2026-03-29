@@ -1,0 +1,141 @@
+name: tox-pancreatic-helix
+description: 'Forged from microgram ''tox-pancreatic''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    action: falsified
+sense:
+  tree:
+    start: check_severe
+    nodes:
+      severe:
+        type: return
+        value:
+          action: discontinue
+          target: pancreas
+          organ: pancreatic
+          severity: severe
+      mild:
+        type: return
+        value:
+          organ: pancreatic
+          severity: mild
+          action: monitor_closely
+          target: pancreas
+      check_mild:
+        type: condition
+        variable: lipase_ratio
+        operator: gte
+        value: 3
+        true_next: mild
+        false_next: normal
+      normal:
+        type: return
+        value:
+          organ: pancreatic
+          target: pancreas
+          severity: normal
+          action: continue
+      check_severe:
+        type: condition
+        variable: lipase_ratio
+        operator: gte
+        value: 5
+        true_next: severe
+        false_next: check_mild
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: lipase_ratio
+        operator: lt
+        value: 5
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      lipase_ratio:
+        type: integer
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    lipase_ratio: 15
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    lipase_ratio: 4
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

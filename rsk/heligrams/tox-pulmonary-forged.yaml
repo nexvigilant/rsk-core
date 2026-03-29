@@ -1,0 +1,138 @@
+name: tox-pulmonary-helix
+description: 'Forged from microgram ''tox-pulmonary''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    severity: falsified
+sense:
+  tree:
+    start: check_severe
+    nodes:
+      severe:
+        type: return
+        value:
+          severity: severe
+          organ: pulmonary
+          action: discontinue
+      mild:
+        type: return
+        value:
+          severity: mild
+          action: monitor_closely
+          organ: pulmonary
+      check_severe:
+        type: condition
+        variable: fev1_pct
+        operator: lte
+        value: 50
+        true_next: severe
+        false_next: check_mild
+      check_mild:
+        type: condition
+        variable: fev1_pct
+        operator: lte
+        value: 80
+        true_next: mild
+        false_next: normal
+      normal:
+        type: return
+        value:
+          organ: pulmonary
+          severity: normal
+          action: continue
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_negation:
+        type: condition
+        variable: fev1_pct
+        operator: gt
+        value: 50
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      fev1_pct:
+        type: integer
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    fev1_pct: 40
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    fev1_pct: 51
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

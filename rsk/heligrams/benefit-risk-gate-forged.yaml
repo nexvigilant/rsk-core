@@ -1,0 +1,238 @@
+name: benefit-risk-gate-helix
+description: 'Forged from microgram ''benefit-risk-gate''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    decision: falsified
+sense:
+  tree:
+    start: negative_check
+    nodes:
+      favorable_risk_check:
+        type: condition
+        variable: risk_score
+        operator: lte
+        value: 20
+        true_next: favorable
+        false_next: acceptable_benefit_check
+      acceptable_risk_check:
+        type: condition
+        variable: risk_score
+        operator: lte
+        value: 40
+        true_next: acceptable
+        false_next: conditional_benefit_check
+      negative:
+        type: return
+        value:
+          decision: NEGATIVE
+          action: consider_withdrawal
+          recommendation: Immediate review required; benefit no longer outweighs risk
+          benefit_risk_ratio: negative
+      unfavorable:
+        type: return
+        value:
+          decision: UNFAVORABLE
+          action: risk_mitigation_required
+          benefit_risk_ratio: unfavorable
+          recommendation: Implement risk minimization measures before continuation
+      conditional:
+        type: return
+        value:
+          recommendation: Benefit marginal; enhanced monitoring and RMP required
+          benefit_risk_ratio: conditional
+          action: enhanced_monitoring_with_rmp
+          decision: CONDITIONAL
+      negative_check:
+        type: condition
+        variable: risk_score
+        operator: gt
+        value: 80
+        true_next: negative
+        false_next: unfavorable_risk_check
+      unfavorable_risk_check:
+        type: condition
+        variable: risk_score
+        operator: gt
+        value: 60
+        true_next: unfavorable
+        false_next: favorable_benefit_check
+      favorable:
+        type: return
+        value:
+          action: continue_monitoring
+          benefit_risk_ratio: favorable
+          recommendation: Benefit clearly outweighs risk; maintain standard surveillance
+          decision: FAVORABLE
+      conditional_risk_check:
+        type: condition
+        variable: risk_score
+        operator: lte
+        value: 60
+        true_next: conditional_unmet_check
+        false_next: unfavorable
+      favorable_benefit_check:
+        type: condition
+        variable: benefit_score
+        operator: gte
+        value: 80
+        true_next: favorable_risk_check
+        false_next: acceptable_benefit_check
+      acceptable_benefit_check:
+        type: condition
+        variable: benefit_score
+        operator: gte
+        value: 60
+        true_next: acceptable_risk_check
+        false_next: conditional_benefit_check
+      acceptable:
+        type: return
+        value:
+          action: standard_risk_management
+          recommendation: Benefit outweighs risk with standard risk management plan
+          decision: ACCEPTABLE
+          benefit_risk_ratio: acceptable
+      conditional_benefit_check:
+        type: condition
+        variable: benefit_score
+        operator: gte
+        value: 40
+        true_next: conditional_risk_check
+        false_next: unfavorable
+      conditional_alt_check:
+        type: condition
+        variable: alternative_available
+        operator: eq
+        value: true
+        true_next: unfavorable
+        false_next: conditional
+      conditional_unmet_check:
+        type: condition
+        variable: unmet_need
+        operator: eq
+        value: true
+        true_next: conditional
+        false_next: conditional_alt_check
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: risk_score
+        operator: lte
+        value: 80
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      verdict: contested
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      alternative_available:
+        type: bool
+        required: false
+      benefit_score:
+        type: int
+        required: false
+      unmet_need:
+        type: bool
+        required: false
+      risk_score:
+        type: int
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      action:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      decision:
+        type: string
+        required: false
+      recommendation:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      benefit_risk_ratio:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    risk_score: 90
+    benefit_score: 85
+    alternative_available: false
+    unmet_need: false
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    risk_score: 80
+    benefit_score: 85
+    alternative_available: false
+    unmet_need: false
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

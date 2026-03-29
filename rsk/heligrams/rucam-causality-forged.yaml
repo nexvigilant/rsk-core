@@ -1,0 +1,170 @@
+name: rucam-causality-helix
+description: 'Forged from microgram ''rucam-causality''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    classification: falsified
+sense:
+  tree:
+    start: highly_probable_check
+    nodes:
+      probable_check:
+        type: condition
+        variable: rucam_score
+        operator: gte
+        value: 6
+        true_next: probable
+        false_next: possible_check
+      probable:
+        type: return
+        value:
+          classification: PROBABLE
+          confidence: 75
+          next_action: investigate_dechallenge
+      excluded:
+        type: return
+        value:
+          next_action: rule_out_drug
+          classification: EXCLUDED
+          confidence: 95
+      highly_probable:
+        type: return
+        value:
+          confidence: 95
+          classification: HIGHLY_PROBABLE
+          next_action: confirm_hepatotoxicity
+      unlikely:
+        type: return
+        value:
+          confidence: 25
+          next_action: evaluate_alternatives
+          classification: UNLIKELY
+      highly_probable_check:
+        type: condition
+        variable: rucam_score
+        operator: gte
+        value: 9
+        true_next: highly_probable
+        false_next: probable_check
+      possible_check:
+        type: condition
+        variable: rucam_score
+        operator: gte
+        value: 3
+        true_next: possible
+        false_next: unlikely_check
+      unlikely_check:
+        type: condition
+        variable: rucam_score
+        operator: gte
+        value: 1
+        true_next: unlikely
+        false_next: excluded
+      possible:
+        type: return
+        value:
+          confidence: 50
+          next_action: monitor_collect_data
+          classification: POSSIBLE
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: rucam_score
+        operator: lt
+        value: 9
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      rucam_score:
+        type: int
+        required: true
+    outputs:
+      verdict:
+        type: string
+        required: false
+      classification:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      next_action:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    rucam_score: 19
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    rucam_score: 8
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

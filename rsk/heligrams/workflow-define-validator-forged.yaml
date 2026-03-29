@@ -1,0 +1,163 @@
+name: workflow-define-validator-helix
+description: 'Forged from microgram ''workflow-define-validator''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    status: falsified
+sense:
+  tree:
+    start: check_length
+    nodes:
+      check_report:
+        type: condition
+        variable: has_report_step
+        operator: eq
+        value: true
+        true_next: valid
+        false_next: missing_report
+      check_detect:
+        type: condition
+        variable: has_detect_step
+        operator: eq
+        value: true
+        true_next: check_report
+        false_next: missing_detect
+      valid:
+        type: return
+        value:
+          status: VALID
+          description: Workflow definition complete - detection and reporting steps present
+      check_length:
+        type: condition
+        variable: step_count
+        operator: gte
+        value: 2
+        true_next: check_detect
+        false_next: too_short
+      missing_detect:
+        type: return
+        value:
+          description: Workflow missing signal detection step - required for PV workflows
+          status: MISSING_DETECT
+      missing_report:
+        type: return
+        value:
+          description: Workflow missing regulatory reporting step - required for PV workflows
+          status: MISSING_REPORT
+      too_short:
+        type: return
+        value:
+          status: TOO_SHORT
+          description: Workflow must have at least 2 steps to be registered
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_negation:
+        type: condition
+        variable: has_report_step
+        operator: lt
+        value: 2
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      has_report_step:
+        type: bool
+        required: false
+      has_detect_step:
+        type: bool
+        required: false
+      step_count:
+        type: int
+        required: false
+    outputs:
+      status:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      description:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    has_detect_step: true
+    has_report_step: 12
+    step_count: 4
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    has_detect_step: true
+    has_report_step: 1
+    step_count: 4
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

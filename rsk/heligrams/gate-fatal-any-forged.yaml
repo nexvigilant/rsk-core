@@ -1,0 +1,159 @@
+name: gate-fatal-any-helix
+description: 'Forged from microgram ''gate-fatal-any''. Domain: SeriousnessClassification. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    gate: falsified
+sense:
+  tree:
+    start: check
+    nodes:
+      check:
+        type: condition
+        variable: death_count
+        operator: gte
+        value: 1
+        true_next: pass
+        false_next: fail
+      pass:
+        type: return
+        value:
+          gate: true
+          threshold: death_count
+          met: true
+      fail:
+        type: return
+        value:
+          met: false
+          gate: false
+          threshold: death_count
+antisense:
+  tree:
+    start: check_incomplete_info
+    nodes:
+      check_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_coding_error
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_comorbidity_confound
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      gate: true
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
+  - when:
+      gate: true
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when:
+      gate: false
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      verdict: absent
+      confidence_score: 0.7
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      coding_verified:
+        type: bool
+        required: false
+      follow_up_complete:
+        type: bool
+        required: false
+      comorbidity_explains:
+        type: bool
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    comorbidity_explains: false
+    death_count: 1
+    follow_up_complete: true
+    coding_verified: true
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, incomplete_info active'
+  input:
+    follow_up_complete: false
+    death_count: 1
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: absent
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — seriousness-classification with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: seriousness-classification. Chains as dual-strand verifier before downstream consumers.'

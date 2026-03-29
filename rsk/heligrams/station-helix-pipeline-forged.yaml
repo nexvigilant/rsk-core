@@ -1,0 +1,143 @@
+name: station-helix-pipeline-helix
+description: 'Forged from microgram ''station-helix-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    reason: falsified
+sense:
+  tree:
+    start: check_turns
+    nodes:
+      mutualism_fail:
+        type: return
+        value:
+          reason: Helix complete but mutualism test failed — knowledge serves self only
+          priority: high
+          route: mutualism_revision
+          action: revise
+      check_turns:
+        type: condition
+        variable: turns_completed
+        operator: gte
+        value: 5
+        true_next: check_mutualism
+        false_next: incomplete
+      check_mutualism:
+        type: condition
+        variable: mutualism_pass
+        operator: eq
+        value: true
+        true_next: complete
+        false_next: mutualism_fail
+      complete:
+        type: return
+        value:
+          action: certify
+          route: archive
+          reason: 5-turn helix complete with mutualism — knowledge encoded
+          priority: low
+      incomplete:
+        type: return
+        value:
+          action: continue
+          route: helix_continuation
+          priority: moderate
+          reason: Helix encoding incomplete — fewer than 5 turns
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: turns_completed
+        operator: lt
+        value: 5
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      turns_completed:
+        type: integer
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    mutualism_pass: true
+    turns_completed: 15
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    mutualism_pass: true
+    turns_completed: 4
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

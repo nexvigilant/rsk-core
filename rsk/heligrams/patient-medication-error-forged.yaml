@@ -1,0 +1,206 @@
+name: patient-medication-error-helix
+description: 'Forged from microgram ''patient-medication-error''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    patient_safety_compliant: falsified
+sense:
+  tree:
+    start: validate_error_report
+    nodes:
+      serious_error:
+        type: return
+        value:
+          patient_safety_compliant: true
+          error_category: serious_medication_error
+          immediate_action: notify_patients_and_healthcare_providers
+          patient_safety_risk: high
+          regulatory_reporting: required
+      check_error_severity:
+        type: condition
+        variable: error_severity
+        operator: eq
+        value: serious_harm
+        true_next: serious_error
+        false_next: check_moderate_error
+      moderate_error:
+        type: return
+        value:
+          patient_safety_compliant: true
+          patient_safety_risk: moderate
+          immediate_action: monitor_patient_closely
+          regulatory_reporting: recommended
+          error_category: moderate_medication_error
+      validate_error_report:
+        type: condition
+        variable: error_type
+        operator: is_not_null
+        value: null
+        true_next: check_error_severity
+        false_next: error_unknown
+      minor_error:
+        type: return
+        value:
+          error_category: minor_medication_error
+          regulatory_reporting: not_required
+          patient_safety_risk: low
+          patient_safety_compliant: true
+          immediate_action: document_and_review
+      check_moderate_error:
+        type: condition
+        variable: error_severity
+        operator: eq
+        value: moderate
+        true_next: moderate_error
+        false_next: minor_error
+      error_unknown:
+        type: return
+        value:
+          patient_safety_compliant: false
+          patient_safety_risk: null
+          error_category: null
+          immediate_action: null
+          regulatory_reporting: null
+antisense:
+  tree:
+    start: check_insufficient_n
+    nodes:
+      check_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      check_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: check_notoriety_bias
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_weber_effect
+      check_weber_effect:
+        type: condition
+        variable: years_on_market
+        operator: gt
+        value: 5
+        true_next: falsified
+        false_next: check_channeling_bias
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      patient_safety_compliant: true
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7000000000000001
+  - when:
+      patient_safety_compliant: true
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.28
+  - when:
+      patient_safety_compliant: false
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7000000000000001
+      verdict: absent
+      confidence: high
+  - when: null
+    default:
+      confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      case_count:
+        type: integer
+        required: false
+      channeling_bias:
+        type: bool
+        required: false
+      notoriety_bias:
+        type: bool
+        required: false
+      years_on_market:
+        type: integer
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    channeling_bias: false
+    error_type: dose_error
+    error_severity: serious_harm
+    notoriety_bias: false
+    case_count: 13
+    years_on_market: 0
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, insufficient_n active'
+  input:
+    error_type: dose_error
+    error_severity: serious_harm
+    case_count: 2
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: absent
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — signal-detection with 4 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: signal-detection. Chains as dual-strand verifier before downstream consumers.'

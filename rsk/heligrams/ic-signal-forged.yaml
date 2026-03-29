@@ -1,0 +1,234 @@
+name: ic-signal-helix
+description: 'Forged from microgram ''ic-signal''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    signal_detected: falsified
+sense:
+  tree:
+    start: null_guard
+    nodes:
+      no_signal_negative:
+        type: return
+        value:
+          signal: NONE
+          signal_detected: false
+          note: IC negative -- no disproportionality
+      moderate_signal:
+        type: return
+        value:
+          signal: MODERATE
+          confidence: MODERATE
+          signal_detected: true
+      check_strong:
+        type: condition
+        variable: ic025
+        operator: gte
+        value: 2.0
+        true_next: strong_signal
+        false_next: check_moderate
+      check_positive:
+        type: condition
+        variable: ic025
+        operator: gte
+        value: 0.0
+        true_next: no_signal_positive
+        false_next: no_signal_negative
+      unknown_return:
+        type: return
+        value:
+          signal_detected: false
+          signal: NONE
+          note: No IC data available
+      strong_signal:
+        type: return
+        value:
+          signal_detected: true
+          signal: STRONG
+          confidence: HIGH
+      weak_signal:
+        type: return
+        value:
+          signal_detected: true
+          signal: WEAK
+          confidence: LOW
+      check_moderate:
+        type: condition
+        variable: ic025
+        operator: gte
+        value: 1.0
+        true_next: moderate_signal
+        false_next: check_weak
+      null_guard:
+        type: condition
+        variable: ic025
+        operator: is_null
+        value: null
+        true_next: unknown_return
+        false_next: check_strong
+      check_weak:
+        type: condition
+        variable: ic025
+        operator: gte
+        value: 0.5
+        true_next: weak_signal
+        false_next: check_positive
+      no_signal_positive:
+        type: return
+        value:
+          signal: NONE
+          signal_detected: false
+          note: IC positive but IC025 below threshold
+antisense:
+  tree:
+    start: check_insufficient_n
+    nodes:
+      check_weber_effect:
+        type: condition
+        variable: years_on_market
+        operator: gt
+        value: 5
+        true_next: falsified
+        false_next: check_channeling_bias
+      check_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_weber_effect
+      check_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: check_notoriety_bias
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+      signal_detected: true
+    default: null
+    emit:
+      confidence: high
+      verdict: confirmed
+      confidence_score: 0.7000000000000001
+  - when:
+      falsified: true
+      signal_detected: true
+    default: null
+    emit:
+      confidence: low
+      verdict: contested
+      confidence_score: 0.28
+  - when:
+      falsified: false
+      signal_detected: false
+    default: null
+    emit:
+      verdict: absent
+      confidence: high
+      confidence_score: 0.7000000000000001
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      case_count:
+        type: integer
+        required: false
+      notoriety_bias:
+        type: bool
+        required: false
+      years_on_market:
+        type: integer
+        required: false
+      channeling_bias:
+        type: bool
+        required: false
+      ic025:
+        type: float
+        required: false
+    outputs:
+      signal:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      note:
+        type: string
+        required: false
+      signal_detected:
+        type: bool
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    case_count: 13
+    notoriety_bias: false
+    channeling_bias: false
+    ic025: 3.0
+    years_on_market: 0
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, insufficient_n active'
+  input:
+    case_count: 2
+    ic025: 3.0
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: absent
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — signal-detection with 4 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: signal-detection. Chains as dual-strand verifier before downstream consumers.'

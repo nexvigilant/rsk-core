@@ -1,0 +1,179 @@
+name: faers-result-classifier-helix
+description: 'Forged from microgram ''faers-result-classifier''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    action: falsified
+sense:
+  tree:
+    start: check_high_volume_serious
+    nodes:
+      routine:
+        type: return
+        value:
+          action: periodic_review
+          priority: 4
+          category: ROUTINE
+      monitor:
+        type: return
+        value:
+          category: MONITOR
+          action: add_to_watchlist
+          priority: 3
+      check_serious_pct_high:
+        type: condition
+        variable: serious_pct
+        operator: gte
+        value: 50
+        true_next: high_alert
+        false_next: investigate
+      investigate:
+        type: return
+        value:
+          priority: 2
+          category: INVESTIGATE
+          action: detailed_case_review
+      check_high_volume_serious:
+        type: condition
+        variable: report_count
+        operator: gte
+        value: 100
+        true_next: check_serious_pct_high
+        false_next: check_moderate_volume
+      check_moderate_volume:
+        type: condition
+        variable: report_count
+        operator: gte
+        value: 50
+        true_next: investigate
+        false_next: check_high_serious_pct
+      check_high_serious_pct:
+        type: condition
+        variable: serious_pct
+        operator: gte
+        value: 70
+        true_next: investigate
+        false_next: check_low_volume
+      check_low_volume:
+        type: condition
+        variable: report_count
+        operator: gte
+        value: 10
+        true_next: monitor
+        false_next: routine
+      high_alert:
+        type: return
+        value:
+          action: immediate_safety_review
+          priority: 1
+          category: HIGH_ALERT
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: serious_pct
+        operator: lt
+        value: 100
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      report_count:
+        type: int
+        required: false
+      serious_pct:
+        type: int
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      priority:
+        type: int
+        required: false
+      category:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      action:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    serious_pct: 110
+    report_count: 150
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    serious_pct: 99
+    report_count: 150
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

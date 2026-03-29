@@ -1,0 +1,257 @@
+name: causality-evidence-aggregator-helix
+description: 'Forged from microgram ''causality-evidence-aggregator''. Domain: CausalityAssessment. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    causality_verdict: falsified
+sense:
+  tree:
+    start: check_naranjo
+    nodes:
+      probable:
+        type: return
+        value:
+          causality_verdict: PROBABLE
+          recommended_action: Report as probable causality — continue monitoring
+          confidence: MODERATE
+          evidence_basis: Naranjo probable (5-8)
+      check_probable_strong_temporal:
+        type: condition
+        variable: temporal_plausibility
+        operator: eq
+        value: STRONG
+        true_next: definite_upgraded
+        false_next: check_probable_dechallenge
+      check_possible_dechallenge:
+        type: condition
+        variable: evidence_strength
+        operator: eq
+        value: STRONG
+        true_next: possible_elevated
+        false_next: possible
+      unlikely:
+        type: return
+        value:
+          causality_verdict: UNLIKELY
+          evidence_basis: Naranjo doubtful + implausible temporal association
+          recommended_action: Close case — causality unlikely
+          confidence: HIGH
+      definite_upgraded:
+        type: return
+        value:
+          evidence_basis: Naranjo probable + corroborating evidence upgrades to certain
+          recommended_action: Report as certain causality per ICH E2A
+          causality_verdict: CERTAIN
+          confidence: HIGH
+      check_possible_temporal:
+        type: condition
+        variable: temporal_plausibility
+        operator: eq
+        value: STRONG
+        true_next: possible_elevated
+        false_next: check_possible_dechallenge
+      definite:
+        type: return
+        value:
+          causality_verdict: CERTAIN
+          confidence: HIGH
+          recommended_action: Report as certain causality per ICH E2A
+          evidence_basis: Naranjo definite (>=9)
+      possible_elevated:
+        type: return
+        value:
+          evidence_basis: Naranjo possible + strong corroborating evidence elevates to probable
+          recommended_action: Treat as probable — corroborating evidence strengthens case
+          confidence: MODERATE
+          causality_verdict: PROBABLE
+      doubtful:
+        type: return
+        value:
+          confidence: LOW
+          recommended_action: Document and archive — no further action unless new evidence
+          causality_verdict: DOUBTFUL
+          evidence_basis: Naranjo doubtful (<=0)
+      check_probable_dechallenge:
+        type: condition
+        variable: evidence_strength
+        operator: eq
+        value: STRONG
+        true_next: definite_upgraded
+        false_next: probable
+      check_naranjo:
+        type: condition
+        variable: naranjo_score
+        operator: gte
+        value: 9
+        true_next: definite
+        false_next: check_probable
+      possible:
+        type: return
+        value:
+          confidence: LOW
+          recommended_action: Continue monitoring and gather additional evidence
+          causality_verdict: POSSIBLE
+          evidence_basis: Naranjo possible (1-4)
+      check_probable:
+        type: condition
+        variable: naranjo_score
+        operator: gte
+        value: 5
+        true_next: check_probable_strong_temporal
+        false_next: check_possible
+      check_possible:
+        type: condition
+        variable: naranjo_score
+        operator: gte
+        value: 1
+        true_next: check_possible_temporal
+        false_next: check_doubtful_temporal
+      check_doubtful_temporal:
+        type: condition
+        variable: temporal_plausibility
+        operator: eq
+        value: IMPLAUSIBLE
+        true_next: unlikely
+        false_next: doubtful
+antisense:
+  tree:
+    start: check_alternative_cause
+    nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_no_dechallenge
+      check_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: check_temporal_implausible
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      temporal_plausibility:
+        type: string
+        required: false
+      naranjo_score:
+        type: int
+        required: true
+      alternative_causes:
+        type: string
+        required: false
+      temporal_plausible:
+        type: bool
+        required: false
+      dechallenge_positive:
+        type: bool
+        required: false
+      evidence_strength:
+        type: string
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      recommended_action:
+        type: string
+        required: false
+      causality_verdict:
+        type: string
+        required: false
+      evidence_basis:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    naranjo_score: 10
+    evidence_strength: STRONG
+    alternative_causes: none
+    temporal_plausibility: STRONG
+    temporal_plausible: true
+    dechallenge_positive: true
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, alternative_cause active'
+  input:
+    naranjo_score: 10
+    evidence_strength: STRONG
+    alternative_causes: likely
+    temporal_plausibility: STRONG
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — causality-assessment with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: causality-assessment. Chains as dual-strand verifier before downstream consumers.'

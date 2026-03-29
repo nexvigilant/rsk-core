@@ -1,0 +1,151 @@
+name: alias-mismatch-detector-helix
+description: 'Forged from microgram ''alias-mismatch-detector''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    health: falsified
+sense:
+  tree:
+    start: check_conflicts
+    nodes:
+      green:
+        type: return
+        value:
+          health: GREEN
+          action: none
+      check_conflicts:
+        type: condition
+        variable: alias_conflicts
+        operator: gt
+        value: 0
+        true_next: red
+        false_next: check_suggested
+      check_suggested:
+        type: condition
+        variable: suggested_aliases
+        operator: gt
+        value: 0
+        true_next: yellow
+        false_next: green
+      yellow:
+        type: return
+        value:
+          action: add_suggested_aliases
+          health: YELLOW
+      red:
+        type: return
+        value:
+          action: resolve_alias_conflicts
+          health: RED
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: alias_conflicts
+        operator: lte
+        value: 0
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      suggested_aliases:
+        type: int
+        required: false
+      orphan_outputs:
+        type: int
+        required: false
+      alias_conflicts:
+        type: int
+        required: false
+    outputs:
+      health:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      action:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    alias_conflicts: 10
+    suggested_aliases: 1
+    orphan_outputs: 3
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    alias_conflicts: 0
+    suggested_aliases: 1
+    orphan_outputs: 3
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

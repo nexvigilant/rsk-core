@@ -1,0 +1,141 @@
+name: tox-neurological-helix
+description: 'Forged from microgram ''tox-neurological''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    severity: falsified
+sense:
+  tree:
+    start: check_severe
+    nodes:
+      check_severe:
+        type: condition
+        variable: neurotox_grade
+        operator: gte
+        value: 3
+        true_next: severe
+        false_next: check_mild
+      normal:
+        type: return
+        value:
+          severity: normal
+          target: brain
+          action: continue
+          organ: neurological
+      mild:
+        type: return
+        value:
+          action: monitor_closely
+          organ: neurological
+          severity: mild
+          target: brain
+      severe:
+        type: return
+        value:
+          organ: neurological
+          target: brain
+          action: discontinue
+          severity: severe
+      check_mild:
+        type: condition
+        variable: neurotox_grade
+        operator: gte
+        value: 2
+        true_next: mild
+        false_next: normal
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_negation:
+        type: condition
+        variable: neurotox_grade
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      neurotox_grade:
+        type: integer
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    neurotox_grade: 13
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    neurotox_grade: 2
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

@@ -1,0 +1,294 @@
+name: algo-void-scan-helix
+description: 'Forged from microgram ''algo-void-scan''. Domain: CausalityAssessment. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    highest_value_gap: falsified
+sense:
+  tree:
+    start: count_rechallenge
+    nodes:
+      check_class:
+        type: condition
+        variable: has_class_comparison
+        operator: eq
+        value: false
+        true_next: minor_gap_class
+        false_next: complete
+      three_plus_gaps:
+        type: condition
+        variable: has_class_comparison
+        operator: eq
+        value: false
+        true_next: four_gaps
+        false_next: three_gaps
+      four_gaps:
+        type: return
+        value:
+          highest_value_gap: rechallenge_data
+          gap_count: 4
+          completeness: incomplete
+          algorithm: 'VOID: 4 gaps detected — rechallenge, dose-response, time-to-onset, class comparison all absent'
+      gap_rechallenge:
+        type: condition
+        variable: has_dose_response
+        operator: eq
+        value: false
+        true_next: gap_both_critical
+        false_next: check_remaining_with_rechallenge_gap
+      minor_gap:
+        type: return
+        value:
+          highest_value_gap: time_to_onset
+          algorithm: 'VOID: 1 minor gap — time-to-onset absent'
+          gap_count: 1
+          completeness: near_complete
+      two_critical_gaps:
+        type: return
+        value:
+          gap_count: 2
+          algorithm: 'VOID: 2 critical gaps — rechallenge + dose-response absent'
+          completeness: partial
+          highest_value_gap: rechallenge_data
+      check_minor_gaps:
+        type: condition
+        variable: has_time_to_onset
+        operator: eq
+        value: false
+        true_next: minor_gap
+        false_next: check_class
+      gap_both_critical:
+        type: condition
+        variable: has_time_to_onset
+        operator: eq
+        value: false
+        true_next: three_plus_gaps
+        false_next: two_critical_gaps
+      count_rechallenge:
+        type: condition
+        variable: has_rechallenge_data
+        operator: eq
+        value: false
+        true_next: gap_rechallenge
+        false_next: count_dose_response
+      three_gaps:
+        type: return
+        value:
+          completeness: incomplete
+          gap_count: 3
+          highest_value_gap: rechallenge_data
+          algorithm: 'VOID: 3 gaps — rechallenge + dose-response + time-to-onset absent'
+      rechallenge_only_gap:
+        type: return
+        value:
+          gap_count: 1
+          highest_value_gap: rechallenge_data
+          algorithm: 'VOID: 1 gap — rechallenge data absent (caps Naranjo at POSSIBLE)'
+          completeness: near_complete
+      dose_response_gap:
+        type: return
+        value:
+          algorithm: 'VOID: 1 gap — dose-response absent'
+          highest_value_gap: dose_response
+          completeness: near_complete
+          gap_count: 1
+      rechallenge_plus_onset_gap:
+        type: return
+        value:
+          gap_count: 2
+          highest_value_gap: rechallenge_data
+          algorithm: 'VOID: 2 gaps — rechallenge + time-to-onset absent'
+          completeness: partial
+      count_dose_response:
+        type: condition
+        variable: has_dose_response
+        operator: eq
+        value: false
+        true_next: dose_response_gap
+        false_next: check_minor_gaps
+      check_remaining_with_rechallenge_gap:
+        type: condition
+        variable: has_time_to_onset
+        operator: eq
+        value: false
+        true_next: rechallenge_plus_onset_gap
+        false_next: rechallenge_only_gap
+      complete:
+        type: return
+        value:
+          completeness: complete
+          highest_value_gap: none
+          gap_count: 0
+          algorithm: 'VOID: 0 gaps — all 7 data elements present. Assessment fully evidenced.'
+      minor_gap_class:
+        type: return
+        value:
+          gap_count: 1
+          highest_value_gap: class_comparison
+          algorithm: 'VOID: 1 minor gap — class comparison absent'
+          completeness: near_complete
+antisense:
+  tree:
+    start: check_alternative_cause
+    nodes:
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: check_temporal_implausible
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_no_dechallenge
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      temporal_plausible:
+        type: bool
+        required: false
+      has_rechallenge_data:
+        type: boolean
+        required: true
+      has_time_to_onset:
+        type: boolean
+        required: true
+      has_clinical_trial_data:
+        type: boolean
+        required: true
+      has_dose_response:
+        type: boolean
+        required: true
+      dechallenge_positive:
+        type: bool
+        required: false
+      has_disproportionality:
+        type: boolean
+        required: true
+      alternative_causes:
+        type: string
+        required: false
+      has_labeling_acknowledgment:
+        type: boolean
+        required: true
+      has_class_comparison:
+        type: boolean
+        required: true
+    outputs:
+      completeness:
+        type: string
+        required: false
+      algorithm:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      gap_count:
+        type: integer
+        required: false
+      highest_value_gap:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    alternative_causes: none
+    has_rechallenge_data: false
+    has_dose_response: false
+    has_clinical_trial_data: true
+    has_class_comparison: false
+    has_labeling_acknowledgment: true
+    has_time_to_onset: false
+    dechallenge_positive: true
+    temporal_plausible: true
+    has_disproportionality: true
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, alternative_cause active'
+  input:
+    alternative_causes: likely
+    has_rechallenge_data: false
+    has_dose_response: false
+    has_clinical_trial_data: true
+    has_class_comparison: false
+    has_labeling_acknowledgment: true
+    has_time_to_onset: false
+    has_disproportionality: true
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — causality-assessment with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: causality-assessment. Chains as dual-strand verifier before downstream consumers.'

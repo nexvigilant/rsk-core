@@ -1,0 +1,143 @@
+name: station-dcs-pipeline-helix
+description: 'Forged from microgram ''station-dcs-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    action: falsified
+sense:
+  tree:
+    start: check_load
+    nodes:
+      check_partition:
+        type: condition
+        variable: partition_detected
+        operator: eq
+        value: true
+        true_next: partitioned
+        false_next: nominal
+      check_load:
+        type: condition
+        variable: cpu_pct
+        operator: gte
+        value: 80
+        true_next: overloaded
+        false_next: check_partition
+      partitioned:
+        type: return
+        value:
+          action: failover
+          reason: Network partition detected — activate failover
+          route: partition_recovery
+          priority: critical
+      nominal:
+        type: return
+        value:
+          action: proceed
+          reason: Load normal, no partitions — nominal operation
+          priority: low
+          route: archive
+      overloaded:
+        type: return
+        value:
+          route: autoscale
+          action: scale
+          reason: CPU ≥80% — horizontal scaling needed
+          priority: high
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: partition_detected
+        operator: lt
+        value: 80
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      partition_detected:
+        type: integer
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    cpu_pct: 90
+    partition_detected: 90
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    cpu_pct: 90
+    partition_detected: 79
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

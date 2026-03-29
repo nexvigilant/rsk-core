@@ -1,0 +1,170 @@
+name: convergence-prr-ror-helix
+description: 'Forged from microgram ''convergence-prr-ror''. Domain: SignalDetection. 4 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    met: falsified
+sense:
+  tree:
+    start: check
+    nodes:
+      divergent:
+        type: return
+        value:
+          convergence: frequentist
+          met: false
+          action: investigate_discrepancy
+      check:
+        type: condition
+        variable: prr_ror_agree
+        operator: eq
+        value: true
+        true_next: converged
+        false_next: divergent
+      converged:
+        type: return
+        value:
+          convergence: frequentist
+          met: true
+          action: escalate
+antisense:
+  tree:
+    start: check_insufficient_n
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_weber_effect:
+        type: condition
+        variable: years_on_market
+        operator: gt
+        value: 5
+        true_next: falsified
+        false_next: check_channeling_bias
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_weber_effect
+      check_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: check_notoriety_bias
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+      met: true
+    default: null
+    emit:
+      confidence_score: 0.7000000000000001
+      verdict: confirmed
+      confidence: high
+  - when:
+      met: true
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      verdict: contested
+      confidence_score: 0.28
+  - when:
+      falsified: false
+      met: false
+    default: null
+    emit:
+      confidence_score: 0.7000000000000001
+      verdict: absent
+      confidence: high
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      years_on_market:
+        type: integer
+        required: false
+      case_count:
+        type: integer
+        required: false
+      channeling_bias:
+        type: bool
+        required: false
+      notoriety_bias:
+        type: bool
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    channeling_bias: false
+    notoriety_bias: false
+    prr_ror_agree: true
+    years_on_market: 0
+    case_count: 13
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, insufficient_n active'
+  input:
+    case_count: 2
+    prr_ror_agree: true
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: absent
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — signal-detection with 4 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: signal-detection. Chains as dual-strand verifier before downstream consumers.'

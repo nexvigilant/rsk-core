@@ -1,0 +1,135 @@
+name: payoff-tier-classifier-helix
+description: 'Forged from microgram ''payoff-tier-classifier''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    tier: falsified
+sense:
+  tree:
+    start: check_high
+    nodes:
+      low:
+        type: return
+        value:
+          tier: low
+      high:
+        type: return
+        value:
+          tier: high
+      check_high:
+        type: condition
+        variable: value
+        operator: gte
+        value: 70
+        true_next: high
+        false_next: check_medium
+      check_medium:
+        type: condition
+        variable: value
+        operator: gte
+        value: 40
+        true_next: medium
+        false_next: low
+      medium:
+        type: return
+        value:
+          tier: medium
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: value
+        operator: lt
+        value: 70
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      value:
+        type: number
+        required: true
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+      tier:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    value: 80
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    value: 69
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

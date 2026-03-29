@@ -1,0 +1,143 @@
+name: station-compliance-pipeline-helix
+description: 'Forged from microgram ''station-compliance-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    reason: falsified
+sense:
+  tree:
+    start: check_score
+    nodes:
+      check_critical:
+        type: condition
+        variable: has_critical_gap
+        operator: eq
+        value: true
+        true_next: critical_gap
+        false_next: moderate_gap
+      moderate_gap:
+        type: return
+        value:
+          reason: Compliance below 80% without critical gaps — schedule remediation
+          priority: moderate
+          route: capa_planned
+          action: plan
+      critical_gap:
+        type: return
+        value:
+          route: capa_immediate
+          action: remediate
+          reason: Critical compliance gap detected — regulatory risk exposure
+          priority: critical
+      check_score:
+        type: condition
+        variable: compliance_score
+        operator: gte
+        value: 80
+        true_next: compliant
+        false_next: check_critical
+      compliant:
+        type: return
+        value:
+          route: archive
+          action: certify
+          priority: low
+          reason: Compliance score ≥80% — within acceptable range
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: has_critical_gap
+        operator: lt
+        value: 80
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      has_critical_gap:
+        type: integer
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    has_critical_gap: 90
+    compliance_score: 92
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    has_critical_gap: 79
+    compliance_score: 92
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

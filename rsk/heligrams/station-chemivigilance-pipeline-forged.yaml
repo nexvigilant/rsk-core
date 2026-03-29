@@ -1,0 +1,159 @@
+name: station-chemivigilance-pipeline-helix
+description: 'Forged from microgram ''station-chemivigilance-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    priority: falsified
+sense:
+  tree:
+    start: check_alerts
+    nodes:
+      withdrawn_similar:
+        type: return
+        value:
+          priority: high
+          reason: Structurally similar to withdrawn drug — investigate shared liability
+          route: sar_analysis
+          action: flag
+      tox_flag:
+        type: return
+        value:
+          reason: High predicted toxicity — in silico flag requires in vitro confirmation
+          action: investigate
+          priority: high
+          route: toxicology_review
+      check_tox:
+        type: condition
+        variable: predicted_toxicity
+        operator: eq
+        value: high
+        true_next: tox_flag
+        false_next: check_similarity
+      high_alerts:
+        type: return
+        value:
+          priority: critical
+          reason: 3+ structural alerts — high probability of reactive metabolite formation
+          route: chemistry_review
+          action: halt
+      check_similarity:
+        type: condition
+        variable: similar_to_withdrawn
+        operator: eq
+        value: true
+        true_next: withdrawn_similar
+        false_next: clean
+      clean:
+        type: return
+        value:
+          action: pass
+          priority: low
+          reason: Clean molecular safety profile — no structural alerts or flags
+          route: archive
+      check_alerts:
+        type: condition
+        variable: structural_alert_count
+        operator: gte
+        value: 3
+        true_next: high_alerts
+        false_next: check_tox
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: predicted_toxicity
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      verdict: contested
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      predicted_toxicity:
+        type: integer
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    similar_to_withdrawn: true
+    predicted_toxicity: 13
+    structural_alert_count: 5
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    similar_to_withdrawn: true
+    predicted_toxicity: 2
+    structural_alert_count: 5
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

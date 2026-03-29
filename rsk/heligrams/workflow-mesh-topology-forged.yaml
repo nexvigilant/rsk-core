@@ -1,0 +1,143 @@
+name: workflow-mesh-topology-helix
+description: 'Forged from microgram ''workflow-mesh-topology''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    topology: falsified
+sense:
+  tree:
+    start: check_density
+    nodes:
+      star:
+        type: return
+        value:
+          topology: star
+          reason: Low signal count — single collector hub
+          max_hops: 1
+          center: collector
+      check_spread:
+        type: condition
+        variable: region_count
+        operator: gte
+        value: 3
+        true_next: mesh
+        false_next: ring
+      mesh:
+        type: return
+        value:
+          center: distributed
+          reason: High density + multi-region — full mesh for gossip
+          max_hops: 3
+          topology: full_mesh
+      ring:
+        type: return
+        value:
+          topology: ring
+          center: relay
+          reason: High density, few regions — ring with relay
+          max_hops: 2
+      check_density:
+        type: condition
+        variable: signal_count
+        operator: gte
+        value: 5
+        true_next: check_spread
+        false_next: star
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      check_negation:
+        type: condition
+        variable: region_count
+        operator: lt
+        value: 5
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      verdict: contested
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      region_count:
+        type: integer
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    region_count: 15
+    signal_count: 2
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    region_count: 4
+    signal_count: 2
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

@@ -1,0 +1,258 @@
+name: e2d-ethics-committee-notification-helix
+description: 'Forged from microgram ''e2d-ethics-committee-notification''. Domain: SeriousnessClassification. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    notify_ethics_committee: falsified
+sense:
+  tree:
+    start: check_serious
+    nodes:
+      return_no_notification:
+        type: return
+        value:
+          notify_ethics_committee: false
+          notify_investigators: false
+          notification_deadline_days: 0
+          notification_type: NO_NOTIFICATION_NON_SERIOUS
+          regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+      check_unexpected:
+        type: condition
+        variable: is_unexpected
+        operator: eq
+        value: true
+        true_next: check_study_involvement
+        false_next: return_no_notification_expected
+      check_lt:
+        type: condition
+        variable: is_life_threatening
+        operator: eq
+        value: true
+        true_next: return_urgent_7_day
+        false_next: return_standard_15_day
+      return_standard_15_day:
+        type: return
+        value:
+          notify_ethics_committee: true
+          notification_type: EXPEDITED_SAFETY_REPORT
+          notification_deadline_days: 15
+          regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+          notify_investigators: true
+      return_no_notification_expected:
+        type: return
+        value:
+          notification_deadline_days: 0
+          notification_type: NO_NOTIFICATION_EXPECTED_REACTION
+          notify_ethics_committee: false
+          notify_investigators: false
+          regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+      return_urgent_7_day:
+        type: return
+        value:
+          notification_type: URGENT_SAFETY_INFORMATION
+          notification_deadline_days: 7
+          regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+          notify_ethics_committee: true
+          notify_investigators: true
+      check_study_involvement:
+        type: condition
+        variable: ongoing_study_involvement
+        operator: eq
+        value: true
+        true_next: check_fatal_or_lt
+        false_next: return_no_study
+      return_no_study:
+        type: return
+        value:
+          notify_investigators: false
+          notification_type: NO_NOTIFICATION_NO_STUDY
+          notification_deadline_days: 0
+          regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+          notify_ethics_committee: false
+      check_serious:
+        type: condition
+        variable: is_serious
+        operator: eq
+        value: true
+        true_next: check_unexpected
+        false_next: return_no_notification
+      check_fatal_or_lt:
+        type: condition
+        variable: is_fatal
+        operator: eq
+        value: true
+        true_next: return_urgent_7_day
+        false_next: check_lt
+antisense:
+  tree:
+    start: check_incomplete_info
+    nodes:
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_comorbidity_confound
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_coding_error
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      notify_ethics_committee: true
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      notify_ethics_committee: true
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when:
+      falsified: false
+      notify_ethics_committee: false
+    default: null
+    emit:
+      verdict: absent
+      confidence_score: 0.7
+      confidence: high
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      coding_verified:
+        type: bool
+        required: false
+      is_fatal:
+        type: bool
+        required: false
+      is_serious:
+        type: bool
+        required: false
+      follow_up_complete:
+        type: bool
+        required: false
+      ongoing_study_involvement:
+        type: bool
+        required: false
+      is_unexpected:
+        type: bool
+        required: false
+      comorbidity_explains:
+        type: bool
+        required: false
+      is_life_threatening:
+        type: bool
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      notification_deadline_days:
+        type: int
+        required: false
+      confidence:
+        type: string
+        required: false
+      notify_investigators:
+        type: bool
+        required: false
+      notification_type:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+      notify_ethics_committee:
+        type: bool
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    follow_up_complete: true
+    comorbidity_explains: false
+    is_serious: true
+    is_fatal: true
+    is_unexpected: true
+    ongoing_study_involvement: true
+    coding_verified: true
+    is_life_threatening: false
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, incomplete_info active'
+  input:
+    is_fatal: true
+    follow_up_complete: false
+    is_life_threatening: false
+    is_serious: true
+    is_unexpected: true
+    ongoing_study_involvement: true
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: absent
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — seriousness-classification with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - is_serious
+  - is_unexpected
+  - ongoing_study_involvement
+  - is_fatal
+  - is_life_threatening
+  chain_prediction: 'Forged heligram. Domain: seriousness-classification. Chains as dual-strand verifier before downstream consumers.'

@@ -1,0 +1,143 @@
+name: station-vigiaccess-pipeline-helix
+description: 'Forged from microgram ''station-vigiaccess-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    route: falsified
+sense:
+  tree:
+    start: check_total
+    nodes:
+      regional_signal:
+        type: return
+        value:
+          route: signal_validation
+          action: investigate
+          reason: 200+ reports in limited regions — possible reporting bias
+          priority: moderate
+      global_signal:
+        type: return
+        value:
+          reason: 200+ reports across 4+ WHO regions — global safety signal
+          route: signal_detection
+          priority: critical
+          action: escalate
+      check_regions:
+        type: condition
+        variable: region_count
+        operator: gte
+        value: 4
+        true_next: global_signal
+        false_next: regional_signal
+      low_vol:
+        type: return
+        value:
+          priority: low
+          route: periodic_review
+          reason: Under 200 global VigiBase reports — insufficient for analysis
+          action: monitor
+      check_total:
+        type: condition
+        variable: total_reports
+        operator: gte
+        value: 200
+        true_next: check_regions
+        false_next: low_vol
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: region_count
+        operator: lt
+        value: 200
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      region_count:
+        type: integer
+        required: false
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    region_count: 210
+    total_reports: 80
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    region_count: 199
+    total_reports: 80
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

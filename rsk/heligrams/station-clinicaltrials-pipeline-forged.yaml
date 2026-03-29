@@ -1,0 +1,159 @@
+name: station-clinicaltrials-pipeline-helix
+description: 'Forged from microgram ''station-clinicaltrials-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    priority: falsified
+sense:
+  tree:
+    start: check_phase
+    nodes:
+      urgent_signal:
+        type: return
+        value:
+          priority: critical
+          route: signal_detection
+          reason: Fatal SAE in Phase 3+ trial — immediate signal investigation
+          action: investigate
+      check_sae_count:
+        type: condition
+        variable: sae_count
+        operator: gte
+        value: 5
+        true_next: check_fatal
+        false_next: low_sae
+      standard_signal:
+        type: return
+        value:
+          reason: Multiple SAEs in Phase 3+ trial — standard signal triage
+          priority: moderate
+          route: signal_detection
+          action: investigate
+      early_phase:
+        type: return
+        value:
+          action: monitor
+          reason: Early phase trial — insufficient population for signal detection
+          priority: low
+          route: archive
+      check_phase:
+        type: condition
+        variable: trial_phase
+        operator: gte
+        value: 3
+        true_next: check_sae_count
+        false_next: early_phase
+      low_sae:
+        type: return
+        value:
+          priority: low
+          action: monitor
+          reason: Phase 3+ with fewer than 5 SAEs — continue monitoring
+          route: periodic_review
+      check_fatal:
+        type: condition
+        variable: has_fatal
+        operator: eq
+        value: true
+        true_next: urgent_signal
+        false_next: standard_signal
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: sae_count
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      sae_count:
+        type: integer
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    trial_phase: 1
+    sae_count: 13
+    has_fatal: false
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    trial_phase: 1
+    sae_count: 2
+    has_fatal: false
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

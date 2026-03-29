@@ -1,0 +1,280 @@
+name: e2a-disability-classifier-helix
+description: 'Forged from microgram ''e2a-disability-classifier''. Domain: SeriousnessClassification. 3 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 2
+  base_pairs:
+    disability_criterion_met: falsified
+sense:
+  tree:
+    start: check_disability_present
+    nodes:
+      minor_impairment:
+        type: return
+        value:
+          disability_type: MINOR_IMPAIRMENT
+          regulatory_reference: 'ICH E2A Section II.B - Note: minor impairment without significant disruption is not a seriousness criterion'
+          rationale: Minor impairment without significant daily activity impact — does not meet disability seriousness criterion
+          disability_criterion_met: false
+          seriousness_basis: NONE
+      check_duration:
+        type: condition
+        variable: disability_duration
+        operator: eq
+        value: permanent
+        true_next: permanent_disability
+        false_next: check_prolonged
+      check_daily_activities:
+        type: condition
+        variable: daily_activities_impaired
+        operator: eq
+        value: true
+        true_next: check_duration
+        false_next: minor_impairment
+      check_prolonged:
+        type: condition
+        variable: disability_duration
+        operator: eq
+        value: prolonged
+        true_next: significant_disability
+        false_next: check_temporary
+      no_disability:
+        type: return
+        value:
+          disability_type: NONE
+          disability_criterion_met: false
+          seriousness_basis: NONE
+          rationale: No disability or incapacity reported — criterion not applicable
+          regulatory_reference: ICH E2A Section II.B - Disability criterion not applicable
+      check_pre_existing:
+        type: condition
+        variable: pre_existing_disability
+        operator: eq
+        value: true
+        true_next: pre_existing_not_criterion
+        false_next: check_significant
+      check_temporary:
+        type: condition
+        variable: disability_duration
+        operator: eq
+        value: temporary
+        true_next: temporary_impairment
+        false_next: significant_disability
+      temporary_impairment:
+        type: return
+        value:
+          regulatory_reference: 'ICH E2A Section II.B - Note: temporary impairment without significant disruption is not a seriousness criterion'
+          disability_type: TEMPORARY_IMPAIRMENT
+          disability_criterion_met: false
+          seriousness_basis: NONE
+          rationale: Temporary impairment without significant or persistent disruption — does not meet disability seriousness criterion
+      check_disability_present:
+        type: condition
+        variable: disability_present
+        operator: eq
+        value: true
+        true_next: check_pre_existing
+        false_next: no_disability
+      pre_existing_not_criterion:
+        type: return
+        value:
+          seriousness_basis: NONE
+          rationale: Disability was pre-existing before the adverse event — not attributable to the event, criterion not met
+          regulatory_reference: ICH E2A Section II.B - Pre-existing disability not attributable to the adverse event
+          disability_criterion_met: false
+          disability_type: PRE_EXISTING
+      check_significant:
+        type: condition
+        variable: significant_disruption
+        operator: eq
+        value: true
+        true_next: check_duration
+        false_next: check_daily_activities
+      permanent_disability:
+        type: return
+        value:
+          disability_type: PERMANENT_SIGNIFICANT
+          regulatory_reference: ICH E2A Section II.B - Significant, persistent or permanent incapacity/disability
+          rationale: Permanent significant disability causing substantial disruption to normal life — seriousness criterion met
+          seriousness_basis: DISABILITY
+          disability_criterion_met: true
+      significant_disability:
+        type: return
+        value:
+          seriousness_basis: DISABILITY
+          rationale: Prolonged significant disability substantially disrupting normal life functioning — seriousness criterion met
+          disability_criterion_met: true
+          regulatory_reference: ICH E2A Section II.B - Significant, persistent or permanent incapacity/disability
+          disability_type: SIGNIFICANT_PROLONGED
+antisense:
+  tree:
+    start: check_incomplete_info
+    nodes:
+      check_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: not_falsified
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: check_coding_error
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: check_comorbidity_confound
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+      disability_criterion_met: true
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      disability_criterion_met: true
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
+  - when:
+      disability_criterion_met: false
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: absent
+      confidence: high
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      coding_verified:
+        type: bool
+        required: false
+      daily_activities_impaired:
+        type: bool
+        required: false
+      significant_disruption:
+        type: bool
+        required: false
+      disability_duration:
+        type: string
+        required: false
+      comorbidity_explains:
+        type: bool
+        required: false
+      pre_existing_disability:
+        type: bool
+        required: false
+      follow_up_complete:
+        type: bool
+        required: false
+      disability_present:
+        type: bool
+        required: false
+    outputs:
+      disability_criterion_met:
+        type: bool
+        required: false
+      seriousness_basis:
+        type: string
+        required: false
+      disability_type:
+        type: string
+        required: false
+      rationale:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    follow_up_complete: true
+    disability_duration: permanent
+    significant_disruption: true
+    coding_verified: true
+    comorbidity_explains: false
+    daily_activities_impaired: true
+    pre_existing_disability: false
+    disability_present: true
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, incomplete_info active'
+  input:
+    follow_up_complete: false
+    disability_duration: permanent
+    disability_present: true
+    significant_disruption: true
+    daily_activities_impaired: true
+    pre_existing_disability: false
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: absent
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — seriousness-classification with 3 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - disability_present
+  - pre_existing_disability
+  - significant_disruption
+  - daily_activities_impaired
+  - disability_duration
+  chain_prediction: 'Forged heligram. Domain: seriousness-classification. Chains as dual-strand verifier before downstream consumers.'
