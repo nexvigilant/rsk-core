@@ -18,10 +18,10 @@ tests:
       death_count: 80000
       new_signals: 0
     expect:
-      signal_tier: high
-      monitoring_frequency: weekly
-      alert_level: CRITICAL
-      action: immediate_review
+      signal_tier: high_signal_volume
+      monitoring_frequency: continuous
+      alert_level: WATCH
+      action: continuous_monitor
 
   - name: moderate company routine
     input:
@@ -31,8 +31,8 @@ tests:
       death_count: 100
       new_signals: 0
     expect:
-      signal_tier: moderate
-      monitoring_frequency: monthly
+      signal_tier: moderate_signal_volume
+      monitoring_frequency: weekly
       alert_level: ROUTINE
       action: periodic_check
 

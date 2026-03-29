@@ -1,0 +1,198 @@
+name: staleness-trust-decay-helix
+description: 'Forged from microgram ''staleness-trust-decay''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    action: falsified
+sense:
+  tree:
+    start: check_base_present
+    nodes:
+      stale:
+        type: return
+        value:
+          action: Trust domain stale — re-demonstrate or exile
+          effective_reliability: 60
+          status: STALE
+      current:
+        type: return
+        value:
+          action: Trust domain current — no action needed
+          effective_reliability: 85
+          status: CURRENT
+      check_recent:
+        type: condition
+        variable: days_since_demo
+        operator: lte
+        value: 11
+        true_next: current
+        false_next: check_moderate_age
+      check_base_present:
+        type: condition
+        variable: base_reliability
+        operator: is_null
+        value: null
+        true_next: reject_missing
+        false_next: check_days_present
+      reject_missing:
+        type: return
+        value:
+          action: 'REJECTED: base_reliability and days_since_demo are required'
+          status: REJECTED
+          effective_reliability: 0
+      check_moderate_age:
+        type: condition
+        variable: days_since_demo
+        operator: lte
+        value: 35
+        true_next: check_base_high
+        false_next: check_stale_long
+      check_base_high:
+        type: condition
+        variable: base_reliability
+        operator: gte
+        value: 0.9
+        true_next: current
+        false_next: stale
+      check_stale_long:
+        type: condition
+        variable: base_reliability
+        operator: gte
+        value: 0.95
+        true_next: stale
+        false_next: critical
+      critical:
+        type: return
+        value:
+          status: CRITICAL
+          effective_reliability: 30
+          action: Trust domain critically decayed — re-validate immediately or exile
+      check_days_present:
+        type: condition
+        variable: days_since_demo
+        operator: is_null
+        value: null
+        true_next: reject_missing
+        false_next: check_perfect_base
+      check_perfect_base:
+        type: condition
+        variable: days_since_demo
+        operator: gt
+        value: 35
+        true_next: check_stale_long
+        false_next: check_recent
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: days_since_demo
+        operator: is_not_null
+        value: null
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      days_since_demo:
+        type: int
+        required: true
+      base_reliability:
+        type: float
+        required: true
+      decay_lambda:
+        type: float
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      effective_reliability:
+        type: int
+        required: false
+      verdict:
+        type: string
+        required: false
+      action:
+        type: string
+        required: false
+      status:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    base_reliability: 0.95
+    days_since_demo: null
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    base_reliability: 0.95
+    days_since_demo: null
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - base_reliability
+  - days_since_demo
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

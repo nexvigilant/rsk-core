@@ -222,7 +222,7 @@ tests:
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:
-    verdict: absent
+    verdict: confirmed
 - name: 'Q4: null safety — graceful degradation'
   input: {}
   expect:

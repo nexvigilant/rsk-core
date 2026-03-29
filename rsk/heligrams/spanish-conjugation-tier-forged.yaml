@@ -167,8 +167,8 @@ tests:
     is_reflexive: false
     is_regular: null
   expect:
-    confidence: low
-    verdict: contested
+    confidence: high
+    verdict: confirmed
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

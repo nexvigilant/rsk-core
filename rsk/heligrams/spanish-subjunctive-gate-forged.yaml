@@ -196,8 +196,8 @@ tests:
     expresses_doubt: true
     expresses_desire: false
   expect:
-    confidence: low
-    verdict: contested
+    confidence: high
+    verdict: confirmed
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

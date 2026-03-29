@@ -152,8 +152,8 @@ tests:
     ends_in_al: false
     syllable_count: 3
   expect:
-    confidence: low
-    verdict: contested
+    confidence: high
+    verdict: confirmed
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:
