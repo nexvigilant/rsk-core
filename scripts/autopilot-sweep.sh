@@ -10,9 +10,13 @@ set -euo pipefail
 #
 # Requires: rsk binary built, pharma_proxy.py accessible
 
-RSK="./target/release/rsk"
-PROXY="scripts/pharma_proxy.py"
-MCG_DIR="rsk/micrograms"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_DIR"
+
+RSK="$PROJECT_DIR/target/release/rsk"
+PROXY="$HOME/ferroforge/scripts/pharma_proxy.py"
+MCG_DIR="$PROJECT_DIR/rsk/micrograms"
 
 COMPANIES=(
   pfizer novartis roche merck abbvie bms jnj lilly
