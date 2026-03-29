@@ -10,27 +10,13 @@ sense:
   tree:
     start: check_rows
     nodes:
-      wide:
-        type: return
-        value:
-          action: select
-          reason: 50+ columns — column selection needed before joins
-          route: column_pruning
-          priority: moderate
-      check_rows:
-        type: condition
-        variable: row_count
-        operator: gte
-        value: 100000
-        true_next: large
-        false_next: check_cols
       large:
         type: return
         value:
-          route: batch_processing
           action: partition
           priority: high
           reason: 100K+ rows — partition before analysis to prevent OOM
+          route: batch_processing
       check_cols:
         type: condition
         variable: column_count
@@ -41,31 +27,52 @@ sense:
       normal:
         type: return
         value:
-          route: archive
+          action: process
           priority: low
           reason: Standard dataframe — direct processing
-          action: process
+          route: archive
+      wide:
+        type: return
+        value:
+          priority: moderate
+          route: column_pruning
+          reason: 50+ columns — column selection needed before joins
+          action: select
+      check_rows:
+        type: condition
+        variable: row_count
+        operator: gte
+        value: 100000
+        true_next: large
+        false_next: check_cols
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: column_count
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
-        variable: row_count
+        variable: column_count
         operator: lt
         value: 100000
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -73,36 +80,36 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7
       verdict: confirmed
-      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
+      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
-      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      row_count:
+      column_count:
         type: integer
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
       confidence:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -110,18 +117,18 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    column_count: 20
-    row_count: 100010
+    row_count: 500000
+    column_count: 100010
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    column_count: 20
-    row_count: 99999
+    row_count: 500000
+    column_count: 99999
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

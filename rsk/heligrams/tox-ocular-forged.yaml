@@ -5,32 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    organ: falsified
+    action: falsified
 sense:
   tree:
     start: check_severe
     nodes:
-      mild:
-        type: return
-        value:
-          organ: ocular
-          target: eye
-          severity: mild
-          action: monitor_closely
-      check_severe:
-        type: condition
-        variable: vision_change_grade
-        operator: gte
-        value: 3
-        true_next: severe
-        false_next: check_mild
-      severe:
-        type: return
-        value:
-          organ: ocular
-          target: eye
-          action: discontinue
-          severity: severe
       check_mild:
         type: condition
         variable: vision_change_grade
@@ -38,22 +17,48 @@ sense:
         value: 1
         true_next: mild
         false_next: normal
+      check_severe:
+        type: condition
+        variable: vision_change_grade
+        operator: gte
+        value: 3
+        true_next: severe
+        false_next: check_mild
       normal:
         type: return
         value:
-          target: eye
           action: continue
-          severity: normal
           organ: ocular
+          target: eye
+          severity: normal
+      severe:
+        type: return
+        value:
+          target: eye
+          organ: ocular
+          action: discontinue
+          severity: severe
+      mild:
+        type: return
+        value:
+          target: eye
+          organ: ocular
+          action: monitor_closely
+          severity: mild
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       check_negation:
         type: condition
         variable: vision_change_grade
@@ -61,11 +66,13 @@ antisense:
         value: 3
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: vision_change_grade
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -74,20 +81,20 @@ resolution:
     default: null
     emit:
       confidence: high
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
-      confidence: medium
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -96,13 +103,13 @@ interface:
         type: integer
         required: false
     outputs:
+      verdict:
+        type: string
+        required: false
       confidence_score:
         type: float
         required: false
       confidence:
-        type: string
-        required: false
-      verdict:
         type: string
         required: false
     aliases: {}
@@ -112,8 +119,8 @@ tests:
   input:
     vision_change_grade: 13
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     vision_change_grade: 2

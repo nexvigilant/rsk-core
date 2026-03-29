@@ -17,6 +17,13 @@ sense:
         value: '{{baseline_rate}}'
         true_next: first_elevated_check_rechallenge
         false_next: first_not_elevated_check_rechallenge
+      sensitization:
+        type: return
+        value:
+          pattern: SENSITIZATION
+          experiment_criterion_met: yes
+          confidence: HIGH
+          interpretation: Sensitization — rechallenge rate exceeds first exposure. Immune-mediated or cumulative mechanism suspected. Strong experiment criterion with dose-escalation concern.
       rechallenge_elevated_check_vs_first:
         type: condition
         variable: rechallenge_rate
@@ -24,41 +31,13 @@ sense:
         value: '{{first_exposure_rate}}'
         true_next: sensitization
         false_next: check_rechallenge_eq_first
-      inconsistent_delayed:
-        type: return
-        value:
-          pattern: INCONSISTENT
-          confidence: LOW
-          experiment_criterion_met: no
-          interpretation: First exposure normal but rechallenge elevated. Delayed onset or coincidental. Experiment criterion not cleanly met — investigate confounders.
-      first_not_elevated_check_rechallenge:
-        type: condition
-        variable: rechallenge_rate
-        operator: gt
-        value: '{{baseline_rate}}'
-        true_next: inconsistent_delayed
-        false_next: no_effect
-      classic_rechallenge_lower:
+      classic_rechallenge_equal:
         type: return
         value:
           pattern: CLASSIC_RECHALLENGE
-          interpretation: Rechallenge positive but at lower rate than first exposure. Partial tolerance may be developing. Still supports experiment criterion.
           experiment_criterion_met: yes
-          confidence: MEDIUM
-      first_elevated_check_rechallenge:
-        type: condition
-        variable: rechallenge_rate
-        operator: gt
-        value: '{{baseline_rate}}'
-        true_next: rechallenge_elevated_check_vs_first
-        false_next: tolerance_pattern
-      sensitization:
-        type: return
-        value:
+          interpretation: Classic rechallenge — rate elevated during both exposures at equal level. Strong Bradford Hill experiment criterion support.
           confidence: HIGH
-          interpretation: Sensitization — rechallenge rate exceeds first exposure. Immune-mediated or cumulative mechanism suspected. Strong experiment criterion with dose-escalation concern.
-          experiment_criterion_met: yes
-          pattern: SENSITIZATION
       check_rechallenge_eq_first:
         type: condition
         variable: rechallenge_rate
@@ -69,47 +48,80 @@ sense:
       tolerance_pattern:
         type: return
         value:
+          experiment_criterion_met: no
+          confidence: MEDIUM
           interpretation: First exposure elevated but rechallenge normal. Suggests tolerance development or adaptation. Experiment criterion not met — effect is not reproducible.
           pattern: TOLERANCE
-          confidence: MEDIUM
+      first_elevated_check_rechallenge:
+        type: condition
+        variable: rechallenge_rate
+        operator: gt
+        value: '{{baseline_rate}}'
+        true_next: rechallenge_elevated_check_vs_first
+        false_next: tolerance_pattern
+      inconsistent_delayed:
+        type: return
+        value:
+          interpretation: First exposure normal but rechallenge elevated. Delayed onset or coincidental. Experiment criterion not cleanly met — investigate confounders.
           experiment_criterion_met: no
+          pattern: INCONSISTENT
+          confidence: LOW
+      classic_rechallenge_lower:
+        type: return
+        value:
+          experiment_criterion_met: yes
+          pattern: CLASSIC_RECHALLENGE
+          interpretation: Rechallenge positive but at lower rate than first exposure. Partial tolerance may be developing. Still supports experiment criterion.
+          confidence: MEDIUM
+      first_not_elevated_check_rechallenge:
+        type: condition
+        variable: rechallenge_rate
+        operator: gt
+        value: '{{baseline_rate}}'
+        true_next: inconsistent_delayed
+        false_next: no_effect
       no_effect:
         type: return
         value:
           interpretation: No elevation at either exposure. No evidence of drug-event relationship via experiment criterion.
+          confidence: HIGH
           pattern: NO_EFFECT
           experiment_criterion_met: no
-          confidence: HIGH
-      classic_rechallenge_equal:
-        type: return
-        value:
-          experiment_criterion_met: yes
-          interpretation: Classic rechallenge — rate elevated during both exposures at equal level. Strong Bradford Hill experiment criterion support.
-          pattern: CLASSIC_RECHALLENGE
-          confidence: HIGH
 antisense:
   tree:
-    start: check_alternative_cause
+    start: null_guard_alternative_cause
     nodes:
-      check_alternative_cause:
-        type: condition
-        variable: alternative_causes
-        operator: eq
-        value: likely
-        true_next: falsified
-        false_next: check_temporal_implausible
       check_temporal_implausible:
         type: condition
         variable: temporal_plausible
         operator: eq
         value: false
         true_next: falsified
+        false_next: null_guard_no_dechallenge
+      null_guard_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: is_null
+        value: null
+        true_next: not_falsified
         false_next: check_no_dechallenge
+      null_guard_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: is_null
+        value: null
+        true_next: null_guard_temporal_implausible
+        false_next: check_alternative_cause
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
       check_no_dechallenge:
         type: condition
         variable: dechallenge_positive
@@ -117,11 +129,20 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: null_guard_temporal_implausible
+      null_guard_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: is_null
+        value: null
+        true_next: null_guard_no_dechallenge
+        false_next: check_temporal_implausible
 resolution:
   mode: base_pair
   rules:
@@ -129,20 +150,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
       confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence_score: 0.27999999999999997
       confidence: low
+      verdict: contested
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
       verdict: indeterminate
     emit: null
 interface:
@@ -151,38 +172,38 @@ interface:
       temporal_plausible:
         type: bool
         required: false
-      alternative_causes:
-        type: string
-        required: false
-      baseline_rate:
-        type: float
-        required: true
       dechallenge_positive:
         type: bool
         required: false
-      first_exposure_rate:
-        type: float
-        required: true
+      alternative_causes:
+        type: string
+        required: false
       rechallenge_rate:
         type: float
         required: true
+      baseline_rate:
+        type: float
+        required: true
+      first_exposure_rate:
+        type: float
+        required: true
     outputs:
-      pattern:
-        type: string
-        required: false
       confidence:
-        type: string
-        required: false
-      verdict:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      interpretation:
+      pattern:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
       experiment_criterion_met:
+        type: string
+        required: false
+      interpretation:
         type: string
         required: false
     aliases: {}
@@ -191,11 +212,11 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     baseline_rate: 5
-    temporal_plausible: true
     rechallenge_rate: 20
+    temporal_plausible: true
+    dechallenge_positive: true
     first_exposure_rate: 20
     alternative_causes: none
-    dechallenge_positive: true
   expect:
     verdict: confirmed
     confidence: high

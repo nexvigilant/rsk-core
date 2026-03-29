@@ -10,83 +10,6 @@ sense:
   tree:
     start: check_benefit_high
     nodes:
-      favorable_with_monitoring:
-        type: return
-        value:
-          regulatory_action: Implement or maintain risk minimization measures
-          br_ratio: FAVORABLE_WITH_CONDITIONS
-          classification: Benefits outweigh risks with risk minimization measures
-          reassessment_interval: 6 months with enhanced monitoring
-      check_low_benefit:
-        type: condition
-        variable: risk_score
-        operator: lt
-        value: 20
-        true_next: uncertain
-        false_next: unfavorable
-      favorable:
-        type: return
-        value:
-          classification: Benefits clearly outweigh risks
-          regulatory_action: No additional risk minimization required
-          reassessment_interval: 12 months per PBRER cycle
-          br_ratio: FAVORABLE
-      uncertain:
-        type: return
-        value:
-          br_ratio: UNCERTAIN
-          regulatory_action: Initiate additional studies or post-authorization safety study
-          reassessment_interval: 3 months pending data collection
-          classification: Benefit-risk balance requires further data
-      check_risk_moderate_for_high_benefit:
-        type: condition
-        variable: risk_score
-        operator: lt
-        value: 70
-        true_next: check_vulnerable_favorable
-        false_next: unfavorable_despite_benefit
-      check_risk_low_for_high_benefit:
-        type: condition
-        variable: risk_score
-        operator: lt
-        value: 30
-        true_next: favorable
-        false_next: check_risk_moderate_for_high_benefit
-      check_vulnerable_favorable:
-        type: condition
-        variable: patient_population_vulnerability
-        operator: eq
-        value: high
-        true_next: uncertain_vulnerable
-        false_next: favorable_with_monitoring
-      unfavorable_despite_benefit:
-        type: return
-        value:
-          br_ratio: UNFAVORABLE
-          classification: Risks outweigh benefits despite demonstrated efficacy
-          reassessment_interval: Immediate regulatory consultation
-          regulatory_action: Consider labeling changes, REMS, or market withdrawal
-      check_benefit_high:
-        type: condition
-        variable: benefit_score
-        operator: gte
-        value: 70
-        true_next: check_risk_low_for_high_benefit
-        false_next: check_benefit_moderate
-      check_risk_for_moderate_benefit:
-        type: condition
-        variable: risk_score
-        operator: lt
-        value: 50
-        true_next: favorable_with_monitoring
-        false_next: uncertain
-      unfavorable:
-        type: return
-        value:
-          reassessment_interval: Immediate regulatory action required
-          regulatory_action: Recommend market withdrawal or severe use restriction
-          br_ratio: UNFAVORABLE
-          classification: Risks outweigh limited benefits
       check_benefit_moderate:
         type: condition
         variable: benefit_score
@@ -94,22 +17,94 @@ sense:
         value: 40
         true_next: check_risk_for_moderate_benefit
         false_next: check_low_benefit
+      check_risk_for_moderate_benefit:
+        type: condition
+        variable: risk_score
+        operator: lt
+        value: 50
+        true_next: favorable_with_monitoring
+        false_next: uncertain
       uncertain_vulnerable:
         type: return
         value:
-          classification: Uncertain benefit-risk in vulnerable population
-          reassessment_interval: Monthly review until resolved
           regulatory_action: Risk minimization measures required — contraindication review
+          reassessment_interval: Monthly review until resolved
           br_ratio: UNCERTAIN_VULNERABLE
-antisense:
-  tree:
-    start: check_negation
-    nodes:
-      falsified:
+          classification: Uncertain benefit-risk in vulnerable population
+      check_risk_low_for_high_benefit:
+        type: condition
+        variable: risk_score
+        operator: lt
+        value: 30
+        true_next: favorable
+        false_next: check_risk_moderate_for_high_benefit
+      uncertain:
         type: return
         value:
-          confounder_count: 1
-          falsified: true
+          classification: Benefit-risk balance requires further data
+          regulatory_action: Initiate additional studies or post-authorization safety study
+          reassessment_interval: 3 months pending data collection
+          br_ratio: UNCERTAIN
+      check_risk_moderate_for_high_benefit:
+        type: condition
+        variable: risk_score
+        operator: lt
+        value: 70
+        true_next: check_vulnerable_favorable
+        false_next: unfavorable_despite_benefit
+      favorable:
+        type: return
+        value:
+          reassessment_interval: 12 months per PBRER cycle
+          regulatory_action: No additional risk minimization required
+          classification: Benefits clearly outweigh risks
+          br_ratio: FAVORABLE
+      check_low_benefit:
+        type: condition
+        variable: risk_score
+        operator: lt
+        value: 20
+        true_next: uncertain
+        false_next: unfavorable
+      favorable_with_monitoring:
+        type: return
+        value:
+          regulatory_action: Implement or maintain risk minimization measures
+          br_ratio: FAVORABLE_WITH_CONDITIONS
+          reassessment_interval: 6 months with enhanced monitoring
+          classification: Benefits outweigh risks with risk minimization measures
+      unfavorable_despite_benefit:
+        type: return
+        value:
+          reassessment_interval: Immediate regulatory consultation
+          br_ratio: UNFAVORABLE
+          classification: Risks outweigh benefits despite demonstrated efficacy
+          regulatory_action: Consider labeling changes, REMS, or market withdrawal
+      unfavorable:
+        type: return
+        value:
+          regulatory_action: Recommend market withdrawal or severe use restriction
+          br_ratio: UNFAVORABLE
+          reassessment_interval: Immediate regulatory action required
+          classification: Risks outweigh limited benefits
+      check_vulnerable_favorable:
+        type: condition
+        variable: patient_population_vulnerability
+        operator: eq
+        value: high
+        true_next: uncertain_vulnerable
+        false_next: favorable_with_monitoring
+      check_benefit_high:
+        type: condition
+        variable: benefit_score
+        operator: gte
+        value: 70
+        true_next: check_risk_low_for_high_benefit
+        false_next: check_benefit_moderate
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
       not_falsified:
         type: return
         value:
@@ -117,11 +112,23 @@ antisense:
           confounder_count: 0
       check_negation:
         type: condition
-        variable: risk_score
+        variable: benefit_score
         operator: lt
         value: 70
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: benefit_score
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -129,45 +136,36 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       verdict: confirmed
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
       confidence: low
   - when: null
     default:
-      confidence_score: 0.5
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
+      risk_score:
+        type: int
+        required: true
       benefit_score:
         type: int
         required: true
       patient_population_vulnerability:
         type: string
         required: false
-      risk_score:
-        type: int
-        required: true
     outputs:
-      br_ratio:
-        type: string
-        required: false
-      confidence_score:
-        type: float
-        required: false
       reassessment_interval:
-        type: string
-        required: false
-      regulatory_action:
         type: string
         required: false
       classification:
@@ -176,26 +174,35 @@ interface:
       verdict:
         type: string
         required: false
+      br_ratio:
+        type: string
+        required: false
+      regulatory_action:
+        type: string
+        required: false
       confidence:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    risk_score: 80
-    benefit_score: 85
+    risk_score: 15
+    benefit_score: 80
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    risk_score: 69
-    benefit_score: 85
+    risk_score: 15
+    benefit_score: 69
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

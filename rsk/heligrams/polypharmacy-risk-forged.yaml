@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 5
   base_pairs:
-    monitoring_frequency: falsified
+    recommendation: falsified
 sense:
   tree:
     start: check_high_drug_count
@@ -13,55 +13,15 @@ sense:
       moderate_risk_elderly:
         type: return
         value:
-          monitoring_frequency: Weekly monitoring for adverse drug reactions
-          risk_level: MODERATE_RISK
           recommendation: Geriatric medication review using Beers Criteria within 72 hours
-      check_moderate_drug_count:
-        type: condition
-        variable: drug_count
-        operator: gt
-        value: 3
-        true_next: check_elderly_moderate
-        false_next: low_risk
-      moderate_risk_interaction:
-        type: return
-        value:
           risk_level: MODERATE_RISK
           monitoring_frequency: Weekly monitoring for adverse drug reactions
-          recommendation: Pharmacist review of drug interactions within 48 hours
-      low_risk:
-        type: return
-        value:
-          monitoring_frequency: Standard monitoring per disease management protocol
-          risk_level: LOW_RISK
-          recommendation: Routine medication reconciliation at next scheduled visit
       high_risk:
         type: return
         value:
+          risk_level: HIGH_RISK
           recommendation: Immediate medication review by clinical pharmacist and prescriber
           monitoring_frequency: Daily clinical monitoring required
-          risk_level: HIGH_RISK
-      check_elderly_high:
-        type: condition
-        variable: patient_age_over_65
-        operator: eq
-        value: true
-        true_next: high_risk
-        false_next: moderate_risk_interaction
-      check_interaction_high:
-        type: condition
-        variable: has_known_interaction
-        operator: eq
-        value: true
-        true_next: check_elderly_high
-        false_next: check_moderate_drug_count
-      check_high_drug_count:
-        type: condition
-        variable: drug_count
-        operator: gt
-        value: 5
-        true_next: check_interaction_high
-        false_next: check_moderate_drug_count
       check_elderly_moderate:
         type: condition
         variable: patient_age_over_65
@@ -69,27 +29,74 @@ sense:
         value: true
         true_next: moderate_risk_elderly
         false_next: low_risk
+      moderate_risk_interaction:
+        type: return
+        value:
+          recommendation: Pharmacist review of drug interactions within 48 hours
+          monitoring_frequency: Weekly monitoring for adverse drug reactions
+          risk_level: MODERATE_RISK
+      check_high_drug_count:
+        type: condition
+        variable: drug_count
+        operator: gt
+        value: 5
+        true_next: check_interaction_high
+        false_next: check_moderate_drug_count
+      check_elderly_high:
+        type: condition
+        variable: patient_age_over_65
+        operator: eq
+        value: true
+        true_next: high_risk
+        false_next: moderate_risk_interaction
+      check_moderate_drug_count:
+        type: condition
+        variable: drug_count
+        operator: gt
+        value: 3
+        true_next: check_elderly_moderate
+        false_next: low_risk
+      check_interaction_high:
+        type: condition
+        variable: has_known_interaction
+        operator: eq
+        value: true
+        true_next: check_elderly_high
+        false_next: check_moderate_drug_count
+      low_risk:
+        type: return
+        value:
+          recommendation: Routine medication reconciliation at next scheduled visit
+          monitoring_frequency: Standard monitoring per disease management protocol
+          risk_level: LOW_RISK
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      check_negation:
+        type: condition
+        variable: patient_age_over_65
+        operator: lte
+        value: 5
+        true_next: falsified
+        false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: patient_age_over_65
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
-      check_negation:
-        type: condition
-        variable: drug_count
-        operator: lte
-        value: 5
-        true_next: falsified
-        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -104,14 +111,14 @@ resolution:
       falsified: true
     default: null
     emit:
-      confidence: low
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
       verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -119,14 +126,23 @@ interface:
       patient_age_over_65:
         type: bool
         required: false
-      drug_count:
-        type: int
-        required: false
       has_known_interaction:
         type: bool
         required: false
+      drug_count:
+        type: int
+        required: false
     outputs:
+      monitoring_frequency:
+        type: string
+        required: false
       risk_level:
+        type: string
+        required: false
+      recommendation:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
       confidence:
@@ -135,34 +151,25 @@ interface:
       confidence_score:
         type: float
         required: false
-      recommendation:
-        type: string
-        required: false
-      monitoring_frequency:
-        type: string
-        required: false
-      verdict:
-        type: string
-        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
+    drug_count: 6
     has_known_interaction: true
-    patient_age_over_65: true
-    drug_count: 15
+    patient_age_over_65: 15
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
+    drug_count: 6
     has_known_interaction: true
-    patient_age_over_65: true
-    drug_count: 5
+    patient_age_over_65: 5
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

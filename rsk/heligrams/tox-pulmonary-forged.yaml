@@ -10,25 +10,6 @@ sense:
   tree:
     start: check_severe
     nodes:
-      severe:
-        type: return
-        value:
-          severity: severe
-          organ: pulmonary
-          action: discontinue
-      mild:
-        type: return
-        value:
-          severity: mild
-          action: monitor_closely
-          organ: pulmonary
-      check_severe:
-        type: condition
-        variable: fev1_pct
-        operator: lte
-        value: 50
-        true_next: severe
-        false_next: check_mild
       check_mild:
         type: condition
         variable: fev1_pct
@@ -36,26 +17,35 @@ sense:
         value: 80
         true_next: mild
         false_next: normal
+      check_severe:
+        type: condition
+        variable: fev1_pct
+        operator: lte
+        value: 50
+        true_next: severe
+        false_next: check_mild
+      mild:
+        type: return
+        value:
+          severity: mild
+          action: monitor_closely
+          organ: pulmonary
       normal:
         type: return
         value:
-          organ: pulmonary
           severity: normal
           action: continue
+          organ: pulmonary
+      severe:
+        type: return
+        value:
+          organ: pulmonary
+          severity: severe
+          action: discontinue
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       check_negation:
         type: condition
         variable: fev1_pct
@@ -63,6 +53,23 @@ antisense:
         value: 50
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: fev1_pct
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -70,21 +77,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
       verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -93,13 +100,13 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
       verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -115,8 +122,8 @@ tests:
   input:
     fev1_pct: 51
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

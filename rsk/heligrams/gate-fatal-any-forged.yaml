@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 2
   base_pairs:
-    gate: falsified
+    met: falsified
 sense:
   tree:
     start: check
@@ -17,22 +17,36 @@ sense:
         value: 1
         true_next: pass
         false_next: fail
+      fail:
+        type: return
+        value:
+          threshold: death_count
+          met: false
+          gate: false
       pass:
         type: return
         value:
           gate: true
           threshold: death_count
           met: true
-      fail:
-        type: return
-        value:
-          met: false
-          gate: false
-          threshold: death_count
 antisense:
   tree:
-    start: check_incomplete_info
+    start: null_guard_incomplete_info
     nodes:
+      null_guard_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: is_null
+        value: null
+        true_next: null_guard_comorbidity_confound
+        false_next: check_incomplete_info
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_comorbidity_confound
       check_coding_error:
         type: condition
         variable: coding_verified
@@ -46,19 +60,26 @@ antisense:
         operator: eq
         value: true
         true_next: falsified
-        false_next: check_coding_error
-      check_incomplete_info:
+        false_next: null_guard_coding_error
+      null_guard_coding_error:
         type: condition
-        variable: follow_up_complete
-        operator: eq
-        value: false
-        true_next: falsified
-        false_next: check_comorbidity_confound
+        variable: coding_verified
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_coding_error
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      null_guard_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: is_null
+        value: null
+        true_next: null_guard_coding_error
+        false_next: check_comorbidity_confound
       not_falsified:
         type: return
         value:
@@ -68,34 +89,34 @@ resolution:
   mode: base_pair
   rules:
   - when:
-      gate: true
       falsified: false
+      met: true
     default: null
     emit:
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
       verdict: confirmed
   - when:
-      gate: true
+      met: true
       falsified: true
     default: null
     emit:
+      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
-      confidence: low
   - when:
-      gate: false
       falsified: false
+      met: false
     default: null
     emit:
       confidence: high
-      verdict: absent
       confidence_score: 0.7
+      verdict: absent
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -110,27 +131,27 @@ interface:
         type: bool
         required: false
     outputs:
+      confidence_score:
+        type: float
+        required: false
       verdict:
         type: string
         required: false
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    comorbidity_explains: false
     death_count: 1
-    follow_up_complete: true
     coding_verified: true
+    follow_up_complete: true
+    comorbidity_explains: false
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, incomplete_info active'
   input:
     follow_up_complete: false

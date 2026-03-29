@@ -10,6 +10,27 @@ sense:
   tree:
     start: check_severe
     nodes:
+      severe:
+        type: return
+        value:
+          severity: severe
+          target: brain
+          action: discontinue
+          organ: neurological
+      normal:
+        type: return
+        value:
+          severity: normal
+          action: continue
+          organ: neurological
+          target: brain
+      mild:
+        type: return
+        value:
+          target: brain
+          severity: mild
+          organ: neurological
+          action: monitor_closely
       check_severe:
         type: condition
         variable: neurotox_grade
@@ -17,27 +38,6 @@ sense:
         value: 3
         true_next: severe
         false_next: check_mild
-      normal:
-        type: return
-        value:
-          severity: normal
-          target: brain
-          action: continue
-          organ: neurological
-      mild:
-        type: return
-        value:
-          action: monitor_closely
-          organ: neurological
-          severity: mild
-          target: brain
-      severe:
-        type: return
-        value:
-          organ: neurological
-          target: brain
-          action: discontinue
-          severity: severe
       check_mild:
         type: condition
         variable: neurotox_grade
@@ -47,8 +47,20 @@ sense:
         false_next: normal
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: neurotox_grade
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
@@ -61,11 +73,6 @@ antisense:
         value: 3
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -73,9 +80,9 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       confidence_score: 0.7
       verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
@@ -96,14 +103,14 @@ interface:
         type: integer
         required: false
     outputs:
-      verdict:
-        type: string
-        required: false
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
+        required: false
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -118,8 +125,8 @@ tests:
   input:
     neurotox_grade: 2
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

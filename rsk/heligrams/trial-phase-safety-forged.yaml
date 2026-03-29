@@ -1,0 +1,216 @@
+name: trial-phase-safety-helix
+description: 'Forged from microgram ''trial-phase-safety''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    data_quality: falsified
+sense:
+  tree:
+    start: check_safety
+    nodes:
+      phase1_safety:
+        type: return
+        value:
+          data_quality: preliminary
+          regulatory_weight: exploratory
+          safety_classification: dose_limiting_toxicity
+      phase2_safety:
+        type: return
+        value:
+          regulatory_weight: supportive
+          safety_classification: preliminary_safety_signal
+          data_quality: moderate
+      check_phase3:
+        type: condition
+        variable: trial_phase
+        operator: eq
+        value: '3'
+        true_next: check_sample_size
+        false_next: check_phase4
+      phase3_small:
+        type: return
+        value:
+          safety_classification: confirmatory_safety_signal
+          regulatory_weight: supportive
+          data_quality: moderate
+      unknown_phase:
+        type: return
+        value:
+          safety_classification: unclassified_safety
+          data_quality: unverified
+          regulatory_weight: unknown
+      check_phase2:
+        type: condition
+        variable: trial_phase
+        operator: eq
+        value: '2'
+        true_next: phase2_safety
+        false_next: check_phase3
+      phase4_safety:
+        type: return
+        value:
+          regulatory_weight: regulatory_commitment
+          safety_classification: post_marketing_surveillance
+          data_quality: real_world
+      check_safety:
+        type: condition
+        variable: has_safety_endpoint
+        operator: eq
+        value: true
+        true_next: check_phase1
+        false_next: no_safety
+      check_sample_size:
+        type: condition
+        variable: sample_size
+        operator: gte
+        value: 500
+        true_next: phase3_pivotal
+        false_next: phase3_small
+      check_phase1:
+        type: condition
+        variable: trial_phase
+        operator: eq
+        value: '1'
+        true_next: phase1_safety
+        false_next: check_phase2
+      check_phase4:
+        type: condition
+        variable: trial_phase
+        operator: eq
+        value: '4'
+        true_next: phase4_safety
+        false_next: unknown_phase
+      no_safety:
+        type: return
+        value:
+          data_quality: not_applicable
+          regulatory_weight: none
+          safety_classification: no_safety_assessment
+      phase3_pivotal:
+        type: return
+        value:
+          data_quality: high
+          safety_classification: pivotal_safety_data
+          regulatory_weight: registrational
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: trial_phase
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: trial_phase
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      has_safety_endpoint:
+        type: bool
+        required: false
+      sample_size:
+        type: int
+        required: false
+      trial_phase:
+        type: string
+        required: false
+    outputs:
+      data_quality:
+        type: string
+        required: false
+      safety_classification:
+        type: string
+        required: false
+      regulatory_weight:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    sample_size: 0
+    has_safety_endpoint: false
+    trial_phase: null
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    sample_size: 0
+    has_safety_endpoint: false
+    trial_phase: false
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

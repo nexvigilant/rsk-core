@@ -5,25 +5,11 @@ type: heligram
 helix:
   twist_rate: 5
   base_pairs:
-    confidence_tier: falsified
+    epistemic_status: falsified
 sense:
   tree:
     start: check_capture
     nodes:
-      check_capture:
-        type: condition
-        variable: capture_pct
-        operator: gte
-        value: 90
-        true_next: high_capture
-        false_next: check_moderate_capture
-      check_moderate_capture:
-        type: condition
-        variable: capture_pct
-        operator: gte
-        value: 60
-        true_next: moderate_capture
-        false_next: check_low_capture
       moderate_capture:
         type: condition
         variable: source_type
@@ -34,51 +20,87 @@ sense:
       census_reconciled:
         type: return
         value:
+          epistemic_status: verified fact — transaction ledger with reconciliation
+          usable_for: true incidence rates, regulatory submissions, publication-grade epidemiology
+          denominator_class: counted
           confidence_tier: census
           warning: none
-          usable_for: true incidence rates, regulatory submissions, publication-grade epidemiology
-          epistemic_status: verified fact — transaction ledger with reconciliation
-          denominator_class: counted
       high_raw:
         type: return
         value:
+          warning: Possible duplicates inflate denominator. Dedup before rate computation.
+          confidence_tier: moderate
           denominator_class: estimated
           epistemic_status: moderate estimate — high capture but no deduplication
-          confidence_tier: moderate
           usable_for: screening, hypothesis generation
-          warning: Possible duplicates inflate denominator. Dedup before rate computation.
-      other_moderate:
-        type: return
-        value:
-          denominator_class: estimated
-          warning: Apply capture adjustment factor before computing rates.
-          confidence_tier: moderate
-          epistemic_status: partial capture — model-dependent correction required
-          usable_for: signal screening with correction factor
-      claims_moderate:
-        type: return
-        value:
-          usable_for: signal screening, denominator approximation, trend detection
-          confidence_tier: moderate
-          epistemic_status: claims-based estimate — 60-90% capture, known blind spots
-          warning: Cash-pay, mail-order, and compounding pharmacy fills are likely missing.
-          denominator_class: estimated
-      high_deduped:
-        type: return
-        value:
-          confidence_tier: high
-          epistemic_status: high-confidence estimate — deduplicated, >90% capture
-          usable_for: signal detection, trend analysis, internal decision-making
-          denominator_class: estimated
-          warning: Not a transaction ledger. Denominator is estimated, not counted.
       census_unreconciled:
         type: return
         value:
           denominator_class: counted
-          warning: Deduplication not confirmed. Run reconciliation before regulatory use.
+          usable_for: incidence rate estimation, internal signal detection
           confidence_tier: census
           epistemic_status: counted but unreconciled — may contain duplicates
-          usable_for: incidence rate estimation, internal signal detection
+          warning: Deduplication not confirmed. Run reconciliation before regulatory use.
+      check_moderate_capture:
+        type: condition
+        variable: capture_pct
+        operator: gte
+        value: 60
+        true_next: moderate_capture
+        false_next: check_low_capture
+      check_capture:
+        type: condition
+        variable: capture_pct
+        operator: gte
+        value: 90
+        true_next: high_capture
+        false_next: check_moderate_capture
+      high_capture:
+        type: condition
+        variable: is_transaction_ledger
+        operator: eq
+        value: true
+        true_next: census_grade
+        false_next: high_estimated
+      high_deduped:
+        type: return
+        value:
+          confidence_tier: high
+          denominator_class: estimated
+          epistemic_status: high-confidence estimate — deduplicated, >90% capture
+          usable_for: signal detection, trend analysis, internal decision-making
+          warning: Not a transaction ledger. Denominator is estimated, not counted.
+      other_moderate:
+        type: return
+        value:
+          epistemic_status: partial capture — model-dependent correction required
+          usable_for: signal screening with correction factor
+          warning: Apply capture adjustment factor before computing rates.
+          confidence_tier: moderate
+          denominator_class: estimated
+      low_capture:
+        type: return
+        value:
+          warning: Denominator below 60% capture. Rates computed from this source are unreliable.
+          denominator_class: modeled
+          usable_for: hypothesis generation only, not suitable for rate computation
+          confidence_tier: low
+          epistemic_status: low capture — denominator is a model output, not a count
+      census_grade:
+        type: condition
+        variable: has_reconciliation
+        operator: eq
+        value: true
+        true_next: census_reconciled
+        false_next: census_unreconciled
+      claims_moderate:
+        type: return
+        value:
+          denominator_class: estimated
+          epistemic_status: claims-based estimate — 60-90% capture, known blind spots
+          confidence_tier: moderate
+          usable_for: signal screening, denominator approximation, trend detection
+          warning: Cash-pay, mail-order, and compounding pharmacy fills are likely missing.
       check_low_capture:
         type: condition
         variable: capture_pct
@@ -93,40 +115,32 @@ sense:
         value: true
         true_next: high_deduped
         false_next: high_raw
-      low_capture:
-        type: return
-        value:
-          epistemic_status: low capture — denominator is a model output, not a count
-          warning: Denominator below 60% capture. Rates computed from this source are unreliable.
-          usable_for: hypothesis generation only, not suitable for rate computation
-          confidence_tier: low
-          denominator_class: modeled
       insufficient_capture:
         type: return
         value:
           confidence_tier: unusable
-          denominator_class: unknown
-          usable_for: nothing — this is the FAERS paradigm (unknown denominator)
           warning: Capture below 30%. This is not a denominator, it is a guess. Do not compute rates.
+          usable_for: nothing — this is the FAERS paradigm (unknown denominator)
+          denominator_class: unknown
           epistemic_status: insufficient — denominator is effectively unknown
-      census_grade:
-        type: condition
-        variable: has_reconciliation
-        operator: eq
-        value: true
-        true_next: census_reconciled
-        false_next: census_unreconciled
-      high_capture:
-        type: condition
-        variable: is_transaction_ledger
-        operator: eq
-        value: true
-        true_next: census_grade
-        false_next: high_estimated
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
+      null_guard_negation:
+        type: condition
+        variable: source_type
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: source_type
+        operator: lt
+        value: 90
+        true_next: falsified
+        false_next: not_falsified
       falsified:
         type: return
         value:
@@ -135,15 +149,8 @@ antisense:
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
-      check_negation:
-        type: condition
-        variable: capture_pct
-        operator: lt
-        value: 90
-        true_next: falsified
-        false_next: not_falsified
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -151,16 +158,16 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
       confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
   - when: null
     default:
       confidence_score: 0.5
@@ -170,10 +177,13 @@ resolution:
 interface:
   major_groove:
     inputs:
+      has_dedup:
+        type: bool
+        required: false
       source_type:
         type: string
         required: true
-      has_dedup:
+      is_transaction_ledger:
         type: bool
         required: false
       capture_pct:
@@ -182,14 +192,11 @@ interface:
       has_reconciliation:
         type: bool
         required: false
-      is_transaction_ledger:
-        type: bool
-        required: false
     outputs:
       warning:
         type: string
         required: false
-      usable_for:
+      denominator_class:
         type: string
         required: false
       confidence_score:
@@ -198,16 +205,16 @@ interface:
       verdict:
         type: string
         required: false
-      epistemic_status:
-        type: string
-        required: false
-      denominator_class:
-        type: string
-        required: false
       confidence_tier:
         type: string
         required: false
+      usable_for:
+        type: string
+        required: false
       confidence:
+        type: string
+        required: false
+      epistemic_status:
         type: string
         required: false
     aliases: {}
@@ -215,19 +222,19 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    capture_pct: 100
-    has_reconciliation: true
-    source_type: ncpdp
     is_transaction_ledger: true
+    has_reconciliation: true
+    source_type: 100
+    capture_pct: 98
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    capture_pct: 89
-    has_reconciliation: true
-    source_type: ncpdp
     is_transaction_ledger: true
+    has_reconciliation: true
+    source_type: 89
+    capture_pct: 98
   expect:
     verdict: contested
     confidence: low

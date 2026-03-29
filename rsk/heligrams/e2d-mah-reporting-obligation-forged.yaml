@@ -10,13 +10,6 @@ sense:
   tree:
     start: check_serious_unexpected
     nodes:
-      return_eu_eudravigilance_domestic:
-        type: return
-        value:
-          submit_to_authority: true
-          submission_pathway: EUDRAVIGILANCE_DOMESTIC
-          submission_format: E2B_R3_ICH
-          regulatory_reference: ICH E2D Section 4 / EU 2010-84-EU Article 107
       check_region_ich:
         type: condition
         variable: marketing_authorization_region
@@ -27,9 +20,30 @@ sense:
       return_eu_eudravigilance_foreign:
         type: return
         value:
+          submission_format: E2B_R3_ICH
+          regulatory_reference: ICH E2D Section 4 / EU 2010-84-EU Article 107
           submission_pathway: EUDRAVIGILANCE_FOREIGN
           submit_to_authority: true
+      return_us_faers:
+        type: return
+        value:
+          regulatory_reference: ICH E2D Section 4 / 21 CFR 314.80
+          submission_format: MedWatch_3500A
+          submission_pathway: FDA_MEDWATCH_FAERS
+          submit_to_authority: true
+      return_authority_forward:
+        type: return
+        value:
+          regulatory_reference: ICH E2D Section 4 - MAH Reporting Obligations
+          submit_to_authority: true
+          submission_format: E2B_R3_ICH
+          submission_pathway: AUTHORITY_FORWARD_MANDATORY
+      return_eu_eudravigilance_domestic:
+        type: return
+        value:
           regulatory_reference: ICH E2D Section 4 / EU 2010-84-EU Article 107
+          submission_pathway: EUDRAVIGILANCE_DOMESTIC
+          submit_to_authority: true
           submission_format: E2B_R3_ICH
       check_received_from_authority:
         type: condition
@@ -38,27 +52,6 @@ sense:
         value: true
         true_next: return_authority_forward
         false_next: check_region
-      return_ich_e2b:
-        type: return
-        value:
-          submit_to_authority: true
-          regulatory_reference: ICH E2D Section 4 / ICH E2B(R3)
-          submission_format: E2B_R3_ICH
-          submission_pathway: ICH_E2B_NATIONAL
-      check_region_us:
-        type: condition
-        variable: marketing_authorization_region
-        operator: eq
-        value: US
-        true_next: return_us_faers
-        false_next: check_region_ich
-      check_serious_unexpected:
-        type: condition
-        variable: serious_unexpected
-        operator: eq
-        value: true
-        true_next: check_received_from_authority
-        false_next: return_periodic_only
       check_region:
         type: condition
         variable: marketing_authorization_region
@@ -66,34 +59,6 @@ sense:
         value: EU
         true_next: check_foreign_eu
         false_next: check_region_us
-      return_us_faers:
-        type: return
-        value:
-          submit_to_authority: true
-          submission_format: MedWatch_3500A
-          regulatory_reference: ICH E2D Section 4 / 21 CFR 314.80
-          submission_pathway: FDA_MEDWATCH_FAERS
-      return_national_authority:
-        type: return
-        value:
-          submit_to_authority: true
-          submission_format: LOCAL_FORMAT
-          regulatory_reference: ICH E2D Section 4 - MAH Reporting Obligations
-          submission_pathway: NATIONAL_AUTHORITY
-      return_authority_forward:
-        type: return
-        value:
-          regulatory_reference: ICH E2D Section 4 - MAH Reporting Obligations
-          submission_format: E2B_R3_ICH
-          submission_pathway: AUTHORITY_FORWARD_MANDATORY
-          submit_to_authority: true
-      return_periodic_only:
-        type: return
-        value:
-          submit_to_authority: false
-          submission_format: PSUR_PBRER
-          regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
-          submission_pathway: PERIODIC_REPORT_ONLY
       check_foreign_eu:
         type: condition
         variable: is_foreign_case
@@ -101,10 +66,59 @@ sense:
         value: true
         true_next: return_eu_eudravigilance_foreign
         false_next: return_eu_eudravigilance_domestic
+      return_ich_e2b:
+        type: return
+        value:
+          submit_to_authority: true
+          regulatory_reference: ICH E2D Section 4 / ICH E2B(R3)
+          submission_pathway: ICH_E2B_NATIONAL
+          submission_format: E2B_R3_ICH
+      return_national_authority:
+        type: return
+        value:
+          submission_pathway: NATIONAL_AUTHORITY
+          submission_format: LOCAL_FORMAT
+          regulatory_reference: ICH E2D Section 4 - MAH Reporting Obligations
+          submit_to_authority: true
+      return_periodic_only:
+        type: return
+        value:
+          submission_format: PSUR_PBRER
+          submission_pathway: PERIODIC_REPORT_ONLY
+          submit_to_authority: false
+          regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
+      check_serious_unexpected:
+        type: condition
+        variable: serious_unexpected
+        operator: eq
+        value: true
+        true_next: check_received_from_authority
+        false_next: return_periodic_only
+      check_region_us:
+        type: condition
+        variable: marketing_authorization_region
+        operator: eq
+        value: US
+        true_next: return_us_faers
+        false_next: check_region_ich
 antisense:
   tree:
-    start: check_incomplete_info
+    start: null_guard_incomplete_info
     nodes:
+      null_guard_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: is_null
+        value: null
+        true_next: null_guard_comorbidity_confound
+        false_next: check_incomplete_info
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_coding_error
       check_coding_error:
         type: condition
         variable: coding_verified
@@ -112,41 +126,48 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      falsified:
+      not_falsified:
         type: return
         value:
-          confounder_count: 1
-          falsified: true
+          falsified: false
+          confounder_count: 0
+      null_guard_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_coding_error
       check_incomplete_info:
         type: condition
         variable: follow_up_complete
         operator: eq
         value: false
         true_next: falsified
-        false_next: check_comorbidity_confound
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
-      check_comorbidity_confound:
+        false_next: null_guard_comorbidity_confound
+      null_guard_comorbidity_confound:
         type: condition
         variable: comorbidity_explains
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: check_coding_error
+        operator: is_null
+        value: null
+        true_next: null_guard_coding_error
+        false_next: check_comorbidity_confound
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
   - when:
-      submit_to_authority: true
       falsified: false
+      submit_to_authority: true
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7
       verdict: confirmed
-      confidence: high
   - when:
       submit_to_authority: true
       falsified: true
@@ -160,22 +181,25 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       confidence_score: 0.7
+      confidence: high
       verdict: absent
   - when: null
     default:
       verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
+      marketing_authorization_region:
+        type: string
+        required: false
       coding_verified:
         type: bool
         required: false
-      comorbidity_explains:
+      serious_unexpected:
         type: bool
         required: false
       source_country:
@@ -184,14 +208,11 @@ interface:
       follow_up_complete:
         type: bool
         required: false
+      comorbidity_explains:
+        type: bool
+        required: false
       is_foreign_case:
         type: bool
-        required: false
-      serious_unexpected:
-        type: bool
-        required: false
-      marketing_authorization_region:
-        type: string
         required: false
       received_from_authority:
         type: bool
@@ -200,49 +221,49 @@ interface:
       submission_pathway:
         type: string
         required: false
-      verdict:
+      submission_format:
         type: string
         required: false
       regulatory_reference:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
-      submission_format:
-        type: string
-        required: false
-      confidence:
+      verdict:
         type: string
         required: false
       submit_to_authority:
         type: bool
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    comorbidity_explains: false
-    received_from_authority: false
-    follow_up_complete: true
-    coding_verified: true
-    is_foreign_case: false
-    marketing_authorization_region: EU
     serious_unexpected: true
+    received_from_authority: false
+    marketing_authorization_region: EU
+    follow_up_complete: true
+    is_foreign_case: false
+    comorbidity_explains: false
+    coding_verified: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, incomplete_info active'
   input:
+    serious_unexpected: true
     received_from_authority: false
+    marketing_authorization_region: EU
     follow_up_complete: false
     is_foreign_case: false
-    marketing_authorization_region: EU
-    serious_unexpected: true
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

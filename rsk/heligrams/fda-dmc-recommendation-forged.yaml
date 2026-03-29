@@ -1,0 +1,310 @@
+name: fda-dmc-recommendation-helix
+description: 'Forged from microgram ''fda-dmc-recommendation''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    rationale: falsified
+sense:
+  tree:
+    start: check_signal
+    nodes:
+      consider_stopping:
+        type: return
+        value:
+          rationale: Suggestive futility — sponsor should evaluate whether to continue
+          dmc_recommendation: CONSIDER_STOPPING
+          notification_required: Sponsor for decision
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.D'
+          action_urgency: ADVISORY
+      futility_strength_check:
+        type: condition
+        variable: signal_strength
+        operator: eq
+        value: definitive
+        true_next: stop_futility
+        false_next: futility_suggestive
+      increase_monitoring:
+        type: return
+        value:
+          rationale: Borderline signal — increase monitoring frequency and schedule earlier review
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.A'
+          dmc_recommendation: INCREASE_MONITORING
+          action_urgency: ADVISORY
+          notification_required: Sponsor; schedule additional interim review
+      safety_strength_check:
+        type: condition
+        variable: signal_strength
+        operator: eq
+        value: definitive
+        true_next: modify_or_stop
+        false_next: safety_suggestive
+      check_protocol:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: protocol_deviation_pattern
+        true_next: protocol_deviation
+        false_next: continue_default
+      modify_protocol:
+        type: return
+        value:
+          action_urgency: STANDARD
+          dmc_recommendation: MODIFY_PROTOCOL
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.C'
+          notification_required: Sponsor; protocol amendment to IRB and FDA
+          rationale: Suggestive safety signal — recommend protocol modification (dose adjustment, additional monitoring, population restriction)
+      futility_suggestive:
+        type: condition
+        variable: signal_strength
+        operator: eq
+        value: suggestive
+        true_next: consider_stopping
+        false_next: continue_with_review
+      efficacy_strength_check:
+        type: condition
+        variable: signal_strength
+        operator: eq
+        value: definitive
+        true_next: stop_efficacy
+        false_next: continue_with_review
+      mortality_suggestive:
+        type: condition
+        variable: signal_strength
+        operator: eq
+        value: suggestive
+        true_next: suspend_enrollment
+        false_next: increase_monitoring
+      stop_futility:
+        type: return
+        value:
+          dmc_recommendation: STOP_FOR_FUTILITY
+          rationale: Definitive futility — continued enrollment exposes subjects to risk without prospect of benefit
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.D'
+          action_urgency: STANDARD
+          notification_required: Sponsor; no expedited FDA report required for futility alone
+      continue_with_review:
+        type: return
+        value:
+          action_urgency: ROUTINE
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.A'
+          dmc_recommendation: CONTINUE_WITH_REVIEW
+          rationale: No actionable signal at this interim — continue per protocol with standard monitoring
+          notification_required: Standard DMC report to sponsor
+      modify_or_stop:
+        type: return
+        value:
+          notification_required: Sponsor, FDA, IRBs, all investigators
+          action_urgency: URGENT
+          rationale: Definitive serious safety signal — recommend protocol modification or trial termination
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.C'
+          dmc_recommendation: MODIFY_OR_STOP
+      check_signal:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: excess_mortality
+        true_next: mortality_strength_check
+        false_next: check_serious_safety
+      stop_trial_immediately:
+        type: return
+        value:
+          dmc_recommendation: STOP_TRIAL
+          rationale: Definitive excess mortality signal — ethical obligation to stop enrollment and treatment
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.B; 21 CFR 312.32'
+          action_urgency: IMMEDIATE
+          notification_required: Sponsor, FDA (IND Safety Report), IRBs, all investigators within 24 hours
+      check_serious_safety:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: serious_safety_signal
+        true_next: safety_strength_check
+        false_next: check_futility
+      check_overwhelming:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: overwhelming_efficacy
+        true_next: efficacy_strength_check
+        false_next: check_protocol
+      safety_suggestive:
+        type: condition
+        variable: signal_strength
+        operator: eq
+        value: suggestive
+        true_next: modify_protocol
+        false_next: increase_monitoring
+      stop_efficacy:
+        type: return
+        value:
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.E'
+          dmc_recommendation: STOP_FOR_EFFICACY
+          rationale: Overwhelming efficacy — continued placebo arm may be unethical; early stopping boundaries met
+          action_urgency: STANDARD
+          notification_required: Sponsor; consider early NDA/BLA submission
+      suspend_enrollment:
+        type: return
+        value:
+          action_urgency: URGENT
+          notification_required: Sponsor, FDA, IRBs; consider IND Safety Report
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section V.B'
+          dmc_recommendation: SUSPEND_ENROLLMENT
+          rationale: Suggestive mortality signal — suspend new enrollment pending detailed safety review
+      protocol_deviation:
+        type: return
+        value:
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006), Section IV.C'
+          action_urgency: STANDARD
+          dmc_recommendation: RECOMMEND_CORRECTIVE_ACTION
+          notification_required: Sponsor and affected sites
+          rationale: Systematic protocol deviations detected — corrective action needed to preserve trial integrity
+      continue_default:
+        type: return
+        value:
+          action_urgency: ROUTINE
+          rationale: No signal type matched — continue per protocol
+          regulatory_reference: 'FDA Guidance: Data Monitoring Committees (2006)'
+          dmc_recommendation: CONTINUE
+          notification_required: Standard DMC report
+      mortality_strength_check:
+        type: condition
+        variable: signal_strength
+        operator: eq
+        value: definitive
+        true_next: stop_trial_immediately
+        false_next: mortality_suggestive
+      check_futility:
+        type: condition
+        variable: signal_type
+        operator: eq
+        value: futility
+        true_next: futility_strength_check
+        false_next: check_overwhelming
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: signal_strength
+        operator: neq
+        value: excess_mortality
+        true_next: falsified
+        false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: signal_strength
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      verdict: contested
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      trial_phase:
+        type: string
+        required: false
+      signal_type:
+        type: string
+        required: true
+      signal_strength:
+        type: string
+        required: true
+    outputs:
+      verdict:
+        type: string
+        required: false
+      notification_required:
+        type: string
+        required: false
+      action_urgency:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      dmc_recommendation:
+        type: string
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+      rationale:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    signal_strength: null
+    signal_type: excess_mortality
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    signal_strength: __negated__
+    signal_type: excess_mortality
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - signal_type
+  - signal_strength
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

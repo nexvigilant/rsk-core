@@ -1,0 +1,172 @@
+name: algo-converge-signal-helix
+description: 'Forged from microgram ''algo-converge-signal''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    algorithm: falsified
+sense:
+  tree:
+    start: check_convergence
+    nodes:
+      diverge_unstable:
+        type: return
+        value:
+          algorithm: 'CONVERGE inverse: Δ > 10.0 — ENERGY increasing, system unstable'
+          verdict: DIVERGE
+      converged:
+        type: return
+        value:
+          verdict: CONVERGED
+          algorithm: 'CONVERGE: ρ(→(Δς) at ∂) → π(ς) — delta within tolerance, fixpoint reached'
+      check_unstable:
+        type: condition
+        variable: delta
+        operator: gte
+        value: 10.0
+        true_next: diverge_unstable
+        false_next: continue_iteration
+      continue_iteration:
+        type: return
+        value:
+          verdict: CONTINUE
+          algorithm: 'CONVERGE: Δ > tolerance but within bounds — iterate again'
+      check_convergence:
+        type: condition
+        variable: tolerance_met
+        operator: eq
+        value: true
+        true_next: converged
+        false_next: check_max_iterations
+      check_max_iterations:
+        type: condition
+        variable: iteration_count
+        operator: gte
+        value: 20
+        true_next: diverge_exhausted
+        false_next: check_unstable
+      diverge_exhausted:
+        type: return
+        value:
+          algorithm: 'CONVERGE inverse: ∂_tolerance never satisfied within max iterations'
+          verdict: DIVERGE
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: delta
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: delta
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      iteration_count:
+        type: integer
+        required: true
+      delta:
+        type: float
+        required: true
+      tolerance_met:
+        type: boolean
+        required: true
+      max_iterations:
+        type: integer
+        required: true
+    outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      algorithm:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    tolerance_met: true
+    max_iterations: 20
+    iteration_count: 5
+    delta: null
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    tolerance_met: true
+    max_iterations: 20
+    iteration_count: 5
+    delta: false
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

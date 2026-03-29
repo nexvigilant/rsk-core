@@ -10,41 +10,6 @@ sense:
   tree:
     start: check_critical
     nodes:
-      check_healthy:
-        type: condition
-        variable: chi
-        operator: gte
-        value: 0.02
-        true_next: healthy
-        false_next: spinning_up
-      depleting:
-        type: return
-        value:
-          band: Depleting
-          action: 'WARNING: χ above equilibrium band (0.27). System outputting more than sustainable. Monitor for drift toward critical.'
-          equilibrium_distance: -1.0
-          severity: warning
-      spinning_up:
-        type: return
-        value:
-          band: SpinningUp
-          severity: info
-          action: 'INFO: χ below equilibrium band (0.02). System consuming more than outputting. Normal during startup or heavy input phase.'
-          equilibrium_distance: -1.0
-      critical:
-        type: return
-        value:
-          equilibrium_distance: -1.0
-          action: 'ALERT: χ exceeds APSW thermodynamic limit (0.60). Output rate unsustainable. Investigate output flooding or input starvation.'
-          severity: critical
-          band: Critical
-      healthy:
-        type: return
-        value:
-          severity: ok
-          band: Healthy
-          equilibrium_distance: 0.0
-          action: System operating within equilibrium band [0.02, 0.27]. No action required.
       check_depleting:
         type: condition
         variable: chi
@@ -59,15 +24,45 @@ sense:
         value: 0.6
         true_next: critical
         false_next: check_depleting
-antisense:
-  tree:
-    start: check_negation
-    nodes:
-      falsified:
+      check_healthy:
+        type: condition
+        variable: chi
+        operator: gte
+        value: 0.02
+        true_next: healthy
+        false_next: spinning_up
+      critical:
         type: return
         value:
-          falsified: true
-          confounder_count: 1
+          band: Critical
+          action: 'ALERT: χ exceeds APSW thermodynamic limit (0.60). Output rate unsustainable. Investigate output flooding or input starvation.'
+          severity: critical
+          equilibrium_distance: -1.0
+      depleting:
+        type: return
+        value:
+          severity: warning
+          equilibrium_distance: -1.0
+          action: 'WARNING: χ above equilibrium band (0.27). System outputting more than sustainable. Monitor for drift toward critical.'
+          band: Depleting
+      healthy:
+        type: return
+        value:
+          equilibrium_distance: 0.0
+          action: System operating within equilibrium band [0.02, 0.27]. No action required.
+          severity: ok
+          band: Healthy
+      spinning_up:
+        type: return
+        value:
+          severity: info
+          equilibrium_distance: -1.0
+          band: SpinningUp
+          action: 'INFO: χ below equilibrium band (0.02). System consuming more than outputting. Normal during startup or heavy input phase.'
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
       check_negation:
         type: condition
         variable: chi
@@ -75,11 +70,23 @@ antisense:
         value: 0.6
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: chi
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       not_falsified:
         type: return
         value:
           falsified: false
           confounder_count: 0
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -87,21 +94,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
       confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
       confidence: medium
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
@@ -110,18 +117,6 @@ interface:
         type: float
         required: true
     outputs:
-      action:
-        type: string
-        required: false
-      verdict:
-        type: string
-        required: false
-      severity:
-        type: string
-        required: false
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
@@ -129,6 +124,18 @@ interface:
         type: float
         required: false
       band:
+        type: string
+        required: false
+      action:
+        type: string
+        required: false
+      severity:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -144,8 +151,8 @@ tests:
   input:
     chi: 0.6
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

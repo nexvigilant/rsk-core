@@ -5,25 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    reason: falsified
+    priority: falsified
 sense:
   tree:
     start: check_case_count
     nodes:
-      multi_region:
-        type: return
-        value:
-          reason: Reports across 3+ EU regions — geographically distributed signal
-          action: investigate
-          priority: high
-          route: signal_investigation
-      high_fatality:
-        type: return
-        value:
-          priority: critical
-          reason: Fatal outcome ≥5% in EudraVigilance — immediate signal investigation
-          route: signal_detection
-          action: escalate
       check_fatal_pct:
         type: condition
         variable: fatal_percentage
@@ -31,6 +17,13 @@ sense:
         value: 5
         true_next: high_fatality
         false_next: check_geographic
+      single_region:
+        type: return
+        value:
+          priority: moderate
+          route: signal_validation
+          reason: Reports concentrated in 1-2 regions — may be reporting artifact
+          action: validate
       check_case_count:
         type: condition
         variable: case_count
@@ -45,29 +38,31 @@ sense:
         value: 3
         true_next: multi_region
         false_next: single_region
-      single_region:
+      high_fatality:
         type: return
         value:
-          action: validate
-          reason: Reports concentrated in 1-2 regions — may be reporting artifact
-          route: signal_validation
-          priority: moderate
+          action: escalate
+          reason: Fatal outcome ≥5% in EudraVigilance — immediate signal investigation
+          route: signal_detection
+          priority: critical
+      multi_region:
+        type: return
+        value:
+          reason: Reports across 3+ EU regions — geographically distributed signal
+          route: signal_investigation
+          action: investigate
+          priority: high
       low_volume:
         type: return
         value:
           priority: low
+          action: monitor
           reason: Fewer than 50 EV cases — insufficient for disproportionality analysis
           route: periodic_review
-          action: monitor
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       check_negation:
         type: condition
         variable: fatal_percentage
@@ -75,6 +70,18 @@ antisense:
         value: 50
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: fatal_percentage
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
@@ -87,9 +94,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence: high
       confidence_score: 0.7
-      verdict: confirmed
   - when:
       falsified: true
     default: null
@@ -99,9 +106,9 @@ resolution:
       confidence: low
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -113,10 +120,10 @@ interface:
       confidence_score:
         type: float
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -128,16 +135,16 @@ tests:
     region_count: 1
     case_count: 20
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     fatal_percentage: 49
     region_count: 1
     case_count: 20
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

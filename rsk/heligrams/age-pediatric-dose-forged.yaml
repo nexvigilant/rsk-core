@@ -16,19 +16,6 @@ sense:
           message: 'Pediatric dosing: use weight-based dosing'
           adjustment_factor: mg/kg dosing recommended
           dosing_method: weight_based
-      age_based_calculation:
-        type: return
-        value:
-          dosing_method: age_based
-          message: Use age-based adjustment if weight unavailable
-          adjustment_factor: Young's rule or Clark's rule
-      check_weight_based:
-        type: condition
-        variable: weight_kg
-        operator: gt
-        value: 0
-        true_next: weight_based_calculation
-        false_next: age_based_calculation
       check_age_years:
         type: condition
         variable: age_years
@@ -36,33 +23,53 @@ sense:
         value: 18
         true_next: check_weight_based
         false_next: adult_dosing
+      age_based_calculation:
+        type: return
+        value:
+          dosing_method: age_based
+          adjustment_factor: Young's rule or Clark's rule
+          message: Use age-based adjustment if weight unavailable
       adult_dosing:
         type: return
         value:
           dosing_method: adult
           adjustment_factor: 1.0
           message: 'Age 18+: use standard adult dosing'
+      check_weight_based:
+        type: condition
+        variable: weight_kg
+        operator: gt
+        value: 0
+        true_next: weight_based_calculation
+        false_next: age_based_calculation
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
+      null_guard_negation:
+        type: condition
+        variable: age_years
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
           confounder_count: 1
           falsified: true
+      check_negation:
+        type: condition
+        variable: age_years
+        operator: gte
+        value: 18
+        true_next: falsified
+        false_next: not_falsified
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
-      check_negation:
-        type: condition
-        variable: weight_kg
-        operator: gte
-        value: 18
-        true_next: falsified
-        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -71,25 +78,25 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
       confidence_score: 0.5
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      weight_kg:
+      age_years:
         type: integer
         required: false
     outputs:
@@ -108,14 +115,14 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     age_years: 8
-    weight_kg: 8
+    weight_kg: 25
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    age_years: 8
-    weight_kg: 18
+    age_years: 18
+    weight_kg: 25
   expect:
     verdict: contested
     confidence: low

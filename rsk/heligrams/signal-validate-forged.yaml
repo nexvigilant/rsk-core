@@ -10,13 +10,6 @@ sense:
   tree:
     start: validate_signal_data
     nodes:
-      validation_unknown:
-        type: return
-        value:
-          signal_strength: null
-          requires_further_investigation: null
-          validation_status: validation_inconclusive
-          validation_compliant: false
       check_prr_threshold:
         type: condition
         variable: prr_value
@@ -24,6 +17,13 @@ sense:
         value: 2
         true_next: check_case_count
         false_next: validation_failed
+      signal_validated:
+        type: return
+        value:
+          validation_status: valid_signal
+          validation_compliant: true
+          signal_strength: confirmed
+          requires_further_investigation: true
       check_confidence:
         type: condition
         variable: lower_ci_95
@@ -31,6 +31,13 @@ sense:
         value: 1
         true_next: signal_validated
         false_next: validation_failed
+      validation_failed:
+        type: return
+        value:
+          signal_strength: weak
+          requires_further_investigation: false
+          validation_status: signal_not_validated
+          validation_compliant: true
       validate_signal_data:
         type: condition
         variable: prr_value
@@ -38,6 +45,13 @@ sense:
         value: null
         true_next: check_prr_threshold
         false_next: validation_unknown
+      validation_unknown:
+        type: return
+        value:
+          requires_further_investigation: null
+          validation_compliant: false
+          signal_strength: null
+          validation_status: validation_inconclusive
       check_case_count:
         type: condition
         variable: case_count
@@ -45,24 +59,55 @@ sense:
         value: 3
         true_next: check_confidence
         false_next: validation_failed
-      validation_failed:
-        type: return
-        value:
-          signal_strength: weak
-          validation_status: signal_not_validated
-          requires_further_investigation: false
-          validation_compliant: true
-      signal_validated:
-        type: return
-        value:
-          signal_strength: confirmed
-          validation_status: valid_signal
-          validation_compliant: true
-          requires_further_investigation: true
 antisense:
   tree:
-    start: check_insufficient_n
+    start: null_guard_insufficient_n
     nodes:
+      null_guard_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: is_null
+        value: null
+        true_next: null_guard_weber_effect
+        false_next: check_notoriety_bias
+      check_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: null_guard_notoriety_bias
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      null_guard_weber_effect:
+        type: condition
+        variable: years_on_market
+        operator: is_null
+        value: null
+        true_next: null_guard_channeling_bias
+        false_next: check_weber_effect
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_weber_effect
+      null_guard_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_channeling_bias
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
       check_channeling_bias:
         type: condition
         variable: channeling_bias
@@ -70,59 +115,42 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
-      check_notoriety_bias:
-        type: condition
-        variable: notoriety_bias
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: check_weber_effect
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       check_weber_effect:
         type: condition
         variable: years_on_market
         operator: gt
         value: 5
         true_next: falsified
-        false_next: check_channeling_bias
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
-      check_insufficient_n:
+        false_next: null_guard_channeling_bias
+      null_guard_insufficient_n:
         type: condition
         variable: case_count
-        operator: lt
-        value: 3
-        true_next: falsified
-        false_next: check_notoriety_bias
+        operator: is_null
+        value: null
+        true_next: null_guard_notoriety_bias
+        false_next: check_insufficient_n
 resolution:
   mode: base_pair
   rules:
   - when:
-      validation_compliant: true
       falsified: false
+      validation_compliant: true
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7000000000000001
       verdict: confirmed
-      confidence: high
   - when:
-      falsified: true
       validation_compliant: true
+      falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.28
       verdict: contested
+      confidence: low
   - when:
-      validation_compliant: false
       falsified: false
+      validation_compliant: false
     default: null
     emit:
       confidence: high
@@ -130,34 +158,34 @@ resolution:
       confidence_score: 0.7000000000000001
   - when: null
     default:
-      verdict: indeterminate
       confidence_score: 0.5
+      verdict: indeterminate
       confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      case_count:
-        type: integer
-        required: false
-      years_on_market:
-        type: integer
-        required: false
       channeling_bias:
         type: bool
         required: false
       notoriety_bias:
         type: bool
         required: false
+      case_count:
+        type: integer
+        required: false
+      years_on_market:
+        type: integer
+        required: false
     outputs:
+      confidence:
+        type: string
+        required: false
       verdict:
         type: string
         required: false
       confidence_score:
         type: float
-        required: false
-      confidence:
-        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -165,18 +193,18 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     notoriety_bias: false
-    channeling_bias: false
-    years_on_market: 0
-    prr_value: 3.5
     case_count: 13
+    channeling_bias: false
+    prr_value: 3.5
+    years_on_market: 0
     lower_ci_95: 1.2
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, insufficient_n active'
   input:
-    prr_value: 3.5
     case_count: 2
+    prr_value: 3.5
     lower_ci_95: 1.2
   expect:
     verdict: contested

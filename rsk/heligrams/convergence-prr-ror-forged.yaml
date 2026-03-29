@@ -10,12 +10,6 @@ sense:
   tree:
     start: check
     nodes:
-      divergent:
-        type: return
-        value:
-          convergence: frequentist
-          met: false
-          action: investigate_discrepancy
       check:
         type: condition
         variable: prr_ror_agree
@@ -26,32 +20,47 @@ sense:
       converged:
         type: return
         value:
-          convergence: frequentist
           met: true
+          convergence: frequentist
           action: escalate
-antisense:
-  tree:
-    start: check_insufficient_n
-    nodes:
-      not_falsified:
+      divergent:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
+          action: investigate_discrepancy
+          convergence: frequentist
+          met: false
+antisense:
+  tree:
+    start: null_guard_insufficient_n
+    nodes:
       check_weber_effect:
         type: condition
         variable: years_on_market
         operator: gt
         value: 5
         true_next: falsified
-        false_next: check_channeling_bias
-      check_notoriety_bias:
+        false_next: null_guard_channeling_bias
+      null_guard_weber_effect:
+        type: condition
+        variable: years_on_market
+        operator: is_null
+        value: null
+        true_next: null_guard_channeling_bias
+        false_next: check_weber_effect
+      null_guard_notoriety_bias:
         type: condition
         variable: notoriety_bias
-        operator: eq
-        value: true
+        operator: is_null
+        value: null
+        true_next: null_guard_weber_effect
+        false_next: check_notoriety_bias
+      check_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: lt
+        value: 3
         true_next: falsified
-        false_next: check_weber_effect
+        false_next: null_guard_notoriety_bias
       check_channeling_bias:
         type: condition
         variable: channeling_bias
@@ -59,18 +68,37 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_weber_effect
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
-      check_insufficient_n:
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_channeling_bias
+      null_guard_insufficient_n:
         type: condition
         variable: case_count
-        operator: lt
-        value: 3
-        true_next: falsified
-        false_next: check_notoriety_bias
+        operator: is_null
+        value: null
+        true_next: null_guard_notoriety_bias
+        false_next: check_insufficient_n
 resolution:
   mode: base_pair
   rules:
@@ -87,12 +115,12 @@ resolution:
       falsified: true
     default: null
     emit:
-      confidence: low
-      verdict: contested
       confidence_score: 0.28
+      verdict: contested
+      confidence: low
   - when:
-      falsified: false
       met: false
+      falsified: false
     default: null
     emit:
       confidence_score: 0.7000000000000001
@@ -101,51 +129,51 @@ resolution:
   - when: null
     default:
       verdict: indeterminate
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      years_on_market:
-        type: integer
+      channeling_bias:
+        type: bool
         required: false
       case_count:
         type: integer
         required: false
-      channeling_bias:
-        type: bool
-        required: false
       notoriety_bias:
         type: bool
         required: false
+      years_on_market:
+        type: integer
+        required: false
     outputs:
-      confidence_score:
-        type: float
+      confidence:
+        type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence:
-        type: string
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    channeling_bias: false
-    notoriety_bias: false
     prr_ror_agree: true
-    years_on_market: 0
     case_count: 13
+    notoriety_bias: false
+    channeling_bias: false
+    years_on_market: 0
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, insufficient_n active'
   input:
-    case_count: 2
     prr_ror_agree: true
+    case_count: 2
   expect:
     confidence: low
     verdict: contested

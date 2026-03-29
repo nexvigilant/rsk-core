@@ -1,0 +1,247 @@
+name: compliance-evidence-mapper-helix
+description: 'Forged from microgram ''compliance-evidence-mapper''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    control_id: falsified
+sense:
+  tree:
+    start: check_signal
+    nodes:
+      check_icsr:
+        type: condition
+        variable: valid_icsr
+        operator: eq
+        value: true
+        true_next: icsr_evidence
+        false_next: check_benefit_risk
+      no_evidence:
+        type: return
+        value:
+          control_id: ICH-E2A-1
+          evidence_description: No compliance evidence generated - case not yet processed
+          compliance_status: not_implemented
+          evidence_type: none
+      periodic_evidence:
+        type: return
+        value:
+          evidence_description: Case classified for PSUR/DSUR periodic reporting per ICH E2C(R2). Report generation not implemented.
+          compliance_status: partial
+          evidence_type: periodic_reporting
+          control_id: ICH-E2A-3
+      check_signal:
+        type: condition
+        variable: signal_detected
+        operator: eq
+        value: true
+        true_next: signal_evidence
+        false_next: check_report_type
+      check_benefit_risk:
+        type: condition
+        variable: benefit_risk_assessed
+        operator: eq
+        value: true
+        true_next: br_evidence
+        false_next: no_evidence
+      check_line_listing:
+        type: condition
+        variable: report_type
+        operator: eq
+        value: LINE_LISTING
+        true_next: line_listing_evidence
+        false_next: check_icsr
+      expedited_ind_evidence:
+        type: return
+        value:
+          evidence_description: IND safety report classified per 21 CFR 312.32 with correct timeline
+          control_id: ICH-E2A-2
+          evidence_type: expedited_reporting
+          compliance_status: implemented
+      signal_evidence:
+        type: return
+        value:
+          evidence_description: Signal detected via PRR/ROR/IC/EBGM convergent analysis against FAERS database
+          evidence_type: signal_detection
+          control_id: ICH-E2C-2
+          compliance_status: implemented
+      icsr_evidence:
+        type: return
+        value:
+          evidence_description: ICSR validated with 4 minimum criteria per ICH E2A Section III.A. Collection system not implemented.
+          compliance_status: partial
+          control_id: ICH-E2A-1
+          evidence_type: icsr_validation
+      check_periodic:
+        type: condition
+        variable: report_type
+        operator: eq
+        value: PSUR_DSUR
+        true_next: periodic_evidence
+        false_next: check_line_listing
+      line_listing_evidence:
+        type: return
+        value:
+          evidence_description: Non-serious case classified for line listing periodic report per ICH E2C(R2).
+          evidence_type: periodic_reporting
+          control_id: ICH-E2A-3
+          compliance_status: partial
+      check_field_alert:
+        type: condition
+        variable: report_type
+        operator: eq
+        value: FIELD_ALERT
+        true_next: expedited_postmarket_evidence
+        false_next: check_periodic
+      expedited_postmarket_evidence:
+        type: return
+        value:
+          control_id: ICH-E2A-2
+          evidence_type: expedited_reporting
+          compliance_status: implemented
+          evidence_description: Field alert classified per 21 CFR 314.80 with 15-day timeline
+      br_evidence:
+        type: return
+        value:
+          evidence_type: benefit_risk
+          compliance_status: partial
+          control_id: ICH-E2C-3
+          evidence_description: Benefit-risk classification completed. Full quantitative B/R framework not implemented.
+      check_report_type:
+        type: condition
+        variable: report_type
+        operator: eq
+        value: IND_SAFETY
+        true_next: expedited_ind_evidence
+        false_next: check_field_alert
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      null_guard_negation:
+        type: condition
+        variable: valid_icsr
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: valid_icsr
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      valid_icsr:
+        type: bool
+        required: false
+      benefit_risk_assessed:
+        type: bool
+        required: false
+      timeline:
+        type: string
+        required: false
+      signal_detected:
+        type: bool
+        required: false
+      causality:
+        type: string
+        required: false
+      report_type:
+        type: string
+        required: false
+    outputs:
+      control_id:
+        type: string
+        required: false
+      evidence_description:
+        type: string
+        required: false
+      evidence_type:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      compliance_status:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    signal_detected: true
+    valid_icsr: null
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    signal_detected: true
+    valid_icsr: false
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

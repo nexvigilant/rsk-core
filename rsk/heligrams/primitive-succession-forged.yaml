@@ -5,72 +5,100 @@ type: heligram
 helix:
   twist_rate: 2
   base_pairs:
-    law_reference: falsified
+    addition_symbol: falsified
 sense:
   tree:
     start: check_dominant_frequency
     nodes:
-      check_dominant_causality:
-        type: condition
-        variable: dominant
-        operator: eq
-        value: causality
-        true_next: caus_missing_boundary
-        false_next: check_dominant_state
-      predict_freq_plus_causality:
-        type: return
-        value:
-          law_reference: Law of Primitive Succession — cron→/schedule (ν→→ dethrone)
-          evidence_count: 1
-          composition_type: DETHRONE_POSSIBLE
-          addition_symbol: →
-          revolution_class: EXPLANATORY
-          successor_formula: → dominant (ν demoted to input)
-          confidence: HIGH
-          predicted_addition: causality
-      predict_freq_plus_state:
-        type: return
-        value:
-          confidence: HIGH
-          revolution_class: MEMORY
-          composition_type: COMPOSITION
-          successor_formula: ν × ς
-          predicted_addition: state
-          evidence_count: 2
-          addition_symbol: ς
-          law_reference: Law of Primitive Succession — cron→systemd (ν+ς), Euclidean→NonEuclidean (∂+ς)
-      check_dominant_state:
-        type: condition
-        variable: dominant
-        operator: eq
-        value: state
-        true_next: state_missing_void
-        false_next: check_dominant_existence
       predict_freq_plus_void:
         type: return
         value:
-          evidence_count: 0
           addition_symbol: ∅
+          confidence: MEDIUM
+          law_reference: Law of Primitive Succession — predicted (dead man switch = ν+∅)
           successor_formula: ν × ∅
           composition_type: COMPOSITION
-          revolution_class: ONTOLOGICAL
-          confidence: MEDIUM
+          evidence_count: 0
           predicted_addition: void
-          law_reference: Law of Primitive Succession — predicted (dead man switch = ν+∅)
-      loc_missing_causality:
+          revolution_class: ONTOLOGICAL
+      bnd_missing_state:
+        type: condition
+        variable: has_state
+        operator: eq
+        value: false
+        true_next: predict_bnd_plus_state
+        false_next: predict_bnd_plus_causality
+      exist_missing_causality:
         type: condition
         variable: has_causality
         operator: eq
         value: false
-        true_next: predict_loc_plus_causality
-        false_next: predict_loc_plus_boundary
-      bnd_missing_comparison:
+        true_next: predict_exist_plus_causality
+        false_next: exist_missing_boundary
+      check_dominant_quantity:
         type: condition
-        variable: has_comparison
+        variable: dominant
+        operator: eq
+        value: quantity
+        true_next: quant_missing_causality
+        false_next: check_dominant_sequence
+      check_dominant_frequency:
+        type: condition
+        variable: dominant
+        operator: eq
+        value: frequency
+        true_next: freq_missing_state
+        false_next: check_dominant_boundary
+      freq_missing_causality:
+        type: condition
+        variable: has_causality
         operator: eq
         value: false
-        true_next: predict_bnd_plus_comparison
-        false_next: bnd_missing_void
+        true_next: predict_freq_plus_causality
+        false_next: freq_missing_boundary
+      predict_exist_plus_state:
+        type: return
+        value:
+          revolution_class: MEMORY
+          confidence: HIGH
+          evidence_count: 1
+          addition_symbol: ς
+          composition_type: COMPOSITION
+          predicted_addition: state
+          law_reference: Law of Primitive Succession — brain JSON→brain.db (∃+ς queryable state)
+          successor_formula: ∃ × ς
+      exist_missing_boundary:
+        type: condition
+        variable: has_boundary
+        operator: eq
+        value: false
+        true_next: predict_exist_plus_boundary
+        false_next: predict_exist_plus_state
+      bnd_missing_void:
+        type: condition
+        variable: has_void
+        operator: eq
+        value: false
+        true_next: predict_bnd_plus_void
+        false_next: bnd_missing_state
+      check_dominant_existence:
+        type: condition
+        variable: dominant
+        operator: eq
+        value: existence
+        true_next: exist_missing_causality
+        false_next: check_dominant_location
+      fallback_unknown:
+        type: return
+        value:
+          predicted_addition: boundary
+          composition_type: COMPOSITION
+          revolution_class: PRECISION
+          addition_symbol: ∂
+          successor_formula: P_d × ∂
+          confidence: LOW
+          evidence_count: 0
+          law_reference: Law of Primitive Succession — ∂ is the most common +1 addition (5/19 transitions)
       state_missing_void:
         type: condition
         variable: has_void
@@ -78,38 +106,200 @@ sense:
         value: false
         true_next: predict_state_plus_void
         false_next: state_missing_causality
-      predict_exist_plus_boundary:
+      check_dominant_location:
+        type: condition
+        variable: dominant
+        operator: eq
+        value: location
+        true_next: loc_missing_causality
+        false_next: check_dominant_quantity
+      check_dominant_state:
+        type: condition
+        variable: dominant
+        operator: eq
+        value: state
+        true_next: state_missing_void
+        false_next: check_dominant_existence
+      predict_caus_plus_quantity:
         type: return
         value:
-          composition_type: COMPOSITION
-          law_reference: Law of Primitive Succession — NexCore crates→MCP server (∃+∂ typed tool boundaries)
-          predicted_addition: boundary
-          addition_symbol: ∂
-          evidence_count: 1
-          successor_formula: ∃ × ∂
+          addition_symbol: N
+          successor_formula: N may dethrone → (measurement contradicts narrative)
           confidence: HIGH
-          revolution_class: PRECISION
-      predict_exist_plus_state:
+          law_reference: Law of Primitive Succession — Phlogiston→Lavoisier (→+N dethrone, weighing reversed →)
+          evidence_count: 1
+          revolution_class: QUANTITATIVE
+          predicted_addition: quantity
+          composition_type: DETHRONE_POSSIBLE
+      predict_caus_plus_state:
         type: return
         value:
-          confidence: HIGH
-          addition_symbol: ς
-          predicted_addition: state
-          evidence_count: 1
+          successor_formula: → × ς
           revolution_class: MEMORY
-          law_reference: Law of Primitive Succession — brain JSON→brain.db (∃+ς queryable state)
-          successor_formula: ∃ × ς
+          confidence: MEDIUM
+          law_reference: Law of Primitive Succession — predicted (→ system with ∂, N, ∅, ν all present)
+          predicted_addition: state
           composition_type: COMPOSITION
+          addition_symbol: ς
+          evidence_count: 0
+      predict_caus_plus_void:
+        type: return
+        value:
+          revolution_class: ONTOLOGICAL
+          successor_formula: → × ∅
+          law_reference: Law of Primitive Succession — PV→PV+1 (→+∅ absence-aware surveillance, predicted)
+          composition_type: COMPOSITION
+          predicted_addition: void
+          evidence_count: 1
+          confidence: HIGH
+          addition_symbol: ∅
+      caus_missing_frequency:
+        type: condition
+        variable: has_frequency
+        operator: eq
+        value: false
+        true_next: predict_caus_plus_frequency
+        false_next: predict_caus_plus_state
+      check_dominant_boundary:
+        type: condition
+        variable: dominant
+        operator: eq
+        value: boundary
+        true_next: bnd_missing_comparison
+        false_next: check_dominant_causality
+      predict_bnd_plus_causality:
+        type: return
+        value:
+          evidence_count: 0
+          successor_formula: ∂ × →
+          revolution_class: EXPLANATORY
+          predicted_addition: causality
+          confidence: MEDIUM
+          law_reference: Law of Primitive Succession — predicted (∂ system with all nearby primitives present)
+          composition_type: COMPOSITION
+          addition_symbol: →
+      check_dominant_causality:
+        type: condition
+        variable: dominant
+        operator: eq
+        value: causality
+        true_next: caus_missing_boundary
+        false_next: check_dominant_state
+      predict_bnd_plus_comparison:
+        type: return
+        value:
+          revolution_class: NEGOTIATION
+          evidence_count: 1
+          law_reference: Law of Primitive Succession — REST→GraphQL (∂+κ client negotiation)
+          confidence: HIGH
+          predicted_addition: comparison
+          addition_symbol: κ
+          composition_type: COMPOSITION
+          successor_formula: ∂ × κ
+      predict_freq_plus_causality:
+        type: return
+        value:
+          composition_type: DETHRONE_POSSIBLE
+          evidence_count: 1
+          revolution_class: EXPLANATORY
+          successor_formula: → dominant (ν demoted to input)
+          predicted_addition: causality
+          addition_symbol: →
+          confidence: HIGH
+          law_reference: Law of Primitive Succession — cron→/schedule (ν→→ dethrone)
+      predict_freq_plus_state:
+        type: return
+        value:
+          addition_symbol: ς
+          evidence_count: 2
+          successor_formula: ν × ς
+          law_reference: Law of Primitive Succession — cron→systemd (ν+ς), Euclidean→NonEuclidean (∂+ς)
+          predicted_addition: state
+          confidence: HIGH
+          composition_type: COMPOSITION
+          revolution_class: MEMORY
+      predict_bnd_plus_void:
+        type: return
+        value:
+          composition_type: COMPOSITION
+          addition_symbol: ∅
+          predicted_addition: void
+          successor_formula: ∂ × ∅
+          confidence: HIGH
+          evidence_count: 1
+          law_reference: Law of Primitive Succession — SQL→NoSQL (∂+∅ absence tolerance)
+          revolution_class: ONTOLOGICAL
+      bnd_missing_comparison:
+        type: condition
+        variable: has_comparison
+        operator: eq
+        value: false
+        true_next: predict_bnd_plus_comparison
+        false_next: bnd_missing_void
+      caus_missing_boundary:
+        type: condition
+        variable: has_boundary
+        operator: eq
+        value: false
+        true_next: predict_caus_plus_boundary
+        false_next: caus_missing_quantity
+      freq_missing_state:
+        type: condition
+        variable: has_state
+        operator: eq
+        value: false
+        true_next: predict_freq_plus_state
+        false_next: freq_missing_causality
+      caus_missing_quantity:
+        type: condition
+        variable: has_quantity
+        operator: eq
+        value: false
+        true_next: predict_caus_plus_quantity
+        false_next: caus_missing_void
+      predict_caus_plus_frequency:
+        type: return
+        value:
+          predicted_addition: frequency
+          addition_symbol: ν
+          successor_formula: → × ν
+          evidence_count: 1
+          confidence: HIGH
+          composition_type: COMPOSITION
+          law_reference: Law of Primitive Succession — SignalDetection→PreemptivePV (→+ν predictive monitoring)
+          revolution_class: SURVEILLANCE
+      predict_state_plus_boundary:
+        type: return
+        value:
+          evidence_count: 0
+          composition_type: COMPOSITION
+          successor_formula: ς × ∂
+          revolution_class: PRECISION
+          predicted_addition: boundary
+          confidence: MEDIUM
+          law_reference: Law of Primitive Succession — predicted (ς system with ∅ and → present)
+          addition_symbol: ∂
+      predict_exist_plus_causality:
+        type: return
+        value:
+          predicted_addition: causality
+          successor_formula: → dominant (∃ demoted — morphisms over membership)
+          composition_type: DETHRONE_POSSIBLE
+          confidence: HIGH
+          law_reference: Law of Primitive Succession — SetTheory→CategoryTheory (∃→→ dethrone, morphisms primary)
+          addition_symbol: →
+          revolution_class: EXPLANATORY
+          evidence_count: 1
       predict_loc_plus_causality:
         type: return
         value:
-          composition_type: COMPOSITION
-          law_reference: Law of Primitive Succession — Ptolemy→Copernicus (ℓ+→ causal mechanism for motion)
-          confidence: HIGH
-          addition_symbol: →
           predicted_addition: causality
-          evidence_count: 1
+          confidence: HIGH
           revolution_class: EXPLANATORY
+          addition_symbol: →
+          composition_type: COMPOSITION
+          evidence_count: 1
+          law_reference: Law of Primitive Succession — Ptolemy→Copernicus (ℓ+→ causal mechanism for motion)
           successor_formula: ℓ × →
       caus_missing_void:
         type: condition
@@ -118,56 +308,100 @@ sense:
         value: false
         true_next: predict_caus_plus_void
         false_next: caus_missing_frequency
-      bnd_missing_state:
-        type: condition
-        variable: has_state
-        operator: eq
-        value: false
-        true_next: predict_bnd_plus_state
-        false_next: predict_bnd_plus_causality
-      freq_missing_causality:
+      predict_caus_plus_boundary:
+        type: return
+        value:
+          predicted_addition: boundary
+          addition_symbol: ∂
+          evidence_count: 3
+          law_reference: Law of Primitive Succession — Newton→Einstein (→+∂_c), Darwin→ModSynth (→+∂_gene), Calculus→Analysis (→+∂_epsilon)
+          successor_formula: → × ∂
+          confidence: HIGH
+          composition_type: COMPOSITION
+          revolution_class: PRECISION
+      quant_missing_causality:
         type: condition
         variable: has_causality
         operator: eq
         value: false
-        true_next: predict_freq_plus_causality
-        false_next: freq_missing_boundary
-      bnd_missing_void:
+        true_next: predict_quant_plus_causality
+        false_next: predict_quant_plus_boundary
+      seq_missing_boundary:
         type: condition
-        variable: has_void
+        variable: has_boundary
         operator: eq
         value: false
-        true_next: predict_bnd_plus_void
-        false_next: bnd_missing_state
-      check_dominant_frequency:
-        type: condition
-        variable: dominant
-        operator: eq
-        value: frequency
-        true_next: freq_missing_state
-        false_next: check_dominant_boundary
-      predict_caus_plus_boundary:
+        true_next: predict_seq_plus_boundary
+        false_next: predict_seq_plus_state
+      predict_freq_plus_boundary:
         type: return
         value:
-          composition_type: COMPOSITION
-          successor_formula: → × ∂
-          revolution_class: PRECISION
-          law_reference: Law of Primitive Succession — Newton→Einstein (→+∂_c), Darwin→ModSynth (→+∂_gene), Calculus→Analysis (→+∂_epsilon)
-          predicted_addition: boundary
-          confidence: HIGH
-          evidence_count: 3
-          addition_symbol: ∂
-      predict_caus_plus_frequency:
-        type: return
-        value:
-          composition_type: COMPOSITION
-          law_reference: Law of Primitive Succession — SignalDetection→PreemptivePV (→+ν predictive monitoring)
-          predicted_addition: frequency
-          successor_formula: → × ν
-          addition_symbol: ν
-          revolution_class: SURVEILLANCE
-          confidence: HIGH
           evidence_count: 1
+          predicted_addition: boundary
+          addition_symbol: ∂
+          law_reference: Law of Primitive Succession — cron→PSUR (ν+∂_regulatory)
+          composition_type: COMPOSITION
+          successor_formula: ν × ∂
+          revolution_class: PRECISION
+          confidence: HIGH
+      predict_exist_plus_boundary:
+        type: return
+        value:
+          composition_type: COMPOSITION
+          successor_formula: ∃ × ∂
+          revolution_class: PRECISION
+          confidence: HIGH
+          addition_symbol: ∂
+          evidence_count: 1
+          predicted_addition: boundary
+          law_reference: Law of Primitive Succession — NexCore crates→MCP server (∃+∂ typed tool boundaries)
+      loc_missing_causality:
+        type: condition
+        variable: has_causality
+        operator: eq
+        value: false
+        true_next: predict_loc_plus_causality
+        false_next: predict_loc_plus_boundary
+      predict_state_plus_causality:
+        type: return
+        value:
+          composition_type: DETHRONE_POSSIBLE
+          confidence: HIGH
+          revolution_class: EXPLANATORY
+          evidence_count: 1
+          law_reference: Law of Primitive Succession — Humoral→GermTheory (ς→→ dethrone, specific causality overthrew state-balance)
+          predicted_addition: causality
+          addition_symbol: →
+          successor_formula: → dominant (ς demoted to substrate)
+      predict_seq_plus_boundary:
+        type: return
+        value:
+          revolution_class: PRECISION
+          law_reference: Law of Primitive Succession — TCP→QUIC (σ+∂ per-stream boundary)
+          addition_symbol: ∂
+          evidence_count: 1
+          confidence: HIGH
+          successor_formula: σ × ∂
+          composition_type: COMPOSITION
+          predicted_addition: boundary
+      freq_missing_boundary:
+        type: condition
+        variable: has_boundary
+        operator: eq
+        value: false
+        true_next: predict_freq_plus_boundary
+        false_next: predict_freq_plus_void
+      predict_loc_plus_boundary:
+        type: return
+        value:
+          successor_formula: ℓ × ∂
+          composition_type: COMPOSITION
+          confidence: MEDIUM
+          evidence_count: 0
+          addition_symbol: ∂
+          revolution_class: PRECISION
+          law_reference: Law of Primitive Succession — predicted (ℓ system with → present)
+          predicted_addition: boundary
       state_missing_causality:
         type: condition
         variable: has_causality
@@ -175,28 +409,28 @@ sense:
         value: false
         true_next: predict_state_plus_causality
         false_next: predict_state_plus_boundary
-      predict_seq_plus_boundary:
+      predict_quant_plus_causality:
         type: return
         value:
-          revolution_class: PRECISION
-          evidence_count: 1
-          law_reference: Law of Primitive Succession — TCP→QUIC (σ+∂ per-stream boundary)
+          revolution_class: EXPLANATORY
+          predicted_addition: causality
           composition_type: COMPOSITION
-          predicted_addition: boundary
-          addition_symbol: ∂
-          successor_formula: σ × ∂
+          successor_formula: N × →
           confidence: HIGH
-      predict_loc_plus_boundary:
+          law_reference: Law of Primitive Succession — SpontaneousReporting→SignalDetection (N+→ disproportionality)
+          addition_symbol: →
+          evidence_count: 1
+      predict_bnd_plus_state:
         type: return
         value:
-          confidence: MEDIUM
-          predicted_addition: boundary
-          addition_symbol: ∂
-          revolution_class: PRECISION
-          law_reference: Law of Primitive Succession — predicted (ℓ system with → present)
-          successor_formula: ℓ × ∂
-          evidence_count: 0
+          revolution_class: MEMORY
+          evidence_count: 2
+          addition_symbol: ς
+          confidence: HIGH
+          successor_formula: ∂ × ς
           composition_type: COMPOSITION
+          predicted_addition: state
+          law_reference: Law of Primitive Succession — config→chart_course (∂+ς), Euclidean→NonEuclidean (∂+ς)
       check_dominant_sequence:
         type: condition
         variable: dominant
@@ -207,298 +441,73 @@ sense:
       predict_seq_plus_state:
         type: return
         value:
-          predicted_addition: state
+          addition_symbol: ς
+          confidence: MEDIUM
+          composition_type: COMPOSITION
+          evidence_count: 0
+          revolution_class: MEMORY
           successor_formula: σ × ς
-          composition_type: COMPOSITION
           law_reference: Law of Primitive Succession — predicted (σ system with ∂ present)
-          confidence: MEDIUM
-          revolution_class: MEMORY
-          evidence_count: 0
-          addition_symbol: ς
-      quant_missing_causality:
-        type: condition
-        variable: has_causality
-        operator: eq
-        value: false
-        true_next: predict_quant_plus_causality
-        false_next: predict_quant_plus_boundary
-      predict_bnd_plus_void:
-        type: return
-        value:
-          addition_symbol: ∅
-          revolution_class: ONTOLOGICAL
-          confidence: HIGH
-          composition_type: COMPOSITION
-          law_reference: Law of Primitive Succession — SQL→NoSQL (∂+∅ absence tolerance)
-          predicted_addition: void
-          evidence_count: 1
-          successor_formula: ∂ × ∅
-      predict_quant_plus_causality:
-        type: return
-        value:
-          law_reference: Law of Primitive Succession — SpontaneousReporting→SignalDetection (N+→ disproportionality)
-          composition_type: COMPOSITION
-          confidence: HIGH
-          predicted_addition: causality
-          addition_symbol: →
-          evidence_count: 1
-          successor_formula: N × →
-          revolution_class: EXPLANATORY
-      predict_state_plus_void:
-        type: return
-        value:
-          confidence: HIGH
-          law_reference: Law of Primitive Succession — Classical→QM (ς+∅, void is structural, superposition)
-          predicted_addition: void
-          composition_type: COMPOSITION
-          addition_symbol: ∅
-          evidence_count: 1
-          revolution_class: ONTOLOGICAL
-          successor_formula: ς × ∅
-      predict_freq_plus_boundary:
-        type: return
-        value:
-          confidence: HIGH
-          addition_symbol: ∂
-          revolution_class: PRECISION
-          composition_type: COMPOSITION
-          predicted_addition: boundary
-          evidence_count: 1
-          law_reference: Law of Primitive Succession — cron→PSUR (ν+∂_regulatory)
-          successor_formula: ν × ∂
-      predict_caus_plus_quantity:
-        type: return
-        value:
-          evidence_count: 1
-          revolution_class: QUANTITATIVE
-          confidence: HIGH
-          predicted_addition: quantity
-          addition_symbol: N
-          composition_type: DETHRONE_POSSIBLE
-          successor_formula: N may dethrone → (measurement contradicts narrative)
-          law_reference: Law of Primitive Succession — Phlogiston→Lavoisier (→+N dethrone, weighing reversed →)
-      predict_bnd_plus_state:
-        type: return
-        value:
-          addition_symbol: ς
-          evidence_count: 2
-          composition_type: COMPOSITION
-          law_reference: Law of Primitive Succession — config→chart_course (∂+ς), Euclidean→NonEuclidean (∂+ς)
-          revolution_class: MEMORY
-          successor_formula: ∂ × ς
-          confidence: HIGH
           predicted_addition: state
-      predict_state_plus_boundary:
-        type: return
-        value:
-          confidence: MEDIUM
-          evidence_count: 0
-          revolution_class: PRECISION
-          successor_formula: ς × ∂
-          law_reference: Law of Primitive Succession — predicted (ς system with ∅ and → present)
-          addition_symbol: ∂
-          predicted_addition: boundary
-          composition_type: COMPOSITION
-      freq_missing_boundary:
-        type: condition
-        variable: has_boundary
-        operator: eq
-        value: false
-        true_next: predict_freq_plus_boundary
-        false_next: predict_freq_plus_void
-      predict_exist_plus_causality:
-        type: return
-        value:
-          predicted_addition: causality
-          addition_symbol: →
-          confidence: HIGH
-          evidence_count: 1
-          successor_formula: → dominant (∃ demoted — morphisms over membership)
-          revolution_class: EXPLANATORY
-          composition_type: DETHRONE_POSSIBLE
-          law_reference: Law of Primitive Succession — SetTheory→CategoryTheory (∃→→ dethrone, morphisms primary)
-      predict_bnd_plus_comparison:
-        type: return
-        value:
-          revolution_class: NEGOTIATION
-          composition_type: COMPOSITION
-          successor_formula: ∂ × κ
-          addition_symbol: κ
-          confidence: HIGH
-          law_reference: Law of Primitive Succession — REST→GraphQL (∂+κ client negotiation)
-          evidence_count: 1
-          predicted_addition: comparison
-      caus_missing_boundary:
-        type: condition
-        variable: has_boundary
-        operator: eq
-        value: false
-        true_next: predict_caus_plus_boundary
-        false_next: caus_missing_quantity
-      exist_missing_causality:
-        type: condition
-        variable: has_causality
-        operator: eq
-        value: false
-        true_next: predict_exist_plus_causality
-        false_next: exist_missing_boundary
       predict_quant_plus_boundary:
         type: return
         value:
+          predicted_addition: boundary
+          evidence_count: 0
           law_reference: Law of Primitive Succession — predicted (N system with → present)
-          addition_symbol: ∂
-          predicted_addition: boundary
-          confidence: MEDIUM
+          composition_type: COMPOSITION
           successor_formula: N × ∂
-          evidence_count: 0
-          composition_type: COMPOSITION
           revolution_class: PRECISION
-      predict_caus_plus_state:
-        type: return
-        value:
-          successor_formula: → × ς
-          composition_type: COMPOSITION
-          addition_symbol: ς
-          evidence_count: 0
-          law_reference: Law of Primitive Succession — predicted (→ system with ∂, N, ∅, ν all present)
-          confidence: MEDIUM
-          predicted_addition: state
-          revolution_class: MEMORY
-      seq_missing_boundary:
-        type: condition
-        variable: has_boundary
-        operator: eq
-        value: false
-        true_next: predict_seq_plus_boundary
-        false_next: predict_seq_plus_state
-      fallback_unknown:
-        type: return
-        value:
-          evidence_count: 0
           addition_symbol: ∂
-          predicted_addition: boundary
-          successor_formula: P_d × ∂
-          law_reference: Law of Primitive Succession — ∂ is the most common +1 addition (5/19 transitions)
-          composition_type: COMPOSITION
-          confidence: LOW
-          revolution_class: PRECISION
-      predict_bnd_plus_causality:
-        type: return
-        value:
-          predicted_addition: causality
-          evidence_count: 0
-          composition_type: COMPOSITION
-          addition_symbol: →
           confidence: MEDIUM
-          law_reference: Law of Primitive Succession — predicted (∂ system with all nearby primitives present)
-          revolution_class: EXPLANATORY
-          successor_formula: ∂ × →
-      freq_missing_state:
-        type: condition
-        variable: has_state
-        operator: eq
-        value: false
-        true_next: predict_freq_plus_state
-        false_next: freq_missing_causality
-      check_dominant_quantity:
-        type: condition
-        variable: dominant
-        operator: eq
-        value: quantity
-        true_next: quant_missing_causality
-        false_next: check_dominant_sequence
-      exist_missing_boundary:
-        type: condition
-        variable: has_boundary
-        operator: eq
-        value: false
-        true_next: predict_exist_plus_boundary
-        false_next: predict_exist_plus_state
-      check_dominant_existence:
-        type: condition
-        variable: dominant
-        operator: eq
-        value: existence
-        true_next: exist_missing_causality
-        false_next: check_dominant_location
-      predict_caus_plus_void:
+      predict_state_plus_void:
         type: return
         value:
-          confidence: HIGH
-          law_reference: Law of Primitive Succession — PV→PV+1 (→+∅ absence-aware surveillance, predicted)
           composition_type: COMPOSITION
-          revolution_class: ONTOLOGICAL
-          addition_symbol: ∅
-          successor_formula: → × ∅
-          evidence_count: 1
+          successor_formula: ς × ∅
           predicted_addition: void
-      caus_missing_frequency:
-        type: condition
-        variable: has_frequency
-        operator: eq
-        value: false
-        true_next: predict_caus_plus_frequency
-        false_next: predict_caus_plus_state
-      check_dominant_location:
-        type: condition
-        variable: dominant
-        operator: eq
-        value: location
-        true_next: loc_missing_causality
-        false_next: check_dominant_quantity
-      predict_state_plus_causality:
-        type: return
-        value:
-          addition_symbol: →
-          evidence_count: 1
-          law_reference: Law of Primitive Succession — Humoral→GermTheory (ς→→ dethrone, specific causality overthrew state-balance)
-          composition_type: DETHRONE_POSSIBLE
+          addition_symbol: ∅
+          revolution_class: ONTOLOGICAL
           confidence: HIGH
-          successor_formula: → dominant (ς demoted to substrate)
-          revolution_class: EXPLANATORY
-          predicted_addition: causality
-      caus_missing_quantity:
-        type: condition
-        variable: has_quantity
-        operator: eq
-        value: false
-        true_next: predict_caus_plus_quantity
-        false_next: caus_missing_void
-      check_dominant_boundary:
-        type: condition
-        variable: dominant
-        operator: eq
-        value: boundary
-        true_next: bnd_missing_comparison
-        false_next: check_dominant_causality
+          evidence_count: 1
+          law_reference: Law of Primitive Succession — Classical→QM (ς+∅, void is structural, superposition)
 antisense:
   tree:
-    start: check_alternative_cause
+    start: null_guard_alternative_cause
     nodes:
+      null_guard_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: is_null
+        value: null
+        true_next: null_guard_temporal_implausible
+        false_next: check_alternative_cause
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_no_dechallenge
       check_temporal_implausible:
         type: condition
         variable: temporal_plausible
         operator: eq
         value: false
         true_next: falsified
-        false_next: check_no_dechallenge
-      check_alternative_cause:
+        false_next: null_guard_no_dechallenge
+      null_guard_temporal_implausible:
         type: condition
-        variable: alternative_causes
-        operator: eq
-        value: likely
-        true_next: falsified
+        variable: temporal_plausible
+        operator: is_null
+        value: null
+        true_next: null_guard_no_dechallenge
         false_next: check_temporal_implausible
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       check_no_dechallenge:
         type: condition
         variable: dechallenge_positive
@@ -506,6 +515,18 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: null_guard_temporal_implausible
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -513,72 +534,78 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       verdict: confirmed
+      confidence_score: 0.7
       confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
       verdict: contested
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
       verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      dominant:
-        type: string
-        required: true
       has_void:
-        type: bool
-        required: false
-      alternative_causes:
-        type: string
-        required: false
-      temporal_plausible:
-        type: bool
-        required: false
-      dechallenge_positive:
         type: bool
         required: false
       has_causality:
         type: bool
         required: false
+      dominant:
+        type: string
+        required: true
+      alternative_causes:
+        type: string
+        required: false
       has_sequence:
         type: bool
         required: false
-      has_state:
-        type: bool
-        required: false
-      has_comparison:
+      dechallenge_positive:
         type: bool
         required: false
       has_quantity:
         type: bool
         required: false
-      has_boundary:
+      temporal_plausible:
+        type: bool
+        required: false
+      has_state:
         type: bool
         required: false
       has_frequency:
         type: bool
         required: false
-    outputs:
-      addition_symbol:
-        type: string
+      has_comparison:
+        type: bool
         required: false
+      has_boundary:
+        type: bool
+        required: false
+    outputs:
       revolution_class:
         type: string
         required: false
       confidence:
         type: string
         required: false
+      evidence_count:
+        type: int
+        required: false
+      confidence_score:
+        type: float
+        required: false
       composition_type:
+        type: string
+        required: false
+      predicted_addition:
         type: string
         required: false
       law_reference:
@@ -587,16 +614,10 @@ interface:
       verdict:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
-      successor_formula:
+      addition_symbol:
         type: string
         required: false
-      evidence_count:
-        type: int
-        required: false
-      predicted_addition:
+      successor_formula:
         type: string
         required: false
     aliases: {}
@@ -604,36 +625,36 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
+    temporal_plausible: true
     dechallenge_positive: true
-    dominant: frequency
-    has_quantity: false
-    has_boundary: false
     has_causality: true
+    has_boundary: false
+    has_quantity: false
     has_state: false
+    has_frequency: true
     has_comparison: false
-    has_sequence: true
     alternative_causes: none
     has_void: false
-    temporal_plausible: true
-    has_frequency: true
+    has_sequence: true
+    dominant: frequency
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, alternative_cause active'
   input:
-    dominant: frequency
-    has_quantity: false
-    has_boundary: false
     has_causality: true
+    has_boundary: false
+    has_quantity: false
     has_state: false
+    has_frequency: true
     has_comparison: false
-    has_sequence: true
     alternative_causes: likely
     has_void: false
-    has_frequency: true
+    has_sequence: true
+    dominant: frequency
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

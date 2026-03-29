@@ -10,50 +10,14 @@ sense:
   tree:
     start: known_teratogen_check
     nodes:
-      no_teratogen_live_birth_check:
-        type: condition
-        variable: live_birth
-        operator: eq
-        value: true
-        true_next: low_live_birth
-        false_next: high_adverse_outcome
-      known_teratogen_check:
-        type: condition
-        variable: known_teratogen
-        operator: eq
-        value: true
-        true_next: teratogen_trimester_check
-        false_next: no_teratogen_outcome_check
       high_t2t3:
         type: return
         value:
           risk: HIGH
-          action: expedited_report_15day
-          reporting: mandatory
-          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
           trimester_context: second_or_third_trimester
-      teratogen_t3_check:
-        type: condition
-        variable: trimester
-        operator: eq
-        value: 3
-        true_next: high_t2t3
-        false_next: moderate_preconception
-      no_teratogen_outcome_check:
-        type: condition
-        variable: outcome_known
-        operator: eq
-        value: true
-        true_next: no_teratogen_live_birth_check
-        false_next: pending_outcome
-      critical_t1:
-        type: return
-        value:
-          trimester_context: first_trimester_organogenesis
-          action: expedited_report_7day
-          risk: CRITICAL
-          reporting: mandatory
+          action: expedited_report_15day
           regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          reporting: mandatory
       teratogen_trimester_check:
         type: condition
         variable: trimester
@@ -64,11 +28,33 @@ sense:
       moderate_preconception:
         type: return
         value:
+          reporting: recommended
+          risk: MODERATE
+          trimester_context: preconception
           regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
           action: monitor_conception
-          reporting: recommended
-          trimester_context: preconception
-          risk: MODERATE
+      known_teratogen_check:
+        type: condition
+        variable: known_teratogen
+        operator: eq
+        value: true
+        true_next: teratogen_trimester_check
+        false_next: no_teratogen_outcome_check
+      no_teratogen_outcome_check:
+        type: condition
+        variable: outcome_known
+        operator: eq
+        value: true
+        true_next: no_teratogen_live_birth_check
+        false_next: pending_outcome
+      high_adverse_outcome:
+        type: return
+        value:
+          risk: HIGH
+          trimester_context: adverse_outcome_no_teratogen
+          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          action: investigate_causality
+          reporting: mandatory
       teratogen_t2_check:
         type: condition
         variable: trimester
@@ -76,45 +62,68 @@ sense:
         value: 2
         true_next: high_t2t3
         false_next: teratogen_t3_check
-      high_adverse_outcome:
-        type: return
-        value:
-          reporting: mandatory
-          trimester_context: adverse_outcome_no_teratogen
-          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
-          risk: HIGH
-          action: investigate_causality
+      no_teratogen_live_birth_check:
+        type: condition
+        variable: live_birth
+        operator: eq
+        value: true
+        true_next: low_live_birth
+        false_next: high_adverse_outcome
       low_live_birth:
         type: return
         value:
-          risk: LOW
-          action: routine_followup
-          reporting: periodic
           regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          risk: LOW
           trimester_context: live_birth_no_teratogen
+          reporting: periodic
+          action: routine_followup
       pending_outcome:
         type: return
         value:
-          action: followup_required
+          risk: PENDING
           trimester_context: outcome_unknown
           regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
           reporting: track_outcome
-          risk: PENDING
-antisense:
-  tree:
-    start: check_measurement_stale
-    nodes:
-      not_falsified:
+          action: followup_required
+      teratogen_t3_check:
+        type: condition
+        variable: trimester
+        operator: eq
+        value: 3
+        true_next: high_t2t3
+        false_next: moderate_preconception
+      critical_t1:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
+          reporting: mandatory
+          risk: CRITICAL
+          action: expedited_report_7day
+          regulatory_reference: ICH E2C FDA Pregnancy Exposure Registry
+          trimester_context: first_trimester_organogenesis
+antisense:
+  tree:
+    start: null_guard_measurement_stale
+    nodes:
+      null_guard_measurement_stale:
+        type: condition
+        variable: measurement_age_minutes
+        operator: is_null
+        value: null
+        true_next: null_guard_single_source
+        false_next: check_measurement_stale
       check_measurement_stale:
         type: condition
         variable: measurement_age_minutes
         operator: gt
         value: 60
         true_next: falsified
+        false_next: null_guard_single_source
+      null_guard_single_source:
+        type: condition
+        variable: probe_count
+        operator: is_null
+        value: null
+        true_next: not_falsified
         false_next: check_single_source
       check_single_source:
         type: condition
@@ -123,6 +132,11 @@ antisense:
         value: 2
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
       falsified:
         type: return
         value:
@@ -135,32 +149,32 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
-      confidence_score: 0.7
       confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      outcome_known:
+      live_birth:
         type: bool
         required: false
-      probe_count:
-        type: integer
+      known_teratogen:
+        type: bool
         required: false
-      live_birth:
+      outcome_known:
         type: bool
         required: false
       trimester:
@@ -169,33 +183,33 @@ interface:
       measurement_age_minutes:
         type: integer
         required: false
-      known_teratogen:
-        type: bool
+      probe_count:
+        type: integer
         required: false
     outputs:
-      trimester_context:
+      verdict:
         type: string
         required: false
       action:
         type: string
         required: false
-      risk:
-        type: string
-        required: false
       reporting:
         type: string
         required: false
-      verdict:
+      trimester_context:
+        type: string
+        required: false
+      risk:
         type: string
         required: false
       confidence:
         type: string
         required: false
-      regulatory_reference:
-        type: string
-        required: false
       confidence_score:
         type: float
+        required: false
+      regulatory_reference:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -203,24 +217,24 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     live_birth: false
+    known_teratogen: true
     outcome_known: false
     trimester: 1
-    measurement_age_minutes: 50
     probe_count: 12
-    known_teratogen: true
+    measurement_age_minutes: 50
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, measurement_stale active'
   input:
     live_birth: false
+    known_teratogen: true
     outcome_known: false
     trimester: 1
     measurement_age_minutes: 61
-    known_teratogen: true
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

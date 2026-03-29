@@ -1,0 +1,218 @@
+name: onboarding-readiness-helix
+description: 'Forged from microgram ''onboarding-readiness''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    next_step: falsified
+sense:
+  tree:
+    start: check_zero_modules
+    nodes:
+      check_quiz_ready:
+        type: condition
+        variable: quiz_score_avg
+        operator: gte
+        value: 80
+        true_next: ready
+        false_next: check_quiz_almost
+      beginner:
+        type: return
+        value:
+          next_step: Start with the Welcome to PV module
+          readiness: beginner
+      check_most_complete:
+        type: condition
+        variable: completion_pct
+        operator: gte
+        value: 60
+        true_next: check_partial_quiz
+        false_next: check_some_complete
+      check_zero_modules:
+        type: condition
+        variable: completed_modules
+        operator: eq
+        value: 0
+        true_next: beginner
+        false_next: check_all_complete
+      needs_work_partial:
+        type: return
+        value:
+          readiness: needs_work
+          next_step: Focus on understanding the core concepts before continuing
+      almost_modules:
+        type: return
+        value:
+          next_step: Complete remaining modules to unlock full access
+          readiness: almost
+      ready:
+        type: return
+        value:
+          next_step: You are ready for independent PV work — explore the full toolkit
+          readiness: ready
+      check_some_complete:
+        type: condition
+        variable: completion_pct
+        operator: gte
+        value: 20
+        true_next: needs_work_early
+        false_next: beginner_started
+      almost_quiz:
+        type: return
+        value:
+          readiness: almost
+          next_step: Review quiz answers — you are close to full readiness
+      needs_work_quiz:
+        type: return
+        value:
+          next_step: Revisit completed modules and retake quizzes
+          readiness: needs_work
+      needs_work_early:
+        type: return
+        value:
+          readiness: needs_work
+          next_step: Continue working through the onboarding modules
+      beginner_started:
+        type: return
+        value:
+          readiness: beginner
+          next_step: Continue the onboarding modules from where you left off
+      check_partial_quiz:
+        type: condition
+        variable: quiz_score_avg
+        operator: gte
+        value: 70
+        true_next: almost_modules
+        false_next: needs_work_partial
+      check_quiz_almost:
+        type: condition
+        variable: quiz_score_avg
+        operator: gte
+        value: 60
+        true_next: almost_quiz
+        false_next: needs_work_quiz
+      check_all_complete:
+        type: condition
+        variable: completion_pct
+        operator: gte
+        value: 100
+        true_next: check_quiz_ready
+        false_next: check_most_complete
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: quiz_score_avg
+        operator: neq
+        value: 0
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: quiz_score_avg
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      quiz_score_avg:
+        type: number
+        required: true
+      completed_modules:
+        type: number
+        required: true
+      completion_pct:
+        type: number
+        required: true
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      next_step:
+        type: string
+        required: false
+      readiness:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    quiz_score_avg: null
+    completion_pct: 0
+    completed_modules: 0
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    quiz_score_avg: 1
+    completion_pct: 0
+    completed_modules: 0
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

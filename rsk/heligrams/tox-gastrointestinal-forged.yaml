@@ -5,11 +5,25 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    action: falsified
+    severity: falsified
 sense:
   tree:
     start: check_severe
     nodes:
+      normal:
+        type: return
+        value:
+          severity: normal
+          target: gi
+          action: continue
+          organ: gastrointestinal
+      check_severe:
+        type: condition
+        variable: ctcae_grade
+        operator: gte
+        value: 3
+        true_next: severe
+        false_next: check_mild
       check_mild:
         type: condition
         variable: ctcae_grade
@@ -21,33 +35,19 @@ sense:
         type: return
         value:
           action: discontinue
-          target: gi
           severity: severe
           organ: gastrointestinal
+          target: gi
       mild:
         type: return
         value:
+          target: gi
+          organ: gastrointestinal
           severity: mild
-          organ: gastrointestinal
           action: monitor_closely
-          target: gi
-      check_severe:
-        type: condition
-        variable: ctcae_grade
-        operator: gte
-        value: 3
-        true_next: severe
-        false_next: check_mild
-      normal:
-        type: return
-        value:
-          organ: gastrointestinal
-          action: continue
-          target: gi
-          severity: normal
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       check_negation:
         type: condition
@@ -59,8 +59,15 @@ antisense:
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: ctcae_grade
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
@@ -73,20 +80,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
+      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
-      confidence: low
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
       confidence_score: 0.5
     emit: null
 interface:
@@ -96,14 +103,14 @@ interface:
         type: integer
         required: false
     outputs:
-      verdict:
-        type: string
+      confidence_score:
+        type: float
         required: false
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
+      verdict:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -118,8 +125,8 @@ tests:
   input:
     ctcae_grade: 2
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

@@ -10,18 +10,6 @@ sense:
   tree:
     start: check_sample
     nodes:
-      check_feedback:
-        type: condition
-        variable: feedback_count
-        operator: gte
-        value: 10
-        true_next: calibrate
-        false_next: insufficient_feedback
-      insufficient_data:
-        type: return
-        value:
-          description: Sample size below 100 - collect more cases before calibrating thresholds
-          decision: INSUFFICIENT_DATA
       check_sample:
         type: condition
         variable: sample_size
@@ -29,37 +17,56 @@ sense:
         value: 100
         true_next: check_feedback
         false_next: insufficient_data
+      calibrate:
+        type: return
+        value:
+          description: Sufficient data and feedback - proceed with threshold calibration
+          decision: CALIBRATE
+      check_feedback:
+        type: condition
+        variable: feedback_count
+        operator: gte
+        value: 10
+        true_next: calibrate
+        false_next: insufficient_feedback
       insufficient_feedback:
         type: return
         value:
           description: Feedback count below 10 - collect more signal review feedback before calibrating
           decision: INSUFFICIENT_DATA
-      calibrate:
+      insufficient_data:
         type: return
         value:
-          decision: CALIBRATE
-          description: Sufficient data and feedback - proceed with threshold calibration
+          description: Sample size below 100 - collect more cases before calibrating thresholds
+          decision: INSUFFICIENT_DATA
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
-      check_negation:
-        type: condition
-        variable: feedback_count
-        operator: lt
-        value: 100
-        true_next: falsified
-        false_next: not_falsified
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
+      null_guard_negation:
+        type: condition
+        variable: sample_size
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      check_negation:
+        type: condition
+        variable: sample_size
+        operator: lt
+        value: 100
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -67,61 +74,61 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
-      confidence_score: 0.7
       verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
+      verdict: contested
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
       verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      sample_size:
-        type: int
-        required: false
       feedback_count:
         type: int
         required: false
+      sample_size:
+        type: int
+        required: false
     outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
       description:
         type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence:
-        type: string
-        required: false
       decision:
         type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    sample_size: 250
-    feedback_count: 110
+    feedback_count: 25
+    sample_size: 110
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    sample_size: 250
-    feedback_count: 99
+    feedback_count: 25
+    sample_size: 99
   expect:
     confidence: low
     verdict: contested

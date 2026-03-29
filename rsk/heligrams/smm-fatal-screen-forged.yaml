@@ -1,0 +1,181 @@
+name: smm-fatal-screen-helix
+description: 'Forged from microgram ''smm-fatal-screen''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    proceed_to_scoring: falsified
+sense:
+  tree:
+    start: check_fatal
+    nodes:
+      fatal_pre_empirical:
+        type: return
+        value:
+          proceed_to_scoring: false
+          score_band: FATAL_FLOOR
+          disposition_note: Fatal violation in pre-empirical framework — MS IMMATURE. Return to workshop for maturation.
+          fatal_multiplier: '0.30'
+          fatal_detected: true
+      check_fatal:
+        type: condition
+        variable: has_fatal_violation
+        operator: eq
+        value: true
+        true_next: check_study_type
+        false_next: clean_pass
+      check_study_type:
+        type: condition
+        variable: study_type
+        operator: eq
+        value: empirical
+        true_next: fatal_empirical
+        false_next: fatal_pre_empirical
+      fatal_empirical:
+        type: return
+        value:
+          score_band: FATAL_ZERO
+          fatal_multiplier: '0.00'
+          disposition_note: Fatal violation in empirical work — CS SUSPENDED. Evidence excluded pending qualified review.
+          proceed_to_scoring: false
+          fatal_detected: true
+      clean_pass:
+        type: return
+        value:
+          score_band: CLEAN
+          proceed_to_scoring: true
+          fatal_detected: false
+          disposition_note: No fatal violations detected. Proceed to severity scoring.
+          fatal_multiplier: '1.00'
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      null_guard_negation:
+        type: condition
+        variable: has_fatal_violation
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_negation:
+        type: condition
+        variable: has_fatal_violation
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+      proceed_to_scoring: true
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+      proceed_to_scoring: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
+  - when:
+      proceed_to_scoring: false
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: absent
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      has_fatal_violation:
+        type: bool
+        required: false
+      study_type:
+        type: string
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      confidence:
+        type: string
+        required: false
+      fatal_detected:
+        type: bool
+        required: false
+      proceed_to_scoring:
+        type: bool
+        required: false
+      disposition_note:
+        type: string
+        required: false
+      fatal_multiplier:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      score_band:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    has_fatal_violation: null
+    study_type: empirical
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    has_fatal_violation: false
+    study_type: empirical
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

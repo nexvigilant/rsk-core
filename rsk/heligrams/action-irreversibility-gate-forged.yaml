@@ -1,0 +1,180 @@
+name: action-irreversibility-gate-helix
+description: 'Forged from microgram ''action-irreversibility-gate''. Domain: WorkflowRouting. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 5
+  base_pairs:
+    requires_expert_review: falsified
+sense:
+  tree:
+    start: check_reversibility
+    nodes:
+      check_reversibility:
+        type: condition
+        variable: action_reversible
+        operator: eq
+        value: true
+        true_next: reversible_proceed
+        false_next: check_imminent_risk
+      check_evidence_strength:
+        type: condition
+        variable: evidence_strong
+        operator: eq
+        value: true
+        true_next: strong_evidence_proceed
+        false_next: block_weak_evidence
+      imminent_proceed_urgent:
+        type: return
+        value:
+          requires_expert_review: true
+          irreversibility_primitive: ∝ — imminent danger bypasses evidence gate
+          chemistry_analog: rapid exothermic reaction requiring immediate containment
+          action: Proceed with irreversible action — patient safety risk overrides evidence requirement
+          gate_decision: PROCEED_URGENT
+      block_weak_evidence:
+        type: return
+        value:
+          irreversibility_primitive: ∝ — irreversible action blocked without strong evidence
+          gate_decision: BLOCK_ESCALATE
+          action: Block irreversible action — no imminent risk and evidence insufficient. Escalate to expert review.
+          chemistry_analog: denaturation prevented — protein integrity preserved pending better data
+          requires_expert_review: true
+      strong_evidence_proceed:
+        type: return
+        value:
+          requires_expert_review: true
+          irreversibility_primitive: ∝ — irreversible action with strong evidence foundation
+          action: Proceed with irreversible action — strong evidence supports decision
+          gate_decision: PROCEED_WITH_REVIEW
+          chemistry_analog: controlled combustion with proper ventilation — entropy committed but understood
+      check_imminent_risk:
+        type: condition
+        variable: patient_risk_imminent
+        operator: eq
+        value: true
+        true_next: imminent_proceed_urgent
+        false_next: check_evidence_strength
+      reversible_proceed:
+        type: return
+        value:
+          gate_decision: PROCEED
+          action: Proceed with reversible action (can be undone if needed)
+          chemistry_analog: reversible reaction — can be driven backward
+          requires_expert_review: false
+          irreversibility_primitive: ∝ — can this action be undone
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: action_reversible
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: action_reversible
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      requires_expert_review: true
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      falsified: true
+      requires_expert_review: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when:
+      falsified: false
+      requires_expert_review: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      confidence: high
+      verdict: absent
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      action_reversible:
+        type: bool
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    action_reversible: null
+    evidence_strong: true
+    patient_risk_imminent: false
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    action_reversible: false
+    evidence_strong: true
+    patient_risk_imminent: false
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — workflow-routing with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: workflow-routing. Chains as dual-strand verifier before downstream consumers.'

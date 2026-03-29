@@ -10,67 +10,14 @@ sense:
   tree:
     start: check_sar
     nodes:
-      check_sar:
-        type: condition
-        variable: suspected_adverse_reaction
-        operator: eq
-        value: true
-        true_next: sar_serious_check
-        false_next: not_sar
-      serious_unexpected_check:
-        type: condition
-        variable: unexpected
-        operator: eq
-        value: true
-        true_next: susar_fatal_check
-        false_next: serious_expected
       susar_15day:
         type: return
         value:
-          reporting_required: true
-          timeline_days: 15
           notification_recipients: FDA + all participating investigators + IRBs
           regulatory_reference: '21 CFR 312.32(c)(1); FDA Guidance: Sponsor Responsibilities (2025), Section IV.B'
-          report_type: IND_SAFETY_15DAY
-      not_sar:
-        type: return
-        value:
-          regulatory_reference: 21 CFR 312.32(c) - only suspected adverse reactions require IND safety reports
-          reporting_required: false
-          report_type: NONE
-          timeline_days: 0
-          notification_recipients: N/A
-      serious_expected:
-        type: return
-        value:
-          report_type: ANNUAL_REPORT
-          notification_recipients: Include in IND Annual Report; update IB if frequency changes
-          regulatory_reference: 21 CFR 312.32(c) - serious expected SARs reported in annual report; FDA Guidance (2025), Section III.B
-          timeline_days: 365
-          reporting_required: false
-      susar_ba_be_exempt:
-        type: return
-        value:
-          report_type: BA_BE_EXEMPT_SAFETY
-          notification_recipients: FDA via ESG electronic submission
           reporting_required: true
+          report_type: IND_SAFETY_15DAY
           timeline_days: 15
-          regulatory_reference: 'FDA Guidance: Electronic Submission of Expedited Safety Reports From IND-Exempt BA/BE Studies (2024)'
-      nonserious_sar:
-        type: return
-        value:
-          timeline_days: 365
-          notification_recipients: Include in IND Annual Report (21 CFR 312.33)
-          report_type: ANNUAL_REPORT
-          reporting_required: false
-          regulatory_reference: '21 CFR 312.33; FDA Guidance: Sponsor Responsibilities (2025), Section III.A'
-      susar_study_type_check:
-        type: condition
-        variable: study_type
-        operator: eq
-        value: ba_be_ind_exempt
-        true_next: susar_ba_be_exempt
-        false_next: susar_15day
       sar_serious_check:
         type: condition
         variable: serious
@@ -78,6 +25,13 @@ sense:
         value: true
         true_next: serious_unexpected_check
         false_next: nonserious_sar
+      check_sar:
+        type: condition
+        variable: suspected_adverse_reaction
+        operator: eq
+        value: true
+        true_next: sar_serious_check
+        false_next: not_sar
       susar_fatal_check:
         type: condition
         variable: fatal_or_life_threatening
@@ -85,23 +39,104 @@ sense:
         value: true
         true_next: susar_7day
         false_next: susar_study_type_check
+      susar_study_type_check:
+        type: condition
+        variable: study_type
+        operator: eq
+        value: ba_be_ind_exempt
+        true_next: susar_ba_be_exempt
+        false_next: susar_15day
       susar_7day:
         type: return
         value:
-          regulatory_reference: '21 CFR 312.32(c)(2); FDA Guidance: Sponsor Responsibilities (2025), Section IV.A'
           reporting_required: true
           report_type: IND_SAFETY_7DAY
-          notification_recipients: FDA + all participating investigators + IRBs
           timeline_days: 7
-antisense:
-  tree:
-    start: check_incomplete_info
-    nodes:
-      falsified:
+          regulatory_reference: '21 CFR 312.32(c)(2); FDA Guidance: Sponsor Responsibilities (2025), Section IV.A'
+          notification_recipients: FDA + all participating investigators + IRBs
+      serious_unexpected_check:
+        type: condition
+        variable: unexpected
+        operator: eq
+        value: true
+        true_next: susar_fatal_check
+        false_next: serious_expected
+      nonserious_sar:
         type: return
         value:
-          confounder_count: 1
-          falsified: true
+          regulatory_reference: '21 CFR 312.33; FDA Guidance: Sponsor Responsibilities (2025), Section III.A'
+          notification_recipients: Include in IND Annual Report (21 CFR 312.33)
+          reporting_required: false
+          report_type: ANNUAL_REPORT
+          timeline_days: 365
+      not_sar:
+        type: return
+        value:
+          timeline_days: 0
+          reporting_required: false
+          notification_recipients: N/A
+          regulatory_reference: 21 CFR 312.32(c) - only suspected adverse reactions require IND safety reports
+          report_type: NONE
+      susar_ba_be_exempt:
+        type: return
+        value:
+          timeline_days: 15
+          reporting_required: true
+          regulatory_reference: 'FDA Guidance: Electronic Submission of Expedited Safety Reports From IND-Exempt BA/BE Studies (2024)'
+          report_type: BA_BE_EXEMPT_SAFETY
+          notification_recipients: FDA via ESG electronic submission
+      serious_expected:
+        type: return
+        value:
+          notification_recipients: Include in IND Annual Report; update IB if frequency changes
+          regulatory_reference: 21 CFR 312.32(c) - serious expected SARs reported in annual report; FDA Guidance (2025), Section III.B
+          reporting_required: false
+          report_type: ANNUAL_REPORT
+          timeline_days: 365
+antisense:
+  tree:
+    start: null_guard_incomplete_info
+    nodes:
+      null_guard_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: is_null
+        value: null
+        true_next: null_guard_coding_error
+        false_next: check_comorbidity_confound
+      null_guard_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_coding_error
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_coding_error
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_comorbidity_confound
+      null_guard_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: is_null
+        value: null
+        true_next: null_guard_comorbidity_confound
+        false_next: check_incomplete_info
       check_coding_error:
         type: condition
         variable: coding_verified
@@ -109,25 +144,11 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
+      falsified:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
-      check_incomplete_info:
-        type: condition
-        variable: follow_up_complete
-        operator: eq
-        value: false
-        true_next: falsified
-        false_next: check_comorbidity_confound
-      check_comorbidity_confound:
-        type: condition
-        variable: comorbidity_explains
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: check_coding_error
+          falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -136,66 +157,69 @@ resolution:
       reporting_required: true
     default: null
     emit:
+      verdict: confirmed
       confidence: high
       confidence_score: 0.7
-      verdict: confirmed
   - when:
-      falsified: true
       reporting_required: true
+      falsified: true
     default: null
     emit:
       verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
   - when:
-      reporting_required: false
       falsified: false
+      reporting_required: false
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7
       verdict: absent
-      confidence: high
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      suspected_adverse_reaction:
-        type: bool
-        required: true
-      comorbidity_explains:
-        type: bool
-        required: false
-      study_type:
-        type: string
-        required: false
       coding_verified:
         type: bool
         required: false
       serious:
         type: bool
         required: true
-      unexpected:
+      study_type:
+        type: string
+        required: false
+      comorbidity_explains:
         type: bool
-        required: true
+        required: false
       fatal_or_life_threatening:
         type: bool
         required: false
       follow_up_complete:
         type: bool
         required: false
+      suspected_adverse_reaction:
+        type: bool
+        required: true
+      unexpected:
+        type: bool
+        required: true
     outputs:
+      confidence_score:
+        type: float
+        required: false
+      report_type:
+        type: string
+        required: false
       timeline_days:
         type: int
         required: false
       confidence:
-        type: string
-        required: false
-      report_type:
         type: string
         required: false
       verdict:
@@ -204,13 +228,10 @@ interface:
       reporting_required:
         type: bool
         required: false
-      notification_recipients:
+      regulatory_reference:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
-      regulatory_reference:
+      notification_recipients:
         type: string
         required: false
     aliases: {}
@@ -218,14 +239,14 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    study_type: ind
     unexpected: true
-    coding_verified: true
-    follow_up_complete: true
-    fatal_or_life_threatening: true
-    suspected_adverse_reaction: true
     serious: true
+    suspected_adverse_reaction: true
+    fatal_or_life_threatening: true
     comorbidity_explains: false
+    follow_up_complete: true
+    study_type: ind
+    coding_verified: true
   expect:
     verdict: confirmed
     confidence: high
@@ -233,10 +254,10 @@ tests:
   input:
     study_type: ind
     unexpected: true
-    suspected_adverse_reaction: true
     serious: true
-    follow_up_complete: false
+    suspected_adverse_reaction: true
     fatal_or_life_threatening: true
+    follow_up_complete: false
   expect:
     verdict: contested
     confidence: low

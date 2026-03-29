@@ -10,6 +10,14 @@ sense:
   tree:
     start: check_serious
     nodes:
+      fifteen_day:
+        type: return
+        value:
+          report_type: EXPEDITED_SAFETY_REPORT
+          deadline_days: 15
+          expedited_required: true
+          regulatory_reference: ICH E2A Section III.B.2 - Serious unexpected non-fatal/non-life-threatening requires 15-day expedited report
+          timeline_category: 15_DAY_EXPEDITED
       check_serious:
         type: condition
         variable: is_serious
@@ -17,45 +25,14 @@ sense:
         value: true
         true_next: check_unexpected
         false_next: not_expedited
-      not_expedited:
-        type: return
-        value:
-          report_type: PERIODIC_SAFETY_UPDATE
-          regulatory_reference: ICH E2A Section III.B.3 - Non-serious reactions reported in periodic updates
-          deadline_days: 90
-          timeline_category: PERIODIC
-          expedited_required: false
-      check_fatal_or_lt:
-        type: condition
-        variable: is_fatal
-        operator: eq
-        value: true
-        true_next: seven_day
-        false_next: check_life_threatening
-      seven_day:
-        type: return
-        value:
-          report_type: EXPEDITED_SAFETY_REPORT
-          expedited_required: true
-          deadline_days: 7
-          regulatory_reference: ICH E2A Section III.B.1 - Fatal or life-threatening unexpected SUSAR requires 7-day initial report
-          timeline_category: 7_DAY_EXPEDITED
       serious_expected:
         type: return
         value:
-          regulatory_reference: ICH E2A Section III.B.3 - Serious expected reactions reported in periodic updates
+          deadline_days: 90
           report_type: PERIODIC_SAFETY_UPDATE
           timeline_category: PERIODIC
-          deadline_days: 90
+          regulatory_reference: ICH E2A Section III.B.3 - Serious expected reactions reported in periodic updates
           expedited_required: false
-      fifteen_day:
-        type: return
-        value:
-          expedited_required: true
-          timeline_category: 15_DAY_EXPEDITED
-          deadline_days: 15
-          report_type: EXPEDITED_SAFETY_REPORT
-          regulatory_reference: ICH E2A Section III.B.2 - Serious unexpected non-fatal/non-life-threatening requires 15-day expedited report
       check_unexpected:
         type: condition
         variable: is_unexpected
@@ -63,6 +40,29 @@ sense:
         value: true
         true_next: check_fatal_or_lt
         false_next: serious_expected
+      check_fatal_or_lt:
+        type: condition
+        variable: is_fatal
+        operator: eq
+        value: true
+        true_next: seven_day
+        false_next: check_life_threatening
+      not_expedited:
+        type: return
+        value:
+          timeline_category: PERIODIC
+          deadline_days: 90
+          report_type: PERIODIC_SAFETY_UPDATE
+          expedited_required: false
+          regulatory_reference: ICH E2A Section III.B.3 - Non-serious reactions reported in periodic updates
+      seven_day:
+        type: return
+        value:
+          expedited_required: true
+          regulatory_reference: ICH E2A Section III.B.1 - Fatal or life-threatening unexpected SUSAR requires 7-day initial report
+          timeline_category: 7_DAY_EXPEDITED
+          deadline_days: 7
+          report_type: EXPEDITED_SAFETY_REPORT
       check_life_threatening:
         type: condition
         variable: is_life_threatening
@@ -72,32 +72,46 @@ sense:
         false_next: fifteen_day
 antisense:
   tree:
-    start: check_incomplete_info
+    start: null_guard_incomplete_info
     nodes:
-      check_incomplete_info:
+      null_guard_incomplete_info:
         type: condition
         variable: follow_up_complete
-        operator: eq
-        value: false
-        true_next: falsified
-        false_next: check_comorbidity_confound
+        operator: is_null
+        value: null
+        true_next: null_guard_comorbidity_confound
+        false_next: check_incomplete_info
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: is_null
+        value: null
+        true_next: null_guard_coding_error
+        false_next: check_comorbidity_confound
+      null_guard_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_coding_error
       check_comorbidity_confound:
         type: condition
         variable: comorbidity_explains
         operator: eq
         value: true
         true_next: falsified
-        false_next: check_coding_error
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
+        false_next: null_guard_coding_error
       check_coding_error:
         type: condition
         variable: coding_verified
@@ -105,89 +119,96 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_comorbidity_confound
 resolution:
   mode: base_pair
   rules:
   - when:
-      expedited_required: true
       falsified: false
+      expedited_required: true
     default: null
     emit:
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
       confidence_score: 0.7
   - when:
       expedited_required: true
       falsified: true
     default: null
     emit:
-      confidence: low
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
   - when:
       expedited_required: false
       falsified: false
     default: null
     emit:
       confidence: high
-      verdict: absent
       confidence_score: 0.7
+      verdict: absent
   - when: null
     default:
       verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
+      comorbidity_explains:
+        type: bool
+        required: false
+      is_serious:
+        type: bool
+        required: false
+      coding_verified:
+        type: bool
+        required: false
+      is_fatal:
+        type: bool
+        required: false
+      is_life_threatening:
+        type: bool
+        required: false
+      study_phase:
+        type: string
+        required: false
       is_unexpected:
         type: bool
         required: false
       follow_up_complete:
         type: bool
         required: false
-      coding_verified:
-        type: bool
-        required: false
-      is_serious:
-        type: bool
-        required: false
-      comorbidity_explains:
-        type: bool
-        required: false
-      study_phase:
-        type: string
-        required: false
-      is_life_threatening:
-        type: bool
-        required: false
-      is_fatal:
-        type: bool
-        required: false
     outputs:
-      verdict:
-        type: string
-        required: false
-      confidence_score:
-        type: float
-        required: false
       report_type:
-        type: string
-        required: false
-      expedited_required:
-        type: bool
-        required: false
-      confidence:
         type: string
         required: false
       deadline_days:
         type: int
         required: false
+      expedited_required:
+        type: bool
+        required: false
+      confidence_score:
+        type: float
+        required: false
       timeline_category:
         type: string
         required: false
+      confidence:
+        type: string
+        required: false
       regulatory_reference:
+        type: string
+        required: false
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -196,22 +217,22 @@ tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
     study_phase: phase_3
-    is_serious: true
-    follow_up_complete: true
     is_fatal: true
-    is_unexpected: true
-    is_life_threatening: false
     comorbidity_explains: false
+    is_life_threatening: false
+    is_unexpected: true
+    follow_up_complete: true
     coding_verified: true
+    is_serious: true
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, incomplete_info active'
   input:
     study_phase: phase_3
+    is_fatal: true
     is_serious: true
     is_life_threatening: false
-    is_fatal: true
     is_unexpected: true
     follow_up_complete: false
   expect:

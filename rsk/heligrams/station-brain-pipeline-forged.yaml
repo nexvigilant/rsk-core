@@ -5,53 +5,25 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    route: falsified
+    priority: falsified
 sense:
   tree:
     start: check_verdict
     nodes:
+      artifact_bloat:
+        type: return
+        value:
+          priority: moderate
+          route: artifact_cleanup
+          action: prune
+          reason: 20+ stale artifacts — archive or resolve
       healthy:
         type: return
         value:
           route: archive
           reason: Brain healthy — verdicts flowing, stores synced, artifacts fresh
-          action: certify
           priority: low
-      low_verdicts:
-        type: return
-        value:
-          route: session_discipline
-          priority: high
-          action: alert
-          reason: Model verdict rate <50% — most sessions unmeasured
-      check_artifacts:
-        type: condition
-        variable: stale_artifact_count
-        operator: gte
-        value: 20
-        true_next: artifact_bloat
-        false_next: healthy
-      sync_broken:
-        type: return
-        value:
-          reason: Dual-store divergence — JSON and SQLite disagree
-          route: brain_reconcile
-          action: repair
-          priority: critical
-      artifact_bloat:
-        type: return
-        value:
-          route: artifact_cleanup
-          reason: 20+ stale artifacts — archive or resolve
-          action: prune
-          priority: moderate
-      check_verdict:
-        type: condition
-        variable: verdict_rate_pct
-        operator: gte
-        value: 50
-        true_next: check_sync
-        false_next: low_verdicts
+          action: certify
       check_sync:
         type: condition
         variable: dual_store_synced
@@ -59,27 +31,62 @@ sense:
         value: true
         true_next: check_artifacts
         false_next: sync_broken
+      check_artifacts:
+        type: condition
+        variable: stale_artifact_count
+        operator: gte
+        value: 20
+        true_next: artifact_bloat
+        false_next: healthy
+      check_verdict:
+        type: condition
+        variable: verdict_rate_pct
+        operator: gte
+        value: 50
+        true_next: check_sync
+        false_next: low_verdicts
+      sync_broken:
+        type: return
+        value:
+          priority: critical
+          action: repair
+          reason: Dual-store divergence — JSON and SQLite disagree
+          route: brain_reconcile
+      low_verdicts:
+        type: return
+        value:
+          reason: Model verdict rate <50% — most sessions unmeasured
+          priority: high
+          route: session_discipline
+          action: alert
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       check_negation:
         type: condition
-        variable: stale_artifact_count
+        variable: dual_store_synced
         operator: lt
         value: 50
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       not_falsified:
         type: return
         value:
-          confounder_count: 0
           falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: dual_store_synced
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -95,46 +102,46 @@ resolution:
     default: null
     emit:
       verdict: contested
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      stale_artifact_count:
+      dual_store_synced:
         type: integer
         required: false
     outputs:
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
+    dual_store_synced: 60
+    stale_artifact_count: 5
     verdict_rate_pct: 30
-    stale_artifact_count: 60
-    dual_store_synced: true
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
+    dual_store_synced: 49
+    stale_artifact_count: 5
     verdict_rate_pct: 30
-    stale_artifact_count: 49
-    dual_store_synced: true
   expect:
     verdict: contested
     confidence: low

@@ -10,6 +10,11 @@ sense:
   tree:
     start: check_high
     nodes:
+      high_coverage:
+        type: return
+        value:
+          color: emerald
+          tier: HIGH
       check_high:
         type: condition
         variable: coverage_pct
@@ -17,33 +22,6 @@ sense:
         value: 75
         true_next: high_coverage
         false_next: check_moderate
-      moderate_coverage:
-        type: return
-        value:
-          color: amber
-          tier: MODERATE
-      critical_gap:
-        type: return
-        value:
-          tier: CRITICAL_GAP
-          color: red
-      check_moderate:
-        type: condition
-        variable: coverage_pct
-        operator: gte
-        value: 50
-        true_next: moderate_coverage
-        false_next: check_low
-      high_coverage:
-        type: return
-        value:
-          tier: HIGH
-          color: emerald
-      low_coverage:
-        type: return
-        value:
-          color: orange
-          tier: LOW
       check_low:
         type: condition
         variable: coverage_pct
@@ -51,20 +29,49 @@ sense:
         value: 25
         true_next: low_coverage
         false_next: critical_gap
+      moderate_coverage:
+        type: return
+        value:
+          color: amber
+          tier: MODERATE
+      low_coverage:
+        type: return
+        value:
+          color: orange
+          tier: LOW
+      critical_gap:
+        type: return
+        value:
+          color: red
+          tier: CRITICAL_GAP
+      check_moderate:
+        type: condition
+        variable: coverage_pct
+        operator: gte
+        value: 50
+        true_next: moderate_coverage
+        false_next: check_low
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
+      null_guard_negation:
+        type: condition
+        variable: coverage_pct
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
         variable: coverage_pct
@@ -79,9 +86,9 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence: high
       verdict: confirmed
       confidence_score: 0.7
-      confidence: high
   - when:
       falsified: true
     default: null
@@ -105,17 +112,17 @@ interface:
       tier:
         type: string
         required: false
+      verdict:
+        type: string
+        required: false
+      color:
+        type: string
+        required: false
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
-        required: false
-      color:
-        type: string
-        required: false
-      verdict:
-        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -124,8 +131,8 @@ tests:
   input:
     coverage_pct: 85
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     coverage_pct: 74

@@ -1,0 +1,221 @@
+name: temporal-association-helix
+description: 'Forged from microgram ''temporal-association''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    confidence: falsified
+sense:
+  tree:
+    start: check_before_drug
+    nodes:
+      subacute_onset:
+        type: return
+        value:
+          confidence: MODERATE
+          assessment: Subacute onset (8-30 days) — plausible temporal association
+          naranjo_contribution: 1
+          temporal_plausibility: POSSIBLE
+      acute_onset:
+        type: return
+        value:
+          naranjo_contribution: 2
+          confidence: HIGH
+          assessment: Acute onset (0-7 days) — strong temporal association
+          temporal_plausibility: STRONG
+      implausible:
+        type: return
+        value:
+          naranjo_contribution: -1
+          temporal_plausibility: IMPLAUSIBLE
+          confidence: HIGH
+          assessment: Event occurred before drug exposure — not drug-related
+      late_onset:
+        type: return
+        value:
+          assessment: Late onset >90 days — less likely to be drug-related
+          naranjo_contribution: 0
+          confidence: LOW
+          temporal_plausibility: WEAK
+      within_known_range:
+        type: return
+        value:
+          assessment: Event onset within known pharmacological timeframe
+          naranjo_contribution: 2
+          confidence: HIGH
+          temporal_plausibility: STRONG
+      check_known_range:
+        type: condition
+        variable: within_known_onset_range
+        operator: eq
+        value: true
+        true_next: within_known_range
+        false_next: check_known_range_false
+      check_acute:
+        type: condition
+        variable: drug_start_to_event_days
+        operator: lte
+        value: 7
+        true_next: acute_onset
+        false_next: check_subacute
+      check_subacute:
+        type: condition
+        variable: drug_start_to_event_days
+        operator: lte
+        value: 30
+        true_next: subacute_onset
+        false_next: check_delayed
+      outside_known_range:
+        type: return
+        value:
+          assessment: Event onset outside known pharmacological timeframe
+          naranjo_contribution: 0
+          confidence: LOW
+          temporal_plausibility: WEAK
+      check_before_drug:
+        type: condition
+        variable: event_before_drug
+        operator: eq
+        value: true
+        true_next: implausible
+        false_next: check_known_range
+      delayed_onset:
+        type: return
+        value:
+          naranjo_contribution: 1
+          assessment: Delayed onset (31-90 days) — possible but less specific
+          confidence: MODERATE
+          temporal_plausibility: POSSIBLE
+      check_delayed:
+        type: condition
+        variable: drug_start_to_event_days
+        operator: lte
+        value: 90
+        true_next: delayed_onset
+        false_next: late_onset
+      check_known_range_false:
+        type: condition
+        variable: within_known_onset_range
+        operator: eq
+        value: false
+        true_next: outside_known_range
+        false_next: check_acute
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: within_known_onset_range
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: within_known_onset_range
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when: null
+    default:
+      confidence: medium
+      verdict: indeterminate
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      drug_start_to_event_days:
+        type: int
+        required: true
+      event_before_drug:
+        type: bool
+        required: false
+      within_known_onset_range:
+        type: bool
+        required: false
+    outputs:
+      temporal_plausibility:
+        type: string
+        required: false
+      naranjo_contribution:
+        type: int
+        required: false
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      assessment:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    within_known_onset_range: null
+    drug_start_to_event_days: 14
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    within_known_onset_range: false
+    drug_start_to_event_days: 14
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

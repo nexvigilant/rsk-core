@@ -5,11 +5,25 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    target: falsified
+    organ: falsified
 sense:
   tree:
     start: check_severe
     nodes:
+      severe:
+        type: return
+        value:
+          organ: musculoskeletal
+          severity: severe
+          action: discontinue
+          target: bone
+      normal:
+        type: return
+        value:
+          target: bone
+          action: continue
+          organ: musculoskeletal
+          severity: normal
       check_severe:
         type: condition
         variable: cpk_ratio
@@ -17,27 +31,6 @@ sense:
         value: 10
         true_next: severe
         false_next: check_mild
-      severe:
-        type: return
-        value:
-          target: bone
-          organ: musculoskeletal
-          action: discontinue
-          severity: severe
-      mild:
-        type: return
-        value:
-          target: bone
-          severity: mild
-          organ: musculoskeletal
-          action: monitor_closely
-      normal:
-        type: return
-        value:
-          organ: musculoskeletal
-          action: continue
-          severity: normal
-          target: bone
       check_mild:
         type: condition
         variable: cpk_ratio
@@ -45,15 +38,34 @@ sense:
         value: 5
         true_next: mild
         false_next: normal
+      mild:
+        type: return
+        value:
+          action: monitor_closely
+          severity: mild
+          organ: musculoskeletal
+          target: bone
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       not_falsified:
         type: return
         value:
           falsified: false
           confounder_count: 0
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      null_guard_negation:
+        type: condition
+        variable: cpk_ratio
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
         variable: cpk_ratio
@@ -61,11 +73,6 @@ antisense:
         value: 10
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -74,19 +81,19 @@ resolution:
     default: null
     emit:
       confidence: high
-      verdict: confirmed
       confidence_score: 0.7
+      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
       confidence: low
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
       verdict: indeterminate
     emit: null
 interface:
@@ -96,13 +103,13 @@ interface:
         type: integer
         required: false
     outputs:
+      confidence:
+        type: string
+        required: false
       confidence_score:
         type: float
         required: false
       verdict:
-        type: string
-        required: false
-      confidence:
         type: string
         required: false
     aliases: {}
@@ -118,8 +125,8 @@ tests:
   input:
     cpk_ratio: 9
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

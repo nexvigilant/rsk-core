@@ -1,0 +1,246 @@
+name: fda-immunogenicity-risk-helix
+description: 'Forged from microgram ''fda-immunogenicity-risk''. Domain: WorkflowRouting. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 5
+  base_pairs:
+    immunogenicity_risk: falsified
+sense:
+  tree:
+    start: check_origin
+    nodes:
+      moderate_sc_endogenous:
+        type: return
+        value:
+          immunogenicity_risk: MODERATE_HIGH
+          monitoring_requirement: Regular ADA sampling. Monitor for injection site reactions, loss of efficacy, and cross-reactivity to endogenous protein.
+          regulatory_reference: 'FDA Guidance: Immunogenicity Assessment (2014), Sections III.A, IV'
+          testing_strategy: Multi-tiered ADA testing with cross-reactivity assessment. SC injection site reactions as sentinel marker.
+      critical_risk:
+        type: return
+        value:
+          immunogenicity_risk: CRITICAL
+          testing_strategy: 'Multi-tiered ADA testing: screening → confirmatory → neutralizing antibody → cross-reactivity to endogenous protein. Validated assay with drug tolerance.'
+          monitoring_requirement: Pre-dose and regular post-dose ADA sampling. Monitor for loss of endogenous protein function (e.g., pure red cell aplasia for EPO).
+          regulatory_reference: 'FDA Guidance: Immunogenicity Assessment for Therapeutic Protein Products (2014), Section IV; ADA Testing Guidance (2019)'
+      check_novel:
+        type: condition
+        variable: product_origin
+        operator: eq
+        value: novel
+        true_next: high_risk_origin
+        false_next: check_route
+      check_intrathecal:
+        type: condition
+        variable: route_of_administration
+        operator: eq
+        value: intrathecal
+        true_next: moderate_intrathecal
+        false_next: check_endogenous_low
+      check_chimeric:
+        type: condition
+        variable: product_origin
+        operator: eq
+        value: chimeric
+        true_next: high_risk_origin
+        false_next: check_novel
+      check_route:
+        type: condition
+        variable: route_of_administration
+        operator: eq
+        value: sc
+        true_next: moderate_sc
+        false_next: check_intrathecal
+      moderate_sc_standard:
+        type: return
+        value:
+          immunogenicity_risk: MODERATE
+          testing_strategy: 'Standard multi-tiered ADA testing: screening → confirmatory → neutralizing antibody.'
+          monitoring_requirement: Pre-dose and periodic ADA sampling. Correlate with efficacy and adverse events.
+          regulatory_reference: 'FDA Guidance: Immunogenicity Assessment (2014), Section III.A'
+      moderate_sc:
+        type: condition
+        variable: endogenous_counterpart
+        operator: eq
+        value: true
+        true_next: moderate_sc_endogenous
+        false_next: moderate_sc_standard
+      check_origin:
+        type: condition
+        variable: product_origin
+        operator: eq
+        value: murine
+        true_next: high_risk_origin
+        false_next: check_chimeric
+      low_moderate:
+        type: return
+        value:
+          immunogenicity_risk: LOW_MODERATE
+          monitoring_requirement: Periodic ADA sampling. Monitor endogenous protein levels if clinically relevant.
+          testing_strategy: Standard ADA testing with cross-reactivity panel for endogenous protein.
+          regulatory_reference: 'FDA Guidance: Immunogenicity Assessment (2014), Section III.A'
+      check_endogenous_low:
+        type: condition
+        variable: endogenous_counterpart
+        operator: eq
+        value: true
+        true_next: low_moderate
+        false_next: low_risk
+      low_risk:
+        type: return
+        value:
+          testing_strategy: 'Standard ADA testing: screening → confirmatory. Neutralizing antibody testing if ADA-positive.'
+          monitoring_requirement: Standard periodic ADA sampling per protocol.
+          regulatory_reference: 'FDA Guidance: Immunogenicity Assessment (2014), Section III.A'
+          immunogenicity_risk: LOW
+      high_risk_origin:
+        type: condition
+        variable: endogenous_counterpart
+        operator: eq
+        value: true
+        true_next: critical_risk
+        false_next: high_risk_standard
+      high_risk_standard:
+        type: return
+        value:
+          monitoring_requirement: Pre-dose and regular ADA sampling throughout clinical program. Correlate with PK, efficacy, and safety.
+          immunogenicity_risk: HIGH
+          testing_strategy: 'Multi-tiered ADA testing: screening → confirmatory → neutralizing antibody. Drug-tolerant assay methodology required.'
+          regulatory_reference: 'FDA Guidance: Immunogenicity Assessment (2014), Section III.B; ADA Testing Guidance (2019)'
+      moderate_intrathecal:
+        type: return
+        value:
+          immunogenicity_risk: MODERATE_HIGH
+          testing_strategy: ADA testing in both serum and CSF. Evaluate blood-brain barrier integrity.
+          regulatory_reference: 'FDA Guidance: Immunogenicity Assessment (2014), Section III.C'
+          monitoring_requirement: CSF and serum ADA sampling. Enhanced neurological monitoring for immune-mediated CNS effects.
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      null_guard_negation:
+        type: condition
+        variable: product_origin
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: product_origin
+        operator: neq
+        value: murine
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      clinical_consequence:
+        type: string
+        required: false
+      route_of_administration:
+        type: string
+        required: true
+      endogenous_counterpart:
+        type: bool
+        required: false
+      product_origin:
+        type: string
+        required: true
+    outputs:
+      confidence:
+        type: string
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      testing_strategy:
+        type: string
+        required: false
+      monitoring_requirement:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      immunogenicity_risk:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    endogenous_counterpart: true
+    product_origin: null
+    route_of_administration: iv
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    endogenous_counterpart: true
+    product_origin: __negated__
+    route_of_administration: iv
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — workflow-routing with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - product_origin
+  - route_of_administration
+  - endogenous_counterpart
+  chain_prediction: 'Forged heligram. Domain: workflow-routing. Chains as dual-strand verifier before downstream consumers.'

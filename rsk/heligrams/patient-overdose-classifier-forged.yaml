@@ -1,0 +1,178 @@
+name: patient-overdose-classifier-helix
+description: 'Forged from microgram ''patient-overdose-classifier''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    overdose_compliant: falsified
+sense:
+  tree:
+    start: validate_overdose_report
+    nodes:
+      check_outcome:
+        type: condition
+        variable: outcome_type
+        operator: eq
+        value: fatal
+        true_next: fatal_overdose
+        false_next: check_serious_outcome
+      serious_overdose:
+        type: return
+        value:
+          outcome: recovery_with_sequelae
+          overdose_compliant: true
+          medical_intervention: intensive_care_required
+          patient_safety_priority: 2
+          overdose_severity: serious
+      mild_overdose:
+        type: return
+        value:
+          outcome: full_recovery
+          patient_safety_priority: 3
+          overdose_compliant: true
+          overdose_severity: mild
+          medical_intervention: supportive_care
+      no_overdose:
+        type: return
+        value:
+          overdose_severity: no_overdose
+          patient_safety_priority: null
+          overdose_compliant: true
+          outcome: not_applicable
+          medical_intervention: null
+      check_serious_outcome:
+        type: condition
+        variable: outcome_type
+        operator: eq
+        value: serious
+        true_next: serious_overdose
+        false_next: mild_overdose
+      fatal_overdose:
+        type: return
+        value:
+          outcome: death
+          overdose_severity: fatal
+          patient_safety_priority: 1
+          overdose_compliant: true
+          medical_intervention: resuscitation_attempted
+      validate_overdose_report:
+        type: condition
+        variable: overdose_reported
+        operator: eq
+        value: true
+        true_next: check_outcome
+        false_next: no_overdose
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_negation:
+        type: condition
+        variable: outcome_type
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: outcome_type
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+      overdose_compliant: true
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+      overdose_compliant: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when:
+      falsified: false
+      overdose_compliant: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: absent
+      confidence: high
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      outcome_type:
+        type: bool
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    outcome_type: null
+    overdose_reported: true
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    outcome_type: false
+    overdose_reported: true
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

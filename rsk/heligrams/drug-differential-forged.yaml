@@ -10,11 +10,6 @@ sense:
   tree:
     start: check_a_higher
     nodes:
-      equal:
-        type: return
-        value:
-          differential: equal
-          label: Rates are comparable
       check_a_higher:
         type: condition
         variable: ratio
@@ -22,6 +17,16 @@ sense:
         value: 1.2
         true_next: a_higher
         false_next: check_b_higher
+      a_higher:
+        type: return
+        value:
+          differential: A
+          label: Drug A has higher rate
+      b_higher:
+        type: return
+        value:
+          label: Drug B has higher rate
+          differential: B
       check_b_higher:
         type: condition
         variable: ratio
@@ -29,19 +34,14 @@ sense:
         value: 0.833
         true_next: b_higher
         false_next: equal
-      a_higher:
+      equal:
         type: return
         value:
-          label: Drug A has higher rate
-          differential: A
-      b_higher:
-        type: return
-        value:
-          label: Drug B has higher rate
-          differential: B
+          differential: equal
+          label: Rates are comparable
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       check_negation:
         type: condition
@@ -53,13 +53,20 @@ antisense:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
+      null_guard_negation:
+        type: condition
+        variable: ratio
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       not_falsified:
         type: return
         value:
-          falsified: false
           confounder_count: 0
+          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -67,20 +74,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      confidence: high
       verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
       verdict: indeterminate
     emit: null
 interface:
@@ -90,20 +97,20 @@ interface:
         type: float
         required: true
     outputs:
-      differential:
-        type: string
-        required: false
       confidence:
         type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
       label:
         type: string
         required: false
       verdict:
         type: string
+        required: false
+      differential:
+        type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null

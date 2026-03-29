@@ -1,0 +1,192 @@
+name: fda-abuse-deterrent-eval-helix
+description: 'Forged from microgram ''fda-abuse-deterrent-eval''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    evaluation_category: falsified
+sense:
+  tree:
+    start: check_in_vitro
+    nodes:
+      check_clinical_study:
+        type: condition
+        variable: clinical_abuse_study
+        operator: eq
+        value: true
+        true_next: full_evaluation
+        false_next: in_vitro_only
+      check_partial:
+        type: condition
+        variable: in_vitro_result
+        operator: eq
+        value: partially_resistant
+        true_next: partial_resistant_path
+        false_next: not_resistant_path
+      in_vitro_only:
+        type: return
+        value:
+          evaluation_category: CATEGORY_1_2_ONLY
+          study_requirements: Category 3 clinical abuse potential study needed to support abuse-deterrent labeling claim
+          labeling_claim: Labeling may describe physical/chemical properties but cannot claim reduced abuse without clinical (Cat 3) data
+          regulatory_reference: 'FDA Guidance: Abuse-Deterrent Opioids (2015), Section III.C'
+      partial_resistant_path:
+        type: return
+        value:
+          study_requirements: Category 1-2 data supports partial claim. Category 3 clinical study recommended for the specific abuse pathway.
+          regulatory_reference: 'FDA Guidance: Abuse-Deterrent Opioids (2015), Section III.B'
+          labeling_claim: Labeling may describe partial resistance to specific manipulation pathways. Must specify which pathways are and are not deterred.
+          evaluation_category: PARTIAL_DETERRENCE
+      not_resistant_path:
+        type: return
+        value:
+          labeling_claim: No abuse-deterrent labeling claim supportable. Product may still be approved as standard opioid formulation.
+          evaluation_category: NO_DETERRENT_CLAIM
+          regulatory_reference: 'FDA Guidance: Abuse-Deterrent Opioids (2015), Section II; Opioid REMS'
+          study_requirements: Standard NDA requirements apply. Consider REMS with ETASS for opioid products.
+      check_in_vitro:
+        type: condition
+        variable: in_vitro_result
+        operator: eq
+        value: resistant
+        true_next: check_clinical_study
+        false_next: check_partial
+      full_evaluation:
+        type: return
+        value:
+          regulatory_reference: 'FDA Guidance: Abuse-Deterrent Opioids - Evaluation and Labeling (2015), Sections III-IV'
+          evaluation_category: CATEGORY_1_2_3
+          labeling_claim: Labeling may describe abuse-deterrent properties with Categories 1-3 data. Include specific abuse pathways tested and limitations.
+          study_requirements: 'Complete: In vitro manipulation (Cat 1), PK (Cat 2), Clinical abuse potential (Cat 3). Category 4 (postmarket) studies recommended.'
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      null_guard_negation:
+        type: condition
+        variable: clinical_abuse_study
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: clinical_abuse_study
+        operator: neq
+        value: resistant
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: confirmed
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence: low
+      confidence_score: 0.27999999999999997
+      verdict: contested
+  - when: null
+    default:
+      confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      in_vitro_result:
+        type: string
+        required: false
+      formulation_category:
+        type: string
+        required: true
+      clinical_abuse_study:
+        type: bool
+        required: false
+      abuse_pathway:
+        type: string
+        required: true
+    outputs:
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      study_requirements:
+        type: string
+        required: false
+      evaluation_category:
+        type: string
+        required: false
+      labeling_claim:
+        type: string
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    clinical_abuse_study: null
+    abuse_pathway: intranasal
+    in_vitro_result: resistant
+    formulation_category: physical_chemical_barrier
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    clinical_abuse_study: __negated__
+    abuse_pathway: intranasal
+    in_vitro_result: resistant
+    formulation_category: physical_chemical_barrier
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - in_vitro_result
+  - clinical_abuse_study
+  - abuse_pathway
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

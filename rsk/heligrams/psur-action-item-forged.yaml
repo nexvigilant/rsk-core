@@ -1,0 +1,178 @@
+name: psur-action-item-helix
+description: 'Forged from microgram ''psur-action-item''. Domain: WorkflowRouting. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 5
+  base_pairs:
+    psur_action_compliant: falsified
+sense:
+  tree:
+    start: validate_psur_conclusion
+    nodes:
+      validate_psur_conclusion:
+        type: condition
+        variable: regulatory_action_required
+        operator: eq
+        value: true
+        true_next: check_action_type
+        false_next: no_action_items
+      label_action:
+        type: return
+        value:
+          priority: high
+          responsible_party: marketing_authorization_holder
+          psur_action_compliant: true
+          action_item: update_product_label
+          implementation_timeline_days: 30
+      check_risk_mitigation:
+        type: condition
+        variable: action_category
+        operator: eq
+        value: risk_minimization
+        true_next: rmp_action
+        false_next: other_action
+      no_action_items:
+        type: return
+        value:
+          implementation_timeline_days: 0
+          psur_action_compliant: true
+          action_item: continue_routine_monitoring
+          priority: none
+          responsible_party: null
+      check_action_type:
+        type: condition
+        variable: action_category
+        operator: eq
+        value: label_update
+        true_next: label_action
+        false_next: check_risk_mitigation
+      other_action:
+        type: return
+        value:
+          responsible_party: marketing_authorization_holder
+          psur_action_compliant: true
+          action_item: other_regulatory_action
+          implementation_timeline_days: 90
+          priority: routine
+      rmp_action:
+        type: return
+        value:
+          priority: high
+          action_item: update_risk_management_plan
+          responsible_party: marketing_authorization_holder
+          implementation_timeline_days: 60
+          psur_action_compliant: true
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      check_negation:
+        type: condition
+        variable: regulatory_action_required
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      null_guard_negation:
+        type: condition
+        variable: regulatory_action_required
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+      psur_action_compliant: true
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      psur_action_compliant: true
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
+  - when:
+      psur_action_compliant: false
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      verdict: absent
+      confidence: high
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      regulatory_action_required:
+        type: bool
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    action_category: label_update
+    regulatory_action_required: null
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    action_category: label_update
+    regulatory_action_required: false
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — workflow-routing with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: workflow-routing. Chains as dual-strand verifier before downstream consumers.'

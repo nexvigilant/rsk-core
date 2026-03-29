@@ -21,16 +21,9 @@ sense:
         type: return
         value:
           reason: MW≥500 Da — Lipinski Rule of 5 violation, oral bioavailability concern
-          action: flag
-          priority: moderate
           route: admet_review
-      normal:
-        type: return
-        value:
-          reason: MW 100-500 Da — within drug-like range
-          priority: low
-          action: pass
-          route: archive
+          priority: moderate
+          action: flag
       check_low:
         type: condition
         variable: molecular_weight
@@ -41,14 +34,33 @@ sense:
       fragment:
         type: return
         value:
+          reason: MW≤100 Da — molecular fragment, not drug-like
           route: archive
           priority: low
-          reason: MW≤100 Da — molecular fragment, not drug-like
           action: classify
+      normal:
+        type: return
+        value:
+          action: pass
+          reason: MW 100-500 Da — within drug-like range
+          route: archive
+          priority: low
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
+      null_guard_negation:
+        type: condition
+        variable: molecular_weight
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       check_negation:
         type: condition
         variable: molecular_weight
@@ -56,16 +68,11 @@ antisense:
         value: 500
         true_next: falsified
         false_next: not_falsified
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
 resolution:
   mode: base_pair
   rules:
@@ -73,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence_score: 0.7
       confidence: high
       verdict: confirmed
-      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
   - when: null
     default:
-      verdict: indeterminate
-      confidence: medium
       confidence_score: 0.5
+      confidence: medium
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -96,13 +103,13 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence:
+      verdict:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      verdict:
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -118,8 +125,8 @@ tests:
   input:
     molecular_weight: 499
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

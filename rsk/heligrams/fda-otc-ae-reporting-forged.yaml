@@ -10,29 +10,6 @@ sense:
   tree:
     start: check_product_status
     nodes:
-      check_monograph:
-        type: condition
-        variable: product_status
-        operator: eq
-        value: otc_monograph
-        true_next: monograph_serious_check
-        false_next: check_dietary
-      monograph_serious:
-        type: return
-        value:
-          timeline_days: 15
-          regulatory_reference: Dietary Supplement and Nonprescription Drug Consumer Protection Act (2006); FDA Guidance (2009), Section III.B
-          report_type: MANDATORY_SERIOUS
-          submission_method: MedWatch 3500A to FDA
-          reporting_required: true
-      dietary_nonserious:
-        type: return
-        value:
-          regulatory_reference: Dietary Supplement and Nonprescription Drug Consumer Protection Act (2006)
-          submission_method: MedWatch 3500B voluntary reporting encouraged
-          timeline_days: 0
-          reporting_required: false
-          report_type: VOLUNTARY
       check_product_status:
         type: condition
         variable: product_status
@@ -40,28 +17,22 @@ sense:
         value: approved_nda
         true_next: nda_serious_check
         false_next: check_monograph
-      unapproved_nonserious:
+      nda_serious:
         type: return
         value:
-          report_type: VOLUNTARY
-          timeline_days: 0
-          submission_method: MedWatch 3500B voluntary reporting encouraged
-          regulatory_reference: 'FDA Guidance: Postmarketing AE Reporting for Nonprescription Products (2009), Section IV'
-          reporting_required: false
-      check_dietary:
-        type: condition
-        variable: product_status
-        operator: eq
-        value: dietary_supplement
-        true_next: dietary_serious_check
-        false_next: unapproved_serious_check
-      nda_serious_check:
-        type: condition
-        variable: serious
-        operator: eq
-        value: true
-        true_next: nda_serious
-        false_next: nda_nonserious
+          submission_method: E2B(R3) via FDA ESG or MedWatch 3500A
+          reporting_required: true
+          timeline_days: 15
+          regulatory_reference: '21 CFR 314.80(c)(1); FDA Guidance: Postmarketing AE Reporting for Nonprescription Products (2009)'
+          report_type: 15-DAY_EXPEDITED
+      nda_nonserious:
+        type: return
+        value:
+          timeline_days: 90
+          reporting_required: true
+          report_type: PERIODIC
+          submission_method: NDA Periodic Safety Report or MedWatch 3500A
+          regulatory_reference: '21 CFR 314.80(c)(2); FDA Guidance: Postmarketing AE Reporting for Nonprescription Products (2009)'
       dietary_serious_check:
         type: condition
         variable: serious
@@ -69,45 +40,6 @@ sense:
         value: true
         true_next: dietary_serious
         false_next: dietary_nonserious
-      nda_nonserious:
-        type: return
-        value:
-          reporting_required: true
-          timeline_days: 90
-          submission_method: NDA Periodic Safety Report or MedWatch 3500A
-          report_type: PERIODIC
-          regulatory_reference: '21 CFR 314.80(c)(2); FDA Guidance: Postmarketing AE Reporting for Nonprescription Products (2009)'
-      monograph_serious_check:
-        type: condition
-        variable: serious
-        operator: eq
-        value: true
-        true_next: monograph_serious
-        false_next: monograph_nonserious
-      unapproved_serious:
-        type: return
-        value:
-          submission_method: MedWatch 3500A to FDA
-          reporting_required: true
-          report_type: MANDATORY_SERIOUS
-          regulatory_reference: Dietary Supplement and Nonprescription Drug Consumer Protection Act (2006); FDA Guidance (2009), Section IV
-          timeline_days: 15
-      nda_serious:
-        type: return
-        value:
-          reporting_required: true
-          report_type: 15-DAY_EXPEDITED
-          timeline_days: 15
-          regulatory_reference: '21 CFR 314.80(c)(1); FDA Guidance: Postmarketing AE Reporting for Nonprescription Products (2009)'
-          submission_method: E2B(R3) via FDA ESG or MedWatch 3500A
-      monograph_nonserious:
-        type: return
-        value:
-          report_type: VOLUNTARY
-          submission_method: MedWatch 3500B voluntary reporting encouraged
-          timeline_days: 0
-          regulatory_reference: 'FDA Guidance: Postmarketing AE Reporting for Nonprescription Products (2009), Section III.C'
-          reporting_required: false
       unapproved_serious_check:
         type: condition
         variable: serious
@@ -115,18 +47,110 @@ sense:
         value: true
         true_next: unapproved_serious
         false_next: unapproved_nonserious
-      dietary_serious:
+      dietary_nonserious:
+        type: return
+        value:
+          reporting_required: false
+          timeline_days: 0
+          submission_method: MedWatch 3500B voluntary reporting encouraged
+          regulatory_reference: Dietary Supplement and Nonprescription Drug Consumer Protection Act (2006)
+          report_type: VOLUNTARY
+      check_monograph:
+        type: condition
+        variable: product_status
+        operator: eq
+        value: otc_monograph
+        true_next: monograph_serious_check
+        false_next: check_dietary
+      nda_serious_check:
+        type: condition
+        variable: serious
+        operator: eq
+        value: true
+        true_next: nda_serious
+        false_next: nda_nonserious
+      unapproved_serious:
+        type: return
+        value:
+          timeline_days: 15
+          submission_method: MedWatch 3500A to FDA
+          regulatory_reference: Dietary Supplement and Nonprescription Drug Consumer Protection Act (2006); FDA Guidance (2009), Section IV
+          reporting_required: true
+          report_type: MANDATORY_SERIOUS
+      check_dietary:
+        type: condition
+        variable: product_status
+        operator: eq
+        value: dietary_supplement
+        true_next: dietary_serious_check
+        false_next: unapproved_serious_check
+      monograph_serious:
         type: return
         value:
           reporting_required: true
+          regulatory_reference: Dietary Supplement and Nonprescription Drug Consumer Protection Act (2006); FDA Guidance (2009), Section III.B
           submission_method: MedWatch 3500A to FDA
           report_type: MANDATORY_SERIOUS
           timeline_days: 15
+      monograph_serious_check:
+        type: condition
+        variable: serious
+        operator: eq
+        value: true
+        true_next: monograph_serious
+        false_next: monograph_nonserious
+      dietary_serious:
+        type: return
+        value:
+          timeline_days: 15
+          submission_method: MedWatch 3500A to FDA
           regulatory_reference: Dietary Supplement and Nonprescription Drug Consumer Protection Act (2006), Section 761
+          report_type: MANDATORY_SERIOUS
+          reporting_required: true
+      unapproved_nonserious:
+        type: return
+        value:
+          regulatory_reference: 'FDA Guidance: Postmarketing AE Reporting for Nonprescription Products (2009), Section IV'
+          submission_method: MedWatch 3500B voluntary reporting encouraged
+          timeline_days: 0
+          report_type: VOLUNTARY
+          reporting_required: false
+      monograph_nonserious:
+        type: return
+        value:
+          reporting_required: false
+          regulatory_reference: 'FDA Guidance: Postmarketing AE Reporting for Nonprescription Products (2009), Section III.C'
+          timeline_days: 0
+          report_type: VOLUNTARY
+          submission_method: MedWatch 3500B voluntary reporting encouraged
 antisense:
   tree:
-    start: check_incomplete_info
+    start: null_guard_incomplete_info
     nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: is_null
+        value: null
+        true_next: null_guard_coding_error
+        false_next: check_comorbidity_confound
+      check_comorbidity_confound:
+        type: condition
+        variable: comorbidity_explains
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_coding_error
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
       check_coding_error:
         type: condition
         variable: coding_verified
@@ -134,127 +158,124 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      check_comorbidity_confound:
+      null_guard_incomplete_info:
         type: condition
-        variable: comorbidity_explains
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: check_coding_error
+        variable: follow_up_complete
+        operator: is_null
+        value: null
+        true_next: null_guard_comorbidity_confound
+        false_next: check_incomplete_info
       check_incomplete_info:
         type: condition
         variable: follow_up_complete
         operator: eq
         value: false
         true_next: falsified
-        false_next: check_comorbidity_confound
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
+        false_next: null_guard_comorbidity_confound
+      null_guard_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_coding_error
 resolution:
   mode: base_pair
   rules:
   - when:
-      reporting_required: true
       falsified: false
+      reporting_required: true
     default: null
     emit:
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
       confidence_score: 0.7
   - when:
-      falsified: true
       reporting_required: true
+      falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when:
-      reporting_required: false
       falsified: false
+      reporting_required: false
     default: null
     emit:
-      confidence_score: 0.7
-      confidence: high
       verdict: absent
+      confidence: high
+      confidence_score: 0.7
   - when: null
     default:
+      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
-      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      follow_up_complete:
-        type: bool
+      reporter_type:
+        type: string
         required: false
       comorbidity_explains:
-        type: bool
-        required: false
-      coding_verified:
         type: bool
         required: false
       serious:
         type: bool
         required: true
+      follow_up_complete:
+        type: bool
+        required: false
+      coding_verified:
+        type: bool
+        required: false
       product_status:
         type: string
         required: true
-      reporter_type:
-        type: string
-        required: false
     outputs:
-      verdict:
-        type: string
-        required: false
-      report_type:
-        type: string
-        required: false
-      reporting_required:
-        type: bool
-        required: false
-      confidence:
-        type: string
-        required: false
-      submission_method:
-        type: string
-        required: false
-      timeline_days:
-        type: int
-        required: false
       regulatory_reference:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
+      submission_method:
+        type: string
+        required: false
+      reporting_required:
+        type: bool
+        required: false
+      timeline_days:
+        type: int
+        required: false
+      report_type:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    coding_verified: true
-    product_status: approved_nda
     serious: true
-    comorbidity_explains: false
+    coding_verified: true
     follow_up_complete: true
+    product_status: approved_nda
+    comorbidity_explains: false
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, incomplete_info active'
   input:
-    product_status: approved_nda
     serious: true
     follow_up_complete: false
+    product_status: approved_nda
   expect:
     verdict: contested
     confidence: low

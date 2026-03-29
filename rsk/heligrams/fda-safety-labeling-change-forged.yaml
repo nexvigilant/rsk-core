@@ -1,0 +1,247 @@
+name: fda-safety-labeling-change-helix
+description: 'Forged from microgram ''fda-safety-labeling-change''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    fda_can_require: falsified
+sense:
+  tree:
+    start: check_section
+    nodes:
+      ar_evidence_check:
+        type: condition
+        variable: evidence_type
+        operator: eq
+        value: new_study_data
+        true_next: ar_study_data
+        false_next: ar_other_evidence
+      check_warnings:
+        type: condition
+        variable: labeling_section
+        operator: eq
+        value: warnings_precautions
+        true_next: warnings_urgency_check
+        false_next: check_adverse_reactions
+      ar_study_data:
+        type: return
+        value:
+          change_type: STANDARD_LABELING_CHANGE
+          fda_can_require: true
+          timeline: Submit CBE-30 with updated ADR table and frequency data
+          supplement_type: Changes Being Effected (CBE-30)
+          regulatory_reference: 'FDA Guidance: Safety Labeling Changes 505(o)(4) (2013), Section V; 21 CFR 201.57(c)(7)'
+      ar_other_evidence:
+        type: return
+        value:
+          timeline: Include in next annual report or submit CBE-30 if clinically significant
+          supplement_type: Annual Report or CBE-30
+          regulatory_reference: 'FDA Guidance: Safety Labeling Changes 505(o)(4) (2013), Section V; 21 CFR 314.70(d)'
+          change_type: MINOR_LABELING_CHANGE
+          fda_can_require: true
+      drug_interactions_path:
+        type: return
+        value:
+          supplement_type: Changes Being Effected (CBE-30)
+          change_type: STANDARD_LABELING_CHANGE
+          fda_can_require: true
+          regulatory_reference: 'FDA Guidance: Safety Labeling Changes 505(o)(4) (2013); 21 CFR 201.57(c)(8)'
+          timeline: Submit CBE-30 with updated interaction data and clinical recommendations
+      contraindications_path:
+        type: return
+        value:
+          change_type: MAJOR_LABELING_CHANGE
+          timeline: FDA may order under 505(o)(4); standard PAS review 4-6 months
+          regulatory_reference: 'FDA Guidance: Safety Labeling Changes 505(o)(4) (2013), Section III.B; 21 CFR 201.57(c)(5)'
+          fda_can_require: true
+          supplement_type: Prior Approval Supplement (PAS)
+      check_contraindications:
+        type: condition
+        variable: labeling_section
+        operator: eq
+        value: contraindications
+        true_next: contraindications_path
+        false_next: check_warnings
+      warnings_immediate:
+        type: return
+        value:
+          supplement_type: Changes Being Effected (CBE-0)
+          fda_can_require: true
+          change_type: URGENT_LABELING_CHANGE
+          timeline: Implement immediately; submit CBE-0 supplement concurrently
+          regulatory_reference: 'FDA Guidance: Safety Labeling Changes 505(o)(4) (2013), Section IV; 21 CFR 314.70(c)(6)(iii)'
+      warnings_urgency_check:
+        type: condition
+        variable: urgency
+        operator: eq
+        value: immediate
+        true_next: warnings_immediate
+        false_next: warnings_standard
+      check_section:
+        type: condition
+        variable: labeling_section
+        operator: eq
+        value: boxed_warning
+        true_next: boxed_warning_path
+        false_next: check_contraindications
+      boxed_warning_path:
+        type: return
+        value:
+          change_type: MAJOR_LABELING_CHANGE
+          timeline: FDA may order within 30 days under 505(o)(4); sponsor must comply or request hearing
+          supplement_type: Prior Approval Supplement (PAS)
+          fda_can_require: true
+          regulatory_reference: 'FDA Guidance: Safety Labeling Changes 505(o)(4) (2013), Section III.A; 21 CFR 201.57(c)(1)'
+      warnings_standard:
+        type: return
+        value:
+          timeline: Submit CBE-30; implement after 30 days unless FDA objects
+          regulatory_reference: 'FDA Guidance: Safety Labeling Changes 505(o)(4) (2013), Section IV; 21 CFR 314.70(c)(6)(iii)'
+          change_type: STANDARD_LABELING_CHANGE
+          supplement_type: Changes Being Effected (CBE-30)
+          fda_can_require: true
+      check_adverse_reactions:
+        type: condition
+        variable: labeling_section
+        operator: eq
+        value: adverse_reactions
+        true_next: ar_evidence_check
+        false_next: drug_interactions_path
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: evidence_type
+        operator: neq
+        value: boxed_warning
+        true_next: falsified
+        false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: evidence_type
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+      fda_can_require: true
+    default: null
+    emit:
+      confidence: high
+      confidence_score: 0.7
+      verdict: confirmed
+  - when:
+      fda_can_require: true
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
+  - when:
+      falsified: false
+      fda_can_require: false
+    default: null
+    emit:
+      confidence: high
+      verdict: absent
+      confidence_score: 0.7
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      evidence_type:
+        type: string
+        required: true
+      labeling_section:
+        type: string
+        required: true
+      urgency:
+        type: string
+        required: false
+    outputs:
+      confidence_score:
+        type: float
+        required: false
+      change_type:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      fda_can_require:
+        type: bool
+        required: false
+      timeline:
+        type: string
+        required: false
+      supplement_type:
+        type: string
+        required: false
+      regulatory_reference:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    evidence_type: null
+    labeling_section: boxed_warning
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    evidence_type: __negated__
+    labeling_section: boxed_warning
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments:
+  - labeling_section
+  - evidence_type
+  - urgency
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

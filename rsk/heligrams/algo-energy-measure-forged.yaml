@@ -1,0 +1,211 @@
+name: algo-energy-measure-helix
+description: 'Forged from microgram ''algo-energy-measure''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    energy_score: falsified
+sense:
+  tree:
+    start: check_state_change
+    nodes:
+      check_consumers_high:
+        type: condition
+        variable: downstream_consumers
+        operator: gte
+        value: 10
+        true_next: check_mag_major_high
+        false_next: check_consumers_medium
+      check_mag_major_high:
+        type: condition
+        variable: state_change_magnitude
+        operator: eq
+        value: major
+        true_next: critical_energy
+        false_next: check_mag_breaking_high
+      moderate_energy:
+        type: return
+        value:
+          energy_score: 0.5
+          algorithm: 'ENERGY: N(→(Δς)) = contained change capacity'
+          energy_class: moderate
+      check_mag_breaking_high:
+        type: condition
+        variable: state_change_magnitude
+        operator: eq
+        value: breaking
+        true_next: critical_energy
+        false_next: high_energy
+      check_consumers_medium:
+        type: condition
+        variable: downstream_consumers
+        operator: gte
+        value: 3
+        true_next: check_mag_major_med
+        false_next: low_energy
+      zero_energy:
+        type: return
+        value:
+          energy_class: inert
+          algorithm: 'ENERGY: N(→(Δς)) = 0 — no state change capacity'
+          energy_score: 0.0
+      critical_energy:
+        type: return
+        value:
+          energy_score: 1.0
+          algorithm: 'ENERGY: N(→(Δς)) = high consumers × breaking change = maximum cascade potential'
+          energy_class: critical
+      check_state_change:
+        type: condition
+        variable: state_change_magnitude
+        operator: eq
+        value: none
+        true_next: zero_energy
+        false_next: check_consumers_high
+      check_mag_major_med:
+        type: condition
+        variable: state_change_magnitude
+        operator: eq
+        value: major
+        true_next: high_energy
+        false_next: check_mag_breaking_med
+      check_mag_breaking_med:
+        type: condition
+        variable: state_change_magnitude
+        operator: eq
+        value: breaking
+        true_next: high_energy
+        false_next: moderate_energy
+      high_energy:
+        type: return
+        value:
+          energy_score: 0.75
+          energy_class: high
+          algorithm: 'ENERGY: N(→(Δς)) = significant cascade potential'
+      low_energy:
+        type: return
+        value:
+          energy_class: low
+          algorithm: 'ENERGY: N(→(Δς)) = minimal cascade potential'
+          energy_score: 0.25
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: downstream_consumers
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: downstream_consumers
+        operator: neq
+        value: none
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence: high
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence_score: 0.27999999999999997
+      confidence: low
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence_score: 0.5
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      component_persistence:
+        type: string
+        required: true
+      state_change_magnitude:
+        type: string
+        required: true
+      downstream_consumers:
+        type: integer
+        required: true
+    outputs:
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      algorithm:
+        type: string
+        required: false
+      energy_class:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      energy_score:
+        type: float
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    downstream_consumers: null
+    component_persistence: foundational
+    state_change_magnitude: breaking
+  expect:
+    verdict: confirmed
+    confidence: high
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    downstream_consumers: __negated__
+    component_persistence: foundational
+    state_change_magnitude: breaking
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

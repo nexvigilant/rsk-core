@@ -10,37 +10,11 @@ sense:
   tree:
     start: check_years_lt_2
     nodes:
-      check_renewal:
-        type: condition
-        variable: renewal_granted
-        operator: eq
-        value: true
-        true_next: check_rmp_36
-        false_next: check_rmp_12
-      return_12_rmp:
+      return_36:
         type: return
         value:
           regulatory_reference: ICH E2C(R2) Section 2 - Reporting Interval
-          interval_months: 12
-      return_12:
-        type: return
-        value:
-          interval_months: 12
-          regulatory_reference: ICH E2C(R2) Section 2 - Reporting Interval
-      check_years_lt_5:
-        type: condition
-        variable: years_since_approval
-        operator: lt
-        value: 5
-        true_next: check_rmp_12
-        false_next: check_renewal
-      check_rmp_36:
-        type: condition
-        variable: risk_management_plan_required
-        operator: eq
-        value: true
-        true_next: return_12_rmp
-        false_next: return_36
+          interval_months: 36
       check_years_lt_2:
         type: condition
         variable: years_since_approval
@@ -48,13 +22,18 @@ sense:
         value: 2
         true_next: check_rmp_6
         false_next: check_years_lt_5
-      check_rmp_12:
+      check_renewal:
         type: condition
-        variable: risk_management_plan_required
+        variable: renewal_granted
         operator: eq
         value: true
-        true_next: return_12_rmp
-        false_next: return_12
+        true_next: check_rmp_36
+        false_next: check_rmp_12
+      return_12:
+        type: return
+        value:
+          regulatory_reference: ICH E2C(R2) Section 2 - Reporting Interval
+          interval_months: 12
       check_rmp_6:
         type: condition
         variable: risk_management_plan_required
@@ -62,37 +41,65 @@ sense:
         value: true
         true_next: return_6
         false_next: return_6
-      return_36:
-        type: return
-        value:
-          interval_months: 36
-          regulatory_reference: ICH E2C(R2) Section 2 - Reporting Interval
+      check_years_lt_5:
+        type: condition
+        variable: years_since_approval
+        operator: lt
+        value: 5
+        true_next: check_rmp_12
+        false_next: check_renewal
       return_6:
         type: return
         value:
           interval_months: 6
           regulatory_reference: ICH E2C(R2) Section 2 - Reporting Interval
-antisense:
-  tree:
-    start: check_negation
-    nodes:
-      check_negation:
+      check_rmp_12:
         type: condition
-        variable: renewal_granted
-        operator: gte
-        value: 2
-        true_next: falsified
-        false_next: not_falsified
-      not_falsified:
+        variable: risk_management_plan_required
+        operator: eq
+        value: true
+        true_next: return_12_rmp
+        false_next: return_12
+      check_rmp_36:
+        type: condition
+        variable: risk_management_plan_required
+        operator: eq
+        value: true
+        true_next: return_12_rmp
+        false_next: return_36
+      return_12_rmp:
         type: return
         value:
-          falsified: false
-          confounder_count: 0
+          regulatory_reference: ICH E2C(R2) Section 2 - Reporting Interval
+          interval_months: 12
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      null_guard_negation:
+        type: condition
+        variable: years_since_approval
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: years_since_approval
+        operator: gte
+        value: 2
+        true_next: falsified
+        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -101,8 +108,8 @@ resolution:
     default: null
     emit:
       confidence_score: 0.7
-      confidence: high
       verdict: confirmed
+      confidence: high
   - when:
       falsified: true
     default: null
@@ -112,22 +119,22 @@ resolution:
       verdict: contested
   - when: null
     default:
+      confidence: medium
       verdict: indeterminate
       confidence_score: 0.5
-      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      years_since_approval:
-        type: number
-        required: true
       renewal_granted:
         type: bool
         required: false
       risk_management_plan_required:
         type: bool
         required: false
+      years_since_approval:
+        type: number
+        required: true
     outputs:
       confidence_score:
         type: float
@@ -138,10 +145,10 @@ interface:
       interval_months:
         type: number
         required: false
-      regulatory_reference:
+      verdict:
         type: string
         required: false
-      verdict:
+      regulatory_reference:
         type: string
         required: false
     aliases: {}
@@ -149,20 +156,20 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    renewal_granted: 0
-    years_since_approval: 1
+    years_since_approval: 0
     risk_management_plan_required: false
+    renewal_granted: false
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    renewal_granted: 2
-    years_since_approval: 1
+    years_since_approval: 2
     risk_management_plan_required: false
+    renewal_granted: false
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

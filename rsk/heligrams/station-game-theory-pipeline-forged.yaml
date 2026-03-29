@@ -1,0 +1,150 @@
+name: station-game-theory-pipeline-helix
+description: 'Forged from microgram ''station-game-theory-pipeline''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    priority: falsified
+sense:
+  tree:
+    start: check_equilibrium
+    nodes:
+      check_dominant:
+        type: condition
+        variable: dominant_strategy_exists
+        operator: eq
+        value: true
+        true_next: dominant
+        false_next: mixed
+      check_equilibrium:
+        type: condition
+        variable: has_nash
+        operator: eq
+        value: true
+        true_next: check_dominant
+        false_next: no_equilibrium
+      no_equilibrium:
+        type: return
+        value:
+          priority: moderate
+          reason: No Nash equilibrium — mixed strategy needed, run simulation
+          route: strategy_simulation
+          action: simulate
+      dominant:
+        type: return
+        value:
+          priority: high
+          reason: Dominant strategy exists — clear competitive advantage path
+          action: execute
+          route: strategy_execution
+      mixed:
+        type: return
+        value:
+          reason: Nash exists but no dominance — analyze mixed strategy probabilities
+          route: strategy_analysis
+          priority: moderate
+          action: analyze
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      null_guard_negation:
+        type: condition
+        variable: dominant_strategy_exists
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: dominant_strategy_exists
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      confidence_score: 0.5
+      verdict: indeterminate
+      confidence: medium
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      dominant_strategy_exists:
+        type: bool
+        required: false
+    outputs:
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      verdict:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    dominant_strategy_exists: null
+    has_nash: false
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    dominant_strategy_exists: false
+    has_nash: false
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'

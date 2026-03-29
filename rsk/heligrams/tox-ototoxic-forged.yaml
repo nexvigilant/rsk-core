@@ -5,17 +5,38 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    severity: falsified
+    organ: falsified
 sense:
   tree:
     start: check_severe
     nodes:
+      check_mild:
+        type: condition
+        variable: hearing_loss_db
+        operator: gte
+        value: 15
+        true_next: mild
+        false_next: normal
+      normal:
+        type: return
+        value:
+          organ: ototoxic
+          target: ear
+          action: continue
+          severity: normal
+      severe:
+        type: return
+        value:
+          severity: severe
+          organ: ototoxic
+          action: discontinue
+          target: ear
       mild:
         type: return
         value:
           severity: mild
-          target: ear
           organ: ototoxic
+          target: ear
           action: monitor_closely
       check_severe:
         type: condition
@@ -24,41 +45,10 @@ sense:
         value: 25
         true_next: severe
         false_next: check_mild
-      severe:
-        type: return
-        value:
-          action: discontinue
-          target: ear
-          severity: severe
-          organ: ototoxic
-      normal:
-        type: return
-        value:
-          target: ear
-          organ: ototoxic
-          action: continue
-          severity: normal
-      check_mild:
-        type: condition
-        variable: hearing_loss_db
-        operator: gte
-        value: 15
-        true_next: mild
-        false_next: normal
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
       check_negation:
         type: condition
         variable: hearing_loss_db
@@ -66,6 +56,23 @@ antisense:
         value: 25
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: hearing_loss_db
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -73,20 +80,20 @@ resolution:
       falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
       confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       verdict: contested
+      confidence: low
       confidence_score: 0.27999999999999997
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
+      confidence_score: 0.5
       confidence: medium
     emit: null
 interface:
@@ -96,14 +103,14 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       verdict:
         type: string
         required: false
       confidence_score:
         type: float
+        required: false
+      confidence:
+        type: string
         required: false
     aliases: {}
   minor_groove: null

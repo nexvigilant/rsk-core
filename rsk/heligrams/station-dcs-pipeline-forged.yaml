@@ -10,6 +10,27 @@ sense:
   tree:
     start: check_load
     nodes:
+      partitioned:
+        type: return
+        value:
+          action: failover
+          reason: Network partition detected — activate failover
+          route: partition_recovery
+          priority: critical
+      overloaded:
+        type: return
+        value:
+          reason: CPU ≥80% — horizontal scaling needed
+          route: autoscale
+          action: scale
+          priority: high
+      nominal:
+        type: return
+        value:
+          reason: Load normal, no partitions — nominal operation
+          priority: low
+          route: archive
+          action: proceed
       check_partition:
         type: condition
         variable: partition_detected
@@ -24,30 +45,9 @@ sense:
         value: 80
         true_next: overloaded
         false_next: check_partition
-      partitioned:
-        type: return
-        value:
-          action: failover
-          reason: Network partition detected — activate failover
-          route: partition_recovery
-          priority: critical
-      nominal:
-        type: return
-        value:
-          action: proceed
-          reason: Load normal, no partitions — nominal operation
-          priority: low
-          route: archive
-      overloaded:
-        type: return
-        value:
-          route: autoscale
-          action: scale
-          reason: CPU ≥80% — horizontal scaling needed
-          priority: high
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       check_negation:
         type: condition
@@ -64,8 +64,15 @@ antisense:
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: partition_detected
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
 resolution:
   mode: base_pair
   rules:
@@ -80,13 +87,13 @@ resolution:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
       confidence: low
+      confidence_score: 0.27999999999999997
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
+      verdict: indeterminate
       confidence_score: 0.5
     emit: null
 interface:
@@ -96,13 +103,13 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
         required: false
       verdict:
+        type: string
+        required: false
+      confidence:
         type: string
         required: false
     aliases: {}
@@ -110,18 +117,18 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    cpu_pct: 90
     partition_detected: 90
+    cpu_pct: 90
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    cpu_pct: 90
     partition_detected: 79
+    cpu_pct: 90
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

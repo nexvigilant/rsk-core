@@ -5,39 +5,18 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    priority: falsified
+    action: falsified
 sense:
   tree:
     start: check_level
     nodes:
-      on_track:
-        type: return
-        value:
-          priority: moderate
-          action: continue
-          reason: Progressing with minor gaps — continue current pathway
-          route: periodic_review
-      major_gaps:
-        type: return
-        value:
-          action: remediate
-          priority: high
-          reason: 5+ competency gaps — structured development plan needed
-          route: learning_plan
-      check_progress:
-        type: condition
-        variable: gap_count
-        operator: gte
-        value: 5
-        true_next: major_gaps
-        false_next: on_track
       independent:
         type: return
         value:
-          reason: Entrustment L4+ — independent practice level achieved
-          priority: low
-          route: certification
           action: certify
+          route: certification
+          priority: low
+          reason: Entrustment L4+ — independent practice level achieved
       check_level:
         type: condition
         variable: entrustment_level
@@ -45,27 +24,55 @@ sense:
         value: 4
         true_next: independent
         false_next: check_progress
+      on_track:
+        type: return
+        value:
+          route: periodic_review
+          priority: moderate
+          action: continue
+          reason: Progressing with minor gaps — continue current pathway
+      check_progress:
+        type: condition
+        variable: gap_count
+        operator: gte
+        value: 5
+        true_next: major_gaps
+        false_next: on_track
+      major_gaps:
+        type: return
+        value:
+          priority: high
+          action: remediate
+          reason: 5+ competency gaps — structured development plan needed
+          route: learning_plan
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
+      check_negation:
+        type: condition
+        variable: entrustment_level
+        operator: lt
+        value: 4
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      null_guard_negation:
+        type: condition
+        variable: entrustment_level
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       not_falsified:
         type: return
         value:
           confounder_count: 0
           falsified: false
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      check_negation:
-        type: condition
-        variable: gap_count
-        operator: lt
-        value: 4
-        true_next: falsified
-        false_next: not_falsified
 resolution:
   mode: base_pair
   rules:
@@ -74,51 +81,51 @@ resolution:
     default: null
     emit:
       verdict: confirmed
-      confidence: high
       confidence_score: 0.7
+      confidence: high
   - when:
       falsified: true
     default: null
     emit:
+      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
-      confidence: low
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      gap_count:
+      entrustment_level:
         type: integer
         required: false
     outputs:
-      confidence_score:
-        type: float
+      confidence:
+        type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence:
-        type: string
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    gap_count: 14
-    entrustment_level: 4
+    gap_count: 0
+    entrustment_level: 14
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    gap_count: 3
-    entrustment_level: 4
+    gap_count: 0
+    entrustment_level: 3
   expect:
     verdict: contested
     confidence: low

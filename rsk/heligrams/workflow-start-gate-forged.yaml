@@ -1,0 +1,185 @@
+name: workflow-start-gate-helix
+description: 'Forged from microgram ''workflow-start-gate''. Domain: WorkflowRouting. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 5
+  base_pairs:
+    description: falsified
+sense:
+  tree:
+    start: check_data_ready
+    nodes:
+      check_signal_investigation:
+        type: condition
+        variable: workflow_type
+        operator: eq
+        value: signal_investigation
+        true_next: start_signal_investigation
+        false_next: check_case_processing
+      check_periodic_review:
+        type: condition
+        variable: workflow_type
+        operator: eq
+        value: periodic_review
+        true_next: start_periodic_review
+        false_next: unknown_workflow
+      blocked_no_data:
+        type: return
+        value:
+          description: Data not ready - workflow cannot start without prerequisite data
+          workflow: none
+          gate: BLOCKED
+      start_case_processing:
+        type: return
+        value:
+          workflow: case_processing
+          gate: OPEN
+          description: Case processing workflow approved - proceed with ingestion and triage
+      check_data_ready:
+        type: condition
+        variable: data_ready
+        operator: eq
+        value: true
+        true_next: check_signal_investigation
+        false_next: blocked_no_data
+      start_periodic_review:
+        type: return
+        value:
+          gate: OPEN
+          description: Periodic review workflow approved - proceed with PSUR/PBRER cycle
+          workflow: periodic_review
+      unknown_workflow:
+        type: return
+        value:
+          gate: BLOCKED
+          description: Unknown workflow type - choose signal_investigation/case_processing/periodic_review
+          workflow: none
+      check_case_processing:
+        type: condition
+        variable: workflow_type
+        operator: eq
+        value: case_processing
+        true_next: start_case_processing
+        false_next: check_periodic_review
+      start_signal_investigation:
+        type: return
+        value:
+          gate: OPEN
+          description: Signal investigation workflow approved - proceed with PRR/ROR detection
+          workflow: signal_investigation
+antisense:
+  tree:
+    start: null_guard_negation
+    nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      null_guard_negation:
+        type: condition
+        variable: workflow_type
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
+      check_negation:
+        type: condition
+        variable: workflow_type
+        operator: neq
+        value: true
+        true_next: falsified
+        false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      confidence_score: 0.7
+      confidence: high
+      verdict: confirmed
+  - when:
+      falsified: true
+    default: null
+    emit:
+      confidence_score: 0.27999999999999997
+      confidence: low
+      verdict: contested
+  - when: null
+    default:
+      confidence: medium
+      confidence_score: 0.5
+      verdict: indeterminate
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      workflow_type:
+        type: string
+        required: false
+      data_ready:
+        type: bool
+        required: false
+    outputs:
+      description:
+        type: string
+        required: false
+      gate:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      workflow:
+        type: string
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    workflow_type: null
+    data_ready: true
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    workflow_type: false
+    data_ready: true
+  expect:
+    verdict: contested
+    confidence: low
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — workflow-routing with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: workflow-routing. Chains as dual-strand verifier before downstream consumers.'

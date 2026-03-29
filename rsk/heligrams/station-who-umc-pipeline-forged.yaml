@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 2
   base_pairs:
-    action: falsified
+    priority: falsified
 sense:
   tree:
     start: check_causality
@@ -17,34 +17,6 @@ sense:
         value: probable
         true_next: probable
         false_next: check_possible
-      possible:
-        type: return
-        value:
-          action: validate
-          reason: WHO-UMC Possible — temporal but alternative explanations exist
-          route: signal_validation
-          priority: moderate
-      check_causality:
-        type: condition
-        variable: causality_category
-        operator: eq
-        value: certain
-        true_next: certain
-        false_next: check_probable
-      unlikely:
-        type: return
-        value:
-          route: archive
-          action: archive
-          reason: WHO-UMC Unlikely/Unclassifiable — insufficient evidence for causality
-          priority: low
-      probable:
-        type: return
-        value:
-          priority: high
-          action: investigate
-          reason: WHO-UMC Probable — likely causal, needs rechallenge or mechanism
-          route: causality_assessment
       check_possible:
         type: condition
         variable: causality_category
@@ -52,34 +24,90 @@ sense:
         value: possible
         true_next: possible
         false_next: unlikely
+      probable:
+        type: return
+        value:
+          priority: high
+          action: investigate
+          route: causality_assessment
+          reason: WHO-UMC Probable — likely causal, needs rechallenge or mechanism
+      unlikely:
+        type: return
+        value:
+          reason: WHO-UMC Unlikely/Unclassifiable — insufficient evidence for causality
+          priority: low
+          action: archive
+          route: archive
+      possible:
+        type: return
+        value:
+          action: validate
+          route: signal_validation
+          priority: moderate
+          reason: WHO-UMC Possible — temporal but alternative explanations exist
       certain:
         type: return
         value:
-          priority: critical
           route: regulatory_action
-          action: confirm
+          priority: critical
           reason: WHO-UMC Certain — causal relationship established
+          action: confirm
+      check_causality:
+        type: condition
+        variable: causality_category
+        operator: eq
+        value: certain
+        true_next: certain
+        false_next: check_probable
 antisense:
   tree:
-    start: check_alternative_cause
+    start: null_guard_alternative_cause
     nodes:
+      null_guard_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: is_null
+        value: null
+        true_next: null_guard_no_dechallenge
+        false_next: check_temporal_implausible
       not_falsified:
         type: return
         value:
           falsified: false
           confounder_count: 0
+      null_guard_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_no_dechallenge
+      null_guard_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: is_null
+        value: null
+        true_next: null_guard_temporal_implausible
+        false_next: check_alternative_cause
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_no_dechallenge
       check_alternative_cause:
         type: condition
         variable: alternative_causes
         operator: eq
         value: likely
         true_next: falsified
-        false_next: check_temporal_implausible
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
+        false_next: null_guard_temporal_implausible
       check_no_dechallenge:
         type: condition
         variable: dechallenge_positive
@@ -87,13 +115,6 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      check_temporal_implausible:
-        type: condition
-        variable: temporal_plausible
-        operator: eq
-        value: false
-        true_next: falsified
-        false_next: check_no_dechallenge
 resolution:
   mode: base_pair
   rules:
@@ -101,42 +122,42 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       confidence: high
       verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      alternative_causes:
-        type: string
-        required: false
       temporal_plausible:
         type: bool
         required: false
       dechallenge_positive:
         type: bool
         required: false
+      alternative_causes:
+        type: string
+        required: false
     outputs:
-      verdict:
+      confidence:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      confidence:
+      verdict:
         type: string
         required: false
     aliases: {}
@@ -144,10 +165,10 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    causality_category: certain
     alternative_causes: none
-    dechallenge_positive: true
     temporal_plausible: true
+    dechallenge_positive: true
+    causality_category: certain
   expect:
     confidence: high
     verdict: confirmed

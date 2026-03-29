@@ -5,25 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    severity: falsified
+    organ: falsified
 sense:
   tree:
     start: check_severe
     nodes:
-      check_severe:
-        type: condition
-        variable: ALT_ULN
-        operator: gte
-        value: 10
-        true_next: severe
-        false_next: check_mild
-      normal:
-        type: return
-        value:
-          severity: normal
-          action: continue
-          target: liver
-          organ: hepatic
       check_mild:
         type: condition
         variable: ALT_ULN
@@ -31,34 +17,50 @@ sense:
         value: 3
         true_next: mild
         false_next: normal
-      severe:
-        type: return
-        value:
-          organ: hepatic
-          action: discontinue
-          severity: severe
-          target: liver
       mild:
         type: return
         value:
-          action: monitor_closely
+          organ: hepatic
           severity: mild
+          target: liver
+          action: monitor_closely
+      normal:
+        type: return
+        value:
+          severity: normal
+          action: continue
           organ: hepatic
           target: liver
+      severe:
+        type: return
+        value:
+          severity: severe
+          target: liver
+          action: discontinue
+          organ: hepatic
+      check_severe:
+        type: condition
+        variable: ALT_ULN
+        operator: gte
+        value: 10
+        true_next: severe
+        false_next: check_mild
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
+          confounder_count: 1
+      null_guard_negation:
+        type: condition
+        variable: ALT_ULN
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
         variable: ALT_ULN
@@ -66,6 +68,11 @@ antisense:
         value: 10
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
@@ -73,9 +80,9 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
@@ -85,9 +92,9 @@ resolution:
       confidence: low
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -99,11 +106,11 @@ interface:
       confidence:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
     aliases: {}
   minor_groove: null
@@ -112,14 +119,14 @@ tests:
   input:
     ALT_ULN: 20
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
     ALT_ULN: 9
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

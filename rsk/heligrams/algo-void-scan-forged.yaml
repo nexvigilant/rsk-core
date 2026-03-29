@@ -17,90 +17,34 @@ sense:
         value: false
         true_next: minor_gap_class
         false_next: complete
-      three_plus_gaps:
-        type: condition
-        variable: has_class_comparison
-        operator: eq
-        value: false
-        true_next: four_gaps
-        false_next: three_gaps
-      four_gaps:
-        type: return
-        value:
-          highest_value_gap: rechallenge_data
-          gap_count: 4
-          completeness: incomplete
-          algorithm: 'VOID: 4 gaps detected — rechallenge, dose-response, time-to-onset, class comparison all absent'
-      gap_rechallenge:
-        type: condition
-        variable: has_dose_response
-        operator: eq
-        value: false
-        true_next: gap_both_critical
-        false_next: check_remaining_with_rechallenge_gap
-      minor_gap:
-        type: return
-        value:
-          highest_value_gap: time_to_onset
-          algorithm: 'VOID: 1 minor gap — time-to-onset absent'
-          gap_count: 1
-          completeness: near_complete
-      two_critical_gaps:
-        type: return
-        value:
-          gap_count: 2
-          algorithm: 'VOID: 2 critical gaps — rechallenge + dose-response absent'
-          completeness: partial
-          highest_value_gap: rechallenge_data
-      check_minor_gaps:
-        type: condition
-        variable: has_time_to_onset
-        operator: eq
-        value: false
-        true_next: minor_gap
-        false_next: check_class
-      gap_both_critical:
-        type: condition
-        variable: has_time_to_onset
-        operator: eq
-        value: false
-        true_next: three_plus_gaps
-        false_next: two_critical_gaps
-      count_rechallenge:
-        type: condition
-        variable: has_rechallenge_data
-        operator: eq
-        value: false
-        true_next: gap_rechallenge
-        false_next: count_dose_response
       three_gaps:
         type: return
         value:
-          completeness: incomplete
+          highest_value_gap: rechallenge_data
           gap_count: 3
-          highest_value_gap: rechallenge_data
+          completeness: incomplete
           algorithm: 'VOID: 3 gaps — rechallenge + dose-response + time-to-onset absent'
-      rechallenge_only_gap:
-        type: return
-        value:
-          gap_count: 1
-          highest_value_gap: rechallenge_data
-          algorithm: 'VOID: 1 gap — rechallenge data absent (caps Naranjo at POSSIBLE)'
-          completeness: near_complete
       dose_response_gap:
         type: return
         value:
+          gap_count: 1
           algorithm: 'VOID: 1 gap — dose-response absent'
           highest_value_gap: dose_response
           completeness: near_complete
+      minor_gap:
+        type: return
+        value:
+          completeness: near_complete
+          algorithm: 'VOID: 1 minor gap — time-to-onset absent'
           gap_count: 1
+          highest_value_gap: time_to_onset
       rechallenge_plus_onset_gap:
         type: return
         value:
-          gap_count: 2
-          highest_value_gap: rechallenge_data
           algorithm: 'VOID: 2 gaps — rechallenge + time-to-onset absent'
+          gap_count: 2
           completeness: partial
+          highest_value_gap: rechallenge_data
       count_dose_response:
         type: condition
         variable: has_dose_response
@@ -108,6 +52,34 @@ sense:
         value: false
         true_next: dose_response_gap
         false_next: check_minor_gaps
+      rechallenge_only_gap:
+        type: return
+        value:
+          highest_value_gap: rechallenge_data
+          algorithm: 'VOID: 1 gap — rechallenge data absent (caps Naranjo at POSSIBLE)'
+          gap_count: 1
+          completeness: near_complete
+      check_minor_gaps:
+        type: condition
+        variable: has_time_to_onset
+        operator: eq
+        value: false
+        true_next: minor_gap
+        false_next: check_class
+      four_gaps:
+        type: return
+        value:
+          completeness: incomplete
+          highest_value_gap: rechallenge_data
+          algorithm: 'VOID: 4 gaps detected — rechallenge, dose-response, time-to-onset, class comparison all absent'
+          gap_count: 4
+      two_critical_gaps:
+        type: return
+        value:
+          completeness: partial
+          highest_value_gap: rechallenge_data
+          gap_count: 2
+          algorithm: 'VOID: 2 critical gaps — rechallenge + dose-response absent'
       check_remaining_with_rechallenge_gap:
         type: condition
         variable: has_time_to_onset
@@ -125,21 +97,82 @@ sense:
       minor_gap_class:
         type: return
         value:
-          gap_count: 1
-          highest_value_gap: class_comparison
-          algorithm: 'VOID: 1 minor gap — class comparison absent'
           completeness: near_complete
+          highest_value_gap: class_comparison
+          gap_count: 1
+          algorithm: 'VOID: 1 minor gap — class comparison absent'
+      gap_rechallenge:
+        type: condition
+        variable: has_dose_response
+        operator: eq
+        value: false
+        true_next: gap_both_critical
+        false_next: check_remaining_with_rechallenge_gap
+      gap_both_critical:
+        type: condition
+        variable: has_time_to_onset
+        operator: eq
+        value: false
+        true_next: three_plus_gaps
+        false_next: two_critical_gaps
+      count_rechallenge:
+        type: condition
+        variable: has_rechallenge_data
+        operator: eq
+        value: false
+        true_next: gap_rechallenge
+        false_next: count_dose_response
+      three_plus_gaps:
+        type: condition
+        variable: has_class_comparison
+        operator: eq
+        value: false
+        true_next: four_gaps
+        false_next: three_gaps
 antisense:
   tree:
-    start: check_alternative_cause
+    start: null_guard_alternative_cause
     nodes:
+      null_guard_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: is_null
+        value: null
+        true_next: null_guard_no_dechallenge
+        false_next: check_temporal_implausible
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_no_dechallenge
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      null_guard_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_no_dechallenge
+      null_guard_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: is_null
+        value: null
+        true_next: null_guard_temporal_implausible
+        false_next: check_alternative_cause
       check_alternative_cause:
         type: condition
         variable: alternative_causes
         operator: eq
         value: likely
         true_next: falsified
-        false_next: check_temporal_implausible
+        false_next: null_guard_temporal_implausible
       not_falsified:
         type: return
         value:
@@ -152,18 +185,6 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      check_temporal_implausible:
-        type: condition
-        variable: temporal_plausible
-        operator: eq
-        value: false
-        true_next: falsified
-        false_next: check_no_dechallenge
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
 resolution:
   mode: base_pair
   rules:
@@ -171,16 +192,16 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
       verdict: confirmed
       confidence: high
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
       verdict: contested
-      confidence: low
       confidence_score: 0.27999999999999997
+      confidence: low
   - when: null
     default:
       verdict: indeterminate
@@ -190,86 +211,86 @@ resolution:
 interface:
   major_groove:
     inputs:
-      temporal_plausible:
-        type: bool
-        required: false
-      has_rechallenge_data:
+      has_clinical_trial_data:
         type: boolean
         required: true
       has_time_to_onset:
         type: boolean
         required: true
-      has_clinical_trial_data:
-        type: boolean
-        required: true
-      has_dose_response:
-        type: boolean
-        required: true
       dechallenge_positive:
         type: bool
         required: false
+      has_dose_response:
+        type: boolean
+        required: true
       has_disproportionality:
         type: boolean
         required: true
-      alternative_causes:
-        type: string
-        required: false
-      has_labeling_acknowledgment:
+      has_rechallenge_data:
         type: boolean
         required: true
       has_class_comparison:
         type: boolean
         required: true
+      has_labeling_acknowledgment:
+        type: boolean
+        required: true
+      alternative_causes:
+        type: string
+        required: false
+      temporal_plausible:
+        type: bool
+        required: false
     outputs:
-      completeness:
-        type: string
-        required: false
-      algorithm:
-        type: string
-        required: false
-      confidence_score:
-        type: float
-        required: false
       verdict:
         type: string
         required: false
       confidence:
         type: string
         required: false
-      gap_count:
-        type: integer
+      completeness:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      algorithm:
+        type: string
         required: false
       highest_value_gap:
         type: string
+        required: false
+      gap_count:
+        type: integer
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    alternative_causes: none
-    has_rechallenge_data: false
-    has_dose_response: false
     has_clinical_trial_data: true
-    has_class_comparison: false
-    has_labeling_acknowledgment: true
-    has_time_to_onset: false
     dechallenge_positive: true
-    temporal_plausible: true
     has_disproportionality: true
+    has_rechallenge_data: false
+    has_time_to_onset: false
+    has_class_comparison: false
+    temporal_plausible: true
+    has_labeling_acknowledgment: true
+    has_dose_response: false
+    alternative_causes: none
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, alternative_cause active'
   input:
-    alternative_causes: likely
-    has_rechallenge_data: false
-    has_dose_response: false
     has_clinical_trial_data: true
+    has_disproportionality: true
+    has_rechallenge_data: false
+    has_time_to_onset: false
     has_class_comparison: false
     has_labeling_acknowledgment: true
-    has_time_to_onset: false
-    has_disproportionality: true
+    has_dose_response: false
+    alternative_causes: likely
   expect:
     verdict: contested
     confidence: low

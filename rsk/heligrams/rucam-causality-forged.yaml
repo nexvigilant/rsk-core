@@ -10,37 +10,6 @@ sense:
   tree:
     start: highly_probable_check
     nodes:
-      probable_check:
-        type: condition
-        variable: rucam_score
-        operator: gte
-        value: 6
-        true_next: probable
-        false_next: possible_check
-      probable:
-        type: return
-        value:
-          classification: PROBABLE
-          confidence: 75
-          next_action: investigate_dechallenge
-      excluded:
-        type: return
-        value:
-          next_action: rule_out_drug
-          classification: EXCLUDED
-          confidence: 95
-      highly_probable:
-        type: return
-        value:
-          confidence: 95
-          classification: HIGHLY_PROBABLE
-          next_action: confirm_hepatotoxicity
-      unlikely:
-        type: return
-        value:
-          confidence: 25
-          next_action: evaluate_alternatives
-          classification: UNLIKELY
       highly_probable_check:
         type: condition
         variable: rucam_score
@@ -55,6 +24,37 @@ sense:
         value: 3
         true_next: possible
         false_next: unlikely_check
+      probable:
+        type: return
+        value:
+          classification: PROBABLE
+          next_action: investigate_dechallenge
+          confidence: 75
+      unlikely:
+        type: return
+        value:
+          confidence: 25
+          next_action: evaluate_alternatives
+          classification: UNLIKELY
+      probable_check:
+        type: condition
+        variable: rucam_score
+        operator: gte
+        value: 6
+        true_next: probable
+        false_next: possible_check
+      possible:
+        type: return
+        value:
+          confidence: 50
+          classification: POSSIBLE
+          next_action: monitor_collect_data
+      highly_probable:
+        type: return
+        value:
+          confidence: 95
+          next_action: confirm_hepatotoxicity
+          classification: HIGHLY_PROBABLE
       unlikely_check:
         type: condition
         variable: rucam_score
@@ -62,16 +62,23 @@ sense:
         value: 1
         true_next: unlikely
         false_next: excluded
-      possible:
+      excluded:
         type: return
         value:
-          confidence: 50
-          next_action: monitor_collect_data
-          classification: POSSIBLE
+          next_action: rule_out_drug
+          classification: EXCLUDED
+          confidence: 95
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
+      null_guard_negation:
+        type: condition
+        variable: rucam_score
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
         variable: rucam_score
@@ -79,16 +86,16 @@ antisense:
         value: 9
         true_next: falsified
         false_next: not_falsified
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       falsified:
         type: return
         value:
           falsified: true
           confounder_count: 1
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
 resolution:
   mode: base_pair
   rules:
@@ -96,16 +103,16 @@ resolution:
       falsified: false
     default: null
     emit:
+      confidence: high
       confidence_score: 0.7
       verdict: confirmed
-      confidence: high
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
       confidence_score: 0.27999999999999997
       verdict: contested
+      confidence: low
   - when: null
     default:
       confidence: medium
@@ -122,10 +129,10 @@ interface:
       verdict:
         type: string
         required: false
-      classification:
+      confidence:
         type: string
         required: false
-      confidence:
+      classification:
         type: string
         required: false
       next_action:
@@ -147,8 +154,8 @@ tests:
   input:
     rucam_score: 8
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

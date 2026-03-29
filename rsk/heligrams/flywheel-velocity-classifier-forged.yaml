@@ -5,21 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    description: falsified
+    classification: falsified
 sense:
   tree:
     start: check_exceptional
     nodes:
-      slow:
-        type: return
-        value:
-          description: Repair time exceeds 72 hours — slow velocity
-          classification: slow
-      target:
-        type: return
-        value:
-          description: Repair time under 24 hours — target velocity
-          classification: target
       check_acceptable:
         type: condition
         variable: avg_repair_ms
@@ -30,8 +20,18 @@ sense:
       exceptional:
         type: return
         value:
-          description: Repair time under 4 hours — exceptional velocity
           classification: exceptional
+          description: Repair time under 4 hours — exceptional velocity
+      slow:
+        type: return
+        value:
+          classification: slow
+          description: Repair time exceeds 72 hours — slow velocity
+      target:
+        type: return
+        value:
+          classification: target
+          description: Repair time under 24 hours — target velocity
       check_target:
         type: condition
         variable: avg_repair_ms
@@ -53,8 +53,20 @@ sense:
         false_next: check_target
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      null_guard_negation:
+        type: condition
+        variable: avg_repair_ms
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
         variable: avg_repair_ms
@@ -62,11 +74,6 @@ antisense:
         value: 14400000
         true_next: falsified
         false_next: not_falsified
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
       not_falsified:
         type: return
         value:
@@ -79,21 +86,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence_score: 0.7
       confidence: high
-      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
+      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
-      verdict: contested
   - when: null
     default:
+      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
-      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -102,14 +109,14 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence:
-        type: string
+      confidence_score:
+        type: float
         required: false
       verdict:
         type: string
         required: false
-      confidence_score:
-        type: float
+      confidence:
+        type: string
         required: false
     aliases: {}
   minor_groove: null
@@ -118,8 +125,8 @@ tests:
   input:
     avg_repair_ms: 14399990
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     avg_repair_ms: 14400000

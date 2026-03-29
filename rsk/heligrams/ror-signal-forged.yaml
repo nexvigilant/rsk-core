@@ -10,58 +10,12 @@ sense:
   tree:
     start: check_strong
     nodes:
-      check_weak:
-        type: condition
-        variable: ror
-        operator: gte
-        value: 1.5
-        true_next: weak_signal
-        false_next: check_none
-      strong_signal:
-        type: return
-        value:
-          signal_detected: true
-          action: immediate_review
-          signal: STRONG
-      check_moderate:
-        type: condition
-        variable: ror
-        operator: gte
-        value: 2.0
-        true_next: moderate_signal
-        false_next: check_weak
-      moderate_signal:
-        type: return
-        value:
-          action: standard_review
-          signal_detected: true
-          signal: MODERATE
-      check_none:
-        type: condition
-        variable: ror
-        operator: gte
-        value: 1.0
-        true_next: no_signal
-        false_next: protective_signal
-      no_signal:
-        type: return
-        value:
-          signal: NONE
-          signal_detected: false
-          note: ROR >= 1 but below threshold
-          action: no_action
       protective_signal:
         type: return
         value:
-          signal: PROTECTIVE
           action: investigate_protective
+          signal: PROTECTIVE
           signal_detected: false
-      weak_signal:
-        type: return
-        value:
-          signal_detected: true
-          signal: WEAK
-          action: monitor
       check_strong:
         type: condition
         variable: ror
@@ -69,22 +23,94 @@ sense:
         value: 4.0
         true_next: strong_signal
         false_next: check_moderate
+      weak_signal:
+        type: return
+        value:
+          signal_detected: true
+          signal: WEAK
+          action: monitor
+      check_none:
+        type: condition
+        variable: ror
+        operator: gte
+        value: 1.0
+        true_next: no_signal
+        false_next: protective_signal
+      strong_signal:
+        type: return
+        value:
+          action: immediate_review
+          signal: STRONG
+          signal_detected: true
+      check_weak:
+        type: condition
+        variable: ror
+        operator: gte
+        value: 1.5
+        true_next: weak_signal
+        false_next: check_none
+      moderate_signal:
+        type: return
+        value:
+          action: standard_review
+          signal_detected: true
+          signal: MODERATE
+      check_moderate:
+        type: condition
+        variable: ror
+        operator: gte
+        value: 2.0
+        true_next: moderate_signal
+        false_next: check_weak
+      no_signal:
+        type: return
+        value:
+          action: no_action
+          note: ROR >= 1 but below threshold
+          signal: NONE
+          signal_detected: false
 antisense:
   tree:
-    start: check_insufficient_n
+    start: null_guard_insufficient_n
     nodes:
+      null_guard_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: is_null
+        value: null
+        true_next: null_guard_notoriety_bias
+        false_next: check_insufficient_n
+      check_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: lt
+        value: 3
+        true_next: falsified
+        false_next: null_guard_notoriety_bias
       check_weber_effect:
         type: condition
         variable: years_on_market
         operator: gt
         value: 5
         true_next: falsified
-        false_next: check_channeling_bias
+        false_next: null_guard_channeling_bias
       falsified:
         type: return
         value:
-          falsified: true
           confounder_count: 1
+          falsified: true
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_weber_effect
       check_channeling_bias:
         type: condition
         variable: channeling_bias
@@ -92,25 +118,27 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
-      check_notoriety_bias:
+      null_guard_notoriety_bias:
         type: condition
         variable: notoriety_bias
-        operator: eq
-        value: true
-        true_next: falsified
-        false_next: check_weber_effect
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
-      check_insufficient_n:
-        type: condition
-        variable: case_count
-        operator: lt
-        value: 3
-        true_next: falsified
+        operator: is_null
+        value: null
+        true_next: null_guard_weber_effect
         false_next: check_notoriety_bias
+      null_guard_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_channeling_bias
+      null_guard_weber_effect:
+        type: condition
+        variable: years_on_market
+        operator: is_null
+        value: null
+        true_next: null_guard_channeling_bias
+        false_next: check_weber_effect
 resolution:
   mode: base_pair
   rules:
@@ -119,40 +147,34 @@ resolution:
       signal_detected: true
     default: null
     emit:
-      confidence_score: 0.7000000000000001
       verdict: confirmed
       confidence: high
+      confidence_score: 0.7000000000000001
   - when:
       signal_detected: true
       falsified: true
     default: null
     emit:
-      confidence_score: 0.28
-      confidence: low
       verdict: contested
+      confidence: low
+      confidence_score: 0.28
   - when:
       falsified: false
       signal_detected: false
     default: null
     emit:
       verdict: absent
-      confidence_score: 0.7000000000000001
       confidence: high
+      confidence_score: 0.7000000000000001
   - when: null
     default:
+      confidence: medium
       confidence_score: 0.5
       verdict: indeterminate
-      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      channeling_bias:
-        type: bool
-        required: false
-      years_on_market:
-        type: integer
-        required: false
       case_count:
         type: integer
         required: false
@@ -162,48 +184,54 @@ interface:
       ror:
         type: float
         required: false
+      years_on_market:
+        type: integer
+        required: false
+      channeling_bias:
+        type: bool
+        required: false
     outputs:
-      verdict:
+      note:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      signal:
         type: string
         required: false
       confidence:
         type: string
         required: false
-      signal:
-        type: string
-        required: false
-      note:
+      action:
         type: string
         required: false
       signal_detected:
         type: bool
         required: false
-      action:
+      verdict:
         type: string
-        required: false
-      confidence_score:
-        type: float
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    notoriety_bias: false
-    channeling_bias: false
-    case_count: 13
     ror: 5.0
+    case_count: 13
+    notoriety_bias: false
     years_on_market: 0
+    channeling_bias: false
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, insufficient_n active'
   input:
     ror: 5.0
     case_count: 2
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

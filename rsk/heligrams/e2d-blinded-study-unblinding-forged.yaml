@@ -5,53 +5,11 @@ type: heligram
 helix:
   twist_rate: 2
   base_pairs:
-    report_after_unblinding: falsified
+    unblind_required: falsified
 sense:
   tree:
     start: check_blinded
     nodes:
-      return_unblind_standard_no_sop:
-        type: return
-        value:
-          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-          unblind_urgency: STANDARD_15_DAY_ESTABLISH_SOP
-          report_after_unblinding: true
-          unblind_required: true
-      check_sop_standard:
-        type: condition
-        variable: unblinding_sop_exists
-        operator: eq
-        value: true
-        true_next: return_unblind_standard
-        false_next: return_unblind_standard_no_sop
-      return_unblind_urgent_no_sop:
-        type: return
-        value:
-          unblind_urgency: IMMEDIATE_7_DAY_ESTABLISH_SOP
-          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-          report_after_unblinding: true
-          unblind_required: true
-      check_sop_urgent:
-        type: condition
-        variable: unblinding_sop_exists
-        operator: eq
-        value: true
-        true_next: return_unblind_urgent
-        false_next: return_unblind_urgent_no_sop
-      check_blinded:
-        type: condition
-        variable: study_blinded
-        operator: eq
-        value: true
-        true_next: check_serious
-        false_next: return_not_blinded
-      check_serious:
-        type: condition
-        variable: is_serious
-        operator: eq
-        value: true
-        true_next: check_unexpected
-        false_next: return_no_unblind
       check_unexpected:
         type: condition
         variable: is_unexpected
@@ -59,41 +17,13 @@ sense:
         value: true
         true_next: check_fatal
         false_next: return_no_unblind_expected
-      check_fatal:
-        type: condition
-        variable: is_fatal
-        operator: eq
-        value: true
-        true_next: check_sop_urgent
-        false_next: check_lt
-      return_unblind_standard:
-        type: return
-        value:
-          report_after_unblinding: true
-          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-          unblind_urgency: STANDARD_15_DAY
-          unblind_required: true
-      return_unblind_urgent:
+      return_unblind_standard_no_sop:
         type: return
         value:
           unblind_required: true
+          unblind_urgency: STANDARD_15_DAY_ESTABLISH_SOP
           report_after_unblinding: true
-          unblind_urgency: IMMEDIATE_7_DAY
           regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-      return_not_blinded:
-        type: return
-        value:
-          unblind_required: false
-          unblind_urgency: NOT_APPLICABLE_OPEN_STUDY
-          report_after_unblinding: false
-          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-      return_no_unblind:
-        type: return
-        value:
-          report_after_unblinding: false
-          unblind_required: false
-          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-          unblind_urgency: NOT_REQUIRED_NON_SERIOUS
       check_lt:
         type: condition
         variable: is_life_threatening
@@ -101,23 +31,93 @@ sense:
         value: true
         true_next: check_sop_urgent
         false_next: check_sop_standard
+      return_unblind_standard:
+        type: return
+        value:
+          report_after_unblinding: true
+          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+          unblind_required: true
+          unblind_urgency: STANDARD_15_DAY
+      check_serious:
+        type: condition
+        variable: is_serious
+        operator: eq
+        value: true
+        true_next: check_unexpected
+        false_next: return_no_unblind
+      check_sop_urgent:
+        type: condition
+        variable: unblinding_sop_exists
+        operator: eq
+        value: true
+        true_next: return_unblind_urgent
+        false_next: return_unblind_urgent_no_sop
+      return_unblind_urgent:
+        type: return
+        value:
+          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+          report_after_unblinding: true
+          unblind_required: true
+          unblind_urgency: IMMEDIATE_7_DAY
+      return_no_unblind:
+        type: return
+        value:
+          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+          report_after_unblinding: false
+          unblind_required: false
+          unblind_urgency: NOT_REQUIRED_NON_SERIOUS
       return_no_unblind_expected:
         type: return
         value:
-          report_after_unblinding: false
-          unblind_required: false
           unblind_urgency: NOT_REQUIRED_EXPECTED
           regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+          report_after_unblinding: false
+          unblind_required: false
+      return_not_blinded:
+        type: return
+        value:
+          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+          unblind_urgency: NOT_APPLICABLE_OPEN_STUDY
+          report_after_unblinding: false
+          unblind_required: false
+      return_unblind_urgent_no_sop:
+        type: return
+        value:
+          unblind_required: true
+          unblind_urgency: IMMEDIATE_7_DAY_ESTABLISH_SOP
+          report_after_unblinding: true
+          regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+      check_fatal:
+        type: condition
+        variable: is_fatal
+        operator: eq
+        value: true
+        true_next: check_sop_urgent
+        false_next: check_lt
+      check_sop_standard:
+        type: condition
+        variable: unblinding_sop_exists
+        operator: eq
+        value: true
+        true_next: return_unblind_standard
+        false_next: return_unblind_standard_no_sop
+      check_blinded:
+        type: condition
+        variable: study_blinded
+        operator: eq
+        value: true
+        true_next: check_serious
+        false_next: return_not_blinded
 antisense:
   tree:
-    start: check_incomplete_info
+    start: null_guard_incomplete_info
     nodes:
-      check_incomplete_info:
+      null_guard_comorbidity_confound:
         type: condition
-        variable: follow_up_complete
-        operator: eq
-        value: false
-        true_next: falsified
+        variable: comorbidity_explains
+        operator: is_null
+        value: null
+        true_next: null_guard_coding_error
         false_next: check_comorbidity_confound
       check_comorbidity_confound:
         type: condition
@@ -125,17 +125,7 @@ antisense:
         operator: eq
         value: true
         true_next: falsified
-        false_next: check_coding_error
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
+        false_next: null_guard_coding_error
       check_coding_error:
         type: condition
         variable: coding_verified
@@ -143,116 +133,147 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_comorbidity_confound
+      null_guard_incomplete_info:
+        type: condition
+        variable: follow_up_complete
+        operator: is_null
+        value: null
+        true_next: null_guard_comorbidity_confound
+        false_next: check_incomplete_info
+      null_guard_coding_error:
+        type: condition
+        variable: coding_verified
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_coding_error
 resolution:
   mode: base_pair
   rules:
   - when:
-      report_after_unblinding: true
       falsified: false
+      unblind_required: true
     default: null
     emit:
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
       confidence_score: 0.7
   - when:
+      unblind_required: true
       falsified: true
-      report_after_unblinding: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       verdict: contested
+      confidence_score: 0.27999999999999997
       confidence: low
   - when:
       falsified: false
-      report_after_unblinding: false
+      unblind_required: false
     default: null
     emit:
-      verdict: absent
       confidence: high
       confidence_score: 0.7
+      verdict: absent
   - when: null
     default:
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
       verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      is_serious:
-        type: bool
-        required: false
-      is_unexpected:
-        type: bool
-        required: false
-      comorbidity_explains:
-        type: bool
-        required: false
       unblinding_sop_exists:
-        type: bool
-        required: false
-      is_life_threatening:
-        type: bool
-        required: false
-      coding_verified:
-        type: bool
-        required: false
-      is_fatal:
         type: bool
         required: false
       follow_up_complete:
         type: bool
         required: false
+      is_fatal:
+        type: bool
+        required: false
       study_blinded:
         type: bool
         required: false
-    outputs:
-      unblind_required:
+      is_unexpected:
         type: bool
         required: false
+      coding_verified:
+        type: bool
+        required: false
+      comorbidity_explains:
+        type: bool
+        required: false
+      is_life_threatening:
+        type: bool
+        required: false
+      is_serious:
+        type: bool
+        required: false
+    outputs:
       confidence:
+        type: string
+        required: false
+      unblind_urgency:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      unblind_urgency:
+      regulatory_reference:
         type: string
         required: false
       report_after_unblinding:
         type: bool
         required: false
-      regulatory_reference:
-        type: string
-        required: false
       verdict:
         type: string
+        required: false
+      unblind_required:
+        type: bool
         required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    follow_up_complete: true
     is_life_threatening: false
+    is_serious: true
+    unblinding_sop_exists: true
+    comorbidity_explains: false
+    coding_verified: true
     is_fatal: true
     study_blinded: true
-    unblinding_sop_exists: true
-    coding_verified: true
-    is_serious: true
-    comorbidity_explains: false
+    follow_up_complete: true
     is_unexpected: true
   expect:
-    confidence: high
     verdict: confirmed
+    confidence: high
 - name: 'Q2: contested — positive sense, incomplete_info active'
   input:
     is_fatal: true
+    is_serious: true
+    study_blinded: true
+    is_life_threatening: false
     unblinding_sop_exists: true
     follow_up_complete: false
-    is_serious: true
-    is_life_threatening: false
-    study_blinded: true
     is_unexpected: true
   expect:
     verdict: contested

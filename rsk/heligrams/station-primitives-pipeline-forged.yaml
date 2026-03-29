@@ -5,25 +5,25 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    route: falsified
+    priority: falsified
 sense:
   tree:
     start: check_coverage
     nodes:
-      check_conservation:
-        type: condition
-        variable: conservation_holds
-        operator: eq
-        value: true
-        true_next: conserved
-        false_next: broken
+      shallow:
+        type: return
+        value:
+          priority: moderate
+          route: decomposition_retry
+          action: deepen
+          reason: Fewer than 5 primitives identified — decomposition too shallow
       conserved:
         type: return
         value:
-          route: archive
-          reason: 5+ primitives, conservation holds — valid decomposition
-          action: certify
           priority: low
+          reason: 5+ primitives, conservation holds — valid decomposition
+          route: archive
+          action: certify
       check_coverage:
         type: condition
         variable: primitives_identified
@@ -35,32 +35,27 @@ sense:
         type: return
         value:
           action: repair
-          route: conservation_repair
           reason: Conservation law violated — existence not conserved through boundaries
+          route: conservation_repair
           priority: high
-      shallow:
-        type: return
-        value:
-          action: deepen
-          reason: Fewer than 5 primitives identified — decomposition too shallow
-          route: decomposition_retry
-          priority: moderate
+      check_conservation:
+        type: condition
+        variable: conservation_holds
+        operator: eq
+        value: true
+        true_next: conserved
+        false_next: broken
 antisense:
   tree:
-    start: check_measurement_stale
+    start: null_guard_measurement_stale
     nodes:
-      check_measurement_stale:
+      null_guard_single_source:
         type: condition
-        variable: measurement_age_minutes
-        operator: gt
-        value: 60
-        true_next: falsified
+        variable: probe_count
+        operator: is_null
+        value: null
+        true_next: not_falsified
         false_next: check_single_source
-      not_falsified:
-        type: return
-        value:
-          confounder_count: 0
-          falsified: false
       check_single_source:
         type: condition
         variable: probe_count
@@ -73,6 +68,25 @@ antisense:
         value:
           falsified: true
           confounder_count: 1
+      check_measurement_stale:
+        type: condition
+        variable: measurement_age_minutes
+        operator: gt
+        value: 60
+        true_next: falsified
+        false_next: null_guard_single_source
+      not_falsified:
+        type: return
+        value:
+          confounder_count: 0
+          falsified: false
+      null_guard_measurement_stale:
+        type: condition
+        variable: measurement_age_minutes
+        operator: is_null
+        value: null
+        true_next: null_guard_single_source
+        false_next: check_measurement_stale
 resolution:
   mode: base_pair
   rules:
@@ -87,42 +101,42 @@ resolution:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
+      verdict: contested
       confidence_score: 0.27999999999999997
   - when: null
     default:
       confidence_score: 0.5
-      confidence: medium
       verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
     inputs:
-      measurement_age_minutes:
-        type: integer
-        required: false
       probe_count:
         type: integer
         required: false
+      measurement_age_minutes:
+        type: integer
+        required: false
     outputs:
+      confidence_score:
+        type: float
+        required: false
       confidence:
         type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence_score:
-        type: float
-        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    probe_count: 12
     conservation_holds: true
     measurement_age_minutes: 50
+    probe_count: 12
     primitives_identified: 3
   expect:
     verdict: confirmed
@@ -130,8 +144,8 @@ tests:
 - name: 'Q2: contested — positive sense, measurement_stale active'
   input:
     measurement_age_minutes: 61
-    conservation_holds: true
     primitives_identified: 3
+    conservation_holds: true
   expect:
     verdict: contested
     confidence: low

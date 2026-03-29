@@ -10,18 +10,6 @@ sense:
   tree:
     start: check_conflicts
     nodes:
-      green:
-        type: return
-        value:
-          health: GREEN
-          action: none
-      check_conflicts:
-        type: condition
-        variable: alias_conflicts
-        operator: gt
-        value: 0
-        true_next: red
-        false_next: check_suggested
       check_suggested:
         type: condition
         variable: suggested_aliases
@@ -29,28 +17,47 @@ sense:
         value: 0
         true_next: yellow
         false_next: green
-      yellow:
-        type: return
-        value:
-          action: add_suggested_aliases
-          health: YELLOW
       red:
         type: return
         value:
-          action: resolve_alias_conflicts
           health: RED
+          action: resolve_alias_conflicts
+      yellow:
+        type: return
+        value:
+          health: YELLOW
+          action: add_suggested_aliases
+      check_conflicts:
+        type: condition
+        variable: alias_conflicts
+        operator: gt
+        value: 0
+        true_next: red
+        false_next: check_suggested
+      green:
+        type: return
+        value:
+          action: none
+          health: GREEN
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       falsified:
         type: return
         value:
-          confounder_count: 1
           falsified: true
+          confounder_count: 1
+      null_guard_negation:
+        type: condition
+        variable: suggested_aliases
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       check_negation:
         type: condition
-        variable: alias_conflicts
+        variable: suggested_aliases
         operator: lte
         value: 0
         true_next: falsified
@@ -74,13 +81,13 @@ resolution:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence: low
       confidence_score: 0.27999999999999997
+      verdict: contested
   - when: null
     default:
-      confidence: medium
       verdict: indeterminate
+      confidence: medium
       confidence_score: 0.5
     emit: null
 interface:
@@ -96,17 +103,17 @@ interface:
         type: int
         required: false
     outputs:
-      health:
+      confidence:
         type: string
         required: false
       verdict:
         type: string
         required: false
-      confidence:
-        type: string
-        required: false
       confidence_score:
         type: float
+        required: false
+      health:
+        type: string
         required: false
       action:
         type: string
@@ -116,17 +123,17 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    alias_conflicts: 10
-    suggested_aliases: 1
+    suggested_aliases: 10
     orphan_outputs: 3
+    alias_conflicts: 2
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, negation active'
   input:
-    alias_conflicts: 0
-    suggested_aliases: 1
+    suggested_aliases: 0
     orphan_outputs: 3
+    alias_conflicts: 2
   expect:
     confidence: low
     verdict: contested

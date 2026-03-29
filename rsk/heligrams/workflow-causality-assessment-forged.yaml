@@ -5,7 +5,7 @@ type: heligram
 helix:
   twist_rate: 2
   base_pairs:
-    chain: falsified
+    causality: falsified
 sense:
   tree:
     start: check_rechallenge
@@ -13,16 +13,22 @@ sense:
       certain:
         type: return
         value:
+          causality: certain
           chain: who-umc → harm-taxonomy → fda-safety
           confidence: 0.95
-          causality: certain
-      check_rechallenge:
+      possible:
+        type: return
+        value:
+          confidence: 0.5
+          chain: who-umc → meddra → epidemiology
+          causality: possible
+      check_temporal:
         type: condition
-        variable: rechallenge_positive
+        variable: temporal_clear
         operator: eq
         value: true
-        true_next: certain
-        false_next: check_temporal
+        true_next: check_mechanism
+        false_next: unlikely
       check_mechanism:
         type: condition
         variable: mechanism_known
@@ -33,56 +39,40 @@ sense:
       probable:
         type: return
         value:
-          causality: probable
           chain: who-umc → drugbank → calculation
           confidence: 0.8
-      possible:
-        type: return
-        value:
-          chain: who-umc → meddra → epidemiology
-          causality: possible
-          confidence: 0.5
+          causality: probable
       unlikely:
         type: return
         value:
+          confidence: 0.2
           causality: unlikely
           chain: who-umc
-          confidence: 0.2
-      check_temporal:
+      check_rechallenge:
         type: condition
-        variable: temporal_clear
+        variable: rechallenge_positive
         operator: eq
         value: true
-        true_next: check_mechanism
-        false_next: unlikely
+        true_next: certain
+        false_next: check_temporal
 antisense:
   tree:
-    start: check_alternative_cause
+    start: null_guard_alternative_cause
     nodes:
-      check_alternative_cause:
-        type: condition
-        variable: alternative_causes
-        operator: eq
-        value: likely
-        true_next: falsified
-        false_next: check_temporal_implausible
-      check_temporal_implausible:
+      null_guard_temporal_implausible:
         type: condition
         variable: temporal_plausible
-        operator: eq
-        value: false
-        true_next: falsified
+        operator: is_null
+        value: null
+        true_next: null_guard_no_dechallenge
+        false_next: check_temporal_implausible
+      null_guard_no_dechallenge:
+        type: condition
+        variable: dechallenge_positive
+        operator: is_null
+        value: null
+        true_next: not_falsified
         false_next: check_no_dechallenge
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
       check_no_dechallenge:
         type: condition
         variable: dechallenge_positive
@@ -90,6 +80,37 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          confounder_count: 1
+          falsified: true
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: null_guard_temporal_implausible
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: eq
+        value: false
+        true_next: falsified
+        false_next: null_guard_no_dechallenge
+      null_guard_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: is_null
+        value: null
+        true_next: null_guard_temporal_implausible
+        false_next: check_alternative_cause
 resolution:
   mode: base_pair
   rules:
@@ -97,67 +118,67 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence_score: 0.7
-      verdict: confirmed
       confidence: high
+      verdict: confirmed
+      confidence_score: 0.7
   - when:
       falsified: true
     default: null
     emit:
-      confidence_score: 0.27999999999999997
       confidence: low
+      confidence_score: 0.27999999999999997
       verdict: contested
   - when: null
     default:
-      confidence_score: 0.5
       confidence: medium
+      confidence_score: 0.5
       verdict: indeterminate
     emit: null
 interface:
   major_groove:
     inputs:
-      alternative_causes:
-        type: string
+      temporal_plausible:
+        type: bool
         required: false
       dechallenge_positive:
         type: bool
         required: false
-      temporal_plausible:
-        type: bool
-        required: false
-    outputs:
-      verdict:
+      alternative_causes:
         type: string
         required: false
+    outputs:
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
+      verdict:
+        type: string
+        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    mechanism_known: true
-    rechallenge_positive: true
     alternative_causes: none
+    dechallenge_positive: true
+    mechanism_known: true
     temporal_clear: true
     temporal_plausible: true
-    dechallenge_positive: true
+    rechallenge_positive: true
   expect:
     confidence: high
     verdict: confirmed
 - name: 'Q2: contested — positive sense, alternative_cause active'
   input:
-    mechanism_known: true
-    rechallenge_positive: true
     alternative_causes: likely
+    mechanism_known: true
     temporal_clear: true
+    rechallenge_positive: true
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

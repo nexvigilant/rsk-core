@@ -10,14 +10,6 @@ sense:
   tree:
     start: check_prr
     nodes:
-      no_signal:
-        type: return
-        value:
-          expected_prr: 5.0
-          drug: warfarin
-          harm_type: A
-          action: monitor
-          signal: false
       check_prr:
         type: condition
         variable: prr
@@ -28,38 +20,36 @@ sense:
       signal:
         type: return
         value:
-          drug: warfarin
+          expected_prr: 5.0
           signal: true
           action: investigate
+          harm_type: A
+          drug: warfarin
+      no_signal:
+        type: return
+        value:
+          signal: false
+          action: monitor
           expected_prr: 5.0
           harm_type: A
+          drug: warfarin
 antisense:
   tree:
-    start: check_insufficient_n
+    start: null_guard_insufficient_n
     nodes:
-      falsified:
-        type: return
-        value:
-          falsified: true
-          confounder_count: 1
-      check_weber_effect:
+      null_guard_insufficient_n:
+        type: condition
+        variable: case_count
+        operator: is_null
+        value: null
+        true_next: null_guard_notoriety_bias
+        false_next: check_insufficient_n
+      null_guard_weber_effect:
         type: condition
         variable: years_on_market
-        operator: gt
-        value: 5
-        true_next: falsified
-        false_next: check_channeling_bias
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
-      check_notoriety_bias:
-        type: condition
-        variable: notoriety_bias
-        operator: eq
-        value: true
-        true_next: falsified
+        operator: is_null
+        value: null
+        true_next: null_guard_channeling_bias
         false_next: check_weber_effect
       check_channeling_bias:
         type: condition
@@ -68,51 +58,89 @@ antisense:
         value: true
         true_next: falsified
         false_next: not_falsified
+      null_guard_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: is_null
+        value: null
+        true_next: null_guard_weber_effect
+        false_next: check_notoriety_bias
+      check_notoriety_bias:
+        type: condition
+        variable: notoriety_bias
+        operator: eq
+        value: true
+        true_next: falsified
+        false_next: null_guard_weber_effect
+      null_guard_channeling_bias:
+        type: condition
+        variable: channeling_bias
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_channeling_bias
+      check_weber_effect:
+        type: condition
+        variable: years_on_market
+        operator: gt
+        value: 5
+        true_next: falsified
+        false_next: null_guard_channeling_bias
       check_insufficient_n:
         type: condition
         variable: case_count
         operator: lt
         value: 3
         true_next: falsified
-        false_next: check_notoriety_bias
+        false_next: null_guard_notoriety_bias
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
 resolution:
   mode: base_pair
   rules:
   - when:
-      falsified: false
       signal: true
+      falsified: false
     default: null
     emit:
-      verdict: confirmed
       confidence_score: 0.7000000000000001
+      verdict: confirmed
       confidence: high
   - when:
-      falsified: true
       signal: true
+      falsified: true
     default: null
     emit:
       confidence_score: 0.28
-      verdict: contested
       confidence: low
+      verdict: contested
   - when:
-      signal: false
       falsified: false
+      signal: false
     default: null
     emit:
-      verdict: absent
-      confidence: high
       confidence_score: 0.7000000000000001
+      confidence: high
+      verdict: absent
   - when: null
     default:
-      confidence_score: 0.5
       verdict: indeterminate
       confidence: medium
+      confidence_score: 0.5
     emit: null
 interface:
   major_groove:
     inputs:
-      years_on_market:
-        type: integer
+      channeling_bias:
+        type: bool
         required: false
       case_count:
         type: integer
@@ -120,29 +148,29 @@ interface:
       notoriety_bias:
         type: bool
         required: false
-      channeling_bias:
-        type: bool
+      years_on_market:
+        type: integer
         required: false
     outputs:
+      verdict:
+        type: string
+        required: false
       confidence:
         type: string
         required: false
       confidence_score:
         type: float
         required: false
-      verdict:
-        type: string
-        required: false
     aliases: {}
   minor_groove: null
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    notoriety_bias: false
-    case_count: 13
     prr: 5.0
+    case_count: 13
     channeling_bias: false
     years_on_market: 0
+    notoriety_bias: false
   expect:
     confidence: high
     verdict: confirmed
@@ -151,8 +179,8 @@ tests:
     case_count: 2
     prr: 5.0
   expect:
-    verdict: contested
     confidence: low
+    verdict: contested
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

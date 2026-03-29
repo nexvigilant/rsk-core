@@ -10,6 +10,20 @@ sense:
   tree:
     start: check_death
     nodes:
+      assess_routine:
+        type: return
+        value:
+          tool_path: /vigilance/causality
+          reason: Signal detected in non-serious case - routine causality assessment recommended
+          next_action: ASSESS_CAUSALITY_ROUTINE
+          priority: P2
+      serious_causality_check:
+        type: condition
+        variable: causality_assessed
+        operator: eq
+        value: true
+        true_next: file_expedited
+        false_next: assess_urgent
       check_hospitalization:
         type: condition
         variable: has_hospitalization
@@ -24,13 +38,13 @@ sense:
         value: true
         true_next: assess_routine
         false_next: routine_monitoring
-      assess_routine:
+      routine_monitoring:
         type: return
         value:
-          tool_path: /vigilance/causality
-          next_action: ASSESS_CAUSALITY_ROUTINE
-          priority: P2
-          reason: Signal detected in non-serious case - routine causality assessment recommended
+          next_action: ROUTINE_MONITORING
+          reason: No serious criteria and no signal - continue routine pharmacovigilance monitoring
+          priority: P3
+          tool_path: /vigilance/signals
       check_death:
         type: condition
         variable: has_death
@@ -38,13 +52,6 @@ sense:
         value: true
         true_next: serious_causality_check
         false_next: check_hospitalization
-      assess_urgent:
-        type: return
-        value:
-          next_action: ASSESS_CAUSALITY_URGENT
-          priority: P0
-          tool_path: /vigilance/causality
-          reason: Serious case criteria met - immediate causality assessment required before expedited filing
       check_disability:
         type: condition
         variable: has_disability
@@ -52,48 +59,57 @@ sense:
         value: true
         true_next: serious_causality_check
         false_next: check_signal_non_serious
-      serious_causality_check:
-        type: condition
-        variable: causality_assessed
-        operator: eq
-        value: true
-        true_next: file_expedited
-        false_next: assess_urgent
-      routine_monitoring:
+      assess_urgent:
         type: return
         value:
-          reason: No serious criteria and no signal - continue routine pharmacovigilance monitoring
-          priority: P3
-          next_action: ROUTINE_MONITORING
-          tool_path: /vigilance/signals
+          next_action: ASSESS_CAUSALITY_URGENT
+          reason: Serious case criteria met - immediate causality assessment required before expedited filing
+          priority: P0
+          tool_path: /vigilance/causality
       file_expedited:
         type: return
         value:
-          tool_path: /vigilance/reporting
-          next_action: FILE_EXPEDITED_REPORT
           reason: Serious case with causality assessed - proceed to expedited regulatory filing
+          next_action: FILE_EXPEDITED_REPORT
           priority: P1
+          tool_path: /vigilance/reporting
 antisense:
   tree:
-    start: check_alternative_cause
+    start: null_guard_alternative_cause
     nodes:
+      null_guard_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: is_null
+        value: null
+        true_next: null_guard_temporal_implausible
+        false_next: check_alternative_cause
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
       check_temporal_implausible:
         type: condition
         variable: temporal_plausible
         operator: eq
         value: false
         true_next: falsified
-        false_next: check_no_dechallenge
-      falsified:
-        type: return
-        value:
-          confounder_count: 1
-          falsified: true
-      not_falsified:
-        type: return
-        value:
-          falsified: false
-          confounder_count: 0
+        false_next: null_guard_no_dechallenge
+      null_guard_temporal_implausible:
+        type: condition
+        variable: temporal_plausible
+        operator: is_null
+        value: null
+        true_next: null_guard_no_dechallenge
+        false_next: check_temporal_implausible
+      check_alternative_cause:
+        type: condition
+        variable: alternative_causes
+        operator: eq
+        value: likely
+        true_next: falsified
+        false_next: null_guard_temporal_implausible
       check_no_dechallenge:
         type: condition
         variable: dechallenge_positive
@@ -101,13 +117,18 @@ antisense:
         value: false
         true_next: falsified
         false_next: not_falsified
-      check_alternative_cause:
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+      null_guard_no_dechallenge:
         type: condition
-        variable: alternative_causes
-        operator: eq
-        value: likely
-        true_next: falsified
-        false_next: check_temporal_implausible
+        variable: dechallenge_positive
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_no_dechallenge
 resolution:
   mode: base_pair
   rules:
@@ -115,21 +136,21 @@ resolution:
       falsified: false
     default: null
     emit:
-      confidence: high
       confidence_score: 0.7
+      confidence: high
       verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      verdict: contested
       confidence_score: 0.27999999999999997
       confidence: low
+      verdict: contested
   - when: null
     default:
-      verdict: indeterminate
       confidence: medium
       confidence_score: 0.5
+      verdict: indeterminate
     emit: null
 interface:
   major_groove:
@@ -137,35 +158,38 @@ interface:
       signal_detected:
         type: bool
         required: false
-      dechallenge_positive:
-        type: bool
-        required: false
       has_hospitalization:
-        type: bool
-        required: false
-      has_disability:
         type: bool
         required: false
       has_death:
         type: bool
         required: false
-      temporal_plausible:
+      causality_assessed:
         type: bool
         required: false
-      causality_assessed:
+      has_disability:
         type: bool
         required: false
       alternative_causes:
         type: string
         required: false
-    outputs:
-      tool_path:
-        type: string
+      temporal_plausible:
+        type: bool
         required: false
+      dechallenge_positive:
+        type: bool
+        required: false
+    outputs:
       priority:
         type: string
         required: false
+      reason:
+        type: string
+        required: false
       verdict:
+        type: string
+        required: false
+      tool_path:
         type: string
         required: false
       confidence:
@@ -173,9 +197,6 @@ interface:
         required: false
       confidence_score:
         type: float
-        required: false
-      reason:
-        type: string
         required: false
       next_action:
         type: string
@@ -185,28 +206,28 @@ interface:
 tests:
 - name: 'Q1: confirmed — positive sense, no confounders'
   input:
-    has_disability: false
-    temporal_plausible: true
-    alternative_causes: none
     causality_assessed: false
-    has_hospitalization: false
-    signal_detected: false
-    has_death: true
     dechallenge_positive: true
+    signal_detected: false
+    temporal_plausible: true
+    has_hospitalization: false
+    has_disability: false
+    alternative_causes: none
+    has_death: true
   expect:
     verdict: confirmed
     confidence: high
 - name: 'Q2: contested — positive sense, alternative_cause active'
   input:
-    has_disability: false
     has_hospitalization: false
     causality_assessed: false
+    has_disability: false
     signal_detected: false
-    has_death: true
     alternative_causes: likely
+    has_death: true
   expect:
-    confidence: low
     verdict: contested
+    confidence: low
 - name: 'Q3: default — empty input, no confounders'
   input: {}
   expect:

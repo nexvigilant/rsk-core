@@ -5,25 +5,11 @@ type: heligram
 helix:
   twist_rate: 3
   base_pairs:
-    target: falsified
+    action: falsified
 sense:
   tree:
     start: check_severe
     nodes:
-      check_mild:
-        type: condition
-        variable: qtc_ms
-        operator: gte
-        value: 450
-        true_next: mild
-        false_next: normal
-      mild:
-        type: return
-        value:
-          target: heart
-          action: monitor_closely
-          severity: mild
-          organ: cardiac
       severe:
         type: return
         value:
@@ -31,13 +17,20 @@ sense:
           severity: severe
           target: heart
           organ: cardiac
-      normal:
+      mild:
         type: return
         value:
+          severity: mild
           organ: cardiac
-          action: continue
-          severity: normal
           target: heart
+          action: monitor_closely
+      check_mild:
+        type: condition
+        variable: qtc_ms
+        operator: gte
+        value: 450
+        true_next: mild
+        false_next: normal
       check_severe:
         type: condition
         variable: qtc_ms
@@ -45,9 +38,16 @@ sense:
         value: 500
         true_next: severe
         false_next: check_mild
+      normal:
+        type: return
+        value:
+          target: heart
+          organ: cardiac
+          action: continue
+          severity: normal
 antisense:
   tree:
-    start: check_negation
+    start: null_guard_negation
     nodes:
       not_falsified:
         type: return
@@ -61,6 +61,13 @@ antisense:
         value: 500
         true_next: falsified
         false_next: not_falsified
+      null_guard_negation:
+        type: condition
+        variable: qtc_ms
+        operator: is_null
+        value: null
+        true_next: not_falsified
+        false_next: check_negation
       falsified:
         type: return
         value:
@@ -73,21 +80,21 @@ resolution:
       falsified: false
     default: null
     emit:
+      verdict: confirmed
       confidence_score: 0.7
       confidence: high
-      verdict: confirmed
   - when:
       falsified: true
     default: null
     emit:
-      confidence: low
-      verdict: contested
       confidence_score: 0.27999999999999997
+      verdict: contested
+      confidence: low
   - when: null
     default:
-      confidence: medium
       confidence_score: 0.5
       verdict: indeterminate
+      confidence: medium
     emit: null
 interface:
   major_groove:
@@ -96,11 +103,11 @@ interface:
         type: integer
         required: false
     outputs:
-      confidence_score:
-        type: float
-        required: false
       confidence:
         type: string
+        required: false
+      confidence_score:
+        type: float
         required: false
       verdict:
         type: string
@@ -112,8 +119,8 @@ tests:
   input:
     qtc_ms: 510
   expect:
-    verdict: confirmed
     confidence: high
+    verdict: confirmed
 - name: 'Q2: contested — positive sense, negation active'
   input:
     qtc_ms: 499
