@@ -1,0 +1,190 @@
+name: spanish-conjugation-tier-helix
+description: 'Forged from microgram ''spanish-conjugation-tier''. Domain: Generic. 1 confounders. Confidence-weighted resolution.'
+version: 0.1.0
+type: heligram
+helix:
+  twist_rate: 3
+  base_pairs:
+    tier: falsified
+sense:
+  tree:
+    start: check_verb_ending_present
+    nodes:
+      tier4:
+        type: return
+        value:
+          tier: 4
+          practice_reps: 60
+          example_verb: irse
+      check_is_regular_present:
+        type: condition
+        variable: is_regular
+        operator: is_null
+        value: null
+        true_next: reject_missing
+        false_next: check_regular
+      check_reflexive_irregular:
+        type: condition
+        variable: is_reflexive
+        operator: eq
+        value: true
+        true_next: tier4
+        false_next: tier3
+      tier2:
+        type: return
+        value:
+          tier: 2
+          example_verb: comer
+          practice_reps: 20
+      tier3:
+        type: return
+        value:
+          tier: 3
+          example_verb: tener
+          practice_reps: 40
+      tier1:
+        type: return
+        value:
+          practice_reps: 10
+          example_verb: hablar
+          tier: 1
+      check_regular:
+        type: condition
+        variable: is_regular
+        operator: eq
+        value: true
+        true_next: check_ar_regular
+        false_next: check_reflexive_irregular
+      check_ar_regular:
+        type: condition
+        variable: verb_ending
+        operator: eq
+        value: ar
+        true_next: tier1
+        false_next: tier2
+      reject_missing:
+        type: return
+        value:
+          tier: 0
+          practice_reps: 0
+          example_verb: 'REJECTED: verb_ending and is_regular are required'
+      check_verb_ending_present:
+        type: condition
+        variable: verb_ending
+        operator: is_null
+        value: null
+        true_next: reject_missing
+        false_next: check_is_regular_present
+antisense:
+  tree:
+    start: check_negation
+    nodes:
+      not_falsified:
+        type: return
+        value:
+          falsified: false
+          confounder_count: 0
+      check_negation:
+        type: condition
+        variable: is_regular
+        operator: is_not_null
+        value: null
+        true_next: falsified
+        false_next: not_falsified
+      falsified:
+        type: return
+        value:
+          falsified: true
+          confounder_count: 1
+resolution:
+  mode: base_pair
+  rules:
+  - when:
+      falsified: false
+    default: null
+    emit:
+      verdict: confirmed
+      confidence_score: 0.7
+      confidence: high
+  - when:
+      falsified: true
+    default: null
+    emit:
+      verdict: contested
+      confidence: low
+      confidence_score: 0.27999999999999997
+  - when: null
+    default:
+      verdict: indeterminate
+      confidence: medium
+      confidence_score: 0.5
+    emit: null
+interface:
+  major_groove:
+    inputs:
+      verb_ending:
+        type: string
+        required: true
+      is_regular:
+        type: bool
+        required: true
+      is_reflexive:
+        type: bool
+        required: false
+    outputs:
+      tier:
+        type: int
+        required: false
+      confidence:
+        type: string
+        required: false
+      example_verb:
+        type: string
+        required: false
+      verdict:
+        type: string
+        required: false
+      confidence_score:
+        type: float
+        required: false
+      practice_reps:
+        type: int
+        required: false
+    aliases: {}
+  minor_groove: null
+tests:
+- name: 'Q1: confirmed — positive sense, no confounders'
+  input:
+    verb_ending: ar
+    is_reflexive: false
+    is_regular: null
+  expect:
+    confidence: high
+    verdict: confirmed
+- name: 'Q2: contested — positive sense, negation active'
+  input:
+    verb_ending: ar
+    is_reflexive: false
+    is_regular: null
+  expect:
+    confidence: low
+    verdict: contested
+- name: 'Q3: default — empty input, no confounders'
+  input: {}
+  expect:
+    verdict: confirmed
+- name: 'Q4: null safety — graceful degradation'
+  input: {}
+  expect:
+    confidence: high
+primitive_signature:
+  dominant: ∂
+  expression: ∂(×(κ_sense, →_antisense)) — generic with 1 confounders
+  primes:
+  - ∂
+  - κ
+  - →
+  - ς
+  - ×
+  arguments: []
+  chain_prediction: 'Forged heligram. Domain: generic. Chains as dual-strand verifier before downstream consumers.'
