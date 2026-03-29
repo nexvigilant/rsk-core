@@ -1,6 +1,46 @@
 # rsk-core
 
-Microgram decision tree runtime and chain composition engine. Sub-millisecond deterministic decision programs with built-in self-testing.
+Microgram decision tree runtime for pharmacovigilance.
+
+Sub-microsecond deterministic decision programs with built-in self-testing, chain composition, and MCP server integration. Part of the [NexVigilant](https://nexvigilant.com) stack powering [mcp.nexvigilant.com](https://mcp.nexvigilant.com).
+
+## At a Glance
+
+| Metric | Count |
+|--------|-------|
+| Micrograms | 1,368 |
+| Heligrams | 165 |
+| Chains | 44 |
+| Self-tests | 9,934 |
+
+## Quick Start
+
+```bash
+cargo build -p rsk --release
+./target/release/rsk mcg test-all rsk/micrograms
+```
+
+## Key Commands
+
+```bash
+# Run a microgram with input
+./target/release/rsk mcg run rsk/micrograms/prr-signal.yaml -i '{"a": 50, "b": 1000, "c": 200, "d": 50000}'
+
+# Self-test a single microgram
+./target/release/rsk mcg test rsk/micrograms/naranjo-quick.yaml
+
+# Run a chain
+./target/release/rsk mcg chain "prr-signal -> signal-to-causality" -d rsk/micrograms -i '{"a": 50, "b": 1000, "c": 200, "d": 50000}'
+
+# Test all chain definitions
+./target/release/rsk mcg chain-test rsk/chains
+
+# Forge a heligram
+./target/release/rsk heligram forge rsk/heligrams/my-heligram.yaml
+
+# Test all heligrams
+./target/release/rsk heligram test-all rsk/heligrams
+```
 
 ## Workspace
 
@@ -8,48 +48,6 @@ Microgram decision tree runtime and chain composition engine. Sub-millisecond de
 |-------|------|
 | `rsk` | CLI binary + library: microgram runtime, decision engine, chain executor, graph ops, statistics |
 | `rsk-mcp` | MCP server exposing 16 tools for AI agent consumption (stdio transport) |
-
-## Quick Start
-
-```bash
-# Build
-cargo build -p rsk --release
-
-# Run a microgram
-./target/release/rsk mcg run rsk/micrograms/prr-signal.yaml -i '{"a": 50, "b": 1000, "c": 200, "d": 50000}'
-
-# Self-test all micrograms
-./target/release/rsk mcg test-all rsk/micrograms
-
-# Test chain definitions
-./target/release/rsk mcg chain-test rsk/chains
-```
-
-## Micrograms
-
-460 atomic decision programs in `rsk/micrograms/`. Each is a YAML file with a decision tree, typed interface, and embedded test cases. Sub-microsecond execution.
-
-```
-rsk/micrograms/
-  ├── *.yaml          (279 top-level programs)
-  ├── academy/        (2)
-  ├── dd/             (3)
-  ├── dev/            (3)
-  ├── flywheel/       (41)
-  ├── pdc/            (92)
-  └── station/        (46)
-```
-
-34 chain definitions in `rsk/chains/` compose micrograms into multi-step workflows.
-
-## Testing
-
-```bash
-cargo test -p rsk --lib              # 559 unit tests
-./target/release/rsk mcg test-all rsk/micrograms  # 5113 microgram self-tests
-./target/release/rsk mcg chain-test rsk/chains     # Chain integration tests
-cargo bench -p rsk                   # Criterion benchmarks
-```
 
 ## MCP Server
 
@@ -75,4 +73,10 @@ Rust 1.85+ (Edition 2024). Strict clippy: `unwrap_used`, `expect_used`, `as_conv
 
 ## License
 
-MIT License. Copyright (c) 2026 Matthew Campion / NexVigilant.
+NexVigilant Source Available License v1.0. Copyright (c) 2026 Matthew Campion / NexVigilant.
+
+Personal non-commercial use only. Organizational use requires written permission from matthew@nexvigilant.com. See [LICENSE](LICENSE) for full terms.
+
+## Contributing
+
+See the NexVigilant [contributing guidelines](https://github.com/nexvigilant/.github/blob/main/CONTRIBUTING.md). Quality gates: `cargo fmt`, `cargo clippy -- -D warnings`, `cargo test -p rsk --lib`.

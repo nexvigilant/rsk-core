@@ -1,16 +1,30 @@
-MIT License
+NexVigilant Source Available License v1.0
 
 Copyright (c) 2026 Matthew Campion / NexVigilant
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any individual obtaining a
+copy of this software and associated documentation files (the "Software"), to
+use, copy, and modify the Software for personal, non-commercial purposes only,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+2. The Software may not be used for commercial purposes without prior written
+   permission from the copyright holder.
+
+3. Organizational use (by corporations, non-profits, government agencies, or
+   any entity other than a natural person acting in a personal capacity)
+   requires separate written permission from the copyright holder. Contact
+   matthew@nexvigilant.com for organizational licensing.
+
+4. Redistribution of the Software, in source or binary form, with or without
+   modification, is permitted only for personal, non-commercial purposes and
+   must include this license in its entirety.
+
+5. The Software may not be sublicensed, sold, or included in any product or
+   service offered for sale without prior written permission from the copyright
+   holder.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
