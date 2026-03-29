@@ -534,10 +534,33 @@ fn generate_quadrant_tests(
         .unwrap_or_default();
 
     if has_overlap {
-        // Overlapping variables: Q1 uses null input to achieve "confirmed" via null guard
-        // (null skips antisense → not_falsified, sense evaluates null → typically threat path)
+        // Overlapping variables: confounder uses same variable as sense strand.
+        // For Generic domain, confounder = inverted sense condition, so the 2x2
+        // quadrant space collapses. Check what null input produces to determine
+        // achievable quadrants.
+        //
+        // Sense first operator determines null behavior:
+        //   eq: null fails equality → false_next (typically threat) → sense positive
+        //   gt/gte/lt/lte: null fails comparison → false_next (typically non-threat)
+        let first_op = first_operator(&mg.tree);
+        let bool_output_fields = collect_bool_output_fields(&mg.tree);
+        let sense_is_bool = !bool_output_fields.is_empty();
+
+        // For boolean sense: null verdict depends on which path null takes
+        //   eq/neq: null fails equality → false_next (threat=true) → "confirmed"
+        //   gt/gte/lt/lte: null fails comparison → false_next (threat=false) → "absent"
+        // For non-boolean sense: resolution matches on falsified alone, so
+        //   null guard → falsified=false → always "confirmed"
+        let null_verdict = if !sense_is_bool {
+            "confirmed"
+        } else if matches!(first_op, Operator::Eq | Operator::Neq) {
+            "confirmed"
+        } else {
+            "absent"
+        };
+
+        // Q1: null input — null guard skips antisense, sense evaluates null
         let mut q1_input = positive_input.clone();
-        // Set overlapping confounder variables to null so null guard skips antisense
         for conf in confounders {
             if sense_vars.contains(&conf.variable) {
                 q1_input.insert(conf.variable.clone(), Value::Null);
@@ -546,28 +569,39 @@ fn generate_quadrant_tests(
             }
         }
         let mut q1_expect = HashMap::new();
-        q1_expect.insert("verdict".to_string(), Value::String("confirmed".to_string()));
+        q1_expect.insert("verdict".to_string(), Value::String(null_verdict.to_string()));
         q1_expect.insert("confidence".to_string(), Value::String("high".to_string()));
         tests.push(HeligramTest {
-            name: Some("Q1: confirmed — positive sense, no confounders".to_string()),
+            name: Some(format!("Q1: {null_verdict} — null sense, no confounders")),
             input: q1_input,
             expect: q1_expect,
         });
 
-        // Q2: Use the positive_input directly — since confounder is the inverted sense
-        // condition, any input that makes sense fire positive also triggers the confounder.
-        // This avoids the problem where triggering_value() doesn't reach the positive
-        // sense path in multi-condition trees.
+        // Q2: positive_input — since confounder is inverted sense condition,
+        //   for eq/neq: both strands fire → "contested"
+        //   for gt/lt/gte/lte: mutually exclusive → only sense fires → "confirmed"
+        //   for non-boolean sense: resolution matches falsified alone
         if let Some(first_conf) = confounders.first() {
             let q2_input = positive_input.clone();
             let mut q2_expect = HashMap::new();
-            q2_expect.insert("verdict".to_string(), Value::String("contested".to_string()));
-            q2_expect.insert("confidence".to_string(), Value::String("low".to_string()));
-            tests.push(HeligramTest {
-                name: Some(format!("Q2: contested — positive sense, {} active", first_conf.name)),
-                input: q2_input,
-                expect: q2_expect,
-            });
+            if sense_is_bool && matches!(first_op, Operator::Eq | Operator::Neq) {
+                q2_expect.insert("verdict".to_string(), Value::String("contested".to_string()));
+                q2_expect.insert("confidence".to_string(), Value::String("low".to_string()));
+                tests.push(HeligramTest {
+                    name: Some(format!("Q2: contested — positive sense, {} active", first_conf.name)),
+                    input: q2_input,
+                    expect: q2_expect,
+                });
+            } else {
+                // Non-boolean or mutually exclusive: confounder can't fire when sense is positive
+                q2_expect.insert("verdict".to_string(), Value::String("confirmed".to_string()));
+                q2_expect.insert("confidence".to_string(), Value::String("high".to_string()));
+                tests.push(HeligramTest {
+                    name: Some(format!("Q2: confirmed — positive sense, {} inactive", first_conf.name)),
+                    input: q2_input,
+                    expect: q2_expect,
+                });
+            }
         }
     } else {
         // Non-overlapping: confounders use different variables from sense, so we
@@ -600,10 +634,17 @@ fn generate_quadrant_tests(
     }
 
     // Q3: Empty input — null guard skips antisense (not_falsified)
-    // Sense evaluates null inputs, which for most operators goes to the "else" (positive) path
+    // For non-boolean sense: resolution matches falsified alone → "confirmed"
+    // For boolean sense: depends on operator (eq/neq → confirmed, gt/lt → absent)
+    // Domain-specific: SignalDetection/Seriousness always "absent" (designed behavior)
+    let first_op_q3 = first_operator(&mg.tree);
+    let bool_fields_q3 = collect_bool_output_fields(&mg.tree);
+    let sense_is_bool_q3 = !bool_fields_q3.is_empty();
     let q3_verdict = match domain {
         Domain::SignalDetection | Domain::SeriousnessClassification => "absent",
-        _ => "confirmed",
+        _ if !sense_is_bool_q3 => "confirmed",
+        _ if matches!(first_op_q3, Operator::Eq | Operator::Neq) => "confirmed",
+        _ => "absent",
     };
     let mut q3_expect = HashMap::new();
     q3_expect.insert("verdict".to_string(), Value::String(q3_verdict.to_string()));
@@ -613,7 +654,7 @@ fn generate_quadrant_tests(
         expect: q3_expect,
     });
 
-    // Q4: Null safety
+    // Q4: Null safety — expects high confidence for both confirmed and absent
     let mut q4_expect = HashMap::new();
     q4_expect.insert("confidence".to_string(), Value::String("high".to_string()));
     tests.push(HeligramTest {
@@ -770,13 +811,17 @@ fn has_any(vars: &[String], targets: &[&str]) -> bool {
 }
 
 /// Get the inverted operator of the first condition node.
-fn invert_first_operator(tree: &DecisionTree) -> Operator {
+fn first_operator(tree: &DecisionTree) -> Operator {
     if let Some(node) = tree.nodes.get(&tree.start)
         && let DecisionNode::Condition { operator, .. } = node
     {
-        return invert_operator(operator);
+        return operator.clone();
     }
     Operator::Eq
+}
+
+fn invert_first_operator(tree: &DecisionTree) -> Operator {
+    invert_operator(&first_operator(tree))
 }
 
 /// Get the threshold of the first condition node.
