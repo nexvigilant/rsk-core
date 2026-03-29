@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Format check
+        run: cargo fmt -p rsk -- --check
+      - name: Clippy (strict)
+        run: cargo clippy -p rsk -- -D clippy::unwrap_used -D clippy::expect_used -D warnings
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release
+        run: cargo build -p rsk --release
+      - name: Lib tests
+        run: cargo test -p rsk --lib
+      - name: Microgram self-tests
+        run: ./target/release/rsk mcg test-all rsk/micrograms
+      - name: Heligram self-tests
+        run: ./target/release/rsk heligram test-all rsk/heligrams
+      - name: Chain tests
+        run: ./target/release/rsk mcg chain-test rsk/chains
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release binary
+        run: cargo build -p rsk --release
