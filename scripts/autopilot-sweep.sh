@@ -23,6 +23,16 @@ COMPANIES=(
   gsk sanofi astrazeneca amgen gilead bayer novonordisk
   regeneron biogen moderna vertex alexion takeda boehringer
   teva astellas daiichi ucb jazz ipsen seagen incyte
+  servier
+  menarini
+  lupin
+  cspc
+  celltrion
+  samsungbioepis
+  hengrui
+  cipla
+  drreddy
+  sunpharma
   eisai
 )
 
