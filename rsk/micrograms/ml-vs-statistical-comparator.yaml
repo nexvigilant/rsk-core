@@ -1,0 +1,205 @@
+name: ml-vs-statistical-comparator
+description: 'Compares ML model predictions against PRR/ROR statistical baseline. Routes to the stronger method or flags disagreement for human review.'
+version: 0.1.0
+family: ml-pipeline
+interface:
+  inputs:
+    ml_signal_probability:
+      type: float
+      required: true
+    ml_auc:
+      type: float
+      required: true
+    prr:
+      type: float
+      required: true
+    ror:
+      type: float
+      required: false
+    case_count:
+      type: int
+      required: false
+  outputs:
+    winner:
+      type: string
+    agreement:
+      type: string
+    recommended_action:
+      type: string
+    reasoning:
+      type: string
+tree:
+  start: classify_ml
+  nodes:
+    classify_ml:
+      type: condition
+      variable: ml_signal_probability
+      operator: gte
+      value: 0.7
+      true_next: ml_says_signal
+      false_next: ml_says_noise
+
+    ml_says_signal:
+      type: condition
+      variable: prr
+      operator: gte
+      value: 2.0
+      true_next: both_signal
+      false_next: ml_signal_stat_noise
+
+    ml_says_noise:
+      type: condition
+      variable: prr
+      operator: gte
+      value: 2.0
+      true_next: ml_noise_stat_signal
+      false_next: both_noise
+
+    both_signal:
+      type: condition
+      variable: ml_auc
+      operator: gte
+      value: 0.8
+      true_next: strong_agreement_signal
+      false_next: moderate_agreement_signal
+
+    strong_agreement_signal:
+      type: return
+      value:
+        winner: both
+        agreement: strong_agreement
+        recommended_action: 'Confirmed signal. Both ML (prob >= 0.7) and PRR >= 2.0 agree. Escalate immediately.'
+        reasoning: 'ML and statistical methods converge. High confidence.'
+
+    moderate_agreement_signal:
+      type: return
+      value:
+        winner: both
+        agreement: moderate_agreement
+        recommended_action: 'Probable signal. Both methods agree but ML model AUC < 0.8. Verify with additional data sources.'
+        reasoning: 'Convergence despite moderate model quality.'
+
+    both_noise:
+      type: return
+      value:
+        winner: both
+        agreement: strong_agreement
+        recommended_action: 'No signal. Both ML (prob < 0.7) and PRR < 2.0 agree. Archive.'
+        reasoning: 'ML and statistical methods converge on noise.'
+
+    ml_signal_stat_noise:
+      type: condition
+      variable: ml_auc
+      operator: gte
+      value: 0.85
+      true_next: trust_ml_over_stat
+      false_next: disagreement_review
+
+    trust_ml_over_stat:
+      type: condition
+      variable: case_count
+      operator: gte
+      value: 50
+      true_next: ml_wins_high_n
+      false_next: disagreement_review
+
+    ml_wins_high_n:
+      type: return
+      value:
+        winner: ml
+        agreement: disagreement
+        recommended_action: 'ML detects signal that PRR misses. High AUC + sufficient cases. Flag for review — ML may be capturing non-linear patterns.'
+        reasoning: 'ML model (AUC >= 0.85) with N >= 50 captures multi-feature interactions PRR cannot.'
+
+    ml_noise_stat_signal:
+      type: condition
+      variable: case_count
+      operator: lt
+      value: 30
+      true_next: possible_spurious_prr
+      false_next: trust_stat_over_ml
+
+    possible_spurious_prr:
+      type: return
+      value:
+        winner: neither
+        agreement: disagreement
+        recommended_action: 'PRR elevated but N < 30 and ML disagrees. Possible spurious disproportionality. Monitor — do not escalate.'
+        reasoning: 'Small sample sizes inflate PRR. ML considers multiple features and sees noise.'
+
+    trust_stat_over_ml:
+      type: return
+      value:
+        winner: statistical
+        agreement: disagreement
+        recommended_action: 'PRR >= 2.0 with adequate cases but ML disagrees. Use statistical as primary — PRR is interpretable and regulatory-accepted.'
+        reasoning: 'Statistical methods are the regulatory standard. ML disagreement warrants investigation but not override.'
+
+    disagreement_review:
+      type: return
+      value:
+        winner: human_review
+        agreement: disagreement
+        recommended_action: 'Methods disagree and neither has clear advantage. Escalate to pharmacovigilance specialist for manual review.'
+        reasoning: 'No clear winner — requires domain expertise to adjudicate.'
+
+tests:
+  - name: both_agree_signal
+    input:
+      ml_signal_probability: 0.92
+      ml_auc: 0.88
+      prr: 4.5
+      case_count: 200
+    expect:
+      winner: both
+      agreement: strong_agreement
+
+  - name: both_agree_noise
+    input:
+      ml_signal_probability: 0.15
+      ml_auc: 0.85
+      prr: 0.8
+      case_count: 50
+    expect:
+      winner: both
+      agreement: strong_agreement
+
+  - name: ml_detects_stat_misses
+    input:
+      ml_signal_probability: 0.88
+      ml_auc: 0.90
+      prr: 1.2
+      case_count: 150
+    expect:
+      winner: ml
+      agreement: disagreement
+
+  - name: stat_detects_ml_misses
+    input:
+      ml_signal_probability: 0.3
+      ml_auc: 0.82
+      prr: 3.5
+      case_count: 80
+    expect:
+      winner: statistical
+      agreement: disagreement
+
+  - name: spurious_prr_small_n
+    input:
+      ml_signal_probability: 0.2
+      ml_auc: 0.85
+      prr: 5.0
+      case_count: 12
+    expect:
+      winner: neither
+      agreement: disagreement
+
+  - name: disagreement_needs_review
+    input:
+      ml_signal_probability: 0.8
+      ml_auc: 0.72
+      prr: 1.1
+      case_count: 40
+    expect:
+      winner: human_review
+      agreement: disagreement
