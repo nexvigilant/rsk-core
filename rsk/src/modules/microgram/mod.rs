@@ -36,7 +36,7 @@ pub use catalog::{
     Catalog, CatalogEntry, alias_check, catalog,
 };
 pub use chain::{
-    BoundaryError, BoundaryErrorSeverity, ChainEgressValidationResult, EgressFinding, EnginePrimitive,
+    BoundaryError, BoundaryErrorSeverity, ChainEgressValidationResult, EgressFinding, EnginePrimitive, FieldCollision,
     ChainResult, ChainStatus, ChainValidationResult, LoopHalt, LoopResult,
     PathMismatch, PathSnapshotResult, ResilientChainResult, StepValidationError,
     ValidatedChainResult,

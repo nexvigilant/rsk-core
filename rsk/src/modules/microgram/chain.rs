@@ -726,6 +726,16 @@ pub struct StepValidationError {
     pub errors: Vec<String>,
 }
 
+/// A field name collision in accumulate mode — two steps produce the same output field.
+#[derive(Debug, Clone, Serialize)]
+pub struct FieldCollision {
+    pub field_name: String,
+    pub first_step: usize,
+    pub first_step_name: String,
+    pub second_step: usize,
+    pub second_step_name: String,
+}
+
 /// Result of validating an entire chain without executing it
 #[derive(Debug, Clone, Serialize)]
 pub struct ChainValidationResult {
@@ -733,6 +743,9 @@ pub struct ChainValidationResult {
     pub steps_checked: usize,
     pub step_errors: Vec<StepValidationError>,
     pub total_errors: usize,
+    /// Fields produced by multiple steps in accumulate mode (later overwrites earlier)
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub field_collisions: Vec<FieldCollision>,
 }
 
 /// Validate all steps in a chain against an initial input WITHOUT executing.
@@ -745,6 +758,9 @@ pub fn chain_validate_all(
 ) -> ChainValidationResult {
     let mut step_errors = Vec::new();
     let mut simulated_input = initial_input.clone();
+    let mut field_collisions = Vec::new();
+    // Track which step first produced each output field: field_name → (step_index, step_name)
+    let mut output_owners: HashMap<String, (usize, String)> = HashMap::new();
 
     for (i, mg) in micrograms.iter().enumerate() {
         // Apply alias remapping (same as runtime)
@@ -764,9 +780,20 @@ pub fn chain_validate_all(
         // Merge (accumulate mode) so upstream fields survive.
         if let Some(ref iface) = mg.interface {
             for field_name in iface.outputs.keys() {
-                // Insert a placeholder — we're validating types, not values.
-                // Use the current value if it already exists (from input passthrough),
-                // otherwise insert Null to represent "this field will be present".
+                // Detect field collisions: if another step already produces this field,
+                // the later step will silently overwrite it in accumulate mode.
+                if let Some((first_idx, first_name)) = output_owners.get(field_name) {
+                    field_collisions.push(FieldCollision {
+                        field_name: field_name.clone(),
+                        first_step: *first_idx,
+                        first_step_name: first_name.clone(),
+                        second_step: i,
+                        second_step_name: mg.name.clone(),
+                    });
+                } else {
+                    output_owners.insert(field_name.clone(), (i, mg.name.clone()));
+                }
+
                 if !simulated_input.contains_key(field_name) {
                     simulated_input.insert(field_name.clone(), Value::Null);
                 }
@@ -776,10 +803,11 @@ pub fn chain_validate_all(
 
     let total_errors: usize = step_errors.iter().map(|s| s.errors.len()).sum();
     ChainValidationResult {
-        valid: step_errors.is_empty(),
+        valid: step_errors.is_empty() && field_collisions.is_empty(),
         steps_checked: micrograms.len(),
         step_errors,
         total_errors,
+        field_collisions,
     }
 }
 

@@ -990,6 +990,7 @@ pub fn handle_microgram(action: &MicrogramAction) {
                     "steps_checked": result.steps_checked,
                     "total_errors": result.total_errors,
                     "step_errors": result.step_errors,
+                    "field_collisions": result.field_collisions,
                 }))
                 .unwrap_or_default()
             );
