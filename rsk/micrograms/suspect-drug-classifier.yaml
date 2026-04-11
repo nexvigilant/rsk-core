@@ -129,7 +129,7 @@ tree:
         rationale: "Interacting drug — possible contributor via drug-drug interaction"
 
     unknown_role:
-      type: string
+      type: return
       value:
         role: UNKNOWN
         causality_weight: 0.5
@@ -145,7 +145,7 @@ tree:
         rationale: "Drug is primary suspect in majority of reports — strong signal candidate"
 
     batch_mixed_role:
-      type: string
+      type: return
       value:
         role: BATCH_MIXED
         causality_weight: 0.6
