@@ -135,9 +135,9 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 .unwrap_or_default()
             );
         }
-        MicrogramAction::Chain { chain, dir, input, resilient, accumulate, strict } => {
+        MicrogramAction::Chain { chain, dir, input, resilient, accumulate, strict, validated } => {
             use rsk::modules::microgram::chain::{
-                chain as chain_fn, chain_accumulate, chain_resilient,
+                chain as chain_fn, chain_accumulate, chain_resilient, chain_validated,
             };
             use rsk::modules::microgram::load_all;
 
@@ -173,7 +173,31 @@ pub fn handle_microgram(action: &MicrogramAction) {
                 }
             }
 
-            if *resilient {
+            if *validated {
+                let result = chain_validated(&ordered, variables, *accumulate);
+
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "mode": "validated",
+                        "success": result.success,
+                        "steps": result.steps.iter().map(|s| json!({
+                            "name": s.result.name,
+                            "success": s.result.success,
+                            "path": s.result.path,
+                            "output": s.result.output,
+                            "duration_us": s.result.duration_us,
+                            "ingress_errors": s.ingress_errors,
+                            "egress_errors": s.egress_errors,
+                        })).collect::<Vec<_>>(),
+                        "final_output": result.final_output,
+                        "total_duration_us": result.total_duration_us,
+                        "boundary_errors": result.boundary_errors,
+                        "boundary_findings": result.boundary_findings,
+                    }))
+                    .unwrap_or_default()
+                );
+            } else if *resilient {
                 let result = chain_resilient(&ordered, variables, *strict);
 
                 println!(
@@ -893,6 +917,31 @@ pub fn handle_microgram(action: &MicrogramAction) {
                         "source": s.source,
                         "target": s.target,
                     })).collect::<Vec<_>>(),
+                }))
+                .unwrap_or_default()
+            );
+        }
+        MicrogramAction::EgressAudit { dir } => {
+            use rsk::modules::microgram::chain::chain_validate_egress;
+            use rsk::modules::microgram::load_all;
+
+            let all = match load_all(Path::new(dir)) {
+                Ok(a) => a,
+                Err(e) => {
+                    eprintln!("{}", json!({"status": "error", "message": e}));
+                    std::process::exit(1);
+                }
+            };
+
+            let result = chain_validate_egress(&all);
+
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&json!({
+                    "valid": result.valid,
+                    "steps_checked": result.steps_checked,
+                    "total_findings": result.total_findings,
+                    "findings": result.findings,
                 }))
                 .unwrap_or_default()
             );

@@ -228,6 +228,44 @@ pub fn chain_accumulate(micrograms: &[Microgram], initial_input: HashMap<String,
     }
 }
 
+/// Severity of a boundary error — determines whether the chain halts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub enum BoundaryErrorSeverity {
+    /// Missing required field — downstream WILL fail. Halt-worthy.
+    Missing,
+    /// Wrong type but field present — downstream MAY succeed. Warning.
+    TypeMismatch,
+}
+
+/// Engine primitive that failed — mirrors primitive-failure-classifier.yaml
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub enum EnginePrimitive {
+    /// Schema validation failure (ingress or egress missing/type)
+    Seal,
+    /// Decision tree evaluation failure (wrong output, incomplete conversion)
+    Convert,
+    /// Chain sequencing failure (phase error)
+    Time,
+    /// Schema impedance mismatch between steps
+    Lubricate,
+    /// Interface contract violation (default/unknown)
+    Transfer,
+}
+
+/// A structured boundary error with severity and primitive classification.
+#[derive(Debug, Clone, Serialize)]
+pub struct BoundaryError {
+    pub step_index: usize,
+    pub step_name: String,
+    pub direction: String,
+    pub message: String,
+    pub severity: BoundaryErrorSeverity,
+    /// Which engine primitive failed
+    pub primitive: EnginePrimitive,
+    /// Actionable fix recommendation
+    pub recommendation: String,
+}
+
 /// Result of a validated chain execution
 #[derive(Debug, Clone, Serialize)]
 pub struct ValidatedChainResult {
@@ -235,8 +273,10 @@ pub struct ValidatedChainResult {
     pub steps: Vec<super::ValidatedResult>,
     pub final_output: HashMap<String, Value>,
     pub total_duration_us: u64,
-    /// Cumulative ingress/egress errors across all steps
+    /// Cumulative ingress/egress errors across all steps (legacy, flat strings)
     pub boundary_errors: Vec<String>,
+    /// Structured boundary errors with severity classification
+    pub boundary_findings: Vec<BoundaryError>,
 }
 
 /// Chain micrograms with ingress/egress validation at every step.
@@ -248,6 +288,41 @@ pub struct ValidatedChainResult {
 /// On ingress failure: halts the chain (invalid input = can't proceed).
 /// On egress failure: records the violation but continues (output exists, just wrong type).
 /// When `accumulate` is true, uses accumulate semantics (merge outputs into context).
+/// Classify an error message as Missing (halt-worthy) or TypeMismatch (warning).
+fn classify_error_severity(err: &str) -> BoundaryErrorSeverity {
+    if err.contains("Missing required") {
+        BoundaryErrorSeverity::Missing
+    } else {
+        BoundaryErrorSeverity::TypeMismatch
+    }
+}
+
+/// Classify a boundary error into engine primitive and recommendation.
+/// Mirrors the logic of primitive-failure-classifier.yaml without YAML I/O.
+fn classify_primitive(direction: &str, message: &str) -> (EnginePrimitive, &'static str) {
+    match direction {
+        "ingress" => {
+            if message.contains("Missing required") {
+                (EnginePrimitive::Seal, "Add required field to upstream output or insert adapter microgram")
+            } else if message.contains("expected type") {
+                (EnginePrimitive::Seal, "Schema types disagree \u{2014} add type-converting adapter")
+            } else {
+                (EnginePrimitive::Seal, "Ingress contract violation \u{2014} inspect upstream output schema")
+            }
+        }
+        "egress" => {
+            if message.contains("Missing required") {
+                (EnginePrimitive::Convert, "Decision tree path doesn't produce required output \u{2014} add missing return nodes")
+            } else if message.contains("expected type") {
+                (EnginePrimitive::Convert, "Tree produces wrong type \u{2014} check return node values")
+            } else {
+                (EnginePrimitive::Convert, "Egress contract violation \u{2014} inspect return node schema")
+            }
+        }
+        _ => (EnginePrimitive::Transfer, "Interface contract violation \u{2014} inspect chain topology"),
+    }
+}
+
 pub fn chain_validated(
     micrograms: &[Microgram],
     initial_input: HashMap<String, Value>,
@@ -257,6 +332,7 @@ pub fn chain_validated(
     let mut steps = Vec::with_capacity(micrograms.len());
     let mut total_us = 0u64;
     let mut boundary_errors = Vec::new();
+    let mut boundary_findings = Vec::new();
 
     for (i, mg) in micrograms.iter().enumerate() {
         let mut step_input = context.clone();
@@ -265,12 +341,32 @@ pub fn chain_validated(
         let vr = mg.run_validated(step_input);
         total_us += vr.result.duration_us;
 
-        // Collect boundary errors with step context
+        // Collect boundary errors with step context, severity, and primitive classification
         for err in &vr.ingress_errors {
             boundary_errors.push(format!("Step {} ({}): ingress: {err}", i, mg.name));
+            let (primitive, recommendation) = classify_primitive("ingress", err);
+            boundary_findings.push(BoundaryError {
+                step_index: i,
+                step_name: mg.name.clone(),
+                direction: "ingress".to_string(),
+                message: err.clone(),
+                severity: classify_error_severity(err),
+                primitive,
+                recommendation: recommendation.to_string(),
+            });
         }
         for err in &vr.egress_errors {
             boundary_errors.push(format!("Step {} ({}): egress: {err}", i, mg.name));
+            let (primitive, recommendation) = classify_primitive("egress", err);
+            boundary_findings.push(BoundaryError {
+                step_index: i,
+                step_name: mg.name.clone(),
+                direction: "egress".to_string(),
+                message: err.clone(),
+                severity: classify_error_severity(err),
+                primitive,
+                recommendation: recommendation.to_string(),
+            });
         }
 
         // Ingress failure: halt the chain
@@ -283,6 +379,7 @@ pub fn chain_validated(
                 final_output,
                 total_duration_us: total_us,
                 boundary_errors,
+                boundary_findings,
             };
         }
 
@@ -296,8 +393,27 @@ pub fn chain_validated(
                 final_output,
                 total_duration_us: total_us,
                 boundary_errors,
+                boundary_findings,
             };
         }
+
+        // Egress failure with Missing severity: halt (downstream WILL fail)
+        let has_missing_egress = vr.egress_errors.iter().any(|e|
+            classify_error_severity(e) == BoundaryErrorSeverity::Missing
+        );
+        if has_missing_egress {
+            let final_output = vr.result.output.clone();
+            steps.push(vr);
+            return ValidatedChainResult {
+                success: false,
+                steps,
+                final_output,
+                total_duration_us: total_us,
+                boundary_errors,
+                boundary_findings,
+            };
+        }
+        // Egress TypeMismatch: record but continue (value exists, just wrong type)
 
         // Update context for next step
         if accumulate {
@@ -324,6 +440,7 @@ pub fn chain_validated(
         final_output,
         total_duration_us: total_us,
         boundary_errors,
+        boundary_findings,
     }
 }
 
@@ -663,5 +780,91 @@ pub fn chain_validate_all(
         steps_checked: micrograms.len(),
         step_errors,
         total_errors,
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Application 3: Live Egress Validation via Test Cases
+//
+// Runs each microgram's self-tests and uses ACTUAL outputs (not declared
+// interface placeholders) to simulate chain data flow. Catches runtime
+// egress violations that static chain_validate_all misses because it
+// uses Null placeholders instead of real computed values.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// A single egress finding from live test execution
+#[derive(Debug, Clone, Serialize)]
+pub struct EgressFinding {
+    pub step_index: usize,
+    pub step_name: String,
+    pub test_index: usize,
+    pub errors: Vec<String>,
+    pub severity: BoundaryErrorSeverity,
+    pub primitive: EnginePrimitive,
+    pub recommendation: String,
+}
+
+/// Result of validating chain egress using actual test-case outputs
+#[derive(Debug, Clone, Serialize)]
+pub struct ChainEgressValidationResult {
+    pub valid: bool,
+    pub steps_checked: usize,
+    pub findings: Vec<EgressFinding>,
+    pub total_findings: usize,
+}
+
+/// Validate chain egress by running each microgram's self-tests and checking
+/// whether actual outputs satisfy declared output interface contracts.
+///
+/// Unlike `chain_validate_all` (which simulates with Null placeholders),
+/// this function executes real decision trees to detect runtime egress
+/// violations: paths that don't produce required outputs, or produce
+/// values with unexpected types.
+pub fn chain_validate_egress(
+    micrograms: &[Microgram],
+) -> ChainEgressValidationResult {
+    let mut findings = Vec::new();
+
+    for (i, mg) in micrograms.iter().enumerate() {
+        // Skip micrograms without interface declarations — nothing to validate
+        if mg.interface.is_none() {
+            continue;
+        }
+
+        // Run each self-test and validate the output against declared interface
+        for (t_idx, test) in mg.tests.iter().enumerate() {
+            let result = mg.run(test.input.clone());
+            let egress_errors = mg.validate_output(&result.output);
+
+            if !egress_errors.is_empty() {
+                // Classify by worst severity in the batch
+                let severity = if egress_errors.iter().any(|e| e.contains("Missing required")) {
+                    BoundaryErrorSeverity::Missing
+                } else {
+                    BoundaryErrorSeverity::TypeMismatch
+                };
+                // Classify the worst error for primitive assignment
+                let worst_err = egress_errors.first().map(|e| e.as_str()).unwrap_or("");
+                let (primitive, recommendation) = classify_primitive("egress", worst_err);
+
+                findings.push(EgressFinding {
+                    step_index: i,
+                    step_name: mg.name.clone(),
+                    test_index: t_idx,
+                    errors: egress_errors,
+                    severity,
+                    primitive,
+                    recommendation: recommendation.to_string(),
+                });
+            }
+        }
+    }
+
+    let total_findings = findings.len();
+    ChainEgressValidationResult {
+        valid: findings.is_empty(),
+        steps_checked: micrograms.len(),
+        findings,
+        total_findings,
     }
 }

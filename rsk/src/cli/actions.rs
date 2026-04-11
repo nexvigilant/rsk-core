@@ -524,6 +524,9 @@ pub enum MicrogramAction {
         /// Strict mode: reject input missing required fields at each chain step
         #[arg(long)]
         strict: bool,
+        /// Validated mode: run with ingress/egress boundary checks at every step
+        #[arg(long)]
+        validated: bool,
     },
     /// Loop a chain: run repeatedly, feeding output back as input
     Loop {
@@ -745,6 +748,12 @@ pub enum MicrogramAction {
     ProcessTest {
         /// Directory containing process YAML definitions
         #[arg(default_value = "processes")]
+        dir: String,
+    },
+    /// Audit egress seal coverage: run all self-tests and check outputs against declared interfaces
+    EgressAudit {
+        /// Path to micrograms directory
+        #[arg(default_value = "micrograms")]
         dir: String,
     },
     /// Validate all chain steps without executing (multi-error report)

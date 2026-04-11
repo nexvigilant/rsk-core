@@ -36,13 +36,14 @@ pub use catalog::{
     Catalog, CatalogEntry, alias_check, catalog,
 };
 pub use chain::{
+    BoundaryError, BoundaryErrorSeverity, ChainEgressValidationResult, EgressFinding, EnginePrimitive,
     ChainResult, ChainStatus, ChainValidationResult, LoopHalt, LoopResult,
     PathMismatch, PathSnapshotResult, ResilientChainResult, StepValidationError,
     ValidatedChainResult,
     chain, chain_accumulate, chain_accumulate_by_names,
     chain_by_names, chain_loop, chain_loop_by_names,
     chain_resilient, chain_resilient_by_names,
-    chain_validate_all, chain_validated, chain_verify_paths,
+    chain_validate_all, chain_validate_egress, chain_validated, chain_verify_paths,
 };
 pub use hygiene::{
     BoundaryReport, FieldGap, HygieneReport,
@@ -229,6 +230,11 @@ fn types_compatible(actual: &str, declared: &str) -> bool {
     let actual = canonicalize_type(actual);
     let declared = canonicalize_type(declared);
     if actual == declared {
+        return true;
+    }
+    // Null is compatible with any declared type — a tree path may
+    // legitimately return null for an optional field on no-match paths.
+    if actual == "null" {
         return true;
     }
     // Numeric coercion: int and float are interchangeable

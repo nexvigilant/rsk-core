@@ -2,7 +2,7 @@
 
 use crate::modules::decision_engine::Value;
 use super::{Microgram, load_all};
-use super::chain::{chain, chain_accumulate, chain_loop, LoopResult};
+use super::chain::{chain, chain_accumulate, chain_loop, chain_validated, BoundaryError, LoopResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -56,6 +56,9 @@ pub struct ChainTestResult {
     /// Primitive signature chain validation (conservation law check)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signature_validation: Option<super::signature_validator::SignatureValidation>,
+    /// Boundary validation findings from chain_validated (egress seal check)
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub boundary_findings: Vec<BoundaryError>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -113,10 +116,12 @@ impl ChainDefinition {
                     mismatch: Some(format!("Missing micrograms: {missing:?}")),
                 }).collect(),
                 signature_validation: None,
+                boundary_findings: Vec::new(),
             };
         }
 
         let owned: Vec<Microgram> = ordered.into_iter().cloned().collect();
+        let mut all_boundary_findings = Vec::new();
 
         for test in &self.tests {
             let chain_result = if self.accumulate {
@@ -125,6 +130,10 @@ impl ChainDefinition {
                 chain(&owned, test.input.clone(), false)
             };
             let actual = chain_result.final_output.clone();
+
+            // Run validated chain in parallel to check boundary seals
+            let validated_result = chain_validated(&owned, test.input.clone(), self.accumulate);
+            all_boundary_findings.extend(validated_result.boundary_findings);
 
             let mut mismatch = None;
             let mut test_passed = true;
@@ -185,6 +194,7 @@ impl ChainDefinition {
             failed: self.tests.len() - passed,
             results,
             signature_validation: None,
+            boundary_findings: all_boundary_findings,
         }
     }
 }
