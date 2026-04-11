@@ -1,4 +1,4 @@
-name: underreporting-estimator
+name: bioavailability-correction
 description: "Estimate true adverse event count by applying underreporting correction factor. ADME Bioavailability (F) analog — fraction of real events that survive intake to reach the signal detection pipeline. FDA estimates F = 1-10% for spontaneous reporting."
 version: 0.1.0
 primitive_signature:

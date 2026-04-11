@@ -1,38 +1,48 @@
 name: pv-signal-to-action
-description: 'Core PV workflow: PRR signal detection → causality bridge → Naranjo assessment → regulatory action routing. Uses accumulate mode to preserve is_serious through mid-chain steps.'
-version: 0.2.0
+description: 'Core PV workflow: underreporting correction (ADME bioavailability) → PRR signal detection → causality bridge → Naranjo assessment → regulatory action routing. Step 0 annotates the signal context with the reporting fraction so downstream consumers know the signal was computed on a fraction of reality.'
+version: 0.3.0
 micrograms_dir: ../micrograms
 accumulate: true
 steps:
+  - bioavailability-correction
   - prr-signal
   - signal-to-causality
   - naranjo-quick
   - causality-to-action
 tests:
-- name: serious case with probable causality — expedited 15-day report
+- name: serious case with probable causality — expedited 15-day report (spontaneous source)
   input:
+    observed_count: 150
     prr: 8.5
     naranjo_score: 7
     is_serious: true
   expect:
+    correction_factor: 20.0
+    reporting_fraction_used: 0.05
     regulatory_action: expedited_report
     deadline_days: 15
     causality: PROBABLE
-- name: serious case with definite causality — 7-day expedited
+- name: serious case with definite causality — 7-day expedited (clinical trial source)
   input:
+    observed_count: 50
+    source_type: clinical_trial
     prr: 3.0
     naranjo_score: 10
     is_serious: true
   expect:
+    correction_factor: 1.11
+    reporting_fraction_used: 0.90
     regulatory_action: expedited_report
     deadline_days: 7
     causality: DEFINITE
 - name: non-serious with possible causality — periodic report
   input:
+    observed_count: 200
     prr: 2.5
     naranjo_score: 3
     is_serious: false
   expect:
+    correction_factor: 20.0
     causality: POSSIBLE
     regulatory_action: monitor
     deadline_days: 90
@@ -41,5 +51,6 @@ tests:
     prr: 1.5
     naranjo_score: 0
   expect:
+    correction_factor: 20.0
     regulatory_action: document
     deadline_days: 0
