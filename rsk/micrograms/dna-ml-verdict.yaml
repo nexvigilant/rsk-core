@@ -11,9 +11,6 @@ interface:
     auc:
       type: float
       required: true
-    f1:
-      type: float
-      required: false
     n_samples:
       type: int
       required: true
@@ -143,7 +140,6 @@ tests:
   - name: perfect_dna_model
     input:
       auc: 1.0
-      f1: 1.0
       n_samples: 100
       total_features: 17
       dna_feature_count: 5
