@@ -105,7 +105,7 @@ tree:
       operator: eq
       value: true
       true_next: check_wifi_data_need
-      false_next: check_ble_range
+      false_next: check_5g_ground
 
     check_wifi_data_need:
       type: condition
