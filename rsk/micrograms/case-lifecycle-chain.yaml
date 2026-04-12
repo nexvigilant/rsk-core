@@ -1,0 +1,96 @@
+name: case-lifecycle-chain
+description: >
+  PV molecular chain: case seriousness → reporting deadline → workflow routing.
+  Composes case-seriousness, seriousness-to-deadline, and full-case-router
+  into a case management pipeline. Input is ICH E2A seriousness criteria.
+  Output is the case routing decision with deadline.
+version: 0.1.0
+family: pv-pipeline
+chain:
+  - case-seriousness
+  - seriousness-to-deadline
+  - full-case-router
+interface:
+  inputs:
+    death:
+      type: bool
+      required: true
+      description: Case resulted in death
+    life_threatening:
+      type: bool
+      required: true
+      description: Case was life-threatening
+    hospitalization:
+      type: bool
+      required: true
+      description: Required or prolonged hospitalization
+    disability:
+      type: bool
+      required: true
+      description: Resulted in persistent disability
+    congenital_anomaly:
+      type: bool
+      required: true
+      description: Congenital anomaly or birth defect
+    medically_important:
+      type: bool
+      required: true
+      description: Other medically important condition
+  outputs:
+    is_serious:
+      type: bool
+      description: Whether the case meets ICH E2A seriousness criteria
+    seriousness_criteria:
+      type: string
+      description: Which seriousness criteria were met
+    deadline_days:
+      type: int
+      description: Reporting deadline in days
+    reporting_type:
+      type: string
+      description: Type of report required (expedited/periodic)
+    route:
+      type: string
+      description: Case routing destination
+steps:
+  - name: classify_seriousness
+    microgram: case-seriousness
+    map:
+      death: "{{ death }}"
+      life_threatening: "{{ life_threatening }}"
+      hospitalization: "{{ hospitalization }}"
+      disability: "{{ disability }}"
+      congenital_anomaly: "{{ congenital_anomaly }}"
+      medically_important: "{{ medically_important }}"
+  - name: compute_deadline
+    microgram: seriousness-to-deadline
+    map:
+      is_serious: "{{ classify_seriousness.is_serious }}"
+      death: "{{ death }}"
+  - name: route_case
+    microgram: full-case-router
+    map:
+      is_serious: "{{ classify_seriousness.is_serious }}"
+      deadline_days: "{{ compute_deadline.deadline_days }}"
+      reporting_type: "{{ compute_deadline.reporting_type }}"
+tests:
+  - name: serious_death_case
+    input:
+      death: true
+      life_threatening: false
+      hospitalization: true
+      disability: false
+      congenital_anomaly: false
+      medically_important: false
+    expect:
+      is_serious: true
+  - name: non_serious_case
+    input:
+      death: false
+      life_threatening: false
+      hospitalization: false
+      disability: false
+      congenital_anomaly: false
+      medically_important: false
+    expect:
+      is_serious: false

@@ -1,0 +1,129 @@
+name: full-pv-pipeline-chain
+description: >
+  Complete PV molecular chain: signal detection + causality + case management.
+  Composes signal-consensus-to-action and case-lifecycle-chain into the full
+  pharmacovigilance pipeline. The master chain. Input is contingency table +
+  causality data + seriousness criteria. Output is the complete regulatory
+  disposition: signal verdict, causality assessment, case routing, and deadline.
+version: 0.1.0
+family: pv-pipeline
+chain:
+  - signal-consensus-to-action
+  - case-lifecycle-chain
+interface:
+  inputs:
+    # Signal detection inputs
+    a:
+      type: int
+      required: true
+      description: Drug-event co-occurrence count
+    b:
+      type: int
+      required: true
+      description: Drug without event count
+    c:
+      type: int
+      required: true
+      description: Event without drug count
+    d:
+      type: int
+      required: true
+      description: Neither drug nor event count
+    # Causality inputs
+    temporal:
+      type: int
+      required: false
+      default: 1
+    dechallenge:
+      type: int
+      required: false
+      default: 0
+    rechallenge:
+      type: int
+      required: false
+      default: 0
+    alternatives:
+      type: int
+      required: false
+      default: 0
+    previous:
+      type: int
+      required: false
+      default: 1
+    # Case seriousness inputs
+    death:
+      type: bool
+      required: true
+    life_threatening:
+      type: bool
+      required: true
+    hospitalization:
+      type: bool
+      required: true
+    disability:
+      type: bool
+      required: true
+    congenital_anomaly:
+      type: bool
+      required: true
+    medically_important:
+      type: bool
+      required: true
+  outputs:
+    signal_detected:
+      type: bool
+    prr:
+      type: float
+    naranjo_category:
+      type: string
+    action:
+      type: string
+    is_serious:
+      type: bool
+    deadline_days:
+      type: int
+    route:
+      type: string
+steps:
+  - name: signal_and_causality
+    chain: signal-consensus-to-action
+    map:
+      a: "{{ a }}"
+      b: "{{ b }}"
+      c: "{{ c }}"
+      d: "{{ d }}"
+      temporal: "{{ temporal }}"
+      dechallenge: "{{ dechallenge }}"
+      rechallenge: "{{ rechallenge }}"
+      alternatives: "{{ alternatives }}"
+      previous: "{{ previous }}"
+  - name: case_management
+    chain: case-lifecycle-chain
+    map:
+      death: "{{ death }}"
+      life_threatening: "{{ life_threatening }}"
+      hospitalization: "{{ hospitalization }}"
+      disability: "{{ disability }}"
+      congenital_anomaly: "{{ congenital_anomaly }}"
+      medically_important: "{{ medically_important }}"
+tests:
+  - name: semaglutide_pancreatitis_serious
+    input:
+      a: 2068
+      b: 76216
+      c: 75999
+      d: 19852706
+      temporal: 1
+      dechallenge: 1
+      rechallenge: 0
+      alternatives: 1
+      previous: 1
+      death: false
+      life_threatening: false
+      hospitalization: true
+      disability: false
+      congenital_anomaly: false
+      medically_important: false
+    expect:
+      signal_detected: true
+      is_serious: true
