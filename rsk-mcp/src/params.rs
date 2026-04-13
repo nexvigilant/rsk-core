@@ -91,6 +91,22 @@ pub struct McgCoverageParams {
     pub path: String,
 }
 
+/// Search micrograms by name, description, or primitive signature
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct McgSearchParams {
+    /// Search query — matched case-insensitively against microgram name and description
+    #[schemars(description = "Search term matched against name and description (case-insensitive)")]
+    pub query: String,
+    /// Optional directory override (defaults to ~/Projects/rsk-core/rsk/micrograms)
+    #[schemars(description = "Directory to search in (default: ~/Projects/rsk-core/rsk/micrograms)")]
+    #[serde(default)]
+    pub dir: Option<String>,
+    /// Maximum results to return (default: 20)
+    #[schemars(description = "Maximum number of results (default: 20)")]
+    #[serde(default)]
+    pub limit: Option<usize>,
+}
+
 /// Stress-test a microgram with random inputs
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct McgStressParams {

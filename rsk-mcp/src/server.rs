@@ -197,6 +197,31 @@ impl RskMcpServer {
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
+    #[tool(description = "Search micrograms by name or description keyword. Returns matching names with paths for use in other mcg_* tools. Default directory: ~/Projects/rsk-core/rsk/micrograms.")]
+    fn mcg_search(
+        &self,
+        Parameters(p): Parameters<params::McgSearchParams>,
+    ) -> Result<String, McpError> {
+        let default_dir = expand_home("~/Projects/rsk-core/rsk/micrograms");
+        let dir_str = p.dir.unwrap_or(default_dir);
+        let dir = std::path::Path::new(&dir_str);
+        let limit = p.limit.unwrap_or(20);
+        let query_lower = p.query.to_lowercase();
+
+        let mut results = Vec::new();
+        search_recursive(dir, &query_lower, &mut results)
+            .map_err(|e| McpError::internal_error(format!("Search failed: {e}"), None))?;
+
+        results.truncate(limit);
+
+        serde_json::to_string_pretty(&serde_json::json!({
+            "query": p.query,
+            "matches": results.len(),
+            "results": results,
+        }))
+        .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
+    }
+
     #[tool(description = "Run coverage analysis on a microgram. Reports which decision paths are exercised by test cases.")]
     fn mcg_coverage(
         &self,
@@ -377,6 +402,56 @@ fn edges_to_skill_graph(edges: &[(String, String)]) -> rsk::modules::graph::Skil
         adj.entry(to.clone()).or_default(); // ensure target node exists
     }
     rsk::modules::graph::SkillGraph::from(adj)
+}
+
+/// Expand `~` to the user's home directory
+fn expand_home(path: &str) -> String {
+    if let Some(rest) = path.strip_prefix("~/") {
+        if let Ok(home) = std::env::var("HOME") {
+            return format!("{home}/{rest}");
+        }
+    }
+    path.to_string()
+}
+
+/// Recursively search YAML files for micrograms matching a query
+fn search_recursive(
+    dir: &std::path::Path,
+    query: &str,
+    results: &mut Vec<serde_json::Value>,
+) -> Result<(), String> {
+    let entries = std::fs::read_dir(dir).map_err(|e| format!("Cannot read dir: {e}"))?;
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Dir entry error: {e}"))?;
+        let path = entry.path();
+        if path.is_dir() {
+            search_recursive(&path, query, results)?;
+        } else if path.extension().is_some_and(|e| e == "yaml" || e == "yml") {
+            if let Ok(mg) = rsk::modules::microgram::Microgram::load(&path) {
+                let name_lower = mg.name.to_lowercase();
+                let desc_lower = mg.description.to_lowercase();
+                let prim_lower = mg
+                    .primitive_signature
+                    .as_ref()
+                    .map(|ps| ps.dominant.to_lowercase())
+                    .unwrap_or_default();
+
+                if name_lower.contains(query)
+                    || desc_lower.contains(query)
+                    || prim_lower.contains(query)
+                {
+                    results.push(serde_json::json!({
+                        "name": mg.name,
+                        "description": mg.description,
+                        "path": path.display().to_string(),
+                        "primitive": mg.primitive_signature.as_ref().map(|ps| &ps.dominant),
+                        "tests": mg.tests.len(),
+                    }));
+                }
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Convert serde_json::Value to rsk::Value
