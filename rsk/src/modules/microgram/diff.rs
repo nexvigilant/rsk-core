@@ -1,5 +1,5 @@
 use super::Microgram;
-use super::compose::{input_variables, output_fields, can_feed_with_aliases};
+use super::compose::{can_feed_with_aliases, input_variables, output_fields};
 use serde::Serialize;
 
 /// Diff result between two micrograms
@@ -15,10 +15,10 @@ pub struct DiffResult {
     pub shared_outputs: Vec<String>,
     pub left_only_outputs: Vec<String>,
     pub right_only_outputs: Vec<String>,
-    pub test_overlap: usize,         // tests with identical inputs
-    pub behavior_matches: usize,     // of overlapping tests, how many produce same output
-    pub behavior_diverges: usize,    // of overlapping tests, how many produce different output
-    pub compatible: bool,            // can they be chained? (left outputs ∩ right inputs ≠ ∅)
+    pub test_overlap: usize,      // tests with identical inputs
+    pub behavior_matches: usize,  // of overlapping tests, how many produce same output
+    pub behavior_diverges: usize, // of overlapping tests, how many produce different output
+    pub compatible: bool,         // can they be chained? (left outputs ∩ right inputs ≠ ∅)
 }
 
 /// Compare two micrograms structurally and behaviorally
@@ -28,13 +28,37 @@ pub fn diff(a: &Microgram, b: &Microgram) -> DiffResult {
     let b_inputs = input_variables(b);
     let b_outputs = output_fields(b);
 
-    let shared_inputs: Vec<String> = a_inputs.iter().filter(|v| b_inputs.contains(v)).cloned().collect();
-    let left_only_inputs: Vec<String> = a_inputs.iter().filter(|v| !b_inputs.contains(v)).cloned().collect();
-    let right_only_inputs: Vec<String> = b_inputs.iter().filter(|v| !a_inputs.contains(v)).cloned().collect();
+    let shared_inputs: Vec<String> = a_inputs
+        .iter()
+        .filter(|v| b_inputs.contains(v))
+        .cloned()
+        .collect();
+    let left_only_inputs: Vec<String> = a_inputs
+        .iter()
+        .filter(|v| !b_inputs.contains(v))
+        .cloned()
+        .collect();
+    let right_only_inputs: Vec<String> = b_inputs
+        .iter()
+        .filter(|v| !a_inputs.contains(v))
+        .cloned()
+        .collect();
 
-    let shared_outputs: Vec<String> = a_outputs.iter().filter(|v| b_outputs.contains(v)).cloned().collect();
-    let left_only_outputs: Vec<String> = a_outputs.iter().filter(|v| !b_outputs.contains(v)).cloned().collect();
-    let right_only_outputs: Vec<String> = b_outputs.iter().filter(|v| !a_outputs.contains(v)).cloned().collect();
+    let shared_outputs: Vec<String> = a_outputs
+        .iter()
+        .filter(|v| b_outputs.contains(v))
+        .cloned()
+        .collect();
+    let left_only_outputs: Vec<String> = a_outputs
+        .iter()
+        .filter(|v| !b_outputs.contains(v))
+        .cloned()
+        .collect();
+    let right_only_outputs: Vec<String> = b_outputs
+        .iter()
+        .filter(|v| !a_outputs.contains(v))
+        .cloned()
+        .collect();
 
     // Behavioral comparison: run shared test inputs through both
     let mut test_overlap = 0;

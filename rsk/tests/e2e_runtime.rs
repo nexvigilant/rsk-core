@@ -20,10 +20,10 @@ fn ensure_registry() {
     if !registry_file.exists() {
         let mut cmd = Command::cargo_bin("rsk").unwrap();
         cmd.arg("skills")
-           .arg("scan")
-           .arg(get_skills_dir().to_str().unwrap())
-           .arg("--output")
-           .arg(registry_file.to_str().unwrap());
+            .arg("scan")
+            .arg(get_skills_dir().to_str().unwrap())
+            .arg("--output")
+            .arg(registry_file.to_str().unwrap());
         cmd.assert().success();
     }
 }
@@ -35,16 +35,16 @@ fn test_e2e_001_ecosystem_scan() {
     let registry_file = get_registry_file();
 
     cmd.arg("skills")
-       .arg("scan")
-       .arg(skills_dir.to_str().unwrap())
-       .arg("--output")
-       .arg(registry_file.to_str().unwrap());
+        .arg("scan")
+        .arg(skills_dir.to_str().unwrap())
+        .arg("--output")
+        .arg(registry_file.to_str().unwrap());
 
     cmd.assert()
-       .success()
-       .stdout(predicate::str::contains("\"status\": \"success\""))
-       .stdout(predicate::str::contains("\"count\""));
-    
+        .success()
+        .stdout(predicate::str::contains("\"status\": \"success\""))
+        .stdout(predicate::str::contains("\"count\""));
+
     assert!(registry_file.exists());
 }
 
@@ -55,14 +55,14 @@ fn test_e2e_002_chain_integrity() {
     let registry_file = get_registry_file();
 
     cmd.arg("chain")
-       .arg("validate")
-       .arg("strategy-engine")
-       .arg("--registry")
-       .arg(registry_file.to_str().unwrap());
+        .arg("validate")
+        .arg("strategy-engine")
+        .arg("--registry")
+        .arg(registry_file.to_str().unwrap());
 
     cmd.assert()
-       .success()
-       .stdout(predicate::str::contains("strategy-engine"));
+        .success()
+        .stdout(predicate::str::contains("strategy-engine"));
     // Note: Don't check for FULL CHAIN VALIDATED if we expect gaps in the real ecosystem
 }
 
@@ -73,14 +73,14 @@ fn test_e2e_003_logic_synthesis() {
     let registry_file = get_registry_file();
 
     cmd.arg("evolve")
-       .arg("is-prime")
-       .arg("--registry")
-       .arg(registry_file.to_str().unwrap());
+        .arg("is-prime")
+        .arg("--registry")
+        .arg(registry_file.to_str().unwrap());
 
     cmd.assert()
-       .success()
-       .stdout(predicate::str::contains("\"status\": \"evolved\""))
-       .stdout(predicate::str::contains("dynamic_intrinsics.rs"));
+        .success()
+        .stdout(predicate::str::contains("\"status\": \"evolved\""))
+        .stdout(predicate::str::contains("dynamic_intrinsics.rs"));
 }
 
 #[test]
@@ -91,23 +91,23 @@ fn test_e2e_004_deterministic_execution() {
     let inputs = r#"{"n": 17}"#;
 
     cmd.arg("skills")
-       .arg("execute")
-       .arg("is-prime")
-       .arg("--input")
-       .arg(inputs)
-       .arg("--registry")
-       .arg(registry_file.to_str().unwrap());
+        .arg("execute")
+        .arg("is-prime")
+        .arg("--input")
+        .arg(inputs)
+        .arg("--registry")
+        .arg(registry_file.to_str().unwrap());
 
     cmd.assert()
-       .success()
-       .stdout(predicate::str::contains("\"status\": \"success\""))
-       .stdout(predicate::str::contains("\"skill\": \"is-prime\""));
+        .success()
+        .stdout(predicate::str::contains("\"status\": \"success\""))
+        .stdout(predicate::str::contains("\"skill\": \"is-prime\""));
 }
 
 #[test]
 fn test_e2e_005_strategic_optimization() {
     let mut cmd = Command::cargo_bin("rsk").unwrap();
-    
+
     let strategy_data = r#"{        "fields": [
             {"id": "F1", "market_size": 1000.0, "growth_rate": 0.1, "capability_fit": 0.9, "competitive_intensity": 0.1}
         ],
@@ -115,26 +115,26 @@ fn test_e2e_005_strategic_optimization() {
             {"id": "T1", "differentiation": 0.9, "cost_advantage": 0.5, "execution_risk": 0.1}
         ]
     }"#;
-    
+
     let logic_path = "/home/matthew/.claude/skills/strategy-engine/logic.yaml";
     if !PathBuf::from(logic_path).exists() {
         return; // Skip if environment not set up
     }
     let logic_tree = fs::read_to_string(logic_path).expect("Failed to read strategy logic");
-    
+
     // In Rust we use the CLI to execute logic
     let test_tree = logic_tree.replace("start: validate_input", "start: exponential_optimization");
-    
+
     cmd.arg("yaml")
-       .arg("execute-logic")
-       .arg("--tree")
-       .arg(test_tree)
-       .arg("--input")
-       .arg(format!(r#"{{"strategy_data": {}}}"#, strategy_data));
+        .arg("execute-logic")
+        .arg("--tree")
+        .arg(test_tree)
+        .arg("--input")
+        .arg(format!(r#"{{"strategy_data": {}}}"#, strategy_data));
 
     cmd.assert()
-       .success()
-       .stdout(predicate::str::contains("\"status\": \"success\""))
-       .stdout(predicate::str::contains("llm_fallback"))
-       .stdout(predicate::str::contains("PHASE 1: WINNING ASPIRATION"));
+        .success()
+        .stdout(predicate::str::contains("\"status\": \"success\""))
+        .stdout(predicate::str::contains("llm_fallback"))
+        .stdout(predicate::str::contains("PHASE 1: WINNING ASPIRATION"));
 }

@@ -4,7 +4,12 @@ use std::collections::HashMap;
 use std::path::Path;
 
 /// (name, typed_inputs, typed_outputs, aliases) — used for alias-aware contract validation
-type TypedEntry = (String, HashMap<String, String>, HashMap<String, String>, HashMap<String, String>);
+type TypedEntry = (
+    String,
+    HashMap<String, String>,
+    HashMap<String, String>,
+    HashMap<String, String>,
+);
 
 /// A type compatibility violation between connected micrograms
 #[derive(Debug, Clone, Serialize)]
@@ -40,7 +45,12 @@ pub fn validate_contracts(dir: &Path) -> Result<ContractValidation, String> {
                 .as_ref()
                 .map(|iface| iface.aliases.clone())
                 .unwrap_or_default();
-            (mg.name.clone(), mg.typed_inputs(), mg.typed_outputs(), aliases)
+            (
+                mg.name.clone(),
+                mg.typed_inputs(),
+                mg.typed_outputs(),
+                aliases,
+            )
         })
         .collect();
 
@@ -64,9 +74,10 @@ pub fn validate_contracts(dir: &Path) -> Result<ContractValidation, String> {
                         return Some((out_field.clone(), out_field.clone()));
                     }
                     // B declares alias: output name → canonical input in B
-                    if let Some(canonical) = b_aliases.get(out_field.as_str()).filter(|c| {
-                        b_inputs.contains_key(c.as_str())
-                    }) {
+                    if let Some(canonical) = b_aliases
+                        .get(out_field.as_str())
+                        .filter(|c| b_inputs.contains_key(c.as_str()))
+                    {
                         return Some((out_field.clone(), canonical.clone()));
                     }
                     // A declares alias: alias of output matches B's input
@@ -86,9 +97,10 @@ pub fn validate_contracts(dir: &Path) -> Result<ContractValidation, String> {
             // Check type compatibility for each shared field pair
             for (a_field, b_field) in &shared {
                 let a_type = &a_outputs[a_field];
-                if let Some(b_type) = b_inputs.get(b_field).filter(|bt| {
-                    !types_compatible(a_type, bt)
-                }) {
+                if let Some(b_type) = b_inputs
+                    .get(b_field)
+                    .filter(|bt| !types_compatible(a_type, bt))
+                {
                     violations.push(ContractViolation {
                         from: a_name.clone(),
                         to: b_name.clone(),

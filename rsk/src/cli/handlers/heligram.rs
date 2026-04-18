@@ -80,7 +80,10 @@ pub fn handle_heligram(action: &HeligramAction) {
             };
 
             if heligrams.is_empty() {
-                println!("{}", json!({"status": "ok", "message": "No heligrams found", "total": 0}));
+                println!(
+                    "{}",
+                    json!({"status": "ok", "message": "No heligrams found", "total": 0})
+                );
                 return;
             }
 
@@ -155,7 +158,10 @@ pub fn handle_heligram(action: &HeligramAction) {
             let yaml_bytes = match std::fs::read(path) {
                 Ok(b) => b,
                 Err(e) => {
-                    eprintln!("{}", json!({"status": "error", "message": format!("Cannot read {path}: {e}")}));
+                    eprintln!(
+                        "{}",
+                        json!({"status": "error", "message": format!("Cannot read {path}: {e}")})
+                    );
                     std::process::exit(1);
                 }
             };
@@ -356,7 +362,11 @@ pub fn handle_heligram(action: &HeligramAction) {
                 }
             }
         }
-        HeligramAction::Chain { chain: chain_str, dir, input } => {
+        HeligramAction::Chain {
+            chain: chain_str,
+            dir,
+            input,
+        } => {
             let names: Vec<&str> = chain_str.split("->").map(|s| s.trim()).collect();
 
             let variables: HashMap<String, RskValue> = match serde_json::from_str(input) {
@@ -372,15 +382,19 @@ pub fn handle_heligram(action: &HeligramAction) {
 
             match chain(&names, Path::new(dir), variables) {
                 Ok(result) => {
-                    let step_summaries: Vec<_> = result.steps.iter().map(|s| {
-                        json!({
-                            "name": s.name,
-                            "agreement": s.agreement,
-                            "verdict": s.resolved_output.get("verdict"),
-                            "confidence": s.resolved_output.get("confidence"),
-                            "duration_us": s.duration_us,
+                    let step_summaries: Vec<_> = result
+                        .steps
+                        .iter()
+                        .map(|s| {
+                            json!({
+                                "name": s.name,
+                                "agreement": s.agreement,
+                                "verdict": s.resolved_output.get("verdict"),
+                                "confidence": s.resolved_output.get("confidence"),
+                                "duration_us": s.duration_us,
+                            })
                         })
-                    }).collect();
+                        .collect();
 
                     println!(
                         "{}",

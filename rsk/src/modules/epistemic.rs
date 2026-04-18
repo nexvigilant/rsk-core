@@ -77,9 +77,8 @@ static OVERCONFIDENT_PATTERNS: LazyLock<Vec<(String, Regex)>> = LazyLock::new(||
 });
 
 /// Citation pattern (looks for [citations] or explicit "source" mentions)
-static CITATION_PATTERN: LazyLock<Option<Regex>> = LazyLock::new(|| {
-    Regex::new(r"\[|\bsource\b|\bcitation\b|\breference\b|\baccording to\b").ok()
-});
+static CITATION_PATTERN: LazyLock<Option<Regex>> =
+    LazyLock::new(|| Regex::new(r"\[|\bsource\b|\bcitation\b|\breference\b|\baccording to\b").ok());
 
 /// Validate a claim for epistemic rigor.
 ///

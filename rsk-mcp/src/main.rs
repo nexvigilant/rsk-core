@@ -4,9 +4,9 @@
 //! and graph operations to AI agents via Model Context Protocol.
 
 use anyhow::Result;
-use rsk_mcp::RskMcpServer;
 use rmcp::ServiceExt;
 use rmcp::transport::stdio;
+use rsk_mcp::RskMcpServer;
 use tracing_subscriber::{self, EnvFilter};
 
 #[tokio::main]

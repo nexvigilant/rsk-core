@@ -51,7 +51,9 @@ pub struct McgChainParams {
     #[serde(default)]
     pub input: Option<serde_json::Value>,
     /// Accumulate all outputs across steps (default: false)
-    #[schemars(description = "If true, all upstream outputs are preserved; if false, only last step output passes forward")]
+    #[schemars(
+        description = "If true, all upstream outputs are preserved; if false, only last step output passes forward"
+    )]
     #[serde(default)]
     pub accumulate: bool,
 }
@@ -95,10 +97,14 @@ pub struct McgCoverageParams {
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct McgSearchParams {
     /// Search query — matched case-insensitively against microgram name and description
-    #[schemars(description = "Search term matched against name and description (case-insensitive)")]
+    #[schemars(
+        description = "Search term matched against name and description (case-insensitive)"
+    )]
     pub query: String,
     /// Optional directory override (defaults to ~/Projects/rsk-core/rsk/micrograms)
-    #[schemars(description = "Directory to search in (default: ~/Projects/rsk-core/rsk/micrograms)")]
+    #[schemars(
+        description = "Directory to search in (default: ~/Projects/rsk-core/rsk/micrograms)"
+    )]
     #[serde(default)]
     pub dir: Option<String>,
     /// Maximum results to return (default: 20)

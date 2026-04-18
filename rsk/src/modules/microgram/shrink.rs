@@ -1,13 +1,10 @@
-use crate::modules::decision_engine::Value;
 use super::Microgram;
 use super::compose::input_variables;
+use crate::modules::decision_engine::Value;
 use std::collections::HashMap;
 
 /// Try to find the minimal input that still produces the same output
-pub fn shrink(
-    mg: &Microgram,
-    input: &HashMap<String, Value>,
-) -> HashMap<String, Value> {
+pub fn shrink(mg: &Microgram, input: &HashMap<String, Value>) -> HashMap<String, Value> {
     let target_result = mg.run(input.clone());
     let target_output = target_result.output;
 
@@ -18,7 +15,11 @@ pub fn shrink(
     for var in &required_vars {
         if let Some(Value::Int(original)) = minimal.get(var).cloned() {
             // Binary search between 0 and original
-            let (mut lo, mut hi) = if original >= 0 { (0, original) } else { (original, 0) };
+            let (mut lo, mut hi) = if original >= 0 {
+                (0, original)
+            } else {
+                (original, 0)
+            };
 
             while lo < hi {
                 let mid = lo + (hi - lo) / 2;
@@ -28,10 +29,18 @@ pub fn shrink(
 
                 if result.output == target_output {
                     // Same output at mid — shrink toward 0
-                    if original >= 0 { hi = mid; } else { lo = mid + 1; }
+                    if original >= 0 {
+                        hi = mid;
+                    } else {
+                        lo = mid + 1;
+                    }
                 } else {
                     // Different output — the boundary is between mid and original
-                    if original >= 0 { lo = mid + 1; } else { hi = mid; }
+                    if original >= 0 {
+                        lo = mid + 1;
+                    } else {
+                        hi = mid;
+                    }
                 }
             }
 

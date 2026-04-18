@@ -1,4 +1,4 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use rsk::{calculate_variance, is_prime, sha256_hash};
 
 fn bench_math(c: &mut Criterion) {
@@ -8,9 +8,7 @@ fn bench_math(c: &mut Criterion) {
         b.iter(|| calculate_variance(black_box(85.0), black_box(100.0)))
     });
 
-    group.bench_function("is_prime_small", |b| {
-        b.iter(|| is_prime(black_box(97)))
-    });
+    group.bench_function("is_prime_small", |b| b.iter(|| is_prime(black_box(97))));
 
     group.bench_function("is_prime_large", |b| {
         b.iter(|| is_prime(black_box(7919))) // 1000th prime

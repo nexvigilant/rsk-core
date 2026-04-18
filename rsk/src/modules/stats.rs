@@ -397,7 +397,11 @@ pub fn chi_square_test(input: &ChiSquareInput) -> StatisticalResult {
         ci_upper: None,
         ci_level: 0.95,
         degrees_of_freedom: Some(dof),
-        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        #[allow(
+            clippy::as_conversions,
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss
+        )]
         sample_size: Some(n as usize), // f64→usize: total count from i64 cells, always non-negative
         assumptions,
         epistemic_level: level.as_str().to_string(),
@@ -481,10 +485,15 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
         assumptions.push(AssumptionCheck {
             name: "Sample size".to_string(),
             passed: n1 >= 10.0 && n2 >= 10.0,
-            #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            #[allow(
+                clippy::as_conversions,
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss
+            )]
             message: format!(
                 "n1={}, n2={}; small samples may violate normality assumption",
-                n1 as usize, n2 as usize // f64→usize: display only, values originated from .len()
+                n1 as usize,
+                n2 as usize // f64→usize: display only, values originated from .len()
             ),
             severity: if n1 < 10.0 || n2 < 10.0 {
                 "warning"
@@ -504,9 +513,7 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
         assumptions.push(AssumptionCheck {
             name: "Variance homogeneity".to_string(),
             passed: false,
-            message: format!(
-                "Variance ratio = {var_ratio:.1}; using Welch's correction"
-            ),
+            message: format!("Variance ratio = {var_ratio:.1}; using Welch's correction"),
             severity: "info".to_string(),
         });
     }
@@ -514,9 +521,7 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
     // Epistemic interpretation
     let (level, interp) = interpret_p_value(p);
     let effect_interp = interpret_effect_size(d, "cohens_d");
-    let full_interpretation = format!(
-        "{interp}. Effect size (Cohen's d={d:.3}): {effect_interp}."
-    );
+    let full_interpretation = format!("{interp}. Effect size (Cohen's d={d:.3}): {effect_interp}.");
 
     Ok(StatisticalResult {
         test_name: "Welch's independent samples t-test".to_string(),
@@ -527,7 +532,11 @@ pub fn t_test_independent(input: &TTestInput) -> Result<StatisticalResult, Strin
         ci_upper: Some(ci_upper),
         ci_level: 0.95,
         degrees_of_freedom: Some(dof),
-        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        #[allow(
+            clippy::as_conversions,
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss
+        )]
         sample_size: Some((n1 + n2) as usize), // f64→usize: sum of .len() values, always non-negative
         assumptions,
         epistemic_level: level.as_str().to_string(),
@@ -618,7 +627,11 @@ pub fn proportion_test(input: &ProportionInput) -> Result<StatisticalResult, Str
         ci_upper: Some(ci_upper),
         ci_level: 0.95,
         degrees_of_freedom: None,
-        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        #[allow(
+            clippy::as_conversions,
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss
+        )]
         sample_size: Some(n as usize), // f64→usize: originated from i64 count, always non-negative
         assumptions,
         epistemic_level: level.as_str().to_string(),
@@ -715,7 +728,11 @@ pub fn correlation_test(input: &CorrelationInput) -> Result<StatisticalResult, S
         assumptions.push(AssumptionCheck {
             name: "Sample size".to_string(),
             passed: n >= 10.0,
-            #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            #[allow(
+                clippy::as_conversions,
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss
+            )]
             message: format!(
                 "n={}; consider Spearman if data may be non-normal",
                 n as usize // f64→usize: display only, value originated from .len()
@@ -728,9 +745,7 @@ pub fn correlation_test(input: &CorrelationInput) -> Result<StatisticalResult, S
     let (level, p_interp) = interpret_p_value(p_value);
     let strength = interpret_effect_size(r, "correlation");
     let direction = if r > 0.0 { "positive" } else { "negative" };
-    let full_interpretation = format!(
-        "{strength} {direction} correlation (r={r:.3}). {p_interp}."
-    );
+    let full_interpretation = format!("{strength} {direction} correlation (r={r:.3}). {p_interp}.");
 
     Ok(StatisticalResult {
         test_name: "Pearson correlation".to_string(),
@@ -741,7 +756,11 @@ pub fn correlation_test(input: &CorrelationInput) -> Result<StatisticalResult, S
         ci_upper: Some(ci_upper),
         ci_level: 0.95,
         degrees_of_freedom: Some(dof),
-        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+        #[allow(
+            clippy::as_conversions,
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss
+        )]
         sample_size: Some(n as usize), // f64→usize: originated from .len(), always non-negative
         assumptions,
         epistemic_level: level.as_str().to_string(),

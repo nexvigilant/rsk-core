@@ -1,6 +1,6 @@
-use crate::modules::decision_engine::Value;
-use super::{Microgram, load_all};
 use super::chain::chain;
+use super::{Microgram, load_all};
+use crate::modules::decision_engine::Value;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::Path;
@@ -33,7 +33,9 @@ pub fn pipe(mg: &Microgram, inputs: &[HashMap<String, Value>]) -> PipeResult {
     for (i, input) in inputs.iter().enumerate() {
         let result = mg.run(input.clone());
         total_us += result.duration_us;
-        if result.success { succeeded += 1; }
+        if result.success {
+            succeeded += 1;
+        }
 
         results.push(PipeEntry {
             index: i,
@@ -64,7 +66,13 @@ pub fn pipe_chain(
     for name in names {
         match all.iter().find(|mg| mg.name == *name) {
             Some(mg) => ordered.push(mg.clone()),
-            None => return Err(format!("Microgram '{}' not found in {}", name, dir.display())),
+            None => {
+                return Err(format!(
+                    "Microgram '{}' not found in {}",
+                    name,
+                    dir.display()
+                ));
+            }
         }
     }
 
@@ -75,7 +83,9 @@ pub fn pipe_chain(
     for (i, input) in inputs.iter().enumerate() {
         let chain_result = chain(&ordered, input.clone(), false);
         total_us += chain_result.total_duration_us;
-        if chain_result.success { succeeded += 1; }
+        if chain_result.success {
+            succeeded += 1;
+        }
 
         results.push(PipeEntry {
             index: i,
@@ -100,21 +110,35 @@ pub fn pipe_chain(
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Filter pipe results by a field condition
-pub fn filter_results(results: &PipeResult, field: &str, op: &str, threshold: &Value) -> PipeResult {
-    let filtered: Vec<PipeEntry> = results.results.iter().filter(|entry| {
-        match entry.output.get(field) {
+pub fn filter_results(
+    results: &PipeResult,
+    field: &str,
+    op: &str,
+    threshold: &Value,
+) -> PipeResult {
+    let filtered: Vec<PipeEntry> = results
+        .results
+        .iter()
+        .filter(|entry| match entry.output.get(field) {
             Some(val) => match op {
                 "eq" => val == threshold,
                 "neq" => val != threshold,
                 "gt" => cmp_values(val, threshold) == Some(std::cmp::Ordering::Greater),
-                "gte" => matches!(cmp_values(val, threshold), Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal)),
+                "gte" => matches!(
+                    cmp_values(val, threshold),
+                    Some(std::cmp::Ordering::Greater | std::cmp::Ordering::Equal)
+                ),
                 "lt" => cmp_values(val, threshold) == Some(std::cmp::Ordering::Less),
-                "lte" => matches!(cmp_values(val, threshold), Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)),
+                "lte" => matches!(
+                    cmp_values(val, threshold),
+                    Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+                ),
                 _ => false,
-            }
+            },
             None => false,
-        }
-    }).cloned().collect();
+        })
+        .cloned()
+        .collect();
 
     let succeeded = filtered.iter().filter(|e| e.success).count();
     let total_us = filtered.iter().map(|e| e.duration_us).sum();
@@ -130,16 +154,20 @@ pub fn filter_results(results: &PipeResult, field: &str, op: &str, threshold: &V
 
 /// Extract a single field from all pipe results
 pub fn map_field(results: &PipeResult, field: &str) -> Vec<Option<Value>> {
-    results.results.iter().map(|entry| {
-        entry.output.get(field).cloned()
-    }).collect()
+    results
+        .results
+        .iter()
+        .map(|entry| entry.output.get(field).cloned())
+        .collect()
 }
 
 /// Count occurrences of each unique value for a field
 pub fn reduce_count(results: &PipeResult, field: &str) -> HashMap<String, usize> {
     let mut counts = HashMap::new();
     for entry in &results.results {
-        let key = entry.output.get(field)
+        let key = entry
+            .output
+            .get(field)
             .map(|v| format!("{v:?}"))
             .unwrap_or_else(|| "null".to_string());
         *counts.entry(key).or_insert(0) += 1;

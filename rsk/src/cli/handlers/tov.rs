@@ -76,7 +76,10 @@ pub fn handle_tov(action: &TovAction) {
             match probabilities {
                 Ok(probs) => {
                     let result = analyze_attenuation(&probs);
-                    println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&result).unwrap_or_default()
+                    );
                 }
                 Err(e) => {
                     eprintln!("Error parsing probabilities: {e}");
@@ -192,7 +195,10 @@ pub fn handle_tov(action: &TovAction) {
                     })
                 })
                 .collect();
-            println!("{}", serde_json::to_string_pretty(&output).unwrap_or_default());
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&output).unwrap_or_default()
+            );
         }
         TovAction::ConservationLaws => {
             let laws = [
@@ -218,7 +224,10 @@ pub fn handle_tov(action: &TovAction) {
                     })
                 })
                 .collect();
-            println!("{}", serde_json::to_string_pretty(&output).unwrap_or_default());
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&output).unwrap_or_default()
+            );
         }
     }
 }

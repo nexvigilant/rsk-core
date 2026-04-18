@@ -8,10 +8,12 @@ Sub-microsecond deterministic decision programs with built-in self-testing, chai
 
 | Metric | Count |
 |--------|-------|
-| Micrograms | 1,368 |
-| Heligrams | 165 |
-| Chains | 44 |
-| Self-tests | 9,934 |
+| Micrograms | 1,587 |
+| Heligrams | 673 |
+| Chains | 200 |
+| Self-tests | 11,117 |
+
+*Last measured: 2026-04-16. Run `./target/release/rsk mcg count` to re-measure.*
 
 ## Quick Start
 
@@ -75,7 +77,7 @@ Rust 1.85+ (Edition 2024). Strict clippy: `unwrap_used`, `expect_used`, `as_conv
 
 NexVigilant Source Available License v1.0. Copyright (c) 2026 Matthew Campion / NexVigilant.
 
-Personal non-commercial use only. Organizational use requires written permission from matthew@nexvigilant.com. See [LICENSE](LICENSE) for full terms.
+Personal non-commercial use only. Organizational use requires written permission from matthew@camp-corp.com. See [LICENSE](LICENSE) for full terms.
 
 ## Contributing
 

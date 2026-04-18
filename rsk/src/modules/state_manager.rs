@@ -363,8 +363,8 @@ impl CheckpointManager {
         if let Some(path) = self.id_map.get(id)
             && path.exists()
         {
-            let content = std::fs::read_to_string(path)
-                .map_err(|e| StateError::IoError(e.to_string()))?;
+            let content =
+                std::fs::read_to_string(path).map_err(|e| StateError::IoError(e.to_string()))?;
 
             let context: ExecutionContext = serde_json::from_str(&content)
                 .map_err(|e| StateError::DeserializeError(e.to_string()))?;

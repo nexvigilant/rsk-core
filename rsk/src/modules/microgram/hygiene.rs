@@ -198,7 +198,13 @@ pub fn check_chain_hygiene_by_names(
     for name in names {
         match all.iter().find(|mg| mg.name == *name) {
             Some(mg) => ordered.push(mg.clone()),
-            None => return Err(format!("Microgram '{}' not found in {}", name, dir.display())),
+            None => {
+                return Err(format!(
+                    "Microgram '{}' not found in {}",
+                    name,
+                    dir.display()
+                ));
+            }
         }
     }
 

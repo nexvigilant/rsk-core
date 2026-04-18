@@ -1,6 +1,6 @@
-use crate::modules::decision_engine::Value;
-use super::{Microgram, load_all};
 use super::compose::input_variables;
+use super::{Microgram, load_all};
+use crate::modules::decision_engine::Value;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -29,9 +29,12 @@ pub fn stress(mg: &Microgram, iterations: usize, seed: u64) -> StressResult {
     // Simple LCG PRNG — no external dependency needed
     let mut rng_state = seed;
     let mut next_rand = || -> i64 {
-        rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        rng_state = rng_state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         // Map to range [-1000, 1000]
-        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u64→i64 intentional for PRNG range mapping
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+        // u64→i64 intentional for PRNG range mapping
         let val = (rng_state >> 33) as i64;
         val % 2001 - 1000
     };
@@ -58,7 +61,9 @@ pub fn stress(mg: &Microgram, iterations: usize, seed: u64) -> StressResult {
     timings.sort();
     let min_us = *timings.first().unwrap_or(&0);
     let max_us = *timings.last().unwrap_or(&0);
-    let avg_us = if timings.is_empty() { 0.0 } else {
+    let avg_us = if timings.is_empty() {
+        0.0
+    } else {
         #[allow(clippy::as_conversions)] // u64→f64 and usize→f64 for averaging
         let avg = timings.iter().sum::<u64>() as f64 / timings.len() as f64;
         avg
@@ -94,7 +99,9 @@ pub fn stress_typed(mg: &Microgram, iterations: usize, seed: u64) -> StressResul
 
     let mut rng_state = seed;
     let mut next_u64 = || -> u64 {
-        rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        rng_state = rng_state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         rng_state >> 33
     };
 
@@ -161,7 +168,9 @@ pub fn stress_typed(mg: &Microgram, iterations: usize, seed: u64) -> StressResul
     timings.sort();
     let min_us = *timings.first().unwrap_or(&0);
     let max_us = *timings.last().unwrap_or(&0);
-    let avg_us = if timings.is_empty() { 0.0 } else {
+    let avg_us = if timings.is_empty() {
+        0.0
+    } else {
         #[allow(clippy::as_conversions)]
         let avg = timings.iter().sum::<u64>() as f64 / timings.len() as f64;
         avg
@@ -212,7 +221,9 @@ pub fn stress_validated(mg: &Microgram, iterations: usize, seed: u64) -> Validat
 
     let mut rng_state = seed;
     let mut next_u64 = || -> u64 {
-        rng_state = rng_state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        rng_state = rng_state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
         rng_state >> 33
     };
 
@@ -274,7 +285,9 @@ pub fn stress_validated(mg: &Microgram, iterations: usize, seed: u64) -> Validat
     timings.sort();
     let min_us = *timings.first().unwrap_or(&0);
     let max_us = *timings.last().unwrap_or(&0);
-    let avg_us = if timings.is_empty() { 0.0 } else {
+    let avg_us = if timings.is_empty() {
+        0.0
+    } else {
         #[allow(clippy::as_conversions)]
         let avg = timings.iter().sum::<u64>() as f64 / timings.len() as f64;
         avg
@@ -297,13 +310,21 @@ pub fn stress_validated(mg: &Microgram, iterations: usize, seed: u64) -> Validat
 }
 
 /// Stress all micrograms in a directory with type-aware inputs
-pub fn stress_all_typed(dir: &Path, iterations: usize, seed: u64) -> Result<Vec<StressResult>, String> {
+pub fn stress_all_typed(
+    dir: &Path,
+    iterations: usize,
+    seed: u64,
+) -> Result<Vec<StressResult>, String> {
     let all = load_all(dir)?;
-    Ok(all.iter().enumerate().map(|(i, mg)| {
-        #[allow(clippy::as_conversions)]
-        let offset = i as u64;
-        stress_typed(mg, iterations, seed.wrapping_add(offset))
-    }).collect())
+    Ok(all
+        .iter()
+        .enumerate()
+        .map(|(i, mg)| {
+            #[allow(clippy::as_conversions)]
+            let offset = i as u64;
+            stress_typed(mg, iterations, seed.wrapping_add(offset))
+        })
+        .collect())
 }
 
 /// A performance baseline entry for one microgram
@@ -342,8 +363,8 @@ pub fn save_baseline(results: &[StressResult], path: &Path) -> Result<(), String
             iterations: r.iterations,
         })
         .collect();
-    let json = serde_json::to_string_pretty(&entries)
-        .map_err(|e| format!("Serialize baseline: {e}"))?;
+    let json =
+        serde_json::to_string_pretty(&entries).map_err(|e| format!("Serialize baseline: {e}"))?;
     std::fs::write(path, json).map_err(|e| format!("Write baseline {}: {e}", path.display()))
 }
 
@@ -389,9 +410,13 @@ pub fn check_regression(
 /// Stress all micrograms in a directory
 pub fn stress_all(dir: &Path, iterations: usize, seed: u64) -> Result<Vec<StressResult>, String> {
     let all = load_all(dir)?;
-    Ok(all.iter().enumerate().map(|(i, mg)| {
-        #[allow(clippy::as_conversions)] // usize→u64 widening, safe on 64-bit
-        let offset = i as u64;
-        stress(mg, iterations, seed.wrapping_add(offset))
-    }).collect())
+    Ok(all
+        .iter()
+        .enumerate()
+        .map(|(i, mg)| {
+            #[allow(clippy::as_conversions)] // usize→u64 widening, safe on 64-bit
+            let offset = i as u64;
+            stress(mg, iterations, seed.wrapping_add(offset))
+        })
+        .collect())
 }

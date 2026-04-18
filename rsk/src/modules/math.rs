@@ -79,7 +79,8 @@ pub fn is_prime(n: i64) -> PrimeResult {
         };
     }
 
-    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // i64→f64 precision loss acceptable for sqrt bound; f64→i64 truncation intentional
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+    // i64→f64 precision loss acceptable for sqrt bound; f64→i64 truncation intentional
     let limit = (n as f64).sqrt() as i64;
     for i in (3..=limit).step_by(2) {
         if n % i == 0 {

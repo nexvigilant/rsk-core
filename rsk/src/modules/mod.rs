@@ -1,6 +1,5 @@
 pub mod anti_pattern;
 pub mod builder;
-pub mod chain;
 pub mod code_generator;
 pub mod compression;
 pub mod crypto;

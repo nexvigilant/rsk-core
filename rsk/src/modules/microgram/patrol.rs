@@ -39,8 +39,12 @@ fn strip_test_blocks(content: &str) -> String {
 
         if in_test_block {
             for ch in trimmed.chars() {
-                if ch == '{' { depth += 1; }
-                if ch == '}' { depth = depth.saturating_sub(1); }
+                if ch == '{' {
+                    depth += 1;
+                }
+                if ch == '}' {
+                    depth = depth.saturating_sub(1);
+                }
             }
             if depth == 0 && trimmed.contains('}') {
                 in_test_block = false;
@@ -125,15 +129,15 @@ fn extract_pub_functions(source: &str) -> Vec<String> {
         let trimmed = line.trim();
         if let Some(rest) = trimmed.strip_prefix("pub fn ") {
             // Skip methods — they have self as first param
-            if trimmed.contains("&self") || trimmed.contains("&mut self")
+            if trimmed.contains("&self")
+                || trimmed.contains("&mut self")
                 || trimmed.contains("(self")
             {
                 continue;
             }
             // Extract function name: "pub fn foo(" → "foo"
             // skip "pub fn "
-            let end = rest.find(['(', '<', ' '])
-                .unwrap_or(rest.len());
+            let end = rest.find(['(', '<', ' ']).unwrap_or(rest.len());
             let name = &rest[..end];
             if !name.is_empty() {
                 fns.push(name.to_string());
@@ -145,7 +149,8 @@ fn extract_pub_functions(source: &str) -> Vec<String> {
 
 /// Count occurrences of a symbol in a file's content (word-boundary aware)
 fn count_references(content: &str, symbol: &str) -> usize {
-    content.match_indices(symbol)
+    content
+        .match_indices(symbol)
         .filter(|(pos, _)| {
             // Check word boundary before
             let before_ok = *pos == 0 || {
@@ -178,10 +183,12 @@ pub fn run_patrol(module_dir: &Path, cli_dir: &Path) -> Result<PatrolReport, Str
     let config: PatrolConfig = if config_path.exists() {
         let content = std::fs::read_to_string(&config_path)
             .map_err(|e| format!("Cannot read patrol.yaml: {e}"))?;
-        serde_yaml::from_str(&content)
-            .map_err(|e| format!("Parse error in patrol.yaml: {e}"))?
+        serde_yaml::from_str(&content).map_err(|e| format!("Parse error in patrol.yaml: {e}"))?
     } else {
-        PatrolConfig { features: vec![], library: vec![] }
+        PatrolConfig {
+            features: vec![],
+            library: vec![],
+        }
     };
 
     let features: HashSet<String> = config.features.into_iter().collect();
@@ -206,9 +213,10 @@ pub fn run_patrol(module_dir: &Path, cli_dir: &Path) -> Result<PatrolReport, Str
     // Uses word-boundary matching (not substring contains) to avoid false positives
     // where short names like "run" match inside "run_patrol"
     let mod_rs = module_dir.join("mod.rs");
-    let mod_content = std::fs::read_to_string(&mod_rs)
-        .map_err(|e| format!("Cannot read mod.rs: {e}"))?;
-    let reexported: HashSet<String> = all_pub_fns.iter()
+    let mod_content =
+        std::fs::read_to_string(&mod_rs).map_err(|e| format!("Cannot read mod.rs: {e}"))?;
+    let reexported: HashSet<String> = all_pub_fns
+        .iter()
         .filter(|name| count_references(&mod_content, name) > 0)
         .cloned()
         .collect();
@@ -358,8 +366,8 @@ pub fn run_patrol(module_dir: &Path, cli_dir: &Path) -> Result<PatrolReport, Str
 /// A subdirectory would be invisible to `collect_rs_files`, causing silent
 /// false negatives in the patrol report. This converts that into a loud error.
 fn guard_flat_module(dir: &Path) -> Result<(), String> {
-    let entries = std::fs::read_dir(dir)
-        .map_err(|e| format!("Cannot read dir {}: {e}", dir.display()))?;
+    let entries =
+        std::fs::read_dir(dir).map_err(|e| format!("Cannot read dir {}: {e}", dir.display()))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| format!("Dir entry error: {e}"))?;
@@ -367,9 +375,10 @@ fn guard_flat_module(dir: &Path) -> Result<(), String> {
         if path.is_dir() {
             // Check if the subdirectory contains any .rs files
             let has_rs = std::fs::read_dir(&path)
-                .map(|rd| rd.flatten().any(|e| {
-                    e.path().extension().is_some_and(|ext| ext == "rs")
-                }))
+                .map(|rd| {
+                    rd.flatten()
+                        .any(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
+                })
                 .unwrap_or(false);
             if has_rs {
                 return Err(format!(
@@ -385,8 +394,8 @@ fn guard_flat_module(dir: &Path) -> Result<(), String> {
 
 /// Collect all .rs files in a directory (non-recursive).
 fn collect_rs_files(dir: &Path) -> Result<Vec<std::path::PathBuf>, String> {
-    let entries = std::fs::read_dir(dir)
-        .map_err(|e| format!("Cannot read dir {}: {e}", dir.display()))?;
+    let entries =
+        std::fs::read_dir(dir).map_err(|e| format!("Cannot read dir {}: {e}", dir.display()))?;
 
     let mut files = Vec::new();
     for entry in entries {

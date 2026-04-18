@@ -62,7 +62,11 @@ Chain mode: step₁.output merges into step₂.input (accumulate: true preserves
 
 ## Ecosystem Scale
 
-464 micrograms, 5,146 self-tests, 0 failures (measured 2026-03-26). 23 chains. Subdirectories: `pdc/`, `flywheel/`, `dev/`, root.
+1,587 micrograms · 673 heligrams · 200 chains · 11,117 self-tests (measured 2026-04-16).
+Source of truth: `./target/release/rsk mcg count`. Subdirectories: `pdc/`, `flywheel/`, `dev/`, root.
+
+Note: `pain-reflection-progress.yaml` currently fails to parse and is excluded from the
+fleet count — surfaced by `mcg count`'s `parse_errors` field.
 
 Key microgram families:
 - **PV signal**: `prr-signal`, `naranjo-quick`, `case-seriousness`, `causality-to-action`

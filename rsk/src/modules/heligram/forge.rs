@@ -19,7 +19,7 @@
 
 use crate::modules::decision_engine::{DecisionNode, DecisionTree, Operator, Value};
 use crate::modules::heligram::{
-    Heligram, HelixInterface, HelixParams, HeligramTest, Resolution, ResolutionRule, Strand,
+    Heligram, HeligramTest, HelixInterface, HelixParams, Resolution, ResolutionRule, Strand,
 };
 use crate::modules::microgram::{Microgram, MicrogramInterface, PrimitiveSignature};
 use std::collections::HashMap;
@@ -132,7 +132,11 @@ fn classify_domain(mg: &Microgram) -> Domain {
             "→" if has_any(&vars, &["naranjo", "causality", "who_umc"]) => {
                 return Domain::CausalityAssessment;
             }
-            "σ" if has_any(&vars, &["seriousness", "serious", "death", "hospitalization"]) => {
+            "σ" if has_any(
+                &vars,
+                &["seriousness", "serious", "death", "hospitalization"],
+            ) =>
+            {
                 return Domain::SeriousnessClassification;
             }
             "ς" if has_any(&vars, &["health", "velocity", "momentum", "elastic"]) => {
@@ -145,9 +149,15 @@ fn classify_domain(mg: &Microgram) -> Domain {
     // Fallback: variable name heuristics
     if has_any(&vars, &["prr", "ror", "ic025", "chi_sq"]) {
         Domain::SignalDetection
-    } else if has_any(&vars, &["naranjo_score", "causality", "dechallenge", "rechallenge"]) {
+    } else if has_any(
+        &vars,
+        &["naranjo_score", "causality", "dechallenge", "rechallenge"],
+    ) {
         Domain::CausalityAssessment
-    } else if has_any(&vars, &["seriousness", "death", "hospitalization", "disability"]) {
+    } else if has_any(
+        &vars,
+        &["seriousness", "death", "hospitalization", "disability"],
+    ) {
         Domain::SeriousnessClassification
     } else if has_any(&vars, &["workflow", "route", "action", "case_type"]) {
         Domain::WorkflowRouting
@@ -310,14 +320,16 @@ fn build_confounder_tree(
             candidate.to_string()
         } else {
             // Domain candidate not in outputs — fall back to heuristic
-            sense_bool_fields.first()
+            sense_bool_fields
+                .first()
                 .or(sense_output_fields.first())
                 .cloned()
                 .unwrap_or_else(|| "result".to_string())
         }
     } else {
         // Causality/Generic: prefer bool fields, else first field
-        sense_bool_fields.first()
+        sense_bool_fields
+            .first()
             .or(sense_output_fields.first())
             .cloned()
             .unwrap_or_else(|| "result".to_string())
@@ -343,8 +355,8 @@ fn build_confounder_tree(
                 variable: conf.variable.clone(),
                 operator: Operator::IsNull,
                 value: None,
-                true_next: next_confounder.clone(),  // null → skip
-                false_next: check_name.clone(),      // non-null → check
+                true_next: next_confounder.clone(), // null → skip
+                false_next: check_name.clone(),     // non-null → check
             },
         );
 
@@ -408,7 +420,9 @@ fn build_confidence_resolution(
         0.9
     };
 
-    let (sense_key, _) = base_pairs.iter().next()
+    let (sense_key, _) = base_pairs
+        .iter()
+        .next()
         .map(|(k, v)| (k.clone(), v.clone()))
         .unwrap_or_else(|| ("result".to_string(), "falsified".to_string()));
 
@@ -429,20 +443,37 @@ fn build_confidence_resolution(
         when_confirmed.insert(sense_key.clone(), Value::Bool(true));
         when_confirmed.insert("falsified".to_string(), Value::Bool(false));
         let mut emit_confirmed = HashMap::new();
-        emit_confirmed.insert("verdict".to_string(), Value::String("confirmed".to_string()));
+        emit_confirmed.insert(
+            "verdict".to_string(),
+            Value::String("confirmed".to_string()),
+        );
         emit_confirmed.insert("confidence".to_string(), Value::String("high".to_string()));
         emit_confirmed.insert("confidence_score".to_string(), Value::Float(max_confidence));
-        rules.push(ResolutionRule { when: Some(when_confirmed), default: None, emit: Some(emit_confirmed) });
+        rules.push(ResolutionRule {
+            when: Some(when_confirmed),
+            default: None,
+            emit: Some(emit_confirmed),
+        });
 
         // Q2: Sense true, falsified → contested
         let mut when_contested = HashMap::new();
         when_contested.insert(sense_key.clone(), Value::Bool(true));
         when_contested.insert("falsified".to_string(), Value::Bool(true));
         let mut emit_contested = HashMap::new();
-        emit_contested.insert("verdict".to_string(), Value::String("contested".to_string()));
+        emit_contested.insert(
+            "verdict".to_string(),
+            Value::String("contested".to_string()),
+        );
         emit_contested.insert("confidence".to_string(), Value::String("low".to_string()));
-        emit_contested.insert("confidence_score".to_string(), Value::Float(max_confidence * 0.4));
-        rules.push(ResolutionRule { when: Some(when_contested), default: None, emit: Some(emit_contested) });
+        emit_contested.insert(
+            "confidence_score".to_string(),
+            Value::Float(max_confidence * 0.4),
+        );
+        rules.push(ResolutionRule {
+            when: Some(when_contested),
+            default: None,
+            emit: Some(emit_contested),
+        });
 
         // Q3: Sense false, not falsified → absent
         let mut when_absent = HashMap::new();
@@ -452,7 +483,11 @@ fn build_confidence_resolution(
         emit_absent.insert("verdict".to_string(), Value::String("absent".to_string()));
         emit_absent.insert("confidence".to_string(), Value::String("high".to_string()));
         emit_absent.insert("confidence_score".to_string(), Value::Float(max_confidence));
-        rules.push(ResolutionRule { when: Some(when_absent), default: None, emit: Some(emit_absent) });
+        rules.push(ResolutionRule {
+            when: Some(when_absent),
+            default: None,
+            emit: Some(emit_absent),
+        });
 
         // Q3b: Sense false, falsified → refuted (sense didn't detect, but confounder active)
         let mut when_refuted = HashMap::new();
@@ -460,9 +495,19 @@ fn build_confidence_resolution(
         when_refuted.insert("falsified".to_string(), Value::Bool(true));
         let mut emit_refuted = HashMap::new();
         emit_refuted.insert("verdict".to_string(), Value::String("refuted".to_string()));
-        emit_refuted.insert("confidence".to_string(), Value::String("medium".to_string()));
-        emit_refuted.insert("confidence_score".to_string(), Value::Float(max_confidence * 0.6));
-        rules.push(ResolutionRule { when: Some(when_refuted), default: None, emit: Some(emit_refuted) });
+        emit_refuted.insert(
+            "confidence".to_string(),
+            Value::String("medium".to_string()),
+        );
+        emit_refuted.insert(
+            "confidence_score".to_string(),
+            Value::Float(max_confidence * 0.6),
+        );
+        rules.push(ResolutionRule {
+            when: Some(when_refuted),
+            default: None,
+            emit: Some(emit_refuted),
+        });
     } else {
         // String/non-boolean sense: match on `falsified` alone.
         // Sense strand always produces output for valid input → presence = positive.
@@ -470,25 +515,48 @@ fn build_confidence_resolution(
         let mut when_confirmed = HashMap::new();
         when_confirmed.insert("falsified".to_string(), Value::Bool(false));
         let mut emit_confirmed = HashMap::new();
-        emit_confirmed.insert("verdict".to_string(), Value::String("confirmed".to_string()));
+        emit_confirmed.insert(
+            "verdict".to_string(),
+            Value::String("confirmed".to_string()),
+        );
         emit_confirmed.insert("confidence".to_string(), Value::String("high".to_string()));
         emit_confirmed.insert("confidence_score".to_string(), Value::Float(max_confidence));
-        rules.push(ResolutionRule { when: Some(when_confirmed), default: None, emit: Some(emit_confirmed) });
+        rules.push(ResolutionRule {
+            when: Some(when_confirmed),
+            default: None,
+            emit: Some(emit_confirmed),
+        });
 
         // Q2: Falsified → contested
         let mut when_contested = HashMap::new();
         when_contested.insert("falsified".to_string(), Value::Bool(true));
         let mut emit_contested = HashMap::new();
-        emit_contested.insert("verdict".to_string(), Value::String("contested".to_string()));
+        emit_contested.insert(
+            "verdict".to_string(),
+            Value::String("contested".to_string()),
+        );
         emit_contested.insert("confidence".to_string(), Value::String("low".to_string()));
-        emit_contested.insert("confidence_score".to_string(), Value::Float(max_confidence * 0.4));
-        rules.push(ResolutionRule { when: Some(when_contested), default: None, emit: Some(emit_contested) });
+        emit_contested.insert(
+            "confidence_score".to_string(),
+            Value::Float(max_confidence * 0.4),
+        );
+        rules.push(ResolutionRule {
+            when: Some(when_contested),
+            default: None,
+            emit: Some(emit_contested),
+        });
     }
 
     // Q4: Default fallback
     let mut default_output = HashMap::new();
-    default_output.insert("verdict".to_string(), Value::String("indeterminate".to_string()));
-    default_output.insert("confidence".to_string(), Value::String("medium".to_string()));
+    default_output.insert(
+        "verdict".to_string(),
+        Value::String("indeterminate".to_string()),
+    );
+    default_output.insert(
+        "confidence".to_string(),
+        Value::String("medium".to_string()),
+    );
     default_output.insert("confidence_score".to_string(), Value::Float(0.5));
     rules.push(ResolutionRule {
         when: None,
@@ -524,11 +592,7 @@ fn generate_quadrant_tests(
     let positive_input: HashMap<String, Value> = mg
         .tests
         .iter()
-        .find(|t| {
-            t.expect
-                .values()
-                .any(|v| matches!(v, Value::Bool(true)))
-        })
+        .find(|t| t.expect.values().any(|v| matches!(v, Value::Bool(true))))
         .or(mg.tests.last())
         .map(|t| t.input.clone())
         .unwrap_or_default();
@@ -565,11 +629,17 @@ fn generate_quadrant_tests(
             if sense_vars.contains(&conf.variable) {
                 q1_input.insert(conf.variable.clone(), Value::Null);
             } else {
-                q1_input.insert(conf.variable.clone(), safe_non_triggering_value(&conf.operator, &conf.threshold));
+                q1_input.insert(
+                    conf.variable.clone(),
+                    safe_non_triggering_value(&conf.operator, &conf.threshold),
+                );
             }
         }
         let mut q1_expect = HashMap::new();
-        q1_expect.insert("verdict".to_string(), Value::String(null_verdict.to_string()));
+        q1_expect.insert(
+            "verdict".to_string(),
+            Value::String(null_verdict.to_string()),
+        );
         q1_expect.insert("confidence".to_string(), Value::String("high".to_string()));
         tests.push(HeligramTest {
             name: Some(format!("Q1: {null_verdict} — null sense, no confounders")),
@@ -585,19 +655,31 @@ fn generate_quadrant_tests(
             let q2_input = positive_input.clone();
             let mut q2_expect = HashMap::new();
             if sense_is_bool && matches!(first_op, Operator::Eq | Operator::Neq) {
-                q2_expect.insert("verdict".to_string(), Value::String("contested".to_string()));
+                q2_expect.insert(
+                    "verdict".to_string(),
+                    Value::String("contested".to_string()),
+                );
                 q2_expect.insert("confidence".to_string(), Value::String("low".to_string()));
                 tests.push(HeligramTest {
-                    name: Some(format!("Q2: contested — positive sense, {} active", first_conf.name)),
+                    name: Some(format!(
+                        "Q2: contested — positive sense, {} active",
+                        first_conf.name
+                    )),
                     input: q2_input,
                     expect: q2_expect,
                 });
             } else {
                 // Non-boolean or mutually exclusive: confounder can't fire when sense is positive
-                q2_expect.insert("verdict".to_string(), Value::String("confirmed".to_string()));
+                q2_expect.insert(
+                    "verdict".to_string(),
+                    Value::String("confirmed".to_string()),
+                );
                 q2_expect.insert("confidence".to_string(), Value::String("high".to_string()));
                 tests.push(HeligramTest {
-                    name: Some(format!("Q2: confirmed — positive sense, {} inactive", first_conf.name)),
+                    name: Some(format!(
+                        "Q2: confirmed — positive sense, {} inactive",
+                        first_conf.name
+                    )),
                     input: q2_input,
                     expect: q2_expect,
                 });
@@ -608,10 +690,16 @@ fn generate_quadrant_tests(
         // can independently control sense and antisense outcomes.
         let mut q1_input = positive_input.clone();
         for conf in confounders {
-            q1_input.insert(conf.variable.clone(), safe_non_triggering_value(&conf.operator, &conf.threshold));
+            q1_input.insert(
+                conf.variable.clone(),
+                safe_non_triggering_value(&conf.operator, &conf.threshold),
+            );
         }
         let mut q1_expect = HashMap::new();
-        q1_expect.insert("verdict".to_string(), Value::String("confirmed".to_string()));
+        q1_expect.insert(
+            "verdict".to_string(),
+            Value::String("confirmed".to_string()),
+        );
         q1_expect.insert("confidence".to_string(), Value::String("high".to_string()));
         tests.push(HeligramTest {
             name: Some("Q1: confirmed — positive sense, no confounders".to_string()),
@@ -621,12 +709,21 @@ fn generate_quadrant_tests(
 
         if let Some(first_conf) = confounders.first() {
             let mut q2_input = positive_input.clone();
-            q2_input.insert(first_conf.variable.clone(), triggering_value(&first_conf.operator, &first_conf.threshold));
+            q2_input.insert(
+                first_conf.variable.clone(),
+                triggering_value(&first_conf.operator, &first_conf.threshold),
+            );
             let mut q2_expect = HashMap::new();
-            q2_expect.insert("verdict".to_string(), Value::String("contested".to_string()));
+            q2_expect.insert(
+                "verdict".to_string(),
+                Value::String("contested".to_string()),
+            );
             q2_expect.insert("confidence".to_string(), Value::String("low".to_string()));
             tests.push(HeligramTest {
-                name: Some(format!("Q2: contested — positive sense, {} active", first_conf.name)),
+                name: Some(format!(
+                    "Q2: contested — positive sense, {} active",
+                    first_conf.name
+                )),
                 input: q2_input,
                 expect: q2_expect,
             });
@@ -689,26 +786,38 @@ fn build_forge_interface(
     // Add confounder variables as optional inputs
     for conf in confounders {
         if !major_inputs.contains_key(&conf.variable) {
-            major_inputs.insert(conf.variable.clone(), InterfaceField {
-                field_type: type_name_for_value(&conf.threshold),
-                required: false,
-            });
+            major_inputs.insert(
+                conf.variable.clone(),
+                InterfaceField {
+                    field_type: type_name_for_value(&conf.threshold),
+                    required: false,
+                },
+            );
         }
     }
 
     // Add forged outputs
-    major_outputs.insert("verdict".to_string(), InterfaceField {
-        field_type: "string".to_string(),
-        required: false,
-    });
-    major_outputs.insert("confidence".to_string(), InterfaceField {
-        field_type: "string".to_string(),
-        required: false,
-    });
-    major_outputs.insert("confidence_score".to_string(), InterfaceField {
-        field_type: "float".to_string(),
-        required: false,
-    });
+    major_outputs.insert(
+        "verdict".to_string(),
+        InterfaceField {
+            field_type: "string".to_string(),
+            required: false,
+        },
+    );
+    major_outputs.insert(
+        "confidence".to_string(),
+        InterfaceField {
+            field_type: "string".to_string(),
+            required: false,
+        },
+    );
+    major_outputs.insert(
+        "confidence_score".to_string(),
+        InterfaceField {
+            field_type: "float".to_string(),
+            required: false,
+        },
+    );
 
     HelixInterface {
         major_groove: Some(MicrogramInterface {
@@ -779,7 +888,10 @@ fn collect_variables(tree: &DecisionTree) -> Vec<String> {
 fn collect_bool_output_fields(tree: &DecisionTree) -> Vec<String> {
     let mut fields = Vec::new();
     for node in tree.nodes.values() {
-        if let DecisionNode::Return { value: Value::Object(map) } = node {
+        if let DecisionNode::Return {
+            value: Value::Object(map),
+        } = node
+        {
             for (key, val) in map {
                 if matches!(val, Value::Bool(_)) && !fields.contains(key) {
                     fields.push(key.clone());
@@ -794,7 +906,10 @@ fn collect_bool_output_fields(tree: &DecisionTree) -> Vec<String> {
 fn collect_output_fields(tree: &DecisionTree) -> Vec<String> {
     let mut fields = Vec::new();
     for node in tree.nodes.values() {
-        if let DecisionNode::Return { value: Value::Object(map) } = node {
+        if let DecisionNode::Return {
+            value: Value::Object(map),
+        } = node
+        {
             for key in map.keys() {
                 if !fields.contains(key) {
                     fields.push(key.clone());
@@ -900,10 +1015,10 @@ fn type_name_for_value(v: &Value) -> String {
 /// Domain-appropriate twist rate (structural review interval in chains).
 fn twist_rate_for_domain(domain: &Domain) -> u32 {
     match domain {
-        Domain::SignalDetection => 3,       // Review every 3 chain steps
-        Domain::CausalityAssessment => 2,   // Tighter review for causality
+        Domain::SignalDetection => 3,     // Review every 3 chain steps
+        Domain::CausalityAssessment => 2, // Tighter review for causality
         Domain::SeriousnessClassification => 2,
-        Domain::WorkflowRouting => 5,       // Looser for routing
+        Domain::WorkflowRouting => 5, // Looser for routing
         Domain::SystemHealth => 3,
         Domain::Generic => 3,
     }
@@ -976,7 +1091,11 @@ mod tests {
             heligram.tests.len()
         );
 
-        let names: Vec<_> = heligram.tests.iter().filter_map(|t| t.name.as_deref()).collect();
+        let names: Vec<_> = heligram
+            .tests
+            .iter()
+            .filter_map(|t| t.name.as_deref())
+            .collect();
         assert!(names.iter().any(|n| n.contains("Q1")), "Missing Q1 test");
         assert!(names.iter().any(|n| n.contains("Q2")), "Missing Q2 test");
         assert!(names.iter().any(|n| n.contains("Q3")), "Missing Q3 test");

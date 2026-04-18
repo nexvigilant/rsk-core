@@ -11,7 +11,7 @@
 
 use crate::modules::decision_engine::{DecisionNode, DecisionTree, Operator, Value};
 use crate::modules::heligram::{
-    Heligram, HelixInterface, HelixParams, HeligramTest, Resolution, ResolutionRule, Strand,
+    Heligram, HeligramTest, HelixInterface, HelixParams, Resolution, ResolutionRule, Strand,
 };
 use crate::modules::microgram::{Microgram, MicrogramInterface};
 use std::collections::HashMap;
@@ -145,8 +145,7 @@ fn build_antisense(
                     for sense_key in sense_map.keys() {
                         let anti_key = antisense_field_name(sense_key);
                         if !seen_fields.contains_key(sense_key) {
-                            seen_fields
-                                .insert(sense_key.clone(), anti_key.clone());
+                            seen_fields.insert(sense_key.clone(), anti_key.clone());
                             field_pairs.push((sense_key.clone(), anti_key));
                         }
                     }
@@ -197,10 +196,7 @@ fn build_antisense(
 /// Rename return value fields to antisense names WITHOUT flipping values.
 /// The operator inversion already routes to the opposite branch —
 /// flipping booleans too would be a double-negation.
-fn invert_return_value(
-    value: &Value,
-    seen: &mut HashMap<String, String>,
-) -> Value {
+fn invert_return_value(value: &Value, seen: &mut HashMap<String, String>) -> Value {
     match value {
         Value::Object(map) => {
             let mut inverted = HashMap::new();
@@ -229,7 +225,15 @@ fn build_resolution(base_pairs: &HashMap<String, String>) -> Resolution {
 
     // Find a boolean-typed pair. Prefer fields with "detected", "signal", "pass", "confirmed"
     // as these are most likely boolean. Fall back to first pair.
-    let boolean_hints = ["detected", "signal", "falsified", "pass", "confirmed", "causal", "positive"];
+    let boolean_hints = [
+        "detected",
+        "signal",
+        "falsified",
+        "pass",
+        "confirmed",
+        "causal",
+        "positive",
+    ];
     let primary_sense = base_pairs
         .keys()
         .find(|k| boolean_hints.iter().any(|h| k.contains(h)))
@@ -243,11 +247,11 @@ fn build_resolution(base_pairs: &HashMap<String, String>) -> Resolution {
         when1.insert(sense_key.clone(), Value::Bool(true));
         when1.insert(anti_key.clone(), Value::Bool(false));
         let mut emit1 = HashMap::new();
-        emit1.insert("verdict".to_string(), Value::String("confirmed".to_string()));
         emit1.insert(
-            "confidence".to_string(),
-            Value::String("high".to_string()),
+            "verdict".to_string(),
+            Value::String("confirmed".to_string()),
         );
+        emit1.insert("confidence".to_string(), Value::String("high".to_string()));
         rules.push(ResolutionRule {
             when: Some(when1),
             default: None,
@@ -276,10 +280,7 @@ fn build_resolution(base_pairs: &HashMap<String, String>) -> Resolution {
         when3.insert(anti_key.clone(), Value::Bool(false));
         let mut emit3 = HashMap::new();
         emit3.insert("verdict".to_string(), Value::String("absent".to_string()));
-        emit3.insert(
-            "confidence".to_string(),
-            Value::String("high".to_string()),
-        );
+        emit3.insert("confidence".to_string(), Value::String("high".to_string()));
         rules.push(ResolutionRule {
             when: Some(when3),
             default: None,
@@ -356,10 +357,7 @@ fn promote_tests(
         input: HashMap::new(),
         expect: {
             let mut e = HashMap::new();
-            e.insert(
-                "verdict".to_string(),
-                Value::String("absent".to_string()),
-            );
+            e.insert("verdict".to_string(), Value::String("absent".to_string()));
             e
         },
     });
@@ -406,15 +404,17 @@ mod tests {
             Path::new(env!("CARGO_MANIFEST_DIR")).join("micrograms/prr-signal.yaml"),
         )
         .expect("prr-signal.yaml should exist");
-        let mg: Microgram =
-            serde_yaml::from_str(&mg_yaml).expect("should parse microgram");
+        let mg: Microgram = serde_yaml::from_str(&mg_yaml).expect("should parse microgram");
 
         let heligram = promote(&mg).expect("promotion should succeed");
 
         assert_eq!(heligram.name, "prr-signal-helix");
         assert_eq!(heligram.heligram_type, "heligram");
         assert_eq!(heligram.helix.twist_rate, 3);
-        assert!(!heligram.helix.base_pairs.is_empty(), "should have base pairs");
+        assert!(
+            !heligram.helix.base_pairs.is_empty(),
+            "should have base pairs"
+        );
         assert!(
             heligram.helix.base_pairs.contains_key("signal_detected"),
             "should pair signal_detected"
@@ -450,8 +450,7 @@ mod tests {
             Path::new(env!("CARGO_MANIFEST_DIR")).join("micrograms/prr-signal.yaml"),
         )
         .expect("prr-signal.yaml should exist");
-        let mg: Microgram =
-            serde_yaml::from_str(&mg_yaml).expect("should parse microgram");
+        let mg: Microgram = serde_yaml::from_str(&mg_yaml).expect("should parse microgram");
 
         let heligram = promote(&mg).expect("promotion should succeed");
         let yaml = to_yaml(&heligram).expect("should serialize to YAML");
@@ -459,14 +458,19 @@ mod tests {
         // Round-trip: parse the YAML back
         let reparsed = Heligram::parse(&yaml).expect("promoted YAML should re-parse");
         assert_eq!(reparsed.name, heligram.name);
-        assert_eq!(reparsed.helix.base_pairs.len(), heligram.helix.base_pairs.len());
+        assert_eq!(
+            reparsed.helix.base_pairs.len(),
+            heligram.helix.base_pairs.len()
+        );
     }
 
     #[test]
     fn test_antisense_field_naming() {
         assert_eq!(antisense_field_name("signal_detected"), "falsified");
         assert_eq!(antisense_field_name("classification"), "null_hypothesis");
-        assert_eq!(antisense_field_name("custom_field"), "custom_field_inverted");
+        assert_eq!(
+            antisense_field_name("custom_field"),
+            "custom_field_inverted"
+        );
     }
-
 }

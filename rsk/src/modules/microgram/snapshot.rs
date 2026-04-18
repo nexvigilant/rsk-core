@@ -19,7 +19,9 @@ pub fn snapshot_save(dir: &Path, out: &Path) -> Result<Snapshot, String> {
     for mg in &all {
         let r = mg.test();
         total_tests += r.total;
-        if r.failed > 0 { all_pass = false; }
+        if r.failed > 0 {
+            all_pass = false;
+        }
     }
 
     let snap = Snapshot {
@@ -29,18 +31,15 @@ pub fn snapshot_save(dir: &Path, out: &Path) -> Result<Snapshot, String> {
         all_pass,
     };
 
-    let json = serde_json::to_string_pretty(&snap)
-        .map_err(|e| format!("Serialize: {e}"))?;
+    let json = serde_json::to_string_pretty(&snap).map_err(|e| format!("Serialize: {e}"))?;
     std::fs::write(out, json).map_err(|e| format!("Write: {e}"))?;
     Ok(snap)
 }
 
 /// Restore ecosystem from a snapshot file
 pub fn snapshot_restore(snap_path: &Path, dir: &Path) -> Result<usize, String> {
-    let content = std::fs::read_to_string(snap_path)
-        .map_err(|e| format!("Read: {e}"))?;
-    let snap: Snapshot = serde_json::from_str(&content)
-        .map_err(|e| format!("Parse: {e}"))?;
+    let content = std::fs::read_to_string(snap_path).map_err(|e| format!("Read: {e}"))?;
+    let snap: Snapshot = serde_json::from_str(&content).map_err(|e| format!("Parse: {e}"))?;
 
     if !dir.exists() {
         std::fs::create_dir_all(dir).map_err(|e| format!("Mkdir: {e}"))?;

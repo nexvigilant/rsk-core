@@ -18,17 +18,25 @@ pub fn handle_stats(action: &StatsAction) {
             println!("{}", json!(result));
         }
         StatsAction::TTest { group1, group2 } => {
-            let g1: Result<Vec<f64>, _> = group1.split(',').map(|s| s.trim().parse::<f64>()).collect();
-            let g2: Result<Vec<f64>, _> = group2.split(',').map(|s| s.trim().parse::<f64>()).collect();
+            let g1: Result<Vec<f64>, _> =
+                group1.split(',').map(|s| s.trim().parse::<f64>()).collect();
+            let g2: Result<Vec<f64>, _> =
+                group2.split(',').map(|s| s.trim().parse::<f64>()).collect();
             match (g1, g2) {
                 (Ok(g1), Ok(g2)) => {
-                    let input = stats::TTestInput { group1: g1, group2: g2 };
+                    let input = stats::TTestInput {
+                        group1: g1,
+                        group2: g2,
+                    };
                     match stats::t_test_independent(&input) {
                         Ok(result) => println!("{}", json!(result)),
                         Err(e) => println!("{}", json!({"status": "error", "message": e})),
                     }
                 }
-                _ => println!("{}", json!({"status": "error", "message": "Invalid number format in group values"})),
+                _ => println!(
+                    "{}",
+                    json!({"status": "error", "message": "Invalid number format in group values"})
+                ),
             }
         }
         StatsAction::Proportion { successes, n, null } => {
@@ -53,7 +61,10 @@ pub fn handle_stats(action: &StatsAction) {
                         Err(e) => println!("{}", json!({"status": "error", "message": e})),
                     }
                 }
-                _ => println!("{}", json!({"status": "error", "message": "Invalid number format in data values"})),
+                _ => println!(
+                    "{}",
+                    json!({"status": "error", "message": "Invalid number format in data values"})
+                ),
             }
         }
     }

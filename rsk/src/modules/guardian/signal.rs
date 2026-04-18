@@ -125,7 +125,11 @@ impl SignalDetector {
         }
 
         // Sort by signal strength
-        signals.sort_by(|a, b| b.signal_strength.partial_cmp(&a.signal_strength).unwrap_or(std::cmp::Ordering::Equal));
+        signals.sort_by(|a, b| {
+            b.signal_strength
+                .partial_cmp(&a.signal_strength)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         signals
     }
 

@@ -135,16 +135,19 @@ pub fn validate_chain_signatures(
     }
 
     // Check terminal condition
-    if let Some(last) = signature_sequence.last().filter(|l| *l != CAUSALITY && *l != PERSISTENCE && *l != MAPPING) {
-            findings.push(SignatureFinding {
-                severity: FindingSeverity::Info,
-                step_index: micrograms.len() - 1,
-                step_name: micrograms.last().map_or("?".into(), |m| m.name.clone()),
-                message: format!(
-                    "Chain ends with '{last}'-dominant step. Expected → (causality established) \
+    if let Some(last) = signature_sequence
+        .last()
+        .filter(|l| *l != CAUSALITY && *l != PERSISTENCE && *l != MAPPING)
+    {
+        findings.push(SignatureFinding {
+            severity: FindingSeverity::Info,
+            step_index: micrograms.len() - 1,
+            step_name: micrograms.last().map_or("?".into(), |m| m.name.clone()),
+            message: format!(
+                "Chain ends with '{last}'-dominant step. Expected → (causality established) \
                      or π (action persisted) as terminal."
-                ),
-            });
+            ),
+        });
     }
 
     // Handoff completeness: did the chain implement → fires → ∃ catches → π holds?
@@ -161,7 +164,9 @@ pub fn validate_chain_signatures(
         });
     }
 
-    let has_errors = findings.iter().any(|f| f.severity == FindingSeverity::Error);
+    let has_errors = findings
+        .iter()
+        .any(|f| f.severity == FindingSeverity::Error);
 
     SignatureValidation {
         chain_name: chain_name.to_string(),
@@ -214,13 +219,15 @@ mod tests {
 
     #[test]
     fn invalid_chain_kappa_directly_to_pi() {
-        let chain = vec![
-            mg_with_sig("prr-signal", "κ"),
-            mg_with_sig("action", "π"),
-        ];
+        let chain = vec![mg_with_sig("prr-signal", "κ"), mg_with_sig("action", "π")];
         let result = validate_chain_signatures("bad-chain", &chain);
         assert!(!result.valid, "κ→π without → should fail");
-        assert!(result.findings.iter().any(|f| f.severity == FindingSeverity::Error));
+        assert!(
+            result
+                .findings
+                .iter()
+                .any(|f| f.severity == FindingSeverity::Error)
+        );
     }
 
     #[test]
@@ -242,6 +249,11 @@ mod tests {
         let chain = vec![mg];
         let result = validate_chain_signatures("no-sig", &chain);
         assert!(result.valid, "Missing signatures are warnings, not errors");
-        assert!(result.findings.iter().any(|f| f.severity == FindingSeverity::Warning));
+        assert!(
+            result
+                .findings
+                .iter()
+                .any(|f| f.severity == FindingSeverity::Warning)
+        );
     }
 }

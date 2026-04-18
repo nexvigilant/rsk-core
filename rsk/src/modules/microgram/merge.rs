@@ -1,6 +1,6 @@
-use crate::modules::decision_engine::{DecisionNode, DecisionTree, Operator};
 use super::Microgram;
 use super::compose::input_variables;
+use crate::modules::decision_engine::{DecisionNode, DecisionTree, Operator};
 use std::collections::HashMap;
 
 /// Merge two micrograms into one by creating a dispatcher that routes
@@ -57,34 +57,47 @@ pub fn merge(a: &Microgram, b: &Microgram, name: &str, description: &str) -> Mic
 /// Remap node references with a prefix
 fn remap_node(node: &DecisionNode, prefix: &str) -> DecisionNode {
     match node {
-        DecisionNode::Condition { variable, operator, value, true_next, false_next } => {
-            DecisionNode::Condition {
-                variable: variable.clone(),
-                operator: operator.clone(),
-                value: value.clone(),
-                true_next: format!("{prefix}{true_next}"),
-                false_next: format!("{prefix}{false_next}"),
-            }
-        }
-        DecisionNode::Return { value } => DecisionNode::Return { value: value.clone() },
-        DecisionNode::Action { action, target, value, next } => {
-            DecisionNode::Action {
-                action: action.clone(),
-                target: target.clone(),
-                value: value.clone(),
-                next: next.as_ref().map(|n| format!("{prefix}{n}")),
-            }
-        }
-        DecisionNode::LlmFallback { prompt, schema } => {
-            DecisionNode::LlmFallback { prompt: prompt.clone(), schema: schema.clone() }
-        }
-        DecisionNode::Intrinsic { function, input_variable, output_variable, next } => {
-            DecisionNode::Intrinsic {
-                function: function.clone(),
-                input_variable: input_variable.clone(),
-                output_variable: output_variable.clone(),
-                next: format!("{prefix}{next}"),
-            }
-        }
+        DecisionNode::Condition {
+            variable,
+            operator,
+            value,
+            true_next,
+            false_next,
+        } => DecisionNode::Condition {
+            variable: variable.clone(),
+            operator: operator.clone(),
+            value: value.clone(),
+            true_next: format!("{prefix}{true_next}"),
+            false_next: format!("{prefix}{false_next}"),
+        },
+        DecisionNode::Return { value } => DecisionNode::Return {
+            value: value.clone(),
+        },
+        DecisionNode::Action {
+            action,
+            target,
+            value,
+            next,
+        } => DecisionNode::Action {
+            action: action.clone(),
+            target: target.clone(),
+            value: value.clone(),
+            next: next.as_ref().map(|n| format!("{prefix}{n}")),
+        },
+        DecisionNode::LlmFallback { prompt, schema } => DecisionNode::LlmFallback {
+            prompt: prompt.clone(),
+            schema: schema.clone(),
+        },
+        DecisionNode::Intrinsic {
+            function,
+            input_variable,
+            output_variable,
+            next,
+        } => DecisionNode::Intrinsic {
+            function: function.clone(),
+            input_variable: input_variable.clone(),
+            output_variable: output_variable.clone(),
+            next: format!("{prefix}{next}"),
+        },
     }
 }

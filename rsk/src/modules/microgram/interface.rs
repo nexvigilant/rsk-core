@@ -1,5 +1,5 @@
-use crate::modules::decision_engine::{DecisionNode, Value};
 use super::Microgram;
+use crate::modules::decision_engine::{DecisionNode, Value};
 use std::collections::{HashMap, HashSet};
 
 /// Infer the type string from a Value
@@ -20,7 +20,9 @@ pub(crate) fn infer_input_types(mg: &Microgram) -> HashMap<String, String> {
     let mut types: HashMap<String, String> = HashMap::new();
     for test in &mg.tests {
         for (k, v) in &test.input {
-            types.entry(k.clone()).or_insert_with(|| value_type_name(v).to_string());
+            types
+                .entry(k.clone())
+                .or_insert_with(|| value_type_name(v).to_string());
         }
     }
     types
@@ -31,7 +33,9 @@ pub(crate) fn infer_output_types(mg: &Microgram) -> HashMap<String, String> {
     let mut types: HashMap<String, String> = HashMap::new();
     for test in &mg.tests {
         for (k, v) in &test.expect {
-            types.entry(k.clone()).or_insert_with(|| value_type_name(v).to_string());
+            types
+                .entry(k.clone())
+                .or_insert_with(|| value_type_name(v).to_string());
         }
     }
     types
@@ -52,7 +56,10 @@ pub(crate) fn input_variables_set(mg: &Microgram) -> HashSet<&str> {
 pub(crate) fn output_fields_set(mg: &Microgram) -> HashSet<&str> {
     let mut fields = HashSet::new();
     for node in mg.tree.nodes.values() {
-        if let DecisionNode::Return { value: Value::Object(map) } = node {
+        if let DecisionNode::Return {
+            value: Value::Object(map),
+        } = node
+        {
             for key in map.keys() {
                 fields.insert(key.as_str());
             }

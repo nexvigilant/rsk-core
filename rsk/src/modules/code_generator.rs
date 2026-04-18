@@ -618,7 +618,10 @@ fn generate_negative_tests(skill_name: &str, failure_modes: &str) -> Vec<Generat
             category: "negative".to_string(),
             description: format!("Test {skill_name} handles: {truncated_desc}"),
             inputs: "/* trigger failure condition */".to_string(),
-            expected: { let t = truncate(content, 30); format!("Err(...) // {t}") },
+            expected: {
+                let t = truncate(content, 30);
+                format!("Err(...) // {t}")
+            },
         });
     }
 
@@ -813,9 +816,7 @@ fn generate_full_rust_module(smst: &SmstResult) -> String {
     let type_name = to_pascal_case(skill_name);
 
     // Module header
-    code.push_str(&format!(
-        "//! {skill_name} - Auto-generated Rust module\n",
-    ));
+    code.push_str(&format!("//! {skill_name} - Auto-generated Rust module\n",));
     if let Some(desc) = &smst.frontmatter.description {
         code.push_str(&format!("//!\n//! {desc}\n"));
     }
@@ -1010,9 +1011,15 @@ pub fn generate_schema_aware_tests(
 
     for field in &input.fields {
         tests.push(GeneratedTestCase {
-            name: { let s = to_snake_case(&field.field_name); format!("test_boundary_{s}") },
+            name: {
+                let s = to_snake_case(&field.field_name);
+                format!("test_boundary_{s}")
+            },
             category: "edge".to_string(),
-            description: { let f = &field.field_name; format!("Boundary test for field {f}") },
+            description: {
+                let f = &field.field_name;
+                format!("Boundary test for field {f}")
+            },
             inputs: format!(
                 "{{ \"{}\": /* boundary value for {} */ }}",
                 field.field_name, field.field_type

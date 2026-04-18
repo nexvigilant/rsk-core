@@ -16,9 +16,8 @@ pub struct CoverageResult {
 /// Analyze path coverage of a microgram's self-tests
 pub fn coverage(mg: &Microgram) -> CoverageResult {
     let total_nodes = mg.tree.nodes.len();
-    let mut visited: HashMap<String, bool> = mg.tree.nodes.keys()
-        .map(|k| (k.clone(), false))
-        .collect();
+    let mut visited: HashMap<String, bool> =
+        mg.tree.nodes.keys().map(|k| (k.clone(), false)).collect();
     let mut paths_taken = Vec::new();
 
     for test in &mg.tests {
@@ -30,12 +29,15 @@ pub fn coverage(mg: &Microgram) -> CoverageResult {
     }
 
     let covered_nodes = visited.values().filter(|&&v| v).count();
-    let uncovered: Vec<String> = visited.iter()
+    let uncovered: Vec<String> = visited
+        .iter()
         .filter(|(_, v)| !*v)
         .map(|(k, _)| k.clone())
         .collect();
 
-    let coverage_pct = if total_nodes == 0 { 100.0 } else {
+    let coverage_pct = if total_nodes == 0 {
+        100.0
+    } else {
         #[allow(clippy::as_conversions)] // usize→f64 for coverage percentage
         let pct = (covered_nodes as f64 / total_nodes as f64) * 100.0;
         pct

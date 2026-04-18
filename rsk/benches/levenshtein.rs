@@ -1,5 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rsk::{levenshtein, fuzzy_search};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use rsk::{fuzzy_search, levenshtein};
 
 fn bench_levenshtein(c: &mut Criterion) {
     let mut group = c.benchmark_group("levenshtein");
@@ -28,12 +28,24 @@ fn bench_fuzzy_search(c: &mut Criterion) {
 
     let candidates: Vec<String> = (0..100).map(|i| format!("skill-{}", i)).collect();
     group.bench_function("100_candidates", |b| {
-        b.iter(|| fuzzy_search(black_box("test-skill"), black_box(&candidates), black_box(10)))
+        b.iter(|| {
+            fuzzy_search(
+                black_box("test-skill"),
+                black_box(&candidates),
+                black_box(10),
+            )
+        })
     });
 
     let candidates_large: Vec<String> = (0..1000).map(|i| format!("skill-{}", i)).collect();
     group.bench_function("1000_candidates", |b| {
-        b.iter(|| fuzzy_search(black_box("test-skill"), black_box(&candidates_large), black_box(10)))
+        b.iter(|| {
+            fuzzy_search(
+                black_box("test-skill"),
+                black_box(&candidates_large),
+                black_box(10),
+            )
+        })
     });
 
     group.finish();

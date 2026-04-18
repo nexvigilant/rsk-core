@@ -90,7 +90,10 @@ pub fn handle_verify(
             },
             "required": ["frontmatter", "spec", "score"]
         });
-        println!("{}", serde_json::to_string_pretty(&schema).unwrap_or_default());
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&schema).unwrap_or_default()
+        );
         return;
     }
 
@@ -133,7 +136,10 @@ pub fn handle_verify(
     match format {
         "json" => {
             if results.len() == 1 {
-                println!("{}", serde_json::to_string_pretty(&results[0]).unwrap_or_default());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&results[0]).unwrap_or_default()
+                );
             } else {
                 println!(
                     "{}",
@@ -258,7 +264,10 @@ pub fn handle_build(path: &str, dry_run: bool) {
     }
 
     if all_results.len() == 1 {
-        println!("{}", serde_json::to_string_pretty(&all_results[0]).unwrap_or_default());
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&all_results[0]).unwrap_or_default()
+        );
     } else {
         println!(
             "{}",

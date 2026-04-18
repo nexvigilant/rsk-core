@@ -1,5 +1,5 @@
-use crate::modules::decision_engine::{DecisionNode, DecisionTree, Operator, Value};
 use super::{Microgram, MicrogramTest};
+use crate::modules::decision_engine::{DecisionNode, DecisionTree, Operator, Value};
 use std::collections::HashMap;
 
 /// Spec for generating a microgram
@@ -8,12 +8,12 @@ pub struct MicrogramSpec {
     pub name: String,
     pub description: String,
     pub variable: String,
-    pub operator: String,     // gt, gte, lt, lte, eq, is_null, is_not_null, matches
-    pub threshold: Value,     // comparison value
-    pub true_label: String,   // output key name when true
-    pub true_value: Value,    // output value when true
-    pub false_label: String,  // output key name when false
-    pub false_value: Value,   // output value when false
+    pub operator: String, // gt, gte, lt, lte, eq, is_null, is_not_null, matches
+    pub threshold: Value, // comparison value
+    pub true_label: String, // output key name when true
+    pub true_value: Value, // output value when true
+    pub false_label: String, // output key name when false
+    pub false_value: Value, // output value when false
 }
 
 impl MicrogramSpec {
@@ -100,21 +100,30 @@ impl MicrogramSpec {
                         m
                     }
                 };
-                tests.push(MicrogramTest { input: at_input, expect: at_expected });
+                tests.push(MicrogramTest {
+                    input: at_input,
+                    expect: at_expected,
+                });
 
                 // Above threshold
                 let mut above_input = HashMap::new();
                 above_input.insert(self.variable.clone(), Value::Int(n + 1));
                 let mut above_expected = HashMap::new();
                 above_expected.insert(self.true_label.clone(), self.true_value.clone());
-                tests.push(MicrogramTest { input: above_input, expect: above_expected });
+                tests.push(MicrogramTest {
+                    input: above_input,
+                    expect: above_expected,
+                });
 
                 // Below threshold
                 let mut below_input = HashMap::new();
                 below_input.insert(self.variable.clone(), Value::Int(n - 1));
                 let mut below_expected = HashMap::new();
                 below_expected.insert(self.false_label.clone(), self.false_value.clone());
-                tests.push(MicrogramTest { input: below_input, expect: below_expected });
+                tests.push(MicrogramTest {
+                    input: below_input,
+                    expect: below_expected,
+                });
             }
             Value::Float(f) => {
                 let f = *f;
@@ -132,19 +141,28 @@ impl MicrogramSpec {
                         m
                     }
                 };
-                tests.push(MicrogramTest { input: at_input, expect: at_expected });
+                tests.push(MicrogramTest {
+                    input: at_input,
+                    expect: at_expected,
+                });
 
                 let mut above_input = HashMap::new();
                 above_input.insert(self.variable.clone(), Value::Float(f + 1.0));
                 let mut above_expected = HashMap::new();
                 above_expected.insert(self.true_label.clone(), self.true_value.clone());
-                tests.push(MicrogramTest { input: above_input, expect: above_expected });
+                tests.push(MicrogramTest {
+                    input: above_input,
+                    expect: above_expected,
+                });
 
                 let mut below_input = HashMap::new();
                 below_input.insert(self.variable.clone(), Value::Float(f - 1.0));
                 let mut below_expected = HashMap::new();
                 below_expected.insert(self.false_label.clone(), self.false_value.clone());
-                tests.push(MicrogramTest { input: below_input, expect: below_expected });
+                tests.push(MicrogramTest {
+                    input: below_input,
+                    expect: below_expected,
+                });
             }
             _ => {
                 // For string/bool comparisons, generate true/false pair
@@ -152,7 +170,10 @@ impl MicrogramSpec {
                 true_input.insert(self.variable.clone(), self.threshold.clone());
                 let mut true_expected = HashMap::new();
                 true_expected.insert(self.true_label.clone(), self.true_value.clone());
-                tests.push(MicrogramTest { input: true_input, expect: true_expected });
+                tests.push(MicrogramTest {
+                    input: true_input,
+                    expect: true_expected,
+                });
             }
         }
 

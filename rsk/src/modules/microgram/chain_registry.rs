@@ -1,8 +1,10 @@
 //! Chain Registry — named chain definitions with end-to-end test cases.
 
-use crate::modules::decision_engine::Value;
+use super::chain::{
+    BoundaryError, LoopResult, chain, chain_accumulate, chain_loop, chain_validated,
+};
 use super::{Microgram, load_all};
-use super::chain::{chain, chain_accumulate, chain_loop, chain_validated, BoundaryError, LoopResult};
+use crate::modules::decision_engine::Value;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
@@ -28,8 +30,12 @@ pub struct ChainDefinition {
     pub accumulate: bool,
 }
 
-fn default_version() -> String { "0.1.0".to_string() }
-fn default_mcg_dir() -> String { "../micrograms".to_string() }
+fn default_version() -> String {
+    "0.1.0".to_string()
+}
+fn default_mcg_dir() -> String {
+    "../micrograms".to_string()
+}
 
 /// A test case for a chain definition
 #[derive(Debug, Clone, Deserialize)]
@@ -77,7 +83,8 @@ impl ChainDefinition {
     pub fn load(path: &Path) -> Result<Self, String> {
         let content = std::fs::read_to_string(path)
             .map_err(|e| format!("Cannot read {}: {e}", path.display()))?;
-        serde_yaml::from_str(&content).map_err(|e| format!("Parse error in {}: {e}", path.display()))
+        serde_yaml::from_str(&content)
+            .map_err(|e| format!("Parse error in {}: {e}", path.display()))
     }
 
     /// Resolve the micrograms directory relative to the chain file
@@ -94,12 +101,16 @@ impl ChainDefinition {
         let mut passed = 0;
 
         // Resolve the ordered micrograms for this chain
-        let ordered: Vec<&Microgram> = self.steps.iter().filter_map(|name| {
-            micrograms.iter().find(|mg| mg.name == *name)
-        }).collect();
+        let ordered: Vec<&Microgram> = self
+            .steps
+            .iter()
+            .filter_map(|name| micrograms.iter().find(|mg| mg.name == *name))
+            .collect();
 
         if ordered.len() != self.steps.len() {
-            let missing: Vec<&String> = self.steps.iter()
+            let missing: Vec<&String> = self
+                .steps
+                .iter()
                 .filter(|s| !micrograms.iter().any(|mg| mg.name == **s))
                 .collect();
             return ChainTestResult {
@@ -107,14 +118,18 @@ impl ChainDefinition {
                 total: self.tests.len(),
                 passed: 0,
                 failed: self.tests.len(),
-                results: self.tests.iter().map(|t| SingleChainTestResult {
-                    name: t.name.clone(),
-                    passed: false,
-                    input: t.input.clone(),
-                    expected: t.expect.clone(),
-                    actual: HashMap::new(),
-                    mismatch: Some(format!("Missing micrograms: {missing:?}")),
-                }).collect(),
+                results: self
+                    .tests
+                    .iter()
+                    .map(|t| SingleChainTestResult {
+                        name: t.name.clone(),
+                        passed: false,
+                        input: t.input.clone(),
+                        expected: t.expect.clone(),
+                        actual: HashMap::new(),
+                        mismatch: Some(format!("Missing micrograms: {missing:?}")),
+                    })
+                    .collect(),
                 signature_validation: None,
                 boundary_findings: Vec::new(),
             };
@@ -148,9 +163,7 @@ impl ChainDefinition {
                         test_passed = false;
                     }
                     None => {
-                        mismatch = Some(format!(
-                            "{key}: expected {expected_val:?}, not in output"
-                        ));
+                        mismatch = Some(format!("{key}: expected {expected_val:?}, not in output"));
                         test_passed = false;
                     }
                 }
@@ -167,15 +180,16 @@ impl ChainDefinition {
                     if actual_path != expected_path {
                         mismatch = Some(format!(
                             "path[{}] ({}): expected {:?}, got {:?}",
-                            step_i, chain_result.steps[step_i].name,
-                            expected_path, actual_path
+                            step_i, chain_result.steps[step_i].name, expected_path, actual_path
                         ));
                         test_passed = false;
                     }
                 }
             }
 
-            if test_passed { passed += 1; }
+            if test_passed {
+                passed += 1;
+            }
 
             results.push(SingleChainTestResult {
                 name: test.name.clone(),
@@ -201,8 +215,7 @@ impl ChainDefinition {
 
 /// Load all chain definitions from a directory
 pub fn load_chains(dir: &Path) -> Result<Vec<(ChainDefinition, std::path::PathBuf)>, String> {
-    let entries = std::fs::read_dir(dir)
-        .map_err(|e| format!("Cannot read chain dir: {e}"))?;
+    let entries = std::fs::read_dir(dir).map_err(|e| format!("Cannot read chain dir: {e}"))?;
 
     let mut chains = Vec::new();
     for entry in entries {
@@ -280,8 +293,12 @@ pub struct ProcessDefinition {
     pub tests: Vec<ProcessTestCase>,
 }
 
-fn default_true() -> bool { true }
-fn default_max_iterations() -> usize { 10 }
+fn default_true() -> bool {
+    true
+}
+fn default_max_iterations() -> usize {
+    10
+}
 
 /// Test case for a process — checks final state after loop completes
 #[derive(Debug, Clone, Deserialize)]
@@ -348,7 +365,11 @@ impl ProcessDefinition {
     }
 
     /// Run the process: resolve micrograms, wire governor, execute loop
-    pub fn run(&self, micrograms: &[Microgram], input: HashMap<String, Value>) -> Result<LoopResult, String> {
+    pub fn run(
+        &self,
+        micrograms: &[Microgram],
+        input: HashMap<String, Value>,
+    ) -> Result<LoopResult, String> {
         let effective = self.effective_steps();
         let mut ordered = Vec::with_capacity(effective.len());
 
@@ -360,13 +381,30 @@ impl ProcessDefinition {
         }
 
         // Determine halt field/value — from explicit config or governor convention
-        let halt_field = self.halt_field.as_deref()
-            .or_else(|| if self.governor.is_some() { Some("loop_action") } else { None });
-        let halt_value_owned = self.halt_value.clone()
-            .or_else(|| if self.governor.is_some() { Some(Value::String("HALT".to_string())) } else { None });
+        let halt_field = self.halt_field.as_deref().or_else(|| {
+            if self.governor.is_some() {
+                Some("loop_action")
+            } else {
+                None
+            }
+        });
+        let halt_value_owned = self.halt_value.clone().or_else(|| {
+            if self.governor.is_some() {
+                Some(Value::String("HALT".to_string()))
+            } else {
+                None
+            }
+        });
         let halt_value = halt_value_owned.as_ref();
 
-        Ok(chain_loop(&ordered, input, self.max_iterations, halt_field, halt_value, false))
+        Ok(chain_loop(
+            &ordered,
+            input,
+            self.max_iterations,
+            halt_field,
+            halt_value,
+            false,
+        ))
     }
 
     /// Run all process test cases
@@ -393,9 +431,15 @@ impl ProcessDefinition {
 
             let halt_reason = match &loop_result.halt_reason {
                 super::chain::LoopHalt::MaxIterations => "MaxIterations".to_string(),
-                super::chain::LoopHalt::HaltCondition { field, .. } => format!("HaltCondition({field})"),
-                super::chain::LoopHalt::Convergence { iteration } => format!("Convergence({iteration})"),
-                super::chain::LoopHalt::ChainFailure { iteration, step } => format!("ChainFailure({iteration}, {step})"),
+                super::chain::LoopHalt::HaltCondition { field, .. } => {
+                    format!("HaltCondition({field})")
+                }
+                super::chain::LoopHalt::Convergence { iteration } => {
+                    format!("Convergence({iteration})")
+                }
+                super::chain::LoopHalt::ChainFailure { iteration, step } => {
+                    format!("ChainFailure({iteration}, {step})")
+                }
             };
 
             let mut mismatch = None;
@@ -406,7 +450,9 @@ impl ProcessDefinition {
                 match loop_result.final_state.get(key) {
                     Some(actual_val) if actual_val == expected_val => {}
                     Some(actual_val) => {
-                        mismatch = Some(format!("{key}: expected {expected_val:?}, got {actual_val:?}"));
+                        mismatch = Some(format!(
+                            "{key}: expected {expected_val:?}, got {actual_val:?}"
+                        ));
                         test_passed = false;
                     }
                     None => {
@@ -418,11 +464,13 @@ impl ProcessDefinition {
 
             // Check expected iterations
             if let Some(expected_iters) = test.expect_iterations
-                && loop_result.iterations != expected_iters {
-                    mismatch = Some(format!(
-                        "iterations: expected {expected_iters}, got {}", loop_result.iterations
-                    ));
-                    test_passed = false;
+                && loop_result.iterations != expected_iters
+            {
+                mismatch = Some(format!(
+                    "iterations: expected {expected_iters}, got {}",
+                    loop_result.iterations
+                ));
+                test_passed = false;
             }
 
             // Check expected halt reason type
@@ -441,7 +489,9 @@ impl ProcessDefinition {
                 }
             }
 
-            if test_passed { passed += 1; }
+            if test_passed {
+                passed += 1;
+            }
 
             results.push(SingleProcessTestResult {
                 name: test.name.clone(),
@@ -466,8 +516,7 @@ impl ProcessDefinition {
 
 /// Load all process definitions from a directory
 pub fn load_processes(dir: &Path) -> Result<Vec<(ProcessDefinition, std::path::PathBuf)>, String> {
-    let entries = std::fs::read_dir(dir)
-        .map_err(|e| format!("Cannot read process dir: {e}"))?;
+    let entries = std::fs::read_dir(dir).map_err(|e| format!("Cannot read process dir: {e}"))?;
 
     let mut processes = Vec::new();
     for entry in entries {
@@ -510,14 +559,15 @@ pub fn test_chains(chains_dir: &Path) -> Result<Vec<ChainTestResult>, String> {
         let mut result = def.test(&micrograms);
 
         // Primitive signature chain validation
-        let chain_mgs: Vec<_> = def.steps.iter()
+        let chain_mgs: Vec<_> = def
+            .steps
+            .iter()
             .filter_map(|name| micrograms.iter().find(|m| m.name == *name))
             .cloned()
             .collect();
         if !chain_mgs.is_empty() {
-            let sig_validation = super::signature_validator::validate_chain_signatures(
-                &def.name, &chain_mgs
-            );
+            let sig_validation =
+                super::signature_validator::validate_chain_signatures(&def.name, &chain_mgs);
             result.signature_validation = Some(sig_validation);
         }
 

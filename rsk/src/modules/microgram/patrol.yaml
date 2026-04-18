@@ -55,8 +55,17 @@ library:
   - check_chain_hygiene_by_names
   - apply_aliases
   - load_all
+  - load_all_collect
+  - load_all_strict
   - load_chains
   - load_processes
+  # Indexed chain variants — caller-owned MicrogramIndex (Ring 1, used by rsk-mcp)
+  - chain_with_index
+  - chain_with_index_typed
+  - chain_accumulate_with_index
+  - chain_accumulate_with_index_typed
+  - chain_resilient_with_index
+  - chain_resilient_with_index_typed
   # Pipe sub-operations — called by pipe_chain, not directly CLI-invoked
   - filter_results
   - map_field

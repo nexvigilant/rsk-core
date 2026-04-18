@@ -1,17 +1,21 @@
+use super::{Microgram, MicrogramError, MicrogramIndex, MicrogramResult, load_all};
 use crate::modules::decision_engine::Value;
-use super::{Microgram, MicrogramResult, load_all};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::Arc;
 
 /// Apply alias remapping: for each alias declared by the target microgram,
 /// if the input contains the alias name but not the canonical name, copy the value.
 /// This bridges the naming gap at runtime — catalog discovers the connection,
 /// this function makes the data flow through it.
 pub fn apply_aliases(input: &mut HashMap<String, Value>, target: &Microgram) {
-    let Some(iface) = &target.interface else { return };
+    let Some(iface) = &target.interface else {
+        return;
+    };
     for (alias, canonical) in &iface.aliases {
-        if input.contains_key(alias) && !input.contains_key(canonical)
+        if input.contains_key(alias)
+            && !input.contains_key(canonical)
             && let Some(val) = input.get(alias).cloned()
         {
             input.insert(canonical.clone(), val);
@@ -31,7 +35,11 @@ pub struct ChainResult {
 /// Chain multiple micrograms: output of step N becomes input of step N+1.
 /// Alias-aware: remaps field names between steps using declared aliases.
 /// When `strict` is true, each step validates required inputs before execution.
-pub fn chain(micrograms: &[Microgram], initial_input: HashMap<String, Value>, strict: bool) -> ChainResult {
+pub fn chain(
+    micrograms: &[Microgram],
+    initial_input: HashMap<String, Value>,
+    strict: bool,
+) -> ChainResult {
     let mut current_input = initial_input;
     let mut steps = Vec::with_capacity(micrograms.len());
     let mut total_us = 0u64;
@@ -62,10 +70,7 @@ pub fn chain(micrograms: &[Microgram], initial_input: HashMap<String, Value>, st
         steps.push(result);
     }
 
-    let final_output = steps
-        .last()
-        .map(|s| s.output.clone())
-        .unwrap_or_default();
+    let final_output = steps.last().map(|s| s.output.clone()).unwrap_or_default();
 
     ChainResult {
         success: true,
@@ -75,23 +80,68 @@ pub fn chain(micrograms: &[Microgram], initial_input: HashMap<String, Value>, st
     }
 }
 
-/// Load micrograms by name from a directory and chain them
+/// Resolve a list of names through a `MicrogramIndex`, materialising owned
+/// clones so the existing `chain()` family can stay by-value. Internal helper.
+fn resolve_cloned(index: &MicrogramIndex, names: &[&str]) -> Result<Vec<Microgram>, String> {
+    let arcs: Vec<Arc<Microgram>> = index.resolve(names.iter().copied())?;
+    Ok(arcs.iter().map(|a| (**a).clone()).collect())
+}
+
+/// Typed-error variant of [`resolve_cloned`]: emits `MicrogramError::UnknownName`
+/// instead of a free-form `String`.
+fn resolve_cloned_typed(
+    index: &MicrogramIndex,
+    names: &[&str],
+) -> Result<Vec<Microgram>, MicrogramError> {
+    let mut out = Vec::with_capacity(names.len());
+    for name in names {
+        match index.get(name) {
+            Some(arc) => out.push((*arc).clone()),
+            None => {
+                return Err(MicrogramError::UnknownName {
+                    name: (*name).to_string(),
+                    dir: index.dir().to_path_buf(),
+                });
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// Chain micrograms already resolved through an index. Preferred entry point
+/// for long-lived consumers: the caller controls how often the index is rebuilt.
+pub fn chain_with_index(
+    index: &MicrogramIndex,
+    names: &[&str],
+    initial_input: HashMap<String, Value>,
+) -> Result<ChainResult, String> {
+    let ordered = resolve_cloned(index, names)?;
+    Ok(chain(&ordered, initial_input, false))
+}
+
+/// Typed-error variant of [`chain_with_index`]. Returns [`MicrogramError`] so
+/// callers can distinguish "name not in index" from other failure modes.
+pub fn chain_with_index_typed(
+    index: &MicrogramIndex,
+    names: &[&str],
+    initial_input: HashMap<String, Value>,
+) -> Result<ChainResult, MicrogramError> {
+    let ordered = resolve_cloned_typed(index, names)?;
+    Ok(chain(&ordered, initial_input, false))
+}
+
+/// Load micrograms by name from a directory and chain them.
+///
+/// Convenience wrapper for one-shot CLI invocations; constructs a fresh
+/// [`MicrogramIndex`] every call. Use [`chain_with_index`] when the fleet can
+/// be scanned once and reused.
 pub fn chain_by_names(
     dir: &Path,
     names: &[&str],
     initial_input: HashMap<String, Value>,
 ) -> Result<ChainResult, String> {
-    let all = load_all(dir)?;
-    let mut ordered = Vec::with_capacity(names.len());
-
-    for name in names {
-        match all.iter().find(|mg| mg.name == *name) {
-            Some(mg) => ordered.push(mg.clone()),
-            None => return Err(format!("Microgram '{}' not found in {}", name, dir.display())),
-        }
-    }
-
-    Ok(chain(&ordered, initial_input, false))
+    let index = MicrogramIndex::load_lossy(dir)?;
+    chain_with_index(&index, names, initial_input)
 }
 
 /// Chain execution status
@@ -180,7 +230,11 @@ pub fn chain_resilient(
 /// context rather than replacing it. Fields from earlier steps survive through
 /// steps that don't reference them. This prevents data loss in long chains.
 /// When `strict` is true, each step validates required inputs before execution.
-pub fn chain_accumulate(micrograms: &[Microgram], initial_input: HashMap<String, Value>, strict: bool) -> ChainResult {
+pub fn chain_accumulate(
+    micrograms: &[Microgram],
+    initial_input: HashMap<String, Value>,
+    strict: bool,
+) -> ChainResult {
     let mut context = initial_input;
     let mut steps = Vec::with_capacity(micrograms.len());
     let mut total_us = 0u64;
@@ -303,23 +357,44 @@ fn classify_primitive(direction: &str, message: &str) -> (EnginePrimitive, &'sta
     match direction {
         "ingress" => {
             if message.contains("Missing required") {
-                (EnginePrimitive::Seal, "Add required field to upstream output or insert adapter microgram")
+                (
+                    EnginePrimitive::Seal,
+                    "Add required field to upstream output or insert adapter microgram",
+                )
             } else if message.contains("expected type") {
-                (EnginePrimitive::Seal, "Schema types disagree \u{2014} add type-converting adapter")
+                (
+                    EnginePrimitive::Seal,
+                    "Schema types disagree \u{2014} add type-converting adapter",
+                )
             } else {
-                (EnginePrimitive::Seal, "Ingress contract violation \u{2014} inspect upstream output schema")
+                (
+                    EnginePrimitive::Seal,
+                    "Ingress contract violation \u{2014} inspect upstream output schema",
+                )
             }
         }
         "egress" => {
             if message.contains("Missing required") {
-                (EnginePrimitive::Convert, "Decision tree path doesn't produce required output \u{2014} add missing return nodes")
+                (
+                    EnginePrimitive::Convert,
+                    "Decision tree path doesn't produce required output \u{2014} add missing return nodes",
+                )
             } else if message.contains("expected type") {
-                (EnginePrimitive::Convert, "Tree produces wrong type \u{2014} check return node values")
+                (
+                    EnginePrimitive::Convert,
+                    "Tree produces wrong type \u{2014} check return node values",
+                )
             } else {
-                (EnginePrimitive::Convert, "Egress contract violation \u{2014} inspect return node schema")
+                (
+                    EnginePrimitive::Convert,
+                    "Egress contract violation \u{2014} inspect return node schema",
+                )
             }
         }
-        _ => (EnginePrimitive::Transfer, "Interface contract violation \u{2014} inspect chain topology"),
+        _ => (
+            EnginePrimitive::Transfer,
+            "Interface contract violation \u{2014} inspect chain topology",
+        ),
     }
 }
 
@@ -398,9 +473,10 @@ pub fn chain_validated(
         }
 
         // Egress failure with Missing severity: halt (downstream WILL fail)
-        let has_missing_egress = vr.egress_errors.iter().any(|e|
-            classify_error_severity(e) == BoundaryErrorSeverity::Missing
-        );
+        let has_missing_egress = vr
+            .egress_errors
+            .iter()
+            .any(|e| classify_error_severity(e) == BoundaryErrorSeverity::Missing);
         if has_missing_egress {
             let final_output = vr.result.output.clone();
             steps.push(vr);
@@ -428,9 +504,15 @@ pub fn chain_validated(
     }
 
     let final_output: HashMap<String, Value> = if accumulate {
-        context.into_iter().filter(|(k, _)| !k.starts_with('_')).collect()
+        context
+            .into_iter()
+            .filter(|(k, _)| !k.starts_with('_'))
+            .collect()
     } else {
-        steps.last().map(|s| s.result.output.clone()).unwrap_or_default()
+        steps
+            .last()
+            .map(|s| s.result.output.clone())
+            .unwrap_or_default()
     };
 
     let success = boundary_errors.is_empty();
@@ -444,42 +526,67 @@ pub fn chain_validated(
     }
 }
 
-/// Load micrograms by name and chain them with context accumulation
+/// Accumulate-chain using an already-loaded index.
+pub fn chain_accumulate_with_index(
+    index: &MicrogramIndex,
+    names: &[&str],
+    initial_input: HashMap<String, Value>,
+) -> Result<ChainResult, String> {
+    let ordered = resolve_cloned(index, names)?;
+    Ok(chain_accumulate(&ordered, initial_input, false))
+}
+
+/// Typed-error variant of [`chain_accumulate_with_index`].
+pub fn chain_accumulate_with_index_typed(
+    index: &MicrogramIndex,
+    names: &[&str],
+    initial_input: HashMap<String, Value>,
+) -> Result<ChainResult, MicrogramError> {
+    let ordered = resolve_cloned_typed(index, names)?;
+    Ok(chain_accumulate(&ordered, initial_input, false))
+}
+
+/// Load micrograms by name and chain them with context accumulation.
+///
+/// Convenience wrapper that rebuilds a [`MicrogramIndex`] per call. Prefer
+/// [`chain_accumulate_with_index`] in long-lived consumers.
 pub fn chain_accumulate_by_names(
     dir: &Path,
     names: &[&str],
     initial_input: HashMap<String, Value>,
 ) -> Result<ChainResult, String> {
-    let all = load_all(dir)?;
-    let mut ordered = Vec::with_capacity(names.len());
-
-    for name in names {
-        match all.iter().find(|mg| mg.name == *name) {
-            Some(mg) => ordered.push(mg.clone()),
-            None => return Err(format!("Microgram '{}' not found in {}", name, dir.display())),
-        }
-    }
-
-    Ok(chain_accumulate(&ordered, initial_input, false))
+    let index = MicrogramIndex::load_lossy(dir)?;
+    chain_accumulate_with_index(&index, names, initial_input)
 }
 
-/// Load micrograms by name and chain them resiliently
+/// Resilient-chain using an already-loaded index.
+pub fn chain_resilient_with_index(
+    index: &MicrogramIndex,
+    names: &[&str],
+    initial_input: HashMap<String, Value>,
+) -> Result<ResilientChainResult, String> {
+    let ordered = resolve_cloned(index, names)?;
+    Ok(chain_resilient(&ordered, initial_input, false))
+}
+
+/// Typed-error variant of [`chain_resilient_with_index`].
+pub fn chain_resilient_with_index_typed(
+    index: &MicrogramIndex,
+    names: &[&str],
+    initial_input: HashMap<String, Value>,
+) -> Result<ResilientChainResult, MicrogramError> {
+    let ordered = resolve_cloned_typed(index, names)?;
+    Ok(chain_resilient(&ordered, initial_input, false))
+}
+
+/// Load micrograms by name and chain them resiliently.
 pub fn chain_resilient_by_names(
     dir: &Path,
     names: &[&str],
     initial_input: HashMap<String, Value>,
 ) -> Result<ResilientChainResult, String> {
-    let all = load_all(dir)?;
-    let mut ordered = Vec::with_capacity(names.len());
-
-    for name in names {
-        match all.iter().find(|mg| mg.name == *name) {
-            Some(mg) => ordered.push(mg.clone()),
-            None => return Err(format!("Microgram '{}' not found in {}", name, dir.display())),
-        }
-    }
-
-    Ok(chain_resilient(&ordered, initial_input, false))
+    let index = MicrogramIndex::load_lossy(dir)?;
+    chain_resilient_with_index(&index, names, initial_input)
 }
 
 /// Result of a looped chain execution
@@ -530,7 +637,11 @@ pub fn chain_loop(
     halt_value: Option<&Value>,
     strict: bool,
 ) -> LoopResult {
-    let max = if max_iterations == 0 { 100 } else { max_iterations };
+    let max = if max_iterations == 0 {
+        100
+    } else {
+        max_iterations
+    };
     let mut current_input = initial_input;
     let mut iteration_results = Vec::new();
     let mut trajectory = Vec::new();
@@ -542,7 +653,9 @@ pub fn chain_loop(
         total_us += result.total_duration_us;
 
         if !result.success {
-            let failed_step = result.steps.iter()
+            let failed_step = result
+                .steps
+                .iter()
                 .find(|s| !s.success)
                 .map(|s| s.name.clone())
                 .unwrap_or_else(|| "unknown".to_string());
@@ -552,7 +665,10 @@ pub fn chain_loop(
             return LoopResult {
                 success: false,
                 iterations: i + 1,
-                halt_reason: LoopHalt::ChainFailure { iteration: i, step: failed_step },
+                halt_reason: LoopHalt::ChainFailure {
+                    iteration: i,
+                    step: failed_step,
+                },
                 iteration_results,
                 final_state,
                 total_duration_us: total_us,
@@ -636,11 +752,24 @@ pub fn chain_loop_by_names(
     for name in names {
         match all.iter().find(|mg| mg.name == *name) {
             Some(mg) => ordered.push(mg.clone()),
-            None => return Err(format!("Microgram '{}' not found in {}", name, dir.display())),
+            None => {
+                return Err(format!(
+                    "Microgram '{}' not found in {}",
+                    name,
+                    dir.display()
+                ));
+            }
         }
     }
 
-    Ok(chain_loop(&ordered, initial_input, max_iterations, halt_field, halt_value, false))
+    Ok(chain_loop(
+        &ordered,
+        initial_input,
+        max_iterations,
+        halt_field,
+        halt_value,
+        false,
+    ))
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -848,9 +977,7 @@ pub struct ChainEgressValidationResult {
 /// this function executes real decision trees to detect runtime egress
 /// violations: paths that don't produce required outputs, or produce
 /// values with unexpected types.
-pub fn chain_validate_egress(
-    micrograms: &[Microgram],
-) -> ChainEgressValidationResult {
+pub fn chain_validate_egress(micrograms: &[Microgram]) -> ChainEgressValidationResult {
     let mut findings = Vec::new();
 
     for (i, mg) in micrograms.iter().enumerate() {
@@ -894,5 +1021,241 @@ pub fn chain_validate_egress(
         steps_checked: micrograms.len(),
         findings,
         total_findings,
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// TESTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::modules::decision_engine::{DecisionNode, DecisionTree, Value};
+    use std::collections::HashMap;
+    use std::path::PathBuf;
+
+    /// Construct a trivial microgram whose tree returns a single `{key: val}`
+    /// object. Useful for testing chain composition without the YAML round-trip.
+    fn mk_returner(name: &str, key: &str, val: Value) -> Microgram {
+        let mut ret_obj = HashMap::new();
+        ret_obj.insert(key.to_string(), val);
+        let mut nodes = HashMap::new();
+        nodes.insert(
+            "root".to_string(),
+            DecisionNode::Return {
+                value: Value::Object(ret_obj),
+            },
+        );
+        Microgram {
+            name: name.to_string(),
+            description: String::new(),
+            version: "0.1.0".to_string(),
+            tree: DecisionTree {
+                start: "root".to_string(),
+                nodes,
+            },
+            tests: Vec::new(),
+            interface: None,
+            primitive_signature: None,
+        }
+    }
+
+    /// Microgram whose tree branches on `x > 0` and always succeeds — used to
+    /// verify chain branching behaviour.
+    fn mk_positive_gate(name: &str) -> Microgram {
+        let mut nodes = HashMap::new();
+        nodes.insert(
+            "root".to_string(),
+            DecisionNode::Condition {
+                variable: "x".to_string(),
+                operator: crate::modules::decision_engine::Operator::Gt,
+                value: Some(Value::Int(0)),
+                true_next: "ok".to_string(),
+                false_next: "no".to_string(),
+            },
+        );
+        let mut ok_map = HashMap::new();
+        ok_map.insert("sign".to_string(), Value::String("positive".to_string()));
+        nodes.insert(
+            "ok".to_string(),
+            DecisionNode::Return {
+                value: Value::Object(ok_map),
+            },
+        );
+
+        let mut no_map = HashMap::new();
+        no_map.insert(
+            "sign".to_string(),
+            Value::String("non-positive".to_string()),
+        );
+        nodes.insert(
+            "no".to_string(),
+            DecisionNode::Return {
+                value: Value::Object(no_map),
+            },
+        );
+
+        Microgram {
+            name: name.to_string(),
+            description: String::new(),
+            version: "0.1.0".to_string(),
+            tree: DecisionTree {
+                start: "root".to_string(),
+                nodes,
+            },
+            tests: Vec::new(),
+            interface: None,
+            primitive_signature: None,
+        }
+    }
+
+    #[test]
+    fn chain_passes_output_as_next_input() {
+        // step1 returns { relay: 7 }; step2 returns { final: "done" }.
+        // Default chain replaces input with each step's output, so the final
+        // output should only contain step2's fields.
+        let step1 = mk_returner("step1", "relay", Value::Int(7));
+        let step2 = mk_returner("step2", "final", Value::String("done".into()));
+
+        let result = chain(&[step1, step2], HashMap::new(), false);
+        assert!(result.success);
+        assert_eq!(result.steps.len(), 2);
+        assert_eq!(
+            result.final_output.get("final"),
+            Some(&Value::String("done".into()))
+        );
+        // step1's `relay` field was dropped when step2's output replaced the context.
+        assert!(!result.final_output.contains_key("relay"));
+    }
+
+    #[test]
+    fn chain_accumulate_preserves_earlier_steps() {
+        // Same two returners, but accumulate mode must merge everything.
+        let step1 = mk_returner("step1", "relay", Value::Int(7));
+        let step2 = mk_returner("step2", "final", Value::String("done".into()));
+
+        let result = chain_accumulate(&[step1, step2], HashMap::new(), false);
+        assert!(result.success);
+        assert_eq!(result.final_output.get("relay"), Some(&Value::Int(7)));
+        assert_eq!(
+            result.final_output.get("final"),
+            Some(&Value::String("done".into()))
+        );
+    }
+
+    #[test]
+    fn chain_accumulate_strips_underscore_keys() {
+        // Accumulate mode filters `_prefixed` internal fields from final output.
+        let mg = mk_returner("leak", "_private", Value::Int(42));
+        let result = chain_accumulate(&[mg], HashMap::new(), false);
+        assert!(result.success);
+        assert!(!result.final_output.contains_key("_private"));
+    }
+
+    #[test]
+    fn chain_resilient_reports_partial_failure() {
+        // step1 returns a good value. step2 has no nodes that match its `start`,
+        // forcing an execution error. Resilient chain should record the failure
+        // and mark the chain as Partial.
+        let good = mk_returner("good", "ok", Value::Bool(true));
+        let mut broken_nodes = HashMap::new();
+        broken_nodes.insert(
+            "only".to_string(),
+            DecisionNode::Return { value: Value::Null },
+        );
+        let broken = Microgram {
+            name: "broken".to_string(),
+            description: String::new(),
+            version: "0.1.0".to_string(),
+            tree: DecisionTree {
+                start: "missing".to_string(), // references a non-existent node
+                nodes: broken_nodes,
+            },
+            tests: Vec::new(),
+            interface: None,
+            primitive_signature: None,
+        };
+
+        let result = chain_resilient(&[good, broken], HashMap::new(), false);
+        assert_eq!(result.status, ChainStatus::Partial);
+        assert_eq!(result.failed_steps, vec!["broken".to_string()]);
+        // Good step's output is preserved through the failure.
+        assert_eq!(result.final_output.get("ok"), Some(&Value::Bool(true)));
+    }
+
+    #[test]
+    fn chain_short_circuits_on_first_failure() {
+        // Non-resilient chain stops at the first error.
+        let mut broken_nodes = HashMap::new();
+        broken_nodes.insert(
+            "only".to_string(),
+            DecisionNode::Return { value: Value::Null },
+        );
+        let broken = Microgram {
+            name: "broken".to_string(),
+            description: String::new(),
+            version: "0.1.0".to_string(),
+            tree: DecisionTree {
+                start: "missing".to_string(),
+                nodes: broken_nodes,
+            },
+            tests: Vec::new(),
+            interface: None,
+            primitive_signature: None,
+        };
+        let after = mk_returner("after", "unreached", Value::Int(1));
+
+        let result = chain(&[broken, after], HashMap::new(), false);
+        assert!(!result.success);
+        // Only the broken step ran — the chain bailed before `after`.
+        assert_eq!(result.steps.len(), 1);
+    }
+
+    #[test]
+    fn chain_with_index_typed_reports_unknown_name() {
+        // Empty index — any resolve() must fail with UnknownName.
+        let idx = MicrogramIndex::from_vec(&PathBuf::from("/tmp"), Vec::new());
+        let err = chain_with_index_typed(&idx, &["ghost"], HashMap::new()).unwrap_err();
+        match err {
+            MicrogramError::UnknownName { name, .. } => assert_eq!(name, "ghost"),
+            other => panic!("expected UnknownName, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn chain_with_index_typed_runs_through() {
+        // Build an index from constructed micrograms — no filesystem involved.
+        let gate = mk_positive_gate("gate");
+        let idx = MicrogramIndex::from_vec(&PathBuf::from("/tmp"), vec![gate]);
+
+        let mut input = HashMap::new();
+        input.insert("x".to_string(), Value::Int(5));
+        let result = chain_with_index_typed(&idx, &["gate"], input).unwrap();
+
+        assert!(result.success);
+        assert_eq!(
+            result.final_output.get("sign"),
+            Some(&Value::String("positive".into()))
+        );
+    }
+
+    #[test]
+    fn apply_aliases_bridges_naming_gap() {
+        // Target microgram declares an alias `rr` → canonical `reporting_ratio`.
+        let mut aliases = HashMap::new();
+        aliases.insert("rr".to_string(), "reporting_ratio".to_string());
+        let mut interface_obj = super::super::MicrogramInterface::default();
+        interface_obj.aliases = aliases;
+        let mut mg = mk_returner("target", "output", Value::Null);
+        mg.interface = Some(interface_obj);
+
+        let mut input = HashMap::new();
+        input.insert("rr".to_string(), Value::Float(2.5));
+        apply_aliases(&mut input, &mg);
+        // Canonical name now holds the aliased value.
+        assert_eq!(input.get("reporting_ratio"), Some(&Value::Float(2.5)));
+        // Original alias still present — we only bridge, not rename.
+        assert_eq!(input.get("rr"), Some(&Value::Float(2.5)));
     }
 }

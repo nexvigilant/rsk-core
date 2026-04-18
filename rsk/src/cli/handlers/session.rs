@@ -13,13 +13,19 @@ pub fn handle_session(action: &SessionAction) {
                 .as_deref()
                 .map(Path::new)
                 .map(std::borrow::Cow::Borrowed)
-                .unwrap_or_else(|| std::borrow::Cow::Owned(session_tracker::default_state_path("default")));
+                .unwrap_or_else(|| {
+                    std::borrow::Cow::Owned(session_tracker::default_state_path("default"))
+                });
             match session_tracker::load_state(&state_path) {
                 Ok(state) => println!("{}", json!(state)),
                 Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
             }
         }
-        SessionAction::Track { skill, context, path } => {
+        SessionAction::Track {
+            skill,
+            context,
+            path,
+        } => {
             let state_path = path
                 .as_deref()
                 .map(std::path::PathBuf::from)
@@ -49,7 +55,11 @@ pub fn handle_session(action: &SessionAction) {
                 Err(e) => println!("{}", json!({"status": "error", "message": e.to_string()})),
             }
         }
-        SessionAction::Log { skill, message, path } => {
+        SessionAction::Log {
+            skill,
+            message,
+            path,
+        } => {
             let log_path = path
                 .as_deref()
                 .map(std::path::PathBuf::from)

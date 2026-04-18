@@ -457,7 +457,8 @@ impl KHSAI {
     /// Calculate KHS_AI from component scores (each 0-100)
     pub fn calculate(latency: u8, accuracy: u8, resource: u8, drift: u8) -> Self {
         let sum = u16::from(latency) + u16::from(accuracy) + u16::from(resource) + u16::from(drift);
-        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u16→u8: max average of 4 u8 values is 255, fits in u8
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+        // u16→u8: max average of 4 u8 values is 255, fits in u8
         let overall = (sum / 4) as u8;
         KHSAI {
             overall,

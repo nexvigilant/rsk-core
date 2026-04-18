@@ -1,6 +1,6 @@
-use crate::modules::decision_engine::{DecisionNode, Value};
+use super::chain::{ChainResult, chain_by_names};
 use super::{Microgram, load_all};
-use super::chain::{chain_by_names, ChainResult};
+use crate::modules::decision_engine::{DecisionNode, Value};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::Path;
@@ -11,7 +11,7 @@ type ProducerEntry = (String, Vec<String>, Vec<String>, HashMap<String, String>)
 /// Goal for composition: what output fields are required
 #[derive(Debug, Clone)]
 pub struct CompositionGoal {
-    pub required_outputs: Vec<String>,   // field names that must exist in final output
+    pub required_outputs: Vec<String>, // field names that must exist in final output
     pub initial_input: HashMap<String, Value>,
 }
 
@@ -19,16 +19,19 @@ pub struct CompositionGoal {
 #[derive(Debug, Clone, Serialize)]
 pub struct CompositionPlan {
     pub feasible: bool,
-    pub chain: Vec<String>,          // ordered microgram names
-    pub coverage: Vec<String>,       // which required outputs are covered
-    pub missing: Vec<String>,        // which required outputs can't be produced
+    pub chain: Vec<String>,    // ordered microgram names
+    pub coverage: Vec<String>, // which required outputs are covered
+    pub missing: Vec<String>,  // which required outputs can't be produced
 }
 
 /// Analyze which output fields a microgram can produce
 pub(crate) fn output_fields(mg: &Microgram) -> Vec<String> {
     let mut fields = Vec::new();
     for node in mg.tree.nodes.values() {
-        if let DecisionNode::Return { value: Value::Object(map) } = node {
+        if let DecisionNode::Return {
+            value: Value::Object(map),
+        } = node
+        {
             for key in map.keys() {
                 if !fields.contains(key) {
                     fields.push(key.clone());
@@ -53,10 +56,7 @@ pub(crate) fn input_variables(mg: &Microgram) -> Vec<String> {
 }
 
 /// Compose a chain from available micrograms to meet a goal
-pub fn compose(
-    dir: &Path,
-    goal: &CompositionGoal,
-) -> Result<CompositionPlan, String> {
+pub fn compose(dir: &Path, goal: &CompositionGoal) -> Result<CompositionPlan, String> {
     let all = load_all(dir)?;
 
     // Index: which microgram produces which output fields (+ aliases)
@@ -68,7 +68,12 @@ pub fn compose(
                 .as_ref()
                 .map(|iface| iface.aliases.clone())
                 .unwrap_or_default();
-            (mg.name.clone(), output_fields(mg), input_variables(mg), aliases)
+            (
+                mg.name.clone(),
+                output_fields(mg),
+                input_variables(mg),
+                aliases,
+            )
         })
         .collect();
 
@@ -100,9 +105,9 @@ pub fn compose(
                 continue;
             }
             // Does it produce something we still need?
-            let produces_needed = outputs.iter().any(|o| {
-                goal.required_outputs.contains(o) && !available.contains(o)
-            });
+            let produces_needed = outputs
+                .iter()
+                .any(|o| goal.required_outputs.contains(o) && !available.contains(o));
             // Or does it produce something that unlocks another microgram?
             let produces_useful = outputs.iter().any(|o| !available.contains(o));
 
@@ -179,7 +184,9 @@ pub fn bench_all(dir: &Path, iterations: usize) -> Result<Vec<BenchResult>, Stri
 
     for mg in &all {
         // Use first test case as benchmark input, or empty
-        let input = mg.tests.first()
+        let input = mg
+            .tests
+            .first()
             .map(|t| t.input.clone())
             .unwrap_or_default();
 
@@ -197,7 +204,11 @@ pub fn bench_all(dir: &Path, iterations: usize) -> Result<Vec<BenchResult>, Stri
         #[allow(clippy::as_conversions)] // u64→f64 for ratio
         let timing_sum = timings.iter().sum::<u64>() as f64;
         let avg_us = timing_sum / timing_count;
-        #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // f64→usize for index, value always non-negative
+        #[allow(
+            clippy::as_conversions,
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss
+        )] // f64→usize for index, value always non-negative
         let p95_idx = (timing_count * 0.95) as usize;
         let p95_us = timings[p95_idx.min(timings.len() - 1)];
 
@@ -231,10 +242,7 @@ pub struct AutoResult {
 }
 
 /// Auto-compose and execute: goal → plan → chain → run → verify
-pub fn auto_execute(
-    dir: &Path,
-    goal: &CompositionGoal,
-) -> Result<AutoResult, String> {
+pub fn auto_execute(dir: &Path, goal: &CompositionGoal) -> Result<AutoResult, String> {
     let start = std::time::Instant::now();
 
     // Step 1: Compose
@@ -255,7 +263,10 @@ pub fn auto_execute(
 
     // Step 3: Verify — all required outputs present in ANY step's output
     let verified = plan.coverage.iter().all(|field| {
-        chain_result.steps.iter().any(|step| step.output.contains_key(field))
+        chain_result
+            .steps
+            .iter()
+            .any(|step| step.output.contains_key(field))
     });
 
     let duration_us = u64::try_from(start.elapsed().as_micros()).unwrap_or(u64::MAX);
@@ -290,9 +301,10 @@ fn resolve_alias(
         return Some(output_name.to_string());
     }
     // 2. B declares alias: output_name → canonical input in B
-    if let Some(canonical) = b_aliases.get(output_name).filter(|c| {
-        b_inputs.iter().any(|i| i == *c)
-    }) {
+    if let Some(canonical) = b_aliases
+        .get(output_name)
+        .filter(|c| b_inputs.iter().any(|i| i == *c))
+    {
         return Some(canonical.clone());
     }
     // 3. A declares alias: find if any alias of output_name matches a B input

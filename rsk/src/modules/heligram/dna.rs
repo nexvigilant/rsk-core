@@ -23,10 +23,7 @@ pub fn encode(data: &[u8]) -> String {
 /// Decode DNA strand back to bytes. Strand length must be divisible by 4.
 pub fn decode(strand: &str) -> Result<Vec<u8>, String> {
     if !strand.len().is_multiple_of(4) {
-        return Err(format!(
-            "strand length {} not divisible by 4",
-            strand.len()
-        ));
+        return Err(format!("strand length {} not divisible by 4", strand.len()));
     }
     let chars: Vec<char> = strand.chars().collect();
     let mut bytes = Vec::with_capacity(chars.len() / 4);

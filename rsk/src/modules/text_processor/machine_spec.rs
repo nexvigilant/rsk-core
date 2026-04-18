@@ -113,8 +113,7 @@ pub fn parse_skill_md(content: &str) -> ParsingResult {
                 // Use regex to match optional numbering and extra text like "### 1. INPUTS (Extra)"
                 // Note: These section-specific patterns are compiled per-call but this is acceptable
                 // since the number of iterations is bounded (8 sections max).
-                let Ok(re) =
-                    Regex::new(&format!(r"(?im)^###\s*(?:\d+\.\s*)?{section_name}\b"))
+                let Ok(re) = Regex::new(&format!(r"(?im)^###\s*(?:\d+\.\s*)?{section_name}\b"))
                 else {
                     continue;
                 };
@@ -279,7 +278,11 @@ pub fn calculate_smst_score(
     score += f64::from(sections_present) * 9.375;
 
     // Determine compliance level based on score
-    #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // f64→u8 for compliance level bucketing; score is bounded [0, 100]
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )] // f64→u8 for compliance level bucketing; score is bounded [0, 100]
     let compliance_level = match score as u8 {
         85..=100 => "diamond",
         70..=84 => "platinum",

@@ -8,8 +8,8 @@ use clap::{Parser, Subcommand};
 mod cli;
 
 use cli::{
-    AntiPatternAction, ChainAction, CompressAction, EpistemicAction, ExecAction, GenerateAction,
-    GraphAction, GuardianAction, HeligramAction, HooksAction, JsonAction, MicrogramAction, RouteAction,
+    AntiPatternAction, CompressAction, EpistemicAction, ExecAction, GenerateAction, GraphAction,
+    GuardianAction, HeligramAction, HooksAction, JsonAction, MicrogramAction, RouteAction,
     SessionAction, Sha256Action, SkillsAction, StateAction, StatsAction, TaxonomyAction,
     TelemetryAction, TextAction, TovAction, YamlAction,
 };
@@ -173,11 +173,6 @@ enum Commands {
         #[command(subcommand)]
         action: SkillsAction,
     },
-    /// Skill chain validation and execution
-    Chain {
-        #[command(subcommand)]
-        action: ChainAction,
-    },
     /// Anti-pattern detection and registration
     #[command(name = "anti-pattern")]
     AntiPattern {
@@ -239,6 +234,21 @@ enum Commands {
         #[command(subcommand)]
         action: StatsAction,
     },
+    /// Record a verdict-chain execution as a learning pattern (JSON to stdout)
+    Train {
+        /// Chain name or hash to train from
+        #[arg(long)]
+        from_chain: String,
+        /// Input JSON the chain was run with
+        #[arg(long)]
+        input: Option<String>,
+        /// Verdict the chain produced
+        #[arg(long)]
+        verdict: Option<String>,
+        /// Ground-truth outcome: success, failure, partial, unknown
+        #[arg(long, default_value = "unknown")]
+        outcome: String,
+    },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -299,7 +309,6 @@ fn main() {
         Commands::Route { action } => cli::handlers::route::handle_route(&action),
         Commands::State { action } => cli::handlers::state::handle_state(&action),
         Commands::Skills { action } => cli::handlers::skills::handle_skills(&action),
-        Commands::Chain { action } => cli::handlers::skills::handle_chain(&action),
         Commands::AntiPattern { action } => {
             cli::handlers::anti_pattern::handle_anti_pattern(&action)
         }
@@ -333,6 +342,17 @@ fn main() {
         Commands::Session { action } => cli::handlers::session::handle_session(&action),
         Commands::Epistemic { action } => cli::handlers::epistemic::handle_epistemic(&action),
         Commands::Stats { action } => cli::handlers::stats::handle_stats(&action),
+        Commands::Train {
+            from_chain,
+            input,
+            verdict,
+            outcome,
+        } => cli::handlers::train::handle_train(
+            &from_chain,
+            input.as_deref(),
+            verdict.as_deref(),
+            &outcome,
+        ),
 
         // Forge (feature-gated)
         #[cfg(feature = "forge")]

@@ -2,9 +2,33 @@
 //!
 //! Deterministic execution engine for logic trees defined in YAML/JSON.
 
+use dashmap::DashMap;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::{Arc, OnceLock};
+
+/// Process-wide compiled regex cache for `Operator::Matches`.
+///
+/// Micrograms commonly reuse a handful of patterns across many evaluations. Compiling
+/// them once and sharing across tree executions removes the per-call allocation that
+/// would otherwise dominate regex-heavy chains. Compilation failures are not cached
+/// (we simply fall through to `false`), so a bad pattern doesn't poison the slot.
+fn regex_cache() -> &'static DashMap<String, Arc<Regex>> {
+    static CACHE: OnceLock<DashMap<String, Arc<Regex>>> = OnceLock::new();
+    CACHE.get_or_init(DashMap::new)
+}
+
+fn cached_regex(pattern: &str) -> Option<Arc<Regex>> {
+    let cache = regex_cache();
+    if let Some(r) = cache.get(pattern) {
+        return Some(Arc::clone(r.value()));
+    }
+    let compiled = Regex::new(pattern).ok()?;
+    let arc = Arc::new(compiled);
+    cache.insert(pattern.to_string(), Arc::clone(&arc));
+    Some(arc)
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -53,7 +77,8 @@ impl Value {
 
     pub fn as_f64(&self) -> Option<f64> {
         match self {
-            #[allow(clippy::as_conversions)] // i64→f64 precision loss acceptable for numeric conversion
+            #[allow(clippy::as_conversions)]
+            // i64→f64 precision loss acceptable for numeric conversion
             Value::Int(i) => Some(*i as f64),
             Value::Float(f) => Some(*f),
             Value::String(s) => s.parse::<f64>().ok(),
@@ -121,8 +146,18 @@ impl DecisionContext {
     }
 }
 
-pub struct DecisionEngine {
-    tree: DecisionTree,
+/// Executor over a [`DecisionTree`].
+///
+/// Holds the tree by `Cow<'a, _>` so callers can either:
+/// * own the tree (`DecisionEngine::new(tree)`) — preserves the legacy API, or
+/// * borrow it (`DecisionEngine::borrowed(&tree)`) — skips the clone in hot paths
+///   like [`super::microgram::Microgram::run`], which invokes the engine once per
+///   run across 1.5K+ micrograms.
+///
+/// Execution is read-only over the tree, so the borrow variant is always safe
+/// as long as the caller keeps the tree alive for the duration of `execute`.
+pub struct DecisionEngine<'a> {
+    tree: std::borrow::Cow<'a, DecisionTree>,
 }
 
 pub fn load_tree(yaml: &str) -> anyhow::Result<DecisionTree> {
@@ -166,9 +201,22 @@ pub enum ExecutionResult {
     Error(String),
 }
 
-impl DecisionEngine {
+impl DecisionEngine<'static> {
+    /// Construct an engine that owns its tree. Back-compat for existing callers;
+    /// prefer [`DecisionEngine::borrowed`] inside hot loops.
     pub fn new(tree: DecisionTree) -> Self {
-        Self { tree }
+        Self {
+            tree: std::borrow::Cow::Owned(tree),
+        }
+    }
+}
+
+impl<'a> DecisionEngine<'a> {
+    /// Construct an engine that borrows its tree — no clone, no allocation.
+    pub fn borrowed(tree: &'a DecisionTree) -> Self {
+        Self {
+            tree: std::borrow::Cow::Borrowed(tree),
+        }
     }
 
     pub fn execute(&self, ctx: &mut DecisionContext) -> ExecutionResult {
@@ -196,7 +244,8 @@ impl DecisionEngine {
                 } => {
                     let var_val = ctx.get(variable).unwrap_or(&Value::Null);
                     let resolved_value = value.as_ref().map(|v| self.interpolate_value(v, ctx));
-                    let result = self.evaluate_condition(var_val, operator, resolved_value.as_ref());
+                    let result =
+                        self.evaluate_condition(var_val, operator, resolved_value.as_ref());
                     current_id = if result {
                         true_next.clone()
                     } else {
@@ -254,18 +303,37 @@ impl DecisionEngine {
     pub fn interpolate_value(&self, val: &Value, ctx: &DecisionContext) -> Value {
         match val {
             Value::String(s) if s.contains("{{") => {
-                let mut result = s.clone();
-                while let Some(start) = result.find("{{") {
-                    if let Some(end) = result[start..].find("}}") {
-                        let full_tag = &result[start..start + end + 2];
-                        let key_path = result[start + 2..start + end].trim();
-                        let replacement = self.resolve_path(key_path, ctx).as_string();
-                        result = result.replace(full_tag, &replacement);
+                // Single forward pass: scan from an advancing cursor, append
+                // unresolved prefix + resolved replacement + continue after
+                // the tag. Avoids:
+                // 1. Quadratic cost of `result.replace(full_tag, ...)` re-scanning
+                //    the whole string on each tag.
+                // 2. Infinite loop when a replacement value itself contains `{{`
+                //    (prior version would re-find the injected brace).
+                let mut out = String::with_capacity(s.len());
+                let bytes = s.as_str();
+                let mut cursor = 0;
+                while cursor < bytes.len() {
+                    let tail = &bytes[cursor..];
+                    if let Some(rel_start) = tail.find("{{") {
+                        out.push_str(&tail[..rel_start]);
+                        let after_open = cursor + rel_start + 2;
+                        if let Some(rel_end) = bytes[after_open..].find("}}") {
+                            let key_path = bytes[after_open..after_open + rel_end].trim();
+                            let replacement = self.resolve_path(key_path, ctx).as_string();
+                            out.push_str(&replacement);
+                            cursor = after_open + rel_end + 2;
+                        } else {
+                            // Unterminated `{{` — emit rest verbatim and stop.
+                            out.push_str(&tail[rel_start..]);
+                            break;
+                        }
                     } else {
+                        out.push_str(tail);
                         break;
                     }
                 }
-                Value::String(result)
+                Value::String(out)
             }
             Value::Object(map) => {
                 let mut new_map = HashMap::new();
@@ -416,30 +484,22 @@ impl DecisionEngine {
             }
             Operator::IsNull => matches!(actual, Value::Null),
             Operator::IsNotNull => !matches!(actual, Value::Null),
-            Operator::Gt => {
-                match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
-                    (Some(a), Some(t)) => a > t,
-                    _ => false,
-                }
-            }
-            Operator::Gte => {
-                match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
-                    (Some(a), Some(t)) => a >= t,
-                    _ => false,
-                }
-            }
-            Operator::Lt => {
-                match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
-                    (Some(a), Some(t)) => a < t,
-                    _ => false,
-                }
-            }
-            Operator::Lte => {
-                match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
-                    (Some(a), Some(t)) => a <= t,
-                    _ => false,
-                }
-            }
+            Operator::Gt => match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
+                (Some(a), Some(t)) => a > t,
+                _ => false,
+            },
+            Operator::Gte => match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
+                (Some(a), Some(t)) => a >= t,
+                _ => false,
+            },
+            Operator::Lt => match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
+                (Some(a), Some(t)) => a < t,
+                _ => false,
+            },
+            Operator::Lte => match (actual.as_f64(), target.and_then(|v| v.as_f64())) {
+                (Some(a), Some(t)) => a <= t,
+                _ => false,
+            },
             Operator::Contains => {
                 if let (Value::String(s), Some(Value::String(t))) = (actual, target) {
                     s.contains(t)
@@ -460,11 +520,7 @@ impl DecisionEngine {
             }
             Operator::Matches => {
                 if let (Value::String(s), Some(Value::String(t))) = (actual, target) {
-                    if let Ok(re) = Regex::new(t) {
-                        re.is_match(s)
-                    } else {
-                        false
-                    }
+                    cached_regex(t).is_some_and(|re| re.is_match(s))
                 } else {
                     false
                 }
@@ -511,5 +567,160 @@ nodes:
                 .to_string()
                 .contains("uses forbidden LlmFallback")
         );
+    }
+
+    #[test]
+    fn interpolation_does_not_reenter_replacements() {
+        // Regression: the previous implementation re-scanned the whole result
+        // after each `replace`, so a replacement value that itself contained
+        // `{{` would be mistaken for a fresh tag and looked up again — worst
+        // case an infinite loop, otherwise unintended double-resolution.
+        let mut ctx = DecisionContext::new();
+        ctx.set("a", Value::String("{{b}}".to_string()));
+        ctx.set("b", Value::String("final".to_string()));
+
+        let empty_tree = DecisionTree {
+            start: String::new(),
+            nodes: HashMap::new(),
+        };
+        let engine = DecisionEngine::borrowed(&empty_tree);
+
+        let template = Value::String("value={{a}}".to_string());
+        let out = engine.interpolate_value(&template, &ctx);
+        // Single-pass substitution: `{{a}}` → `{{b}}` (literal), not re-resolved.
+        assert_eq!(out, Value::String("value={{b}}".to_string()));
+    }
+
+    #[test]
+    fn interpolation_handles_unterminated_brace() {
+        let ctx = DecisionContext::new();
+        let empty_tree = DecisionTree {
+            start: String::new(),
+            nodes: HashMap::new(),
+        };
+        let engine = DecisionEngine::borrowed(&empty_tree);
+        let template = Value::String("prefix {{oops".to_string());
+        let out = engine.interpolate_value(&template, &ctx);
+        // Unterminated tag passes through verbatim instead of looping forever.
+        assert_eq!(out, Value::String("prefix {{oops".to_string()));
+    }
+
+    #[test]
+    fn borrowed_engine_does_not_clone_tree() {
+        // The API-level guarantee: constructing a borrowed engine takes a
+        // reference, so the caller keeps ownership and no clone occurs. Spot
+        // check that execution produces the same result as the owned API.
+        let tree = DecisionTree {
+            start: "root".to_string(),
+            nodes: {
+                let mut m = HashMap::new();
+                m.insert(
+                    "root".to_string(),
+                    DecisionNode::Return {
+                        value: Value::Bool(true),
+                    },
+                );
+                m
+            },
+        };
+        let engine = DecisionEngine::borrowed(&tree);
+        let mut ctx = DecisionContext::new();
+        match engine.execute(&mut ctx) {
+            ExecutionResult::Value(Value::Bool(true)) => {}
+            other => panic!("unexpected execution result: {other:?}"),
+        }
+        // tree is still usable after execute — proof that we borrowed it.
+        assert_eq!(tree.start, "root");
+    }
+
+    #[test]
+    fn regex_cache_reuses_compiled_regex() {
+        // First call compiles and stores; second call fetches the same Arc.
+        let a = cached_regex("^foo$").unwrap();
+        let b = cached_regex("^foo$").unwrap();
+        assert!(Arc::ptr_eq(&a, &b));
+        assert!(a.is_match("foo"));
+        assert!(!a.is_match("bar"));
+    }
+
+    #[test]
+    fn regex_cache_invalid_pattern_returns_none() {
+        // Invalid patterns must not be cached nor panic.
+        assert!(cached_regex("(unclosed").is_none());
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Property tests — exercise numeric-coercion semantics with random inputs
+    // ═══════════════════════════════════════════════════════════════════════
+
+    use proptest::prelude::*;
+
+    fn mk_condition_engine() -> DecisionEngine<'static> {
+        DecisionEngine::new(DecisionTree {
+            start: String::new(),
+            nodes: HashMap::new(),
+        })
+    }
+
+    proptest! {
+        /// `Eq` with numeric coercion must agree regardless of whether the
+        /// numbers are wrapped in Int, Float, or numeric-parseable String.
+        #[test]
+        fn eq_numeric_coercion_is_reflexive(n in any::<i32>()) {
+            let e = mk_condition_engine();
+            let n_i64 = i64::from(n);
+            let int_val = Value::Int(n_i64);
+            let float_val = Value::Float(n_i64 as f64);
+            let string_val = Value::String(n_i64.to_string());
+
+            prop_assert!(e.evaluate_condition(&int_val, &Operator::Eq, Some(&float_val)));
+            prop_assert!(e.evaluate_condition(&float_val, &Operator::Eq, Some(&int_val)));
+            prop_assert!(e.evaluate_condition(&int_val, &Operator::Eq, Some(&string_val)));
+        }
+
+        /// `Gt` is antisymmetric over distinct int values.
+        #[test]
+        fn gt_antisymmetric(a in any::<i32>(), b in any::<i32>()) {
+            prop_assume!(a != b);
+            let e = mk_condition_engine();
+            let av = Value::Int(i64::from(a));
+            let bv = Value::Int(i64::from(b));
+            let a_gt_b = e.evaluate_condition(&av, &Operator::Gt, Some(&bv));
+            let b_gt_a = e.evaluate_condition(&bv, &Operator::Gt, Some(&av));
+            prop_assert!(a_gt_b ^ b_gt_a, "exactly one of a>b, b>a must hold for distinct ints");
+        }
+
+        /// `Gte` over equal ints must be true regardless of wrapping type.
+        #[test]
+        fn gte_equal_values_int_vs_float(n in -10_000i32..10_000) {
+            let e = mk_condition_engine();
+            let int_val = Value::Int(i64::from(n));
+            let float_val = Value::Float(f64::from(n));
+            prop_assert!(e.evaluate_condition(&int_val, &Operator::Gte, Some(&float_val)));
+            prop_assert!(e.evaluate_condition(&float_val, &Operator::Gte, Some(&int_val)));
+        }
+
+        /// `Neq` must disagree with `Eq` on every input pair.
+        #[test]
+        fn eq_and_neq_are_opposites(a in any::<i32>(), b in any::<i32>()) {
+            let e = mk_condition_engine();
+            let av = Value::Int(i64::from(a));
+            let bv = Value::Int(i64::from(b));
+            let eq = e.evaluate_condition(&av, &Operator::Eq, Some(&bv));
+            let neq = e.evaluate_condition(&av, &Operator::Neq, Some(&bv));
+            prop_assert_eq!(eq, !neq);
+        }
+
+        /// `IsNull` is true iff the value is `Value::Null`.
+        #[test]
+        fn is_null_correct(s in "\\PC*") {
+            let e = mk_condition_engine();
+            let null = Value::Null;
+            let non_null = Value::String(s.clone());
+            prop_assert!(e.evaluate_condition(&null, &Operator::IsNull, None));
+            prop_assert!(!e.evaluate_condition(&non_null, &Operator::IsNull, None));
+            prop_assert!(!e.evaluate_condition(&null, &Operator::IsNotNull, None));
+            prop_assert!(e.evaluate_condition(&non_null, &Operator::IsNotNull, None));
+        }
     }
 }

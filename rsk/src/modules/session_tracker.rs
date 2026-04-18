@@ -303,14 +303,17 @@ fn uuid_v4() -> String {
         .as_nanos();
 
     // Mix time with constants to get pseudo-random values
-    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u128→u64 intentional truncation for pseudo-random mixing
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+    // u128→u64 intentional truncation for pseudo-random mixing
     let a = (time as u64) ^ 0xDEADBEEF_CAFEBABE;
-    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u128→u64 intentional truncation for pseudo-random mixing
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+    // u128→u64 intentional truncation for pseudo-random mixing
     let b = (time >> 64) as u64 ^ 0x12345678_ABCDEF01;
 
     // Build UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
     // where y is 8, 9, a, or b
-    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // u64→u32/u16 intentional truncation for UUID segment extraction
+    #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+    // u64→u32/u16 intentional truncation for UUID segment extraction
     let seg1 = (a >> 32) as u32;
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     let seg2 = ((a >> 16) & 0xFFFF) as u16;

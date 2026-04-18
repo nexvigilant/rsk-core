@@ -274,7 +274,11 @@ impl RoutingEngine {
 
         // Sort by score descending and take top N
         let mut recommendations: Vec<RoutingScore> = scores.into_iter().collect();
-        recommendations.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        recommendations.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         recommendations.truncate(request.limit);
 
         Ok(RoutingResult {

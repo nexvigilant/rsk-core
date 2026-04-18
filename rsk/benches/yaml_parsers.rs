@@ -11,7 +11,7 @@
 //! - Medium frontmatter (50 keys): < 50us
 //! - Complex frontmatter (nested): < 100us
 
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, black_box, criterion_group, criterion_main};
 
 /// Sample YAML content representing typical SKILL.md frontmatter
 const SMALL_FRONTMATTER: &str = r#"
@@ -127,8 +127,7 @@ fn bench_serde_yaml(c: &mut Criterion) {
     group.throughput(Throughput::Bytes(DEEPLY_NESTED.len() as u64));
     group.bench_function("deeply_nested", |b| {
         b.iter(|| {
-            let result: serde_json::Value =
-                serde_yaml::from_str(black_box(DEEPLY_NESTED)).unwrap();
+            let result: serde_json::Value = serde_yaml::from_str(black_box(DEEPLY_NESTED)).unwrap();
             black_box(result)
         })
     });
@@ -337,7 +336,7 @@ triggers:
                     if parts.len() >= 3 {
                         // 2. Parse YAML
                         let result: serde_json::Value = serde_yaml::from_str(parts[1]).unwrap();
-                        
+
                         // 3. String operation (simulated trigger match)
                         if let Some(triggers) = result.get("triggers").and_then(|t| t.as_array()) {
                             for t in triggers {

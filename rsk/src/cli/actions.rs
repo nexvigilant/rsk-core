@@ -402,40 +402,6 @@ pub enum StateAction {
 }
 
 #[derive(Subcommand)]
-pub enum ChainAction {
-    /// Validate a skill chain recursively
-    Validate {
-        /// Start skill name
-        name: String,
-        /// Maximum recursion depth
-        #[arg(short, long, default_value = "3")]
-        depth: usize,
-        /// Path to registry JSON
-        #[arg(short, long)]
-        registry: Option<String>,
-    },
-    /// Run an inline chain definition (e.g. "analyze -> transform -> output")
-    Run {
-        /// Inline chain definition using -> for sequential, | for parallel
-        chain: String,
-        /// Dry run mode — show what would execute without running
-        #[arg(long)]
-        dry_run: bool,
-        /// Fail fast — stop on first error (default: true)
-        #[arg(long, default_value = "true")]
-        fail_fast: bool,
-    },
-    /// Run a chain from a YAML definition file
-    RunYaml {
-        /// Path to chain YAML file
-        path: String,
-        /// Dry run mode
-        #[arg(long)]
-        dry_run: bool,
-    },
-}
-
-#[derive(Subcommand)]
 pub enum SkillsAction {
     /// Scan a directory for skills and update the registry
     Scan {
@@ -504,6 +470,19 @@ pub enum MicrogramAction {
         /// Path to micrograms directory
         #[arg(default_value = "micrograms")]
         dir: String,
+    },
+    /// Count ecosystem artifacts (micrograms, chains, tests) — source of truth
+    /// for stats that previously drifted between CLAUDE.md and README.
+    Count {
+        /// Micrograms directory
+        #[arg(short, long, default_value = "rsk/micrograms")]
+        micrograms: String,
+        /// Chains directory
+        #[arg(short, long, default_value = "rsk/chains")]
+        chains: String,
+        /// Heligrams directory (optional)
+        #[arg(long, default_value = "rsk/heligrams")]
+        heligrams: String,
     },
     /// Chain micrograms: output of N flows into input of N+1
     Chain {

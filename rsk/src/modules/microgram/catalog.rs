@@ -1,5 +1,5 @@
-use super::load_all;
 use super::compose::{input_variables, output_fields};
+use super::load_all;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::Path;
@@ -60,7 +60,9 @@ pub fn catalog(dir: &Path) -> Result<Catalog, String> {
         };
         let test_result = mg.test();
         let tests_pass = test_result.failed == 0;
-        if !tests_pass { all_pass = false; }
+        if !tests_pass {
+            all_pass = false;
+        }
         total_tests += test_result.total;
 
         let aliases = mg
@@ -89,16 +91,19 @@ pub fn catalog(dir: &Path) -> Result<Catalog, String> {
     let mut connections = Vec::new();
     for a in &entries {
         for b in &entries {
-            if a.name == b.name { continue; }
+            if a.name == b.name {
+                continue;
+            }
             let can_feed = a.outputs.iter().any(|o| {
                 // Direct match
                 if b.inputs.contains(o) {
                     return true;
                 }
                 // B declares alias: output name → canonical input in B
-                if b.aliases.get(o.as_str()).is_some_and(|canonical| {
-                    b.inputs.iter().any(|i| i == canonical)
-                }) {
+                if b.aliases
+                    .get(o.as_str())
+                    .is_some_and(|canonical| b.inputs.iter().any(|i| i == canonical))
+                {
                     return true;
                 }
                 // A declares alias: alias of output matches B's input
@@ -132,16 +137,16 @@ pub fn catalog(dir: &Path) -> Result<Catalog, String> {
 #[derive(Debug, Clone, Serialize)]
 pub struct AliasConflict {
     pub alias: String,
-    pub canonicals: Vec<(String, String)>,  // (microgram_name, canonical_name)
+    pub canonicals: Vec<(String, String)>, // (microgram_name, canonical_name)
 }
 
 /// A suggestion for a new alias based on output→input field name similarity
 #[derive(Debug, Clone, Serialize)]
 pub struct AliasSuggestion {
-    pub from: String,    // source microgram
-    pub to: String,      // target microgram
-    pub source: String,  // output field in source
-    pub target: String,  // input field in target
+    pub from: String,   // source microgram
+    pub to: String,     // target microgram
+    pub source: String, // output field in source
+    pub target: String, // input field in target
 }
 
 /// Result of alias validation across an ecosystem
@@ -149,7 +154,7 @@ pub struct AliasSuggestion {
 pub struct AliasCheckResult {
     pub total_aliases: usize,
     pub conflicts: Vec<AliasConflict>,
-    pub unused: Vec<(String, String, String)>,  // (microgram, alias, canonical)
+    pub unused: Vec<(String, String, String)>, // (microgram, alias, canonical)
     pub suggested: Vec<AliasSuggestion>,
 }
 
@@ -186,7 +191,9 @@ pub fn alias_check(dir: &Path) -> Result<AliasCheckResult, String> {
     let conflicts: Vec<AliasConflict> = alias_map
         .into_iter()
         .filter(|(_, entries)| {
-            if entries.len() <= 1 { return false; }
+            if entries.len() <= 1 {
+                return false;
+            }
             // Conflict if different canonical targets
             let first_canon = &entries[0].1;
             entries.iter().any(|(_, c)| c != first_canon)
@@ -197,17 +204,24 @@ pub fn alias_check(dir: &Path) -> Result<AliasCheckResult, String> {
     // Suggest aliases: find output→input pairs across micrograms that don't
     // directly match but are close (share a common substring)
     let mut suggested = Vec::new();
-    let entries: Vec<_> = all.iter().map(|mg| {
-        (mg.name.clone(), output_fields(mg), input_variables(mg))
-    }).collect();
+    let entries: Vec<_> = all
+        .iter()
+        .map(|mg| (mg.name.clone(), output_fields(mg), input_variables(mg)))
+        .collect();
 
     for (a_name, a_outputs, _) in &entries {
         for (b_name, _, b_inputs) in &entries {
-            if a_name == b_name { continue; }
+            if a_name == b_name {
+                continue;
+            }
             for out_field in a_outputs {
                 for in_field in b_inputs {
-                    if out_field == in_field { continue; } // already matches directly
-                    if !fields_likely_alias(out_field, in_field) { continue; }
+                    if out_field == in_field {
+                        continue;
+                    } // already matches directly
+                    if !fields_likely_alias(out_field, in_field) {
+                        continue;
+                    }
                     suggested.push(AliasSuggestion {
                         from: a_name.clone(),
                         to: b_name.clone(),
@@ -281,10 +295,12 @@ fn levenshtein(a: &str, b: &str) -> usize {
     for i in 1..=a_len {
         curr[0] = i;
         for j in 1..=b_len {
-            let cost = if a_bytes[i - 1] == b_bytes[j - 1] { 0 } else { 1 };
-            curr[j] = (prev[j] + 1)
-                .min(curr[j - 1] + 1)
-                .min(prev[j - 1] + cost);
+            let cost = if a_bytes[i - 1] == b_bytes[j - 1] {
+                0
+            } else {
+                1
+            };
+            curr[j] = (prev[j] + 1).min(curr[j - 1] + 1).min(prev[j - 1] + cost);
         }
         std::mem::swap(&mut prev, &mut curr);
     }

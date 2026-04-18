@@ -11,77 +11,75 @@
 
 pub mod catalog;
 pub mod chain;
+pub mod chain_registry;
 pub mod clone;
 pub mod compose;
 pub mod contracts;
 pub mod coverage;
 pub mod diff;
+pub mod error;
 pub mod evolve;
 pub mod generate;
 pub mod hygiene;
+pub mod index;
 pub mod interface;
 pub mod matrix;
 pub mod merge;
+pub mod patrol;
 pub mod pipe;
 pub mod shrink;
+pub mod signature_validator;
 pub mod snapshot;
 pub mod stress;
-pub mod patrol;
-pub mod chain_registry;
-pub mod signature_validator;
 
 // Re-export all public items from submodules
 pub use catalog::{
-    AliasCheckResult, AliasConflict, AliasSuggestion,
-    Catalog, CatalogEntry, alias_check, catalog,
+    AliasCheckResult, AliasConflict, AliasSuggestion, Catalog, CatalogEntry, alias_check, catalog,
 };
 pub use chain::{
-    BoundaryError, BoundaryErrorSeverity, ChainEgressValidationResult, EgressFinding, EnginePrimitive, FieldCollision,
-    ChainResult, ChainStatus, ChainValidationResult, LoopHalt, LoopResult,
+    BoundaryError, BoundaryErrorSeverity, ChainEgressValidationResult, ChainResult, ChainStatus,
+    ChainValidationResult, EgressFinding, EnginePrimitive, FieldCollision, LoopHalt, LoopResult,
     PathMismatch, PathSnapshotResult, ResilientChainResult, StepValidationError,
-    ValidatedChainResult,
-    chain, chain_accumulate, chain_accumulate_by_names,
-    chain_by_names, chain_loop, chain_loop_by_names,
-    chain_resilient, chain_resilient_by_names,
-    chain_validate_all, chain_validate_egress, chain_validated, chain_verify_paths,
+    ValidatedChainResult, chain, chain_accumulate, chain_accumulate_by_names,
+    chain_accumulate_with_index, chain_accumulate_with_index_typed, chain_by_names, chain_loop,
+    chain_loop_by_names, chain_resilient, chain_resilient_by_names, chain_resilient_with_index,
+    chain_resilient_with_index_typed, chain_validate_all, chain_validate_egress, chain_validated,
+    chain_verify_paths, chain_with_index, chain_with_index_typed,
 };
-pub use hygiene::{
-    BoundaryReport, FieldGap, HygieneReport,
-    check_chain_hygiene, check_chain_hygiene_by_names,
+pub use chain_registry::{
+    ChainDefinition, ChainTestCase, ChainTestResult, ProcessDefinition, ProcessTestCase,
+    ProcessTestResult, SingleChainTestResult, SingleProcessTestResult, load_chains, load_processes,
+    test_chains, test_processes,
 };
 pub use clone::clone_mutated;
 pub use compose::{
-    AutoResult, BenchResult, CompositionGoal, CompositionPlan,
-    auto_execute, bench_all, compose,
+    AutoResult, BenchResult, CompositionGoal, CompositionPlan, auto_execute, bench_all, compose,
 };
 pub use contracts::{ContractValidation, ContractViolation, validate_contracts};
 pub use coverage::{CoverageResult, coverage, coverage_all};
 pub use diff::{DiffResult, diff};
+pub use error::{MicrogramError, MicrogramResultT};
 pub use evolve::evolve_tests;
 pub use generate::MicrogramSpec;
+pub use hygiene::{
+    BoundaryReport, FieldGap, HygieneReport, check_chain_hygiene, check_chain_hygiene_by_names,
+};
+pub use index::{LoadError, MicrogramIndex};
 pub use matrix::{MatrixCell, MatrixResult, matrix};
 pub use merge::merge;
+pub use patrol::{
+    PatrolFinding, PatrolReport, PatrolVerdict, Ring, SymbolClass, run_patrol, run_patrol_default,
+};
 pub use pipe::{PipeEntry, PipeResult, filter_results, map_field, pipe, pipe_chain, reduce_count};
 pub use shrink::shrink;
 pub use snapshot::{Snapshot, snapshot_restore, snapshot_save};
 pub use stress::{
     BaselineEntry, RegressionEntry, RegressionResult, StressResult, ValidatedStressResult,
-    check_regression, load_baseline, save_baseline,
-    stress, stress_all, stress_typed, stress_all_typed, stress_validated,
-};
-pub use chain_registry::{
-    ChainDefinition, ChainTestCase, ChainTestResult, SingleChainTestResult,
-    ProcessDefinition, ProcessTestCase, ProcessTestResult, SingleProcessTestResult,
-    load_chains, load_processes, test_chains, test_processes,
-};
-pub use patrol::{
-    PatrolFinding, PatrolReport, PatrolVerdict, Ring, SymbolClass,
-    run_patrol, run_patrol_default,
+    check_regression, load_baseline, save_baseline, stress, stress_all, stress_all_typed,
+    stress_typed, stress_validated,
 };
 
-use crate::modules::decision_engine::{
-    DecisionContext, DecisionEngine, DecisionTree, Value,
-};
+use crate::modules::decision_engine::{DecisionContext, DecisionEngine, DecisionTree, Value};
 use interface::{infer_input_types, infer_output_types, input_variables_set, output_fields_set};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -392,19 +390,20 @@ impl Microgram {
         let success = result.success && egress_errors.is_empty();
 
         ValidatedResult {
-            result: MicrogramResult {
-                success,
-                ..result
-            },
+            result: MicrogramResult { success, ..result },
             ingress_errors: Vec::new(),
             egress_errors,
         }
     }
 
-    /// Execute with given input variables
+    /// Execute with given input variables.
+    ///
+    /// Uses a borrowed [`DecisionEngine`] — the tree is not cloned. For a
+    /// fleet of 1.5K+ micrograms each running multiple tests, this removes
+    /// one full `DecisionTree` clone per `run()` call.
     pub fn run(&self, input: HashMap<String, Value>) -> MicrogramResult {
         let start = std::time::Instant::now();
-        let engine = DecisionEngine::new(self.tree.clone());
+        let engine = DecisionEngine::borrowed(&self.tree);
         let mut ctx = DecisionContext {
             variables: input,
             execution_path: Vec::new(),
@@ -566,25 +565,70 @@ impl Microgram {
 }
 
 /// Load all micrograms from a directory, recursing into subdirectories.
+///
+/// Parse failures are reported to stderr and skipped (legacy behaviour). Callers
+/// that need to treat parse errors as fatal should use [`load_all_collect`].
 pub fn load_all(dir: &Path) -> Result<Vec<Microgram>, String> {
-    let mut micrograms = Vec::new();
-    load_all_recursive(dir, &mut micrograms)?;
-    micrograms.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(micrograms)
+    let (loaded, errors) = load_all_collect(dir)?;
+    for (path, message) in &errors {
+        eprintln!("Warning: skipping {}: {message}", path.display());
+    }
+    Ok(loaded)
 }
 
-fn load_all_recursive(dir: &Path, out: &mut Vec<Microgram>) -> Result<(), String> {
+/// Load all micrograms from a directory, returning both the successfully parsed
+/// set and a list of `(path, error_message)` pairs for files that failed.
+///
+/// This is the non-lossy alternative to [`load_all`]. It always returns a sorted
+/// `Vec` of micrograms plus a separate errors list, giving callers the choice
+/// between lenient and strict policies without losing diagnostic information.
+pub fn load_all_collect(
+    dir: &Path,
+) -> Result<(Vec<Microgram>, Vec<(std::path::PathBuf, String)>), String> {
+    let mut micrograms = Vec::new();
+    let mut errors = Vec::new();
+    load_all_recursive(dir, &mut micrograms, &mut errors)?;
+    micrograms.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok((micrograms, errors))
+}
+
+/// Strict loader: any parse failure is fatal.
+///
+/// Use in CI gates and batch commands where a corrupt microgram should fail
+/// the run loudly instead of silently shrinking the fleet. Returns a single
+/// summarising error string listing every failed path.
+pub fn load_all_strict(dir: &Path) -> Result<Vec<Microgram>, String> {
+    let (loaded, errors) = load_all_collect(dir)?;
+    if errors.is_empty() {
+        return Ok(loaded);
+    }
+    let summary = errors
+        .iter()
+        .map(|(p, e)| format!("  {}: {e}", p.display()))
+        .collect::<Vec<_>>()
+        .join("\n");
+    Err(format!(
+        "{} microgram file(s) failed to parse:\n{summary}",
+        errors.len()
+    ))
+}
+
+fn load_all_recursive(
+    dir: &Path,
+    out: &mut Vec<Microgram>,
+    errors: &mut Vec<(std::path::PathBuf, String)>,
+) -> Result<(), String> {
     let entries = std::fs::read_dir(dir).map_err(|e| format!("Cannot read dir: {e}"))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| format!("Dir entry error: {e}"))?;
         let path = entry.path();
         if path.is_dir() {
-            load_all_recursive(&path, out)?;
+            load_all_recursive(&path, out, errors)?;
         } else if path.extension().is_some_and(|e| e == "yaml" || e == "yml") {
             match Microgram::load(&path) {
                 Ok(mg) => out.push(mg),
-                Err(e) => eprintln!("Warning: skipping {}: {e}", path.display()),
+                Err(e) => errors.push((path, e)),
             }
         }
     }
@@ -817,8 +861,7 @@ tests:
         let mut input = HashMap::new();
         input.insert("value".to_string(), Value::Int(95));
 
-        let result =
-            chain_by_names(dir.path(), &["threshold-gate", "score-label"], input).unwrap();
+        let result = chain_by_names(dir.path(), &["threshold-gate", "score-label"], input).unwrap();
 
         assert!(result.success);
         assert_eq!(
@@ -879,8 +922,15 @@ tests:
         let mg = spec.build();
         let test_result = mg.test();
         // All auto-generated tests should pass (they're derived from the same logic)
-        assert_eq!(test_result.failed, 0, "Generated tests should all pass: {:?}", test_result.results);
-        assert!(test_result.total >= 3, "Should generate at least 3 boundary tests");
+        assert_eq!(
+            test_result.failed, 0,
+            "Generated tests should all pass: {:?}",
+            test_result.results
+        );
+        assert!(
+            test_result.total >= 3,
+            "Should generate at least 3 boundary tests"
+        );
     }
 
     #[test]
@@ -932,14 +982,17 @@ tests:
         let new_tests = evolve_tests(&mg);
 
         // Should suggest at least the boundary ±1 around threshold (0)
-        let has_minus_one = new_tests.iter().any(|t| {
-            t.input.get("n") == Some(&Value::Int(-1))
-        });
-        let has_plus_one = new_tests.iter().any(|t| {
-            t.input.get("n") == Some(&Value::Int(1))
-        });
+        let has_minus_one = new_tests
+            .iter()
+            .any(|t| t.input.get("n") == Some(&Value::Int(-1)));
+        let has_plus_one = new_tests
+            .iter()
+            .any(|t| t.input.get("n") == Some(&Value::Int(1)));
         // -1 is already covered by -3 test (same branch), but 1 might be new
-        assert!(has_minus_one || has_plus_one, "Should suggest boundary values near threshold");
+        assert!(
+            has_minus_one || has_plus_one,
+            "Should suggest boundary values near threshold"
+        );
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -983,7 +1036,10 @@ tests:
         };
 
         let plan = compose(dir.path(), &goal).unwrap();
-        assert!(!plan.feasible, "Should report infeasible for unreachable output");
+        assert!(
+            !plan.feasible,
+            "Should report infeasible for unreachable output"
+        );
         assert!(plan.missing.contains(&"nonexistent_field".to_string()));
     }
 
@@ -1025,7 +1081,11 @@ tests:
 
         for r in &results {
             assert_eq!(r.iterations, 100);
-            #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // f64→u64 for test assertion comparison
+            #[allow(
+                clippy::as_conversions,
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss
+            )] // f64→u64 for test assertion comparison
             let avg_as_u64 = r.avg_us as u64;
             assert!(r.min_us <= avg_as_u64 + 1);
             #[allow(clippy::as_conversions)] // u64→f64 for test assertion comparison
@@ -1064,7 +1124,11 @@ tests:
         let exec = result.execution.unwrap();
         assert!(exec.success);
         assert!(exec.final_output.contains_key("label"));
-        assert!(result.duration_us < 10_000, "Auto should complete in <10ms, took {}us", result.duration_us);
+        assert!(
+            result.duration_us < 10_000,
+            "Auto should complete in <10ms, took {}us",
+            result.duration_us
+        );
     }
 
     #[test]
@@ -1128,10 +1192,14 @@ tests:
         assert!(cat.total_tests > 0);
 
         // threshold-gate outputs "score" → score-label inputs "score"
-        let has_gate_to_label = cat.connections.iter().any(|(a, b)| {
-            a == "threshold-gate" && b == "score-label"
-        });
-        assert!(has_gate_to_label, "Should detect gate→label connection via 'score'");
+        let has_gate_to_label = cat
+            .connections
+            .iter()
+            .any(|(a, b)| a == "threshold-gate" && b == "score-label");
+        assert!(
+            has_gate_to_label,
+            "Should detect gate→label connection via 'score'"
+        );
     }
 
     #[test]
@@ -1144,8 +1212,10 @@ tests:
 
         // threshold-gate outputs: gate, score → score-label needs: score → connection exists
         // score-label outputs: label → threshold-gate needs: value → no connection
-        assert!(!cat.connections.iter().any(|(a, _)| a == "score-label"),
-            "score-label should not connect to anything (label doesn't feed value)");
+        assert!(
+            !cat.connections.iter().any(|(a, _)| a == "score-label"),
+            "score-label should not connect to anything (label doesn't feed value)"
+        );
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -1156,7 +1226,8 @@ tests:
     fn test_diff_same_inputs() {
         // is-positive and is-even both take "n"
         let a = Microgram::parse(IS_POSITIVE).unwrap();
-        let b = Microgram::parse(r#"
+        let b = Microgram::parse(
+            r#"
 name: is-even
 description: "Check if even"
 tree:
@@ -1182,7 +1253,9 @@ tests:
     expect: { even: true }
   - input: { n: 5 }
     expect: { even: false }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let d = diff(&a, &b);
         assert!(d.same_inputs, "Both take 'n'");
@@ -1206,7 +1279,8 @@ tests:
     fn test_diff_behavioral_overlap() {
         // Two micrograms with identical test input {n: 5}
         let a = Microgram::parse(IS_POSITIVE).unwrap();
-        let b = Microgram::parse(r#"
+        let b = Microgram::parse(
+            r#"
 name: is-big
 tree:
   start: check
@@ -1227,7 +1301,9 @@ tree:
 tests:
   - input: { n: 5 }
     expect: { big: false }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let d = diff(&a, &b);
         assert_eq!(d.test_overlap, 1, "Both test n=5");
@@ -1262,7 +1338,10 @@ tests:
         input2.insert("value".to_string(), Value::Int(90));
         let result2 = merged.run(input2);
         assert!(result2.success);
-        assert_eq!(result2.output.get("gate"), Some(&Value::String("PASS".to_string())));
+        assert_eq!(
+            result2.output.get("gate"),
+            Some(&Value::String("PASS".to_string()))
+        );
     }
 
     #[test]
@@ -1284,17 +1363,35 @@ tests:
     fn test_pipe_single() {
         let mg = Microgram::parse(IS_POSITIVE).unwrap();
         let inputs = vec![
-            { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(5)); m },
-            { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(-3)); m },
-            { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(0)); m },
+            {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(5));
+                m
+            },
+            {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(-3));
+                m
+            },
+            {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(0));
+                m
+            },
         ];
 
         let result = pipe(&mg, &inputs);
         assert_eq!(result.total, 3);
         assert_eq!(result.succeeded, 3);
         assert_eq!(result.failed, 0);
-        assert_eq!(result.results[0].output.get("positive"), Some(&Value::Bool(true)));
-        assert_eq!(result.results[1].output.get("positive"), Some(&Value::Bool(false)));
+        assert_eq!(
+            result.results[0].output.get("positive"),
+            Some(&Value::Bool(true))
+        );
+        assert_eq!(
+            result.results[1].output.get("positive"),
+            Some(&Value::Bool(false))
+        );
     }
 
     #[test]
@@ -1304,9 +1401,21 @@ tests:
         std::fs::write(dir.path().join("label.yaml"), SCORE_LABEL).unwrap();
 
         let inputs = vec![
-            { let mut m = HashMap::new(); m.insert("value".to_string(), Value::Int(90)); m },
-            { let mut m = HashMap::new(); m.insert("value".to_string(), Value::Int(50)); m },
-            { let mut m = HashMap::new(); m.insert("value".to_string(), Value::Int(100)); m },
+            {
+                let mut m = HashMap::new();
+                m.insert("value".to_string(), Value::Int(90));
+                m
+            },
+            {
+                let mut m = HashMap::new();
+                m.insert("value".to_string(), Value::Int(50));
+                m
+            },
+            {
+                let mut m = HashMap::new();
+                m.insert("value".to_string(), Value::Int(100));
+                m
+            },
         ];
 
         let result = pipe_chain(dir.path(), &["threshold-gate", "score-label"], &inputs).unwrap();
@@ -1314,11 +1423,20 @@ tests:
         assert_eq!(result.succeeded, 3);
 
         // value:90 → PASS(score:100) → HIGH
-        assert_eq!(result.results[0].output.get("label"), Some(&Value::String("HIGH".to_string())));
+        assert_eq!(
+            result.results[0].output.get("label"),
+            Some(&Value::String("HIGH".to_string()))
+        );
         // value:50 → FAIL(score:0) → LOW
-        assert_eq!(result.results[1].output.get("label"), Some(&Value::String("LOW".to_string())));
+        assert_eq!(
+            result.results[1].output.get("label"),
+            Some(&Value::String("LOW".to_string()))
+        );
         // value:100 → PASS(score:100) → HIGH
-        assert_eq!(result.results[2].output.get("label"), Some(&Value::String("HIGH".to_string())));
+        assert_eq!(
+            result.results[2].output.get("label"),
+            Some(&Value::String("HIGH".to_string()))
+        );
     }
 
     #[test]
@@ -1336,7 +1454,11 @@ tests:
         assert_eq!(result.total, 1000);
         assert_eq!(result.succeeded, 1000);
         // 1000 executions should complete in under 10ms
-        assert!(result.total_duration_us < 10_000, "1000 pipes took {}us", result.total_duration_us);
+        assert!(
+            result.total_duration_us < 10_000,
+            "1000 pipes took {}us",
+            result.total_duration_us
+        );
     }
 
     // ═════════════════════════════════════════════════════════════════════
@@ -1506,9 +1628,21 @@ tests:
     fn test_filter_results() {
         let mg = Microgram::parse(IS_POSITIVE).unwrap();
         let inputs = vec![
-            { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(5)); m },
-            { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(-3)); m },
-            { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(10)); m },
+            {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(5));
+                m
+            },
+            {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(-3));
+                m
+            },
+            {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(10));
+                m
+            },
         ];
         let pipe_result = pipe(&mg, &inputs);
 
@@ -1521,20 +1655,35 @@ tests:
     fn test_map_field() {
         let mg = Microgram::parse(IS_POSITIVE).unwrap();
         let inputs = vec![
-            { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(1)); m },
-            { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(-1)); m },
+            {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(1));
+                m
+            },
+            {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(-1));
+                m
+            },
         ];
         let pipe_result = pipe(&mg, &inputs);
 
         let values = map_field(&pipe_result, "positive");
-        assert_eq!(values, vec![Some(Value::Bool(true)), Some(Value::Bool(false))]);
+        assert_eq!(
+            values,
+            vec![Some(Value::Bool(true)), Some(Value::Bool(false))]
+        );
     }
 
     #[test]
     fn test_reduce_count() {
         let mg = Microgram::parse(IS_POSITIVE).unwrap();
         let inputs: Vec<HashMap<String, Value>> = (-3..=3)
-            .map(|i| { let mut m = HashMap::new(); m.insert("n".to_string(), Value::Int(i)); m })
+            .map(|i| {
+                let mut m = HashMap::new();
+                m.insert("n".to_string(), Value::Int(i));
+                m
+            })
             .collect();
         let pipe_result = pipe(&mg, &inputs);
 
@@ -1559,10 +1708,18 @@ tests:
         assert_eq!(result.cells.len(), 4);
 
         // Self-matches: each microgram should match its own tests
-        let self_gate = result.cells.iter().find(|c| c.runner == "threshold-gate" && c.test_from == "threshold-gate").unwrap();
+        let self_gate = result
+            .cells
+            .iter()
+            .find(|c| c.runner == "threshold-gate" && c.test_from == "threshold-gate")
+            .unwrap();
         assert_eq!(self_gate.matched, self_gate.total);
 
-        let self_pos = result.cells.iter().find(|c| c.runner == "is-positive" && c.test_from == "is-positive").unwrap();
+        let self_pos = result
+            .cells
+            .iter()
+            .find(|c| c.runner == "is-positive" && c.test_from == "is-positive")
+            .unwrap();
         assert_eq!(self_pos.matched, self_pos.total);
     }
 
@@ -1643,13 +1800,19 @@ tests:
         let mut input = HashMap::new();
         input.insert("value".to_string(), Value::Int(90));
         let result = mutant.run(input);
-        assert_eq!(result.output.get("gate"), Some(&Value::String("FAIL".to_string())));
+        assert_eq!(
+            result.output.get("gate"),
+            Some(&Value::String("FAIL".to_string()))
+        );
 
         // value=100 should PASS with threshold 100
         let mut input2 = HashMap::new();
         input2.insert("value".to_string(), Value::Int(100));
         let result2 = mutant.run(input2);
-        assert_eq!(result2.output.get("gate"), Some(&Value::String("PASS".to_string())));
+        assert_eq!(
+            result2.output.get("gate"),
+            Some(&Value::String("PASS".to_string()))
+        );
 
         // Auto-generated tests should pass (regenerated from mutant logic)
         let test_result = mutant.test();
@@ -1839,8 +2002,8 @@ tests:
 
         // Input has BOTH raw_score and score. Alias should NOT overwrite score.
         let mut input = HashMap::new();
-        input.insert("raw_score".to_string(), Value::Int(25));  // alias → low
-        input.insert("score".to_string(), Value::Int(75));       // direct → high
+        input.insert("raw_score".to_string(), Value::Int(25)); // alias → low
+        input.insert("score".to_string(), Value::Int(75)); // direct → high
 
         let result = chain::chain(&[consumer], input, false);
         assert!(result.success);
@@ -1919,9 +2082,19 @@ tests:
         };
 
         let plan = compose::compose(dir.path(), &goal).unwrap();
-        assert!(plan.feasible, "Should compose a feasible chain via alias: {:?}", plan);
-        assert!(plan.chain.contains(&"source-mg".to_string()), "Chain should include source");
-        assert!(plan.chain.contains(&"consumer-mg".to_string()), "Chain should include consumer");
+        assert!(
+            plan.feasible,
+            "Should compose a feasible chain via alias: {:?}",
+            plan
+        );
+        assert!(
+            plan.chain.contains(&"source-mg".to_string()),
+            "Chain should include source"
+        );
+        assert!(
+            plan.chain.contains(&"consumer-mg".to_string()),
+            "Chain should include consumer"
+        );
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1937,14 +2110,17 @@ tests:
         input.insert("value".to_string(), Value::Int(90));
 
         let expected_paths = vec![
-            vec!["check".to_string(), "pass".to_string()],        // gate: 90 >= 80 → pass
-            vec!["check".to_string(), "high".to_string()],        // label: 100 >= 50 → high
+            vec!["check".to_string(), "pass".to_string()], // gate: 90 >= 80 → pass
+            vec!["check".to_string(), "high".to_string()], // label: 100 >= 50 → high
         ];
 
-        let (_result, snapshot) = chain::chain_verify_paths(
-            &[gate, label], input, &expected_paths, false,
+        let (_result, snapshot) =
+            chain::chain_verify_paths(&[gate, label], input, &expected_paths, false);
+        assert!(
+            snapshot.success,
+            "Path snapshot should match: {:?}",
+            snapshot.mismatches
         );
-        assert!(snapshot.success, "Path snapshot should match: {:?}", snapshot.mismatches);
         assert_eq!(snapshot.steps_checked, 2);
     }
 
@@ -1958,13 +2134,12 @@ tests:
 
         // Deliberately wrong path expectation
         let expected_paths = vec![
-            vec!["check".to_string(), "fail".to_string()],        // WRONG: actually passes
+            vec!["check".to_string(), "fail".to_string()], // WRONG: actually passes
             vec!["check".to_string(), "high".to_string()],
         ];
 
-        let (_result, snapshot) = chain::chain_verify_paths(
-            &[gate, label], input, &expected_paths, false,
-        );
+        let (_result, snapshot) =
+            chain::chain_verify_paths(&[gate, label], input, &expected_paths, false);
         assert!(!snapshot.success, "Should detect path mismatch");
         assert_eq!(snapshot.mismatches.len(), 1);
         assert_eq!(snapshot.mismatches[0].step_index, 0);
@@ -1978,7 +2153,8 @@ tests:
     #[test]
     fn test_validate_all_reports_every_step() {
         // Build a chain where multiple steps have required fields
-        let step_a = Microgram::parse(r#"
+        let step_a = Microgram::parse(
+            r#"
 name: step-a
 description: "Requires x"
 interface:
@@ -1999,9 +2175,12 @@ tree:
 tests:
   - input: { x: 1 }
     expect: { y: 1 }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
-        let step_b = Microgram::parse(r#"
+        let step_b = Microgram::parse(
+            r#"
 name: step-b
 description: "Requires z"
 interface:
@@ -2022,7 +2201,9 @@ tree:
 tests:
   - input: { z: "hello" }
     expect: { result: done }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         // Empty input — both steps should report errors
         let result = chain::chain_validate_all(&[step_a, step_b], &HashMap::new());
@@ -2050,7 +2231,8 @@ tests:
 
     #[test]
     fn test_hygiene_detects_field_gaps() {
-        let producer = Microgram::parse(r#"
+        let producer = Microgram::parse(
+            r#"
 name: producer
 description: "Outputs alpha and beta"
 interface:
@@ -2071,9 +2253,12 @@ tree:
 tests:
   - input: {}
     expect: { alpha: 1, beta: "x" }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
-        let consumer = Microgram::parse(r#"
+        let consumer = Microgram::parse(
+            r#"
 name: consumer
 description: "Needs alpha, beta, and gamma"
 interface:
@@ -2098,10 +2283,15 @@ tree:
 tests:
   - input: { alpha: 1, beta: "x", gamma: true }
     expect: { result: done }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let report = hygiene::check_chain_hygiene(&[producer, consumer], &HashMap::new());
-        assert!(!report.clean, "Should detect missing required field 'gamma'");
+        assert!(
+            !report.clean,
+            "Should detect missing required field 'gamma'"
+        );
         assert_eq!(report.required_gaps, 1);
         assert_eq!(report.total_gaps, 1);
         assert_eq!(report.boundaries[0].coverage, 2.0 / 3.0);
@@ -2110,7 +2300,8 @@ tests:
 
     #[test]
     fn test_hygiene_clean_when_all_fields_satisfied() {
-        let producer = Microgram::parse(r#"
+        let producer = Microgram::parse(
+            r#"
 name: producer
 description: "Outputs score"
 interface:
@@ -2127,9 +2318,12 @@ tree:
 tests:
   - input: {}
     expect: { score: 100 }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
-        let consumer = Microgram::parse(r#"
+        let consumer = Microgram::parse(
+            r#"
 name: consumer
 description: "Needs score"
 interface:
@@ -2150,7 +2344,9 @@ tree:
 tests:
   - input: { score: 100 }
     expect: { label: HIGH }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let report = hygiene::check_chain_hygiene(&[producer, consumer], &HashMap::new());
         assert!(report.clean, "All required fields satisfied");
@@ -2165,12 +2361,17 @@ tests:
     #[test]
     fn test_patrol_runs_on_codebase() {
         // Run patrol against the actual microgram module
-        let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        let project_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
         let report = patrol::run_patrol_default(project_root).unwrap();
 
         // Patrol should find symbols and classify them
         assert!(report.total_symbols > 0, "Should find pub functions");
-        assert_eq!(report.unclassified, 0, "All re-exported symbols should be classified");
+        assert_eq!(
+            report.unclassified, 0,
+            "All re-exported symbols should be classified"
+        );
 
         // Every finding should have a valid verdict
         for finding in &report.findings {
@@ -2183,7 +2384,9 @@ tests:
                     assert!(
                         finding.actual_ring < finding.expected_ring,
                         "Unwired finding {}: actual {:?} should be below expected {:?}",
-                        finding.symbol, finding.actual_ring, finding.expected_ring
+                        finding.symbol,
+                        finding.actual_ring,
+                        finding.expected_ring
                     );
                 }
                 patrol::PatrolVerdict::Unclassified => {
@@ -2199,7 +2402,10 @@ tests:
         }
 
         // No stale config entries should exist
-        assert_eq!(report.stale, 0, "patrol.yaml should not contain stale entries");
+        assert_eq!(
+            report.stale, 0,
+            "patrol.yaml should not contain stale entries"
+        );
     }
 
     // ───────────────────────────────────────────────────────────
@@ -2261,7 +2467,10 @@ tests:
         assert!(vr.is_valid());
         assert!(vr.ingress_errors.is_empty());
         assert!(vr.egress_errors.is_empty());
-        assert_eq!(vr.result.output.get("grade"), Some(&Value::String("PASS".to_string())));
+        assert_eq!(
+            vr.result.output.get("grade"),
+            Some(&Value::String("PASS".to_string()))
+        );
     }
 
     #[test]
@@ -2291,7 +2500,10 @@ tests:
     fn test_run_validated_wrong_type_input() {
         let mg = Microgram::parse(TYPED_MICROGRAM).unwrap();
         let mut input = HashMap::new();
-        input.insert("score".to_string(), Value::String("not_a_number".to_string()));
+        input.insert(
+            "score".to_string(),
+            Value::String("not_a_number".to_string()),
+        );
 
         let vr = mg.run_validated(input);
         assert!(!vr.is_valid());

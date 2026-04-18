@@ -12,9 +12,9 @@
 //! - 100 modules: < 500us
 //! - 1000 modules: < 5ms
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use rsk::{EffortSize, ExecutionModule, build_execution_plan};
 use std::hint::black_box;
-use rsk::{build_execution_plan, ExecutionModule, EffortSize};
 
 /// Generate a linear chain of modules (worst case for topological sort)
 fn generate_linear_chain(n: usize) -> Vec<ExecutionModule> {
@@ -88,23 +88,15 @@ fn bench_build_plan(c: &mut Criterion) {
     for size in [10, 100, 1000].iter() {
         group.throughput(Throughput::Elements(*size as u64));
 
-        group.bench_with_input(
-            BenchmarkId::new("linear_chain", size),
-            size,
-            |b, &size| {
-                let modules = generate_linear_chain(size);
-                b.iter(|| build_execution_plan(black_box(modules.clone())))
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("linear_chain", size), size, |b, &size| {
+            let modules = generate_linear_chain(size);
+            b.iter(|| build_execution_plan(black_box(modules.clone())))
+        });
 
-        group.bench_with_input(
-            BenchmarkId::new("wide_parallel", size),
-            size,
-            |b, &size| {
-                let modules = generate_wide_parallel(size);
-                b.iter(|| build_execution_plan(black_box(modules.clone())))
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("wide_parallel", size), size, |b, &size| {
+            let modules = generate_wide_parallel(size);
+            b.iter(|| build_execution_plan(black_box(modules.clone())))
+        });
     }
 
     group.finish();

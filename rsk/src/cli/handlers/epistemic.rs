@@ -14,7 +14,10 @@ pub fn handle_epistemic(action: &EpistemicAction) {
         EpistemicAction::Batch { claims } => {
             let claim_list: Vec<&str> = claims.split("|||").collect();
             let results = epistemic::validate_claims(&claim_list);
-            println!("{}", json!({"status": "success", "results": results, "total": results.len()}));
+            println!(
+                "{}",
+                json!({"status": "success", "results": results, "total": results.len()})
+            );
         }
         EpistemicAction::Suggestions => {
             let suggestions = epistemic::get_hedging_suggestions();

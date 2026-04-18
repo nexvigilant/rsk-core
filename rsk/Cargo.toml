@@ -5,7 +5,7 @@ edition = "2024"
 authors = ["Matthew Campion"]
 description = "Microgram decision tree runtime and chain composition engine"
 readme = "README.md"
-license = "MIT"
+license = "LicenseRef-NexVigilant-Proprietary-1.0"
 keywords = ["microgram", "decision-tree", "pharmacovigilance", "mcp", "signal-detection"]
 categories = ["algorithms", "command-line-utilities"]
 
@@ -13,34 +13,27 @@ categories = ["algorithms", "command-line-utilities"]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_yaml = "0.9"
-# Alternative YAML parser (MIT/Apache-2.0, actively maintained)
-yaml-rust2 = { version = "0.10", optional = true }
 toml = "0.9"
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 sha2 = "0.10"
 # Type-level arithmetic for ToV compile-time constraint verification
 typenum = "1.17"
+# syn/quote used only by the `rsk_dev` binary's Rust source inspection
 syn = { workspace = true }
 quote = { workspace = true }
-proc-macro2 = { workspace = true }
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6.0"
-polars = { workspace = true }
 clap = { version = "4.5.54", features = ["derive"] }
 regex = "1.12.2"
 uuid = { version = "1.0", features = ["v4"] }
 dashmap = { workspace = true }
 tokio = { version = "1.0", features = ["full"] }
 walkdir = "2.5"
-rayon = "1.10"
 
-# Scientific Computing
+# Scientific Computing — only libraries that are actually referenced
 statrs = { workspace = true }
 uom = { workspace = true }
-faer = { workspace = true }
-scilib = { workspace = true }
-num = { workspace = true }
 
 # Compression
 flate2 = "1.0"
@@ -69,6 +62,7 @@ tempfile = "3.15"
 criterion = { version = "0.6", features = ["html_reports"] }
 assert_cmd = "2.0"
 predicates = "3.1"
+proptest = "1.5"
 
 [[bench]]
 name = "execution_engine"

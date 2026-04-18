@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 authors = ["Matthew Campion"]
 description = "MCP server exposing RSK microgram runtime and computation kernel to AI agents"
-license = "MIT"
+license = "LicenseRef-NexVigilant-Proprietary-1.0"
 rust-version = "1.85"
 
 [[bin]]

@@ -42,7 +42,7 @@ pub enum SymptomType {
     Behavioral, // Process patterns
     Textual,    // Keyword matching
     #[default]
-    Metric,     // Numeric thresholds
+    Metric, // Numeric thresholds
 }
 
 /// Severity of detected anti-pattern
@@ -254,9 +254,7 @@ fn match_structural_symptom(
         Some(SymptomMatch {
             description: symptom.description.clone(),
             pattern: symptom.pattern.clone(),
-            evidence: format!(
-                "{metric}={value} ({direction} threshold {threshold})"
-            ),
+            evidence: format!("{metric}={value} ({direction} threshold {threshold})"),
             confidence,
         })
     } else {
@@ -662,7 +660,10 @@ impl PatternRegistry {
     /// Create a new registry with built-in patterns
     pub fn new() -> Self {
         Self {
-            patterns: vec![create_god_object_pattern(), create_paper_constructs_pattern()],
+            patterns: vec![
+                create_god_object_pattern(),
+                create_paper_constructs_pattern(),
+            ],
             version: "1.0.0".to_string(),
             total_detections: 0,
         }
@@ -671,8 +672,7 @@ impl PatternRegistry {
     /// Load from a JSON file, or create default if missing
     pub fn load_or_create(path: &std::path::Path) -> Result<Self, String> {
         if path.exists() {
-            let content =
-                std::fs::read_to_string(path).map_err(|e| format!("Read error: {e}"))?;
+            let content = std::fs::read_to_string(path).map_err(|e| format!("Read error: {e}"))?;
             serde_json::from_str(&content).map_err(|e| format!("Parse error: {e}"))
         } else {
             let registry = Self::new();

@@ -14,9 +14,7 @@ pub mod dna;
 pub mod forge;
 pub mod promote;
 
-use crate::modules::decision_engine::{
-    DecisionContext, DecisionEngine, DecisionTree, Value,
-};
+use crate::modules::decision_engine::{DecisionContext, DecisionEngine, DecisionTree, Value};
 use crate::modules::microgram::{MicrogramInterface, PrimitiveSignature};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -236,11 +234,11 @@ impl Heligram {
         for rule in &self.resolution.rules {
             if let Some(ref when) = rule.when {
                 let matches = when.iter().all(|(key, expected)| {
-                    combined.get(key).is_some_and(|actual| values_match(actual, expected))
+                    combined
+                        .get(key)
+                        .is_some_and(|actual| values_match(actual, expected))
                 });
-                if matches
-                    && let Some(ref emit) = rule.emit
-                {
+                if matches && let Some(ref emit) = rule.emit {
                     let mut output = emit.clone();
                     // Template substitution: replace {{field}} with actual values
                     resolve_templates(&mut output, &combined);
@@ -263,7 +261,10 @@ impl Heligram {
 
         // No rule matched — produce a minimal output
         let mut output = HashMap::new();
-        output.insert("agreement".to_string(), Value::Bool(self.check_agreement(sense, antisense)));
+        output.insert(
+            "agreement".to_string(),
+            Value::Bool(self.check_agreement(sense, antisense)),
+        );
         output.insert("_unresolved".to_string(), Value::Bool(true));
         output
     }
@@ -285,9 +286,8 @@ impl Heligram {
                     Some(actual) if values_match(actual, expected) => {}
                     Some(actual) => {
                         all_match = false;
-                        mismatch_details.push(format!(
-                            "{key}: expected {expected:?}, got {actual:?}"
-                        ));
+                        mismatch_details
+                            .push(format!("{key}: expected {expected:?}, got {actual:?}"));
                     }
                     None => {
                         all_match = false;
@@ -375,7 +375,8 @@ fn values_match(actual: &Value, expected: &Value) -> bool {
 
 /// Replace `{{field_name}}` in string values with actual values from combined output
 fn resolve_templates(output: &mut HashMap<String, Value>, source: &HashMap<String, Value>) {
-    let snapshot: Vec<(String, Value)> = output.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
+    let snapshot: Vec<(String, Value)> =
+        output.iter().map(|(k, v)| (k.clone(), v.clone())).collect();
     for (key, val) in snapshot {
         if let Value::String(s) = &val
             && s.contains("{{")
@@ -425,7 +426,9 @@ pub fn chain(
     let mut total_us = 0u64;
 
     for name in names {
-        let h = all.iter().find(|h| h.name == *name)
+        let h = all
+            .iter()
+            .find(|h| h.name == *name)
             .ok_or_else(|| format!("Heligram '{}' not found in {}", name, dir.display()))?;
 
         let result = h.run(accumulated.clone());
@@ -444,7 +447,10 @@ pub fn chain(
             accumulated.insert(format!("{}_sense_{k}", name.replace('-', "_")), v.clone());
         }
         for (k, v) in &result.antisense_output {
-            accumulated.insert(format!("{}_antisense_{k}", name.replace('-', "_")), v.clone());
+            accumulated.insert(
+                format!("{}_antisense_{k}", name.replace('-', "_")),
+                v.clone(),
+            );
         }
 
         steps.push(result);
@@ -482,7 +488,10 @@ fn load_all_recursive(dir: &Path, out: &mut Vec<Heligram>) -> Result<(), String>
         let path = entry.path();
         if path.is_dir() {
             load_all_recursive(&path, out)?;
-        } else if path.extension().is_some_and(|ext| ext == "yaml" || ext == "yml") {
+        } else if path
+            .extension()
+            .is_some_and(|ext| ext == "yaml" || ext == "yml")
+        {
             match Heligram::load(&path) {
                 Ok(h) => out.push(h),
                 Err(e) => {
@@ -504,9 +513,10 @@ mod tests {
     #[test]
     fn test_parse_prr_signal_helix() {
         let yaml = std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("heligrams/prr-signal-helix.yaml")
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("heligrams/prr-signal-helix.yaml"),
         )
-            .expect("heligram YAML should exist");
+        .expect("heligram YAML should exist");
         let h = Heligram::parse(&yaml).expect("should parse");
         assert_eq!(h.name, "prr-signal-helix");
         assert_eq!(h.heligram_type, "heligram");
@@ -518,9 +528,10 @@ mod tests {
     #[test]
     fn test_run_confirmed_signal() {
         let yaml = std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("heligrams/prr-signal-helix.yaml")
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("heligrams/prr-signal-helix.yaml"),
         )
-            .expect("heligram YAML should exist");
+        .expect("heligram YAML should exist");
         let h = Heligram::parse(&yaml).expect("should parse");
 
         let mut input = HashMap::new();
@@ -544,9 +555,10 @@ mod tests {
     #[test]
     fn test_run_contested_signal() {
         let yaml = std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("heligrams/prr-signal-helix.yaml")
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("heligrams/prr-signal-helix.yaml"),
         )
-            .expect("heligram YAML should exist");
+        .expect("heligram YAML should exist");
         let h = Heligram::parse(&yaml).expect("should parse");
 
         let mut input = HashMap::new();
@@ -566,9 +578,10 @@ mod tests {
     #[test]
     fn test_run_no_signal() {
         let yaml = std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("heligrams/prr-signal-helix.yaml")
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("heligrams/prr-signal-helix.yaml"),
         )
-            .expect("heligram YAML should exist");
+        .expect("heligram YAML should exist");
         let h = Heligram::parse(&yaml).expect("should parse");
 
         let mut input = HashMap::new();
@@ -588,9 +601,10 @@ mod tests {
     #[test]
     fn test_null_safety() {
         let yaml = std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("heligrams/prr-signal-helix.yaml")
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("heligrams/prr-signal-helix.yaml"),
         )
-            .expect("heligram YAML should exist");
+        .expect("heligram YAML should exist");
         let h = Heligram::parse(&yaml).expect("should parse");
 
         let result = h.run(HashMap::new());
@@ -605,12 +619,21 @@ mod tests {
     #[test]
     fn test_self_tests() {
         let yaml = std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("heligrams/prr-signal-helix.yaml")
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("heligrams/prr-signal-helix.yaml"),
         )
-            .expect("heligram YAML should exist");
+        .expect("heligram YAML should exist");
         let h = Heligram::parse(&yaml).expect("should parse");
         let result = h.test();
-        assert_eq!(result.failed, 0, "All heligram self-tests should pass: {:?}",
-            result.results.iter().filter(|r| !r.passed).collect::<Vec<_>>());
+        assert_eq!(
+            result.failed,
+            0,
+            "All heligram self-tests should pass: {:?}",
+            result
+                .results
+                .iter()
+                .filter(|r| !r.passed)
+                .collect::<Vec<_>>()
+        );
     }
 }

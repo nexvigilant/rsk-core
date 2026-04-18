@@ -20,7 +20,10 @@ pub fn handle_hooks(action: &HooksAction) {
             let result = validate_file(&path, &policy);
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&result).unwrap_or_default()
+                );
             } else {
                 let formatted = format_validation_result(&result);
                 if !formatted.is_empty() {
@@ -35,7 +38,10 @@ pub fn handle_hooks(action: &HooksAction) {
             let result = check_staleness(&path, &policy);
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&result).unwrap_or_default()
+                );
             } else {
                 println!("{}", format_staleness_result(&result));
             }
@@ -54,7 +60,10 @@ pub fn handle_hooks(action: &HooksAction) {
             let result = scan_directory(&path, *depth, &policy);
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&result).unwrap_or_default()
+                );
             } else {
                 println!("{}", format_scan_result(&result));
             }
@@ -107,7 +116,10 @@ pub fn handle_hooks(action: &HooksAction) {
             let check = BlindspotCheck::for_file(&path, &policy);
 
             if format == "json" {
-                println!("{}", serde_json::to_string_pretty(&check).unwrap_or_default());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&check).unwrap_or_default()
+                );
             } else {
                 println!("{}", check.message);
                 println!("\nChecklist:");

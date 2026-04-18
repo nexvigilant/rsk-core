@@ -33,17 +33,18 @@ pub mod skill_metadata;
 
 // Re-export generic text utilities
 pub use generic::{
+    CompressionAnalysis, NormalizeResult, TokenizeResult, WordFrequencyResult,
     analyze_compressibility, extract_ngrams, normalize, slugify, tokenize, truncate,
-    word_frequency, CompressionAnalysis, NormalizeResult, TokenizeResult, WordFrequencyResult,
+    word_frequency,
 };
 
 // Re-export skill metadata types
-pub use skill_metadata::{parse_frontmatter, SkillFrontmatter, SkillSection};
+pub use skill_metadata::{SkillFrontmatter, SkillSection, parse_frontmatter};
 
 // Re-export machine spec types and functions
 pub use machine_spec::{
-    calculate_smst_score, extract_smst, parse_skill_md, validate_diamond_spec, ParsingResult,
-    SkillMachineSpec, SmstResult, SmstScore,
+    ParsingResult, SkillMachineSpec, SmstResult, SmstScore, calculate_smst_score, extract_smst,
+    parse_skill_md, validate_diamond_spec,
 };
 
 #[cfg(test)]

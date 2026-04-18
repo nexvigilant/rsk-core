@@ -100,8 +100,14 @@ pub fn protective_depth(target_probability: f64, attenuation_rate: f64) -> usize
     );
     assert!(attenuation_rate > 0.0, "Attenuation rate must be positive");
     let min_depth = 1.0 + (-target_probability.ln()) / attenuation_rate;
-    #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)] // f64→usize: ceil of positive value
-    { min_depth.ceil() as usize }
+    #[allow(
+        clippy::as_conversions,
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss
+    )] // f64→usize: ceil of positive value
+    {
+        min_depth.ceil() as usize
+    }
 }
 
 /// Maximum probability in a slice
@@ -254,7 +260,8 @@ mod tests {
             .collect();
 
         let actual = harm_probability(&probs);
-        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)] // test: small i32 literal
+        #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+        // test: small i32 literal
         let expected = p_val.powi(levels as i32);
 
         assert!(

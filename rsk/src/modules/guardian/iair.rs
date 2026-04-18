@@ -3,10 +3,7 @@
 //! Implements the 8-block IAIR schema for standardized incident reporting
 //! for AI/algorithm incidents, adapted from ToV §55.
 
-use crate::tov::{
-    ACACase, ACACausalityCategory,
-    HarmType,
-};
+use crate::tov::{ACACase, ACACausalityCategory, HarmType};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 

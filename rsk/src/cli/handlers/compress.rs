@@ -107,7 +107,11 @@ pub fn handle_compress(action: &CompressAction) {
             } else {
                 "incompressible"
             };
-            #[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+            #[allow(
+                clippy::as_conversions,
+                clippy::cast_possible_truncation,
+                clippy::cast_sign_loss
+            )]
             // usize→f64 for ratio multiplication, f64→usize for display — safe for text lengths
             let estimated_compressed_size = (text.len() as f64 * ratio).round() as usize;
             println!(

@@ -87,7 +87,10 @@ pub fn handle_state(action: &StateAction) {
             },
             StateAction::Stats => match manager.stats() {
                 Ok(stats) => {
-                    println!("{}", serde_json::to_string_pretty(&stats).unwrap_or_default());
+                    println!(
+                        "{}",
+                        serde_json::to_string_pretty(&stats).unwrap_or_default()
+                    );
                 }
                 Err(e) => {
                     eprintln!("{}", json!({"status": "error", "message": e.to_string()}));

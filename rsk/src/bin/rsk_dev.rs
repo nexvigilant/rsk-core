@@ -1,10 +1,10 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use quote::ToTokens;
+use regex::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
-use syn::{FnArg, Item, ReturnType, Type, Meta};
-use regex::Regex;
+use syn::{FnArg, Item, Meta, ReturnType, Type};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "RSK Development Tool", long_about = None)]
@@ -26,7 +26,11 @@ enum Commands {
         output: Option<PathBuf>,
 
         /// Comma-separated list of modules to process
-        #[arg(short, long, default_value = "execution_engine,routing_engine,state_manager")]
+        #[arg(
+            short,
+            long,
+            default_value = "execution_engine,routing_engine,state_manager"
+        )]
         modules: String,
     },
     /// Synchronize rsk_bridge.py with PyO3 bindings
@@ -66,22 +70,36 @@ fn parse_rust_type(ty: &Type) -> String {
     let type_str = ty.to_token_stream().to_string().replace(' ', "");
     let type_str = type_str.replace('&', "");
 
-    if type_str == "String" || type_str == "str" { return "str".to_string(); }
-    if type_str == "bool" { return "bool".to_string(); }
-    if type_str == "f32" || type_str == "f64" { return "float".to_string(); }
-    if ["i32", "i64", "u32", "u64", "usize"].contains(&type_str.as_str()) { return "int".to_string(); }
-    if type_str == "Vec<String>" || type_str == "Vec<str>" { return "list[str]".to_string(); }
-    if type_str == "Vec<u8>" { return "bytes".to_string(); }
+    if type_str == "String" || type_str == "str" {
+        return "str".to_string();
+    }
+    if type_str == "bool" {
+        return "bool".to_string();
+    }
+    if type_str == "f32" || type_str == "f64" {
+        return "float".to_string();
+    }
+    if ["i32", "i64", "u32", "u64", "usize"].contains(&type_str.as_str()) {
+        return "int".to_string();
+    }
+    if type_str == "Vec<String>" || type_str == "Vec<str>" {
+        return "list[str]".to_string();
+    }
+    if type_str == "Vec<u8>" {
+        return "bytes".to_string();
+    }
     if type_str.starts_with("Option<") {
         let inner = &type_str[7..type_str.len() - 1];
-        return format!("Optional[{inner}]"); 
+        return format!("Optional[{inner}]");
     }
     if type_str.starts_with("Vec<") {
         let inner = &type_str[4..type_str.len() - 1];
-        return format!("list[{inner}]"); 
+        return format!("list[{inner}]");
     }
-    if type_str.starts_with("HashMap<") { return "dict[str, Any]".to_string(); }
-    
+    if type_str.starts_with("HashMap<") {
+        return "dict[str, Any]".to_string();
+    }
+
     "Any".to_string()
 }
 
@@ -124,7 +142,12 @@ fn parse_module(path: &Path) -> Result<Vec<RustFunction>> {
                 ReturnType::Default => "None".to_string(),
                 ReturnType::Type(_, ty) => parse_rust_type(ty),
             };
-            functions.push(RustFunction { name, params, return_type, doc });
+            functions.push(RustFunction {
+                name,
+                params,
+                return_type,
+                doc,
+            });
         }
     }
     Ok(functions)
@@ -137,14 +160,19 @@ fn parse_pyo3_bindings(path: &Path) -> Result<Vec<PyO3Function>> {
 
     for item in file.items {
         if let Item::Fn(func) = item {
-            let is_pyfunction = func.attrs.iter().any(|attr| attr.path().is_ident("pyfunction"));
+            let is_pyfunction = func
+                .attrs
+                .iter()
+                .any(|attr| attr.path().is_ident("pyfunction"));
             if is_pyfunction {
                 let rust_name = func.sig.ident.to_string();
                 let mut python_name = rust_name.clone();
-                
+
                 for attr in &func.attrs {
                     if attr.path().is_ident("pyo3")
-                        && let Ok(list) = attr.parse_args_with(syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated)
+                        && let Ok(list) = attr.parse_args_with(
+                            syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
+                        )
                     {
                         for meta in list {
                             if let Meta::NameValue(nv) = meta
@@ -163,12 +191,18 @@ fn parse_pyo3_bindings(path: &Path) -> Result<Vec<PyO3Function>> {
                 for arg in func.sig.inputs {
                     if let FnArg::Typed(pat_type) = arg {
                         let param_name = pat_type.pat.to_token_stream().to_string();
-                        if param_name == "py" || param_name == "_py" { continue; }
+                        if param_name == "py" || param_name == "_py" {
+                            continue;
+                        }
                         params.push((param_name, parse_rust_type(&pat_type.ty)));
                     }
                 }
 
-                functions.push(PyO3Function { python_name, params, doc });
+                functions.push(PyO3Function {
+                    python_name,
+                    params,
+                    doc,
+                });
             }
         }
     }
@@ -214,9 +248,23 @@ import shutil
     };
 
     for func in functions {
-        let py_params = func.params.iter().map(|(n, t)| format!("{n}: {t}")).collect::<Vec<_>>().join(", ");
-        let p_names_map = func.params.iter().map(|(n, _)| format!("'{n}': {n}")).collect::<Vec<_>>().join(", ");
-        let docstring = if func.doc.is_empty() { format!("Call rsk {} {}", subcommand, func.name) } else { func.doc.replace('"', "'") };
+        let py_params = func
+            .params
+            .iter()
+            .map(|(n, t)| format!("{n}: {t}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let p_names_map = func
+            .params
+            .iter()
+            .map(|(n, _)| format!("'{n}': {n}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let docstring = if func.doc.is_empty() {
+            format!("Call rsk {} {}", subcommand, func.name)
+        } else {
+            func.doc.replace('"', "'")
+        };
 
         body.push_str(&format!(
             r#"
@@ -249,7 +297,11 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::GenerateBridge { input_dir, output, modules } => {
+        Commands::GenerateBridge {
+            input_dir,
+            output,
+            modules,
+        } => {
             let module_names: Vec<&str> = modules.split(',').collect();
             let mut all_output = String::new();
 
@@ -260,7 +312,8 @@ fn main() -> Result<()> {
                     continue;
                 }
 
-                let functions = parse_module(&path).with_context(|| format!("Failed to parse module {path:?}"))?;
+                let functions = parse_module(&path)
+                    .with_context(|| format!("Failed to parse module {path:?}"))?;
                 all_output.push_str(&generate_python_bridge(name, &functions));
                 all_output.push_str("\n\n");
             }
@@ -271,21 +324,35 @@ fn main() -> Result<()> {
                 println!("{all_output}");
             }
         }
-        Commands::Sync { bindings, bridge, validate, generate } => {
+        Commands::Sync {
+            bindings,
+            bridge,
+            validate,
+            generate,
+        } => {
             let bridge_path = bridge.unwrap_or_else(|| {
-                dirs::home_dir().unwrap_or_default().join(".claude/skills/.shared/rsk_bridge.py")
+                dirs::home_dir()
+                    .unwrap_or_default()
+                    .join(".claude/skills/.shared/rsk_bridge.py")
             });
 
-            if !bindings.exists() { anyhow::bail!("Bindings file not found: {bindings:?}"); }
-            if !bridge_path.exists() { anyhow::bail!("Bridge file not found: {bridge_path:?}"); }
+            if !bindings.exists() {
+                anyhow::bail!("Bindings file not found: {bindings:?}");
+            }
+            if !bridge_path.exists() {
+                anyhow::bail!("Bridge file not found: {bridge_path:?}");
+            }
 
             let pyo3_funcs = parse_pyo3_bindings(&bindings)?;
             let bridge_names = get_bridge_names(&bridge_path)?;
-            let pyo3_names: Vec<String> = pyo3_funcs.iter().map(|f| f.python_name.clone()).collect();
-            
+            let pyo3_names: Vec<String> =
+                pyo3_funcs.iter().map(|f| f.python_name.clone()).collect();
+
             let mut missing = Vec::new();
             for name in &pyo3_names {
-                if !bridge_names.contains(name) { missing.push(name); }
+                if !bridge_names.contains(name) {
+                    missing.push(name);
+                }
             }
 
             println!("RSK Bridge Sync Report");
@@ -296,16 +363,31 @@ fn main() -> Result<()> {
 
             if !missing.is_empty() {
                 println!("\nMissing functions:");
-                for name in &missing { println!("  - {name}"); }
+                for name in &missing {
+                    println!("  - {name}");
+                }
 
                 if generate {
                     println!("\nGenerated stubs:");
                     for name in missing {
-                        let Some(func) = pyo3_funcs.iter().find(|f| f.python_name == *name) else { continue; };
-                        let params = func.params.iter().map(|(n, t)| format!("{n}: {t}")).collect::<Vec<_>>().join(", ");
-                        let p_names = func.params.iter().map(|(n, _)| n.as_str()).collect::<Vec<_>>().join(", ");
-                        
-                        println!(r#"
+                        let Some(func) = pyo3_funcs.iter().find(|f| f.python_name == *name) else {
+                            continue;
+                        };
+                        let params = func
+                            .params
+                            .iter()
+                            .map(|(n, t)| format!("{n}: {t}"))
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        let p_names = func
+                            .params
+                            .iter()
+                            .map(|(n, _)| n.as_str())
+                            .collect::<Vec<_>>()
+                            .join(", ");
+
+                        println!(
+                            r#"
 def {}({}) -> dict:
     """{}
     
@@ -316,12 +398,19 @@ def {}({}) -> dict:
     
     # CLI fallback logic here
     raise NotImplementedError("{} requires rsk or CLI")
-"#, 
-                            func.python_name, params, func.doc, func.python_name, p_names, func.python_name
+"#,
+                            func.python_name,
+                            params,
+                            func.doc,
+                            func.python_name,
+                            p_names,
+                            func.python_name
                         );
                     }
                 }
-                if validate { anyhow::bail!("Bridge is out of sync!"); }
+                if validate {
+                    anyhow::bail!("Bridge is out of sync!");
+                }
             } else {
                 println!("\nStatus: IN_SYNC");
             }

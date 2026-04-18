@@ -5,16 +5,16 @@
 pub mod anti_pattern;
 pub mod compress;
 pub mod epistemic;
-pub mod microgram;
 pub mod exec;
 #[cfg(feature = "forge")]
 pub mod forge;
 pub mod generate;
 pub mod graph;
-pub mod heligram;
 pub mod guardian;
+pub mod heligram;
 pub mod hooks;
 pub mod json;
+pub mod microgram;
 pub mod route;
 pub mod session;
 pub mod simple;
@@ -25,5 +25,6 @@ pub mod taxonomy;
 pub mod telemetry;
 pub mod text;
 pub mod tov;
+pub mod train;
 pub mod verify;
 pub mod yaml;

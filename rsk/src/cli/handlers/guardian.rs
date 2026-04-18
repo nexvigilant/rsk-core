@@ -65,7 +65,10 @@ pub fn handle_guardian(action: &GuardianAction) {
                 output_treatment,
             };
             let result = calculate_risk(&params);
-            println!("{}", serde_json::to_string_pretty(&result).unwrap_or_default());
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&result).unwrap_or_default()
+            );
         }
         GuardianAction::Report {
             category,
@@ -107,7 +110,10 @@ pub fn handle_guardian(action: &GuardianAction) {
                 }
             };
 
-            println!("{}", serde_json::to_string_pretty(&iair).unwrap_or_default());
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&iair).unwrap_or_default()
+            );
         }
         GuardianAction::Categories => {
             let categories = [
@@ -168,7 +174,10 @@ pub fn handle_guardian(action: &GuardianAction) {
                     })
                 })
                 .collect();
-            println!("{}", serde_json::to_string_pretty(&output).unwrap_or_default());
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&output).unwrap_or_default()
+            );
         }
         GuardianAction::Minimize { risk, incidents } => {
             let level = recommend_minimization(*risk, *incidents);

@@ -138,8 +138,7 @@ pub fn validate_file(path: &Path, policy: &PolicyFile) -> ValidationResult {
                         &format!("File in forbidden zone: {forbidden_path}"),
                         "forbidden_zones",
                     );
-                    result
-                        .add_suggestion("Move to a project directory or appropriate location");
+                    result.add_suggestion("Move to a project directory or appropriate location");
                 }
             }
         }

@@ -36,7 +36,10 @@ pub fn handle_generate(action: &GenerateAction) {
                         }
                     }
                     _ => {
-                        println!("{}", serde_json::to_string_pretty(&rules).unwrap_or_default());
+                        println!(
+                            "{}",
+                            serde_json::to_string_pretty(&rules).unwrap_or_default()
+                        );
                     }
                 }
             }
@@ -51,7 +54,10 @@ pub fn handle_generate(action: &GenerateAction) {
                         println!("{}", scaffold.rust_code);
                     }
                     _ => {
-                        println!("{}", serde_json::to_string_pretty(&scaffold).unwrap_or_default());
+                        println!(
+                            "{}",
+                            serde_json::to_string_pretty(&scaffold).unwrap_or_default()
+                        );
                     }
                 }
             }

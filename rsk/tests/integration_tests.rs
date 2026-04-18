@@ -129,28 +129,28 @@ mod smst_extraction {
         let base_path = temp_dir.join("test_verify_skill");
         let skill_path = base_path.join("SKILL.md");
         fs::create_dir_all(&base_path).unwrap();
-        
+
         // Create required directories for Diamond compliance
         fs::create_dir_all(base_path.join("scripts")).unwrap();
         fs::create_dir_all(base_path.join("references")).unwrap();
         fs::create_dir_all(base_path.join("templates")).unwrap();
         fs::create_dir_all(base_path.join("tests")).unwrap();
-        
+
         // Create required artifacts
         fs::write(base_path.join("logic.yaml"), "nodes: {}").unwrap();
         fs::write(base_path.join("validation_rules.json"), "{}").unwrap();
         fs::write(base_path.join("tests/scaffold.rs"), "// test").unwrap();
-        
+
         // Create dummy verify script that succeeds
         let verify_script = base_path.join("scripts/verify");
         fs::write(&verify_script, "#!/bin/sh\nexit 0").unwrap();
-        
+
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
             fs::set_permissions(&verify_script, fs::Permissions::from_mode(0o755)).unwrap();
         }
-        
+
         fs::write(&skill_path, SAMPLE_SKILL_MD).unwrap();
 
         let (stdout, stderr, success) =
@@ -370,18 +370,18 @@ mod end_to_end {
         let skill_dir = temp_dir.join("test_e2e_skill");
         let skill_path = skill_dir.join("SKILL.md");
         fs::create_dir_all(&skill_dir).unwrap();
-        
+
         // Create required directories for Diamond compliance
         fs::create_dir_all(skill_dir.join("scripts")).unwrap();
         fs::create_dir_all(skill_dir.join("references")).unwrap();
         fs::create_dir_all(skill_dir.join("templates")).unwrap();
         fs::create_dir_all(skill_dir.join("tests")).unwrap();
-        
+
         // Create required artifacts
         fs::write(skill_dir.join("logic.yaml"), "nodes: {}").unwrap();
         fs::write(skill_dir.join("validation_rules.json"), "{}").unwrap();
         fs::write(skill_dir.join("tests/scaffold.rs"), "// test").unwrap();
-        
+
         // Create dummy verify script
         let verify_script = skill_dir.join("scripts/verify");
         fs::write(&verify_script, "#!/bin/sh\nexit 0").unwrap();
@@ -390,7 +390,7 @@ mod end_to_end {
             use std::os::unix::fs::PermissionsExt;
             fs::set_permissions(&verify_script, fs::Permissions::from_mode(0o755)).unwrap();
         }
-        
+
         fs::write(&skill_path, SAMPLE_SKILL_MD).unwrap();
 
         // Step 1: Parse (compact JSON format)

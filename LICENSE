@@ -1,35 +1,20 @@
-NexVigilant Source Available License v1.0
+Copyright (c) 2026 NexVigilant LLC
+All Rights Reserved.
 
-Copyright (c) 2026 Matthew Campion / NexVigilant
+This source code is the proprietary and confidential property of
+NexVigilant LLC. No part of this software may be reproduced, modified,
+distributed, transmitted, displayed, published, or sublicensed in any
+form or by any means, in whole or in part, without the prior written
+permission of NexVigilant LLC.
 
-Permission is hereby granted, free of charge, to any individual obtaining a
-copy of this software and associated documentation files (the "Software"), to
-use, copy, and modify the Software for personal, non-commercial purposes only,
-subject to the following conditions:
+Use of this software is restricted to parties authorized under a
+separate written agreement with NexVigilant LLC. Unauthorized use,
+reproduction, distribution, or modification is strictly prohibited
+and may violate applicable copyright, trade secret, and other laws.
 
-1. The above copyright notice and this permission notice shall be included in
-   all copies or substantial portions of the Software.
+NO LICENSE OR RIGHT IS GRANTED HEREIN, WHETHER BY ESTOPPEL,
+IMPLICATION, OR OTHERWISE. THE SOFTWARE IS PROVIDED "AS IS" WITHOUT
+WARRANTY OF ANY KIND.
 
-2. The Software may not be used for commercial purposes without prior written
-   permission from the copyright holder.
+For licensing inquiries: matthew@camp-corp.com
 
-3. Organizational use (by corporations, non-profits, government agencies, or
-   any entity other than a natural person acting in a personal capacity)
-   requires separate written permission from the copyright holder. Contact
-   matthew@nexvigilant.com for organizational licensing.
-
-4. Redistribution of the Software, in source or binary form, with or without
-   modification, is permitted only for personal, non-commercial purposes and
-   must include this license in its entirety.
-
-5. The Software may not be sublicensed, sold, or included in any product or
-   service offered for sale without prior written permission from the copyright
-   holder.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.

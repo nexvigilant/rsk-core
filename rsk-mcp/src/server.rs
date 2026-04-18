@@ -5,15 +5,27 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{ServerCapabilities, ServerInfo};
 use rmcp::{ErrorData as McpError, ServerHandler, tool, tool_handler, tool_router};
 
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, RwLock};
+
+use rsk::modules::microgram::MicrogramIndex;
+
 use crate::params;
 
 /// RSK MCP Server
 ///
 /// Exposes rsk-core's microgram runtime, statistical tests, decision engine,
 /// and graph operations as typed MCP tools for AI agent consumption.
+///
+/// Holds a per-directory [`MicrogramIndex`] cache so repeated chain/list/info
+/// calls against the same microgram tree share a single filesystem scan.
 #[derive(Clone)]
 pub struct RskMcpServer {
     tool_router: ToolRouter<Self>,
+    /// Cache of loaded microgram directories. Shared across clones of the
+    /// server so concurrent tool calls reuse the same index.
+    index_cache: Arc<RwLock<HashMap<PathBuf, Arc<MicrogramIndex>>>>,
 }
 
 #[tool_router]
@@ -23,14 +35,43 @@ impl RskMcpServer {
     pub fn new() -> Self {
         Self {
             tool_router: Self::tool_router(),
+            index_cache: Arc::new(RwLock::new(HashMap::new())),
         }
+    }
+
+    /// Fetch (or build, on miss) a cached [`MicrogramIndex`] for `dir`.
+    ///
+    /// First call for a given directory pays the scan cost once; all subsequent
+    /// calls return a cheap `Arc` clone. The cache never invalidates — MCP
+    /// callers that mutate the fleet on disk should either restart the server
+    /// or clear the cache out-of-band.
+    fn index_for(&self, dir: &Path) -> Result<Arc<MicrogramIndex>, McpError> {
+        // Canonicalize to make "./rsk/micrograms" and "rsk/micrograms" share a slot.
+        let key = dir.canonicalize().unwrap_or_else(|_| dir.to_path_buf());
+
+        if let Ok(guard) = self.index_cache.read()
+            && let Some(idx) = guard.get(&key)
+        {
+            return Ok(Arc::clone(idx));
+        }
+
+        let built = MicrogramIndex::load_lossy(dir).map_err(|e| {
+            McpError::internal_error(format!("Failed to index {}: {e}", dir.display()), None)
+        })?;
+        let arc = Arc::new(built);
+        if let Ok(mut guard) = self.index_cache.write() {
+            guard.insert(key, Arc::clone(&arc));
+        }
+        Ok(arc)
     }
 
     // ════════════════════════════════════════════════════════════════════════
     // System Tools (1)
     // ════════════════════════════════════════════════════════════════════════
 
-    #[tool(description = "Health check for RSK MCP server. Returns version, tool count, and status.")]
+    #[tool(
+        description = "Health check for RSK MCP server. Returns version, tool count, and status."
+    )]
     fn rsk_health(&self) -> String {
         let tool_count = self.tool_router.list_all().len();
         serde_json::json!({
@@ -46,14 +87,14 @@ impl RskMcpServer {
     // Microgram Tools (8)
     // ════════════════════════════════════════════════════════════════════════
 
-    #[tool(description = "Run a microgram with JSON input. Returns decision path, output variables, and execution time (sub-millisecond).")]
-    fn mcg_run(
-        &self,
-        Parameters(p): Parameters<params::McgRunParams>,
-    ) -> Result<String, McpError> {
+    #[tool(
+        description = "Run a microgram with JSON input. Returns decision path, output variables, and execution time (sub-millisecond)."
+    )]
+    fn mcg_run(&self, Parameters(p): Parameters<params::McgRunParams>) -> Result<String, McpError> {
         let path = std::path::Path::new(&p.path);
-        let mg = rsk::modules::microgram::Microgram::load(path)
-            .map_err(|e| McpError::internal_error(format!("Failed to load microgram: {e}"), None))?;
+        let mg = rsk::modules::microgram::Microgram::load(path).map_err(|e| {
+            McpError::internal_error(format!("Failed to load microgram: {e}"), None)
+        })?;
 
         let input = parse_json_input(p.input)?;
         let result = mg.run(input);
@@ -61,21 +102,26 @@ impl RskMcpServer {
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "Self-test a microgram against its built-in test cases. Returns pass/fail count and individual test results.")]
+    #[tool(
+        description = "Self-test a microgram against its built-in test cases. Returns pass/fail count and individual test results."
+    )]
     fn mcg_test(
         &self,
         Parameters(p): Parameters<params::McgTestParams>,
     ) -> Result<String, McpError> {
         let path = std::path::Path::new(&p.path);
-        let mg = rsk::modules::microgram::Microgram::load(path)
-            .map_err(|e| McpError::internal_error(format!("Failed to load microgram: {e}"), None))?;
+        let mg = rsk::modules::microgram::Microgram::load(path).map_err(|e| {
+            McpError::internal_error(format!("Failed to load microgram: {e}"), None)
+        })?;
 
         let result = mg.test();
         serde_json::to_string_pretty(&result)
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "Self-test ALL micrograms in a directory (recursive). Returns aggregate pass/fail counts across all programs.")]
+    #[tool(
+        description = "Self-test ALL micrograms in a directory (recursive). Returns aggregate pass/fail counts across all programs."
+    )]
     fn mcg_test_all(
         &self,
         Parameters(p): Parameters<params::McgTestAllParams>,
@@ -107,7 +153,9 @@ impl RskMcpServer {
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "Run a microgram chain: output of step N becomes input of step N+1. Alias-aware field remapping between steps.")]
+    #[tool(
+        description = "Run a microgram chain: output of step N becomes input of step N+1. Alias-aware field remapping between steps."
+    )]
     fn mcg_chain(
         &self,
         Parameters(p): Parameters<params::McgChainParams>,
@@ -116,11 +164,12 @@ impl RskMcpServer {
         let names: Vec<&str> = p.chain.split("->").map(str::trim).collect();
 
         let input = parse_json_input(p.input)?;
+        let index = self.index_for(dir)?;
 
         let result = if p.accumulate {
-            rsk::modules::microgram::chain_accumulate_by_names(dir, &names, input)
+            rsk::modules::microgram::chain_accumulate_with_index(&index, &names, input)
         } else {
-            rsk::modules::microgram::chain_by_names(dir, &names, input)
+            rsk::modules::microgram::chain_with_index(&index, &names, input)
         };
 
         match result {
@@ -130,7 +179,9 @@ impl RskMcpServer {
         }
     }
 
-    #[tool(description = "Test all chain definitions in a directory against their declared test cases.")]
+    #[tool(
+        description = "Test all chain definitions in a directory against their declared test cases."
+    )]
     fn mcg_chain_test(
         &self,
         Parameters(p): Parameters<params::McgChainTestParams>,
@@ -143,16 +194,18 @@ impl RskMcpServer {
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "List all micrograms in a directory with name, description, and interface summary.")]
+    #[tool(
+        description = "List all micrograms in a directory with name, description, and interface summary."
+    )]
     fn mcg_list(
         &self,
         Parameters(p): Parameters<params::McgListParams>,
     ) -> Result<String, McpError> {
         let dir = std::path::Path::new(&p.dir);
-        let micrograms = rsk::modules::microgram::load_all(dir)
-            .map_err(|e| McpError::internal_error(format!("Failed to load: {e}"), None))?;
+        let index = self.index_for(dir)?;
 
-        let listing: Vec<serde_json::Value> = micrograms
+        let listing: Vec<serde_json::Value> = index
+            .all()
             .iter()
             .map(|mg| {
                 serde_json::json!({
@@ -173,7 +226,9 @@ impl RskMcpServer {
         .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "Get detailed info about a microgram: typed inputs/outputs, test cases, primitive signature.")]
+    #[tool(
+        description = "Get detailed info about a microgram: typed inputs/outputs, test cases, primitive signature."
+    )]
     fn mcg_info(
         &self,
         Parameters(p): Parameters<params::McgInfoParams>,
@@ -197,7 +252,9 @@ impl RskMcpServer {
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "Search micrograms by name or description keyword. Returns matching names with paths for use in other mcg_* tools. Default directory: ~/Projects/rsk-core/rsk/micrograms.")]
+    #[tool(
+        description = "Search micrograms by name or description keyword. Returns matching names with paths for use in other mcg_* tools. Default directory: ~/Projects/rsk-core/rsk/micrograms."
+    )]
     fn mcg_search(
         &self,
         Parameters(p): Parameters<params::McgSearchParams>,
@@ -222,7 +279,9 @@ impl RskMcpServer {
         .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "Run coverage analysis on a microgram. Reports which decision paths are exercised by test cases.")]
+    #[tool(
+        description = "Run coverage analysis on a microgram. Reports which decision paths are exercised by test cases."
+    )]
     fn mcg_coverage(
         &self,
         Parameters(p): Parameters<params::McgCoverageParams>,
@@ -240,11 +299,10 @@ impl RskMcpServer {
     // Statistics Tools (4)
     // ════════════════════════════════════════════════════════════════════════
 
-    #[tool(description = "Chi-square independence test on a 2x2 contingency table. Returns chi-square statistic, p-value, and epistemic interpretation.")]
-    fn stats_chi_square(
-        &self,
-        Parameters(p): Parameters<params::ChiSquareParams>,
-    ) -> String {
+    #[tool(
+        description = "Chi-square independence test on a 2x2 contingency table. Returns chi-square statistic, p-value, and epistemic interpretation."
+    )]
+    fn stats_chi_square(&self, Parameters(p): Parameters<params::ChiSquareParams>) -> String {
         let input = rsk::modules::stats::ChiSquareInput {
             a: p.a,
             b: p.b,
@@ -255,7 +313,9 @@ impl RskMcpServer {
         serde_json::to_string_pretty(&result).unwrap_or_default()
     }
 
-    #[tool(description = "Welch's t-test for two independent samples. Returns t-statistic, degrees of freedom, p-value, and interpretation.")]
+    #[tool(
+        description = "Welch's t-test for two independent samples. Returns t-statistic, degrees of freedom, p-value, and interpretation."
+    )]
     fn stats_t_test(
         &self,
         Parameters(p): Parameters<params::TTestParams>,
@@ -270,7 +330,9 @@ impl RskMcpServer {
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "One-sample proportion test. Tests if observed proportion differs from null hypothesis.")]
+    #[tool(
+        description = "One-sample proportion test. Tests if observed proportion differs from null hypothesis."
+    )]
     fn stats_proportion_test(
         &self,
         Parameters(p): Parameters<params::ProportionTestParams>,
@@ -286,15 +348,14 @@ impl RskMcpServer {
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
 
-    #[tool(description = "Pearson correlation test. Returns correlation coefficient r, p-value, and strength interpretation.")]
+    #[tool(
+        description = "Pearson correlation test. Returns correlation coefficient r, p-value, and strength interpretation."
+    )]
     fn stats_correlation(
         &self,
         Parameters(p): Parameters<params::CorrelationParams>,
     ) -> Result<String, McpError> {
-        let input = rsk::modules::stats::CorrelationInput {
-            x: p.x,
-            y: p.y,
-        };
+        let input = rsk::modules::stats::CorrelationInput { x: p.x, y: p.y };
         let result = rsk::modules::stats::correlation_test(&input)
             .map_err(|e| McpError::internal_error(format!("Correlation failed: {e}"), None))?;
         serde_json::to_string_pretty(&result)
@@ -305,7 +366,9 @@ impl RskMcpServer {
     // Decision Engine Tools (1)
     // ════════════════════════════════════════════════════════════════════════
 
-    #[tool(description = "Process a decision tree defined in YAML with input variables. Returns the decision path and output variables.")]
+    #[tool(
+        description = "Process a decision tree defined in YAML with input variables. Returns the decision path and output variables."
+    )]
     fn decision_tree_run(
         &self,
         Parameters(p): Parameters<params::DecisionTreeParams>,
@@ -333,7 +396,9 @@ impl RskMcpServer {
     // Graph Tools (2)
     // ════════════════════════════════════════════════════════════════════════
 
-    #[tool(description = "Topological sort of a directed acyclic graph. Returns nodes in dependency order or error if cycle detected.")]
+    #[tool(
+        description = "Topological sort of a directed acyclic graph. Returns nodes in dependency order or error if cycle detected."
+    )]
     fn graph_topsort(
         &self,
         Parameters(p): Parameters<params::GraphTopsortParams>,
@@ -342,18 +407,24 @@ impl RskMcpServer {
         match graph.topological_sort() {
             Ok(order) => serde_json::to_string_pretty(&serde_json::json!({ "order": order }))
                 .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None)),
-            Err(cycle) => Err(McpError::internal_error(format!("Cycle detected: {cycle:?}"), None)),
+            Err(cycle) => Err(McpError::internal_error(
+                format!("Cycle detected: {cycle:?}"),
+                None,
+            )),
         }
     }
 
-    #[tool(description = "Compute parallel execution levels from a DAG. Groups nodes that can run concurrently.")]
+    #[tool(
+        description = "Compute parallel execution levels from a DAG. Groups nodes that can run concurrently."
+    )]
     fn graph_parallel_levels(
         &self,
         Parameters(p): Parameters<params::GraphLevelsParams>,
     ) -> Result<String, McpError> {
         let graph = edges_to_skill_graph(&p.edges);
-        let result = graph.level_parallelization()
-            .map_err(|cycle| McpError::internal_error(format!("Cycle detected: {cycle:?}"), None))?;
+        let result = graph.level_parallelization().map_err(|cycle| {
+            McpError::internal_error(format!("Cycle detected: {cycle:?}"), None)
+        })?;
         serde_json::to_string_pretty(&serde_json::json!({ "levels": result }))
             .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))
     }
@@ -362,14 +433,13 @@ impl RskMcpServer {
 #[tool_handler]
 impl ServerHandler for RskMcpServer {
     fn get_info(&self) -> ServerInfo {
-        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
-            .with_instructions(
-                "RSK MCP Server — microgram decision tree runtime, statistical tests, \
+        ServerInfo::new(ServerCapabilities::builder().enable_tools().build()).with_instructions(
+            "RSK MCP Server — microgram decision tree runtime, statistical tests, \
                  decision engine, and graph operations. Use mcg_* tools for microgram \
                  operations, stats_* for statistical inference, decision_tree_run for \
                  tree processing, and graph_* for DAG operations."
-                    .to_string(),
-            )
+                .to_string(),
+        )
     }
 }
 
@@ -389,7 +459,10 @@ fn parse_json_input(
             }
             Ok(result)
         }
-        Some(_) => Err(McpError::invalid_params("Input must be a JSON object", None)),
+        Some(_) => Err(McpError::invalid_params(
+            "Input must be a JSON object",
+            None,
+        )),
         None => Ok(std::collections::HashMap::new()),
     }
 }
