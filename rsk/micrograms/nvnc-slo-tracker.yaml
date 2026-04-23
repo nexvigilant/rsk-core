@@ -1,0 +1,78 @@
+name: nvnc-slo-tracker
+description: 'NVNC SLO pass/fail gate. Caller passes observed p99_exceeded_target + sample_count_adequate + window_days_met (bools derived from observability logs). Microgram returns PASS / FAIL / INCOMPLETE. Feeds the p99_latency_slo_met input of nvnc-gold-promotion-gate.'
+version: 0.1.0
+interface:
+  inputs:
+    p99_exceeded_target:
+      type: bool
+      required: true
+    sample_count_adequate:
+      type: bool
+      required: true
+    window_days_met:
+      type: bool
+      required: true
+  outputs:
+    verdict:
+      type: string
+    slo_met:
+      type: bool
+    reason:
+      type: string
+tree:
+  start: check_window
+  nodes:
+    check_window:
+      type: condition
+      variable: window_days_met
+      operator: eq
+      value: false
+      true_next: incomplete_window
+      false_next: check_samples
+    check_samples:
+      type: condition
+      variable: sample_count_adequate
+      operator: eq
+      value: false
+      true_next: incomplete_samples
+      false_next: check_p99
+    check_p99:
+      type: condition
+      variable: p99_exceeded_target
+      operator: eq
+      value: true
+      true_next: fail_p99
+      false_next: pass_slo
+    incomplete_window:
+      type: return
+      value:
+        verdict: INCOMPLETE
+        slo_met: false
+        reason: "observation window too short — run more days before judging SLO"
+    incomplete_samples:
+      type: return
+      value:
+        verdict: INCOMPLETE
+        slo_met: false
+        reason: "sample count below statistical power threshold — more traffic needed"
+    fail_p99:
+      type: return
+      value:
+        verdict: FAIL
+        slo_met: false
+        reason: "p99 latency exceeded target during observation window — element does not meet SLO"
+    pass_slo:
+      type: return
+      value:
+        verdict: PASS
+        slo_met: true
+        reason: "p99 within target, samples adequate, window complete — SLO met"
+tests:
+- input: { p99_exceeded_target: false, sample_count_adequate: true, window_days_met: true }
+  expect: { verdict: PASS, slo_met: true }
+- input: { p99_exceeded_target: true, sample_count_adequate: true, window_days_met: true }
+  expect: { verdict: FAIL, slo_met: false }
+- input: { p99_exceeded_target: false, sample_count_adequate: false, window_days_met: true }
+  expect: { verdict: INCOMPLETE, slo_met: false }
+- input: { p99_exceeded_target: false, sample_count_adequate: true, window_days_met: false }
+  expect: { verdict: INCOMPLETE, slo_met: false }
