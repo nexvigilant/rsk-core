@@ -1,0 +1,60 @@
+name: nvnc-tenant-quota
+description: 'NVNC tenant quota gate. Caller precomputes at_or_above_ceiling + has_headroom_margin (bool). Microgram returns ALLOW/WARN/BLOCK verdict. Composes into nvnc-deploy-guardian so deploys that breach capacity BLOCK before restart.'
+version: 0.1.0
+interface:
+  inputs:
+    at_or_above_ceiling:
+      type: bool
+      required: true
+    has_headroom_margin:
+      type: bool
+      required: true
+    requested_tier:
+      type: string
+      required: false
+  outputs:
+    verdict:
+      type: string
+    reason:
+      type: string
+tree:
+  start: check_ceiling
+  nodes:
+    check_ceiling:
+      type: condition
+      variable: at_or_above_ceiling
+      operator: eq
+      value: true
+      true_next: block_ceiling
+      false_next: check_headroom
+    check_headroom:
+      type: condition
+      variable: has_headroom_margin
+      operator: eq
+      value: false
+      true_next: warn_headroom
+      false_next: allow
+    block_ceiling:
+      type: return
+      value:
+        verdict: BLOCK
+        reason: "tenant count at or above ceiling — raise capacity or evict idle tenants before provisioning new"
+    warn_headroom:
+      type: return
+      value:
+        verdict: WARN
+        reason: "capacity below target headroom margin — provision authorized but schedule capacity expansion"
+    allow:
+      type: return
+      value:
+        verdict: ALLOW
+        reason: "capacity healthy — provision authorized"
+tests:
+- input: { at_or_above_ceiling: false, has_headroom_margin: true, requested_tier: "GxP" }
+  expect: { verdict: ALLOW }
+- input: { at_or_above_ceiling: false, has_headroom_margin: false, requested_tier: "Standard" }
+  expect: { verdict: WARN }
+- input: { at_or_above_ceiling: true, has_headroom_margin: false, requested_tier: "Anonymous" }
+  expect: { verdict: BLOCK }
+- input: { at_or_above_ceiling: true, has_headroom_margin: true, requested_tier: "ReadOnly" }
+  expect: { verdict: BLOCK }

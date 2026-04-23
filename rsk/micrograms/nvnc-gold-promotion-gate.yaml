@@ -1,0 +1,96 @@
+name: nvnc-gold-promotion-gate
+description: 'NVNC SILVER→GOLD promotion gate. Given evidence signals (production traffic days, p99 latency SLO met, rollback drill rehearsed, external customer attested), returns GO/WAIT/BLOCK. This is the objective rubric — no subjective promotion. Closes the SILVER→GOLD loop for the Foundation/Compute/Communication/Control substrate.'
+version: 0.1.0
+interface:
+  inputs:
+    traffic_30_days_met:
+      type: bool
+      required: true
+    p99_latency_slo_met:
+      type: bool
+      required: true
+    rollback_drill_rehearsed:
+      type: bool
+      required: true
+    external_customer_attested:
+      type: bool
+      required: true
+  outputs:
+    verdict:
+      type: string
+    missing_axiom:
+      type: string
+    next_action:
+      type: string
+tree:
+  start: check_traffic
+  nodes:
+    check_traffic:
+      type: condition
+      variable: traffic_30_days_met
+      operator: eq
+      value: false
+      true_next: wait_traffic
+      false_next: check_slo
+    check_slo:
+      type: condition
+      variable: p99_latency_slo_met
+      operator: eq
+      value: false
+      true_next: block_slo
+      false_next: check_rollback
+    check_rollback:
+      type: condition
+      variable: rollback_drill_rehearsed
+      operator: eq
+      value: false
+      true_next: block_rollback
+      false_next: check_customer
+    check_customer:
+      type: condition
+      variable: external_customer_attested
+      operator: eq
+      value: false
+      true_next: wait_customer
+      false_next: promote
+    wait_traffic:
+      type: return
+      value:
+        verdict: WAIT
+        missing_axiom: "production-traffic-30-days"
+        next_action: "continue logging traffic; promotion gate reopens at 30 cumulative days"
+    block_slo:
+      type: return
+      value:
+        verdict: BLOCK
+        missing_axiom: "A2-observability — p99 SLO unmet"
+        next_action: "investigate latency tail; optimize or raise SLO bar consciously before retry"
+    block_rollback:
+      type: return
+      value:
+        verdict: BLOCK
+        missing_axiom: "A4-reversibility-bias"
+        next_action: "run a rollback drill — prior bundle at .prev, systemctl restart, health probe — document outcome"
+    wait_customer:
+      type: return
+      value:
+        verdict: WAIT
+        missing_axiom: "external-customer-attestation"
+        next_action: "GOLD requires at least one external (non-dogfood) customer workload; schedule pilot"
+    promote:
+      type: return
+      value:
+        verdict: GO
+        missing_axiom: "none"
+        next_action: "all four GOLD axioms met — flip Grade::Silver → Grade::Gold in manifest.rs and regenerate nvnc-manifest.json"
+tests:
+- input: { traffic_30_days_met: true, p99_latency_slo_met: true, rollback_drill_rehearsed: true, external_customer_attested: true }
+  expect: { verdict: GO }
+- input: { traffic_30_days_met: false, p99_latency_slo_met: true, rollback_drill_rehearsed: true, external_customer_attested: true }
+  expect: { verdict: WAIT }
+- input: { traffic_30_days_met: true, p99_latency_slo_met: false, rollback_drill_rehearsed: true, external_customer_attested: true }
+  expect: { verdict: BLOCK, missing_axiom: "A2-observability — p99 SLO unmet" }
+- input: { traffic_30_days_met: true, p99_latency_slo_met: true, rollback_drill_rehearsed: false, external_customer_attested: true }
+  expect: { verdict: BLOCK, missing_axiom: "A4-reversibility-bias" }
+- input: { traffic_30_days_met: true, p99_latency_slo_met: true, rollback_drill_rehearsed: true, external_customer_attested: false }
+  expect: { verdict: WAIT, missing_axiom: "external-customer-attestation" }
