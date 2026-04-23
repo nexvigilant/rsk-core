@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-concomitant-causality
-description: 'ICH E2A Section II.D: Concomitant medication causality gate — determines whether a concomitant (non-suspect) drug may be contributing to the adverse event, affecting causality attribution and reporting requirements'
 version: 1.0.0
+description: "ICH E2A Section II.D: Concomitant medication causality gate — determines whether a concomitant (non-suspect) drug may be contributing to the adverse event, affecting causality attribution and reporting requirements"
+family: pv.causality
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: concomitant_drug_present
+    type: bool
+    required: false
+    description: ""
+  - name: known_interaction
+    type: bool
+    required: false
+    description: ""
+  - name: other_cause_identified
+    type: bool
+    required: false
+    description: ""
+  - name: suspect_drug_temporal_fit
+    type: bool
+    required: false
+    description: ""
+  - name: temporal_fit_concomitant
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: attribution
+    type: string
+  - name: causality_confounded
+    type: bool
+  - name: investigation_needed
+    type: bool
+  - name: rationale
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     concomitant_drug_present:
@@ -29,6 +71,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2a Concomitant Causality
+  subtitle: "ICH E2A Section II.D: Concomitant medication causality gate — determines whether a concomitant (non-suspect) drug may be contributing to the adverse event, affecting causality attribution and reporting requirements"
+  icon: git-branch
+  route: /vigilance/mg/e2a-concomitant-causality
+  steps:
+    - field: concomitant_drug_present
+      label: concomitant drug present
+      help: Enter concomitant_drug_present
+      widget: toggle
+      placeholder: null
+    - field: known_interaction
+      label: known interaction
+      help: Enter known_interaction
+      widget: toggle
+      placeholder: null
+    - field: other_cause_identified
+      label: other cause identified
+      help: Enter other_cause_identified
+      widget: toggle
+      placeholder: null
+    - field: suspect_drug_temporal_fit
+      label: suspect drug temporal fit
+      help: Enter suspect_drug_temporal_fit
+      widget: toggle
+      placeholder: null
+    - field: temporal_fit_concomitant
+      label: temporal fit concomitant
+      help: Enter temporal_fit_concomitant
+      widget: toggle
+      placeholder: null
+  result:
+    template: "attribution: {{attribution}} — causality_confounded: {{causality_confounded}} — investigation_needed: {{investigation_needed}} — rationale: {{rationale}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-concomitant-causality
+  cli: rsk mcg run e2a-concomitant-causality
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_concomitant_present
   nodes:
@@ -100,77 +184,107 @@ tree:
         investigation_needed: false
         rationale: No concomitant medication — causality attributed to suspect drug only
         regulatory_reference: ICH E2A Section II.D - No concomitant medication to consider
-primitive_signature:
-  dominant: '→'
-  expression: '→ — concomitant causality confounding assessment'
-  primes: ['→', 'κ']
-  arguments: ['concomitant_drug_present', 'known_interaction', 'temporal_fit_concomitant', 'suspect_drug_temporal_fit']
-  chain_prediction: 'Feeds causality_confounded into naranjo-quick or signal-to-causality to adjust causality scoring when concomitant drugs are present.'
 tests:
-# No concomitant = suspect only
-- input:
-    concomitant_drug_present: false
-    known_interaction: false
-    temporal_fit_concomitant: false
-    suspect_drug_temporal_fit: true
-    other_cause_identified: false
-  expect:
-    causality_confounded: false
-    attribution: SUSPECT_ONLY
-    investigation_needed: false
-    regulatory_reference: ICH E2A Section II.D - No concomitant medication to consider
-# Concomitant with known interaction = confounded
-- input:
-    concomitant_drug_present: true
-    known_interaction: true
-    temporal_fit_concomitant: true
-    suspect_drug_temporal_fit: true
-    other_cause_identified: false
-  expect:
-    causality_confounded: true
-    attribution: CONCOMITANT_INTERACTION
-    investigation_needed: true
-    regulatory_reference: ICH E2A Section II.D - Concomitant medication with known interaction confounds causality
-# Both drugs fit temporally = dual temporal confounding
-- input:
-    concomitant_drug_present: true
-    known_interaction: false
-    temporal_fit_concomitant: true
-    suspect_drug_temporal_fit: true
-    other_cause_identified: false
-  expect:
-    causality_confounded: true
-    attribution: DUAL_TEMPORAL_FIT
-    investigation_needed: true
-    regulatory_reference: ICH E2A Section II.D - Multiple drugs with temporal association require careful attribution
-# Only concomitant fits temporally = possible concomitant cause
-- input:
-    concomitant_drug_present: true
-    known_interaction: false
-    temporal_fit_concomitant: true
-    suspect_drug_temporal_fit: false
-    other_cause_identified: false
-  expect:
-    causality_confounded: false
-    attribution: CONCOMITANT_POSSIBLE
-    investigation_needed: true
-    regulatory_reference: ICH E2A Section II.D - Concomitant temporal fit without suspect fit suggests concomitant causality
-# Concomitant present but no temporal fit = suspect primary
-- input:
-    concomitant_drug_present: true
-    known_interaction: false
-    temporal_fit_concomitant: false
-    suspect_drug_temporal_fit: true
-    other_cause_identified: false
-  expect:
-    causality_confounded: false
-    attribution: SUSPECT_PRIMARY
-    investigation_needed: false
-    regulatory_reference: ICH E2A Section II.D - Concomitant without temporal fit does not confound causality
-# Empty input = no concomitant
-- input: {}
-  expect:
-    causality_confounded: false
-    attribution: SUSPECT_ONLY
-    investigation_needed: false
-    regulatory_reference: ICH E2A Section II.D - No concomitant medication to consider
+  - input:
+      concomitant_drug_present: false
+      known_interaction: false
+      temporal_fit_concomitant: false
+      suspect_drug_temporal_fit: true
+      other_cause_identified: false
+    expect:
+      causality_confounded: false
+      attribution: SUSPECT_ONLY
+      investigation_needed: false
+      regulatory_reference: ICH E2A Section II.D - No concomitant medication to consider
+  - input:
+      concomitant_drug_present: true
+      known_interaction: true
+      temporal_fit_concomitant: true
+      suspect_drug_temporal_fit: true
+      other_cause_identified: false
+    expect:
+      causality_confounded: true
+      attribution: CONCOMITANT_INTERACTION
+      investigation_needed: true
+      regulatory_reference: ICH E2A Section II.D - Concomitant medication with known interaction confounds causality
+  - input:
+      concomitant_drug_present: true
+      known_interaction: false
+      temporal_fit_concomitant: true
+      suspect_drug_temporal_fit: true
+      other_cause_identified: false
+    expect:
+      causality_confounded: true
+      attribution: DUAL_TEMPORAL_FIT
+      investigation_needed: true
+      regulatory_reference: ICH E2A Section II.D - Multiple drugs with temporal association require careful attribution
+  - input:
+      concomitant_drug_present: true
+      known_interaction: false
+      temporal_fit_concomitant: true
+      suspect_drug_temporal_fit: false
+      other_cause_identified: false
+    expect:
+      causality_confounded: false
+      attribution: CONCOMITANT_POSSIBLE
+      investigation_needed: true
+      regulatory_reference: ICH E2A Section II.D - Concomitant temporal fit without suspect fit suggests concomitant causality
+  - input:
+      concomitant_drug_present: true
+      known_interaction: false
+      temporal_fit_concomitant: false
+      suspect_drug_temporal_fit: true
+      other_cause_identified: false
+    expect:
+      causality_confounded: false
+      attribution: SUSPECT_PRIMARY
+      investigation_needed: false
+      regulatory_reference: ICH E2A Section II.D - Concomitant without temporal fit does not confound causality
+  - input: {}
+    expect:
+      causality_confounded: false
+      attribution: SUSPECT_ONLY
+      investigation_needed: false
+      regulatory_reference: ICH E2A Section II.D - No concomitant medication to consider
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - attribution
+    - causality_confounded
+    - investigation_needed
+    - rationale
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.causality
+  log_level: info
+governance:
+  sop_ref: SOP-PV-002
+  regulatory_ref:
+    - ICH-E2A
+    - WHO-UMC
+  harm_types:
+    - A
+    - B
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - hierarchy
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

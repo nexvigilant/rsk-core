@@ -1,35 +1,113 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workflow-completion-gate
-description: "Determines whether the PV investigation workflow is complete and ready for closure"
 version: 0.1.0
-
+description: Determines whether the PV investigation workflow is complete and ready for closure
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: signal_assessed
+    type: bool
+    required: true
+    description: Whether the signal has been formally assessed
+  - name: causality_determined
+    type: bool
+    required: true
+    description: Whether causality assessment has been completed
+  - name: action_recommended
+    type: bool
+    required: true
+    description: Whether an action/recommendation has been formulated
+  - name: report_filed
+    type: bool
+    required: true
+    description: Whether the investigation report has been filed
+  - name: review_complete
+    type: bool
+    required: true
+    description: Whether the investigation has been reviewed by a QA person
+outputs:
+  - name: complete
+    type: bool
+  - name: remaining_steps
+    type: string
+  - name: completion_pct
+    type: int
 interface:
   inputs:
     signal_assessed:
       type: bool
-      description: "Whether the signal has been formally assessed"
+      description: Whether the signal has been formally assessed
     causality_determined:
       type: bool
-      description: "Whether causality assessment has been completed"
+      description: Whether causality assessment has been completed
     action_recommended:
       type: bool
-      description: "Whether an action/recommendation has been formulated"
+      description: Whether an action/recommendation has been formulated
     report_filed:
       type: bool
-      description: "Whether the investigation report has been filed"
+      description: Whether the investigation report has been filed
     review_complete:
       type: bool
-      description: "Whether the investigation has been reviewed by a QA person"
+      description: Whether the investigation has been reviewed by a QA person
   outputs:
     complete:
       type: bool
-      description: "Whether the workflow is complete"
+      description: Whether the workflow is complete
     remaining_steps:
       type: string
-      description: "Description of remaining steps if not complete"
+      description: Description of remaining steps if not complete
     completion_pct:
       type: int
-      description: "Percentage completion (0-100)"
-
+      description: Percentage completion (0-100)
+ui:
+  title: Workflow Completion Gate
+  subtitle: Determines whether the PV investigation workflow is complete and ready for closure
+  icon: circle
+  route: /vigilance/mg/workflow-completion-gate
+  steps:
+    - field: signal_assessed
+      label: signal assessed
+      help: Whether the signal has been formally assessed
+      widget: toggle
+      placeholder: null
+    - field: causality_determined
+      label: causality determined
+      help: Whether causality assessment has been completed
+      widget: toggle
+      placeholder: null
+    - field: action_recommended
+      label: action recommended
+      help: Whether an action/recommendation has been formulated
+      widget: toggle
+      placeholder: null
+    - field: report_filed
+      label: report filed
+      help: Whether the investigation report has been filed
+      widget: toggle
+      placeholder: null
+    - field: review_complete
+      label: review complete
+      help: Whether the investigation has been reviewed by a QA person
+      widget: toggle
+      placeholder: null
+  result:
+    template: "complete: {{complete}} — remaining_steps: {{remaining_steps}} — completion_pct: {{completion_pct}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workflow-completion-gate
+  cli: rsk mcg run workflow-completion-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signal_assessed
   nodes:
@@ -40,14 +118,12 @@ tree:
       value: true
       true_next: check_causality
       false_next: return_incomplete_1_step
-
     return_incomplete_1_step:
       type: return
       value:
         complete: false
-        remaining_steps: "Signal assessment, causality determination, action recommendation, report filing, QA review"
+        remaining_steps: Signal assessment, causality determination, action recommendation, report filing, QA review
         completion_pct: 0
-
     check_causality:
       type: condition
       variable: causality_determined
@@ -55,14 +131,12 @@ tree:
       value: true
       true_next: check_action_recommended
       false_next: return_incomplete_2_steps
-
     return_incomplete_2_steps:
       type: return
       value:
         complete: false
-        remaining_steps: "Causality determination, action recommendation, report filing, QA review"
+        remaining_steps: Causality determination, action recommendation, report filing, QA review
         completion_pct: 20
-
     check_action_recommended:
       type: condition
       variable: action_recommended
@@ -70,14 +144,12 @@ tree:
       value: true
       true_next: check_report_filed
       false_next: return_incomplete_3_steps
-
     return_incomplete_3_steps:
       type: return
       value:
         complete: false
-        remaining_steps: "Action recommendation, report filing, QA review"
+        remaining_steps: Action recommendation, report filing, QA review
         completion_pct: 40
-
     check_report_filed:
       type: condition
       variable: report_filed
@@ -85,14 +157,12 @@ tree:
       value: true
       true_next: check_review_complete
       false_next: return_incomplete_4_steps
-
     return_incomplete_4_steps:
       type: return
       value:
         complete: false
-        remaining_steps: "Report filing, QA review"
+        remaining_steps: Report filing, QA review
         completion_pct: 60
-
     check_review_complete:
       type: condition
       variable: review_complete
@@ -100,45 +170,136 @@ tree:
       value: true
       true_next: return_complete
       false_next: return_incomplete_5_steps
-
     return_incomplete_5_steps:
       type: return
       value:
         complete: false
-        remaining_steps: "QA review"
+        remaining_steps: QA review
         completion_pct: 80
-
     return_complete:
       type: return
       value:
         complete: true
-        remaining_steps: "none"
+        remaining_steps: none
         completion_pct: 100
-
 tests:
-  - input: { signal_assessed: false, causality_determined: false, action_recommended: false, report_filed: false, review_complete: false }
-    expect: { complete: false, remaining_steps: "Signal assessment, causality determination, action recommendation, report filing, QA review", completion_pct: 0 }
-
-  - input: { signal_assessed: true, causality_determined: false, action_recommended: false, report_filed: false, review_complete: false }
-    expect: { complete: false, remaining_steps: "Causality determination, action recommendation, report filing, QA review", completion_pct: 20 }
-
-  - input: { signal_assessed: true, causality_determined: true, action_recommended: false, report_filed: false, review_complete: false }
-    expect: { complete: false, remaining_steps: "Action recommendation, report filing, QA review", completion_pct: 40 }
-
-  - input: { signal_assessed: true, causality_determined: true, action_recommended: true, report_filed: false, review_complete: false }
-    expect: { complete: false, remaining_steps: "Report filing, QA review", completion_pct: 60 }
-
-  - input: { signal_assessed: true, causality_determined: true, action_recommended: true, report_filed: true, review_complete: false }
-    expect: { complete: false, remaining_steps: "QA review", completion_pct: 80 }
-
-  - input: { signal_assessed: true, causality_determined: true, action_recommended: true, report_filed: true, review_complete: true }
-    expect: { complete: true, remaining_steps: "none", completion_pct: 100 }
-
-  - input: { signal_assessed: true, causality_determined: true, action_recommended: true, report_filed: false, review_complete: true }
-    expect: { complete: false, remaining_steps: "Report filing, QA review", completion_pct: 60 }
-
-  - input: { signal_assessed: false, causality_determined: true, action_recommended: true, report_filed: true, review_complete: true }
-    expect: { complete: false, remaining_steps: "Signal assessment, causality determination, action recommendation, report filing, QA review", completion_pct: 0 }
-
+  - input:
+      signal_assessed: false
+      causality_determined: false
+      action_recommended: false
+      report_filed: false
+      review_complete: false
+    expect:
+      complete: false
+      remaining_steps: Signal assessment, causality determination, action recommendation, report filing, QA review
+      completion_pct: 0
+  - input:
+      signal_assessed: true
+      causality_determined: false
+      action_recommended: false
+      report_filed: false
+      review_complete: false
+    expect:
+      complete: false
+      remaining_steps: Causality determination, action recommendation, report filing, QA review
+      completion_pct: 20
+  - input:
+      signal_assessed: true
+      causality_determined: true
+      action_recommended: false
+      report_filed: false
+      review_complete: false
+    expect:
+      complete: false
+      remaining_steps: Action recommendation, report filing, QA review
+      completion_pct: 40
+  - input:
+      signal_assessed: true
+      causality_determined: true
+      action_recommended: true
+      report_filed: false
+      review_complete: false
+    expect:
+      complete: false
+      remaining_steps: Report filing, QA review
+      completion_pct: 60
+  - input:
+      signal_assessed: true
+      causality_determined: true
+      action_recommended: true
+      report_filed: true
+      review_complete: false
+    expect:
+      complete: false
+      remaining_steps: QA review
+      completion_pct: 80
+  - input:
+      signal_assessed: true
+      causality_determined: true
+      action_recommended: true
+      report_filed: true
+      review_complete: true
+    expect:
+      complete: true
+      remaining_steps: none
+      completion_pct: 100
+  - input:
+      signal_assessed: true
+      causality_determined: true
+      action_recommended: true
+      report_filed: false
+      review_complete: true
+    expect:
+      complete: false
+      remaining_steps: Report filing, QA review
+      completion_pct: 60
+  - input:
+      signal_assessed: false
+      causality_determined: true
+      action_recommended: true
+      report_filed: true
+      review_complete: true
+    expect:
+      complete: false
+      remaining_steps: Signal assessment, causality determination, action recommendation, report filing, QA review
+      completion_pct: 0
   - input: {}
-    expect: { complete: false, remaining_steps: "Signal assessment, causality determination, action recommendation, report filing, QA review", completion_pct: 0 }
+    expect:
+      complete: false
+      remaining_steps: Signal assessment, causality determination, action recommendation, report filing, QA review
+      completion_pct: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - complete
+    - remaining_steps
+    - completion_pct
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

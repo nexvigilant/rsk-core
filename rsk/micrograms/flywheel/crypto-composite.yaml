@@ -1,19 +1,94 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: crypto-composite
-description: 'Aggregate 4 crypto micrograms into single GREEN/YELLOW/RED. RED if any red, YELLOW if any yellow, GREEN otherwise (grey=green).'
 version: 1.0.0
-primitive_signature:
-  dominant: sum
-  expression: "S(health, sigs, backups, provenance)"
-  primes: [sum, boundary, state]
+description: Aggregate 4 crypto micrograms into single GREEN/YELLOW/RED. RED if any red, YELLOW if any yellow, GREEN otherwise (grey=green).
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: health_level
+    type: string
+    required: false
+    description: ""
+  - name: sig_level
+    type: string
+    required: false
+    description: ""
+  - name: backup_level
+    type: string
+    required: false
+    description: ""
+  - name: prov_level
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: crypto_health
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
-    health_level: { type: string, required: false }
-    sig_level: { type: string, required: false }
-    backup_level: { type: string, required: false }
-    prov_level: { type: string, required: false }
+    health_level:
+      type: string
+      required: false
+    sig_level:
+      type: string
+      required: false
+    backup_level:
+      type: string
+      required: false
+    prov_level:
+      type: string
+      required: false
   outputs:
-    crypto_health: { type: string }
-    action: { type: string }
+    crypto_health:
+      type: string
+    action:
+      type: string
+ui:
+  title: Crypto Composite
+  subtitle: Aggregate 4 crypto micrograms into single GREEN/YELLOW/RED. RED if any red, YELLOW if any yellow, GREEN otherwise (grey=green).
+  icon: circle
+  route: /vigilance/mg/crypto-composite
+  steps:
+    - field: health_level
+      label: health level
+      help: Enter health_level
+      widget: text
+      placeholder: null
+    - field: sig_level
+      label: sig level
+      help: Enter sig_level
+      widget: text
+      placeholder: null
+    - field: backup_level
+      label: backup level
+      help: Enter backup_level
+      widget: text
+      placeholder: null
+    - field: prov_level
+      label: prov level
+      help: Enter prov_level
+      widget: text
+      placeholder: null
+  result:
+    template: "crypto_health: {{crypto_health}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/crypto-composite
+  cli: rsk mcg run crypto-composite
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_health_red
   nodes:
@@ -68,29 +143,119 @@ tree:
       false_next: green
     green:
       type: return
-      value: { crypto_health: GREEN, action: none }
+      value:
+        crypto_health: GREEN
+        action: none
     yellow:
       type: return
-      value: { crypto_health: YELLOW, action: monitor }
+      value:
+        crypto_health: YELLOW
+        action: monitor
     red:
       type: return
-      value: { crypto_health: RED, action: intervene }
+      value:
+        crypto_health: RED
+        action: intervene
 tests:
-- input: { health_level: green, sig_level: green, backup_level: green, prov_level: green }
-  expect: { crypto_health: GREEN, action: none }
-- input: { health_level: green, sig_level: green, backup_level: green, prov_level: grey }
-  expect: { crypto_health: GREEN, action: none }
-- input: { health_level: red, sig_level: green, backup_level: green, prov_level: green }
-  expect: { crypto_health: RED, action: intervene }
-- input: { health_level: green, sig_level: red, backup_level: green, prov_level: green }
-  expect: { crypto_health: RED, action: intervene }
-- input: { health_level: green, sig_level: green, backup_level: red, prov_level: green }
-  expect: { crypto_health: RED, action: intervene }
-- input: { health_level: yellow, sig_level: green, backup_level: green, prov_level: green }
-  expect: { crypto_health: YELLOW, action: monitor }
-- input: { health_level: green, sig_level: yellow, backup_level: green, prov_level: green }
-  expect: { crypto_health: YELLOW, action: monitor }
-- input: { health_level: green, sig_level: green, backup_level: green, prov_level: yellow }
-  expect: { crypto_health: YELLOW, action: monitor }
-- input: {}
-  expect: { crypto_health: GREEN, action: none }
+  - input:
+      health_level: green
+      sig_level: green
+      backup_level: green
+      prov_level: green
+    expect:
+      crypto_health: GREEN
+      action: none
+  - input:
+      health_level: green
+      sig_level: green
+      backup_level: green
+      prov_level: grey
+    expect:
+      crypto_health: GREEN
+      action: none
+  - input:
+      health_level: red
+      sig_level: green
+      backup_level: green
+      prov_level: green
+    expect:
+      crypto_health: RED
+      action: intervene
+  - input:
+      health_level: green
+      sig_level: red
+      backup_level: green
+      prov_level: green
+    expect:
+      crypto_health: RED
+      action: intervene
+  - input:
+      health_level: green
+      sig_level: green
+      backup_level: red
+      prov_level: green
+    expect:
+      crypto_health: RED
+      action: intervene
+  - input:
+      health_level: yellow
+      sig_level: green
+      backup_level: green
+      prov_level: green
+    expect:
+      crypto_health: YELLOW
+      action: monitor
+  - input:
+      health_level: green
+      sig_level: yellow
+      backup_level: green
+      prov_level: green
+    expect:
+      crypto_health: YELLOW
+      action: monitor
+  - input:
+      health_level: green
+      sig_level: green
+      backup_level: green
+      prov_level: yellow
+    expect:
+      crypto_health: YELLOW
+      action: monitor
+  - input: {}
+    expect:
+      crypto_health: GREEN
+      action: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - crypto_health
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-unblinding-decision
-description: 'ICH E2A blinded study unblinding gate: determines whether treatment unblinding is recommended for expedited reporting'
 version: 0.1.0
+description: "ICH E2A blinded study unblinding gate: determines whether treatment unblinding is recommended for expedited reporting"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: expedited_reporting_required
+    type: bool
+    required: false
+    description: ""
+  - name: serious_ae
+    type: bool
+    required: false
+    description: ""
+  - name: study_blinded
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: description
+    type: string
+  - name: not_applicable
+    type: bool
+  - name: regulatory_reference
+    type: string
+  - name: scope
+    type: string
+  - name: unblinding_recommended
+    type: bool
 interface:
   inputs:
     expedited_reporting_required:
@@ -23,6 +57,38 @@ interface:
       type: string
     unblinding_recommended:
       type: bool
+ui:
+  title: E2a Unblinding Decision
+  subtitle: "ICH E2A blinded study unblinding gate: determines whether treatment unblinding is recommended for expedited reporting"
+  icon: circle
+  route: /vigilance/mg/e2a-unblinding-decision
+  steps:
+    - field: expedited_reporting_required
+      label: expedited reporting required
+      help: Enter expedited_reporting_required
+      widget: toggle
+      placeholder: null
+    - field: serious_ae
+      label: serious ae
+      help: Enter serious_ae
+      widget: toggle
+      placeholder: null
+    - field: study_blinded
+      label: study blinded
+      help: Enter study_blinded
+      widget: toggle
+      placeholder: null
+  result:
+    template: "description: {{description}} — not_applicable: {{not_applicable}} — regulatory_reference: {{regulatory_reference}} — scope: {{scope}} — unblinding_recommended: {{unblinding_recommended}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-unblinding-decision
+  cli: rsk mcg run e2a-unblinding-decision
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_blinded
   nodes:
@@ -71,65 +137,96 @@ tree:
         description: Unblinding not recommended - case does not meet expedited reporting criteria
         regulatory_reference: ICH E2A Section III.B.2
 tests:
-# All three true - unblinding recommended
-- input:
-    study_blinded: true
-    serious_ae: true
-    expedited_reporting_required: true
-  expect:
-    unblinding_recommended: true
-    scope: PATIENT_ONLY
-    description: Unblinding recommended for the specific patient to fulfill expedited reporting obligations
-    regulatory_reference: ICH E2A Section III.B.2
-# Study not blinded - not applicable
-- input:
-    study_blinded: false
-    serious_ae: true
-    expedited_reporting_required: true
-  expect:
-    unblinding_recommended: false
-    not_applicable: true
-    scope: NONE
-    description: Study is not blinded - unblinding decision not applicable
-    regulatory_reference: ICH E2A Section III.B.2
-# Blinded but not serious - no unblinding
-- input:
-    study_blinded: true
-    serious_ae: false
-    expedited_reporting_required: true
-  expect:
-    unblinding_recommended: false
-    not_applicable: false
-    scope: NONE
-    description: Unblinding not recommended - case does not meet expedited reporting criteria
-    regulatory_reference: ICH E2A Section III.B.2
-# Blinded, serious, but not expedited - no unblinding
-- input:
-    study_blinded: true
-    serious_ae: true
-    expedited_reporting_required: false
-  expect:
-    unblinding_recommended: false
-    not_applicable: false
-    scope: NONE
-    description: Unblinding not recommended - case does not meet expedited reporting criteria
-    regulatory_reference: ICH E2A Section III.B.2
-# Empty input - not applicable (defaults to not blinded)
-- input: {}
-  expect:
-    unblinding_recommended: false
-    not_applicable: true
-    scope: NONE
-    description: Study is not blinded - unblinding decision not applicable
-    regulatory_reference: ICH E2A Section III.B.2
-# All false
-- input:
-    study_blinded: false
-    serious_ae: false
-    expedited_reporting_required: false
-  expect:
-    unblinding_recommended: false
-    not_applicable: true
-    scope: NONE
-    description: Study is not blinded - unblinding decision not applicable
-    regulatory_reference: ICH E2A Section III.B.2
+  - input:
+      study_blinded: true
+      serious_ae: true
+      expedited_reporting_required: true
+    expect:
+      unblinding_recommended: true
+      scope: PATIENT_ONLY
+      description: Unblinding recommended for the specific patient to fulfill expedited reporting obligations
+      regulatory_reference: ICH E2A Section III.B.2
+  - input:
+      study_blinded: false
+      serious_ae: true
+      expedited_reporting_required: true
+    expect:
+      unblinding_recommended: false
+      not_applicable: true
+      scope: NONE
+      description: Study is not blinded - unblinding decision not applicable
+      regulatory_reference: ICH E2A Section III.B.2
+  - input:
+      study_blinded: true
+      serious_ae: false
+      expedited_reporting_required: true
+    expect:
+      unblinding_recommended: false
+      not_applicable: false
+      scope: NONE
+      description: Unblinding not recommended - case does not meet expedited reporting criteria
+      regulatory_reference: ICH E2A Section III.B.2
+  - input:
+      study_blinded: true
+      serious_ae: true
+      expedited_reporting_required: false
+    expect:
+      unblinding_recommended: false
+      not_applicable: false
+      scope: NONE
+      description: Unblinding not recommended - case does not meet expedited reporting criteria
+      regulatory_reference: ICH E2A Section III.B.2
+  - input: {}
+    expect:
+      unblinding_recommended: false
+      not_applicable: true
+      scope: NONE
+      description: Study is not blinded - unblinding decision not applicable
+      regulatory_reference: ICH E2A Section III.B.2
+  - input:
+      study_blinded: false
+      serious_ae: false
+      expedited_reporting_required: false
+    expect:
+      unblinding_recommended: false
+      not_applicable: true
+      scope: NONE
+      description: Study is not blinded - unblinding decision not applicable
+      regulatory_reference: ICH E2A Section III.B.2
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - description
+    - not_applicable
+    - regulatory_reference
+    - scope
+    - unblinding_recommended
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

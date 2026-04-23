@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: labeling-change-classifier
-description: Classify FDA drug labeling changes by type and assess regulatory impact
 version: 0.1.0
+description: Classify FDA drug labeling changes by type and assess regulatory impact
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Labeling Change Classifier
+  subtitle: Classify FDA drug labeling changes by type and assess regulatory impact
+  icon: circle
+  route: /vigilance/mg/labeling-change-classifier
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/labeling-change-classifier
+  cli: rsk mcg run labeling-change-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_change_type
   nodes:
@@ -89,50 +118,81 @@ tree:
         regulatory_action: black_box_warning_addition
         severity_rank: 5
 tests:
-- input:
-    change_type: ZZZZZ_NO_MATCH
-  expect:
-    regulatory_action: null
-    severity_rank: null
-    requires_dhpc: false
-- input:
-    change_type: adverse_reaction
-  expect:
-    requires_dhpc: false
-    severity_rank: 3
-    regulatory_action: adverse_reaction_update
-- input:
-    change_type: boxed_warning
-  expect:
-    requires_dhpc: true
-    regulatory_action: black_box_warning_addition
-    severity_rank: 5
-- input:
-    change_type: contraindication
-  expect:
-    severity_rank: 5
-    regulatory_action: contraindication_addition
-    requires_dhpc: true
-- input:
-    change_type: precaution
-  expect:
-    severity_rank: 2
-    requires_dhpc: false
-    regulatory_action: precaution_update
-- input:
-    change_type: warning
-  expect:
-    severity_rank: 4
-    regulatory_action: warning_addition
-    requires_dhpc: true
-- input: {}
-  expect:
-    requires_dhpc: false
-    regulatory_action: null
-    severity_rank: null
-- input: {}
-  expect:
-    requires_dhpc: false
-    regulatory_action: null
-    severity_rank: null
-interface: null
+  - input:
+      change_type: ZZZZZ_NO_MATCH
+    expect:
+      regulatory_action: null
+      severity_rank: null
+      requires_dhpc: false
+  - input:
+      change_type: adverse_reaction
+    expect:
+      requires_dhpc: false
+      severity_rank: 3
+      regulatory_action: adverse_reaction_update
+  - input:
+      change_type: boxed_warning
+    expect:
+      requires_dhpc: true
+      regulatory_action: black_box_warning_addition
+      severity_rank: 5
+  - input:
+      change_type: contraindication
+    expect:
+      severity_rank: 5
+      regulatory_action: contraindication_addition
+      requires_dhpc: true
+  - input:
+      change_type: precaution
+    expect:
+      severity_rank: 2
+      requires_dhpc: false
+      regulatory_action: precaution_update
+  - input:
+      change_type: warning
+    expect:
+      severity_rank: 4
+      regulatory_action: warning_addition
+      requires_dhpc: true
+  - input: {}
+    expect:
+      requires_dhpc: false
+      regulatory_action: null
+      severity_rank: null
+  - input: {}
+    expect:
+      requires_dhpc: false
+      regulatory_action: null
+      severity_rank: null
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: risk-characterize
-description: "Characterize identified risk based on frequency and severity assessment"
 version: 0.1.0
+description: Characterize identified risk based on frequency and severity assessment
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Risk Characterize
+  subtitle: Characterize identified risk based on frequency and severity assessment
+  icon: circle
+  route: /vigilance/mg/risk-characterize
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/risk-characterize
+  cli: rsk mcg run risk-characterize
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_risk_data
   nodes:
@@ -15,68 +44,68 @@ tree:
       type: condition
       variable: frequency_category
       operator: eq
-      value: "common"
+      value: common
       true_next: check_common_severity
       false_next: check_uncommon
     check_common_severity:
       type: condition
       variable: severity
       operator: eq
-      value: "serious"
+      value: serious
       true_next: high_priority_risk
       false_next: moderate_priority_risk
     check_uncommon:
       type: condition
       variable: frequency_category
       operator: eq
-      value: "rare"
+      value: rare
       true_next: check_rare_severity
       false_next: very_rare_risk
     check_rare_severity:
       type: condition
       variable: severity
       operator: eq
-      value: "serious"
+      value: serious
       true_next: serious_rare_risk
       false_next: minimal_risk
     high_priority_risk:
       type: return
       value:
-        risk_category: "high"
+        risk_category: high
         risk_mitigation_required: true
-        monitoring_intensity: "intensive"
+        monitoring_intensity: intensive
         patient_communication_required: true
         risk_management_compliant: true
     moderate_priority_risk:
       type: return
       value:
-        risk_category: "moderate"
+        risk_category: moderate
         risk_mitigation_required: true
-        monitoring_intensity: "standard"
+        monitoring_intensity: standard
         patient_communication_required: true
         risk_management_compliant: true
     serious_rare_risk:
       type: return
       value:
-        risk_category: "serious_rare"
+        risk_category: serious_rare
         risk_mitigation_required: true
-        monitoring_intensity: "targeted"
+        monitoring_intensity: targeted
         patient_communication_required: true
         risk_management_compliant: true
     minimal_risk:
       type: return
       value:
-        risk_category: "minimal"
+        risk_category: minimal
         risk_mitigation_required: false
-        monitoring_intensity: "routine"
+        monitoring_intensity: routine
         patient_communication_required: false
         risk_management_compliant: true
     very_rare_risk:
       type: return
       value:
-        risk_category: "very_rare"
+        risk_category: very_rare
         risk_mitigation_required: false
-        monitoring_intensity: "standard"
+        monitoring_intensity: standard
         patient_communication_required: false
         risk_management_compliant: true
     characterization_unknown:
@@ -88,26 +117,58 @@ tree:
         patient_communication_required: null
         risk_management_compliant: false
 tests:
-- input:
-    adverse_event_identified: "myocardial_infarction"
-    frequency_category: "common"
-    severity: "serious"
-  expect:
-    risk_category: "high"
-    risk_mitigation_required: true
-- input:
-    adverse_event_identified: "rash"
-    frequency_category: "common"
-    severity: "mild"
-  expect:
-    risk_category: "moderate"
-- input:
-    adverse_event_identified: "rare_syndrome"
-    frequency_category: "rare"
-    severity: "serious"
-  expect:
-    risk_category: "serious_rare"
-- input: {}
-  expect:
-    risk_category: null
-    risk_management_compliant: false
+  - input:
+      adverse_event_identified: myocardial_infarction
+      frequency_category: common
+      severity: serious
+    expect:
+      risk_category: high
+      risk_mitigation_required: true
+  - input:
+      adverse_event_identified: rash
+      frequency_category: common
+      severity: mild
+    expect:
+      risk_category: moderate
+  - input:
+      adverse_event_identified: rare_syndrome
+      frequency_category: rare
+      severity: serious
+    expect:
+      risk_category: serious_rare
+  - input: {}
+    expect:
+      risk_category: null
+      risk_management_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

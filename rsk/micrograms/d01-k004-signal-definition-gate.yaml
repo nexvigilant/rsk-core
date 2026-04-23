@@ -1,0 +1,101 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: d01-k004-signal-definition-gate
+version: 0.1.0
+description: Determine if observation meets CIOMS/WHO definition of safety signal (new, changed, or incompletely documented)
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: D01 K004 Signal Definition Gate
+  subtitle: Determine if observation meets CIOMS/WHO definition of safety signal (new, changed, or incompletely documented)
+  icon: activity
+  route: /vigilance/mg/d01-k004-signal-definition-gate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/d01-k004-signal-definition-gate
+  cli: rsk mcg run d01-k004-signal-definition-gate
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check
+  nodes:
+    no:
+      type: return
+      value:
+        not_signal: false
+    yes:
+      type: return
+      value:
+        is_signal: true
+    check:
+      type: condition
+      variable: signal_strength
+      operator: gte
+      value: 1
+      true_next: yes
+      false_next: no
+tests:
+  - input:
+      signal_strength: 1
+    expect:
+      is_signal: true
+  - input:
+      signal_strength: 2
+    expect:
+      is_signal: true
+  - input:
+      signal_strength: 0
+    expect:
+      not_signal: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

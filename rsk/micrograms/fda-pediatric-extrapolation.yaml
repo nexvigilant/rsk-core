@@ -1,20 +1,58 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: fda-pediatric-extrapolation
-description: "ICH E11A pediatric extrapolation decision tree: determines study requirements by disease similarity and PK comparability per ICH E11A 'Pediatric Extrapolation' (2024)"
 version: 0.1.0
+description: "ICH E11A pediatric extrapolation decision tree: determines study requirements by disease similarity and PK comparability per ICH E11A 'Pediatric Extrapolation' (2024)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: disease_similar_adults
+    type: bool
+    required: true
+    description: Whether the disease course is similar in pediatric and adult populations
+  - name: response_similar_adults
+    type: bool
+    required: true
+    description: Whether drug response is expected to be similar in pediatric and adult populations
+  - name: pk_data_available
+    type: bool
+    required: false
+    description: Whether adequate PK data exists in the pediatric population
+  - name: age_group
+    type: string
+    required: false
+    description: "Pediatric age group: neonate, infant, child, adolescent"
+outputs:
+  - name: extrapolation_approach
+    type: string
+  - name: study_requirement
+    type: string
+  - name: pk_study_needed
+    type: bool
+  - name: efficacy_trial_needed
+    type: bool
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     disease_similar_adults:
       type: bool
       required: true
-      description: "Whether the disease course is similar in pediatric and adult populations"
+      description: Whether the disease course is similar in pediatric and adult populations
     response_similar_adults:
       type: bool
       required: true
-      description: "Whether drug response is expected to be similar in pediatric and adult populations"
+      description: Whether drug response is expected to be similar in pediatric and adult populations
     pk_data_available:
       type: bool
       required: false
-      description: "Whether adequate PK data exists in the pediatric population"
+      description: Whether adequate PK data exists in the pediatric population
     age_group:
       type: string
       required: false
@@ -30,6 +68,43 @@ interface:
       type: bool
     regulatory_reference:
       type: string
+ui:
+  title: Fda Pediatric Extrapolation
+  subtitle: "ICH E11A pediatric extrapolation decision tree: determines study requirements by disease similarity and PK comparability per ICH E11A 'Pediatric Extrapolation' (2024)"
+  icon: circle
+  route: /vigilance/mg/fda-pediatric-extrapolation
+  steps:
+    - field: disease_similar_adults
+      label: disease similar adults
+      help: Whether the disease course is similar in pediatric and adult populations
+      widget: toggle
+      placeholder: null
+    - field: response_similar_adults
+      label: response similar adults
+      help: Whether drug response is expected to be similar in pediatric and adult populations
+      widget: toggle
+      placeholder: null
+    - field: pk_data_available
+      label: pk data available
+      help: Whether adequate PK data exists in the pediatric population
+      widget: toggle
+      placeholder: null
+    - field: age_group
+      label: age group
+      help: "Pediatric age group: neonate, infant, child, adolescent"
+      widget: text
+      placeholder: null
+  result:
+    template: "extrapolation_approach: {{extrapolation_approach}} — study_requirement: {{study_requirement}} — pk_study_needed: {{pk_study_needed}} — efficacy_trial_needed: {{efficacy_trial_needed}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/fda-pediatric-extrapolation
+  cli: rsk mcg run fda-pediatric-extrapolation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_disease_similarity
   nodes:
@@ -40,7 +115,6 @@ tree:
       value: true
       true_next: check_response_similarity
       false_next: no_extrapolation
-
     check_response_similarity:
       type: condition
       variable: response_similar_adults
@@ -48,8 +122,6 @@ tree:
       value: true
       true_next: check_pk_data
       false_next: partial_extrapolation
-
-    # Full extrapolation possible
     check_pk_data:
       type: condition
       variable: pk_data_available
@@ -57,115 +129,126 @@ tree:
       value: true
       true_next: full_extrapolation
       false_next: pk_study_needed
-
     full_extrapolation:
       type: return
       value:
-        extrapolation_approach: "FULL_EXTRAPOLATION"
-        study_requirement: "PK bridging study to confirm exposure. No separate efficacy trial required. Safety data from PK study."
+        extrapolation_approach: FULL_EXTRAPOLATION
+        study_requirement: PK bridging study to confirm exposure. No separate efficacy trial required. Safety data from PK study.
         pk_study_needed: false
         efficacy_trial_needed: false
-        regulatory_reference: "ICH E11A (2024), Section 3.1 — Full Extrapolation Framework"
-
+        regulatory_reference: ICH E11A (2024), Section 3.1 — Full Extrapolation Framework
     pk_study_needed:
       type: return
       value:
-        extrapolation_approach: "FULL_EXTRAPOLATION_WITH_PK"
-        study_requirement: "Conduct PK study in target pediatric population to establish dose. Efficacy extrapolated from adult data."
+        extrapolation_approach: FULL_EXTRAPOLATION_WITH_PK
+        study_requirement: Conduct PK study in target pediatric population to establish dose. Efficacy extrapolated from adult data.
         pk_study_needed: true
         efficacy_trial_needed: false
-        regulatory_reference: "ICH E11A (2024), Section 3.2 — PK Bridging"
-
-    # Partial extrapolation — response not fully similar
+        regulatory_reference: ICH E11A (2024), Section 3.2 — PK Bridging
     partial_extrapolation:
       type: condition
       variable: age_group
       operator: eq
-      value: "neonate"
+      value: neonate
       true_next: neonate_full_trial
       false_next: partial_extrapolation_trial
-
     partial_extrapolation_trial:
       type: return
       value:
-        extrapolation_approach: "PARTIAL_EXTRAPOLATION"
-        study_requirement: "Conduct PK study plus reduced efficacy trial (fewer patients, modified endpoints). Exposure-response analysis to bridge remaining uncertainty."
+        extrapolation_approach: PARTIAL_EXTRAPOLATION
+        study_requirement: Conduct PK study plus reduced efficacy trial (fewer patients, modified endpoints). Exposure-response analysis to bridge remaining uncertainty.
         pk_study_needed: true
         efficacy_trial_needed: true
-        regulatory_reference: "ICH E11A (2024), Section 3.3 — Partial Extrapolation with Exposure-Response"
-
+        regulatory_reference: ICH E11A (2024), Section 3.3 — Partial Extrapolation with Exposure-Response
     neonate_full_trial:
       type: return
       value:
-        extrapolation_approach: "NO_EXTRAPOLATION_NEONATAL"
-        study_requirement: "Neonates with uncertain drug response require full efficacy and safety trials. Maturational physiology differences preclude extrapolation."
+        extrapolation_approach: NO_EXTRAPOLATION_NEONATAL
+        study_requirement: Neonates with uncertain drug response require full efficacy and safety trials. Maturational physiology differences preclude extrapolation.
         pk_study_needed: true
         efficacy_trial_needed: true
-        regulatory_reference: "ICH E11A (2024), Section 4 — Special Considerations for Neonates"
-
-    # No extrapolation — disease differs
+        regulatory_reference: ICH E11A (2024), Section 4 — Special Considerations for Neonates
     no_extrapolation:
       type: return
       value:
-        extrapolation_approach: "NO_EXTRAPOLATION"
-        study_requirement: "Disease progression differs between adults and pediatrics. Full independent efficacy and safety program required."
+        extrapolation_approach: NO_EXTRAPOLATION
+        study_requirement: Disease progression differs between adults and pediatrics. Full independent efficacy and safety program required.
         pk_study_needed: true
         efficacy_trial_needed: true
-        regulatory_reference: "ICH E11A (2024), Section 2 — Extrapolation Not Justified"
-
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ(κ, ∂) — study requirement routing by disease similarity classification and population boundary'
-  primes: ['σ', 'κ', '∂']
-  arguments: ['disease_similar_adults', 'response_similar_adults', 'pk_data_available', 'age_group']
-
+        regulatory_reference: ICH E11A (2024), Section 2 — Extrapolation Not Justified
 tests:
-# Full extrapolation: disease similar, response similar, PK available
-- input:
-    disease_similar_adults: true
-    response_similar_adults: true
-    pk_data_available: true
-  expect:
-    extrapolation_approach: "FULL_EXTRAPOLATION"
-    pk_study_needed: false
-    efficacy_trial_needed: false
-
-# Full extrapolation but needs PK study
-- input:
-    disease_similar_adults: true
-    response_similar_adults: true
-    pk_data_available: false
-  expect:
-    extrapolation_approach: "FULL_EXTRAPOLATION_WITH_PK"
-    pk_study_needed: true
-    efficacy_trial_needed: false
-
-# Partial: disease similar but response differs, child
-- input:
-    disease_similar_adults: true
-    response_similar_adults: false
-    age_group: "child"
-  expect:
-    extrapolation_approach: "PARTIAL_EXTRAPOLATION"
-    efficacy_trial_needed: true
-
-# Neonate: no extrapolation regardless
-- input:
-    disease_similar_adults: true
-    response_similar_adults: false
-    age_group: "neonate"
-  expect:
-    extrapolation_approach: "NO_EXTRAPOLATION_NEONATAL"
-
-# Disease differs -> full program
-- input:
-    disease_similar_adults: false
-    response_similar_adults: true
-  expect:
-    extrapolation_approach: "NO_EXTRAPOLATION"
-    efficacy_trial_needed: true
-
-# Empty -> no extrapolation (disease not confirmed similar)
-- input: {}
-  expect:
-    extrapolation_approach: "NO_EXTRAPOLATION"
+  - input:
+      disease_similar_adults: true
+      response_similar_adults: true
+      pk_data_available: true
+    expect:
+      extrapolation_approach: FULL_EXTRAPOLATION
+      pk_study_needed: false
+      efficacy_trial_needed: false
+  - input:
+      disease_similar_adults: true
+      response_similar_adults: true
+      pk_data_available: false
+    expect:
+      extrapolation_approach: FULL_EXTRAPOLATION_WITH_PK
+      pk_study_needed: true
+      efficacy_trial_needed: false
+  - input:
+      disease_similar_adults: true
+      response_similar_adults: false
+      age_group: child
+    expect:
+      extrapolation_approach: PARTIAL_EXTRAPOLATION
+      efficacy_trial_needed: true
+  - input:
+      disease_similar_adults: true
+      response_similar_adults: false
+      age_group: neonate
+    expect:
+      extrapolation_approach: NO_EXTRAPOLATION_NEONATAL
+  - input:
+      disease_similar_adults: false
+      response_similar_adults: true
+    expect:
+      extrapolation_approach: NO_EXTRAPOLATION
+      efficacy_trial_needed: true
+  - input: {}
+    expect:
+      extrapolation_approach: NO_EXTRAPOLATION
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - extrapolation_approach
+    - study_requirement
+    - pk_study_needed
+    - efficacy_trial_needed
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

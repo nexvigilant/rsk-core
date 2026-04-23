@@ -1,47 +1,120 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workflow-risk-management
-description: "Select risk management approach by risk category"
 version: 0.1.0
-
+description: Select risk management approach by risk category
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Workflow Risk Management
+  subtitle: Select risk management approach by risk category
+  icon: circle
+  route: /vigilance/mg/workflow-risk-management
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workflow-risk-management
+  cli: rsk mcg run workflow-risk-management
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_category
   nodes:
     check_category:
-      type: "condition"
-      variable: "risk_category"
-      operator: "eq"
-      value: "identified"
-      true_next: "identified_risk"
-      false_next: "check_potential"
+      type: condition
+      variable: risk_category
+      operator: eq
+      value: identified
+      true_next: identified_risk
+      false_next: check_potential
     identified_risk:
-      type: "return"
+      type: return
       value:
-        approach: "routine_minimization"
-        chain: "compliance \u2192 benefit-risk \u2192 ema"
-        actions: ["labeling", "PIL", "training"]
+        approach: routine_minimization
+        chain: compliance → benefit-risk → ema
+        actions:
+          - labeling
+          - PIL
+          - training
     check_potential:
-      type: "condition"
-      variable: "risk_category"
-      operator: "eq"
-      value: "potential"
-      true_next: "potential_risk"
-      false_next: "missing_info"
+      type: condition
+      variable: risk_category
+      operator: eq
+      value: potential
+      true_next: potential_risk
+      false_next: missing_info
     potential_risk:
-      type: "return"
+      type: return
       value:
-        approach: "additional_monitoring"
-        chain: "preemptive-pv \u2192 vigilance \u2192 epidemiology"
-        actions: ["PASS", "registry", "study"]
+        approach: additional_monitoring
+        chain: preemptive-pv → vigilance → epidemiology
+        actions:
+          - PASS
+          - registry
+          - study
     missing_info:
-      type: "return"
+      type: return
       value:
-        approach: "information_gathering"
-        chain: "pubmed \u2192 clinicaltrials \u2192 epidemiology"
-        actions: ["literature_review", "observational_study"]
-
+        approach: information_gathering
+        chain: pubmed → clinicaltrials → epidemiology
+        actions:
+          - literature_review
+          - observational_study
 tests:
-  - input: {"risk_category": "identified"}
-    expect: {"approach": "routine_minimization"}
-  - input: {"risk_category": "potential"}
-    expect: {"approach": "additional_monitoring"}
-  - input: {"risk_category": "missing"}
-    expect: {"approach": "information_gathering"}
+  - input:
+      risk_category: identified
+    expect:
+      approach: routine_minimization
+  - input:
+      risk_category: potential
+    expect:
+      approach: additional_monitoring
+  - input:
+      risk_category: missing
+    expect:
+      approach: information_gathering
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

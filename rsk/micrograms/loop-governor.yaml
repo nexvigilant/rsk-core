@@ -1,40 +1,105 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: loop-governor
-description: 'Loop Governor: transforms scorecard-compound governor signals into loop control. Maps HALT/CONSOLIDATE/CONTINUE to loop-compatible halt decisions. Designed to be the feedback node in a looped chain — it reads the compound verdict and decides whether to keep iterating.'
 version: 0.1.0
-primitive_signature:
-  dominant: '∂'
-  expression: '∂(ν(Σ)) — boundary gate on the frequency of aggregation'
-  primes: ['∂', 'ν', 'κ']
-  arguments: ['governor_signal']
-  chain_prediction: 'ρ(∂(ν(Σ))) — self-governing loop: the governor governs the governor'
+description: "Loop Governor: transforms scorecard-compound governor signals into loop control. Maps HALT/CONSOLIDATE/CONTINUE to loop-compatible halt decisions. Designed to be the feedback node in a looped chain — it reads the compound verdict and decides whether to keep iterating."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: governor_signal
+    type: string
+    required: false
+    description: "Governor signal from scorecard-compound: starts with HALT, CONSOLIDATE, or CONTINUE"
+  - name: compound_verdict
+    type: string
+    required: false
+    description: Compound verdict from scorecard-compound
+  - name: persistence_ratio
+    type: float
+    required: false
+    description: Fraction of sessions reaching L4+
+  - name: iteration
+    type: int
+    required: false
+    description: Current loop iteration (injected by looper)
+outputs:
+  - name: loop_action
+    type: string
+  - name: reason
+    type: string
+  - name: prescription
+    type: string
 interface:
   inputs:
     governor_signal:
       type: string
       required: false
-      description: 'Governor signal from scorecard-compound: starts with HALT, CONSOLIDATE, or CONTINUE'
+      description: "Governor signal from scorecard-compound: starts with HALT, CONSOLIDATE, or CONTINUE"
     compound_verdict:
       type: string
       required: false
-      description: 'Compound verdict from scorecard-compound'
+      description: Compound verdict from scorecard-compound
     persistence_ratio:
       type: float
       required: false
-      description: 'Fraction of sessions reaching L4+'
+      description: Fraction of sessions reaching L4+
     iteration:
       type: int
       required: false
-      description: 'Current loop iteration (injected by looper)'
+      description: Current loop iteration (injected by looper)
   outputs:
     loop_action:
       type: string
-      description: 'HALT or CONTINUE'
+      description: HALT or CONTINUE
     reason:
       type: string
-      description: 'Why the loop is halting or continuing'
+      description: Why the loop is halting or continuing
     prescription:
       type: string
-      description: 'What to do next based on the governor signal'
+      description: What to do next based on the governor signal
+ui:
+  title: Loop Governor
+  subtitle: "Loop Governor: transforms scorecard-compound governor signals into loop control. Maps HALT/CONSOLIDATE/CONTINUE to loop-compatible halt decisions. Designed to be the feedback node in a looped chain — it reads the compound verdict and decides whether to keep iterating."
+  icon: circle
+  route: /vigilance/mg/loop-governor
+  steps:
+    - field: governor_signal
+      label: governor signal
+      help: "Governor signal from scorecard-compound: starts with HALT, CONSOLIDATE, or CONTINUE"
+      widget: text
+      placeholder: null
+    - field: compound_verdict
+      label: compound verdict
+      help: Compound verdict from scorecard-compound
+      widget: text
+      placeholder: null
+    - field: persistence_ratio
+      label: persistence ratio
+      help: Fraction of sessions reaching L4+
+      widget: text
+      placeholder: null
+    - field: iteration
+      label: iteration
+      help: Current loop iteration (injected by looper)
+      widget: text
+      placeholder: null
+  result:
+    template: "loop_action: {{loop_action}} — reason: {{reason}} — prescription: {{prescription}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/loop-governor
+  cli: rsk mcg run loop-governor
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_governor
   nodes:
@@ -42,89 +107,108 @@ tree:
       type: condition
       variable: governor_signal
       operator: is_not_null
-      value: ''
+      value: ""
       true_next: parse_halt
       false_next: no_governor
-
     no_governor:
       type: return
       value:
         loop_action: CONTINUE
-        reason: 'No governor signal present — no basis to halt'
-        prescription: 'Feed session data to produce a governor signal'
-
+        reason: No governor signal present — no basis to halt
+        prescription: Feed session data to produce a governor signal
     parse_halt:
       type: condition
       variable: governor_signal
       operator: contains
-      value: 'HALT'
+      value: HALT
       true_next: halt_action
       false_next: parse_consolidate
-
     halt_action:
       type: return
       value:
         loop_action: HALT
-        reason: 'Governor signal is HALT — heat accumulation detected'
-        prescription: 'Stop new work. Commit existing uncommitted changes. Every session is producing sparks (L3). The flywheel is generating heat, not momentum.'
-
+        reason: Governor signal is HALT — heat accumulation detected
+        prescription: Stop new work. Commit existing uncommitted changes. Every session is producing sparks (L3). The flywheel is generating heat, not momentum.
     parse_consolidate:
       type: condition
       variable: governor_signal
       operator: contains
-      value: 'CONSOLIDATE'
+      value: CONSOLIDATE
       true_next: consolidate_action
       false_next: continue_action
-
     consolidate_action:
       type: return
       value:
         loop_action: CONTINUE
-        reason: 'Governor signal is CONSOLIDATE — persistence ratio below 0.5'
-        prescription: 'One consolidation session per two production sessions. Commit sparks before starting new chains.'
-
+        reason: Governor signal is CONSOLIDATE — persistence ratio below 0.5
+        prescription: One consolidation session per two production sessions. Commit sparks before starting new chains.
     continue_action:
       type: return
       value:
         loop_action: CONTINUE
-        reason: 'Governor signal is CONTINUE — shipping is happening'
-        prescription: 'Maintain current cadence. Clear remaining sparks between production sessions.'
-
+        reason: Governor signal is CONTINUE — shipping is happening
+        prescription: Maintain current cadence. Clear remaining sparks between production sessions.
 tests:
-# HALT signal → loop halts
-- input:
-    governor_signal: 'HALT — every session is producing sparks.'
-    compound_verdict: heat_accumulation
-  expect:
-    loop_action: HALT
-    reason: 'Governor signal is HALT — heat accumulation detected'
-
-# CONSOLIDATE signal → continue but warn
-- input:
-    governor_signal: 'CONSOLIDATE — persistence ratio below 0.5.'
-    compound_verdict: consolidation_needed
-  expect:
-    loop_action: CONTINUE
-
-# CONTINUE signal → keep going
-- input:
-    governor_signal: 'CONTINUE — shipping is happening.'
-    compound_verdict: healthy_with_sparks
-  expect:
-    loop_action: CONTINUE
-    reason: 'Governor signal is CONTINUE — shipping is happening'
-
-# No governor signal → continue by default
-- input: {}
-  expect:
-    loop_action: CONTINUE
-    reason: 'No governor signal present — no basis to halt'
-
-# HALT with full context
-- input:
-    governor_signal: 'HALT — every session is producing sparks. Stop new work.'
-    compound_verdict: heat_accumulation
-    persistence_ratio: 0.0
-    iteration: 3
-  expect:
-    loop_action: HALT
+  - input:
+      governor_signal: HALT — every session is producing sparks.
+      compound_verdict: heat_accumulation
+    expect:
+      loop_action: HALT
+      reason: Governor signal is HALT — heat accumulation detected
+  - input:
+      governor_signal: CONSOLIDATE — persistence ratio below 0.5.
+      compound_verdict: consolidation_needed
+    expect:
+      loop_action: CONTINUE
+  - input:
+      governor_signal: CONTINUE — shipping is happening.
+      compound_verdict: healthy_with_sparks
+    expect:
+      loop_action: CONTINUE
+      reason: Governor signal is CONTINUE — shipping is happening
+  - input: {}
+    expect:
+      loop_action: CONTINUE
+      reason: No governor signal present — no basis to halt
+  - input:
+      governor_signal: HALT — every session is producing sparks. Stop new work.
+      compound_verdict: heat_accumulation
+      persistence_ratio: 0
+      iteration: 3
+    expect:
+      loop_action: HALT
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - loop_action
+    - reason
+    - prescription
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

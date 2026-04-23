@@ -1,6 +1,100 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: regulatory-intake-bridge
-description: Translates regulatory assessment outputs into case intake fields. Bridges e2a-minimum-criteria (valid_icsr), benefit-risk-ratio (regulatory_action, br_ratio), and workflow-start-gate (gate) outputs into intake-to-triage and expedited-reporting inputs.
 version: 0.1.0
+description: Translates regulatory assessment outputs into case intake fields. Bridges e2a-minimum-criteria (valid_icsr), benefit-risk-ratio (regulatory_action, br_ratio), and workflow-start-gate (gate) outputs into intake-to-triage and expedited-reporting inputs.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: gate
+    type: string
+    required: false
+    description: ""
+  - name: valid_icsr
+    type: bool
+    required: true
+    description: ""
+  - name: regulatory_action
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: completeness_pct
+    type: int
+  - name: serious
+    type: bool
+  - name: score
+    type: int
+  - name: intake_action
+    type: string
+  - name: valid
+    type: bool
+interface:
+  inputs:
+    gate:
+      type: string
+      required: false
+    valid_icsr:
+      type: bool
+      required: true
+    regulatory_action:
+      type: string
+      required: false
+  outputs:
+    completeness_pct:
+      type: int
+      required: true
+    serious:
+      type: bool
+      required: true
+    score:
+      type: int
+      required: true
+    intake_action:
+      type: string
+      required: true
+    valid:
+      type: bool
+      required: true
+  aliases: {}
+ui:
+  title: Regulatory Intake Bridge
+  subtitle: Translates regulatory assessment outputs into case intake fields. Bridges e2a-minimum-criteria (valid_icsr), benefit-risk-ratio (regulatory_action, br_ratio), and workflow-start-gate (gate) outputs into intake-to-triage and expedited-reporting inputs.
+  icon: circle
+  route: /vigilance/mg/regulatory-intake-bridge
+  steps:
+    - field: gate
+      label: gate
+      help: Enter gate
+      widget: text
+      placeholder: null
+    - field: valid_icsr
+      label: valid icsr
+      help: Enter valid_icsr
+      widget: toggle
+      placeholder: null
+    - field: regulatory_action
+      label: regulatory action
+      help: Enter regulatory_action
+      widget: text
+      placeholder: null
+  result:
+    template: "completeness_pct: {{completeness_pct}} — serious: {{serious}} — score: {{score}} — intake_action: {{intake_action}} — valid: {{valid}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/regulatory-intake-bridge
+  cli: rsk mcg run regulatory-intake-bridge
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_valid_icsr
   nodes:
@@ -95,130 +189,139 @@ tree:
       true_next: check_gate_label
       false_next: check_gate_standard
 tests:
-- input:
-    gate: FAIL
-    regulatory_action: NONE
-    valid_icsr: false
-  expect:
-    valid: false
-    serious: false
-    completeness_pct: 0
-- input:
-    regulatory_action: WITHDRAWAL
-    valid_icsr: true
-    gate: PASS
-  expect:
-    score: 100
-    serious: true
-    valid: true
-    completeness_pct: 100
-- input:
-    gate: PASS
-    valid_icsr: true
-    regulatory_action: RESTRICTION
-  expect:
-    valid: true
-    score: 85
-    serious: true
-- input:
-    gate: PASS
-    valid_icsr: true
-    regulatory_action: LABEL_CHANGE
-  expect:
-    valid: true
-    completeness_pct: 75
-    serious: false
-- input:
-    gate: FAIL
-    regulatory_action: LABEL_CHANGE
-    valid_icsr: true
-  expect:
-    completeness_pct: 50
-    score: 40
-    valid: true
-- input:
-    valid_icsr: true
-    gate: PASS
-    regulatory_action: NONE
-  expect:
-    valid: true
-    serious: false
-    score: 50
-    completeness_pct: 75
-- input:
-    valid_icsr: true
-    regulatory_action: NONE
-    gate: FAIL
-  expect:
-    completeness_pct: 50
-    valid: true
-- input: {}
-  expect:
-    intake_action: Case does not meet E2A minimum criteria — return to reporter
-    score: 0
-    completeness_pct: 0
-    serious: false
-    valid: false
-- input: {}
-  expect:
-    intake_action: Case does not meet E2A minimum criteria — return to reporter
-    score: 0
-    completeness_pct: 0
-    valid: false
-    serious: false
-- input: {}
-  expect:
-    intake_action: Case does not meet E2A minimum criteria — return to reporter
-    serious: false
-    valid: false
-    completeness_pct: 0
-    score: 0
-- input: {}
-  expect:
-    intake_action: Case does not meet E2A minimum criteria — return to reporter
-    completeness_pct: 0
-    valid: false
-    score: 0
-    serious: false
-- input: {}
-  expect:
-    completeness_pct: 0
-    valid: false
-    score: 0
-    serious: false
-    intake_action: Case does not meet E2A minimum criteria — return to reporter
-- input: {}
-  expect:
-    completeness_pct: 0
-    valid: false
-    intake_action: Case does not meet E2A minimum criteria — return to reporter
-    serious: false
-    score: 0
-interface:
-  inputs:
-    gate:
-      type: string
-      required: false
-    valid_icsr:
-      type: bool
-      required: true
-    regulatory_action:
-      type: string
-      required: false
-  outputs:
-    completeness_pct:
-      type: int
-      required: true
-    serious:
-      type: bool
-      required: true
-    score:
-      type: int
-      required: true
-    intake_action:
-      type: string
-      required: true
-    valid:
-      type: bool
-      required: true
-  aliases: {}
+  - input:
+      gate: FAIL
+      regulatory_action: NONE
+      valid_icsr: false
+    expect:
+      valid: false
+      serious: false
+      completeness_pct: 0
+  - input:
+      regulatory_action: WITHDRAWAL
+      valid_icsr: true
+      gate: PASS
+    expect:
+      score: 100
+      serious: true
+      valid: true
+      completeness_pct: 100
+  - input:
+      gate: PASS
+      valid_icsr: true
+      regulatory_action: RESTRICTION
+    expect:
+      valid: true
+      score: 85
+      serious: true
+  - input:
+      gate: PASS
+      valid_icsr: true
+      regulatory_action: LABEL_CHANGE
+    expect:
+      valid: true
+      completeness_pct: 75
+      serious: false
+  - input:
+      gate: FAIL
+      regulatory_action: LABEL_CHANGE
+      valid_icsr: true
+    expect:
+      completeness_pct: 50
+      score: 40
+      valid: true
+  - input:
+      valid_icsr: true
+      gate: PASS
+      regulatory_action: NONE
+    expect:
+      valid: true
+      serious: false
+      score: 50
+      completeness_pct: 75
+  - input:
+      valid_icsr: true
+      regulatory_action: NONE
+      gate: FAIL
+    expect:
+      completeness_pct: 50
+      valid: true
+  - input: {}
+    expect:
+      intake_action: Case does not meet E2A minimum criteria — return to reporter
+      score: 0
+      completeness_pct: 0
+      serious: false
+      valid: false
+  - input: {}
+    expect:
+      intake_action: Case does not meet E2A minimum criteria — return to reporter
+      score: 0
+      completeness_pct: 0
+      valid: false
+      serious: false
+  - input: {}
+    expect:
+      intake_action: Case does not meet E2A minimum criteria — return to reporter
+      serious: false
+      valid: false
+      completeness_pct: 0
+      score: 0
+  - input: {}
+    expect:
+      intake_action: Case does not meet E2A minimum criteria — return to reporter
+      completeness_pct: 0
+      valid: false
+      score: 0
+      serious: false
+  - input: {}
+    expect:
+      completeness_pct: 0
+      valid: false
+      score: 0
+      serious: false
+      intake_action: Case does not meet E2A minimum criteria — return to reporter
+  - input: {}
+    expect:
+      completeness_pct: 0
+      valid: false
+      intake_action: Case does not meet E2A minimum criteria — return to reporter
+      serious: false
+      score: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - completeness_pct
+    - serious
+    - score
+    - intake_action
+    - valid
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

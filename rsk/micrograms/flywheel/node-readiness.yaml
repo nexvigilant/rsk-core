@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: node-readiness
-description: 'Flywheel node readiness gate: READY (loop_closure>=0.5 AND compounding>=0.5 AND automation>=0.2), WIRING (any>=0.3), DORMANT (all<0.3)'
 version: 0.1.0
+description: "Flywheel node readiness gate: READY (loop_closure>=0.5 AND compounding>=0.5 AND automation>=0.2), WIRING (any>=0.3), DORMANT (all<0.3)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: automation
+    type: int
+    required: false
+    description: ""
+  - name: compounding
+    type: int
+    required: false
+    description: ""
+  - name: loop_closure
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: promotable
+    type: bool
+  - name: status
+    type: string
 interface:
   inputs:
     automation:
@@ -17,6 +45,38 @@ interface:
       type: bool
     status:
       type: string
+ui:
+  title: Node Readiness
+  subtitle: "Flywheel node readiness gate: READY (loop_closure>=0.5 AND compounding>=0.5 AND automation>=0.2), WIRING (any>=0.3), DORMANT (all<0.3)"
+  icon: circle
+  route: /vigilance/mg/node-readiness
+  steps:
+    - field: automation
+      label: automation
+      help: Enter automation
+      widget: text
+      placeholder: null
+    - field: compounding
+      label: compounding
+      help: Enter compounding
+      widget: text
+      placeholder: null
+    - field: loop_closure
+      label: loop closure
+      help: Enter loop_closure
+      widget: text
+      placeholder: null
+  result:
+    template: "promotable: {{promotable}} — status: {{status}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/node-readiness
+  cli: rsk mcg run node-readiness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_ready
   nodes:
@@ -71,63 +131,97 @@ tree:
         status: DORMANT
         promotable: false
 tests:
-- input:
-    loop_closure: 68
-    compounding: 74
-    automation: 92
-  expect:
-    status: READY
-    promotable: true
-- input:
-    loop_closure: 72
-    compounding: 70
-    automation: 35
-  expect:
-    status: READY
-    promotable: true
-- input:
-    loop_closure: 25
-    compounding: 95
-    automation: 15
-  expect:
-    status: WIRING
-    promotable: false
-- input:
-    loop_closure: 55
-    compounding: 60
-    automation: 10
-  expect:
-    status: WIRING
-    promotable: false
-- input:
-    loop_closure: 15
-    compounding: 18
-    automation: 10
-  expect:
-    status: DORMANT
-    promotable: false
-- input:
-    loop_closure: 0
-    compounding: 0
-    automation: 0
-  expect:
-    status: DORMANT
-    promotable: false
-- input:
-    loop_closure: 50
-    compounding: 50
-    automation: 20
-  expect:
-    status: READY
-    promotable: true
-- input:
-    loop_closure: 49
-    compounding: 50
-    automation: 20
-  expect:
-    status: WIRING
-    promotable: false
-- input: {}
-  expect:
-    promotable: false
-    status: DORMANT
+  - input:
+      loop_closure: 68
+      compounding: 74
+      automation: 92
+    expect:
+      status: READY
+      promotable: true
+  - input:
+      loop_closure: 72
+      compounding: 70
+      automation: 35
+    expect:
+      status: READY
+      promotable: true
+  - input:
+      loop_closure: 25
+      compounding: 95
+      automation: 15
+    expect:
+      status: WIRING
+      promotable: false
+  - input:
+      loop_closure: 55
+      compounding: 60
+      automation: 10
+    expect:
+      status: WIRING
+      promotable: false
+  - input:
+      loop_closure: 15
+      compounding: 18
+      automation: 10
+    expect:
+      status: DORMANT
+      promotable: false
+  - input:
+      loop_closure: 0
+      compounding: 0
+      automation: 0
+    expect:
+      status: DORMANT
+      promotable: false
+  - input:
+      loop_closure: 50
+      compounding: 50
+      automation: 20
+    expect:
+      status: READY
+      promotable: true
+  - input:
+      loop_closure: 49
+      compounding: 50
+      automation: 20
+    expect:
+      status: WIRING
+      promotable: false
+  - input: {}
+    expect:
+      promotable: false
+      status: DORMANT
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - promotable
+    - status
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

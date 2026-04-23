@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-algovigilance-pipeline
-description: 'Triage algorithmovigilance signals: classify AI/ML drift, bias, and performance degradation'
 version: 0.1.0
+description: "Triage algorithmovigilance signals: classify AI/ML drift, bias, and performance degradation"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Algovigilance Pipeline
+  subtitle: "Triage algorithmovigilance signals: classify AI/ML drift, bias, and performance degradation"
+  icon: circle
+  route: /vigilance/mg/station-algovigilance-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-algovigilance-pipeline
+  cli: rsk mcg run station-algovigilance-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_drift
   nodes:
@@ -54,69 +83,99 @@ tree:
       true_next: drift_severity
       false_next: check_bias
 tests:
-- input:
-    bias_detected: false
-    drift_detected: true
-    drift_psi: 0.4
-  expect:
-    action: halt
-    priority: critical
-    route: model_retrain
-- input:
-    bias_detected: false
-    drift_detected: true
-    drift_psi: 0.15
-  expect:
-    action: monitor
-    route: drift_monitoring
-    priority: moderate
-- input:
-    bias_detected: true
-    drift_detected: false
-    drift_psi: 0.0
-  expect:
-    action: investigate
-    priority: high
-    route: bias_audit
-- input:
-    drift_detected: false
-    bias_detected: false
-    drift_psi: 0.0
-  expect:
-    action: certify
-    priority: low
-    route: archive
-- input:
-    drift_psi: 0.249
-  expect:
-    route: archive
-    action: certify
-    priority: low
-    reason: No drift or bias detected — algorithm performing within parameters
-- input:
-    drift_psi: 0.251
-  expect:
-    reason: No drift or bias detected — algorithm performing within parameters
-    priority: low
-    action: certify
-    route: archive
-- input: {}
-  expect:
-    action: certify
-    reason: No drift or bias detected — algorithm performing within parameters
-    priority: low
-    route: archive
-- input: {}
-  expect:
-    action: certify
-    reason: No drift or bias detected — algorithm performing within parameters
-    route: archive
-    priority: low
-- input: {}
-  expect:
-    priority: low
-    action: certify
-    route: archive
-    reason: No drift or bias detected — algorithm performing within parameters
-interface: null
-primitive_signature: null
+  - input:
+      bias_detected: false
+      drift_detected: true
+      drift_psi: 0.4
+    expect:
+      action: halt
+      priority: critical
+      route: model_retrain
+  - input:
+      bias_detected: false
+      drift_detected: true
+      drift_psi: 0.15
+    expect:
+      action: monitor
+      route: drift_monitoring
+      priority: moderate
+  - input:
+      bias_detected: true
+      drift_detected: false
+      drift_psi: 0
+    expect:
+      action: investigate
+      priority: high
+      route: bias_audit
+  - input:
+      drift_detected: false
+      bias_detected: false
+      drift_psi: 0
+    expect:
+      action: certify
+      priority: low
+      route: archive
+  - input:
+      drift_psi: 0.249
+    expect:
+      route: archive
+      action: certify
+      priority: low
+      reason: No drift or bias detected — algorithm performing within parameters
+  - input:
+      drift_psi: 0.251
+    expect:
+      reason: No drift or bias detected — algorithm performing within parameters
+      priority: low
+      action: certify
+      route: archive
+  - input: {}
+    expect:
+      action: certify
+      reason: No drift or bias detected — algorithm performing within parameters
+      priority: low
+      route: archive
+  - input: {}
+    expect:
+      action: certify
+      reason: No drift or bias detected — algorithm performing within parameters
+      route: archive
+      priority: low
+  - input: {}
+    expect:
+      priority: low
+      action: certify
+      route: archive
+      reason: No drift or bias detected — algorithm performing within parameters
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

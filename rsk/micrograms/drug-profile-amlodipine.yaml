@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-profile-amlodipine
-description: 'Safety triage for amlodipine: PRR-based signal routing (Type A)'
 version: 0.1.0
+description: "Safety triage for amlodipine: PRR-based signal routing (Type A)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Profile Amlodipine
+  subtitle: "Safety triage for amlodipine: PRR-based signal routing (Type A)"
+  icon: circle
+  route: /vigilance/mg/drug-profile-amlodipine
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-profile-amlodipine
+  cli: rsk mcg run drug-profile-amlodipine
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_prr
   nodes:
@@ -8,7 +37,7 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: signal
       false_next: no_signal
     no_signal:
@@ -28,35 +57,65 @@ tree:
         expected_prr: 1.7
         drug: amlodipine
 tests:
-- input:
-    prr: 1.7
-  expect:
-    signal: false
-    drug: amlodipine
-- input:
-    prr: 0.5
-  expect:
-    signal: false
-    drug: amlodipine
-- input: {}
-  expect:
-    drug: amlodipine
-    signal: false
-- input:
-    prr: 1.999
-  expect:
-    action: monitor
-    signal: false
-    drug: amlodipine
-    harm_type: A
-    expected_prr: 1.7
-- input:
-    prr: 2.001
-  expect:
-    signal: true
-    expected_prr: 1.7
-    action: investigate
-    harm_type: A
-    drug: amlodipine
-interface: null
-primitive_signature: null
+  - input:
+      prr: 1.7
+    expect:
+      signal: false
+      drug: amlodipine
+  - input:
+      prr: 0.5
+    expect:
+      signal: false
+      drug: amlodipine
+  - input: {}
+    expect:
+      drug: amlodipine
+      signal: false
+  - input:
+      prr: 1.999
+    expect:
+      action: monitor
+      signal: false
+      drug: amlodipine
+      harm_type: A
+      expected_prr: 1.7
+  - input:
+      prr: 2.001
+    expect:
+      signal: true
+      expected_prr: 1.7
+      action: investigate
+      harm_type: A
+      drug: amlodipine
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

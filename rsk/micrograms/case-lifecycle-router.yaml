@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: case-lifecycle-router
-description: 'PVOS lifecycle router: advances cases through new->triage->assessment->reporting->closed based on state and completion conditions'
 version: 0.1.0
+description: "PVOS lifecycle router: advances cases through new->triage->assessment->reporting->closed based on state and completion conditions"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: current_state
+    type: string
+    required: false
+    description: ""
+  - name: deadline_met
+    type: bool
+    required: false
+    description: ""
+  - name: has_causality
+    type: bool
+    required: false
+    description: ""
+  - name: has_seriousness
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: description
+    type: string
 interface:
   inputs:
     current_state:
@@ -20,6 +52,43 @@ interface:
       type: string
     description:
       type: string
+ui:
+  title: Case Lifecycle Router
+  subtitle: "PVOS lifecycle router: advances cases through new->triage->assessment->reporting->closed based on state and completion conditions"
+  icon: circle
+  route: /vigilance/mg/case-lifecycle-router
+  steps:
+    - field: current_state
+      label: current state
+      help: Enter current_state
+      widget: text
+      placeholder: null
+    - field: deadline_met
+      label: deadline met
+      help: Enter deadline_met
+      widget: toggle
+      placeholder: null
+    - field: has_causality
+      label: has causality
+      help: Enter has_causality
+      widget: toggle
+      placeholder: null
+    - field: has_seriousness
+      label: has seriousness
+      help: Enter has_seriousness
+      widget: toggle
+      placeholder: null
+  result:
+    template: "action: {{action}} — description: {{description}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/case-lifecycle-router
+  cli: rsk mcg run case-lifecycle-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_new
   nodes:
@@ -125,76 +194,110 @@ tree:
         action: ERROR_UNKNOWN_STATE
         description: Unrecognized case state - manual review required
 tests:
-- input:
-    current_state: new
-    has_seriousness: false
-    has_causality: false
-    deadline_met: false
-  expect:
-    action: MOVE_TO_TRIAGE
-    description: New case received - advance to triage for seriousness assessment
-- input:
-    current_state: triage
-    has_seriousness: false
-    has_causality: false
-    deadline_met: false
-  expect:
-    action: ASSESS_SERIOUSNESS
-    description: Case in triage requires seriousness classification before advancing
-- input:
-    current_state: triage
-    has_seriousness: true
-    has_causality: false
-    deadline_met: false
-  expect:
-    action: MOVE_TO_ASSESSMENT
-    description: Seriousness classified - advance to causality assessment
-- input:
-    current_state: assessment
-    has_seriousness: true
-    has_causality: false
-    deadline_met: false
-  expect:
-    action: ASSESS_CAUSALITY
-    description: Case in assessment requires causality evaluation before advancing
-- input:
-    current_state: assessment
-    has_seriousness: true
-    has_causality: true
-    deadline_met: false
-  expect:
-    action: MOVE_TO_REPORTING
-    description: Causality assessed - advance to regulatory reporting
-- input:
-    current_state: reporting
-    has_seriousness: true
-    has_causality: true
-    deadline_met: false
-  expect:
-    action: FILE_REPORT
-    description: Report deadline not yet met - file regulatory report
-- input:
-    current_state: reporting
-    has_seriousness: true
-    has_causality: true
-    deadline_met: true
-  expect:
-    action: MOVE_TO_CLOSED
-    description: Reporting deadline met - close the case
-- input:
-    current_state: closed
-    has_seriousness: true
-    has_causality: true
-    deadline_met: true
-  expect:
-    action: NO_ACTION
-    description: Case is already closed - no further action required
-- input:
-    current_state: invalid_state
-  expect:
-    action: ERROR_UNKNOWN_STATE
-    description: Unrecognized case state - manual review required
-- input: {}
-  expect:
-    action: ERROR_UNKNOWN_STATE
-    description: Unrecognized case state - manual review required
+  - input:
+      current_state: new
+      has_seriousness: false
+      has_causality: false
+      deadline_met: false
+    expect:
+      action: MOVE_TO_TRIAGE
+      description: New case received - advance to triage for seriousness assessment
+  - input:
+      current_state: triage
+      has_seriousness: false
+      has_causality: false
+      deadline_met: false
+    expect:
+      action: ASSESS_SERIOUSNESS
+      description: Case in triage requires seriousness classification before advancing
+  - input:
+      current_state: triage
+      has_seriousness: true
+      has_causality: false
+      deadline_met: false
+    expect:
+      action: MOVE_TO_ASSESSMENT
+      description: Seriousness classified - advance to causality assessment
+  - input:
+      current_state: assessment
+      has_seriousness: true
+      has_causality: false
+      deadline_met: false
+    expect:
+      action: ASSESS_CAUSALITY
+      description: Case in assessment requires causality evaluation before advancing
+  - input:
+      current_state: assessment
+      has_seriousness: true
+      has_causality: true
+      deadline_met: false
+    expect:
+      action: MOVE_TO_REPORTING
+      description: Causality assessed - advance to regulatory reporting
+  - input:
+      current_state: reporting
+      has_seriousness: true
+      has_causality: true
+      deadline_met: false
+    expect:
+      action: FILE_REPORT
+      description: Report deadline not yet met - file regulatory report
+  - input:
+      current_state: reporting
+      has_seriousness: true
+      has_causality: true
+      deadline_met: true
+    expect:
+      action: MOVE_TO_CLOSED
+      description: Reporting deadline met - close the case
+  - input:
+      current_state: closed
+      has_seriousness: true
+      has_causality: true
+      deadline_met: true
+    expect:
+      action: NO_ACTION
+      description: Case is already closed - no further action required
+  - input:
+      current_state: invalid_state
+    expect:
+      action: ERROR_UNKNOWN_STATE
+      description: Unrecognized case state - manual review required
+  - input: {}
+    expect:
+      action: ERROR_UNKNOWN_STATE
+      description: Unrecognized case state - manual review required
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - description
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

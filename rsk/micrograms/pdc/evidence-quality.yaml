@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: evidence-quality
-description: "Domain 10: Grade evidence quality using GRADE-style hierarchy — from RCT meta-analysis down to expert opinion."
 version: 0.1.0
+description: "Domain 10: Grade evidence quality using GRADE-style hierarchy — from RCT meta-analysis down to expert opinion."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: evidence_type
+    type: string
+    required: false
+    description: ""
+  - name: has_limitations
+    type: bool
+    required: false
+    description: ""
+  - name: large_effect
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: ai_assist
+    type: string
+  - name: confidence
+    type: string
+  - name: decision_impact
+    type: string
+  - name: downgrade_factors
+    type: string
+  - name: grade
+    type: string
+  - name: typical_sources
+    type: string
+  - name: upgrade_factors
+    type: string
 interface:
   inputs:
     evidence_type:
@@ -27,6 +65,38 @@ interface:
       type: string
     upgrade_factors:
       type: string
+ui:
+  title: Evidence Quality
+  subtitle: "Domain 10: Grade evidence quality using GRADE-style hierarchy — from RCT meta-analysis down to expert opinion."
+  icon: circle
+  route: /vigilance/mg/evidence-quality
+  steps:
+    - field: evidence_type
+      label: evidence type
+      help: Enter evidence_type
+      widget: text
+      placeholder: null
+    - field: has_limitations
+      label: has limitations
+      help: Enter has_limitations
+      widget: toggle
+      placeholder: null
+    - field: large_effect
+      label: large effect
+      help: Enter large_effect
+      widget: toggle
+      placeholder: null
+  result:
+    template: "ai_assist: {{ai_assist}} — confidence: {{confidence}} — decision_impact: {{decision_impact}} — downgrade_factors: {{downgrade_factors}} — grade: {{grade}} — typical_sources: {{typical_sources}} — upgrade_factors: {{upgrade_factors}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/evidence-quality
+  cli: rsk mcg run evidence-quality
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_type
   nodes:
@@ -76,69 +146,108 @@ tree:
       type: return
       value:
         grade: HIGH
-        confidence: "high confidence the true effect is close to estimated effect"
-        typical_sources: "SR of RCTs, well-conducted RCTs without limitations"
-        decision_impact: "strong recommendation possible"
-        upgrade_factors: "large effect size, dose-response, all plausible confounders reduce effect"
-        ai_assist: "automated quality scoring, bias detection, heterogeneity assessment"
+        confidence: high confidence the true effect is close to estimated effect
+        typical_sources: SR of RCTs, well-conducted RCTs without limitations
+        decision_impact: strong recommendation possible
+        upgrade_factors: large effect size, dose-response, all plausible confounders reduce effect
+        ai_assist: automated quality scoring, bias detection, heterogeneity assessment
     moderate_quality:
       type: return
       value:
         grade: MODERATE
-        confidence: "moderate confidence — true effect likely close but may differ substantially"
-        typical_sources: "RCTs with limitations, strong observational studies"
-        decision_impact: "conditional recommendation, consider additional evidence"
-        downgrade_factors: "risk of bias, inconsistency, indirectness, imprecision, publication bias"
-        ai_assist: "sensitivity analysis, bias quantification, certainty visualization"
+        confidence: moderate confidence — true effect likely close but may differ substantially
+        typical_sources: RCTs with limitations, strong observational studies
+        decision_impact: conditional recommendation, consider additional evidence
+        downgrade_factors: risk of bias, inconsistency, indirectness, imprecision, publication bias
+        ai_assist: sensitivity analysis, bias quantification, certainty visualization
     low_quality:
       type: return
       value:
         grade: LOW
-        confidence: "low confidence — true effect may differ substantially from estimate"
-        typical_sources: "observational studies, case-control studies, case series"
-        decision_impact: "weak recommendation, additional research likely to change estimate"
-        ai_assist: "evidence gap analysis, research prioritization, uncertainty modeling"
+        confidence: low confidence — true effect may differ substantially from estimate
+        typical_sources: observational studies, case-control studies, case series
+        decision_impact: weak recommendation, additional research likely to change estimate
+        ai_assist: evidence gap analysis, research prioritization, uncertainty modeling
     very_low_quality:
       type: return
       value:
         grade: VERY_LOW
-        confidence: "very low confidence — estimate is very uncertain"
-        typical_sources: "expert opinion, case reports, mechanistic reasoning"
-        decision_impact: "very weak recommendation, substantial uncertainty in all estimates"
-        ai_assist: "expert opinion synthesis, Delphi facilitation, uncertainty communication"
+        confidence: very low confidence — estimate is very uncertain
+        typical_sources: expert opinion, case reports, mechanistic reasoning
+        decision_impact: very weak recommendation, substantial uncertainty in all estimates
+        ai_assist: expert opinion synthesis, Delphi facilitation, uncertainty communication
 tests:
-- input:
-    evidence_type: meta_analysis_rct
-  expect:
-    grade: HIGH
-- input:
-    evidence_type: rct
-    has_limitations: false
-  expect:
-    grade: HIGH
-- input:
-    evidence_type: rct
-    has_limitations: true
-  expect:
-    grade: MODERATE
-- input:
-    evidence_type: observational
-    large_effect: true
-  expect:
-    grade: MODERATE
-- input:
-    evidence_type: observational
-    large_effect: false
-  expect:
-    grade: LOW
-- input:
-    evidence_type: case_series
-  expect:
-    grade: LOW
-- input:
-    evidence_type: expert_opinion
-  expect:
-    grade: VERY_LOW
-- input: {}
-  expect:
-    grade: VERY_LOW
+  - input:
+      evidence_type: meta_analysis_rct
+    expect:
+      grade: HIGH
+  - input:
+      evidence_type: rct
+      has_limitations: false
+    expect:
+      grade: HIGH
+  - input:
+      evidence_type: rct
+      has_limitations: true
+    expect:
+      grade: MODERATE
+  - input:
+      evidence_type: observational
+      large_effect: true
+    expect:
+      grade: MODERATE
+  - input:
+      evidence_type: observational
+      large_effect: false
+    expect:
+      grade: LOW
+  - input:
+      evidence_type: case_series
+    expect:
+      grade: LOW
+  - input:
+      evidence_type: expert_opinion
+    expect:
+      grade: VERY_LOW
+  - input: {}
+    expect:
+      grade: VERY_LOW
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_assist
+    - confidence
+    - decision_impact
+    - downgrade_factors
+    - grade
+    - typical_sources
+    - upgrade_factors
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

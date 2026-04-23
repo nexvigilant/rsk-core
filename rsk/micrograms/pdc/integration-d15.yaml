@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: integration-d15
-description: "Domain 15 cross-domain integration — information management enables evidence-based practice across all domains."
 version: 0.1.0
+description: Domain 15 cross-domain integration — information management enables evidence-based practice across all domains.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: target_domain
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: epas
+    type: string
+  - name: integration_type
+    type: string
+  - name: module
+    type: string
+  - name: synergy
+    type: string
 interface:
   inputs:
     target_domain:
@@ -15,6 +39,28 @@ interface:
       type: string
     synergy:
       type: string
+ui:
+  title: Integration D15
+  subtitle: Domain 15 cross-domain integration — information management enables evidence-based practice across all domains.
+  icon: circle
+  route: /vigilance/mg/integration-d15
+  steps:
+    - field: target_domain
+      label: target domain
+      help: Enter target_domain
+      widget: text
+      placeholder: null
+  result:
+    template: "epas: {{epas}} — integration_type: {{integration_type}} — module: {{module}} — synergy: {{synergy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/integration-d15
+  cli: rsk mcg run integration-d15
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target
   nodes:
@@ -64,78 +110,114 @@ tree:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Information-Signal Integration"
-        synergy: "literature evidence validates and contextualizes statistical signals"
-        epas: "EPA2, EPA5"
+        module: Information-Signal Integration
+        synergy: literature evidence validates and contextualizes statistical signals
+        epas: EPA2, EPA5
     d15_d7:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Information-Database Integration"
-        synergy: "structured reporting data + unstructured literature = comprehensive safety intelligence"
-        epas: "EPA2, EPA4"
+        module: Information-Database Integration
+        synergy: structured reporting data + unstructured literature = comprehensive safety intelligence
+        epas: EPA2, EPA4
     d15_d9:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Information-Research Integration"
-        synergy: "information management enables systematic evidence generation and synthesis"
-        epas: "EPA4"
+        module: Information-Research Integration
+        synergy: information management enables systematic evidence generation and synthesis
+        epas: EPA4
     d15_d2:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Information-Clinical Integration"
-        synergy: "literature supports clinical assessment through evidence-based ADR knowledge"
+        module: Information-Clinical Integration
+        synergy: literature supports clinical assessment through evidence-based ADR knowledge
     d15_d10:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Information-Assessment"
-        synergy: "comprehensive information gathering underpins evidence-based benefit-risk assessment"
+        module: Information-Assessment
+        synergy: comprehensive information gathering underpins evidence-based benefit-risk assessment
     d15_d14:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Information-Communication"
-        synergy: "information quality determines communication credibility and stakeholder trust"
+        module: Information-Communication
+        synergy: information quality determines communication credibility and stakeholder trust
     general:
       type: return
       value:
         integration_type: UNIVERSAL
-        module: "Information Foundation"
-        synergy: "information excellence is the evidence base that all other domains depend on"
+        module: Information Foundation
+        synergy: information excellence is the evidence base that all other domains depend on
 tests:
-- input:
-    target_domain: 8
-  expect:
-    integration_type: PRIMARY
-    module: "Information-Signal Integration"
-- input:
-    target_domain: 7
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 9
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 2
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 10
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 14
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 1
-  expect:
-    integration_type: UNIVERSAL
-    module: "Information Foundation"
-- input: {}
-  expect:
-    integration_type: UNIVERSAL
+  - input:
+      target_domain: 8
+    expect:
+      integration_type: PRIMARY
+      module: Information-Signal Integration
+  - input:
+      target_domain: 7
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 9
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 2
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 10
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 14
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 1
+    expect:
+      integration_type: UNIVERSAL
+      module: Information Foundation
+  - input: {}
+    expect:
+      integration_type: UNIVERSAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - epas
+    - integration_type
+    - module
+    - synergy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

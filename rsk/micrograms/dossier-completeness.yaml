@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dossier-completeness
-description: 'Safety dossier completeness scorer: evaluates FAERS, guideline, and competitor data availability to classify dossier as comprehensive/adequate/minimal/empty with a 0-100 score'
 version: 0.1.0
+description: "Safety dossier completeness scorer: evaluates FAERS, guideline, and competitor data availability to classify dossier as comprehensive/adequate/minimal/empty with a 0-100 score"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_faers
+    type: bool
+    required: true
+    description: ""
+  - name: faers_report_count
+    type: float
+    required: true
+    description: ""
+  - name: signal_count
+    type: float
+    required: true
+    description: ""
+  - name: guideline_hits
+    type: float
+    required: true
+    description: ""
+  - name: competitor_count
+    type: float
+    required: true
+    description: ""
+outputs:
+  - name: completeness
+    type: string
+  - name: score
+    type: float
+  - name: gaps
+    type: string
 interface:
   inputs:
     has_faers:
@@ -25,6 +63,48 @@ interface:
       type: float
     gaps:
       type: string
+ui:
+  title: Dossier Completeness
+  subtitle: "Safety dossier completeness scorer: evaluates FAERS, guideline, and competitor data availability to classify dossier as comprehensive/adequate/minimal/empty with a 0-100 score"
+  icon: circle
+  route: /vigilance/mg/dossier-completeness
+  steps:
+    - field: has_faers
+      label: has faers
+      help: Enter has_faers
+      widget: toggle
+      placeholder: null
+    - field: faers_report_count
+      label: faers report count
+      help: Enter faers_report_count
+      widget: text
+      placeholder: null
+    - field: signal_count
+      label: signal count
+      help: Enter signal_count
+      widget: text
+      placeholder: null
+    - field: guideline_hits
+      label: guideline hits
+      help: Enter guideline_hits
+      widget: text
+      placeholder: null
+    - field: competitor_count
+      label: competitor count
+      help: Enter competitor_count
+      widget: text
+      placeholder: null
+  result:
+    template: "completeness: {{completeness}} — score: {{score}} — gaps: {{gaps}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dossier-completeness
+  cli: rsk mcg run dossier-completeness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_faers
   nodes:
@@ -126,107 +206,133 @@ tree:
         score: 0
         gaps: All sections — FAERS, guidelines, and competitors
 tests:
-# All sections, high volume
-- input:
-    has_faers: true
-    faers_report_count: 50000
-    signal_count: 5
-    guideline_hits: 8
-    competitor_count: 3
-  expect:
-    completeness: comprehensive
-    score: 95
-    gaps: none
-# All sections, low FAERS volume
-- input:
-    has_faers: true
-    faers_report_count: 500
-    signal_count: 2
-    guideline_hits: 3
-    competitor_count: 2
-  expect:
-    completeness: adequate
-    score: 75
-    gaps: Low FAERS report volume
-# FAERS + Guidelines, no competitors
-- input:
-    has_faers: true
-    faers_report_count: 10000
-    signal_count: 3
-    guideline_hits: 5
-    competitor_count: 0
-  expect:
-    completeness: adequate
-    score: 65
-    gaps: Competitive landscape data
-# FAERS only, strong volume
-- input:
-    has_faers: true
-    faers_report_count: 8000
-    signal_count: 4
-    guideline_hits: 0
-    competitor_count: 0
-  expect:
-    completeness: adequate
-    score: 55
-    gaps: Regulatory guidelines and competitive data
-# FAERS only, low volume
-- input:
-    has_faers: true
-    faers_report_count: 200
-    signal_count: 1
-    guideline_hits: 0
-    competitor_count: 0
-  expect:
-    completeness: minimal
-    score: 35
-    gaps: Regulatory guidelines and competitive data
-# Guidelines only
-- input:
-    has_faers: false
-    faers_report_count: 0
-    signal_count: 0
-    guideline_hits: 4
-    competitor_count: 0
-  expect:
-    completeness: minimal
-    score: 25
-    gaps: FAERS safety data and competitive landscape
-# Competitors only
-- input:
-    has_faers: false
-    faers_report_count: 0
-    signal_count: 0
-    guideline_hits: 0
-    competitor_count: 3
-  expect:
-    completeness: minimal
-    score: 20
-    gaps: FAERS safety data and regulatory guidelines
-# Empty dossier
-- input:
-    has_faers: false
-    faers_report_count: 0
-    signal_count: 0
-    guideline_hits: 0
-    competitor_count: 0
-  expect:
-    completeness: empty
-    score: 0
-    gaps: All sections — FAERS, guidelines, and competitors
-# Boundary: exactly 1000 reports with all sections = comprehensive
-- input:
-    has_faers: true
-    faers_report_count: 1000
-    signal_count: 1
-    guideline_hits: 1
-    competitor_count: 1
-  expect:
-    completeness: comprehensive
-    score: 95
-    gaps: none
-- input: {}
-  expect:
-    completeness: empty
-    gaps: "All sections — FAERS, guidelines, and competitors"
-    score: 0
+  - input:
+      has_faers: true
+      faers_report_count: 50000
+      signal_count: 5
+      guideline_hits: 8
+      competitor_count: 3
+    expect:
+      completeness: comprehensive
+      score: 95
+      gaps: none
+  - input:
+      has_faers: true
+      faers_report_count: 500
+      signal_count: 2
+      guideline_hits: 3
+      competitor_count: 2
+    expect:
+      completeness: adequate
+      score: 75
+      gaps: Low FAERS report volume
+  - input:
+      has_faers: true
+      faers_report_count: 10000
+      signal_count: 3
+      guideline_hits: 5
+      competitor_count: 0
+    expect:
+      completeness: adequate
+      score: 65
+      gaps: Competitive landscape data
+  - input:
+      has_faers: true
+      faers_report_count: 8000
+      signal_count: 4
+      guideline_hits: 0
+      competitor_count: 0
+    expect:
+      completeness: adequate
+      score: 55
+      gaps: Regulatory guidelines and competitive data
+  - input:
+      has_faers: true
+      faers_report_count: 200
+      signal_count: 1
+      guideline_hits: 0
+      competitor_count: 0
+    expect:
+      completeness: minimal
+      score: 35
+      gaps: Regulatory guidelines and competitive data
+  - input:
+      has_faers: false
+      faers_report_count: 0
+      signal_count: 0
+      guideline_hits: 4
+      competitor_count: 0
+    expect:
+      completeness: minimal
+      score: 25
+      gaps: FAERS safety data and competitive landscape
+  - input:
+      has_faers: false
+      faers_report_count: 0
+      signal_count: 0
+      guideline_hits: 0
+      competitor_count: 3
+    expect:
+      completeness: minimal
+      score: 20
+      gaps: FAERS safety data and regulatory guidelines
+  - input:
+      has_faers: false
+      faers_report_count: 0
+      signal_count: 0
+      guideline_hits: 0
+      competitor_count: 0
+    expect:
+      completeness: empty
+      score: 0
+      gaps: All sections — FAERS, guidelines, and competitors
+  - input:
+      has_faers: true
+      faers_report_count: 1000
+      signal_count: 1
+      guideline_hits: 1
+      competitor_count: 1
+    expect:
+      completeness: comprehensive
+      score: 95
+      gaps: none
+  - input: {}
+    expect:
+      completeness: empty
+      gaps: All sections — FAERS, guidelines, and competitors
+      score: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - completeness
+    - score
+    - gaps
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

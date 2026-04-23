@@ -1,52 +1,125 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: soc-cardiac
-description: "Classify Cardiac disorders by seriousness"
 version: 0.1.0
-
+description: Classify Cardiac disorders by seriousness
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Soc Cardiac
+  subtitle: Classify Cardiac disorders by seriousness
+  icon: circle
+  route: /vigilance/mg/soc-cardiac
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/soc-cardiac
+  cli: rsk mcg run soc-cardiac
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_serious
   nodes:
     check_serious:
-      type: "condition"
-      variable: "is_serious"
-      operator: "eq"
+      type: condition
+      variable: is_serious
+      operator: eq
       value: true
-      true_next: "check_fatal"
-      false_next: "non_serious"
+      true_next: check_fatal
+      false_next: non_serious
     check_fatal:
-      type: "condition"
-      variable: "is_fatal"
-      operator: "eq"
+      type: condition
+      variable: is_fatal
+      operator: eq
       value: true
-      true_next: "fatal"
-      false_next: "serious"
+      true_next: fatal
+      false_next: serious
     fatal:
-      type: "return"
+      type: return
       value:
-        soc: "Cardiac"
-        severity: "fatal"
-        priority: "critical"
-        route: "causality_assessment"
+        soc: Cardiac
+        severity: fatal
+        priority: critical
+        route: causality_assessment
     serious:
-      type: "return"
+      type: return
       value:
-        soc: "Cardiac"
-        severity: "serious"
-        priority: "high"
-        route: "signal_investigation"
+        soc: Cardiac
+        severity: serious
+        priority: high
+        route: signal_investigation
     non_serious:
-      type: "return"
+      type: return
       value:
-        soc: "Cardiac"
-        severity: "non_serious"
-        priority: "low"
-        route: "periodic_review"
-
+        soc: Cardiac
+        severity: non_serious
+        priority: low
+        route: periodic_review
 tests:
-  - input: {"is_serious": true, "is_fatal": true}
-    expect: {"soc": "Cardiac", "severity": "fatal"}
-  - input: {"is_serious": true, "is_fatal": false}
-    expect: {"soc": "Cardiac", "severity": "serious"}
-  - input: {"is_serious": false, "is_fatal": false}
-    expect: {"soc": "Cardiac", "severity": "non_serious"}
+  - input:
+      is_serious: true
+      is_fatal: true
+    expect:
+      soc: Cardiac
+      severity: fatal
+  - input:
+      is_serious: true
+      is_fatal: false
+    expect:
+      soc: Cardiac
+      severity: serious
+  - input:
+      is_serious: false
+      is_fatal: false
+    expect:
+      soc: Cardiac
+      severity: non_serious
   - input: {}
-    expect: {"soc": "Cardiac", "severity": "non_serious"}
+    expect:
+      soc: Cardiac
+      severity: non_serious
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

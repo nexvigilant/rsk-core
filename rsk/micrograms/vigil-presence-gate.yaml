@@ -1,0 +1,199 @@
+# MICROGRAM++ (test-repair)
+name: vigil-presence-gate
+version: 0.1.0
+description: "Operator-Vigil presence gate: routes tool actions based on operator availability and oversight quality (allow | confirm | block)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: presence
+    type: string
+    required: true
+    description: EMPTY | NEARBY | OCCUPIED
+  - name: sensors_online
+    type: int
+    required: true
+    description: ""
+  - name: action_class
+    type: string
+    required: true
+    description: reversible | irreversible | destructive
+outputs:
+  - name: decision
+    type: string
+  - name: reason
+    type: string
+interface:
+  inputs:
+    presence:
+      type: string
+      required: true
+      description: EMPTY | NEARBY | OCCUPIED
+    sensors_online:
+      type: int
+      required: true
+    action_class:
+      type: string
+      required: true
+      description: reversible | irreversible | destructive
+  outputs:
+    decision:
+      type: string
+      description: allow | confirm | block
+    reason:
+      type: string
+ui:
+  title: Vigil Presence Gate
+  subtitle: "Operator-Vigil presence gate: routes tool actions based on operator availability and oversight quality (allow | confirm | block)"
+  icon: circle
+  route: /vigilance/mg/vigil-presence-gate
+  steps:
+    - field: presence
+      label: presence
+      help: EMPTY | NEARBY | OCCUPIED
+      widget: text
+      placeholder: null
+    - field: sensors_online
+      label: sensors online
+      help: Enter sensors_online
+      widget: text
+      placeholder: null
+    - field: action_class
+      label: action class
+      help: reversible | irreversible | destructive
+      widget: text
+      placeholder: null
+  result:
+    template: "decision: {{decision}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/vigil-presence-gate
+  cli: rsk mcg run vigil-presence-gate
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: presence_branch
+  nodes:
+    presence_branch:
+      type: condition
+      variable: presence
+      operator: eq
+      value: EMPTY
+      true_next: empty_check_class
+      false_next: occupied_check_sensors
+    empty_check_class:
+      type: condition
+      variable: action_class
+      operator: eq
+      value: destructive
+      true_next: empty_destructive_block
+      false_next: empty_check_irreversible
+    empty_destructive_block:
+      type: return
+      value:
+        decision: block
+        reason: "presence=EMPTY + action=destructive: no human to authorize"
+    empty_check_irreversible:
+      type: condition
+      variable: action_class
+      operator: eq
+      value: irreversible
+      true_next: empty_irrev_block
+      false_next: empty_reversible_allow
+    empty_irrev_block:
+      type: return
+      value:
+        decision: block
+        reason: "presence=EMPTY + action=irreversible: defer until operator returns"
+    empty_reversible_allow:
+      type: return
+      value:
+        decision: allow
+        reason: reversible action permitted in operator absence
+    occupied_check_sensors:
+      type: condition
+      variable: sensors_online
+      operator: lt
+      value: 3
+      true_next: degraded_check_class
+      false_next: full_check_class
+    degraded_check_class:
+      type: condition
+      variable: action_class
+      operator: eq
+      value: destructive
+      true_next: degraded_destructive_confirm
+      false_next: degraded_other_allow
+    degraded_destructive_confirm:
+      type: return
+      value:
+        decision: confirm
+        reason: "sensors degraded + destructive: require explicit confirmation"
+    degraded_other_allow:
+      type: return
+      value:
+        decision: allow
+        reason: sensors degraded but action class safe
+    full_check_class:
+      type: condition
+      variable: action_class
+      operator: eq
+      value: destructive
+      true_next: full_destructive_confirm
+      false_next: full_allow
+    full_destructive_confirm:
+      type: return
+      value:
+        decision: confirm
+        reason: "destructive action with full sensor coverage: confirm before execute"
+    full_allow:
+      type: return
+      value:
+        decision: allow
+        reason: operator present, sensors full, action class safe
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - decision
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true
+tests:
+  - input: {}
+    expect: {}

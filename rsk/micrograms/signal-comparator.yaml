@@ -1,224 +1,282 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-comparator
-description: 'Cross-signal comparator: compares two PV signals (PRR values) and determines which is stronger, whether they agree, and if their ratio suggests confounding. Uses cross-variable comparison to directly compare signal_a against signal_b. First microgram designed to stress-test the cross-variable comparison engine.'
 version: 0.1.0
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(signal_a, signal_b) at ∂(ratio_thresholds) — pairwise signal comparison with ratio analysis'
-  primes: ['κ', '∂', 'N', 'μ']
-  arguments: ['signal_a', 'signal_b', 'threshold']
-  chain_prediction: 'μ(κ(a,b)) → signal_agreement_assessment'
+description: "Cross-signal comparator: compares two PV signals (PRR values) and determines which is stronger, whether they agree, and if their ratio suggests confounding. Uses cross-variable comparison to directly compare signal_a against signal_b. First microgram designed to stress-test the cross-variable comparison engine."
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: signal_a
+    type: float
+    required: true
+    description: PRR value of signal A
+  - name: signal_b
+    type: float
+    required: true
+    description: PRR value of signal B
+  - name: threshold
+    type: float
+    required: false
+    description: Signal threshold (default 2.0)
+outputs:
+  - name: agreement
+    type: string
+  - name: stronger
+    type: string
+  - name: ratio
+    type: string
 interface:
   inputs:
     signal_a:
       type: float
       required: true
-      description: 'PRR value of signal A'
+      description: PRR value of signal A
     signal_b:
       type: float
       required: true
-      description: 'PRR value of signal B'
+      description: PRR value of signal B
     threshold:
       type: float
       required: false
-      description: 'Signal threshold (default 2.0)'
+      description: Signal threshold (default 2.0)
   outputs:
     agreement:
       type: string
-      description: 'CONCORDANT (both above or both below threshold), DISCORDANT (one above, one below), BOTH_NULL (both below)'
+      description: CONCORDANT (both above or both below threshold), DISCORDANT (one above, one below), BOTH_NULL (both below)
     stronger:
       type: string
-      description: 'Which signal is stronger: A, B, or EQUAL'
+      description: "Which signal is stronger: A, B, or EQUAL"
     ratio:
       type: string
-      description: 'Relative strength description'
+      description: Relative strength description
+ui:
+  title: Signal Comparator
+  subtitle: "Cross-signal comparator: compares two PV signals (PRR values) and determines which is stronger, whether they agree, and if their ratio suggests confounding. Uses cross-variable comparison to directly compare signal_a against signal_b. First microgram designed to stress-test the cross-variable comparison engine."
+  icon: activity
+  route: /vigilance/mg/signal-comparator
+  steps:
+    - field: signal_a
+      label: signal a
+      help: PRR value of signal A
+      widget: text
+      placeholder: null
+    - field: signal_b
+      label: signal b
+      help: PRR value of signal B
+      widget: text
+      placeholder: null
+    - field: threshold
+      label: threshold
+      help: Signal threshold (default 2.0)
+      widget: text
+      placeholder: null
+  result:
+    template: "agreement: {{agreement}} — stronger: {{stronger}} — ratio: {{ratio}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-comparator
+  cli: rsk mcg run signal-comparator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_a_above
   nodes:
-    # Check if signal_a is above threshold (default 2.0)
     check_a_above:
       type: condition
       variable: signal_a
       operator: gte
-      value: 2.0
+      value: 2
       true_next: a_above_check_b
       false_next: a_below_check_b
-
-    # signal_a >= 2.0, check signal_b
     a_above_check_b:
       type: condition
       variable: signal_b
       operator: gte
-      value: 2.0
+      value: 2
       true_next: both_above_compare
       false_next: only_a_above
-
-    # Both above threshold — compare them directly
     both_above_compare:
       type: condition
       variable: signal_a
       operator: gt
-      value: '{{signal_b}}'
+      value: "{{signal_b}}"
       true_next: concordant_a_stronger
       false_next: concordant_check_equal
-
     concordant_check_equal:
       type: condition
       variable: signal_a
       operator: eq
-      value: '{{signal_b}}'
+      value: "{{signal_b}}"
       true_next: concordant_equal
       false_next: concordant_b_stronger
-
     concordant_a_stronger:
       type: return
       value:
         agreement: CONCORDANT
         stronger: A
-        ratio: 'Both signals detected, A is stronger'
-
+        ratio: Both signals detected, A is stronger
     concordant_b_stronger:
       type: return
       value:
         agreement: CONCORDANT
         stronger: B
-        ratio: 'Both signals detected, B is stronger'
-
+        ratio: Both signals detected, B is stronger
     concordant_equal:
       type: return
       value:
         agreement: CONCORDANT
         stronger: EQUAL
-        ratio: 'Both signals detected at equal strength'
-
-    # Only signal_a above threshold
+        ratio: Both signals detected at equal strength
     only_a_above:
       type: return
       value:
         agreement: DISCORDANT
         stronger: A
-        ratio: 'Only signal A detected — investigate confounding in B'
-
-    # signal_a < 2.0, check signal_b
+        ratio: Only signal A detected — investigate confounding in B
     a_below_check_b:
       type: condition
       variable: signal_b
       operator: gte
-      value: 2.0
+      value: 2
       true_next: only_b_above
       false_next: both_below_compare
-
-    # Only signal_b above threshold
     only_b_above:
       type: return
       value:
         agreement: DISCORDANT
         stronger: B
-        ratio: 'Only signal B detected — investigate confounding in A'
-
-    # Both below threshold — compare which is closer to threshold
+        ratio: Only signal B detected — investigate confounding in A
     both_below_compare:
       type: condition
       variable: signal_a
       operator: gt
-      value: '{{signal_b}}'
+      value: "{{signal_b}}"
       true_next: both_null_a_closer
       false_next: both_null_check_equal
-
     both_null_check_equal:
       type: condition
       variable: signal_a
       operator: eq
-      value: '{{signal_b}}'
+      value: "{{signal_b}}"
       true_next: both_null_equal
       false_next: both_null_b_closer
-
     both_null_a_closer:
       type: return
       value:
         agreement: BOTH_NULL
         stronger: A
-        ratio: 'No signals detected, A closer to threshold'
-
+        ratio: No signals detected, A closer to threshold
     both_null_b_closer:
       type: return
       value:
         agreement: BOTH_NULL
         stronger: B
-        ratio: 'No signals detected, B closer to threshold'
-
+        ratio: No signals detected, B closer to threshold
     both_null_equal:
       type: return
       value:
         agreement: BOTH_NULL
         stronger: EQUAL
-        ratio: 'No signals detected, equal sub-threshold values'
-
+        ratio: No signals detected, equal sub-threshold values
 tests:
-# Both above threshold, A stronger
-- input:
-    signal_a: 5.0
-    signal_b: 3.0
-  expect:
-    agreement: CONCORDANT
-    stronger: A
-
-# Both above threshold, B stronger
-- input:
-    signal_a: 2.5
-    signal_b: 8.0
-  expect:
-    agreement: CONCORDANT
-    stronger: B
-
-# Both above threshold, equal
-- input:
-    signal_a: 4.0
-    signal_b: 4.0
-  expect:
-    agreement: CONCORDANT
-    stronger: EQUAL
-
-# Discordant — only A above
-- input:
-    signal_a: 3.5
-    signal_b: 1.2
-  expect:
-    agreement: DISCORDANT
-    stronger: A
-
-# Discordant — only B above
-- input:
-    signal_a: 0.8
-    signal_b: 5.0
-  expect:
-    agreement: DISCORDANT
-    stronger: B
-
-# Both null, A closer to threshold
-- input:
-    signal_a: 1.8
-    signal_b: 0.5
-  expect:
-    agreement: BOTH_NULL
-    stronger: A
-
-# Both null, equal
-- input:
-    signal_a: 1.0
-    signal_b: 1.0
-  expect:
-    agreement: BOTH_NULL
-    stronger: EQUAL
-
-# Edge: exactly at threshold
-- input:
-    signal_a: 2.0
-    signal_b: 2.0
-  expect:
-    agreement: CONCORDANT
-    stronger: EQUAL
-
-# Null input safety
-- input: {}
-  expect:
-    agreement: BOTH_NULL
+  - input:
+      signal_a: 5
+      signal_b: 3
+    expect:
+      agreement: CONCORDANT
+      stronger: A
+  - input:
+      signal_a: 2.5
+      signal_b: 8
+    expect:
+      agreement: CONCORDANT
+      stronger: B
+  - input:
+      signal_a: 4
+      signal_b: 4
+    expect:
+      agreement: CONCORDANT
+      stronger: EQUAL
+  - input:
+      signal_a: 3.5
+      signal_b: 1.2
+    expect:
+      agreement: DISCORDANT
+      stronger: A
+  - input:
+      signal_a: 0.8
+      signal_b: 5
+    expect:
+      agreement: DISCORDANT
+      stronger: B
+  - input:
+      signal_a: 1.8
+      signal_b: 0.5
+    expect:
+      agreement: BOTH_NULL
+      stronger: A
+  - input:
+      signal_a: 1
+      signal_b: 1
+    expect:
+      agreement: BOTH_NULL
+      stronger: EQUAL
+  - input:
+      signal_a: 2
+      signal_b: 2
+    expect:
+      agreement: CONCORDANT
+      stronger: EQUAL
+  - input: {}
+    expect:
+      agreement: BOTH_NULL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - agreement
+    - stronger
+    - ratio
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

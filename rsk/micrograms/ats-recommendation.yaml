@@ -1,12 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ats-recommendation
-description: 'Generate final ATS pass/fail verdict with prioritized fix recommendations based on upstream scores'
 version: 0.1.0
-primitive_signature:
-  dominant: Σ
-  expression: Σ(format_verdict, match_tier, gap_severity) → →(action_plan)
-  primes: [Σ, →, κ, N]
-  arguments: [sum, causality, comparison, quantity]
-  chain_prediction: terminal — receives from ats-gap-detector
+description: Generate final ATS pass/fail verdict with prioritized fix recommendations based on upstream scores
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: format_verdict
+    type: string
+    required: false
+    description: ""
+  - name: match_tier
+    type: string
+    required: false
+    description: ""
+  - name: gap_severity
+    type: string
+    required: false
+    description: ""
+  - name: format_score
+    type: integer
+    required: false
+    description: ""
+  - name: ats_pass_likely
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: overall_verdict
+    type: string
+  - name: pass_probability
+    type: string
+  - name: priority_fixes
+    type: string
+  - name: apply_recommendation
+    type: string
 interface:
   inputs:
     format_verdict:
@@ -33,6 +67,48 @@ interface:
       type: string
     apply_recommendation:
       type: string
+ui:
+  title: Ats Recommendation
+  subtitle: Generate final ATS pass/fail verdict with prioritized fix recommendations based on upstream scores
+  icon: circle
+  route: /vigilance/mg/ats-recommendation
+  steps:
+    - field: format_verdict
+      label: format verdict
+      help: Enter format_verdict
+      widget: text
+      placeholder: null
+    - field: match_tier
+      label: match tier
+      help: Enter match_tier
+      widget: text
+      placeholder: null
+    - field: gap_severity
+      label: gap severity
+      help: Enter gap_severity
+      widget: text
+      placeholder: null
+    - field: format_score
+      label: format score
+      help: Enter format_score
+      widget: number
+      placeholder: null
+    - field: ats_pass_likely
+      label: ats pass likely
+      help: Enter ats_pass_likely
+      widget: toggle
+      placeholder: null
+  result:
+    template: "overall_verdict: {{overall_verdict}} — pass_probability: {{pass_probability}} — priority_fixes: {{priority_fixes}} — apply_recommendation: {{apply_recommendation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ats-recommendation
+  cli: rsk mcg run ats-recommendation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: format_block
   nodes:
@@ -68,80 +144,116 @@ tree:
       type: return
       value:
         overall_verdict: REJECT
-        pass_probability: "<10%"
-        priority_fixes: "1. Convert to .docx or .pdf 2. Remove tables/columns/graphics 3. Use standard section headers 4. Re-run screening"
-        apply_recommendation: "Do not apply until format is fixed — ATS will not parse this resume"
+        pass_probability: <10%
+        priority_fixes: 1. Convert to .docx or .pdf 2. Remove tables/columns/graphics 3. Use standard section headers 4. Re-run screening
+        apply_recommendation: Do not apply until format is fixed — ATS will not parse this resume
     blocked_by_gaps:
       type: return
       value:
         overall_verdict: RECONSIDER
-        pass_probability: "<20%"
-        priority_fixes: "1. Acquire missing credentials or certifications 2. Target roles matching current qualifications 3. Reframe transferable experience"
-        apply_recommendation: "Consider alternative roles — critical qualification gaps cannot be solved by resume optimization alone"
+        pass_probability: <20%
+        priority_fixes: 1. Acquire missing credentials or certifications 2. Target roles matching current qualifications 3. Reframe transferable experience
+        apply_recommendation: Consider alternative roles — critical qualification gaps cannot be solved by resume optimization alone
     likely_pass:
       type: return
       value:
         overall_verdict: STRONG_MATCH
         pass_probability: ">80%"
-        priority_fixes: "1. Verify exact keyword phrasing matches job listing 2. Quantify achievements (numbers, percentages, dollar amounts) 3. Front-load strongest matches in Summary section"
-        apply_recommendation: "Apply — strong alignment. Customize cover letter to reinforce top 3 matching qualifications"
+        priority_fixes: 1. Verify exact keyword phrasing matches job listing 2. Quantify achievements (numbers, percentages, dollar amounts) 3. Front-load strongest matches in Summary section
+        apply_recommendation: Apply — strong alignment. Customize cover letter to reinforce top 3 matching qualifications
     possible_pass:
       type: return
       value:
         overall_verdict: CONDITIONAL_MATCH
-        pass_probability: "50-70%"
-        priority_fixes: "1. Add missing keywords from job description verbatim 2. Expand Skills section with tool/technology names 3. Mirror the job listing's language in Experience bullets 4. Add industry-specific acronyms"
-        apply_recommendation: "Apply after optimization — moderate gaps are fixable with keyword tailoring"
+        pass_probability: 50-70%
+        priority_fixes: 1. Add missing keywords from job description verbatim 2. Expand Skills section with tool/technology names 3. Mirror the job listing's language in Experience bullets 4. Add industry-specific acronyms
+        apply_recommendation: Apply after optimization — moderate gaps are fixable with keyword tailoring
     likely_fail:
       type: return
       value:
         overall_verdict: WEAK_MATCH
-        pass_probability: "<30%"
-        priority_fixes: "1. Rewrite Summary to mirror job description language 2. Add all missing keywords from listing 3. Restructure Experience bullets around required skills 4. Consider skills-based resume format 5. Add relevant projects or certifications"
-        apply_recommendation: "Significant rework needed before applying — current version will likely be filtered out"
+        pass_probability: <30%
+        priority_fixes: 1. Rewrite Summary to mirror job description language 2. Add all missing keywords from listing 3. Restructure Experience bullets around required skills 4. Consider skills-based resume format 5. Add relevant projects or certifications
+        apply_recommendation: Significant rework needed before applying — current version will likely be filtered out
 tests:
-- input:
-    format_verdict: FAIL
-    match_tier: STRONG
-    gap_severity: NONE
-  expect:
-    overall_verdict: REJECT
-    pass_probability: "<10%"
-- input:
-    format_verdict: PASS
-    match_tier: STRONG
-    gap_severity: NONE
-  expect:
-    overall_verdict: STRONG_MATCH
-    pass_probability: ">80%"
-- input:
-    format_verdict: PASS
-    match_tier: MODERATE
-    gap_severity: LOW
-  expect:
-    overall_verdict: CONDITIONAL_MATCH
-    pass_probability: "50-70%"
-- input:
-    format_verdict: PASS
-    match_tier: WEAK
-    gap_severity: MODERATE
-  expect:
-    overall_verdict: WEAK_MATCH
-    pass_probability: "<30%"
-- input:
-    format_verdict: PASS
-    match_tier: STRONG
-    gap_severity: CRITICAL
-  expect:
-    overall_verdict: RECONSIDER
-    pass_probability: "<20%"
-- input:
-    format_verdict: WARN
-    match_tier: MODERATE
-    gap_severity: NONE
-  expect:
-    overall_verdict: CONDITIONAL_MATCH
-- input: {}
-  expect:
-    overall_verdict: WEAK_MATCH
-    pass_probability: "<30%"
+  - input:
+      format_verdict: FAIL
+      match_tier: STRONG
+      gap_severity: NONE
+    expect:
+      overall_verdict: REJECT
+      pass_probability: <10%
+  - input:
+      format_verdict: PASS
+      match_tier: STRONG
+      gap_severity: NONE
+    expect:
+      overall_verdict: STRONG_MATCH
+      pass_probability: ">80%"
+  - input:
+      format_verdict: PASS
+      match_tier: MODERATE
+      gap_severity: LOW
+    expect:
+      overall_verdict: CONDITIONAL_MATCH
+      pass_probability: 50-70%
+  - input:
+      format_verdict: PASS
+      match_tier: WEAK
+      gap_severity: MODERATE
+    expect:
+      overall_verdict: WEAK_MATCH
+      pass_probability: <30%
+  - input:
+      format_verdict: PASS
+      match_tier: STRONG
+      gap_severity: CRITICAL
+    expect:
+      overall_verdict: RECONSIDER
+      pass_probability: <20%
+  - input:
+      format_verdict: WARN
+      match_tier: MODERATE
+      gap_severity: NONE
+    expect:
+      overall_verdict: CONDITIONAL_MATCH
+  - input: {}
+    expect:
+      overall_verdict: WEAK_MATCH
+      pass_probability: <30%
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - overall_verdict
+    - pass_probability
+    - priority_fixes
+    - apply_recommendation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

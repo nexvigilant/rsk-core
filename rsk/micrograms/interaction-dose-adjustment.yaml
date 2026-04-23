@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: interaction-dose-adjustment
-description: "Calculate recommended dose adjustments to manage drug interactions"
 version: 0.1.0
+description: Calculate recommended dose adjustments to manage drug interactions
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Interaction Dose Adjustment
+  subtitle: Calculate recommended dose adjustments to manage drug interactions
+  icon: circle
+  route: /vigilance/mg/interaction-dose-adjustment
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/interaction-dose-adjustment
+  cli: rsk mcg run interaction-dose-adjustment
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_interaction_data
   nodes:
@@ -29,24 +58,24 @@ tree:
       type: return
       value:
         dose_adjustment_percent: 50
-        new_dose_recommendation: "half_normal_dose"
-        adjustment_rationale: "major_pk_interaction"
+        new_dose_recommendation: half_normal_dose
+        adjustment_rationale: major_pk_interaction
         titration_required: true
         adjustment_compliant: true
     reduce_25_percent:
       type: return
       value:
         dose_adjustment_percent: 25
-        new_dose_recommendation: "three_quarter_normal_dose"
-        adjustment_rationale: "moderate_pk_interaction"
+        new_dose_recommendation: three_quarter_normal_dose
+        adjustment_rationale: moderate_pk_interaction
         titration_required: true
         adjustment_compliant: true
     reduce_10_percent:
       type: return
       value:
         dose_adjustment_percent: 10
-        new_dose_recommendation: "consider_minor_reduction"
-        adjustment_rationale: "minor_pk_interaction"
+        new_dose_recommendation: consider_minor_reduction
+        adjustment_rationale: minor_pk_interaction
         titration_required: false
         adjustment_compliant: true
     adjustment_unknown:
@@ -58,24 +87,56 @@ tree:
         titration_required: null
         adjustment_compliant: false
 tests:
-- input:
-    auc_increase_factor: 4.5
-  expect:
-    dose_adjustment_percent: 50
-    new_dose_recommendation: "half_normal_dose"
-    titration_required: true
-- input:
-    auc_increase_factor: 2.0
-  expect:
-    dose_adjustment_percent: 25
-    new_dose_recommendation: "three_quarter_normal_dose"
-    titration_required: true
-- input:
-    auc_increase_factor: 1.2
-  expect:
-    dose_adjustment_percent: 10
-    new_dose_recommendation: "consider_minor_reduction"
-- input: {}
-  expect:
-    dose_adjustment_percent: null
-    adjustment_compliant: false
+  - input:
+      auc_increase_factor: 4.5
+    expect:
+      dose_adjustment_percent: 50
+      new_dose_recommendation: half_normal_dose
+      titration_required: true
+  - input:
+      auc_increase_factor: 2
+    expect:
+      dose_adjustment_percent: 25
+      new_dose_recommendation: three_quarter_normal_dose
+      titration_required: true
+  - input:
+      auc_increase_factor: 1.2
+    expect:
+      dose_adjustment_percent: 10
+      new_dose_recommendation: consider_minor_reduction
+  - input: {}
+    expect:
+      dose_adjustment_percent: null
+      adjustment_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pvos-calibrate-gate
-description: 'PVOS threshold calibration: gates algorithm threshold calibration on minimum sample size (>=100) and feedback count (>=10) - prevents calibration on sparse data'
 version: 0.1.0
+description: "PVOS threshold calibration: gates algorithm threshold calibration on minimum sample size (>=100) and feedback count (>=10) - prevents calibration on sparse data"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: feedback_count
+    type: int
+    required: false
+    description: ""
+  - name: sample_size
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: decision
+    type: string
+  - name: description
+    type: string
 interface:
   inputs:
     feedback_count:
@@ -14,6 +38,33 @@ interface:
       type: string
     description:
       type: string
+ui:
+  title: Pvos Calibrate Gate
+  subtitle: "PVOS threshold calibration: gates algorithm threshold calibration on minimum sample size (>=100) and feedback count (>=10) - prevents calibration on sparse data"
+  icon: circle
+  route: /vigilance/mg/pvos-calibrate-gate
+  steps:
+    - field: feedback_count
+      label: feedback count
+      help: Enter feedback_count
+      widget: text
+      placeholder: null
+    - field: sample_size
+      label: sample size
+      help: Enter sample_size
+      widget: text
+      placeholder: null
+  result:
+    template: "decision: {{decision}} — description: {{description}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pvos-calibrate-gate
+  cli: rsk mcg run pvos-calibrate-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_sample
   nodes:
@@ -47,31 +98,65 @@ tree:
         decision: INSUFFICIENT_DATA
         description: Feedback count below 10 - collect more signal review feedback before calibrating
 tests:
-- input:
-    sample_size: 250
-    feedback_count: 25
-  expect:
-    decision: CALIBRATE
-    description: Sufficient data and feedback - proceed with threshold calibration
-- input:
-    sample_size: 50
-    feedback_count: 25
-  expect:
-    decision: INSUFFICIENT_DATA
-    description: Sample size below 100 - collect more cases before calibrating thresholds
-- input:
-    sample_size: 200
-    feedback_count: 5
-  expect:
-    decision: INSUFFICIENT_DATA
-    description: Feedback count below 10 - collect more signal review feedback before calibrating
-- input:
-    sample_size: 100
-    feedback_count: 10
-  expect:
-    decision: CALIBRATE
-    description: Sufficient data and feedback - proceed with threshold calibration
-- input: {}
-  expect:
-    decision: INSUFFICIENT_DATA
-    description: Sample size below 100 - collect more cases before calibrating thresholds
+  - input:
+      sample_size: 250
+      feedback_count: 25
+    expect:
+      decision: CALIBRATE
+      description: Sufficient data and feedback - proceed with threshold calibration
+  - input:
+      sample_size: 50
+      feedback_count: 25
+    expect:
+      decision: INSUFFICIENT_DATA
+      description: Sample size below 100 - collect more cases before calibrating thresholds
+  - input:
+      sample_size: 200
+      feedback_count: 5
+    expect:
+      decision: INSUFFICIENT_DATA
+      description: Feedback count below 10 - collect more signal review feedback before calibrating
+  - input:
+      sample_size: 100
+      feedback_count: 10
+    expect:
+      decision: CALIBRATE
+      description: Sufficient data and feedback - proceed with threshold calibration
+  - input: {}
+    expect:
+      decision: INSUFFICIENT_DATA
+      description: Sample size below 100 - collect more cases before calibrating thresholds
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - decision
+    - description
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

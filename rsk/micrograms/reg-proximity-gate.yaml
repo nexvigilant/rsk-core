@@ -1,0 +1,213 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: reg-proximity-gate
+version: 0.1.0
+description: Gate 3 detector per NVG-CON-ARP-001 Article IV. Flags claims for human gate review when PRR >= 4.0 OR severity tier >= serious. Triggered by /api/arp/claims ingress hook; when gated=true, records gate:regulatory_proximity artifact and blocks auto-validation.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: prr
+    type: number
+    required: true
+    description: Proportional reporting ratio computed for the claim
+  - name: severity_tier
+    type: string
+    required: true
+    description: "One of: non-serious | serious | life-threatening | fatal"
+  - name: marketed_product
+    type: boolean
+    required: true
+    description: True if the claim names a marketed product (not investigational)
+outputs:
+  - name: gated
+    type: boolean
+  - name: reason
+    type: string
+interface:
+  inputs:
+    prr:
+      type: number
+      required: true
+      description: Proportional reporting ratio computed for the claim
+    severity_tier:
+      type: string
+      required: true
+      description: "One of: non-serious | serious | life-threatening | fatal"
+    marketed_product:
+      type: boolean
+      required: true
+      description: True if the claim names a marketed product (not investigational)
+  outputs:
+    gated:
+      type: boolean
+    reason:
+      type: string
+ui:
+  title: Reg Proximity Gate
+  subtitle: Gate 3 detector per NVG-CON-ARP-001 Article IV. Flags claims for human gate review when PRR >= 4.0 OR severity tier >= serious. Triggered by /api/arp/claims ingress hook; when gated=true, records gate:regulatory_proximity artifact and blocks auto-validation.
+  icon: circle
+  route: /vigilance/mg/reg-proximity-gate
+  steps:
+    - field: prr
+      label: prr
+      help: Proportional reporting ratio computed for the claim
+      widget: number
+      placeholder: null
+    - field: severity_tier
+      label: severity tier
+      help: "One of: non-serious | serious | life-threatening | fatal"
+      widget: text
+      placeholder: null
+    - field: marketed_product
+      label: marketed product
+      help: True if the claim names a marketed product (not investigational)
+      widget: toggle
+      placeholder: null
+  result:
+    template: "gated: {{gated}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/reg-proximity-gate
+  cli: rsk mcg run reg-proximity-gate
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_prr
+  nodes:
+    check_prr:
+      type: condition
+      variable: prr
+      operator: gte
+      value: 4
+      true_next: require_marketed
+      false_next: check_severity
+    check_severity:
+      type: condition
+      variable: severity_tier
+      operator: eq
+      value: serious
+      true_next: require_marketed
+      false_next: check_life_threatening
+    check_life_threatening:
+      type: condition
+      variable: severity_tier
+      operator: eq
+      value: life-threatening
+      true_next: require_marketed
+      false_next: check_fatal
+    check_fatal:
+      type: condition
+      variable: severity_tier
+      operator: eq
+      value: fatal
+      true_next: require_marketed
+      false_next: passthrough
+    require_marketed:
+      type: condition
+      variable: marketed_product
+      operator: eq
+      value: true
+      true_next: gate_required
+      false_next: passthrough
+    gate_required:
+      type: return
+      value:
+        gated: true
+        reason: prr-ge-4-or-serious-on-marketed-product
+    passthrough:
+      type: return
+      value:
+        gated: false
+        reason: below-regulatory-proximity-threshold
+tests:
+  - name: high_prr_serious_marketed_gated
+    input:
+      prr: 5.2
+      severity_tier: serious
+      marketed_product: true
+    expect:
+      gated: true
+      reason: prr-ge-4-or-serious-on-marketed-product
+  - name: high_prr_nonserious_marketed_gated
+    input:
+      prr: 4.1
+      severity_tier: non-serious
+      marketed_product: true
+    expect:
+      gated: true
+      reason: prr-ge-4-or-serious-on-marketed-product
+  - name: low_prr_fatal_marketed_gated
+    input:
+      prr: 1.5
+      severity_tier: fatal
+      marketed_product: true
+    expect:
+      gated: true
+      reason: prr-ge-4-or-serious-on-marketed-product
+  - name: low_prr_nonserious_marketed_passthrough
+    input:
+      prr: 2
+      severity_tier: non-serious
+      marketed_product: true
+    expect:
+      gated: false
+      reason: below-regulatory-proximity-threshold
+  - name: high_prr_serious_investigational_passthrough
+    input:
+      prr: 8
+      severity_tier: life-threatening
+      marketed_product: false
+    expect:
+      gated: false
+      reason: below-regulatory-proximity-threshold
+  - name: boundary_prr_exactly_4_marketed_gated
+    input:
+      prr: 4
+      severity_tier: non-serious
+      marketed_product: true
+    expect:
+      gated: true
+      reason: prr-ge-4-or-serious-on-marketed-product
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - gated
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

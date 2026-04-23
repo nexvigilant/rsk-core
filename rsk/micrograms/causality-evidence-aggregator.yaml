@@ -1,6 +1,95 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: causality-evidence-aggregator
-description: Aggregates temporal association, dechallenge/rechallenge, and Naranjo score into unified causality verdict. Bridges temporal-association + dechallenge-rechallenge + naranjo-quick outputs.
 version: 0.1.0
+description: Aggregates temporal association, dechallenge/rechallenge, and Naranjo score into unified causality verdict. Bridges temporal-association + dechallenge-rechallenge + naranjo-quick outputs.
+family: pv.causality
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: evidence_strength
+    type: string
+    required: false
+    description: ""
+  - name: naranjo_score
+    type: int
+    required: true
+    description: ""
+  - name: temporal_plausibility
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: recommended_action
+    type: string
+  - name: evidence_basis
+    type: string
+  - name: causality_verdict
+    type: string
+  - name: confidence
+    type: string
+interface:
+  inputs:
+    evidence_strength:
+      type: string
+      required: false
+    naranjo_score:
+      type: int
+      required: true
+    temporal_plausibility:
+      type: string
+      required: false
+  outputs:
+    recommended_action:
+      type: string
+      required: false
+    evidence_basis:
+      type: string
+      required: false
+    causality_verdict:
+      type: string
+      required: false
+    confidence:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Causality Evidence Aggregator
+  subtitle: Aggregates temporal association, dechallenge/rechallenge, and Naranjo score into unified causality verdict. Bridges temporal-association + dechallenge-rechallenge + naranjo-quick outputs.
+  icon: git-branch
+  route: /vigilance/mg/causality-evidence-aggregator
+  steps:
+    - field: evidence_strength
+      label: evidence strength
+      help: Enter evidence_strength
+      widget: text
+      placeholder: null
+    - field: naranjo_score
+      label: naranjo score
+      help: Enter naranjo_score
+      widget: text
+      placeholder: null
+    - field: temporal_plausibility
+      label: temporal plausibility
+      help: Enter temporal_plausibility
+      widget: text
+      placeholder: null
+  result:
+    template: "recommended_action: {{recommended_action}} — evidence_basis: {{evidence_basis}} — causality_verdict: {{causality_verdict}} — confidence: {{confidence}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/causality-evidence-aggregator
+  cli: rsk mcg run causality-evidence-aggregator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_naranjo
   nodes:
@@ -110,174 +199,190 @@ tree:
         evidence_basis: Naranjo probable + corroborating evidence upgrades to certain
         recommended_action: Report as certain causality per ICH E2A
 tests:
-- input:
-    naranjo_score: 10
-    temporal_plausibility: STRONG
-    evidence_strength: STRONG
-  expect:
-    confidence: HIGH
-    causality_verdict: CERTAIN
-- input:
-    temporal_plausibility: STRONG
-    evidence_strength: MODERATE
-    naranjo_score: 6
-  expect:
-    confidence: HIGH
-    causality_verdict: CERTAIN
-- input:
-    evidence_strength: STRONG
-    naranjo_score: 5
-    temporal_plausibility: POSSIBLE
-  expect:
-    causality_verdict: CERTAIN
-    confidence: HIGH
-- input:
-    evidence_strength: MODERATE
-    temporal_plausibility: POSSIBLE
-    naranjo_score: 7
-  expect:
-    causality_verdict: PROBABLE
-    confidence: MODERATE
-- input:
-    evidence_strength: WEAK
-    temporal_plausibility: STRONG
-    naranjo_score: 3
-  expect:
-    causality_verdict: PROBABLE
-    confidence: MODERATE
-- input:
-    naranjo_score: 2
-    temporal_plausibility: WEAK
-    evidence_strength: STRONG
-  expect:
-    confidence: MODERATE
-    causality_verdict: PROBABLE
-- input:
-    naranjo_score: 3
-    temporal_plausibility: POSSIBLE
-    evidence_strength: WEAK
-  expect:
-    confidence: LOW
-    causality_verdict: POSSIBLE
-- input:
-    temporal_plausibility: IMPLAUSIBLE
-    evidence_strength: INSUFFICIENT
-    naranjo_score: 0
-  expect:
-    confidence: HIGH
-    causality_verdict: UNLIKELY
-- input:
-    naranjo_score: -1
-    evidence_strength: INSUFFICIENT
-    temporal_plausibility: WEAK
-  expect:
-    causality_verdict: DOUBTFUL
-    confidence: LOW
-- input: {}
-  expect:
-    evidence_basis: Naranjo doubtful (<=0)
-    confidence: LOW
-    causality_verdict: DOUBTFUL
-    recommended_action: Document and archive — no further action unless new evidence
-- input:
-    naranjo_score: 8
-  expect:
-    evidence_basis: Naranjo probable (5-8)
-    confidence: MODERATE
-    recommended_action: Report as probable causality — continue monitoring
-    causality_verdict: PROBABLE
-- input:
-    naranjo_score: 900
-  expect:
-    evidence_basis: Naranjo definite (>=9)
-    recommended_action: Report as certain causality per ICH E2A
-    confidence: HIGH
-    causality_verdict: CERTAIN
-- input: {}
-  expect:
-    evidence_basis: Naranjo doubtful (<=0)
-    recommended_action: Document and archive — no further action unless new evidence
-    confidence: LOW
-    causality_verdict: DOUBTFUL
-- input:
-    naranjo_score: 100
-  expect:
-    evidence_basis: Naranjo definite (>=9)
-    recommended_action: Report as certain causality per ICH E2A
-    causality_verdict: CERTAIN
-    confidence: HIGH
-- input: {}
-  expect:
-    recommended_action: Document and archive — no further action unless new evidence
-    causality_verdict: DOUBTFUL
-    evidence_basis: Naranjo doubtful (<=0)
-    confidence: LOW
-- input:
-    naranjo_score: 4
-  expect:
-    evidence_basis: Naranjo possible (1-4)
-    confidence: LOW
-    recommended_action: Continue monitoring and gather additional evidence
-    causality_verdict: POSSIBLE
-- input:
-    naranjo_score: 500
-  expect:
-    causality_verdict: CERTAIN
-    evidence_basis: Naranjo definite (>=9)
-    recommended_action: Report as certain causality per ICH E2A
-    confidence: HIGH
-- input: {}
-  expect:
-    evidence_basis: Naranjo doubtful (<=0)
-    confidence: LOW
-    recommended_action: Document and archive — no further action unless new evidence
-    causality_verdict: DOUBTFUL
-- input: {}
-  expect:
-    recommended_action: Document and archive — no further action unless new evidence
-    confidence: LOW
-    evidence_basis: Naranjo doubtful (<=0)
-    causality_verdict: DOUBTFUL
-- input: {}
-  expect:
-    evidence_basis: Naranjo doubtful (<=0)
-    recommended_action: Document and archive — no further action unless new evidence
-    confidence: LOW
-    causality_verdict: DOUBTFUL
-- input: {}
-  expect:
-    recommended_action: Document and archive — no further action unless new evidence
-    confidence: LOW
-    evidence_basis: Naranjo doubtful (<=0)
-    causality_verdict: DOUBTFUL
-- input: {}
-  expect:
-    evidence_basis: Naranjo doubtful (<=0)
-    causality_verdict: DOUBTFUL
-    confidence: LOW
-    recommended_action: Document and archive — no further action unless new evidence
-interface:
-  inputs:
-    evidence_strength:
-      type: string
-      required: false
-    naranjo_score:
-      type: int
-      required: true
-    temporal_plausibility:
-      type: string
-      required: false
-  outputs:
-    recommended_action:
-      type: string
-      required: false
-    evidence_basis:
-      type: string
-      required: false
-    causality_verdict:
-      type: string
-      required: false
-    confidence:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      naranjo_score: 10
+      temporal_plausibility: STRONG
+      evidence_strength: STRONG
+    expect:
+      confidence: HIGH
+      causality_verdict: CERTAIN
+  - input:
+      temporal_plausibility: STRONG
+      evidence_strength: MODERATE
+      naranjo_score: 6
+    expect:
+      confidence: HIGH
+      causality_verdict: CERTAIN
+  - input:
+      evidence_strength: STRONG
+      naranjo_score: 5
+      temporal_plausibility: POSSIBLE
+    expect:
+      causality_verdict: CERTAIN
+      confidence: HIGH
+  - input:
+      evidence_strength: MODERATE
+      temporal_plausibility: POSSIBLE
+      naranjo_score: 7
+    expect:
+      causality_verdict: PROBABLE
+      confidence: MODERATE
+  - input:
+      evidence_strength: WEAK
+      temporal_plausibility: STRONG
+      naranjo_score: 3
+    expect:
+      causality_verdict: PROBABLE
+      confidence: MODERATE
+  - input:
+      naranjo_score: 2
+      temporal_plausibility: WEAK
+      evidence_strength: STRONG
+    expect:
+      confidence: MODERATE
+      causality_verdict: PROBABLE
+  - input:
+      naranjo_score: 3
+      temporal_plausibility: POSSIBLE
+      evidence_strength: WEAK
+    expect:
+      confidence: LOW
+      causality_verdict: POSSIBLE
+  - input:
+      temporal_plausibility: IMPLAUSIBLE
+      evidence_strength: INSUFFICIENT
+      naranjo_score: 0
+    expect:
+      confidence: HIGH
+      causality_verdict: UNLIKELY
+  - input:
+      naranjo_score: -1
+      evidence_strength: INSUFFICIENT
+      temporal_plausibility: WEAK
+    expect:
+      causality_verdict: DOUBTFUL
+      confidence: LOW
+  - input: {}
+    expect:
+      evidence_basis: Naranjo doubtful (<=0)
+      confidence: LOW
+      causality_verdict: DOUBTFUL
+      recommended_action: Document and archive — no further action unless new evidence
+  - input:
+      naranjo_score: 8
+    expect:
+      evidence_basis: Naranjo probable (5-8)
+      confidence: MODERATE
+      recommended_action: Report as probable causality — continue monitoring
+      causality_verdict: PROBABLE
+  - input:
+      naranjo_score: 900
+    expect:
+      evidence_basis: Naranjo definite (>=9)
+      recommended_action: Report as certain causality per ICH E2A
+      confidence: HIGH
+      causality_verdict: CERTAIN
+  - input: {}
+    expect:
+      evidence_basis: Naranjo doubtful (<=0)
+      recommended_action: Document and archive — no further action unless new evidence
+      confidence: LOW
+      causality_verdict: DOUBTFUL
+  - input:
+      naranjo_score: 100
+    expect:
+      evidence_basis: Naranjo definite (>=9)
+      recommended_action: Report as certain causality per ICH E2A
+      causality_verdict: CERTAIN
+      confidence: HIGH
+  - input: {}
+    expect:
+      recommended_action: Document and archive — no further action unless new evidence
+      causality_verdict: DOUBTFUL
+      evidence_basis: Naranjo doubtful (<=0)
+      confidence: LOW
+  - input:
+      naranjo_score: 4
+    expect:
+      evidence_basis: Naranjo possible (1-4)
+      confidence: LOW
+      recommended_action: Continue monitoring and gather additional evidence
+      causality_verdict: POSSIBLE
+  - input:
+      naranjo_score: 500
+    expect:
+      causality_verdict: CERTAIN
+      evidence_basis: Naranjo definite (>=9)
+      recommended_action: Report as certain causality per ICH E2A
+      confidence: HIGH
+  - input: {}
+    expect:
+      evidence_basis: Naranjo doubtful (<=0)
+      confidence: LOW
+      recommended_action: Document and archive — no further action unless new evidence
+      causality_verdict: DOUBTFUL
+  - input: {}
+    expect:
+      recommended_action: Document and archive — no further action unless new evidence
+      confidence: LOW
+      evidence_basis: Naranjo doubtful (<=0)
+      causality_verdict: DOUBTFUL
+  - input: {}
+    expect:
+      evidence_basis: Naranjo doubtful (<=0)
+      recommended_action: Document and archive — no further action unless new evidence
+      confidence: LOW
+      causality_verdict: DOUBTFUL
+  - input: {}
+    expect:
+      recommended_action: Document and archive — no further action unless new evidence
+      confidence: LOW
+      evidence_basis: Naranjo doubtful (<=0)
+      causality_verdict: DOUBTFUL
+  - input: {}
+    expect:
+      evidence_basis: Naranjo doubtful (<=0)
+      causality_verdict: DOUBTFUL
+      confidence: LOW
+      recommended_action: Document and archive — no further action unless new evidence
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - recommended_action
+    - evidence_basis
+    - causality_verdict
+    - confidence
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.causality
+  log_level: info
+governance:
+  sop_ref: SOP-PV-002
+  regulatory_ref:
+    - ICH-E2A
+    - WHO-UMC
+  harm_types:
+    - A
+    - B
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - hierarchy
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

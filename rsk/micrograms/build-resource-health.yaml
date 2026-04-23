@@ -1,6 +1,83 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: build-resource-health
-description: Translates build resource metrics (headroom, cache state) into system health status and severity. Bridges build-memory-gate and build-flywheel-chain outputs into health-traffic-classifier and severity-tier inputs.
 version: 0.1.0
+description: Translates build resource metrics (headroom, cache state) into system health status and severity. Bridges build-memory-gate and build-flywheel-chain outputs into health-traffic-classifier and severity-tier inputs.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: headroom_pct
+    type: int
+    required: true
+    description: ""
+  - name: prune_cache
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: score
+    type: int
+  - name: resource_action
+    type: string
+  - name: status
+    type: string
+  - name: severity
+    type: string
+interface:
+  inputs:
+    headroom_pct:
+      type: int
+      required: true
+    prune_cache:
+      type: bool
+      required: false
+  outputs:
+    score:
+      type: int
+      required: true
+    resource_action:
+      type: string
+      required: true
+    status:
+      type: string
+      required: true
+    severity:
+      type: string
+      required: true
+  aliases: {}
+ui:
+  title: Build Resource Health
+  subtitle: Translates build resource metrics (headroom, cache state) into system health status and severity. Bridges build-memory-gate and build-flywheel-chain outputs into health-traffic-classifier and severity-tier inputs.
+  icon: circle
+  route: /vigilance/mg/build-resource-health
+  steps:
+    - field: headroom_pct
+      label: headroom pct
+      help: Enter headroom_pct
+      widget: text
+      placeholder: null
+    - field: prune_cache
+      label: prune cache
+      help: Enter prune_cache
+      widget: toggle
+      placeholder: null
+  result:
+    template: "score: {{score}} — resource_action: {{resource_action}} — status: {{status}} — severity: {{severity}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/build-resource-health
+  cli: rsk mcg run build-resource-health
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_headroom_critical
   nodes:
@@ -82,195 +159,209 @@ tree:
       true_next: healthy_needs_maintenance
       false_next: healthy_resources
 tests:
-- input:
-    headroom_pct: 5
-    prune_cache: false
-  expect:
-    severity: CRITICAL
-    status: RED
-    score: 10
-- input:
-    headroom_pct: 15
-    prune_cache: true
-  expect:
-    status: RED
-    severity: HIGH
-    score: 25
-- input:
-    prune_cache: false
-    headroom_pct: 20
-  expect:
-    status: YELLOW
-    severity: HIGH
-    score: 30
-- input:
-    prune_cache: false
-    headroom_pct: 40
-  expect:
-    severity: MODERATE
-    status: YELLOW
-    score: 55
-- input:
-    prune_cache: true
-    headroom_pct: 60
-  expect:
-    score: 75
-    severity: LOW
-    status: GREEN
-- input:
-    prune_cache: false
-    headroom_pct: 80
-  expect:
-    severity: LOW
-    status: GREEN
-    score: 90
-- input:
-    headroom_pct: 0
-    prune_cache: true
-  expect:
-    severity: CRITICAL
-    status: RED
-    score: 10
-- input:
-    headroom_pct: 100
-    prune_cache: false
-  expect:
-    status: GREEN
-    severity: LOW
-    score: 90
-- input: {}
-  expect:
-    resource_action: Resources healthy — full parallel build capacity available
-    status: GREEN
-    severity: LOW
-    score: 90
-- input:
-    headroom_pct: -1
-  expect:
-    score: 10
-    status: RED
-    resource_action: Halt non-essential builds — memory critically low
-    severity: CRITICAL
-- input:
-    headroom_pct: 24
-  expect:
-    status: YELLOW
-    severity: HIGH
-    resource_action: Reduce build parallelism — approaching memory limits
-    score: 30
-- input:
-    headroom_pct: 26
-  expect:
-    score: 55
-    status: YELLOW
-    severity: MODERATE
-    resource_action: Monitor memory usage — consider sequential builds for heavy crates
-- input:
-    headroom_pct: 2500
-  expect:
-    severity: LOW
-    score: 90
-    resource_action: Resources healthy — full parallel build capacity available
-    status: GREEN
-- input: {}
-  expect:
-    severity: LOW
-    status: GREEN
-    score: 90
-    resource_action: Resources healthy — full parallel build capacity available
-- input:
-    headroom_pct: -1
-  expect:
-    score: 10
-    severity: CRITICAL
-    resource_action: Halt non-essential builds — memory critically low
-    status: RED
-- input:
-    headroom_pct: 9
-  expect:
-    score: 10
-    resource_action: Halt non-essential builds — memory critically low
-    severity: CRITICAL
-    status: RED
-- input:
-    headroom_pct: 11
-  expect:
-    status: YELLOW
-    severity: HIGH
-    score: 30
-    resource_action: Reduce build parallelism — approaching memory limits
-- input:
-    headroom_pct: 1000
-  expect:
-    severity: LOW
-    score: 90
-    resource_action: Resources healthy — full parallel build capacity available
-    status: GREEN
-- input: {}
-  expect:
-    resource_action: Resources healthy — full parallel build capacity available
-    severity: LOW
-    score: 90
-    status: GREEN
-- input:
-    headroom_pct: -1
-  expect:
-    severity: CRITICAL
-    resource_action: Halt non-essential builds — memory critically low
-    score: 10
-    status: RED
-- input:
-    headroom_pct: 49
-  expect:
-    score: 55
-    status: YELLOW
-    resource_action: Monitor memory usage — consider sequential builds for heavy crates
-    severity: MODERATE
-- input:
-    headroom_pct: 51
-  expect:
-    resource_action: Resources healthy — full parallel build capacity available
-    status: GREEN
-    severity: LOW
-    score: 90
-- input:
-    headroom_pct: 5000
-  expect:
-    status: GREEN
-    resource_action: Resources healthy — full parallel build capacity available
-    severity: LOW
-    score: 90
-- input: {}
-  expect:
-    score: 90
-    severity: LOW
-    resource_action: Resources healthy — full parallel build capacity available
-    status: GREEN
-- input: {}
-  expect:
-    severity: LOW
-    status: GREEN
-    resource_action: Resources healthy — full parallel build capacity available
-    score: 90
-interface:
-  inputs:
-    headroom_pct:
-      type: int
-      required: true
-    prune_cache:
-      type: bool
-      required: false
-  outputs:
-    score:
-      type: int
-      required: true
-    resource_action:
-      type: string
-      required: true
-    status:
-      type: string
-      required: true
-    severity:
-      type: string
-      required: true
-  aliases: {}
+  - input:
+      headroom_pct: 5
+      prune_cache: false
+    expect:
+      severity: CRITICAL
+      status: RED
+      score: 10
+  - input:
+      headroom_pct: 15
+      prune_cache: true
+    expect:
+      status: RED
+      severity: HIGH
+      score: 25
+  - input:
+      prune_cache: false
+      headroom_pct: 20
+    expect:
+      status: YELLOW
+      severity: HIGH
+      score: 30
+  - input:
+      prune_cache: false
+      headroom_pct: 40
+    expect:
+      severity: MODERATE
+      status: YELLOW
+      score: 55
+  - input:
+      prune_cache: true
+      headroom_pct: 60
+    expect:
+      score: 75
+      severity: LOW
+      status: GREEN
+  - input:
+      prune_cache: false
+      headroom_pct: 80
+    expect:
+      severity: LOW
+      status: GREEN
+      score: 90
+  - input:
+      headroom_pct: 0
+      prune_cache: true
+    expect:
+      severity: CRITICAL
+      status: RED
+      score: 10
+  - input:
+      headroom_pct: 100
+      prune_cache: false
+    expect:
+      status: GREEN
+      severity: LOW
+      score: 90
+  - input: {}
+    expect:
+      resource_action: Resources healthy — full parallel build capacity available
+      status: GREEN
+      severity: LOW
+      score: 90
+  - input:
+      headroom_pct: -1
+    expect:
+      score: 10
+      status: RED
+      resource_action: Halt non-essential builds — memory critically low
+      severity: CRITICAL
+  - input:
+      headroom_pct: 24
+    expect:
+      status: YELLOW
+      severity: HIGH
+      resource_action: Reduce build parallelism — approaching memory limits
+      score: 30
+  - input:
+      headroom_pct: 26
+    expect:
+      score: 55
+      status: YELLOW
+      severity: MODERATE
+      resource_action: Monitor memory usage — consider sequential builds for heavy crates
+  - input:
+      headroom_pct: 2500
+    expect:
+      severity: LOW
+      score: 90
+      resource_action: Resources healthy — full parallel build capacity available
+      status: GREEN
+  - input: {}
+    expect:
+      severity: LOW
+      status: GREEN
+      score: 90
+      resource_action: Resources healthy — full parallel build capacity available
+  - input:
+      headroom_pct: -1
+    expect:
+      score: 10
+      severity: CRITICAL
+      resource_action: Halt non-essential builds — memory critically low
+      status: RED
+  - input:
+      headroom_pct: 9
+    expect:
+      score: 10
+      resource_action: Halt non-essential builds — memory critically low
+      severity: CRITICAL
+      status: RED
+  - input:
+      headroom_pct: 11
+    expect:
+      status: YELLOW
+      severity: HIGH
+      score: 30
+      resource_action: Reduce build parallelism — approaching memory limits
+  - input:
+      headroom_pct: 1000
+    expect:
+      severity: LOW
+      score: 90
+      resource_action: Resources healthy — full parallel build capacity available
+      status: GREEN
+  - input: {}
+    expect:
+      resource_action: Resources healthy — full parallel build capacity available
+      severity: LOW
+      score: 90
+      status: GREEN
+  - input:
+      headroom_pct: -1
+    expect:
+      severity: CRITICAL
+      resource_action: Halt non-essential builds — memory critically low
+      score: 10
+      status: RED
+  - input:
+      headroom_pct: 49
+    expect:
+      score: 55
+      status: YELLOW
+      resource_action: Monitor memory usage — consider sequential builds for heavy crates
+      severity: MODERATE
+  - input:
+      headroom_pct: 51
+    expect:
+      resource_action: Resources healthy — full parallel build capacity available
+      status: GREEN
+      severity: LOW
+      score: 90
+  - input:
+      headroom_pct: 5000
+    expect:
+      status: GREEN
+      resource_action: Resources healthy — full parallel build capacity available
+      severity: LOW
+      score: 90
+  - input: {}
+    expect:
+      score: 90
+      severity: LOW
+      resource_action: Resources healthy — full parallel build capacity available
+      status: GREEN
+  - input: {}
+    expect:
+      severity: LOW
+      status: GREEN
+      resource_action: Resources healthy — full parallel build capacity available
+      score: 90
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - score
+    - resource_action
+    - status
+    - severity
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

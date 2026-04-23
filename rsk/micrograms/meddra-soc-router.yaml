@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: meddra-soc-router
-description: "Route adverse event terms to appropriate MedDRA System Organ Class (SOC)"
 version: 0.1.0
+description: Route adverse event terms to appropriate MedDRA System Organ Class (SOC)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Meddra Soc Router
+  subtitle: Route adverse event terms to appropriate MedDRA System Organ Class (SOC)
+  icon: circle
+  route: /vigilance/mg/meddra-soc-router
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/meddra-soc-router
+  cli: rsk mcg run meddra-soc-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_term
   nodes:
@@ -22,52 +51,52 @@ tree:
       type: return
       value:
         soc_code: "10001"
-        soc_name: "Infections and infestations"
+        soc_name: Infections and infestations
         meddra_hierarchy_compliant: true
     check_keyword:
       type: condition
       variable: adverse_event_term
       operator: matches
-      value: "(?i)(infection|bacterial|viral|fungal|pneumonia|sepsis)"
+      value: (?i)(infection|bacterial|viral|fungal|pneumonia|sepsis)
       true_next: infections_soc
       false_next: check_cardiac
     check_cardiac:
       type: condition
       variable: adverse_event_term
       operator: matches
-      value: "(?i)(cardiac|heart|arrhythmia|infarction|myocardial)"
+      value: (?i)(cardiac|heart|arrhythmia|infarction|myocardial)
       true_next: cardiac_soc
       false_next: check_neuro
     check_neuro:
       type: condition
       variable: adverse_event_term
       operator: matches
-      value: "(?i)(seizure|stroke|convulsion|headache|migraine)"
+      value: (?i)(seizure|stroke|convulsion|headache|migraine)
       true_next: neuro_soc
       false_next: other_soc
     infections_soc:
       type: return
       value:
         soc_code: "10001"
-        soc_name: "Infections and infestations"
+        soc_name: Infections and infestations
         meddra_hierarchy_compliant: true
     cardiac_soc:
       type: return
       value:
         soc_code: "10007"
-        soc_name: "Cardiac disorders"
+        soc_name: Cardiac disorders
         meddra_hierarchy_compliant: true
     neuro_soc:
       type: return
       value:
         soc_code: "10029104"
-        soc_name: "Nervous system disorders"
+        soc_name: Nervous system disorders
         meddra_hierarchy_compliant: true
     other_soc:
       type: return
       value:
         soc_code: "10010001"
-        soc_name: "General disorders and administration site conditions"
+        soc_name: General disorders and administration site conditions
         meddra_hierarchy_compliant: true
     soc_unknown:
       type: return
@@ -76,28 +105,60 @@ tree:
         soc_name: null
         meddra_hierarchy_compliant: false
 tests:
-- input:
-    adverse_event_term: "pneumonia"
-    soc_code: null
-  expect:
-    soc_code: "10001"
-    soc_name: "Infections and infestations"
-- input:
-    adverse_event_term: "myocardial infarction"
-  expect:
-    soc_code: "10007"
-    soc_name: "Cardiac disorders"
-- input:
-    adverse_event_term: "seizure"
-  expect:
-    soc_code: "10029104"
-    soc_name: "Nervous system disorders"
-- input:
-    adverse_event_term: "fatigue"
-  expect:
-    soc_code: "10010001"
-    soc_name: "General disorders and administration site conditions"
-- input: {}
-  expect:
-    soc_code: null
-    meddra_hierarchy_compliant: false
+  - input:
+      adverse_event_term: pneumonia
+      soc_code: null
+    expect:
+      soc_code: "10001"
+      soc_name: Infections and infestations
+  - input:
+      adverse_event_term: myocardial infarction
+    expect:
+      soc_code: "10007"
+      soc_name: Cardiac disorders
+  - input:
+      adverse_event_term: seizure
+    expect:
+      soc_code: "10029104"
+      soc_name: Nervous system disorders
+  - input:
+      adverse_event_term: fatigue
+    expect:
+      soc_code: "10010001"
+      soc_name: General disorders and administration site conditions
+  - input: {}
+    expect:
+      soc_code: null
+      meddra_hierarchy_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

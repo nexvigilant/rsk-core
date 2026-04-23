@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: harm-type-router
-description: 'Route ToV harm types A-H to response protocols based on NexVigilant 8-type harm taxonomy'
 version: 0.1.0
+description: Route ToV harm types A-H to response protocols based on NexVigilant 8-type harm taxonomy
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: harm_type
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: escalate
+    type: bool
+  - name: protocol
+    type: string
+  - name: severity
+    type: string
+  - name: sla_hours
+    type: int
 interface:
   inputs:
     harm_type:
@@ -15,6 +39,28 @@ interface:
       type: string
     sla_hours:
       type: int
+ui:
+  title: Harm Type Router
+  subtitle: Route ToV harm types A-H to response protocols based on NexVigilant 8-type harm taxonomy
+  icon: circle
+  route: /vigilance/mg/harm-type-router
+  steps:
+    - field: harm_type
+      label: harm type
+      help: Enter harm_type
+      widget: text
+      placeholder: null
+  result:
+    template: "escalate: {{escalate}} — protocol: {{protocol}} — severity: {{severity}} — sla_hours: {{sla_hours}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/harm-type-router
+  cli: rsk mcg run harm-type-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_type_a
   nodes:
@@ -124,65 +170,101 @@ tree:
         sla_hours: 720
         escalate: false
 tests:
-- input:
-    harm_type: A
-  expect:
-    protocol: EXPEDITED_7DAY
-    severity: FATAL
-    sla_hours: 24
-    escalate: true
-- input:
-    harm_type: B
-  expect:
-    protocol: EXPEDITED_7DAY
-    severity: LIFE_THREATENING
-    sla_hours: 24
-    escalate: true
-- input:
-    harm_type: C
-  expect:
-    protocol: EXPEDITED_15DAY
-    severity: SERIOUS
-    sla_hours: 72
-    escalate: true
-- input:
-    harm_type: D
-  expect:
-    protocol: EXPEDITED_15DAY
-    severity: SERIOUS
-    sla_hours: 72
-    escalate: true
-- input:
-    harm_type: E
-  expect:
-    protocol: EXPEDITED_15DAY
-    severity: SERIOUS
-    sla_hours: 72
-    escalate: true
-- input:
-    harm_type: F
-  expect:
-    protocol: EXPEDITED_15DAY
-    severity: SIGNIFICANT
-    sla_hours: 120
-    escalate: true
-- input:
-    harm_type: G
-  expect:
-    protocol: PERIODIC_PSUR
-    severity: NON_SERIOUS
-    sla_hours: 720
-    escalate: false
-- input:
-    harm_type: H
-  expect:
-    protocol: PERIODIC_PSUR
-    severity: OTHER
-    sla_hours: 720
-    escalate: false
-- input: {}
-  expect:
-    escalate: false
-    protocol: PERIODIC_PSUR
-    severity: OTHER
-    sla_hours: 720
+  - input:
+      harm_type: A
+    expect:
+      protocol: EXPEDITED_7DAY
+      severity: FATAL
+      sla_hours: 24
+      escalate: true
+  - input:
+      harm_type: B
+    expect:
+      protocol: EXPEDITED_7DAY
+      severity: LIFE_THREATENING
+      sla_hours: 24
+      escalate: true
+  - input:
+      harm_type: C
+    expect:
+      protocol: EXPEDITED_15DAY
+      severity: SERIOUS
+      sla_hours: 72
+      escalate: true
+  - input:
+      harm_type: D
+    expect:
+      protocol: EXPEDITED_15DAY
+      severity: SERIOUS
+      sla_hours: 72
+      escalate: true
+  - input:
+      harm_type: E
+    expect:
+      protocol: EXPEDITED_15DAY
+      severity: SERIOUS
+      sla_hours: 72
+      escalate: true
+  - input:
+      harm_type: F
+    expect:
+      protocol: EXPEDITED_15DAY
+      severity: SIGNIFICANT
+      sla_hours: 120
+      escalate: true
+  - input:
+      harm_type: G
+    expect:
+      protocol: PERIODIC_PSUR
+      severity: NON_SERIOUS
+      sla_hours: 720
+      escalate: false
+  - input:
+      harm_type: H
+    expect:
+      protocol: PERIODIC_PSUR
+      severity: OTHER
+      sla_hours: 720
+      escalate: false
+  - input: {}
+    expect:
+      escalate: false
+      protocol: PERIODIC_PSUR
+      severity: OTHER
+      sla_hours: 720
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - escalate
+    - protocol
+    - severity
+    - sla_hours
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

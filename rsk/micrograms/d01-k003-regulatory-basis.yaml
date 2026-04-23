@@ -1,0 +1,95 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: d01-k003-regulatory-basis
+version: 0.1.0
+description: Identify governing regulatory authority and applicable PV framework based on jurisdiction and product type
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: D01 K003 Regulatory Basis
+  subtitle: Identify governing regulatory authority and applicable PV framework based on jurisdiction and product type
+  icon: circle
+  route: /vigilance/mg/d01-k003-regulatory-basis
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/d01-k003-regulatory-basis
+  cli: rsk mcg run d01-k003-regulatory-basis
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check
+  nodes:
+    no:
+      type: return
+      value:
+        framework_unknown: false
+    check:
+      type: condition
+      variable: jurisdiction_code
+      operator: matches
+      value: 0
+      true_next: yes
+      false_next: no
+    yes:
+      type: return
+      value:
+        framework_identified: true
+tests:
+  - input:
+      jurisdiction_code: 0
+    expect:
+      framework_unknown: false
+  - input:
+      jurisdiction_code: 1
+    expect:
+      framework_unknown: false
+  - input:
+      jurisdiction_code: -1
+    expect:
+      framework_unknown: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

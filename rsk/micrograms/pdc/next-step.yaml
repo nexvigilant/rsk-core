@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: next-step
-description: "Management: given current level and career goal, recommend the single next development action."
 version: 0.1.0
+description: "Management: given current level and career goal, recommend the single next development action."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: ai_interested
+    type: bool
+    required: false
+    description: ""
+  - name: current_level
+    type: int
+    required: false
+    description: ""
+  - name: has_mentees
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: epa_focus
+    type: string
+  - name: next_action
+    type: string
+  - name: program
+    type: string
+  - name: timeline
+    type: string
+  - name: tip
+    type: string
+  - name: why
+    type: string
 interface:
   inputs:
     ai_interested:
@@ -25,6 +61,38 @@ interface:
       type: string
     why:
       type: string
+ui:
+  title: Next Step
+  subtitle: "Management: given current level and career goal, recommend the single next development action."
+  icon: circle
+  route: /vigilance/mg/next-step
+  steps:
+    - field: ai_interested
+      label: ai interested
+      help: Enter ai_interested
+      widget: toggle
+      placeholder: null
+    - field: current_level
+      label: current level
+      help: Enter current_level
+      widget: text
+      placeholder: null
+    - field: has_mentees
+      label: has mentees
+      help: Enter has_mentees
+      widget: toggle
+      placeholder: null
+  result:
+    template: "epa_focus: {{epa_focus}} — next_action: {{next_action}} — program: {{program}} — timeline: {{timeline}} — tip: {{tip}} — why: {{why}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/next-step
+  cli: rsk mcg run next-step
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -80,100 +148,138 @@ tree:
     start_foundations:
       type: return
       value:
-        next_action: "Complete foundational domains (D1-D3) to L2"
-        why: "You need the basics before anything else. Focus on terminology, concepts, and observation."
+        next_action: Complete foundational domains (D1-D3) to L2
+        why: You need the basics before anything else. Focus on terminology, concepts, and observation.
         program: APPE_ROTATION
-        epa_focus: "EPA 1 (observe case processing)"
-        timeline: "6 weeks"
-        tip: "Watch experienced professionals work. Ask questions. Write down what you learn."
+        epa_focus: EPA 1 (observe case processing)
+        timeline: 6 weeks
+        tip: Watch experienced professionals work. Ask questions. Write down what you learn.
     build_independence:
       type: return
       value:
-        next_action: "Achieve L3 in your primary CPA domains"
-        why: "You can handle routine work. Now push for independent practice on complex cases."
+        next_action: Achieve L3 in your primary CPA domains
+        why: You can handle routine work. Now push for independent practice on complex cases.
         program: FELLOWSHIP_12
-        epa_focus: "EPA 1-3 (case processing, literature, communication)"
-        timeline: "6-12 months"
-        tip: "Take on progressively harder cases. When you feel uncomfortable, that is where growth happens."
+        epa_focus: EPA 1-3 (case processing, literature, communication)
+        timeline: 6-12 months
+        tip: Take on progressively harder cases. When you feel uncomfortable, that is where growth happens.
     start_ai_gateway:
       type: return
       value:
-        next_action: "Enter EPA 10 AI Gateway — Phase 2 (Application)"
-        why: "You are independent in your domains. AI skills will multiply your impact."
-        program: "EPA10 development pathway"
-        epa_focus: "EPA 10 (AI tools implementation)"
-        timeline: "6 months"
-        tip: "Start using AI tools in your daily work. Validate every output. Learn the limitations."
+        next_action: Enter EPA 10 AI Gateway — Phase 2 (Application)
+        why: You are independent in your domains. AI skills will multiply your impact.
+        program: EPA10 development pathway
+        epa_focus: EPA 10 (AI tools implementation)
+        timeline: 6 months
+        tip: Start using AI tools in your daily work. Validate every output. Learn the limitations.
     deepen_expertise:
       type: return
       value:
-        next_action: "Achieve L4 in your primary CPA domains"
-        why: "Independent is good. Innovative is better. Lead a process improvement project."
+        next_action: Achieve L4 in your primary CPA domains
+        why: Independent is good. Innovative is better. Lead a process improvement project.
         program: FELLOWSHIP_18
-        epa_focus: "EPA 5-8 (signal detection, regulatory, risk, investigations)"
-        timeline: "6-12 months"
-        tip: "Find something that bothers you about the current process. Fix it. Document the improvement."
+        epa_focus: EPA 5-8 (signal detection, regulatory, risk, investigations)
+        timeline: 6-12 months
+        tip: Find something that bothers you about the current process. Fix it. Document the improvement.
     start_mentoring:
       type: return
       value:
-        next_action: "Begin mentoring junior professionals"
-        why: "Teaching is the fastest path to mastery. You will learn what you actually know."
-        program: "Mentoring program"
-        epa_focus: "EPA 8-9 (cross-functional leadership, quality systems)"
-        timeline: "ongoing"
-        tip: "Pick one person. Meet weekly. Help them through their current challenge."
+        next_action: Begin mentoring junior professionals
+        why: Teaching is the fastest path to mastery. You will learn what you actually know.
+        program: Mentoring program
+        epa_focus: EPA 8-9 (cross-functional leadership, quality systems)
+        timeline: ongoing
+        tip: Pick one person. Meet weekly. Help them through their current challenge.
     pursue_expert:
       type: return
       value:
-        next_action: "Publish or present your innovations externally"
-        why: "You innovate and you mentor. Now share with the field. That is L5."
+        next_action: Publish or present your innovations externally
+        why: You innovate and you mentor. Now share with the field. That is L5.
         program: SMP
-        epa_focus: "EPA 11-15 (executive EPAs)"
-        timeline: "1-2 years"
-        tip: "Submit an abstract to a PV conference. Write up your best process improvement as a paper."
+        epa_focus: EPA 11-15 (executive EPAs)
+        timeline: 1-2 years
+        tip: Submit an abstract to a PV conference. Write up your best process improvement as a paper.
     expert_path:
       type: return
       value:
-        next_action: "Lead organizational transformation"
-        why: "You are recognized as expert. Now transform your organization and influence the industry."
-        program: "Executive development"
-        epa_focus: "EPA 16-20 (crisis, leadership, partnerships, public perception, transformation)"
-        timeline: "ongoing"
-        tip: "What would PV look like if you could redesign it? Start building that vision."
+        next_action: Lead organizational transformation
+        why: You are recognized as expert. Now transform your organization and influence the industry.
+        program: Executive development
+        epa_focus: EPA 16-20 (crisis, leadership, partnerships, public perception, transformation)
+        timeline: ongoing
+        tip: What would PV look like if you could redesign it? Start building that vision.
 tests:
-- input:
-    current_level: 1
-  expect:
-    program: APPE_ROTATION
-    timeline: "6 weeks"
-- input:
-    current_level: 2
-  expect:
-    program: FELLOWSHIP_12
-- input:
-    current_level: 3
-    ai_interested: true
-  expect:
-    epa_focus: "EPA 10 (AI tools implementation)"
-- input:
-    current_level: 3
-    ai_interested: false
-  expect:
-    program: FELLOWSHIP_18
-- input:
-    current_level: 4
-    has_mentees: false
-  expect:
-    next_action: "Begin mentoring junior professionals"
-- input:
-    current_level: 4
-    has_mentees: true
-  expect:
-    program: SMP
-- input:
-    current_level: 5
-  expect:
-    program: "Executive development"
-- input: {}
-  expect:
-    program: APPE_ROTATION
+  - input:
+      current_level: 1
+    expect:
+      program: APPE_ROTATION
+      timeline: 6 weeks
+  - input:
+      current_level: 2
+    expect:
+      program: FELLOWSHIP_12
+  - input:
+      current_level: 3
+      ai_interested: true
+    expect:
+      epa_focus: EPA 10 (AI tools implementation)
+  - input:
+      current_level: 3
+      ai_interested: false
+    expect:
+      program: FELLOWSHIP_18
+  - input:
+      current_level: 4
+      has_mentees: false
+    expect:
+      next_action: Begin mentoring junior professionals
+  - input:
+      current_level: 4
+      has_mentees: true
+    expect:
+      program: SMP
+  - input:
+      current_level: 5
+    expect:
+      program: Executive development
+  - input: {}
+    expect:
+      program: APPE_ROTATION
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - epa_focus
+    - next_action
+    - program
+    - timeline
+    - tip
+    - why
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

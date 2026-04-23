@@ -1,6 +1,101 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: domain-lookup
-description: 'PDC: Return full domain specification by ID — name, cluster, definition, knowledge count, skill count, AI integration points'
 version: 0.1.0
+description: "PDC: Return full domain specification by ID — name, cluster, definition, knowledge count, skill count, AI integration points"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: domain_id
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: knowledge_areas
+    type: int
+  - name: skills
+    type: int
+  - name: behaviors
+    type: int
+  - name: ai_points
+    type: int
+  - name: cluster
+    type: string
+  - name: name
+    type: string
+  - name: key_focus
+    type: string
+  - name: error
+    type: string
+  - name: cluster_id
+    type: int
+  - name: anchor_levels
+    type: int
+interface:
+  inputs:
+    domain_id:
+      type: int
+      required: false
+  outputs:
+    knowledge_areas:
+      type: int
+      required: false
+    skills:
+      type: int
+      required: false
+    behaviors:
+      type: int
+      required: false
+    ai_points:
+      type: int
+      required: false
+    cluster:
+      type: string
+      required: false
+    name:
+      type: string
+      required: false
+    key_focus:
+      type: string
+      required: false
+    error:
+      type: string
+      required: false
+    cluster_id:
+      type: int
+      required: false
+    anchor_levels:
+      type: int
+      required: false
+  aliases: {}
+ui:
+  title: Domain Lookup
+  subtitle: "PDC: Return full domain specification by ID — name, cluster, definition, knowledge count, skill count, AI integration points"
+  icon: circle
+  route: /vigilance/mg/domain-lookup
+  steps:
+    - field: domain_id
+      label: domain id
+      help: Enter domain_id
+      widget: text
+      placeholder: null
+  result:
+    template: "knowledge_areas: {{knowledge_areas}} — skills: {{skills}} — behaviors: {{behaviors}} — ai_points: {{ai_points}} — cluster: {{cluster}} — name: {{name}} — key_focus: {{key_focus}} — error: {{error}} — cluster_id: {{cluster_id}} — anchor_levels: {{anchor_levels}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/domain-lookup
+  cli: rsk mcg run domain-lookup
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_d1
   nodes:
@@ -295,463 +390,468 @@ tree:
       true_next: d13
       false_next: check_d14
 tests:
-- input:
-    domain_id: 1
-  expect:
-    name: Foundations of Pharmacovigilance in the AI Era
-    cluster: FOUNDATIONAL
-    knowledge_areas: 8
-- input:
-    domain_id: 8
-  expect:
-    key_focus: PRR/ROR/EBGM, signal validation, evidence assessment, ML detection
-    cluster: PROCESS_METHODOLOGY
-    name: Signal Detection and Management Using AI
-- input:
-    domain_id: 10
-  expect:
-    cluster: ASSESSMENT_STRATEGY
-    name: Benefit-Risk Assessment in the AI Era
-- input:
-    domain_id: 14
-  expect:
-    name: Communication in the AI Era
-    cluster: INTEGRATION_COMMUNICATION
-- input:
-    domain_id: 15
-  expect:
-    cluster_id: 4
-    cluster: INTEGRATION_COMMUNICATION
-- input:
-    domain_id: 0
-  expect:
-    name: INVALID
-- input:
-    domain_id: 16
-  expect:
-    name: INVALID
-- input: {}
-  expect:
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 1500
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 3
-  expect:
-    key_focus: organ-specific ADRs, biomarkers, diagnostic criteria, AI screening
-    behaviors: 7
-    skills: 7
-    anchor_levels: 7
-    knowledge_areas: 8
-    name: Important ADRs and Their Recognition Using AI
-    cluster: FOUNDATIONAL
-    ai_points: 6
-    cluster_id: 1
-- input:
-    domain_id: 5
-  expect:
-    anchor_levels: 7
-    name: Pharmacovigilance in Clinical Trials with AI Integration
-    cluster: PROCESS_METHODOLOGY
-    ai_points: 6
-    skills: 7
-    cluster_id: 2
-    knowledge_areas: 8
-    behaviors: 7
-    key_focus: trial safety monitoring, DSMBs, aggregate reporting, AI real-time monitoring
-- input:
-    domain_id: 400
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 11
-  expect:
-    ai_points: 6
-    key_focus: RMP planning, risk minimization, effectiveness evaluation, AI monitoring
-    name: Risk Management with AI Integration
-    knowledge_areas: 8
-    cluster: ASSESSMENT_STRATEGY
-    anchor_levels: 7
-    behaviors: 7
-    cluster_id: 3
-    skills: 7
-- input:
-    domain_id: 13
-  expect:
-    ai_points: 6
-    name: Global Pharmacovigilance and Public Health with AI Support
-    key_focus: WHO monitoring, regional variations, pandemic preparedness, AI global surveillance
-    skills: 7
-    behaviors: 7
-    cluster_id: 4
-    anchor_levels: 7
-    cluster: INTEGRATION_COMMUNICATION
-    knowledge_areas: 8
-- input:
-    domain_id: 1200
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 5
-  expect:
-    cluster_id: 2
-    behaviors: 7
-    name: Pharmacovigilance in Clinical Trials with AI Integration
-    skills: 7
-    ai_points: 6
-    knowledge_areas: 8
-    anchor_levels: 7
-    key_focus: trial safety monitoring, DSMBs, aggregate reporting, AI real-time monitoring
-    cluster: PROCESS_METHODOLOGY
-- input:
-    domain_id: 7
-  expect:
-    ai_points: 6
-    anchor_levels: 7
-    behaviors: 7
-    knowledge_areas: 8
-    cluster_id: 2
-    cluster: PROCESS_METHODOLOGY
-    key_focus: database systems, data quality, reporting bias, AI analytics
-    skills: 7
-    name: Spontaneous Reporting Systems with AI Enhancement
-- input:
-    domain_id: 600
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: -1
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: 13
-  expect:
-    ai_points: 6
-    skills: 7
-    anchor_levels: 7
-    cluster: INTEGRATION_COMMUNICATION
-    behaviors: 7
-    key_focus: WHO monitoring, regional variations, pandemic preparedness, AI global surveillance
-    knowledge_areas: 8
-    cluster_id: 4
-    name: Global Pharmacovigilance and Public Health with AI Support
-- input:
-    domain_id: 1400
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 2
-  expect:
-    knowledge_areas: 8
-    name: Clinical Aspects of ADRs with AI-Enhanced Analysis
-    cluster_id: 1
-    skills: 7
-    cluster: FOUNDATIONAL
-    behaviors: 7
-    anchor_levels: 7
-    ai_points: 6
-    key_focus: ADR classification, causality assessment, pharmacogenetics, AI pattern recognition
-- input:
-    domain_id: 4
-  expect:
-    behaviors: 7
-    ai_points: 7
-    key_focus: case processing, MedDRA coding, narrative writing, AI automation
-    skills: 7
-    knowledge_areas: 8
-    cluster_id: 2
-    cluster: PROCESS_METHODOLOGY
-    anchor_levels: 7
-    name: Individual Case Safety Reports (ICSRs) in the AI Era
-- input:
-    domain_id: 300
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: 3
-  expect:
-    anchor_levels: 7
-    ai_points: 6
-    knowledge_areas: 8
-    skills: 7
-    key_focus: organ-specific ADRs, biomarkers, diagnostic criteria, AI screening
-    behaviors: 7
-    name: Important ADRs and Their Recognition Using AI
-    cluster_id: 1
-    cluster: FOUNDATIONAL
-- input:
-    domain_id: 200
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 4
-  expect:
-    name: Individual Case Safety Reports (ICSRs) in the AI Era
-    key_focus: case processing, MedDRA coding, narrative writing, AI automation
-    knowledge_areas: 8
-    anchor_levels: 7
-    ai_points: 7
-    cluster_id: 2
-    behaviors: 7
-    cluster: PROCESS_METHODOLOGY
-    skills: 7
-- input:
-    domain_id: 6
-  expect:
-    behaviors: 7
-    name: Medication Errors, Quality Issues and AI Detection
-    cluster: PROCESS_METHODOLOGY
-    key_focus: error taxonomy, root cause analysis, human factors, AI detection
-    cluster_id: 2
-    anchor_levels: 7
-    ai_points: 6
-    skills: 7
-    knowledge_areas: 8
-- input:
-    domain_id: 500
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 12
-  expect:
-    cluster: ASSESSMENT_STRATEGY
-    anchor_levels: 7
-    name: Industry and Regulatory Authorities, Mandatory Procedures from Legislation
-    behaviors: 7
-    skills: 7
-    ai_points: 6
-    key_focus: regulatory frameworks, inspection management, QPPV, compliance, AI adoption
-    knowledge_areas: 8
-    cluster_id: 3
-- input:
-    domain_id: 1100
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 9
-  expect:
-    cluster: PROCESS_METHODOLOGY
-    knowledge_areas: 8
-    name: Post-Authorization Observational Studies and Clinical Trials in PV
-    skills: 7
-    behaviors: 7
-    cluster_id: 2
-    anchor_levels: 7
-    key_focus: epidemiological design, real-world evidence, bias/confounding, AI analytics
-    ai_points: 6
-- input:
-    domain_id: 11
-  expect:
-    anchor_levels: 7
-    skills: 7
-    behaviors: 7
-    name: Risk Management with AI Integration
-    cluster_id: 3
-    ai_points: 6
-    key_focus: RMP planning, risk minimization, effectiveness evaluation, AI monitoring
-    cluster: ASSESSMENT_STRATEGY
-    knowledge_areas: 8
-- input:
-    domain_id: 1000
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: -1
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: 900
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 7
-  expect:
-    cluster: PROCESS_METHODOLOGY
-    cluster_id: 2
-    name: Spontaneous Reporting Systems with AI Enhancement
-    skills: 7
-    behaviors: 7
-    anchor_levels: 7
-    ai_points: 6
-    knowledge_areas: 8
-    key_focus: database systems, data quality, reporting bias, AI analytics
-- input:
-    domain_id: 9
-  expect:
-    skills: 7
-    ai_points: 6
-    behaviors: 7
-    knowledge_areas: 8
-    key_focus: epidemiological design, real-world evidence, bias/confounding, AI analytics
-    name: Post-Authorization Observational Studies and Clinical Trials in PV
-    cluster_id: 2
-    anchor_levels: 7
-    cluster: PROCESS_METHODOLOGY
-- input:
-    domain_id: 800
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: -1
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: 2
-  expect:
-    knowledge_areas: 8
-    key_focus: ADR classification, causality assessment, pharmacogenetics, AI pattern recognition
-    behaviors: 7
-    cluster_id: 1
-    name: Clinical Aspects of ADRs with AI-Enhanced Analysis
-    anchor_levels: 7
-    cluster: FOUNDATIONAL
-    skills: 7
-    ai_points: 6
-- input:
-    domain_id: -1
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: 6
-  expect:
-    anchor_levels: 7
-    cluster_id: 2
-    knowledge_areas: 8
-    name: Medication Errors, Quality Issues and AI Detection
-    behaviors: 7
-    key_focus: error taxonomy, root cause analysis, human factors, AI detection
-    ai_points: 6
-    skills: 7
-    cluster: PROCESS_METHODOLOGY
-- input:
-    domain_id: 700
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-- input:
-    domain_id: -1
-  expect:
-    error: Domain ID must be 1-15
-    name: INVALID
-- input:
-    domain_id: 12
-  expect:
-    anchor_levels: 7
-    ai_points: 6
-    behaviors: 7
-    knowledge_areas: 8
-    key_focus: regulatory frameworks, inspection management, QPPV, compliance, AI adoption
-    cluster_id: 3
-    cluster: ASSESSMENT_STRATEGY
-    skills: 7
-    name: Industry and Regulatory Authorities, Mandatory Procedures from Legislation
-- input:
-    domain_id: 1300
-  expect:
-    name: INVALID
-    error: Domain ID must be 1-15
-interface:
-  inputs:
-    domain_id:
-      type: int
-      required: false
-  outputs:
-    knowledge_areas:
-      type: int
-      required: false
-    skills:
-      type: int
-      required: false
-    behaviors:
-      type: int
-      required: false
-    ai_points:
-      type: int
-      required: false
-    cluster:
-      type: string
-      required: false
-    name:
-      type: string
-      required: false
-    key_focus:
-      type: string
-      required: false
-    error:
-      type: string
-      required: false
-    cluster_id:
-      type: int
-      required: false
-    anchor_levels:
-      type: int
-      required: false
-  aliases: {}
+  - input:
+      domain_id: 1
+    expect:
+      name: Foundations of Pharmacovigilance in the AI Era
+      cluster: FOUNDATIONAL
+      knowledge_areas: 8
+  - input:
+      domain_id: 8
+    expect:
+      key_focus: PRR/ROR/EBGM, signal validation, evidence assessment, ML detection
+      cluster: PROCESS_METHODOLOGY
+      name: Signal Detection and Management Using AI
+  - input:
+      domain_id: 10
+    expect:
+      cluster: ASSESSMENT_STRATEGY
+      name: Benefit-Risk Assessment in the AI Era
+  - input:
+      domain_id: 14
+    expect:
+      name: Communication in the AI Era
+      cluster: INTEGRATION_COMMUNICATION
+  - input:
+      domain_id: 15
+    expect:
+      cluster_id: 4
+      cluster: INTEGRATION_COMMUNICATION
+  - input:
+      domain_id: 0
+    expect:
+      name: INVALID
+  - input:
+      domain_id: 16
+    expect:
+      name: INVALID
+  - input: {}
+    expect:
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 1500
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 3
+    expect:
+      key_focus: organ-specific ADRs, biomarkers, diagnostic criteria, AI screening
+      behaviors: 7
+      skills: 7
+      anchor_levels: 7
+      knowledge_areas: 8
+      name: Important ADRs and Their Recognition Using AI
+      cluster: FOUNDATIONAL
+      ai_points: 6
+      cluster_id: 1
+  - input:
+      domain_id: 5
+    expect:
+      anchor_levels: 7
+      name: Pharmacovigilance in Clinical Trials with AI Integration
+      cluster: PROCESS_METHODOLOGY
+      ai_points: 6
+      skills: 7
+      cluster_id: 2
+      knowledge_areas: 8
+      behaviors: 7
+      key_focus: trial safety monitoring, DSMBs, aggregate reporting, AI real-time monitoring
+  - input:
+      domain_id: 400
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 11
+    expect:
+      ai_points: 6
+      key_focus: RMP planning, risk minimization, effectiveness evaluation, AI monitoring
+      name: Risk Management with AI Integration
+      knowledge_areas: 8
+      cluster: ASSESSMENT_STRATEGY
+      anchor_levels: 7
+      behaviors: 7
+      cluster_id: 3
+      skills: 7
+  - input:
+      domain_id: 13
+    expect:
+      ai_points: 6
+      name: Global Pharmacovigilance and Public Health with AI Support
+      key_focus: WHO monitoring, regional variations, pandemic preparedness, AI global surveillance
+      skills: 7
+      behaviors: 7
+      cluster_id: 4
+      anchor_levels: 7
+      cluster: INTEGRATION_COMMUNICATION
+      knowledge_areas: 8
+  - input:
+      domain_id: 1200
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 5
+    expect:
+      cluster_id: 2
+      behaviors: 7
+      name: Pharmacovigilance in Clinical Trials with AI Integration
+      skills: 7
+      ai_points: 6
+      knowledge_areas: 8
+      anchor_levels: 7
+      key_focus: trial safety monitoring, DSMBs, aggregate reporting, AI real-time monitoring
+      cluster: PROCESS_METHODOLOGY
+  - input:
+      domain_id: 7
+    expect:
+      ai_points: 6
+      anchor_levels: 7
+      behaviors: 7
+      knowledge_areas: 8
+      cluster_id: 2
+      cluster: PROCESS_METHODOLOGY
+      key_focus: database systems, data quality, reporting bias, AI analytics
+      skills: 7
+      name: Spontaneous Reporting Systems with AI Enhancement
+  - input:
+      domain_id: 600
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: -1
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: 13
+    expect:
+      ai_points: 6
+      skills: 7
+      anchor_levels: 7
+      cluster: INTEGRATION_COMMUNICATION
+      behaviors: 7
+      key_focus: WHO monitoring, regional variations, pandemic preparedness, AI global surveillance
+      knowledge_areas: 8
+      cluster_id: 4
+      name: Global Pharmacovigilance and Public Health with AI Support
+  - input:
+      domain_id: 1400
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 2
+    expect:
+      knowledge_areas: 8
+      name: Clinical Aspects of ADRs with AI-Enhanced Analysis
+      cluster_id: 1
+      skills: 7
+      cluster: FOUNDATIONAL
+      behaviors: 7
+      anchor_levels: 7
+      ai_points: 6
+      key_focus: ADR classification, causality assessment, pharmacogenetics, AI pattern recognition
+  - input:
+      domain_id: 4
+    expect:
+      behaviors: 7
+      ai_points: 7
+      key_focus: case processing, MedDRA coding, narrative writing, AI automation
+      skills: 7
+      knowledge_areas: 8
+      cluster_id: 2
+      cluster: PROCESS_METHODOLOGY
+      anchor_levels: 7
+      name: Individual Case Safety Reports (ICSRs) in the AI Era
+  - input:
+      domain_id: 300
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: 3
+    expect:
+      anchor_levels: 7
+      ai_points: 6
+      knowledge_areas: 8
+      skills: 7
+      key_focus: organ-specific ADRs, biomarkers, diagnostic criteria, AI screening
+      behaviors: 7
+      name: Important ADRs and Their Recognition Using AI
+      cluster_id: 1
+      cluster: FOUNDATIONAL
+  - input:
+      domain_id: 200
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 4
+    expect:
+      name: Individual Case Safety Reports (ICSRs) in the AI Era
+      key_focus: case processing, MedDRA coding, narrative writing, AI automation
+      knowledge_areas: 8
+      anchor_levels: 7
+      ai_points: 7
+      cluster_id: 2
+      behaviors: 7
+      cluster: PROCESS_METHODOLOGY
+      skills: 7
+  - input:
+      domain_id: 6
+    expect:
+      behaviors: 7
+      name: Medication Errors, Quality Issues and AI Detection
+      cluster: PROCESS_METHODOLOGY
+      key_focus: error taxonomy, root cause analysis, human factors, AI detection
+      cluster_id: 2
+      anchor_levels: 7
+      ai_points: 6
+      skills: 7
+      knowledge_areas: 8
+  - input:
+      domain_id: 500
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 12
+    expect:
+      cluster: ASSESSMENT_STRATEGY
+      anchor_levels: 7
+      name: Industry and Regulatory Authorities, Mandatory Procedures from Legislation
+      behaviors: 7
+      skills: 7
+      ai_points: 6
+      key_focus: regulatory frameworks, inspection management, QPPV, compliance, AI adoption
+      knowledge_areas: 8
+      cluster_id: 3
+  - input:
+      domain_id: 1100
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 9
+    expect:
+      cluster: PROCESS_METHODOLOGY
+      knowledge_areas: 8
+      name: Post-Authorization Observational Studies and Clinical Trials in PV
+      skills: 7
+      behaviors: 7
+      cluster_id: 2
+      anchor_levels: 7
+      key_focus: epidemiological design, real-world evidence, bias/confounding, AI analytics
+      ai_points: 6
+  - input:
+      domain_id: 11
+    expect:
+      anchor_levels: 7
+      skills: 7
+      behaviors: 7
+      name: Risk Management with AI Integration
+      cluster_id: 3
+      ai_points: 6
+      key_focus: RMP planning, risk minimization, effectiveness evaluation, AI monitoring
+      cluster: ASSESSMENT_STRATEGY
+      knowledge_areas: 8
+  - input:
+      domain_id: 1000
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: -1
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: 900
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 7
+    expect:
+      cluster: PROCESS_METHODOLOGY
+      cluster_id: 2
+      name: Spontaneous Reporting Systems with AI Enhancement
+      skills: 7
+      behaviors: 7
+      anchor_levels: 7
+      ai_points: 6
+      knowledge_areas: 8
+      key_focus: database systems, data quality, reporting bias, AI analytics
+  - input:
+      domain_id: 9
+    expect:
+      skills: 7
+      ai_points: 6
+      behaviors: 7
+      knowledge_areas: 8
+      key_focus: epidemiological design, real-world evidence, bias/confounding, AI analytics
+      name: Post-Authorization Observational Studies and Clinical Trials in PV
+      cluster_id: 2
+      anchor_levels: 7
+      cluster: PROCESS_METHODOLOGY
+  - input:
+      domain_id: 800
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: -1
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: 2
+    expect:
+      knowledge_areas: 8
+      key_focus: ADR classification, causality assessment, pharmacogenetics, AI pattern recognition
+      behaviors: 7
+      cluster_id: 1
+      name: Clinical Aspects of ADRs with AI-Enhanced Analysis
+      anchor_levels: 7
+      cluster: FOUNDATIONAL
+      skills: 7
+      ai_points: 6
+  - input:
+      domain_id: -1
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: 6
+    expect:
+      anchor_levels: 7
+      cluster_id: 2
+      knowledge_areas: 8
+      name: Medication Errors, Quality Issues and AI Detection
+      behaviors: 7
+      key_focus: error taxonomy, root cause analysis, human factors, AI detection
+      ai_points: 6
+      skills: 7
+      cluster: PROCESS_METHODOLOGY
+  - input:
+      domain_id: 700
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: -1
+    expect:
+      error: Domain ID must be 1-15
+      name: INVALID
+  - input:
+      domain_id: 12
+    expect:
+      anchor_levels: 7
+      ai_points: 6
+      behaviors: 7
+      knowledge_areas: 8
+      key_focus: regulatory frameworks, inspection management, QPPV, compliance, AI adoption
+      cluster_id: 3
+      cluster: ASSESSMENT_STRATEGY
+      skills: 7
+      name: Industry and Regulatory Authorities, Mandatory Procedures from Legislation
+  - input:
+      domain_id: 1300
+    expect:
+      name: INVALID
+      error: Domain ID must be 1-15
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - knowledge_areas
+    - skills
+    - behaviors
+    - ai_points
+    - cluster
+    - name
+    - key_focus
+    - error
+    - cluster_id
+    - anchor_levels
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

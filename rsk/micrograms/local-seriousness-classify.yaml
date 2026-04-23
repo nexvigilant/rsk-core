@@ -1,9 +1,33 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: local-seriousness-classify
-description: >
-  Pre-filter: classify adverse event seriousness using local Ollama (qwen2.5:3b).
-  Zero API cost. ~6s on CPU. ICH E2A criteria.
-  Routes to local_nexvigilant_com_classify Station tool.
 version: 1.0.0
+description: |
+  Pre-filter: classify adverse event seriousness using local Ollama (qwen2.5:3b). Zero API cost. ~6s on CPU. ICH E2A criteria. Routes to local_nexvigilant_com_classify Station tool.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: narrative
+    type: string
+    required: true
+    description: Adverse event report narrative text
+outputs:
+  - name: classification
+    type: string
+  - name: criteria
+    type: string
+  - name: confidence
+    type: number
+  - name: model
+    type: string
+  - name: route
+    type: string
 interface:
   inputs:
     narrative:
@@ -21,6 +45,29 @@ interface:
       type: string
     route:
       type: string
+ui:
+  title: Local Seriousness Classify
+  subtitle: |
+    Pre-filter: classify adverse event seriousness using local Ollama (qwen2.5:3b). Zero API cost. ~6s on CPU. ICH E2A criteria. Routes to local_nexvigilant_com_classify Station tool.
+  icon: circle
+  route: /vigilance/mg/local-seriousness-classify
+  steps:
+    - field: narrative
+      label: narrative
+      help: Adverse event report narrative text
+      widget: text
+      placeholder: null
+  result:
+    template: "classification: {{classification}} — criteria: {{criteria}} — confidence: {{confidence}} — model: {{model}} — route: {{route}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/local-seriousness-classify
+  cli: rsk mcg run local-seriousness-classify
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_narrative
   nodes:
@@ -34,29 +81,66 @@ tree:
     empty_result:
       type: return
       value:
-        classification: "UNKNOWN"
-        criteria: "none"
-        confidence: 0.0
-        model: "none"
-        route: "skip"
+        classification: UNKNOWN
+        criteria: none
+        confidence: 0
+        model: none
+        route: skip
     route_to_ollama:
       type: return
       value:
-        classification: "PENDING"
-        criteria: "ich_e2a"
-        confidence: 0.0
-        model: "qwen2.5:3b"
-        route: "local_nexvigilant_com_classify(text=narrative, categories='SERIOUS,NON-SERIOUS', context='ICH E2A seriousness criteria')"
+        classification: PENDING
+        criteria: ich_e2a
+        confidence: 0
+        model: qwen2.5:3b
+        route: local_nexvigilant_com_classify(text=narrative, categories='SERIOUS,NON-SERIOUS', context='ICH E2A seriousness criteria')
 tests:
   - name: empty_narrative
     input:
       narrative: ""
     expect:
-      classification: "UNKNOWN"
-      route: "skip"
+      classification: UNKNOWN
+      route: skip
   - name: has_narrative
     input:
-      narrative: "Patient hospitalized for severe allergic reaction"
+      narrative: Patient hospitalized for severe allergic reaction
     expect:
-      classification: "PENDING"
-      model: "qwen2.5:3b"
+      classification: PENDING
+      model: qwen2.5:3b
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - classification
+    - criteria
+    - confidence
+    - model
+    - route
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

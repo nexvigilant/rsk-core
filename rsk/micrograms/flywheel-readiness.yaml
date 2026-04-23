@@ -1,19 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: flywheel-readiness
-description: Evaluate flywheel node readiness for tier promotion — 3 binary gates
 version: 0.1.0
+description: Evaluate flywheel node readiness for tier promotion — 3 binary gates
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Flywheel Readiness
+  subtitle: Evaluate flywheel node readiness for tier promotion — 3 binary gates
+  icon: circle
+  route: /vigilance/mg/flywheel-readiness
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/flywheel-readiness
+  cli: rsk mcg run flywheel-readiness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_crates
   nodes:
     ready:
       type: return
       value:
-        score: 1.0
+        score: 1
         blocker: none
         ready: true
     not_ready_crates:
       type: return
       value:
-        score: 0.0
+        score: 0
         ready: false
         blocker: crate_count < 2 — wire at least 2 crates
     check_status:
@@ -50,79 +79,110 @@ tree:
       true_next: ready
       false_next: not_ready_consumer
 tests:
-- input:
-    has_consumer: true
-    status_active: true
-    crate_count: 3
-  expect:
-    blocker: none
-    ready: true
-    score: 1.0
-- input:
-    crate_count: 1
-    status_active: true
-    has_consumer: true
-  expect:
-    score: 0.0
-    ready: false
-    blocker: crate_count < 2 — wire at least 2 crates
-- input:
-    status_active: false
-    has_consumer: true
-    crate_count: 5
-  expect:
-    ready: false
-    score: 0.33
-    blocker: status is not active
-- input:
-    crate_count: 2
-    status_active: true
-    has_consumer: false
-  expect:
-    blocker: no consumer integration
-    ready: false
-    score: 0.67
-- input:
-    has_consumer: false
-    crate_count: 0
-    status_active: false
-  expect:
-    blocker: crate_count < 2 — wire at least 2 crates
-    score: 0.0
-    ready: false
-- input:
-    status_active: true
-    has_consumer: true
-    crate_count: 2
-  expect:
-    score: 1.0
-    blocker: none
-    ready: true
-- input: {}
-  expect:
-    ready: false
-    score: 0.0
-    blocker: crate_count < 2 — wire at least 2 crates
-- input:
-    crate_count: -1
-  expect:
-    blocker: crate_count < 2 — wire at least 2 crates
-    ready: false
-    score: 0.0
-- input:
-    crate_count: 200
-  expect:
-    ready: false
-    score: 0.33
-    blocker: status is not active
-- input: {}
-  expect:
-    blocker: crate_count < 2 — wire at least 2 crates
-    score: 0.0
-    ready: false
-- input: {}
-  expect:
-    blocker: crate_count < 2 — wire at least 2 crates
-    ready: false
-    score: 0.0
-interface: null
+  - input:
+      has_consumer: true
+      status_active: true
+      crate_count: 3
+    expect:
+      blocker: none
+      ready: true
+      score: 1
+  - input:
+      crate_count: 1
+      status_active: true
+      has_consumer: true
+    expect:
+      score: 0
+      ready: false
+      blocker: crate_count < 2 — wire at least 2 crates
+  - input:
+      status_active: false
+      has_consumer: true
+      crate_count: 5
+    expect:
+      ready: false
+      score: 0.33
+      blocker: status is not active
+  - input:
+      crate_count: 2
+      status_active: true
+      has_consumer: false
+    expect:
+      blocker: no consumer integration
+      ready: false
+      score: 0.67
+  - input:
+      has_consumer: false
+      crate_count: 0
+      status_active: false
+    expect:
+      blocker: crate_count < 2 — wire at least 2 crates
+      score: 0
+      ready: false
+  - input:
+      status_active: true
+      has_consumer: true
+      crate_count: 2
+    expect:
+      score: 1
+      blocker: none
+      ready: true
+  - input: {}
+    expect:
+      ready: false
+      score: 0
+      blocker: crate_count < 2 — wire at least 2 crates
+  - input:
+      crate_count: -1
+    expect:
+      blocker: crate_count < 2 — wire at least 2 crates
+      ready: false
+      score: 0
+  - input:
+      crate_count: 200
+    expect:
+      ready: false
+      score: 0.33
+      blocker: status is not active
+  - input: {}
+    expect:
+      blocker: crate_count < 2 — wire at least 2 crates
+      score: 0
+      ready: false
+  - input: {}
+    expect:
+      blocker: crate_count < 2 — wire at least 2 crates
+      ready: false
+      score: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

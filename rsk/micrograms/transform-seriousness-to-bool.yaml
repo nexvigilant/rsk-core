@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: transform-seriousness-to-bool
-description: 'Transform: decomposes case-seriousness string + criterion into boolean flags (serious, fatal, life_threatening) for downstream mcgs'
 version: 0.2.0
+description: "Transform: decomposes case-seriousness string + criterion into boolean flags (serious, fatal, life_threatening) for downstream mcgs"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: seriousness
+    type: string
+    required: true
+    description: ""
+  - name: criterion
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: serious
+    type: bool
+  - name: serious_ae
+    type: bool
+  - name: fatal
+    type: bool
+  - name: is_life_threatening
+    type: bool
+  - name: source
+    type: string
 interface:
   inputs:
     seriousness:
@@ -20,6 +50,33 @@ interface:
       type: bool
     source:
       type: string
+ui:
+  title: Transform Seriousness To Bool
+  subtitle: "Transform: decomposes case-seriousness string + criterion into boolean flags (serious, fatal, life_threatening) for downstream mcgs"
+  icon: circle
+  route: /vigilance/mg/transform-seriousness-to-bool
+  steps:
+    - field: seriousness
+      label: seriousness
+      help: Enter seriousness
+      widget: text
+      placeholder: null
+    - field: criterion
+      label: criterion
+      help: Enter criterion
+      widget: text
+      placeholder: null
+  result:
+    template: "serious: {{serious}} — serious_ae: {{serious_ae}} — fatal: {{fatal}} — is_life_threatening: {{is_life_threatening}} — source: {{source}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/transform-seriousness-to-bool
+  cli: rsk mcg run transform-seriousness-to-bool
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_serious
   nodes:
@@ -76,60 +133,92 @@ tree:
         fatal: false
         is_life_threatening: false
         source: case-seriousness
-primitive_signature:
-  dominant: 'μ'
-  expression: 'μ — domain mapping or format conversion'
-  primes: ['μ']
-  arguments: []
 tests:
-- input:
-    seriousness: SERIOUS
-    criterion: DEATH
-  expect:
-    serious: true
-    serious_ae: true
-    fatal: true
-    is_life_threatening: false
-    source: case-seriousness
-- input:
-    seriousness: SERIOUS
-    criterion: LIFE_THREATENING
-  expect:
-    serious: true
-    serious_ae: true
-    fatal: false
-    is_life_threatening: true
-    source: case-seriousness
-- input:
-    seriousness: SERIOUS
-    criterion: HOSPITALIZATION
-  expect:
-    serious: true
-    serious_ae: true
-    fatal: false
-    is_life_threatening: false
-    source: case-seriousness
-- input:
-    seriousness: SERIOUS
-    criterion: CONGENITAL_ANOMALY
-  expect:
-    serious: true
-    serious_ae: true
-    fatal: false
-    is_life_threatening: false
-    source: case-seriousness
-- input:
-    seriousness: NON-SERIOUS
-  expect:
-    serious: false
-    serious_ae: false
-    fatal: false
-    is_life_threatening: false
-    source: case-seriousness
-- input: {}
-  expect:
-    serious: false
-    serious_ae: false
-    fatal: false
-    is_life_threatening: false
-    source: case-seriousness
+  - input:
+      seriousness: SERIOUS
+      criterion: DEATH
+    expect:
+      serious: true
+      serious_ae: true
+      fatal: true
+      is_life_threatening: false
+      source: case-seriousness
+  - input:
+      seriousness: SERIOUS
+      criterion: LIFE_THREATENING
+    expect:
+      serious: true
+      serious_ae: true
+      fatal: false
+      is_life_threatening: true
+      source: case-seriousness
+  - input:
+      seriousness: SERIOUS
+      criterion: HOSPITALIZATION
+    expect:
+      serious: true
+      serious_ae: true
+      fatal: false
+      is_life_threatening: false
+      source: case-seriousness
+  - input:
+      seriousness: SERIOUS
+      criterion: CONGENITAL_ANOMALY
+    expect:
+      serious: true
+      serious_ae: true
+      fatal: false
+      is_life_threatening: false
+      source: case-seriousness
+  - input:
+      seriousness: NON-SERIOUS
+    expect:
+      serious: false
+      serious_ae: false
+      fatal: false
+      is_life_threatening: false
+      source: case-seriousness
+  - input: {}
+    expect:
+      serious: false
+      serious_ae: false
+      fatal: false
+      is_life_threatening: false
+      source: case-seriousness
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - serious
+    - serious_ae
+    - fatal
+    - is_life_threatening
+    - source
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

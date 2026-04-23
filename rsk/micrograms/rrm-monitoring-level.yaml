@@ -1,6 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: rrm-monitoring-level
-description: "Railway Reference Model monitoring level classifier. Maps a monitoring system to ETCS-equivalent levels: L1 (spot/periodic), L2 (continuous/streaming), L3 (moving block/predictive). Higher levels subsume lower. Level determines capacity and detection latency."
 version: 0.1.0
+description: "Railway Reference Model monitoring level classifier. Maps a monitoring system to ETCS-equivalent levels: L1 (spot/periodic), L2 (continuous/streaming), L3 (moving block/predictive). Higher levels subsume lower. Level determines capacity and detection latency."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_continuous
+    type: bool
+    required: false
+    description: ""
+  - name: is_predictive
+    type: bool
+    required: false
+    description: ""
+  - name: update_frequency_per_hour
+    type: int
+    required: false
+    description: ""
+  - name: has_position_reporting
+    type: bool
+    required: false
+    description: ""
+  - name: detection_latency_hours
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: etcs_level
+    type: int
+  - name: level_name
+    type: string
+  - name: railway_equivalent
+    type: string
+  - name: pv_equivalent
+    type: string
+  - name: capacity_multiplier
+    type: string
+  - name: detection_capability
+    type: string
 interface:
   inputs:
     is_continuous:
@@ -31,6 +75,48 @@ interface:
       type: string
     detection_capability:
       type: string
+ui:
+  title: Rrm Monitoring Level
+  subtitle: "Railway Reference Model monitoring level classifier. Maps a monitoring system to ETCS-equivalent levels: L1 (spot/periodic), L2 (continuous/streaming), L3 (moving block/predictive). Higher levels subsume lower. Level determines capacity and detection latency."
+  icon: circle
+  route: /vigilance/mg/rrm-monitoring-level
+  steps:
+    - field: is_continuous
+      label: is continuous
+      help: Enter is_continuous
+      widget: toggle
+      placeholder: null
+    - field: is_predictive
+      label: is predictive
+      help: Enter is_predictive
+      widget: toggle
+      placeholder: null
+    - field: update_frequency_per_hour
+      label: update frequency per hour
+      help: Enter update_frequency_per_hour
+      widget: text
+      placeholder: null
+    - field: has_position_reporting
+      label: has position reporting
+      help: Enter has_position_reporting
+      widget: toggle
+      placeholder: null
+    - field: detection_latency_hours
+      label: detection latency hours
+      help: Enter detection_latency_hours
+      widget: text
+      placeholder: null
+  result:
+    template: "etcs_level: {{etcs_level}} — level_name: {{level_name}} — railway_equivalent: {{railway_equivalent}} — pv_equivalent: {{pv_equivalent}} — capacity_multiplier: {{capacity_multiplier}} — detection_capability: {{detection_capability}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/rrm-monitoring-level
+  cli: rsk mcg run rrm-monitoring-level
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_predictive
   nodes:
@@ -87,96 +173,129 @@ tree:
       type: return
       value:
         etcs_level: 0
-        level_name: "Time Interval"
-        railway_equivalent: "Pre-signaling era (1830s) — trains depart at time intervals with no track state knowledge"
-        pv_equivalent: "Spontaneous reporting only — no systematic monitoring, signals discovered by chance"
-        capacity_multiplier: "1x (baseline)"
-        detection_capability: "Reactive only — events detected after harm occurs"
+        level_name: Time Interval
+        railway_equivalent: Pre-signaling era (1830s) — trains depart at time intervals with no track state knowledge
+        pv_equivalent: Spontaneous reporting only — no systematic monitoring, signals discovered by chance
+        capacity_multiplier: 1x (baseline)
+        detection_capability: Reactive only — events detected after harm occurs
     level_1:
       type: return
       value:
         etcs_level: 1
-        level_name: "Spot Transmission"
-        railway_equivalent: "ETCS L1 — Eurobalises provide movement authority at discrete track points"
-        pv_equivalent: "Periodic safety reporting (PSUR/PBRER) — state snapshots at regulatory intervals"
-        capacity_multiplier: "1.0-1.2x"
-        detection_capability: "Periodic detection — signals found at scheduled review points"
+        level_name: Spot Transmission
+        railway_equivalent: ETCS L1 — Eurobalises provide movement authority at discrete track points
+        pv_equivalent: Periodic safety reporting (PSUR/PBRER) — state snapshots at regulatory intervals
+        capacity_multiplier: 1.0-1.2x
+        detection_capability: Periodic detection — signals found at scheduled review points
     level_2:
       type: return
       value:
         etcs_level: 2
-        level_name: "Continuous Supervision"
-        railway_equivalent: "ETCS L2 — Radio Block Centre streams movement authority continuously"
-        pv_equivalent: "Real-time FAERS monitoring — continuous analysis of adverse event reports as they arrive"
-        capacity_multiplier: "1.2-1.5x"
-        detection_capability: "Continuous detection — signals found as data arrives"
+        level_name: Continuous Supervision
+        railway_equivalent: ETCS L2 — Radio Block Centre streams movement authority continuously
+        pv_equivalent: Real-time FAERS monitoring — continuous analysis of adverse event reports as they arrive
+        capacity_multiplier: 1.2-1.5x
+        detection_capability: Continuous detection — signals found as data arrives
     level_3:
       type: return
       value:
         etcs_level: 3
-        level_name: "Moving Block"
-        railway_equivalent: "ETCS L3 — train reports position continuously, blocks shrink to braking distance"
-        pv_equivalent: "Predictive PV — ML models dynamically adjust thresholds, signals detected before reports accumulate"
-        capacity_multiplier: "1.3-1.5x"
-        detection_capability: "Predictive detection — signals anticipated from emerging patterns"
-primitive_signature:
-  dominant: 'ς'
-  expression: 'ς — state monitoring or drift detection'
-  primes: ['ς']
-  arguments: []
+        level_name: Moving Block
+        railway_equivalent: ETCS L3 — train reports position continuously, blocks shrink to braking distance
+        pv_equivalent: Predictive PV — ML models dynamically adjust thresholds, signals detected before reports accumulate
+        capacity_multiplier: 1.3-1.5x
+        detection_capability: Predictive detection — signals anticipated from emerging patterns
 tests:
-- input:
-    is_predictive: true
-  expect:
-    etcs_level: 3
-    level_name: "Moving Block"
-- input:
-    is_continuous: true
-    has_position_reporting: true
-  expect:
-    etcs_level: 3
-    level_name: "Moving Block"
-- input:
-    is_continuous: true
-    has_position_reporting: false
-  expect:
-    etcs_level: 2
-    level_name: "Continuous Supervision"
-- input:
-    update_frequency_per_hour: 120
-  expect:
-    etcs_level: 2
-    level_name: "Continuous Supervision"
-- input:
-    update_frequency_per_hour: 4
-  expect:
-    etcs_level: 1
-    level_name: "Spot Transmission"
-- input:
-    detection_latency_hours: 12
-  expect:
-    etcs_level: 1
-    level_name: "Spot Transmission"
-- input:
-    detection_latency_hours: 168
-  expect:
-    etcs_level: 0
-    level_name: "Time Interval"
-- input: {}
-  expect:
-    etcs_level: 0
-    level_name: "Time Interval"
-- input:
-    is_predictive: false
-    is_continuous: false
-    update_frequency_per_hour: 0
-    detection_latency_hours: 8760
-  expect:
-    etcs_level: 0
-    level_name: "Time Interval"
-- input:
-    is_continuous: true
-    is_predictive: true
-  expect:
-    etcs_level: 3
-    level_name: "Moving Block"
+  - input:
+      is_predictive: true
+    expect:
+      etcs_level: 3
+      level_name: Moving Block
+  - input:
+      is_continuous: true
+      has_position_reporting: true
+    expect:
+      etcs_level: 3
+      level_name: Moving Block
+  - input:
+      is_continuous: true
+      has_position_reporting: false
+    expect:
+      etcs_level: 2
+      level_name: Continuous Supervision
+  - input:
+      update_frequency_per_hour: 120
+    expect:
+      etcs_level: 2
+      level_name: Continuous Supervision
+  - input:
+      update_frequency_per_hour: 4
+    expect:
+      etcs_level: 1
+      level_name: Spot Transmission
+  - input:
+      detection_latency_hours: 12
+    expect:
+      etcs_level: 1
+      level_name: Spot Transmission
+  - input:
+      detection_latency_hours: 168
+    expect:
+      etcs_level: 0
+      level_name: Time Interval
+  - input: {}
+    expect:
+      etcs_level: 0
+      level_name: Time Interval
+  - input:
+      is_predictive: false
+      is_continuous: false
+      update_frequency_per_hour: 0
+      detection_latency_hours: 8760
+    expect:
+      etcs_level: 0
+      level_name: Time Interval
+  - input:
+      is_continuous: true
+      is_predictive: true
+    expect:
+      etcs_level: 3
+      level_name: Moving Block
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - etcs_level
+    - level_name
+    - railway_equivalent
+    - pv_equivalent
+    - capacity_multiplier
+    - detection_capability
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

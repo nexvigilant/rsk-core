@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: flywheel-velocity-classifier
-description: Classify repair velocity from average repair time in milliseconds
 version: 0.1.0
+description: Classify repair velocity from average repair time in milliseconds
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Flywheel Velocity Classifier
+  subtitle: Classify repair velocity from average repair time in milliseconds
+  icon: circle
+  route: /vigilance/mg/flywheel-velocity-classifier
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/flywheel-velocity-classifier
+  cli: rsk mcg run flywheel-velocity-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_exceptional
   nodes:
@@ -46,111 +75,142 @@ tree:
       true_next: exceptional
       false_next: check_target
 tests:
-- input:
-    avg_repair_ms: 3600000
-  expect:
-    description: Repair time under 4 hours — exceptional velocity
-    classification: exceptional
-- input:
-    avg_repair_ms: 14400000
-  expect:
-    classification: target
-    description: Repair time under 24 hours — target velocity
-- input:
-    avg_repair_ms: 43200000
-  expect:
-    description: Repair time under 24 hours — target velocity
-    classification: target
-- input:
-    avg_repair_ms: 86400000
-  expect:
-    description: Repair time under 72 hours — acceptable velocity
-    classification: acceptable
-- input:
-    avg_repair_ms: 172800000
-  expect:
-    description: Repair time under 72 hours — acceptable velocity
-    classification: acceptable
-- input:
-    avg_repair_ms: 259200000
-  expect:
-    classification: slow
-    description: Repair time exceeds 72 hours — slow velocity
-- input:
-    avg_repair_ms: 500000000
-  expect:
-    description: Repair time exceeds 72 hours — slow velocity
-    classification: slow
-- input:
-    avg_repair_ms: 0
-  expect:
-    classification: exceptional
-    description: Repair time under 4 hours — exceptional velocity
-- input:
-    avg_repair_ms: -1
-  expect:
-    classification: exceptional
-    description: Repair time under 4 hours — exceptional velocity
-- input:
-    avg_repair_ms: 86399999
-  expect:
-    classification: target
-    description: Repair time under 24 hours — target velocity
-- input:
-    avg_repair_ms: 86400001
-  expect:
-    description: Repair time under 72 hours — acceptable velocity
-    classification: acceptable
-- input:
-    avg_repair_ms: 8640000000
-  expect:
-    description: Repair time exceeds 72 hours — slow velocity
-    classification: slow
-- input: {}
-  expect:
-    classification: slow
-    description: Repair time exceeds 72 hours — slow velocity
-- input:
-    avg_repair_ms: -1
-  expect:
-    description: Repair time under 4 hours — exceptional velocity
-    classification: exceptional
-- input:
-    avg_repair_ms: 259199999
-  expect:
-    classification: acceptable
-    description: Repair time under 72 hours — acceptable velocity
-- input:
-    avg_repair_ms: 259200001
-  expect:
-    classification: slow
-    description: Repair time exceeds 72 hours — slow velocity
-- input:
-    avg_repair_ms: 25920000000
-  expect:
-    classification: slow
-    description: Repair time exceeds 72 hours — slow velocity
-- input: {}
-  expect:
-    classification: slow
-    description: Repair time exceeds 72 hours — slow velocity
-- input:
-    avg_repair_ms: -1
-  expect:
-    classification: exceptional
-    description: Repair time under 4 hours — exceptional velocity
-- input:
-    avg_repair_ms: 14399999
-  expect:
-    description: Repair time under 4 hours — exceptional velocity
-    classification: exceptional
-- input:
-    avg_repair_ms: 14400001
-  expect:
-    description: Repair time under 24 hours — target velocity
-    classification: target
-- input: {}
-  expect:
-    classification: slow
-    description: Repair time exceeds 72 hours — slow velocity
-interface: null
+  - input:
+      avg_repair_ms: 3600000
+    expect:
+      description: Repair time under 4 hours — exceptional velocity
+      classification: exceptional
+  - input:
+      avg_repair_ms: 14400000
+    expect:
+      classification: target
+      description: Repair time under 24 hours — target velocity
+  - input:
+      avg_repair_ms: 43200000
+    expect:
+      description: Repair time under 24 hours — target velocity
+      classification: target
+  - input:
+      avg_repair_ms: 86400000
+    expect:
+      description: Repair time under 72 hours — acceptable velocity
+      classification: acceptable
+  - input:
+      avg_repair_ms: 172800000
+    expect:
+      description: Repair time under 72 hours — acceptable velocity
+      classification: acceptable
+  - input:
+      avg_repair_ms: 259200000
+    expect:
+      classification: slow
+      description: Repair time exceeds 72 hours — slow velocity
+  - input:
+      avg_repair_ms: 500000000
+    expect:
+      description: Repair time exceeds 72 hours — slow velocity
+      classification: slow
+  - input:
+      avg_repair_ms: 0
+    expect:
+      classification: exceptional
+      description: Repair time under 4 hours — exceptional velocity
+  - input:
+      avg_repair_ms: -1
+    expect:
+      classification: exceptional
+      description: Repair time under 4 hours — exceptional velocity
+  - input:
+      avg_repair_ms: 86399999
+    expect:
+      classification: target
+      description: Repair time under 24 hours — target velocity
+  - input:
+      avg_repair_ms: 86400001
+    expect:
+      description: Repair time under 72 hours — acceptable velocity
+      classification: acceptable
+  - input:
+      avg_repair_ms: 8640000000
+    expect:
+      description: Repair time exceeds 72 hours — slow velocity
+      classification: slow
+  - input: {}
+    expect:
+      classification: slow
+      description: Repair time exceeds 72 hours — slow velocity
+  - input:
+      avg_repair_ms: -1
+    expect:
+      description: Repair time under 4 hours — exceptional velocity
+      classification: exceptional
+  - input:
+      avg_repair_ms: 259199999
+    expect:
+      classification: acceptable
+      description: Repair time under 72 hours — acceptable velocity
+  - input:
+      avg_repair_ms: 259200001
+    expect:
+      classification: slow
+      description: Repair time exceeds 72 hours — slow velocity
+  - input:
+      avg_repair_ms: 25920000000
+    expect:
+      classification: slow
+      description: Repair time exceeds 72 hours — slow velocity
+  - input: {}
+    expect:
+      classification: slow
+      description: Repair time exceeds 72 hours — slow velocity
+  - input:
+      avg_repair_ms: -1
+    expect:
+      classification: exceptional
+      description: Repair time under 4 hours — exceptional velocity
+  - input:
+      avg_repair_ms: 14399999
+    expect:
+      description: Repair time under 4 hours — exceptional velocity
+      classification: exceptional
+  - input:
+      avg_repair_ms: 14400001
+    expect:
+      description: Repair time under 24 hours — target velocity
+      classification: target
+  - input: {}
+    expect:
+      classification: slow
+      description: Repair time exceeds 72 hours — slow velocity
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

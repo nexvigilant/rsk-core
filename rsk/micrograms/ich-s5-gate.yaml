@@ -1,33 +1,95 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ich-s5-gate
-description: "ICH S5 compliance: Reproductive Toxicology"
 version: 0.1.0
-
+description: "ICH S5 compliance: Reproductive Toxicology"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Ich S5 Gate
+  subtitle: "ICH S5 compliance: Reproductive Toxicology"
+  icon: circle
+  route: /vigilance/mg/ich-s5-gate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ich-s5-gate
+  cli: rsk mcg run ich-s5-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
     check:
-      type: "condition"
-      variable: "repro_done"
-      operator: "eq"
+      type: condition
+      variable: repro_done
+      operator: eq
       value: true
-      true_next: "compliant"
-      false_next: "gap"
+      true_next: compliant
+      false_next: gap
     compliant:
-      type: "return"
+      type: return
       value:
-        guideline: "ICH S5"
+        guideline: ICH S5
         compliant: true
-        action: "proceed"
+        action: proceed
     gap:
-      type: "return"
+      type: return
       value:
-        guideline: "ICH S5"
+        guideline: ICH S5
         compliant: false
-        action: "remediate"
-        gap: "repro_done"
-
+        action: remediate
+        gap: repro_done
 tests:
-  - input: {"repro_done": true}
-    expect: {"compliant": true}
+  - input:
+      repro_done: true
+    expect:
+      compliant: true
   - input: {}
-    expect: {"compliant": false}
+    expect:
+      compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

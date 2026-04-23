@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: narrative-redaction-router
-description: "Gate 4 of narrative safe-extract: route narrative through redaction decision based on combined PHI severity, site exposure, and inference risk to produce a final extract/block/review verdict"
 version: 0.1.0
+description: "Gate 4 of narrative safe-extract: route narrative through redaction decision based on combined PHI severity, site exposure, and inference risk to produce a final extract/block/review verdict"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: phi_severity
+    type: string
+    required: false
+    description: ""
+  - name: site_risk_level
+    type: string
+    required: false
+    description: ""
+  - name: inference_risk
+    type: string
+    required: false
+    description: ""
+  - name: is_expedited_report
+    type: bool
+    required: false
+    description: ""
+  - name: regulatory_submission
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: verdict
+    type: string
+  - name: overall_risk
+    type: string
+  - name: can_extract
+    type: bool
+  - name: requires_redaction
+    type: bool
+  - name: action
+    type: string
 interface:
   inputs:
     phi_severity:
@@ -29,6 +71,48 @@ interface:
       type: bool
     action:
       type: string
+ui:
+  title: Narrative Redaction Router
+  subtitle: "Gate 4 of narrative safe-extract: route narrative through redaction decision based on combined PHI severity, site exposure, and inference risk to produce a final extract/block/review verdict"
+  icon: circle
+  route: /vigilance/mg/narrative-redaction-router
+  steps:
+    - field: phi_severity
+      label: phi severity
+      help: Enter phi_severity
+      widget: text
+      placeholder: null
+    - field: site_risk_level
+      label: site risk level
+      help: Enter site_risk_level
+      widget: text
+      placeholder: null
+    - field: inference_risk
+      label: inference risk
+      help: Enter inference_risk
+      widget: text
+      placeholder: null
+    - field: is_expedited_report
+      label: is expedited report
+      help: Enter is_expedited_report
+      widget: toggle
+      placeholder: null
+    - field: regulatory_submission
+      label: regulatory submission
+      help: Enter regulatory_submission
+      widget: toggle
+      placeholder: null
+  result:
+    template: "verdict: {{verdict}} — overall_risk: {{overall_risk}} — can_extract: {{can_extract}} — requires_redaction: {{requires_redaction}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/narrative-redaction-router
+  cli: rsk mcg run narrative-redaction-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_phi
   nodes:
@@ -36,49 +120,49 @@ tree:
       type: condition
       variable: phi_severity
       operator: eq
-      value: "CRITICAL"
+      value: CRITICAL
       true_next: block_critical
       false_next: check_phi_high
     check_phi_high:
       type: condition
       variable: phi_severity
       operator: eq
-      value: "HIGH"
+      value: HIGH
       true_next: block_high_phi
       false_next: check_site_critical
     check_site_critical:
       type: condition
       variable: site_risk_level
       operator: eq
-      value: "CRITICAL"
+      value: CRITICAL
       true_next: block_critical
       false_next: check_site_high
     check_site_high:
       type: condition
       variable: site_risk_level
       operator: eq
-      value: "HIGH"
+      value: HIGH
       true_next: block_high_site
       false_next: check_inference_critical
     check_inference_critical:
       type: condition
       variable: inference_risk
       operator: eq
-      value: "CRITICAL"
+      value: CRITICAL
       true_next: block_critical
       false_next: check_inference_high
     check_inference_high:
       type: condition
       variable: inference_risk
       operator: eq
-      value: "HIGH"
+      value: HIGH
       true_next: block_high_inference
       false_next: check_moderate_phi
     check_moderate_phi:
       type: condition
       variable: phi_severity
       operator: eq
-      value: "MODERATE"
+      value: MODERATE
       true_next: check_regulatory_moderate
       false_next: check_moderate_site
     check_regulatory_moderate:
@@ -92,21 +176,21 @@ tree:
       type: condition
       variable: site_risk_level
       operator: eq
-      value: "MODERATE"
+      value: MODERATE
       true_next: review_moderate
       false_next: check_moderate_inference
     check_moderate_inference:
       type: condition
       variable: inference_risk
       operator: eq
-      value: "MODERATE"
+      value: MODERATE
       true_next: review_moderate
       false_next: check_low_phi
     check_low_phi:
       type: condition
       variable: phi_severity
       operator: eq
-      value: "LOW"
+      value: LOW
       true_next: review_low
       false_next: check_expedited
     check_expedited:
@@ -123,7 +207,7 @@ tree:
         overall_risk: CRITICAL
         can_extract: false
         requires_redaction: true
-        action: "Full redaction required — CRITICAL risk elements must be removed before any extraction"
+        action: Full redaction required — CRITICAL risk elements must be removed before any extraction
     block_high_phi:
       type: return
       value:
@@ -131,7 +215,7 @@ tree:
         overall_risk: HIGH
         can_extract: false
         requires_redaction: true
-        action: "PHI redaction required — HIGH severity identifiers must be removed or pseudonymized"
+        action: PHI redaction required — HIGH severity identifiers must be removed or pseudonymized
     block_high_site:
       type: return
       value:
@@ -139,7 +223,7 @@ tree:
         overall_risk: HIGH
         can_extract: false
         requires_redaction: true
-        action: "Site identifier redaction required — replace site details with generic labels"
+        action: Site identifier redaction required — replace site details with generic labels
     block_high_inference:
       type: return
       value:
@@ -147,7 +231,7 @@ tree:
         overall_risk: HIGH
         can_extract: false
         requires_redaction: true
-        action: "Quasi-identifier generalization required — reduce specificity of identifying combinations"
+        action: Quasi-identifier generalization required — reduce specificity of identifying combinations
     redact_and_extract:
       type: return
       value:
@@ -155,7 +239,7 @@ tree:
         overall_risk: MODERATE
         can_extract: true
         requires_redaction: true
-        action: "Regulatory submission — apply standard redactions (HIPAA Safe Harbor) then extract"
+        action: Regulatory submission — apply standard redactions (HIPAA Safe Harbor) then extract
     review_moderate:
       type: return
       value:
@@ -163,7 +247,7 @@ tree:
         overall_risk: MODERATE
         can_extract: false
         requires_redaction: true
-        action: "Manual review required — MODERATE risk elements need expert assessment"
+        action: Manual review required — MODERATE risk elements need expert assessment
     review_low:
       type: return
       value:
@@ -171,7 +255,7 @@ tree:
         overall_risk: LOW
         can_extract: false
         requires_redaction: false
-        action: "Low-risk review — confirm no additional context creates combined risk"
+        action: Low-risk review — confirm no additional context creates combined risk
     extract_expedited:
       type: return
       value:
@@ -179,7 +263,7 @@ tree:
         overall_risk: NONE
         can_extract: true
         requires_redaction: false
-        action: "Clean narrative — safe to extract for expedited regulatory submission"
+        action: Clean narrative — safe to extract for expedited regulatory submission
     extract_clean:
       type: return
       value:
@@ -187,99 +271,136 @@ tree:
         overall_risk: NONE
         can_extract: true
         requires_redaction: false
-        action: "Clean narrative — safe to extract, no identifiers detected"
+        action: Clean narrative — safe to extract, no identifiers detected
 tests:
-- input:
-    phi_severity: "CRITICAL"
-  expect:
-    verdict: BLOCK
-    overall_risk: CRITICAL
-    can_extract: false
-    requires_redaction: true
-- input:
-    phi_severity: "HIGH"
-  expect:
-    verdict: BLOCK
-    overall_risk: HIGH
-    can_extract: false
-- input:
-    site_risk_level: "CRITICAL"
-  expect:
-    verdict: BLOCK
-    overall_risk: CRITICAL
-    can_extract: false
-- input:
-    site_risk_level: "HIGH"
-  expect:
-    verdict: BLOCK
-    overall_risk: HIGH
-    can_extract: false
-- input:
-    inference_risk: "CRITICAL"
-  expect:
-    verdict: BLOCK
-    overall_risk: CRITICAL
-    can_extract: false
-- input:
-    inference_risk: "HIGH"
-  expect:
-    verdict: BLOCK
-    overall_risk: HIGH
-    can_extract: false
-- input:
-    phi_severity: "MODERATE"
-    regulatory_submission: true
-  expect:
-    verdict: REDACT_AND_EXTRACT
-    can_extract: true
-    requires_redaction: true
-- input:
-    phi_severity: "MODERATE"
-    regulatory_submission: false
-  expect:
-    verdict: REVIEW
-    overall_risk: MODERATE
-- input:
-    site_risk_level: "MODERATE"
-  expect:
-    verdict: REVIEW
-    overall_risk: MODERATE
-- input:
-    inference_risk: "MODERATE"
-  expect:
-    verdict: REVIEW
-    overall_risk: MODERATE
-- input:
-    phi_severity: "LOW"
-  expect:
-    verdict: REVIEW
-    overall_risk: LOW
-    requires_redaction: false
-- input:
-    is_expedited_report: true
-  expect:
-    verdict: EXTRACT
-    can_extract: true
-    requires_redaction: false
-- input: {}
-  expect:
-    verdict: EXTRACT
-    overall_risk: NONE
-    can_extract: true
-    requires_redaction: false
-- input:
-    phi_severity: "NONE"
-    site_risk_level: "NONE"
-    inference_risk: "NONE"
-  expect:
-    verdict: EXTRACT
-    can_extract: true
-    requires_redaction: false
-- input:
-    phi_severity: "NONE"
-    site_risk_level: "NONE"
-    inference_risk: "NONE"
-    is_expedited_report: true
-  expect:
-    verdict: EXTRACT
-    can_extract: true
+  - input:
+      phi_severity: CRITICAL
+    expect:
+      verdict: BLOCK
+      overall_risk: CRITICAL
+      can_extract: false
+      requires_redaction: true
+  - input:
+      phi_severity: HIGH
+    expect:
+      verdict: BLOCK
+      overall_risk: HIGH
+      can_extract: false
+  - input:
+      site_risk_level: CRITICAL
+    expect:
+      verdict: BLOCK
+      overall_risk: CRITICAL
+      can_extract: false
+  - input:
+      site_risk_level: HIGH
+    expect:
+      verdict: BLOCK
+      overall_risk: HIGH
+      can_extract: false
+  - input:
+      inference_risk: CRITICAL
+    expect:
+      verdict: BLOCK
+      overall_risk: CRITICAL
+      can_extract: false
+  - input:
+      inference_risk: HIGH
+    expect:
+      verdict: BLOCK
+      overall_risk: HIGH
+      can_extract: false
+  - input:
+      phi_severity: MODERATE
+      regulatory_submission: true
+    expect:
+      verdict: REDACT_AND_EXTRACT
+      can_extract: true
+      requires_redaction: true
+  - input:
+      phi_severity: MODERATE
+      regulatory_submission: false
+    expect:
+      verdict: REVIEW
+      overall_risk: MODERATE
+  - input:
+      site_risk_level: MODERATE
+    expect:
+      verdict: REVIEW
+      overall_risk: MODERATE
+  - input:
+      inference_risk: MODERATE
+    expect:
+      verdict: REVIEW
+      overall_risk: MODERATE
+  - input:
+      phi_severity: LOW
+    expect:
+      verdict: REVIEW
+      overall_risk: LOW
+      requires_redaction: false
+  - input:
+      is_expedited_report: true
+    expect:
+      verdict: EXTRACT
+      can_extract: true
+      requires_redaction: false
+  - input: {}
+    expect:
+      verdict: EXTRACT
+      overall_risk: NONE
+      can_extract: true
+      requires_redaction: false
+  - input:
+      phi_severity: NONE
+      site_risk_level: NONE
+      inference_risk: NONE
+    expect:
+      verdict: EXTRACT
+      can_extract: true
+      requires_redaction: false
+  - input:
+      phi_severity: NONE
+      site_risk_level: NONE
+      inference_risk: NONE
+      is_expedited_report: true
+    expect:
+      verdict: EXTRACT
+      can_extract: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - verdict
+    - overall_risk
+    - can_extract
+    - requires_redaction
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

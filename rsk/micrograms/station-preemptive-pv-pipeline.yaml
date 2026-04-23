@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-preemptive-pv-pipeline
-description: Route preemptive PV predictions by trajectory severity and intervention window
 version: 0.1.0
+description: Route preemptive PV predictions by trajectory severity and intervention window
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Preemptive Pv Pipeline
+  subtitle: Route preemptive PV predictions by trajectory severity and intervention window
+  icon: circle
+  route: /vigilance/mg/station-preemptive-pv-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-preemptive-pv-pipeline
+  cli: rsk mcg run station-preemptive-pv-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_trajectory
   nodes:
@@ -40,73 +69,103 @@ tree:
         priority: high
         reason: Intervention window ≤7 days — prepare risk minimization measures
 tests:
-- input:
-    trajectory_severity: critical
-    intervention_window_days: 3
-  expect:
-    action: intervene
-    priority: critical
-    route: preemptive_action
-- input:
-    trajectory_severity: moderate
-    intervention_window_days: 5
-  expect:
-    priority: high
-    route: risk_management
-    action: prepare
-- input:
-    trajectory_severity: low
-    intervention_window_days: 30
-  expect:
-    route: enhanced_monitoring
-    action: monitor
-    priority: moderate
-- input: {}
-  expect:
-    priority: moderate
-    route: enhanced_monitoring
-    reason: Intervention window >7 days — time to gather more data
-    action: monitor
-- input:
-    intervention_window_days: 0
-  expect:
-    reason: Intervention window ≤7 days — prepare risk minimization measures
-    priority: high
-    route: risk_management
-    action: prepare
-- input:
-    intervention_window_days: -1
-  expect:
-    action: prepare
-    priority: high
-    route: risk_management
-    reason: Intervention window ≤7 days — prepare risk minimization measures
-- input:
-    intervention_window_days: 6
-  expect:
-    action: prepare
-    reason: Intervention window ≤7 days — prepare risk minimization measures
-    route: risk_management
-    priority: high
-- input:
-    intervention_window_days: 8
-  expect:
-    reason: Intervention window >7 days — time to gather more data
-    priority: moderate
-    route: enhanced_monitoring
-    action: monitor
-- input:
-    intervention_window_days: 700
-  expect:
-    action: monitor
-    priority: moderate
-    reason: Intervention window >7 days — time to gather more data
-    route: enhanced_monitoring
-- input: {}
-  expect:
-    route: enhanced_monitoring
-    reason: Intervention window >7 days — time to gather more data
-    priority: moderate
-    action: monitor
-interface: null
-primitive_signature: null
+  - input:
+      trajectory_severity: critical
+      intervention_window_days: 3
+    expect:
+      action: intervene
+      priority: critical
+      route: preemptive_action
+  - input:
+      trajectory_severity: moderate
+      intervention_window_days: 5
+    expect:
+      priority: high
+      route: risk_management
+      action: prepare
+  - input:
+      trajectory_severity: low
+      intervention_window_days: 30
+    expect:
+      route: enhanced_monitoring
+      action: monitor
+      priority: moderate
+  - input: {}
+    expect:
+      priority: moderate
+      route: enhanced_monitoring
+      reason: Intervention window >7 days — time to gather more data
+      action: monitor
+  - input:
+      intervention_window_days: 0
+    expect:
+      reason: Intervention window ≤7 days — prepare risk minimization measures
+      priority: high
+      route: risk_management
+      action: prepare
+  - input:
+      intervention_window_days: -1
+    expect:
+      action: prepare
+      priority: high
+      route: risk_management
+      reason: Intervention window ≤7 days — prepare risk minimization measures
+  - input:
+      intervention_window_days: 6
+    expect:
+      action: prepare
+      reason: Intervention window ≤7 days — prepare risk minimization measures
+      route: risk_management
+      priority: high
+  - input:
+      intervention_window_days: 8
+    expect:
+      reason: Intervention window >7 days — time to gather more data
+      priority: moderate
+      route: enhanced_monitoring
+      action: monitor
+  - input:
+      intervention_window_days: 700
+    expect:
+      action: monitor
+      priority: moderate
+      reason: Intervention window >7 days — time to gather more data
+      route: enhanced_monitoring
+  - input: {}
+    expect:
+      route: enhanced_monitoring
+      reason: Intervention window >7 days — time to gather more data
+      priority: moderate
+      action: monitor
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

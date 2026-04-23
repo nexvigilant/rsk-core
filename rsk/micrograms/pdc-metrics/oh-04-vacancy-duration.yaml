@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: oh-04-vacancy-duration
-description: "Critical PV role vacancy ≤45 days"
 version: 0.1.0
-
+description: Critical PV role vacancy ≤45 days
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Oh 04 Vacancy Duration
+  subtitle: Critical PV role vacancy ≤45 days
+  icon: circle
+  route: /vigilance/mg/oh-04-vacancy-duration
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/oh-04-vacancy-duration
+  cli: rsk mcg run oh-04-vacancy-duration
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -15,22 +43,58 @@ tree:
     pass:
       type: return
       value:
-        metric: "oh-04-vacancy-duration"
-        category: "Organizational Health"
+        metric: oh-04-vacancy-duration
+        category: Organizational Health
         met: true
-        action: "on_track"
-        frequency: "monthly"
+        action: on_track
+        frequency: monthly
     fail:
       type: return
       value:
-        metric: "oh-04-vacancy-duration"
-        category: "Organizational Health"
+        metric: oh-04-vacancy-duration
+        category: Organizational Health
         met: false
-        action: "remediate"
-        frequency: "monthly"
-
+        action: remediate
+        frequency: monthly
 tests:
-  - input: {vacancy_days: 45}
-    expect: {met: true, category: "Organizational Health"}
+  - input:
+      vacancy_days: 45
+    expect:
+      met: true
+      category: Organizational Health
   - input: {}
-    expect: {met: false, category: "Organizational Health"}
+    expect:
+      met: false
+      category: Organizational Health
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: algo-energy-measure
-description: "Algorithm 7 (ENERGY): Measures N(→(Δς)) — capacity for change. Scores by downstream consumers (→), state change magnitude (Δς), quantifies impact potential (N)."
 version: 0.1.0
+description: "Algorithm 7 (ENERGY): Measures N(→(Δς)) — capacity for change. Scores by downstream consumers (→), state change magnitude (Δς), quantifies impact potential (N)."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: downstream_consumers
+    type: integer
+    required: true
+    description: ""
+  - name: state_change_magnitude
+    type: string
+    required: true
+    description: ""
+  - name: component_persistence
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: energy_score
+    type: float
+  - name: energy_class
+    type: string
+  - name: algorithm
+    type: string
 interface:
   inputs:
     downstream_consumers:
@@ -9,11 +39,20 @@ interface:
     state_change_magnitude:
       type: string
       required: true
-      enum: [none, minor, moderate, major, breaking]
+      enum:
+        - none
+        - minor
+        - moderate
+        - major
+        - breaking
     component_persistence:
       type: string
       required: true
-      enum: [volatile, recent, established, foundational]
+      enum:
+        - volatile
+        - recent
+        - established
+        - foundational
   outputs:
     energy_score:
       type: float
@@ -21,6 +60,38 @@ interface:
       type: string
     algorithm:
       type: string
+ui:
+  title: Algo Energy Measure
+  subtitle: "Algorithm 7 (ENERGY): Measures N(→(Δς)) — capacity for change. Scores by downstream consumers (→), state change magnitude (Δς), quantifies impact potential (N)."
+  icon: circle
+  route: /vigilance/mg/algo-energy-measure
+  steps:
+    - field: downstream_consumers
+      label: downstream consumers
+      help: Enter downstream_consumers
+      widget: number
+      placeholder: null
+    - field: state_change_magnitude
+      label: state change magnitude
+      help: Enter state_change_magnitude
+      widget: text
+      placeholder: null
+    - field: component_persistence
+      label: component persistence
+      help: Enter component_persistence
+      widget: text
+      placeholder: null
+  result:
+    template: "energy_score: {{energy_score}} — energy_class: {{energy_class}} — algorithm: {{algorithm}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/algo-energy-measure
+  cli: rsk mcg run algo-energy-measure
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_state_change
   nodes:
@@ -76,7 +147,7 @@ tree:
     critical_energy:
       type: return
       value:
-        energy_score: 1.0
+        energy_score: 1
         energy_class: critical
         algorithm: "ENERGY: N(→(Δς)) = high consumers × breaking change = maximum cascade potential"
     high_energy:
@@ -100,28 +171,95 @@ tree:
     zero_energy:
       type: return
       value:
-        energy_score: 0.0
+        energy_score: 0
         energy_class: inert
         algorithm: "ENERGY: N(→(Δς)) = 0 — no state change capacity"
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-- input: { downstream_consumers: 40, state_change_magnitude: breaking, component_persistence: foundational }
-  expect: { energy_score: 1.0, energy_class: critical }
-- input: { downstream_consumers: 15, state_change_magnitude: moderate, component_persistence: established }
-  expect: { energy_score: 0.75, energy_class: high }
-- input: { downstream_consumers: 5, state_change_magnitude: major, component_persistence: recent }
-  expect: { energy_score: 0.75, energy_class: high }
-- input: { downstream_consumers: 1, state_change_magnitude: minor, component_persistence: volatile }
-  expect: { energy_score: 0.25, energy_class: low }
-- input: { downstream_consumers: 100, state_change_magnitude: none, component_persistence: foundational }
-  expect: { energy_score: 0.0, energy_class: inert }
-- input: { downstream_consumers: 5, state_change_magnitude: breaking, component_persistence: established }
-  expect: { energy_score: 0.75, energy_class: high }
-- input: { downstream_consumers: 4, state_change_magnitude: minor, component_persistence: recent }
-  expect: { energy_score: 0.5, energy_class: moderate }
-- input: {}
-  expect: { energy_score: 0.25, energy_class: low }
+  - input:
+      downstream_consumers: 40
+      state_change_magnitude: breaking
+      component_persistence: foundational
+    expect:
+      energy_score: 1
+      energy_class: critical
+  - input:
+      downstream_consumers: 15
+      state_change_magnitude: moderate
+      component_persistence: established
+    expect:
+      energy_score: 0.75
+      energy_class: high
+  - input:
+      downstream_consumers: 5
+      state_change_magnitude: major
+      component_persistence: recent
+    expect:
+      energy_score: 0.75
+      energy_class: high
+  - input:
+      downstream_consumers: 1
+      state_change_magnitude: minor
+      component_persistence: volatile
+    expect:
+      energy_score: 0.25
+      energy_class: low
+  - input:
+      downstream_consumers: 100
+      state_change_magnitude: none
+      component_persistence: foundational
+    expect:
+      energy_score: 0
+      energy_class: inert
+  - input:
+      downstream_consumers: 5
+      state_change_magnitude: breaking
+      component_persistence: established
+    expect:
+      energy_score: 0.75
+      energy_class: high
+  - input:
+      downstream_consumers: 4
+      state_change_magnitude: minor
+      component_persistence: recent
+    expect:
+      energy_score: 0.5
+      energy_class: moderate
+  - input: {}
+    expect:
+      energy_score: 0.25
+      energy_class: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - energy_score
+    - energy_class
+    - algorithm
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

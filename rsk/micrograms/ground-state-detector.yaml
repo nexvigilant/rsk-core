@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ground-state-detector
-description: Classifies system-at-rest as a meaningful state. Absence itself as a signal. Fills the ∅ (Nothing) primitive gap.
 version: 0.1.0
+description: Classifies system-at-rest as a meaningful state. Absence itself as a signal. Fills the ∅ (Nothing) primitive gap.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Ground State Detector
+  subtitle: Classifies system-at-rest as a meaningful state. Absence itself as a signal. Fills the ∅ (Nothing) primitive gap.
+  icon: circle
+  route: /vigilance/mg/ground-state-detector
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ground-state-detector
+  cli: rsk mcg run ground-state-detector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_active_channels
   nodes:
@@ -15,7 +44,7 @@ tree:
       type: return
       value:
         action: No activity detected. System at rest. Ground state established.
-        chemistry_analog: 'Absolute zero: no molecular motion, complete equilibrium'
+        chemistry_analog: "Absolute zero: no molecular motion, complete equilibrium"
         system_state: GROUND_STATE
         nothing_primitive: ∅ — absence defines presence; ground state is the reference point
     alert_from_rest:
@@ -24,13 +53,13 @@ tree:
         system_state: ALERT_FROM_REST
         action: Critical alert raised from near-ground state. Immediate attention required.
         nothing_primitive: ∅ — sudden break in silence; ground state violated by high-severity event
-        chemistry_analog: 'Supercooled liquid crystallizing: phase transition from near-inert state'
+        chemistry_analog: "Supercooled liquid crystallizing: phase transition from near-inert state"
     minimal_activity:
       type: return
       value:
         nothing_primitive: ∅ — single ripple on still water; ground state remains dominant
         system_state: MINIMAL_ACTIVITY
-        chemistry_analog: 'Vacuum with trace particles: near-absolute absence with minimal perturbation'
+        chemistry_analog: "Vacuum with trace particles: near-absolute absence with minimal perturbation"
         action: Single low-severity signal detected. Minimal disturbance from ground state.
     full_activity:
       type: return
@@ -38,7 +67,7 @@ tree:
         action: All four channels active. Full system engagement. No ground state advantage.
         nothing_primitive: ∅ — completely transcended; system fully in motion state
         system_state: FULL_ACTIVITY
-        chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
+        chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
     check_active_channels:
       type: condition
       variable: active_channels
@@ -64,7 +93,7 @@ tree:
       type: return
       value:
         nothing_primitive: ∅ — limited activity around the ground reference frame
-        chemistry_analog: 'Diffusion at low concentration: minimal but detectable motion'
+        chemistry_analog: "Diffusion at low concentration: minimal but detectable motion"
         action: Two channels active. Low overall system load. Ground state partially engaged.
         system_state: LOW_ACTIVITY
     moderate_activity:
@@ -72,7 +101,7 @@ tree:
       value:
         system_state: MODERATE_ACTIVITY
         nothing_primitive: ∅ — clear deviation from rest; absence no longer the dominant state
-        chemistry_analog: 'Equilibrium with steady-state flow: dynamic balance with ongoing activity'
+        chemistry_analog: "Equilibrium with steady-state flow: dynamic balance with ongoing activity"
         action: Three channels active. Moderate system load. Ground state significantly perturbed.
     check_single_channel:
       type: condition
@@ -82,130 +111,161 @@ tree:
       true_next: check_severity_for_single
       false_next: check_low_activity
 tests:
-- input:
-    active_channels: 0
-    highest_severity: none
-  expect:
-    system_state: GROUND_STATE
-- input:
-    active_channels: 1
-    highest_severity: low
-  expect:
-    system_state: MINIMAL_ACTIVITY
-- input:
-    active_channels: 1
-    highest_severity: high
-  expect:
-    system_state: ALERT_FROM_REST
-- input:
-    active_channels: 2
-    highest_severity: medium
-  expect:
-    system_state: LOW_ACTIVITY
-- input:
-    highest_severity: low
-    active_channels: 3
-  expect:
-    system_state: MODERATE_ACTIVITY
-- input:
-    active_channels: 4
-    highest_severity: high
-  expect:
-    system_state: FULL_ACTIVITY
-- input:
-    highest_severity: low
-    active_channels: 4
-  expect:
-    system_state: FULL_ACTIVITY
-- input:
-    active_channels: 0
-    highest_severity: high
-  expect:
-    system_state: GROUND_STATE
-- input: {}
-  expect:
-    chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
-    system_state: FULL_ACTIVITY
-    nothing_primitive: ∅ — completely transcended; system fully in motion state
-    action: All four channels active. Full system engagement. No ground state advantage.
-- input:
-    active_channels: -1
-  expect:
-    nothing_primitive: ∅ — limited activity around the ground reference frame
-    system_state: LOW_ACTIVITY
-    chemistry_analog: 'Diffusion at low concentration: minimal but detectable motion'
-    action: Two channels active. Low overall system load. Ground state partially engaged.
-- input:
-    active_channels: -1
-  expect:
-    nothing_primitive: ∅ — limited activity around the ground reference frame
-    action: Two channels active. Low overall system load. Ground state partially engaged.
-    chemistry_analog: 'Diffusion at low concentration: minimal but detectable motion'
-    system_state: LOW_ACTIVITY
-- input: {}
-  expect:
-    system_state: FULL_ACTIVITY
-    action: All four channels active. Full system engagement. No ground state advantage.
-    nothing_primitive: ∅ — completely transcended; system fully in motion state
-    chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
-- input:
-    active_channels: -1
-  expect:
-    nothing_primitive: ∅ — limited activity around the ground reference frame
-    system_state: LOW_ACTIVITY
-    chemistry_analog: 'Diffusion at low concentration: minimal but detectable motion'
-    action: Two channels active. Low overall system load. Ground state partially engaged.
-- input:
-    active_channels: 200
-  expect:
-    nothing_primitive: ∅ — completely transcended; system fully in motion state
-    system_state: FULL_ACTIVITY
-    chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
-    action: All four channels active. Full system engagement. No ground state advantage.
-- input: {}
-  expect:
-    action: All four channels active. Full system engagement. No ground state advantage.
-    nothing_primitive: ∅ — completely transcended; system fully in motion state
-    chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
-    system_state: FULL_ACTIVITY
-- input:
-    active_channels: -1
-  expect:
-    nothing_primitive: ∅ — limited activity around the ground reference frame
-    system_state: LOW_ACTIVITY
-    action: Two channels active. Low overall system load. Ground state partially engaged.
-    chemistry_analog: 'Diffusion at low concentration: minimal but detectable motion'
-- input:
-    active_channels: 300
-  expect:
-    action: All four channels active. Full system engagement. No ground state advantage.
-    nothing_primitive: ∅ — completely transcended; system fully in motion state
-    chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
-    system_state: FULL_ACTIVITY
-- input: {}
-  expect:
-    nothing_primitive: ∅ — completely transcended; system fully in motion state
-    chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
-    action: All four channels active. Full system engagement. No ground state advantage.
-    system_state: FULL_ACTIVITY
-- input:
-    active_channels: -1
-  expect:
-    chemistry_analog: 'Diffusion at low concentration: minimal but detectable motion'
-    nothing_primitive: ∅ — limited activity around the ground reference frame
-    system_state: LOW_ACTIVITY
-    action: Two channels active. Low overall system load. Ground state partially engaged.
-- input:
-    active_channels: 100
-  expect:
-    nothing_primitive: ∅ — completely transcended; system fully in motion state
-    action: All four channels active. Full system engagement. No ground state advantage.
-    chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
-    system_state: FULL_ACTIVITY
-- input: {}
-  expect:
-    nothing_primitive: ∅ — completely transcended; system fully in motion state
-    action: All four channels active. Full system engagement. No ground state advantage.
-    chemistry_analog: 'Boiling liquid: all molecules active, maximum disorder and motion'
-    system_state: FULL_ACTIVITY
-interface: null
+  - input:
+      active_channels: 0
+      highest_severity: none
+    expect:
+      system_state: GROUND_STATE
+  - input:
+      active_channels: 1
+      highest_severity: low
+    expect:
+      system_state: MINIMAL_ACTIVITY
+  - input:
+      active_channels: 1
+      highest_severity: high
+    expect:
+      system_state: ALERT_FROM_REST
+  - input:
+      active_channels: 2
+      highest_severity: medium
+    expect:
+      system_state: LOW_ACTIVITY
+  - input:
+      highest_severity: low
+      active_channels: 3
+    expect:
+      system_state: MODERATE_ACTIVITY
+  - input:
+      active_channels: 4
+      highest_severity: high
+    expect:
+      system_state: FULL_ACTIVITY
+  - input:
+      highest_severity: low
+      active_channels: 4
+    expect:
+      system_state: FULL_ACTIVITY
+  - input:
+      active_channels: 0
+      highest_severity: high
+    expect:
+      system_state: GROUND_STATE
+  - input: {}
+    expect:
+      chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
+      system_state: FULL_ACTIVITY
+      nothing_primitive: ∅ — completely transcended; system fully in motion state
+      action: All four channels active. Full system engagement. No ground state advantage.
+  - input:
+      active_channels: -1
+    expect:
+      nothing_primitive: ∅ — limited activity around the ground reference frame
+      system_state: LOW_ACTIVITY
+      chemistry_analog: "Diffusion at low concentration: minimal but detectable motion"
+      action: Two channels active. Low overall system load. Ground state partially engaged.
+  - input:
+      active_channels: -1
+    expect:
+      nothing_primitive: ∅ — limited activity around the ground reference frame
+      action: Two channels active. Low overall system load. Ground state partially engaged.
+      chemistry_analog: "Diffusion at low concentration: minimal but detectable motion"
+      system_state: LOW_ACTIVITY
+  - input: {}
+    expect:
+      system_state: FULL_ACTIVITY
+      action: All four channels active. Full system engagement. No ground state advantage.
+      nothing_primitive: ∅ — completely transcended; system fully in motion state
+      chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
+  - input:
+      active_channels: -1
+    expect:
+      nothing_primitive: ∅ — limited activity around the ground reference frame
+      system_state: LOW_ACTIVITY
+      chemistry_analog: "Diffusion at low concentration: minimal but detectable motion"
+      action: Two channels active. Low overall system load. Ground state partially engaged.
+  - input:
+      active_channels: 200
+    expect:
+      nothing_primitive: ∅ — completely transcended; system fully in motion state
+      system_state: FULL_ACTIVITY
+      chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
+      action: All four channels active. Full system engagement. No ground state advantage.
+  - input: {}
+    expect:
+      action: All four channels active. Full system engagement. No ground state advantage.
+      nothing_primitive: ∅ — completely transcended; system fully in motion state
+      chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
+      system_state: FULL_ACTIVITY
+  - input:
+      active_channels: -1
+    expect:
+      nothing_primitive: ∅ — limited activity around the ground reference frame
+      system_state: LOW_ACTIVITY
+      action: Two channels active. Low overall system load. Ground state partially engaged.
+      chemistry_analog: "Diffusion at low concentration: minimal but detectable motion"
+  - input:
+      active_channels: 300
+    expect:
+      action: All four channels active. Full system engagement. No ground state advantage.
+      nothing_primitive: ∅ — completely transcended; system fully in motion state
+      chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
+      system_state: FULL_ACTIVITY
+  - input: {}
+    expect:
+      nothing_primitive: ∅ — completely transcended; system fully in motion state
+      chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
+      action: All four channels active. Full system engagement. No ground state advantage.
+      system_state: FULL_ACTIVITY
+  - input:
+      active_channels: -1
+    expect:
+      chemistry_analog: "Diffusion at low concentration: minimal but detectable motion"
+      nothing_primitive: ∅ — limited activity around the ground reference frame
+      system_state: LOW_ACTIVITY
+      action: Two channels active. Low overall system load. Ground state partially engaged.
+  - input:
+      active_channels: 100
+    expect:
+      nothing_primitive: ∅ — completely transcended; system fully in motion state
+      action: All four channels active. Full system engagement. No ground state advantage.
+      chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
+      system_state: FULL_ACTIVITY
+  - input: {}
+    expect:
+      nothing_primitive: ∅ — completely transcended; system fully in motion state
+      action: All four channels active. Full system engagement. No ground state advantage.
+      chemistry_analog: "Boiling liquid: all molecules active, maximum disorder and motion"
+      system_state: FULL_ACTIVITY
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

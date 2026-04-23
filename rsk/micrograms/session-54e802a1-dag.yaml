@@ -1,0 +1,157 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: session-54e802a1-dag
+version: 1.0.0
+description: Auto-generated DAG from session 54e802a1 fast-food prompts (2 nodes)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: step_0_done
+    type: bool
+    required: false
+    description: ""
+  - name: step_1_done
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: task
+    type: string
+  - name: prompt
+    type: string
+  - name: priority
+    type: int
+interface:
+  inputs:
+    step_0_done:
+      type: bool
+      required: false
+    step_1_done:
+      type: bool
+      required: false
+  outputs:
+    task:
+      type: string
+    prompt:
+      type: string
+    priority:
+      type: int
+ui:
+  title: Session 54e802a1 Dag
+  subtitle: Auto-generated DAG from session 54e802a1 fast-food prompts (2 nodes)
+  icon: circle
+  route: /vigilance/mg/session-54e802a1-dag
+  steps:
+    - field: step_0_done
+      label: step 0 done
+      help: Enter step_0_done
+      widget: toggle
+      placeholder: null
+    - field: step_1_done
+      label: step 1 done
+      help: Enter step_1_done
+      widget: toggle
+      placeholder: null
+  result:
+    template: "task: {{task}} — prompt: {{prompt}} — priority: {{priority}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/session-54e802a1-dag
+  cli: rsk mcg run session-54e802a1-dag
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: gate_0
+  nodes:
+    gate_0:
+      type: condition
+      variable: step_0_done
+      operator: eq
+      value: true
+      true_next: gate_1
+      false_next: node_0
+    node_0:
+      type: return
+      value:
+        task: step-0
+        prompt: |-
+          {"session_id":"26fcd73c-a769-41df-8ddd-1df55f61e1f5","transcript_path":"/home/matthew/.claude/projects/-home-matthew/26fcd73c-a769-41df-8ddd-1df55f61e1f5.jsonl","cwd":"/home/matthew/Projects/Active/nexcore/crates/nexvigilant-terminal/frontend","permission_mode":"bypassPermissions","hook_event_name":"Stop","stop_hook_active":false,"last_assistant_message":"---
+
+          **Session exhale:** fully demonstrated — Terminal xterm.js rendering fixed (display:none→block before open), FIFO command bridge proven with real PV data (metformin), MCP bridge binary updated.
+          Lessons: 3. Patterns: 1. Proposition: xterm.js requires visible container at open() — zero-size canvas renders nothing silently. rho: PASS.
+          Manifest: 4 files (pty.rs, main.ts, mcp_bridge.rs, nvterm_mcp.rs).
+
+          > Reconnect nvterm-mcp MCP server and test the 7 tools live against the Terminal
+          > Run a full signal detection pipeline inside the Terminal via nvterm_claude_print
+          > Remove diagnostic logging from pty.rs and main.ts, rebuild clean release
+          > Clean up the deprecated claude-repl-mcp satellite crate now that REPL is in the Terminal"}
+        priority: 1
+    gate_1:
+      type: condition
+      variable: step_1_done
+      operator: eq
+      value: true
+      true_next: node_1
+      false_next: node_1
+    node_1:
+      type: return
+      value:
+        task: step-1
+        prompt: '{"session_id":"6f1e7158-ba20-42ed-87b4-c4c110698142","transcript_path":"/home/matthew/.claude/projects/-home-matthew/6f1e7158-ba20-42ed-87b4-c4c110698142.jsonl","cwd":"/home/matthew/Projects/Active/nexcore","permission_mode":"bypassPermissions","hook_event_name":"Stop","stop_hook_active":false}'
+        priority: 2
+tests:
+  - name: empty input routes to first prompt
+    input: {}
+    expect:
+      task: step-0
+      priority: 1
+  - name: first done routes to second
+    input:
+      step_0_done: true
+    expect:
+      task: step-1
+      priority: 2
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - task
+    - prompt
+    - priority
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

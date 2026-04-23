@@ -1,38 +1,88 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: adapt-label-to-expectedness
-description: >
-  Adapter: transforms DailyMed labeling data (adverse_reactions section) into
-  the input shape needed by expectedness-check microgram. Takes boolean flags
-  indicating whether the event appears in the drug label.
 version: 0.1.0
-primitive_signature:
-  dominant: 'μ'
-  expression: 'μ(∂_label → ∂_expectedness) — maps labeling boundary to expectedness boundary'
-  primes: ['μ', '∂', 'κ']
-  arguments: ['event_in_label', 'event_class_in_label']
-  chain_prediction: >
-    Bridge between dailymed config (get_adverse_reactions output) and
-    expectedness-check microgram. DailyMed tells us what's in the label,
-    this adapter formats it for the expectedness classifier.
+description: |
+  Adapter: transforms DailyMed labeling data (adverse_reactions section) into the input shape needed by expectedness-check microgram. Takes boolean flags indicating whether the event appears in the drug label.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: event_in_label
+    type: bool
+    required: true
+    description: Is the specific event listed in the adverse reactions section?
+  - name: event_class_in_label
+    type: bool
+    required: false
+    description: Is the event class (SOC) listed even if specific PT is not?
+  - name: severity_in_label
+    type: bool
+    required: false
+    description: Is the observed severity level described in the label?
+outputs:
+  - name: expectedness_category
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     event_in_label:
       type: bool
       required: true
-      description: "Is the specific event listed in the adverse reactions section?"
+      description: Is the specific event listed in the adverse reactions section?
     event_class_in_label:
       type: bool
       required: false
-      description: "Is the event class (SOC) listed even if specific PT is not?"
+      description: Is the event class (SOC) listed even if specific PT is not?
     severity_in_label:
       type: bool
       required: false
-      description: "Is the observed severity level described in the label?"
+      description: Is the observed severity level described in the label?
   outputs:
     expectedness_category:
       type: string
-      description: "EXPECTED | UNEXPECTED_NATURE | UNEXPECTED_SEVERITY | UNKNOWN"
+      description: EXPECTED | UNEXPECTED_NATURE | UNEXPECTED_SEVERITY | UNKNOWN
     action:
       type: string
+ui:
+  title: Adapt Label To Expectedness
+  subtitle: |
+    Adapter: transforms DailyMed labeling data (adverse_reactions section) into the input shape needed by expectedness-check microgram. Takes boolean flags indicating whether the event appears in the drug label.
+  icon: circle
+  route: /vigilance/mg/adapt-label-to-expectedness
+  steps:
+    - field: event_in_label
+      label: event in label
+      help: Is the specific event listed in the adverse reactions section?
+      widget: toggle
+      placeholder: null
+    - field: event_class_in_label
+      label: event class in label
+      help: Is the event class (SOC) listed even if specific PT is not?
+      widget: toggle
+      placeholder: null
+    - field: severity_in_label
+      label: severity in label
+      help: Is the observed severity level described in the label?
+      widget: toggle
+      placeholder: null
+  result:
+    template: "expectedness_category: {{expectedness_category}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/adapt-label-to-expectedness
+  cli: rsk mcg run adapt-label-to-expectedness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_event_present
   nodes:
@@ -43,7 +93,6 @@ tree:
       value: null
       true_next: unknown
       false_next: check_listed
-
     check_listed:
       type: condition
       variable: event_in_label
@@ -51,13 +100,11 @@ tree:
       value: true
       true_next: expected
       false_next: check_class
-
     expected:
       type: return
       value:
         expectedness_category: EXPECTED
-        action: "Event listed in label — expected, routine reporting"
-
+        action: Event listed in label — expected, routine reporting
     check_class:
       type: condition
       variable: event_class_in_label
@@ -65,48 +112,74 @@ tree:
       value: true
       true_next: unexpected_severity
       false_next: unexpected_nature
-
     unexpected_severity:
       type: return
       value:
         expectedness_category: UNEXPECTED_SEVERITY
-        action: "Event class listed but specific event not — unexpected by severity, expedited reporting if serious"
-
+        action: Event class listed but specific event not — unexpected by severity, expedited reporting if serious
     unexpected_nature:
       type: return
       value:
         expectedness_category: UNEXPECTED_NATURE
-        action: "Event not in label at all — unexpected by nature, expedited reporting if serious"
-
+        action: Event not in label at all — unexpected by nature, expedited reporting if serious
     unknown:
       type: return
       value:
         expectedness_category: UNKNOWN
-        action: "Label data unavailable — assume unexpected for regulatory safety"
-
+        action: Label data unavailable — assume unexpected for regulatory safety
 tests:
-- input:
-    event_in_label: true
-  expect:
-    expectedness_category: EXPECTED
-
-- input:
-    event_in_label: false
-    event_class_in_label: true
-  expect:
-    expectedness_category: UNEXPECTED_SEVERITY
-
-- input:
-    event_in_label: false
-    event_class_in_label: false
-  expect:
-    expectedness_category: UNEXPECTED_NATURE
-
-- input: {}
-  expect:
-    expectedness_category: UNKNOWN
-
-- input:
-    event_in_label: false
-  expect:
-    expectedness_category: UNEXPECTED_NATURE
+  - input:
+      event_in_label: true
+    expect:
+      expectedness_category: EXPECTED
+  - input:
+      event_in_label: false
+      event_class_in_label: true
+    expect:
+      expectedness_category: UNEXPECTED_SEVERITY
+  - input:
+      event_in_label: false
+      event_class_in_label: false
+    expect:
+      expectedness_category: UNEXPECTED_NATURE
+  - input: {}
+    expect:
+      expectedness_category: UNKNOWN
+  - input:
+      event_in_label: false
+    expect:
+      expectedness_category: UNEXPECTED_NATURE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - expectedness_category
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

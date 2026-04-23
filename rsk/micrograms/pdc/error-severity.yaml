@@ -1,6 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: error-severity
-description: "Domain 6: Grade medication error outcome severity — near miss through fatal. Returns NCC MERP category, action, and investigation level."
 version: 0.1.0
+description: "Domain 6: Grade medication error outcome severity — near miss through fatal. Returns NCC MERP category, action, and investigation level."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: caused_harm
+    type: bool
+    required: false
+    description: ""
+  - name: is_fatal
+    type: bool
+    required: false
+    description: ""
+  - name: is_permanent
+    type: bool
+    required: false
+    description: ""
+  - name: reached_patient
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: harm_level
+    type: string
+  - name: investigation
+    type: string
+  - name: just_culture
+    type: string
+  - name: ncc_merp
+    type: string
+  - name: rca_required
+    type: bool
+  - name: reporting
+    type: string
+  - name: severity
+    type: string
 interface:
   inputs:
     caused_harm:
@@ -32,6 +76,43 @@ interface:
       type: string
     severity:
       type: string
+ui:
+  title: Error Severity
+  subtitle: "Domain 6: Grade medication error outcome severity — near miss through fatal. Returns NCC MERP category, action, and investigation level."
+  icon: circle
+  route: /vigilance/mg/error-severity
+  steps:
+    - field: caused_harm
+      label: caused harm
+      help: Enter caused_harm
+      widget: toggle
+      placeholder: null
+    - field: is_fatal
+      label: is fatal
+      help: Enter is_fatal
+      widget: toggle
+      placeholder: null
+    - field: is_permanent
+      label: is permanent
+      help: Enter is_permanent
+      widget: toggle
+      placeholder: null
+    - field: reached_patient
+      label: reached patient
+      help: Enter reached_patient
+      widget: toggle
+      placeholder: null
+  result:
+    template: "action: {{action}} — harm_level: {{harm_level}} — investigation: {{investigation}} — just_culture: {{just_culture}} — ncc_merp: {{ncc_merp}} — rca_required: {{rca_required}} — reporting: {{reporting}} — severity: {{severity}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/error-severity
+  cli: rsk mcg run error-severity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_reached_patient
   nodes:
@@ -67,92 +148,132 @@ tree:
       type: return
       value:
         severity: NEAR_MISS
-        ncc_merp: "Category A-B"
+        ncc_merp: Category A-B
         harm_level: none
         investigation: TRENDING
-        action: "document, analyze for system learning, track trends"
+        action: document, analyze for system learning, track trends
         rca_required: false
-        reporting: "internal voluntary, aggregate analysis"
-        just_culture: "celebrate the catch — system worked"
+        reporting: internal voluntary, aggregate analysis
+        just_culture: celebrate the catch — system worked
     no_harm:
       type: return
       value:
         severity: NO_HARM
-        ncc_merp: "Category C-D"
+        ncc_merp: Category C-D
         harm_level: none
         investigation: BASIC
-        action: "document, brief analysis, consider system factors"
+        action: document, brief analysis, consider system factors
         rca_required: false
-        reporting: "internal mandatory, consider external reporting"
-        just_culture: "learning opportunity — what let the error through?"
+        reporting: internal mandatory, consider external reporting
+        just_culture: learning opportunity — what let the error through?
     temporary_harm:
       type: return
       value:
         severity: TEMPORARY_HARM
-        ncc_merp: "Category E-F"
+        ncc_merp: Category E-F
         harm_level: reversible
         investigation: COMPREHENSIVE
-        action: "patient care intervention, RCA, corrective action plan"
+        action: patient care intervention, RCA, corrective action plan
         rca_required: true
-        reporting: "internal mandatory, external regulatory reporting"
-        just_culture: "system investigation — identify root causes, not blame"
+        reporting: internal mandatory, external regulatory reporting
+        just_culture: system investigation — identify root causes, not blame
     permanent_harm:
       type: return
       value:
         severity: PERMANENT_HARM
-        ncc_merp: "Category G-H"
+        ncc_merp: Category G-H
         harm_level: irreversible
         investigation: FULL_RCA
-        action: "immediate patient care, comprehensive RCA, CAPA, leadership review"
+        action: immediate patient care, comprehensive RCA, CAPA, leadership review
         rca_required: true
-        reporting: "internal mandatory, regulatory reporting, sentinel event notification"
-        just_culture: "full system analysis — human error vs at-risk vs reckless"
+        reporting: internal mandatory, regulatory reporting, sentinel event notification
+        just_culture: full system analysis — human error vs at-risk vs reckless
     fatal:
       type: return
       value:
         severity: FATAL
-        ncc_merp: "Category I"
+        ncc_merp: Category I
         harm_level: death
         investigation: SENTINEL_EVENT
-        action: "immediate leadership notification, comprehensive RCA, regulatory report, family disclosure"
+        action: immediate leadership notification, comprehensive RCA, regulatory report, family disclosure
         rca_required: true
-        reporting: "internal mandatory, regulatory expedited, sentinel event, accreditation body"
-        just_culture: "comprehensive review — protect staff, fix system, honor patient"
+        reporting: internal mandatory, regulatory expedited, sentinel event, accreditation body
+        just_culture: comprehensive review — protect staff, fix system, honor patient
 tests:
-- input:
-    reached_patient: false
-  expect:
-    severity: NEAR_MISS
-    rca_required: false
-- input:
-    reached_patient: true
-    caused_harm: false
-  expect:
-    severity: NO_HARM
-    ncc_merp: "Category C-D"
-- input:
-    reached_patient: true
-    caused_harm: true
-    is_permanent: false
-  expect:
-    severity: TEMPORARY_HARM
-    rca_required: true
-- input:
-    reached_patient: true
-    caused_harm: true
-    is_permanent: true
-    is_fatal: false
-  expect:
-    severity: PERMANENT_HARM
-    investigation: FULL_RCA
-- input:
-    reached_patient: true
-    caused_harm: true
-    is_permanent: true
-    is_fatal: true
-  expect:
-    severity: FATAL
-    investigation: SENTINEL_EVENT
-- input: {}
-  expect:
-    severity: TEMPORARY_HARM
+  - input:
+      reached_patient: false
+    expect:
+      severity: NEAR_MISS
+      rca_required: false
+  - input:
+      reached_patient: true
+      caused_harm: false
+    expect:
+      severity: NO_HARM
+      ncc_merp: Category C-D
+  - input:
+      reached_patient: true
+      caused_harm: true
+      is_permanent: false
+    expect:
+      severity: TEMPORARY_HARM
+      rca_required: true
+  - input:
+      reached_patient: true
+      caused_harm: true
+      is_permanent: true
+      is_fatal: false
+    expect:
+      severity: PERMANENT_HARM
+      investigation: FULL_RCA
+  - input:
+      reached_patient: true
+      caused_harm: true
+      is_permanent: true
+      is_fatal: true
+    expect:
+      severity: FATAL
+      investigation: SENTINEL_EVENT
+  - input: {}
+    expect:
+      severity: TEMPORARY_HARM
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - harm_level
+    - investigation
+    - just_culture
+    - ncc_merp
+    - rca_required
+    - reporting
+    - severity
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

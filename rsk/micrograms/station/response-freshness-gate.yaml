@@ -1,6 +1,85 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: response-freshness-gate
-description: Validates API response data freshness. Determines if data is recent enough for the intended use case.
 version: 0.1.0
+description: Validates API response data freshness. Determines if data is recent enough for the intended use case.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: data_year
+    type: int
+    required: false
+    description: ""
+  - name: current_year
+    type: int
+    required: false
+    description: ""
+  - name: is_current
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: usable
+    type: bool
+  - name: freshness
+    type: string
+interface:
+  inputs:
+    data_year:
+      type: int
+      required: false
+    current_year:
+      type: int
+      required: false
+    is_current:
+      type: bool
+      required: false
+  outputs:
+    usable:
+      type: bool
+      required: false
+    freshness:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Response Freshness Gate
+  subtitle: Validates API response data freshness. Determines if data is recent enough for the intended use case.
+  icon: circle
+  route: /vigilance/mg/response-freshness-gate
+  steps:
+    - field: data_year
+      label: data year
+      help: Enter data_year
+      widget: text
+      placeholder: null
+    - field: current_year
+      label: current year
+      help: Enter current_year
+      widget: text
+      placeholder: null
+    - field: is_current
+      label: is current
+      help: Enter is_current
+      widget: toggle
+      placeholder: null
+  result:
+    template: "usable: {{usable}} — freshness: {{freshness}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/response-freshness-gate
+  cli: rsk mcg run response-freshness-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_is_current
   nodes:
@@ -53,101 +132,116 @@ tree:
       true_next: return_current
       false_next: check_year
 tests:
-- input:
-    data_year: 2026
-    is_current: true
-    current_year: 2026
-  expect:
-    freshness: current
-    usable: true
-- input:
-    data_year: 2024
-    current_year: 2026
-    is_current: false
-  expect:
-    freshness: acceptable
-    usable: true
-- input:
-    current_year: 2026
-    is_current: false
-    data_year: 2019
-  expect:
-    usable: false
-    freshness: ancient
-- input:
-    data_year: 2010
-    current_year: 2026
-    is_current: false
-  expect:
-    usable: false
-    freshness: ancient
-- input:
-    is_current: false
-    data_year: 2021
-    current_year: 2026
-  expect:
-    freshness: acceptable
-    usable: true
-- input: {}
-  expect:
-    freshness: ancient
-    usable: false
-- input:
-    data_year: 0
-  expect:
-    usable: false
-    freshness: ancient
-- input:
-    data_year: -1
-  expect:
-    usable: false
-    freshness: ancient
-- input:
-    data_year: 2020
-  expect:
-    usable: false
-    freshness: stale
-- input:
-    data_year: 2022
-  expect:
-    freshness: acceptable
-    usable: true
-- input:
-    data_year: 202100
-  expect:
-    freshness: acceptable
-    usable: true
-- input:
-    data_year: 0
-  expect:
-    freshness: ancient
-    usable: false
-- input:
-    data_year: -1
-  expect:
-    usable: false
-    freshness: ancient
-- input:
-    data_year: 202000
-  expect:
-    usable: true
-    freshness: acceptable
-interface:
-  inputs:
-    data_year:
-      type: int
-      required: false
-    current_year:
-      type: int
-      required: false
-    is_current:
-      type: bool
-      required: false
-  outputs:
-    usable:
-      type: bool
-      required: false
-    freshness:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      data_year: 2026
+      is_current: true
+      current_year: 2026
+    expect:
+      freshness: current
+      usable: true
+  - input:
+      data_year: 2024
+      current_year: 2026
+      is_current: false
+    expect:
+      freshness: acceptable
+      usable: true
+  - input:
+      current_year: 2026
+      is_current: false
+      data_year: 2019
+    expect:
+      usable: false
+      freshness: ancient
+  - input:
+      data_year: 2010
+      current_year: 2026
+      is_current: false
+    expect:
+      usable: false
+      freshness: ancient
+  - input:
+      is_current: false
+      data_year: 2021
+      current_year: 2026
+    expect:
+      freshness: acceptable
+      usable: true
+  - input: {}
+    expect:
+      freshness: ancient
+      usable: false
+  - input:
+      data_year: 0
+    expect:
+      usable: false
+      freshness: ancient
+  - input:
+      data_year: -1
+    expect:
+      usable: false
+      freshness: ancient
+  - input:
+      data_year: 2020
+    expect:
+      usable: false
+      freshness: stale
+  - input:
+      data_year: 2022
+    expect:
+      freshness: acceptable
+      usable: true
+  - input:
+      data_year: 202100
+    expect:
+      freshness: acceptable
+      usable: true
+  - input:
+      data_year: 0
+    expect:
+      freshness: ancient
+      usable: false
+  - input:
+      data_year: -1
+    expect:
+      usable: false
+      freshness: ancient
+  - input:
+      data_year: 202000
+    expect:
+      usable: true
+      freshness: acceptable
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - usable
+    - freshness
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

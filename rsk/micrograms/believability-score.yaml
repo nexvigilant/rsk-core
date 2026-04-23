@@ -1,0 +1,226 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: believability-score
+version: 0.1.0
+description: "Dalio believability-weighted vote weight for Moltbook-ARP. Inputs: voter verdict success rate (0-100 as percent), voter molt tier numeric (0=M0, 4=M4, 5=M5), domain match flag. Returns integer weight 1-5 reflecting vote credibility."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: success_pct
+    type: integer
+    required: true
+    description: Voter verdict success rate, 0-100
+  - name: molt_numeric
+    type: integer
+    required: true
+    description: M0=0, M1=1, M2=2, M3=3, M4=4, M5=5
+  - name: domain_match
+    type: bool
+    required: true
+    description: True if voter primary domain matches post submolt domain
+outputs:
+  - name: weight
+    type: integer
+interface:
+  inputs:
+    success_pct:
+      type: integer
+      required: true
+      description: Voter verdict success rate, 0-100
+    molt_numeric:
+      type: integer
+      required: true
+      description: M0=0, M1=1, M2=2, M3=3, M4=4, M5=5
+    domain_match:
+      type: bool
+      required: true
+      description: True if voter primary domain matches post submolt domain
+  outputs:
+    weight:
+      type: integer
+ui:
+  title: Believability Score
+  subtitle: "Dalio believability-weighted vote weight for Moltbook-ARP. Inputs: voter verdict success rate (0-100 as percent), voter molt tier numeric (0=M0, 4=M4, 5=M5), domain match flag. Returns integer weight 1-5 reflecting vote credibility."
+  icon: circle
+  route: /vigilance/mg/believability-score
+  steps:
+    - field: success_pct
+      label: success pct
+      help: Voter verdict success rate, 0-100
+      widget: number
+      placeholder: null
+    - field: molt_numeric
+      label: molt numeric
+      help: M0=0, M1=1, M2=2, M3=3, M4=4, M5=5
+      widget: number
+      placeholder: null
+    - field: domain_match
+      label: domain match
+      help: True if voter primary domain matches post submolt domain
+      widget: toggle
+      placeholder: null
+  result:
+    template: "weight: {{weight}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/believability-score
+  cli: rsk mcg run believability-score
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_m0
+  nodes:
+    check_m0:
+      type: condition
+      variable: molt_numeric
+      operator: lte
+      value: 0
+      true_next: weight_one
+      false_next: check_high_track
+    check_high_track:
+      type: condition
+      variable: success_pct
+      operator: gte
+      value: 80
+      true_next: check_senior_plus_domain
+      false_next: check_mid_track
+    check_senior_plus_domain:
+      type: condition
+      variable: molt_numeric
+      operator: gte
+      value: 3
+      true_next: check_domain_for_five
+      false_next: weight_three
+    check_domain_for_five:
+      type: condition
+      variable: domain_match
+      operator: eq
+      value: true
+      true_next: weight_five
+      false_next: weight_four
+    check_mid_track:
+      type: condition
+      variable: success_pct
+      operator: gte
+      value: 50
+      true_next: check_senior_mid
+      false_next: weight_one
+    check_senior_mid:
+      type: condition
+      variable: molt_numeric
+      operator: gte
+      value: 3
+      true_next: weight_three
+      false_next: weight_two
+    weight_one:
+      type: return
+      value:
+        weight: 1
+    weight_two:
+      type: return
+      value:
+        weight: 2
+    weight_three:
+      type: return
+      value:
+        weight: 3
+    weight_four:
+      type: return
+      value:
+        weight: 4
+    weight_five:
+      type: return
+      value:
+        weight: 5
+tests:
+  - name: m0_always_weight_one
+    input:
+      success_pct: 100
+      molt_numeric: 0
+      domain_match: true
+    expect:
+      weight: 1
+  - name: high_track_senior_domain_match_max
+    input:
+      success_pct: 95
+      molt_numeric: 4
+      domain_match: true
+    expect:
+      weight: 5
+  - name: high_track_senior_no_domain
+    input:
+      success_pct: 90
+      molt_numeric: 3
+      domain_match: false
+    expect:
+      weight: 4
+  - name: high_track_junior
+    input:
+      success_pct: 90
+      molt_numeric: 2
+      domain_match: true
+    expect:
+      weight: 3
+  - name: mid_track_senior
+    input:
+      success_pct: 60
+      molt_numeric: 4
+      domain_match: false
+    expect:
+      weight: 3
+  - name: mid_track_junior
+    input:
+      success_pct: 55
+      molt_numeric: 2
+      domain_match: false
+    expect:
+      weight: 2
+  - name: low_track_any_stage
+    input:
+      success_pct: 20
+      molt_numeric: 4
+      domain_match: true
+    expect:
+      weight: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - weight
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

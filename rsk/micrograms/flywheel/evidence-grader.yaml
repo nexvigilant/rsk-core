@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: evidence-grader
-description: 'Grade loop evaluation evidence quality for VDAG Reality Gradient. Maps loop_state + margin_ratio to evidence quality (NONE/WEAK/MODERATE/STRONG) with numeric score (0/33/66/100).'
 version: 0.1.0
+description: Grade loop evaluation evidence quality for VDAG Reality Gradient. Maps loop_state + margin_ratio to evidence quality (NONE/WEAK/MODERATE/STRONG) with numeric score (0/33/66/100).
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: loop_state
+    type: string
+    required: true
+    description: ""
+  - name: margin_ratio
+    type: integer
+    required: true
+    description: ""
+outputs:
+  - name: quality
+    type: string
+  - name: score
+    type: float
 interface:
   inputs:
     loop_state:
@@ -14,6 +38,33 @@ interface:
       type: string
     score:
       type: float
+ui:
+  title: Evidence Grader
+  subtitle: Grade loop evaluation evidence quality for VDAG Reality Gradient. Maps loop_state + margin_ratio to evidence quality (NONE/WEAK/MODERATE/STRONG) with numeric score (0/33/66/100).
+  icon: circle
+  route: /vigilance/mg/evidence-grader
+  steps:
+    - field: loop_state
+      label: loop state
+      help: Enter loop_state
+      widget: text
+      placeholder: null
+    - field: margin_ratio
+      label: margin ratio
+      help: Enter margin_ratio
+      widget: number
+      placeholder: null
+  result:
+    template: "quality: {{quality}} — score: {{score}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/evidence-grader
+  cli: rsk mcg run evidence-grader
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_default
   nodes:
@@ -98,84 +149,118 @@ tree:
       type: return
       value:
         quality: NONE
-        score: 0.0
+        score: 0
     return_weak:
       type: return
       value:
         quality: WEAK
-        score: 33.0
+        score: 33
     return_moderate:
       type: return
       value:
         quality: MODERATE
-        score: 66.0
+        score: 66
     return_strong:
       type: return
       value:
         quality: STRONG
-        score: 100.0
+        score: 100
 tests:
-- input:
-    loop_state: default
-    margin_ratio: 50
-  expect:
-    quality: NONE
-    score: 0.0
-- input:
-    loop_state: disintegrated
-    margin_ratio: 0
-  expect:
-    quality: STRONG
-    score: 100.0
-- input:
-    loop_state: stalled
-    margin_ratio: 0
-  expect:
-    quality: STRONG
-    score: 100.0
-- input:
-    loop_state: gimbal_lock
-    margin_ratio: 0
-  expect:
-    quality: STRONG
-    score: 100.0
-- input:
-    loop_state: fatigue_failure_imminent
-    margin_ratio: 0
-  expect:
-    quality: STRONG
-    score: 100.0
-- input:
-    loop_state: critical
-    margin_ratio: 5
-  expect:
-    quality: WEAK
-    score: 33.0
-- input:
-    loop_state: warning
-    margin_ratio: 30
-  expect:
-    quality: MODERATE
-    score: 66.0
-- input:
-    loop_state: low
-    margin_ratio: 20
-  expect:
-    quality: WEAK
-    score: 33.0
-- input:
-    loop_state: thriving
-    margin_ratio: 75
-  expect:
-    quality: STRONG
-    score: 100.0
-- input:
-    loop_state: nominal
-    margin_ratio: 25
-  expect:
-    quality: MODERATE
-    score: 66.0
-- input: {}
-  expect:
-    quality: WEAK
-    score: 33.0
+  - input:
+      loop_state: default
+      margin_ratio: 50
+    expect:
+      quality: NONE
+      score: 0
+  - input:
+      loop_state: disintegrated
+      margin_ratio: 0
+    expect:
+      quality: STRONG
+      score: 100
+  - input:
+      loop_state: stalled
+      margin_ratio: 0
+    expect:
+      quality: STRONG
+      score: 100
+  - input:
+      loop_state: gimbal_lock
+      margin_ratio: 0
+    expect:
+      quality: STRONG
+      score: 100
+  - input:
+      loop_state: fatigue_failure_imminent
+      margin_ratio: 0
+    expect:
+      quality: STRONG
+      score: 100
+  - input:
+      loop_state: critical
+      margin_ratio: 5
+    expect:
+      quality: WEAK
+      score: 33
+  - input:
+      loop_state: warning
+      margin_ratio: 30
+    expect:
+      quality: MODERATE
+      score: 66
+  - input:
+      loop_state: low
+      margin_ratio: 20
+    expect:
+      quality: WEAK
+      score: 33
+  - input:
+      loop_state: thriving
+      margin_ratio: 75
+    expect:
+      quality: STRONG
+      score: 100
+  - input:
+      loop_state: nominal
+      margin_ratio: 25
+    expect:
+      quality: MODERATE
+      score: 66
+  - input: {}
+    expect:
+      quality: WEAK
+      score: 33
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - quality
+    - score
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

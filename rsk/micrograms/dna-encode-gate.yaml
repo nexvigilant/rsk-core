@@ -1,11 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dna-encode-gate
-description: 'Gates DNA encoding: validates feature vector has sufficient dimensions and non-zero values before encoding as DNA strand'
 version: 0.1.0
-family: dna-ml
-primitive_signature:
-  dominant: boundary
-  expression: '∂(N(features), ∃(non_zero))'
-  primes: [boundary, quantity, existence]
+description: "Gates DNA encoding: validates feature vector has sufficient dimensions and non-zero values before encoding as DNA strand"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: n_features
+    type: int
+    required: true
+    description: ""
+  - name: non_zero_ratio
+    type: float
+    required: true
+    description: ""
+  - name: max_value
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: gate_decision
+    type: string
+  - name: reason
+    type: string
+  - name: encoding_quality
+    type: string
 interface:
   inputs:
     n_features:
@@ -24,6 +49,38 @@ interface:
       type: string
     encoding_quality:
       type: string
+ui:
+  title: Dna Encode Gate
+  subtitle: "Gates DNA encoding: validates feature vector has sufficient dimensions and non-zero values before encoding as DNA strand"
+  icon: circle
+  route: /vigilance/mg/dna-encode-gate
+  steps:
+    - field: n_features
+      label: n features
+      help: Enter n_features
+      widget: text
+      placeholder: null
+    - field: non_zero_ratio
+      label: non zero ratio
+      help: Enter non_zero_ratio
+      widget: text
+      placeholder: null
+    - field: max_value
+      label: max value
+      help: Enter max_value
+      widget: text
+      placeholder: null
+  result:
+    template: "gate_decision: {{gate_decision}} — reason: {{reason}} — encoding_quality: {{encoding_quality}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dna-encode-gate
+  cli: rsk mcg run dna-encode-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_min_features
   nodes:
@@ -34,7 +91,6 @@ tree:
       value: 4
       true_next: check_non_zero
       false_next: insufficient_features
-
     check_non_zero:
       type: condition
       variable: non_zero_ratio
@@ -42,7 +98,6 @@ tree:
       value: 0.5
       true_next: check_full_features
       false_next: sparse_features
-
     check_full_features:
       type: condition
       variable: n_features
@@ -50,35 +105,30 @@ tree:
       value: 12
       true_next: full_encode
       false_next: partial_encode
-
     full_encode:
       type: return
       value:
         gate_decision: proceed
-        reason: 'Full 12-dim PV feature vector with sufficient non-zero values'
+        reason: Full 12-dim PV feature vector with sufficient non-zero values
         encoding_quality: high
-
     partial_encode:
       type: return
       value:
         gate_decision: proceed
-        reason: 'Partial feature vector — encoding will have reduced discriminative power'
+        reason: Partial feature vector — encoding will have reduced discriminative power
         encoding_quality: medium
-
     sparse_features:
       type: return
       value:
         gate_decision: warn
-        reason: 'More than half of features are zero — DNA strand will have low information content'
+        reason: More than half of features are zero — DNA strand will have low information content
         encoding_quality: low
-
     insufficient_features:
       type: return
       value:
         gate_decision: reject
-        reason: 'Fewer than 4 features — insufficient for meaningful DNA encoding'
+        reason: Fewer than 4 features — insufficient for meaningful DNA encoding
         encoding_quality: none
-
 tests:
   - name: full_12_features
     input:
@@ -88,7 +138,6 @@ tests:
     expect:
       gate_decision: proceed
       encoding_quality: high
-
   - name: partial_features
     input:
       n_features: 8
@@ -96,7 +145,6 @@ tests:
     expect:
       gate_decision: proceed
       encoding_quality: medium
-
   - name: sparse_data
     input:
       n_features: 12
@@ -104,16 +152,49 @@ tests:
     expect:
       gate_decision: warn
       encoding_quality: low
-
   - name: too_few_features
     input:
       n_features: 2
-      non_zero_ratio: 1.0
+      non_zero_ratio: 1
     expect:
       gate_decision: reject
       encoding_quality: none
-
   - name: null_safety
     input: {}
     expect:
       gate_decision: reject
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - gate_decision
+    - reason
+    - encoding_quality
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

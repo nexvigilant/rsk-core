@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: rmp-measure-effectiveness
-description: 'Risk Minimization Plan (RMP) measure effectiveness assessment based on measure type, compliance rate, and outcome improvement. EMA RMP Guideline Rev 2.1.'
 version: 0.1.0
+description: Risk Minimization Plan (RMP) measure effectiveness assessment based on measure type, compliance rate, and outcome improvement. EMA RMP Guideline Rev 2.1.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: measure_type
+    type: string
+    required: true
+    description: ""
+  - name: compliance_rate
+    type: float
+    required: true
+    description: ""
+  - name: outcome_improved
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: effectiveness
+    type: string
+  - name: recommendation
+    type: string
+  - name: continue_measure
+    type: bool
 interface:
   inputs:
     measure_type:
@@ -19,6 +49,38 @@ interface:
       type: string
     continue_measure:
       type: bool
+ui:
+  title: Rmp Measure Effectiveness
+  subtitle: Risk Minimization Plan (RMP) measure effectiveness assessment based on measure type, compliance rate, and outcome improvement. EMA RMP Guideline Rev 2.1.
+  icon: circle
+  route: /vigilance/mg/rmp-measure-effectiveness
+  steps:
+    - field: measure_type
+      label: measure type
+      help: Enter measure_type
+      widget: text
+      placeholder: null
+    - field: compliance_rate
+      label: compliance rate
+      help: Enter compliance_rate
+      widget: text
+      placeholder: null
+    - field: outcome_improved
+      label: outcome improved
+      help: Enter outcome_improved
+      widget: toggle
+      placeholder: null
+  result:
+    template: "effectiveness: {{effectiveness}} — recommendation: {{recommendation}} — continue_measure: {{continue_measure}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/rmp-measure-effectiveness
+  cli: rsk mcg run rmp-measure-effectiveness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: outcome_check
   nodes:
@@ -68,7 +130,6 @@ tree:
         recommendation: Discontinue or redesign measure; implement alternative risk control
         continue_measure: false
 tests:
-  # Outcome improved + high compliance → effective
   - input:
       measure_type: educational
       compliance_rate: 0.85
@@ -77,7 +138,6 @@ tests:
       effectiveness: effective
       recommendation: Continue measure, monitor compliance quarterly
       continue_measure: true
-  # Outcome improved + low compliance → partially effective
   - input:
       measure_type: monitoring
       compliance_rate: 0.55
@@ -86,7 +146,6 @@ tests:
       effectiveness: partially_effective
       recommendation: Increase compliance interventions; consider measure refinement
       continue_measure: true
-  # Outcome not improved + high compliance → partially effective
   - input:
       measure_type: access
       compliance_rate: 0.75
@@ -95,7 +154,6 @@ tests:
       effectiveness: partially_effective
       recommendation: Assess outcome metrics; evaluate measure relevance and impact timing
       continue_measure: true
-  # Outcome not improved + low compliance → ineffective
   - input:
       measure_type: educational
       compliance_rate: 0.45
@@ -104,7 +162,6 @@ tests:
       effectiveness: ineffective
       recommendation: Discontinue or redesign measure; implement alternative risk control
       continue_measure: false
-  # Boundary: exactly 70% compliance + outcome improved
   - input:
       measure_type: monitoring
       compliance_rate: 0.7
@@ -113,7 +170,6 @@ tests:
       effectiveness: effective
       recommendation: Continue measure, monitor compliance quarterly
       continue_measure: true
-  # Boundary: exactly 70% compliance + outcome not improved
   - input:
       measure_type: access
       compliance_rate: 0.7
@@ -122,7 +178,6 @@ tests:
       effectiveness: partially_effective
       recommendation: Assess outcome metrics; evaluate measure relevance and impact timing
       continue_measure: true
-  # High compliance, outcome improved → effective
   - input:
       measure_type: educational
       compliance_rate: 0.95
@@ -131,7 +186,6 @@ tests:
       effectiveness: effective
       recommendation: Continue measure, monitor compliance quarterly
       continue_measure: true
-  # Very low compliance, outcome not improved → ineffective
   - input:
       measure_type: monitoring
       compliance_rate: 0.2
@@ -140,18 +194,51 @@ tests:
       effectiveness: ineffective
       recommendation: Discontinue or redesign measure; implement alternative risk control
       continue_measure: false
-  # Zero compliance, outcome not improved → ineffective
   - input:
       measure_type: access
-      compliance_rate: 0.0
+      compliance_rate: 0
       outcome_improved: false
     expect:
       effectiveness: ineffective
       recommendation: Discontinue or redesign measure; implement alternative risk control
       continue_measure: false
-  # Empty input defaults to ineffective (no outcome, zero compliance)
   - input: {}
     expect:
       effectiveness: ineffective
       recommendation: Discontinue or redesign measure; implement alternative risk control
       continue_measure: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - effectiveness
+    - recommendation
+    - continue_measure
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ab-force-without-mass
-description: 'Antibody: detects force applied to zero mass (stem-phys F=ma — infinite acceleration). Physics singularity guard.'
 version: 0.1.0
+description: "Antibody: detects force applied to zero mass (stem-phys F=ma — infinite acceleration). Physics singularity guard."
+family: antibody.chemistry
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - antibody
+inputs:
+  - name: force
+    type: number
+    required: true
+    description: ""
+  - name: mass
+    type: number
+    required: true
+    description: ""
+outputs:
+  - name: threat
+    type: boolean
+  - name: response
+    type: string
 interface:
   inputs:
     force:
@@ -14,6 +38,33 @@ interface:
       type: boolean
     response:
       type: string
+ui:
+  title: Force Without Mass
+  subtitle: "Antibody: detects force applied to zero mass (stem-phys F=ma — infinite acceleration). Physics singularity guard."
+  icon: shield
+  route: /vigilance/mg/ab-force-without-mass
+  steps:
+    - field: force
+      label: force
+      help: Enter force
+      widget: number
+      placeholder: null
+    - field: mass
+      label: mass
+      help: Enter mass
+      widget: number
+      placeholder: null
+  result:
+    template: "threat: {{threat}} — response: {{response}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ab-force-without-mass
+  cli: rsk mcg run ab-force-without-mass
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_force
   nodes:
@@ -35,27 +86,75 @@ tree:
       type: return
       value:
         threat: true
-        response: 'BLOCK: force applied to zero mass — acceleration is infinite'
+        response: "BLOCK: force applied to zero mass — acceleration is infinite"
     clean_no_force:
       type: return
       value:
         threat: false
-        response: 'PASS: zero force, no acceleration regardless of mass'
+        response: "PASS: zero force, no acceleration regardless of mass"
     clean:
       type: return
       value:
         threat: false
-        response: 'PASS'
+        response: PASS
 tests:
-- input: { force: 10, mass: 2 }
-  expect: { threat: false }
-- input: { force: 0, mass: 0 }
-  expect: { threat: false }
-- input: { force: 10, mass: 0 }
-  expect: { threat: true }
-- input: { force: -5, mass: -1 }
-  expect: { threat: true }
-- input: {}
-  expect:
-    response: PASS
-    threat: false
+  - input:
+      force: 10
+      mass: 2
+    expect:
+      threat: false
+  - input:
+      force: 0
+      mass: 0
+    expect:
+      threat: false
+  - input:
+      force: 10
+      mass: 0
+    expect:
+      threat: true
+  - input:
+      force: -5
+      mass: -1
+    expect:
+      threat: true
+  - input: {}
+    expect:
+      response: PASS
+      threat: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - threat
+    - response
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: antibody.chemistry
+  log_level: info
+governance:
+  sop_ref: SOP-CHEM-001
+  regulatory_ref: []
+  harm_types:
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - conservation
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

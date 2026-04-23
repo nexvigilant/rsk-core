@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: safety-margin
-description: 'Classify a safety margin distance value (d) into DANGER/CAUTION/SAFE zones with corresponding score ranges'
 version: 0.1.0
+description: Classify a safety margin distance value (d) into DANGER/CAUTION/SAFE zones with corresponding score ranges
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: d
+    type: float
+    required: true
+    description: ""
+outputs:
+  - name: zone
+    type: string
+  - name: color
+    type: string
+  - name: score_min
+    type: int
+  - name: score_max
+    type: int
 interface:
   inputs:
     d:
@@ -15,6 +39,28 @@ interface:
       type: int
     score_max:
       type: int
+ui:
+  title: Safety Margin
+  subtitle: Classify a safety margin distance value (d) into DANGER/CAUTION/SAFE zones with corresponding score ranges
+  icon: circle
+  route: /vigilance/mg/safety-margin
+  steps:
+    - field: d
+      label: d
+      help: Enter d
+      widget: text
+      placeholder: null
+  result:
+    template: "zone: {{zone}} — color: {{color}} — score_min: {{score_min}} — score_max: {{score_max}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/safety-margin
+  cli: rsk mcg run safety-margin
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_danger
   nodes:
@@ -54,51 +100,87 @@ tree:
         score_min: 66
         score_max: 100
 tests:
-- input:
-    d: -0.5
-  expect:
-    zone: DANGER
-    color: red
-    score_min: 0
-    score_max: 33
-- input:
-    d: 0
-  expect:
-    zone: DANGER
-    color: red
-    score_min: 0
-    score_max: 33
-- input:
-    d: 0.5
-  expect:
-    zone: CAUTION
-    color: yellow
-    score_min: 33
-    score_max: 66
-- input:
-    d: 1.0
-  expect:
-    zone: CAUTION
-    color: yellow
-    score_min: 33
-    score_max: 66
-- input:
-    d: 1.5
-  expect:
-    zone: SAFE
-    color: green
-    score_min: 66
-    score_max: 100
-- input:
-    d: 3.0
-  expect:
-    zone: SAFE
-    color: green
-    score_min: 66
-    score_max: 100
-- input: {}
-  expect:
-    color: green
-    score_max: 100
-    score_min: 66
-    zone: SAFE
+  - input:
+      d: -0.5
+    expect:
+      zone: DANGER
+      color: red
+      score_min: 0
+      score_max: 33
+  - input:
+      d: 0
+    expect:
+      zone: DANGER
+      color: red
+      score_min: 0
+      score_max: 33
+  - input:
+      d: 0.5
+    expect:
+      zone: CAUTION
+      color: yellow
+      score_min: 33
+      score_max: 66
+  - input:
+      d: 1
+    expect:
+      zone: CAUTION
+      color: yellow
+      score_min: 33
+      score_max: 66
+  - input:
+      d: 1.5
+    expect:
+      zone: SAFE
+      color: green
+      score_min: 66
+      score_max: 100
+  - input:
+      d: 3
+    expect:
+      zone: SAFE
+      color: green
+      score_min: 66
+      score_max: 100
+  - input: {}
+    expect:
+      color: green
+      score_max: 100
+      score_min: 66
+      zone: SAFE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - zone
+    - color
+    - score_min
+    - score_max
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

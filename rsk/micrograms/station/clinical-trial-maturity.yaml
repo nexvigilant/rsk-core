@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: clinical-trial-maturity
-description: Evaluates clinical trial maturity and safety data availability. Routes based on trial phase and result status.
 version: 0.1.0
+description: Evaluates clinical trial maturity and safety data availability. Routes based on trial phase and result status.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: status
+    type: string
+    required: false
+    description: ""
+  - name: phase
+    type: string
+    required: false
+    description: ""
+  - name: has_results
+    type: bool
+    required: false
+    description: ""
+  - name: enrollment
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: maturity
+    type: string
+  - name: has_safety_data
+    type: bool
 interface:
   inputs:
     status:
@@ -20,6 +52,43 @@ interface:
       type: string
     has_safety_data:
       type: bool
+ui:
+  title: Clinical Trial Maturity
+  subtitle: Evaluates clinical trial maturity and safety data availability. Routes based on trial phase and result status.
+  icon: circle
+  route: /vigilance/mg/clinical-trial-maturity
+  steps:
+    - field: status
+      label: status
+      help: Enter status
+      widget: text
+      placeholder: null
+    - field: phase
+      label: phase
+      help: Enter phase
+      widget: text
+      placeholder: null
+    - field: has_results
+      label: has results
+      help: Enter has_results
+      widget: toggle
+      placeholder: null
+    - field: enrollment
+      label: enrollment
+      help: Enter enrollment
+      widget: text
+      placeholder: null
+  result:
+    template: "maturity: {{maturity}} — has_safety_data: {{has_safety_data}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/clinical-trial-maturity
+  cli: rsk mcg run clinical-trial-maturity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_status
   nodes:
@@ -78,40 +147,40 @@ tree:
         has_safety_data: false
 tests:
   - input:
-      status: "Completed"
-      phase: "Phase 4"
+      status: Completed
+      phase: Phase 4
       has_results: true
       enrollment: 1000
     expect:
       maturity: mature
       has_safety_data: true
   - input:
-      status: "Active, not recruiting"
-      phase: "Phase 3"
+      status: Active, not recruiting
+      phase: Phase 3
       has_results: true
       enrollment: 500
     expect:
       maturity: mature
       has_safety_data: true
   - input:
-      status: "Recruiting"
-      phase: "Phase 2"
+      status: Recruiting
+      phase: Phase 2
       has_results: false
       enrollment: 200
     expect:
       maturity: developing
       has_safety_data: false
   - input:
-      status: "Not yet recruiting"
-      phase: "Phase 1"
+      status: Not yet recruiting
+      phase: Phase 1
       has_results: false
       enrollment: 50
     expect:
       maturity: early
       has_safety_data: false
   - input:
-      status: "Completed"
-      phase: "Phase 4"
+      status: Completed
+      phase: Phase 4
       has_results: true
       enrollment: 5000
     expect:
@@ -121,3 +190,37 @@ tests:
     expect:
       maturity: unusable
       has_safety_data: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - maturity
+    - has_safety_data
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

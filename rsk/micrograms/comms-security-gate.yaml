@@ -1,28 +1,75 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: comms-security-gate
-description: "Validates communication security posture before transmitting. Gates on mTLS status, firmware signature, replay protection, and encryption. Blocks transmission if security requirements unmet for the link type."
 version: 0.1.0
+description: Validates communication security posture before transmitting. Gates on mTLS status, firmware signature, replay protection, and encryption. Blocks transmission if security requirements unmet for the link type.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: link_type
+    type: string
+    required: true
+    description: ""
+  - name: mtls_active
+    type: boolean
+    required: false
+    description: Whether mTLS handshake is established
+  - name: firmware_signed
+    type: boolean
+    required: false
+    description: Whether modem/radio firmware signature verified at boot
+  - name: replay_nonce_valid
+    type: boolean
+    required: false
+    description: Whether replay protection nonce counter is current
+  - name: certificate_pinned
+    type: boolean
+    required: false
+    description: Whether TLS certificate is pinned to known CA
+outputs:
+  - name: verdict
+    type: string
+  - name: security_level
+    type: string
+  - name: missing_controls
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     link_type:
       type: string
       required: true
-      enum: [ble_5, wifi_6e, fiveg_modem, lora_sx1276, iridium_certus, vhf_radio, adsb_out]
+      enum:
+        - ble_5
+        - wifi_6e
+        - fiveg_modem
+        - lora_sx1276
+        - iridium_certus
+        - vhf_radio
+        - adsb_out
     mtls_active:
       type: boolean
       required: false
-      description: "Whether mTLS handshake is established"
+      description: Whether mTLS handshake is established
     firmware_signed:
       type: boolean
       required: false
-      description: "Whether modem/radio firmware signature verified at boot"
+      description: Whether modem/radio firmware signature verified at boot
     replay_nonce_valid:
       type: boolean
       required: false
-      description: "Whether replay protection nonce counter is current"
+      description: Whether replay protection nonce counter is current
     certificate_pinned:
       type: boolean
       required: false
-      description: "Whether TLS certificate is pinned to known CA"
+      description: Whether TLS certificate is pinned to known CA
   outputs:
     verdict:
       type: string
@@ -32,10 +79,51 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Comms Security Gate
+  subtitle: Validates communication security posture before transmitting. Gates on mTLS status, firmware signature, replay protection, and encryption. Blocks transmission if security requirements unmet for the link type.
+  icon: circle
+  route: /vigilance/mg/comms-security-gate
+  steps:
+    - field: link_type
+      label: link type
+      help: Enter link_type
+      widget: text
+      placeholder: null
+    - field: mtls_active
+      label: mtls active
+      help: Whether mTLS handshake is established
+      widget: toggle
+      placeholder: null
+    - field: firmware_signed
+      label: firmware signed
+      help: Whether modem/radio firmware signature verified at boot
+      widget: toggle
+      placeholder: null
+    - field: replay_nonce_valid
+      label: replay nonce valid
+      help: Whether replay protection nonce counter is current
+      widget: toggle
+      placeholder: null
+    - field: certificate_pinned
+      label: certificate pinned
+      help: Whether TLS certificate is pinned to known CA
+      widget: toggle
+      placeholder: null
+  result:
+    template: "verdict: {{verdict}} — security_level: {{security_level}} — missing_controls: {{missing_controls}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/comms-security-gate
+  cli: rsk mcg run comms-security-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_vhf
   nodes:
-    # VHF and ADS-B are unencrypted by regulation
     check_vhf:
       type: condition
       variable: link_type
@@ -43,7 +131,6 @@ tree:
       value: vhf_radio
       true_next: vhf_pass
       false_next: check_adsb
-
     check_adsb:
       type: condition
       variable: link_type
@@ -51,8 +138,6 @@ tree:
       value: adsb_out
       true_next: adsb_pass
       false_next: check_lora
-
-    # LoRa — AES-128 payload encryption, no mTLS
     check_lora:
       type: condition
       variable: link_type
@@ -60,7 +145,6 @@ tree:
       value: lora_sx1276
       true_next: check_lora_replay
       false_next: check_mtls
-
     check_lora_replay:
       type: condition
       variable: replay_nonce_valid
@@ -68,8 +152,6 @@ tree:
       value: true
       true_next: lora_pass
       false_next: lora_warn
-
-    # All IP-based links require mTLS
     check_mtls:
       type: condition
       variable: mtls_active
@@ -77,7 +159,6 @@ tree:
       value: true
       true_next: check_firmware
       false_next: mtls_fail
-
     check_firmware:
       type: condition
       variable: firmware_signed
@@ -85,7 +166,6 @@ tree:
       value: true
       true_next: check_replay
       false_next: firmware_fail
-
     check_replay:
       type: condition
       variable: replay_nonce_valid
@@ -93,7 +173,6 @@ tree:
       value: true
       true_next: check_cert_pin
       false_next: replay_fail
-
     check_cert_pin:
       type: condition
       variable: certificate_pinned
@@ -101,123 +180,177 @@ tree:
       value: true
       true_next: full_pass
       false_next: cert_warn
-
-    # Terminal nodes
     vhf_pass:
       type: return
       value:
         verdict: pass
-        security_level: "unencrypted_regulated"
-        missing_controls: "none — VHF ATC is unencrypted by regulation (ICAO Annex 10)"
-        action: "Transmit. Do NOT add encryption — violates aviation radio regulations."
-
+        security_level: unencrypted_regulated
+        missing_controls: none — VHF ATC is unencrypted by regulation (ICAO Annex 10)
+        action: Transmit. Do NOT add encryption — violates aviation radio regulations.
     adsb_pass:
       type: return
       value:
         verdict: pass
-        security_level: "broadcast_unencrypted"
-        missing_controls: "none — ADS-B Out is unencrypted broadcast per DO-260B/ED-102A"
-        action: "Transmit position, velocity, and ICAO address. Broadcast only — no encryption."
-
+        security_level: broadcast_unencrypted
+        missing_controls: none — ADS-B Out is unencrypted broadcast per DO-260B/ED-102A
+        action: Transmit position, velocity, and ICAO address. Broadcast only — no encryption.
     lora_pass:
       type: return
       value:
         verdict: pass
-        security_level: "encrypted_no_mtls"
-        missing_controls: "no mTLS (acceptable for LoRa — no IP stack)"
-        action: "Transmit telemetry with AES-128 payload encryption. Fire-and-forget."
-
+        security_level: encrypted_no_mtls
+        missing_controls: no mTLS (acceptable for LoRa — no IP stack)
+        action: Transmit telemetry with AES-128 payload encryption. Fire-and-forget.
     lora_warn:
       type: return
       value:
         verdict: warn
-        security_level: "encrypted_replay_risk"
-        missing_controls: "replay nonce counter stale or missing"
+        security_level: encrypted_replay_risk
+        missing_controls: replay nonce counter stale or missing
         action: "Resync nonce counter before transmitting. Risk: replay attack on telemetry."
-
     mtls_fail:
       type: return
       value:
         verdict: block
-        security_level: "unencrypted"
-        missing_controls: "mTLS not established — all IP links require mutual authentication"
-        action: "BLOCK transmission. Establish mTLS handshake first. No cleartext on IP links."
-
+        security_level: unencrypted
+        missing_controls: mTLS not established — all IP links require mutual authentication
+        action: BLOCK transmission. Establish mTLS handshake first. No cleartext on IP links.
     firmware_fail:
       type: return
       value:
         verdict: block
-        security_level: "untrusted_firmware"
-        missing_controls: "modem firmware signature verification failed"
-        action: "BLOCK transmission. Firmware may be compromised. Power-cycle modem, re-verify signature at boot."
-
+        security_level: untrusted_firmware
+        missing_controls: modem firmware signature verification failed
+        action: BLOCK transmission. Firmware may be compromised. Power-cycle modem, re-verify signature at boot.
     replay_fail:
       type: return
       value:
         verdict: warn
-        security_level: "encrypted_replay_risk"
-        missing_controls: "replay protection nonce stale"
-        action: "Resync nonce counter. Transmission allowed with elevated risk logging."
-
+        security_level: encrypted_replay_risk
+        missing_controls: replay protection nonce stale
+        action: Resync nonce counter. Transmission allowed with elevated risk logging.
     cert_warn:
       type: return
       value:
         verdict: warn
-        security_level: "encrypted_unpinned"
-        missing_controls: "certificate not pinned — MITM risk on untrusted networks"
-        action: "Transmit with caution. Pin certificate at next connection reset."
-
+        security_level: encrypted_unpinned
+        missing_controls: certificate not pinned — MITM risk on untrusted networks
+        action: Transmit with caution. Pin certificate at next connection reset.
     full_pass:
       type: return
       value:
         verdict: pass
-        security_level: "full_mtls_pinned"
-        missing_controls: "none"
-        action: "All security controls active. Transmit freely."
-
-primitive_signature:
-  dominant: '∂'
-  expression: '∂(×(ς_security, ς_link)) — boundary gate on security state per link type'
-  primes: ['∂', '×', 'ς']
-  arguments: ['→']
-
+        security_level: full_mtls_pinned
+        missing_controls: none
+        action: All security controls active. Transmit freely.
 tests:
-- name: "VHF — always pass, unencrypted by regulation"
-  input: { link_type: vhf_radio }
-  expect: { verdict: pass, security_level: "unencrypted_regulated" }
-
-- name: "ADS-B — always pass, broadcast"
-  input: { link_type: adsb_out }
-  expect: { verdict: pass, security_level: "broadcast_unencrypted" }
-
-- name: "LoRa with valid nonce — pass"
-  input: { link_type: lora_sx1276, replay_nonce_valid: true }
-  expect: { verdict: pass, security_level: "encrypted_no_mtls" }
-
-- name: "LoRa with stale nonce — warn"
-  input: { link_type: lora_sx1276, replay_nonce_valid: false }
-  expect: { verdict: warn }
-
-- name: "5G full security — pass"
-  input: { link_type: fiveg_modem, mtls_active: true, firmware_signed: true, replay_nonce_valid: true, certificate_pinned: true }
-  expect: { verdict: pass, security_level: "full_mtls_pinned" }
-
-- name: "5G no mTLS — block"
-  input: { link_type: fiveg_modem, mtls_active: false }
-  expect: { verdict: block, security_level: "unencrypted" }
-
-- name: "Wi-Fi unsigned firmware — block"
-  input: { link_type: wifi_6e, mtls_active: true, firmware_signed: false }
-  expect: { verdict: block, security_level: "untrusted_firmware" }
-
-- name: "BLE unpinned cert — warn"
-  input: { link_type: ble_5, mtls_active: true, firmware_signed: true, replay_nonce_valid: true, certificate_pinned: false }
-  expect: { verdict: warn, security_level: "encrypted_unpinned" }
-
-- name: "Iridium full security — pass"
-  input: { link_type: iridium_certus, mtls_active: true, firmware_signed: true, replay_nonce_valid: true, certificate_pinned: true }
-  expect: { verdict: pass, security_level: "full_mtls_pinned" }
-
-- name: "null safety"
-  input: {}
-  expect: { verdict: block }
+  - name: VHF — always pass, unencrypted by regulation
+    input:
+      link_type: vhf_radio
+    expect:
+      verdict: pass
+      security_level: unencrypted_regulated
+  - name: ADS-B — always pass, broadcast
+    input:
+      link_type: adsb_out
+    expect:
+      verdict: pass
+      security_level: broadcast_unencrypted
+  - name: LoRa with valid nonce — pass
+    input:
+      link_type: lora_sx1276
+      replay_nonce_valid: true
+    expect:
+      verdict: pass
+      security_level: encrypted_no_mtls
+  - name: LoRa with stale nonce — warn
+    input:
+      link_type: lora_sx1276
+      replay_nonce_valid: false
+    expect:
+      verdict: warn
+  - name: 5G full security — pass
+    input:
+      link_type: fiveg_modem
+      mtls_active: true
+      firmware_signed: true
+      replay_nonce_valid: true
+      certificate_pinned: true
+    expect:
+      verdict: pass
+      security_level: full_mtls_pinned
+  - name: 5G no mTLS — block
+    input:
+      link_type: fiveg_modem
+      mtls_active: false
+    expect:
+      verdict: block
+      security_level: unencrypted
+  - name: Wi-Fi unsigned firmware — block
+    input:
+      link_type: wifi_6e
+      mtls_active: true
+      firmware_signed: false
+    expect:
+      verdict: block
+      security_level: untrusted_firmware
+  - name: BLE unpinned cert — warn
+    input:
+      link_type: ble_5
+      mtls_active: true
+      firmware_signed: true
+      replay_nonce_valid: true
+      certificate_pinned: false
+    expect:
+      verdict: warn
+      security_level: encrypted_unpinned
+  - name: Iridium full security — pass
+    input:
+      link_type: iridium_certus
+      mtls_active: true
+      firmware_signed: true
+      replay_nonce_valid: true
+      certificate_pinned: true
+    expect:
+      verdict: pass
+      security_level: full_mtls_pinned
+  - name: null safety
+    input: {}
+    expect:
+      verdict: block
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - verdict
+    - security_level
+    - missing_controls
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: algo-bias-triage
-description: 'Algovigilance: triage bias signals by disparity ratio, affected population size, and protected attribute category'
 version: 0.1.0
+description: "Algovigilance: triage bias signals by disparity ratio, affected population size, and protected attribute category"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: disparity_ratio
+    type: float
+    required: false
+    description: ""
+  - name: affected_population_pct
+    type: float
+    required: false
+    description: ""
+  - name: protected_attribute
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: triage_level
+    type: string
+  - name: action
+    type: string
+  - name: review_deadline_days
+    type: int
+  - name: observer_visible
+    type: bool
 interface:
   inputs:
     disparity_ratio:
@@ -21,6 +53,38 @@ interface:
       type: int
     observer_visible:
       type: bool
+ui:
+  title: Algo Bias Triage
+  subtitle: "Algovigilance: triage bias signals by disparity ratio, affected population size, and protected attribute category"
+  icon: circle
+  route: /vigilance/mg/algo-bias-triage
+  steps:
+    - field: disparity_ratio
+      label: disparity ratio
+      help: Enter disparity_ratio
+      widget: text
+      placeholder: null
+    - field: affected_population_pct
+      label: affected population pct
+      help: Enter affected_population_pct
+      widget: text
+      placeholder: null
+    - field: protected_attribute
+      label: protected attribute
+      help: Enter protected_attribute
+      widget: text
+      placeholder: null
+  result:
+    template: "triage_level: {{triage_level}} — action: {{action}} — review_deadline_days: {{review_deadline_days}} — observer_visible: {{observer_visible}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/algo-bias-triage
+  cli: rsk mcg run algo-bias-triage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_disparity_high
   nodes:
@@ -28,14 +92,14 @@ tree:
       type: condition
       variable: disparity_ratio
       operator: gt
-      value: 2.0
+      value: 2
       true_next: check_population_large_critical
       false_next: check_disparity_moderate
     check_population_large_critical:
       type: condition
       variable: affected_population_pct
       operator: gt
-      value: 10.0
+      value: 10
       true_next: critical_bias
       false_next: serious_bias
     check_disparity_moderate:
@@ -49,7 +113,7 @@ tree:
       type: condition
       variable: affected_population_pct
       operator: gt
-      value: 5.0
+      value: 5
       true_next: moderate_bias
       false_next: minor_bias
     check_disparity_minor:
@@ -95,86 +159,122 @@ tree:
         review_deadline_days: 90
         observer_visible: false
 tests:
-- input:
-    disparity_ratio: 3.5
-    affected_population_pct: 25.0
-    protected_attribute: race
-  expect:
-    triage_level: CRITICAL
-    action: quarantine_and_audit
-    review_deadline_days: 3
-    observer_visible: true
-- input:
-    disparity_ratio: 2.5
-    affected_population_pct: 8.0
-    protected_attribute: gender
-  expect:
-    triage_level: SERIOUS
-    action: expedited_review
-    review_deadline_days: 7
-    observer_visible: true
-- input:
-    disparity_ratio: 1.7
-    affected_population_pct: 12.0
-    protected_attribute: age
-  expect:
-    triage_level: MODERATE
-    action: schedule_fairness_audit
-    review_deadline_days: 14
-    observer_visible: true
-- input:
-    disparity_ratio: 1.6
-    affected_population_pct: 3.0
-    protected_attribute: disability
-  expect:
-    triage_level: MINOR
-    action: add_to_monitoring
-    review_deadline_days: 30
-    observer_visible: true
-- input:
-    disparity_ratio: 1.2
-    affected_population_pct: 1.0
-    protected_attribute: religion
-  expect:
-    triage_level: MINOR
-    action: add_to_monitoring
-    review_deadline_days: 30
-    observer_visible: true
-- input:
-    disparity_ratio: 1.05
-    affected_population_pct: 50.0
-    protected_attribute: gender
-  expect:
-    triage_level: NONE
-    action: no_action
-    review_deadline_days: 90
-    observer_visible: false
-- input: {}
-  expect:
-    triage_level: NONE
-    action: no_action
-    review_deadline_days: 90
-    observer_visible: false
-- input:
-    disparity_ratio: 0.0
-  expect:
-    triage_level: NONE
-    action: no_action
-    review_deadline_days: 90
-    observer_visible: false
-- input:
-    disparity_ratio: 2.1
-    affected_population_pct: 10.0
-  expect:
-    triage_level: SERIOUS
-    action: expedited_review
-    review_deadline_days: 7
-    observer_visible: true
-- input:
-    disparity_ratio: 2.1
-    affected_population_pct: 10.1
-  expect:
-    triage_level: CRITICAL
-    action: quarantine_and_audit
-    review_deadline_days: 3
-    observer_visible: true
+  - input:
+      disparity_ratio: 3.5
+      affected_population_pct: 25
+      protected_attribute: race
+    expect:
+      triage_level: CRITICAL
+      action: quarantine_and_audit
+      review_deadline_days: 3
+      observer_visible: true
+  - input:
+      disparity_ratio: 2.5
+      affected_population_pct: 8
+      protected_attribute: gender
+    expect:
+      triage_level: SERIOUS
+      action: expedited_review
+      review_deadline_days: 7
+      observer_visible: true
+  - input:
+      disparity_ratio: 1.7
+      affected_population_pct: 12
+      protected_attribute: age
+    expect:
+      triage_level: MODERATE
+      action: schedule_fairness_audit
+      review_deadline_days: 14
+      observer_visible: true
+  - input:
+      disparity_ratio: 1.6
+      affected_population_pct: 3
+      protected_attribute: disability
+    expect:
+      triage_level: MINOR
+      action: add_to_monitoring
+      review_deadline_days: 30
+      observer_visible: true
+  - input:
+      disparity_ratio: 1.2
+      affected_population_pct: 1
+      protected_attribute: religion
+    expect:
+      triage_level: MINOR
+      action: add_to_monitoring
+      review_deadline_days: 30
+      observer_visible: true
+  - input:
+      disparity_ratio: 1.05
+      affected_population_pct: 50
+      protected_attribute: gender
+    expect:
+      triage_level: NONE
+      action: no_action
+      review_deadline_days: 90
+      observer_visible: false
+  - input: {}
+    expect:
+      triage_level: NONE
+      action: no_action
+      review_deadline_days: 90
+      observer_visible: false
+  - input:
+      disparity_ratio: 0
+    expect:
+      triage_level: NONE
+      action: no_action
+      review_deadline_days: 90
+      observer_visible: false
+  - input:
+      disparity_ratio: 2.1
+      affected_population_pct: 10
+    expect:
+      triage_level: SERIOUS
+      action: expedited_review
+      review_deadline_days: 7
+      observer_visible: true
+  - input:
+      disparity_ratio: 2.1
+      affected_population_pct: 10.1
+    expect:
+      triage_level: CRITICAL
+      action: quarantine_and_audit
+      review_deadline_days: 3
+      observer_visible: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - triage_level
+    - action
+    - review_deadline_days
+    - observer_visible
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

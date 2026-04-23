@@ -1,16 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: algo-converge-signal
-description: "Algorithm 8 (CONVERGE): Fixpoint iteration for signal stability. Checks delta between successive estimates against tolerance tiers. Returns CONVERGED/CONTINUE/DIVERGE."
 version: 0.1.0
+description: "Algorithm 8 (CONVERGE): Fixpoint iteration for signal stability. Checks delta between successive estimates against tolerance tiers. Returns CONVERGED/CONTINUE/DIVERGE."
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: delta
+    type: float
+    required: true
+    description: abs(current - previous) pre-computed
+  - name: tolerance_met
+    type: boolean
+    required: true
+    description: Is delta <= tolerance? (pre-computed by caller)
+  - name: iteration_count
+    type: integer
+    required: true
+    description: ""
+  - name: max_iterations
+    type: integer
+    required: true
+    description: ""
+outputs:
+  - name: verdict
+    type: string
+  - name: algorithm
+    type: string
 interface:
   inputs:
     delta:
       type: float
       required: true
-      description: "abs(current - previous) pre-computed"
+      description: abs(current - previous) pre-computed
     tolerance_met:
       type: boolean
       required: true
-      description: "Is delta <= tolerance? (pre-computed by caller)"
+      description: Is delta <= tolerance? (pre-computed by caller)
     iteration_count:
       type: integer
       required: true
@@ -22,6 +54,43 @@ interface:
       type: string
     algorithm:
       type: string
+ui:
+  title: Algo Converge Signal
+  subtitle: "Algorithm 8 (CONVERGE): Fixpoint iteration for signal stability. Checks delta between successive estimates against tolerance tiers. Returns CONVERGED/CONTINUE/DIVERGE."
+  icon: activity
+  route: /vigilance/mg/algo-converge-signal
+  steps:
+    - field: delta
+      label: delta
+      help: abs(current - previous) pre-computed
+      widget: text
+      placeholder: null
+    - field: tolerance_met
+      label: tolerance met
+      help: Is delta <= tolerance? (pre-computed by caller)
+      widget: toggle
+      placeholder: null
+    - field: iteration_count
+      label: iteration count
+      help: Enter iteration_count
+      widget: number
+      placeholder: null
+    - field: max_iterations
+      label: max iterations
+      help: Enter max_iterations
+      widget: number
+      placeholder: null
+  result:
+    template: "verdict: {{verdict}} — algorithm: {{algorithm}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/algo-converge-signal
+  cli: rsk mcg run algo-converge-signal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_convergence
   nodes:
@@ -43,7 +112,7 @@ tree:
       type: condition
       variable: delta
       operator: gte
-      value: 10.0
+      value: 10
       true_next: diverge_unstable
       false_next: continue_iteration
     converged:
@@ -66,25 +135,96 @@ tree:
       value:
         verdict: CONTINUE
         algorithm: "CONVERGE: Δ > tolerance but within bounds — iterate again"
-primitive_signature:
-  dominant: 'ς'
-  expression: 'ς — state monitoring or drift detection'
-  primes: ['ς']
-  arguments: []
 tests:
-- input: { delta: 0.01, tolerance_met: true, iteration_count: 5, max_iterations: 20 }
-  expect: { verdict: CONVERGED }
-- input: { delta: 0.30, tolerance_met: false, iteration_count: 3, max_iterations: 20 }
-  expect: { verdict: CONTINUE }
-- input: { delta: 0.30, tolerance_met: false, iteration_count: 20, max_iterations: 20 }
-  expect: { verdict: DIVERGE }
-- input: { delta: 22.0, tolerance_met: false, iteration_count: 2, max_iterations: 20 }
-  expect: { verdict: DIVERGE }
-- input: { delta: 0.0, tolerance_met: true, iteration_count: 1, max_iterations: 10 }
-  expect: { verdict: CONVERGED }
-- input: { delta: 0.05, tolerance_met: true, iteration_count: 8, max_iterations: 20 }
-  expect: { verdict: CONVERGED }
-- input: { delta: 1.5, tolerance_met: false, iteration_count: 1, max_iterations: 10 }
-  expect: { verdict: CONTINUE }
-- input: {}
-  expect: { verdict: CONTINUE }
+  - input:
+      delta: 0.01
+      tolerance_met: true
+      iteration_count: 5
+      max_iterations: 20
+    expect:
+      verdict: CONVERGED
+  - input:
+      delta: 0.3
+      tolerance_met: false
+      iteration_count: 3
+      max_iterations: 20
+    expect:
+      verdict: CONTINUE
+  - input:
+      delta: 0.3
+      tolerance_met: false
+      iteration_count: 20
+      max_iterations: 20
+    expect:
+      verdict: DIVERGE
+  - input:
+      delta: 22
+      tolerance_met: false
+      iteration_count: 2
+      max_iterations: 20
+    expect:
+      verdict: DIVERGE
+  - input:
+      delta: 0
+      tolerance_met: true
+      iteration_count: 1
+      max_iterations: 10
+    expect:
+      verdict: CONVERGED
+  - input:
+      delta: 0.05
+      tolerance_met: true
+      iteration_count: 8
+      max_iterations: 20
+    expect:
+      verdict: CONVERGED
+  - input:
+      delta: 1.5
+      tolerance_met: false
+      iteration_count: 1
+      max_iterations: 10
+    expect:
+      verdict: CONTINUE
+  - input: {}
+    expect:
+      verdict: CONTINUE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - verdict
+    - algorithm
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,95 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: fda-drug-interaction-study
-description: 'FDA drug interaction study requirement: routes by mechanism type and exposure change per ICH M12 ''Drug Interaction Studies'' (2024) and FDA DDI Guidance'
 version: 0.1.0
+description: "FDA drug interaction study requirement: routes by mechanism type and exposure change per ICH M12 'Drug Interaction Studies' (2024) and FDA DDI Guidance"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: victim_narrow_ti
+    type: bool
+    required: false
+    description: ""
+  - name: auc_fold_change
+    type: float
+    required: true
+    description: ""
+  - name: mechanism
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: study_requirement
+    type: string
+  - name: clinical_recommendation
+    type: string
+  - name: labeling_section
+    type: string
+  - name: regulatory_reference
+    type: string
+interface:
+  inputs:
+    victim_narrow_ti:
+      type: bool
+      required: false
+    auc_fold_change:
+      type: float
+      required: true
+    mechanism:
+      type: string
+      required: true
+  outputs:
+    study_requirement:
+      type: string
+      required: false
+    clinical_recommendation:
+      type: string
+      required: false
+    labeling_section:
+      type: string
+      required: false
+    regulatory_reference:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Fda Drug Interaction Study
+  subtitle: "FDA drug interaction study requirement: routes by mechanism type and exposure change per ICH M12 'Drug Interaction Studies' (2024) and FDA DDI Guidance"
+  icon: circle
+  route: /vigilance/mg/fda-drug-interaction-study
+  steps:
+    - field: victim_narrow_ti
+      label: victim narrow ti
+      help: Enter victim_narrow_ti
+      widget: toggle
+      placeholder: null
+    - field: auc_fold_change
+      label: auc fold change
+      help: Enter auc_fold_change
+      widget: text
+      placeholder: null
+    - field: mechanism
+      label: mechanism
+      help: Enter mechanism
+      widget: text
+      placeholder: null
+  result:
+    template: "study_requirement: {{study_requirement}} — clinical_recommendation: {{clinical_recommendation}} — labeling_section: {{labeling_section}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/fda-drug-interaction-study
+  cli: rsk mcg run fda-drug-interaction-study
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_mechanism
   nodes:
@@ -36,7 +125,7 @@ tree:
       type: condition
       variable: auc_fold_change
       operator: gte
-      value: 2.0
+      value: 2
       true_next: transporter_significant
       false_next: transporter_minor
     transporter_minor:
@@ -120,7 +209,7 @@ tree:
       type: condition
       variable: auc_fold_change
       operator: gte
-      value: 2.0
+      value: 2
       true_next: moderate_inhibitor
       false_next: cyp_inh_weak_check
     check_mechanism:
@@ -141,7 +230,7 @@ tree:
       type: return
       value:
         clinical_recommendation: pH-dependent absorption — evaluate with acid-reducing agents (PPI, H2RA, antacid)
-        regulatory_reference: 'FDA Guidance: Evaluation of Gastric pH-Dependent Drug Interactions (2023)'
+        regulatory_reference: "FDA Guidance: Evaluation of Gastric pH-Dependent Drug Interactions (2023)"
         labeling_section: Drug Interactions + Dosage
         study_requirement: DEDICATED_DDI_STUDY_REQUIRED
     strong_standard:
@@ -155,7 +244,7 @@ tree:
       type: condition
       variable: auc_fold_change
       operator: gte
-      value: 5.0
+      value: 5
       true_next: strong_inhibitor
       false_next: cyp_inh_moderate_check
     no_inhibition:
@@ -166,191 +255,188 @@ tree:
         labeling_section: Clinical Pharmacology (state negative finding)
         study_requirement: NO_FURTHER_STUDY
 tests:
-- input:
-    mechanism: cyp_inhibition
-    auc_fold_change: 6.0
-    victim_narrow_ti: true
-  expect:
-    study_requirement: CONTRAINDICATION_OR_DOSE_ADJUSTMENT
-- input:
-    mechanism: cyp_inhibition
-    auc_fold_change: 5.5
-    victim_narrow_ti: false
-  expect:
-    study_requirement: DEDICATED_DDI_STUDY_REQUIRED
-- input:
-    auc_fold_change: 3.0
-    mechanism: cyp_inhibition
-  expect:
-    study_requirement: DEDICATED_DDI_STUDY_REQUIRED
-- input:
-    mechanism: cyp_inhibition
-    auc_fold_change: 1.5
-  expect:
-    study_requirement: IN_VITRO_SUFFICIENT
-- input:
-    auc_fold_change: 1.1
-    mechanism: cyp_inhibition
-  expect:
-    study_requirement: NO_FURTHER_STUDY
-- input:
-    mechanism: cyp_induction
-    auc_fold_change: 0.15
-  expect:
-    study_requirement: DEDICATED_DDI_STUDY_REQUIRED
-- input:
-    auc_fold_change: 0.4
-    mechanism: cyp_induction
-  expect:
-    study_requirement: DEDICATED_DDI_STUDY_REQUIRED
-- input:
-    auc_fold_change: 2.5
-    mechanism: transporter
-  expect:
-    study_requirement: DEDICATED_DDI_STUDY_REQUIRED
-- input:
-    auc_fold_change: 0.3
-    mechanism: ph_dependent
-  expect:
-    study_requirement: DEDICATED_DDI_STUDY_REQUIRED
-- input:
-    auc_fold_change: 1.2
-    mechanism: protein_binding
-  expect:
-    study_requirement: NO_FURTHER_STUDY
-- input: {}
-  expect:
-    study_requirement: NO_FURTHER_STUDY
-- input:
-    auc_fold_change: 1.999
-  expect:
-    study_requirement: NO_FURTHER_STUDY
-    labeling_section: Clinical Pharmacology
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-    regulatory_reference: ICH M12 (2024), Section 6
-- input:
-    auc_fold_change: 2.001
-  expect:
-    study_requirement: NO_FURTHER_STUDY
-    labeling_section: Clinical Pharmacology
-    regulatory_reference: ICH M12 (2024), Section 6
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-- input:
-    auc_fold_change: 0.199
-  expect:
-    labeling_section: Clinical Pharmacology
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-    study_requirement: NO_FURTHER_STUDY
-    regulatory_reference: ICH M12 (2024), Section 6
-- input:
-    auc_fold_change: 0.201
-  expect:
-    regulatory_reference: ICH M12 (2024), Section 6
-    labeling_section: Clinical Pharmacology
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-    study_requirement: NO_FURTHER_STUDY
-- input:
-    auc_fold_change: 0.499
-  expect:
-    labeling_section: Clinical Pharmacology
-    study_requirement: NO_FURTHER_STUDY
-    regulatory_reference: ICH M12 (2024), Section 6
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-- input:
-    auc_fold_change: 0.501
-  expect:
-    study_requirement: NO_FURTHER_STUDY
-    regulatory_reference: ICH M12 (2024), Section 6
-    labeling_section: Clinical Pharmacology
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-- input:
-    auc_fold_change: 1.249
-  expect:
-    study_requirement: NO_FURTHER_STUDY
-    labeling_section: Clinical Pharmacology
-    regulatory_reference: ICH M12 (2024), Section 6
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-- input:
-    auc_fold_change: 1.251
-  expect:
-    study_requirement: NO_FURTHER_STUDY
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-    labeling_section: Clinical Pharmacology
-    regulatory_reference: ICH M12 (2024), Section 6
-- input:
-    auc_fold_change: 1.999
-  expect:
-    labeling_section: Clinical Pharmacology
-    study_requirement: NO_FURTHER_STUDY
-    regulatory_reference: ICH M12 (2024), Section 6
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-- input:
-    auc_fold_change: 2.001
-  expect:
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-    labeling_section: Clinical Pharmacology
-    study_requirement: NO_FURTHER_STUDY
-    regulatory_reference: ICH M12 (2024), Section 6
-- input:
-    auc_fold_change: 4.999
-  expect:
-    regulatory_reference: ICH M12 (2024), Section 6
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-    labeling_section: Clinical Pharmacology
-    study_requirement: NO_FURTHER_STUDY
-- input:
-    auc_fold_change: 5.001
-  expect:
-    labeling_section: Clinical Pharmacology
-    study_requirement: NO_FURTHER_STUDY
-    clinical_recommendation: Protein binding displacement alone rarely clinically significant
-    regulatory_reference: ICH M12 (2024), Section 6
-# Weak inducer (AUC > 0.5)
-- input:
-    mechanism: "cyp_induction"
-    auc_fold_change: 0.7
-  expect:
-    study_requirement: IN_VITRO_SUFFICIENT
-# Minor transporter interaction (AUC < 2.0)
-- input:
-    mechanism: "transporter"
-    auc_fold_change: 1.4
-  expect:
-    study_requirement: IN_VITRO_SUFFICIENT
-interface:
-  inputs:
-    victim_narrow_ti:
-      type: bool
-      required: false
-    auc_fold_change:
-      type: float
-      required: true
-    mechanism:
-      type: string
-      required: true
-  outputs:
-    study_requirement:
-      type: string
-      required: false
-    clinical_recommendation:
-      type: string
-      required: false
-    labeling_section:
-      type: string
-      required: false
-    regulatory_reference:
-      type: string
-      required: false
-  aliases: {}
-primitive_signature:
-  dominant: κ
-  expression: κ(ν, ∂) — DDI classification by exposure magnitude and mechanism boundary
-  primes:
-  - κ
-  - ν
-  - ∂
-  arguments:
-  - mechanism
-  - auc_fold_change
-  - victim_narrow_ti
-  chain_prediction: null
+  - input:
+      mechanism: cyp_inhibition
+      auc_fold_change: 6
+      victim_narrow_ti: true
+    expect:
+      study_requirement: CONTRAINDICATION_OR_DOSE_ADJUSTMENT
+  - input:
+      mechanism: cyp_inhibition
+      auc_fold_change: 5.5
+      victim_narrow_ti: false
+    expect:
+      study_requirement: DEDICATED_DDI_STUDY_REQUIRED
+  - input:
+      auc_fold_change: 3
+      mechanism: cyp_inhibition
+    expect:
+      study_requirement: DEDICATED_DDI_STUDY_REQUIRED
+  - input:
+      mechanism: cyp_inhibition
+      auc_fold_change: 1.5
+    expect:
+      study_requirement: IN_VITRO_SUFFICIENT
+  - input:
+      auc_fold_change: 1.1
+      mechanism: cyp_inhibition
+    expect:
+      study_requirement: NO_FURTHER_STUDY
+  - input:
+      mechanism: cyp_induction
+      auc_fold_change: 0.15
+    expect:
+      study_requirement: DEDICATED_DDI_STUDY_REQUIRED
+  - input:
+      auc_fold_change: 0.4
+      mechanism: cyp_induction
+    expect:
+      study_requirement: DEDICATED_DDI_STUDY_REQUIRED
+  - input:
+      auc_fold_change: 2.5
+      mechanism: transporter
+    expect:
+      study_requirement: DEDICATED_DDI_STUDY_REQUIRED
+  - input:
+      auc_fold_change: 0.3
+      mechanism: ph_dependent
+    expect:
+      study_requirement: DEDICATED_DDI_STUDY_REQUIRED
+  - input:
+      auc_fold_change: 1.2
+      mechanism: protein_binding
+    expect:
+      study_requirement: NO_FURTHER_STUDY
+  - input: {}
+    expect:
+      study_requirement: NO_FURTHER_STUDY
+  - input:
+      auc_fold_change: 1.999
+    expect:
+      study_requirement: NO_FURTHER_STUDY
+      labeling_section: Clinical Pharmacology
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+      regulatory_reference: ICH M12 (2024), Section 6
+  - input:
+      auc_fold_change: 2.001
+    expect:
+      study_requirement: NO_FURTHER_STUDY
+      labeling_section: Clinical Pharmacology
+      regulatory_reference: ICH M12 (2024), Section 6
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+  - input:
+      auc_fold_change: 0.199
+    expect:
+      labeling_section: Clinical Pharmacology
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+      study_requirement: NO_FURTHER_STUDY
+      regulatory_reference: ICH M12 (2024), Section 6
+  - input:
+      auc_fold_change: 0.201
+    expect:
+      regulatory_reference: ICH M12 (2024), Section 6
+      labeling_section: Clinical Pharmacology
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+      study_requirement: NO_FURTHER_STUDY
+  - input:
+      auc_fold_change: 0.499
+    expect:
+      labeling_section: Clinical Pharmacology
+      study_requirement: NO_FURTHER_STUDY
+      regulatory_reference: ICH M12 (2024), Section 6
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+  - input:
+      auc_fold_change: 0.501
+    expect:
+      study_requirement: NO_FURTHER_STUDY
+      regulatory_reference: ICH M12 (2024), Section 6
+      labeling_section: Clinical Pharmacology
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+  - input:
+      auc_fold_change: 1.249
+    expect:
+      study_requirement: NO_FURTHER_STUDY
+      labeling_section: Clinical Pharmacology
+      regulatory_reference: ICH M12 (2024), Section 6
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+  - input:
+      auc_fold_change: 1.251
+    expect:
+      study_requirement: NO_FURTHER_STUDY
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+      labeling_section: Clinical Pharmacology
+      regulatory_reference: ICH M12 (2024), Section 6
+  - input:
+      auc_fold_change: 1.999
+    expect:
+      labeling_section: Clinical Pharmacology
+      study_requirement: NO_FURTHER_STUDY
+      regulatory_reference: ICH M12 (2024), Section 6
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+  - input:
+      auc_fold_change: 2.001
+    expect:
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+      labeling_section: Clinical Pharmacology
+      study_requirement: NO_FURTHER_STUDY
+      regulatory_reference: ICH M12 (2024), Section 6
+  - input:
+      auc_fold_change: 4.999
+    expect:
+      regulatory_reference: ICH M12 (2024), Section 6
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+      labeling_section: Clinical Pharmacology
+      study_requirement: NO_FURTHER_STUDY
+  - input:
+      auc_fold_change: 5.001
+    expect:
+      labeling_section: Clinical Pharmacology
+      study_requirement: NO_FURTHER_STUDY
+      clinical_recommendation: Protein binding displacement alone rarely clinically significant
+      regulatory_reference: ICH M12 (2024), Section 6
+  - input:
+      mechanism: cyp_induction
+      auc_fold_change: 0.7
+    expect:
+      study_requirement: IN_VITRO_SUFFICIENT
+  - input:
+      mechanism: transporter
+      auc_fold_change: 1.4
+    expect:
+      study_requirement: IN_VITRO_SUFFICIENT
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - study_requirement
+    - clinical_recommendation
+    - labeling_section
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

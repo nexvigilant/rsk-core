@@ -1,27 +1,71 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: session-health-chi
-description: 'T Tauri χ health classifier: maps branching ratio χ = output/input to health band using equilibrium boundaries from Serna et al. 2024 (ApJ 968 68)'
 version: 0.1.0
-input_type: session_metrics
-output_type: health_assessment
+description: "T Tauri χ health classifier: maps branching ratio χ = output/input to health band using equilibrium boundaries from Serna et al. 2024 (ApJ 968 68)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: chi
+    type: float
+    required: true
+    description: Branching ratio χ = output_events / input_events
+outputs:
+  - name: band
+    type: string
+  - name: severity
+    type: string
+  - name: equilibrium_distance
+    type: float
+  - name: action
+    type: string
 interface:
   inputs:
     chi:
       type: float
       required: true
-      description: 'Branching ratio χ = output_events / input_events'
+      description: Branching ratio χ = output_events / input_events
   outputs:
     band:
       type: string
-      description: 'Health band: SpinningUp, Healthy, Depleting, or Critical'
+      description: "Health band: SpinningUp, Healthy, Depleting, or Critical"
     severity:
       type: string
-      description: 'Severity level: info, ok, warning, critical'
+      description: "Severity level: info, ok, warning, critical"
     equilibrium_distance:
       type: float
-      description: 'Distance from equilibrium peak χ=0.04'
+      description: Distance from equilibrium peak χ=0.04
     action:
       type: string
-      description: 'Recommended action based on health band'
+      description: Recommended action based on health band
+ui:
+  title: Session Health Chi
+  subtitle: "T Tauri χ health classifier: maps branching ratio χ = output/input to health band using equilibrium boundaries from Serna et al. 2024 (ApJ 968 68)"
+  icon: circle
+  route: /vigilance/mg/session-health-chi
+  steps:
+    - field: chi
+      label: chi
+      help: Branching ratio χ = output_events / input_events
+      widget: text
+      placeholder: null
+  result:
+    template: "band: {{band}} — severity: {{severity}} — equilibrium_distance: {{equilibrium_distance}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/session-health-chi
+  cli: rsk mcg run session-health-chi
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_critical
   nodes:
@@ -29,7 +73,7 @@ tree:
       type: condition
       variable: chi
       operator: gt
-      value: 0.60
+      value: 0.6
       true_next: critical
       false_next: check_depleting
     check_depleting:
@@ -51,29 +95,29 @@ tree:
       value:
         band: Critical
         severity: critical
-        equilibrium_distance: -1.0
-        action: 'ALERT: χ exceeds APSW thermodynamic limit (0.60). Output rate unsustainable. Investigate output flooding or input starvation.'
+        equilibrium_distance: -1
+        action: "ALERT: χ exceeds APSW thermodynamic limit (0.60). Output rate unsustainable. Investigate output flooding or input starvation."
     depleting:
       type: return
       value:
         band: Depleting
         severity: warning
-        equilibrium_distance: -1.0
-        action: 'WARNING: χ above equilibrium band (0.27). System outputting more than sustainable. Monitor for drift toward critical.'
+        equilibrium_distance: -1
+        action: "WARNING: χ above equilibrium band (0.27). System outputting more than sustainable. Monitor for drift toward critical."
     healthy:
       type: return
       value:
         band: Healthy
         severity: ok
-        equilibrium_distance: 0.0
-        action: 'System operating within equilibrium band [0.02, 0.27]. No action required.'
+        equilibrium_distance: 0
+        action: System operating within equilibrium band [0.02, 0.27]. No action required.
     spinning_up:
       type: return
       value:
         band: SpinningUp
         severity: info
-        equilibrium_distance: -1.0
-        action: 'INFO: χ below equilibrium band (0.02). System consuming more than outputting. Normal during startup or heavy input phase.'
+        equilibrium_distance: -1
+        action: "INFO: χ below equilibrium band (0.02). System consuming more than outputting. Normal during startup or heavy input phase."
 tests:
   - input:
       chi: 0.04
@@ -96,22 +140,22 @@ tests:
       band: SpinningUp
       severity: info
   - input:
-      chi: 0.0
+      chi: 0
     expect:
       band: SpinningUp
       severity: info
   - input:
-      chi: 0.40
+      chi: 0.4
     expect:
       band: Depleting
       severity: warning
   - input:
-      chi: 0.70
+      chi: 0.7
     expect:
       band: Critical
       severity: critical
   - input:
-      chi: 0.60
+      chi: 0.6
     expect:
       band: Depleting
       severity: warning
@@ -124,3 +168,39 @@ tests:
     expect:
       band: SpinningUp
       severity: info
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - band
+    - severity
+    - equilibrium_distance
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

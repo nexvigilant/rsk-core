@@ -1,6 +1,90 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dd-domain-scorer
-description: 'Classify a PV DD domain risk level from its raw score (0-100). Raw score = (RED×100 + YELLOW×50) / total, computed upstream. Source: Youssef & Hammad, Drug Safety (Dec 2025)'
 version: 0.1.0
+description: "Classify a PV DD domain risk level from its raw score (0-100). Raw score = (RED×100 + YELLOW×50) / total, computed upstream. Source: Youssef & Hammad, Drug Safety (Dec 2025)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: raw_score
+    type: float
+    required: false
+    description: ""
+  - name: has_yellow
+    type: bool
+    required: false
+    description: ""
+  - name: has_red
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: severity
+    type: int
+  - name: risk_level
+    type: string
+interface:
+  inputs:
+    raw_score:
+      type: float
+      required: false
+    has_yellow:
+      type: bool
+      required: false
+    has_red:
+      type: bool
+      required: false
+  outputs:
+    action:
+      type: string
+      required: false
+    severity:
+      type: int
+      required: false
+    risk_level:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Dd Domain Scorer
+  subtitle: "Classify a PV DD domain risk level from its raw score (0-100). Raw score = (RED×100 + YELLOW×50) / total, computed upstream. Source: Youssef & Hammad, Drug Safety (Dec 2025)"
+  icon: circle
+  route: /vigilance/mg/dd-domain-scorer
+  steps:
+    - field: raw_score
+      label: raw score
+      help: Enter raw_score
+      widget: text
+      placeholder: null
+    - field: has_yellow
+      label: has yellow
+      help: Enter has_yellow
+      widget: toggle
+      placeholder: null
+    - field: has_red
+      label: has red
+      help: Enter has_red
+      widget: toggle
+      placeholder: null
+  result:
+    template: "action: {{action}} — severity: {{severity}} — risk_level: {{risk_level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dd-domain-scorer
+  cli: rsk mcg run dd-domain-scorer
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_score_null
   nodes:
@@ -45,7 +129,7 @@ tree:
       type: condition
       variable: raw_score
       operator: gt
-      value: 75.0
+      value: 75
       true_next: extreme
       false_next: critical
     extreme:
@@ -65,7 +149,7 @@ tree:
       type: condition
       variable: raw_score
       operator: gt
-      value: 0.0
+      value: 0
       true_next: low
       false_next: clean
     check_score_null:
@@ -76,86 +160,99 @@ tree:
       true_next: not_assessed
       false_next: check_critical
 tests:
-- input:
-    raw_score: 85.0
-    has_red: true
-    has_yellow: false
-  expect:
-    risk_level: extreme
-    action: immediate_escalation
-    severity: 4
-- input:
-    has_yellow: true
-    has_red: true
-    raw_score: 50.0
-  expect:
-    risk_level: critical
-    action: detailed_review
-    severity: 3
-- input:
-    raw_score: 50.0
-    has_red: false
-    has_yellow: true
-  expect:
-    severity: 2
-    risk_level: moderate
-    action: enhanced_monitoring
-- input:
-    has_yellow: false
-    raw_score: 0.0
-    has_red: false
-  expect:
-    severity: 0
-    risk_level: clean
-    action: standard_monitoring
-- input: {}
-  expect:
-    action: no_data
-    risk_level: not_assessed
-    severity: 0
-- input:
-    raw_score: 74.999
-  expect:
-    action: standard_monitoring
-    risk_level: low
-    severity: 1
-- input:
-    raw_score: 75.001
-  expect:
-    severity: 1
-    action: standard_monitoring
-    risk_level: low
-- input:
-    raw_score: -0.001
-  expect:
-    severity: 0
-    action: standard_monitoring
-    risk_level: clean
-- input:
-    raw_score: 0.001
-  expect:
-    risk_level: low
-    action: standard_monitoring
-    severity: 1
-interface:
-  inputs:
-    raw_score:
-      type: float
-      required: false
-    has_yellow:
-      type: bool
-      required: false
-    has_red:
-      type: bool
-      required: false
-  outputs:
-    action:
-      type: string
-      required: false
-    severity:
-      type: int
-      required: false
-    risk_level:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      raw_score: 85
+      has_red: true
+      has_yellow: false
+    expect:
+      risk_level: extreme
+      action: immediate_escalation
+      severity: 4
+  - input:
+      has_yellow: true
+      has_red: true
+      raw_score: 50
+    expect:
+      risk_level: critical
+      action: detailed_review
+      severity: 3
+  - input:
+      raw_score: 50
+      has_red: false
+      has_yellow: true
+    expect:
+      severity: 2
+      risk_level: moderate
+      action: enhanced_monitoring
+  - input:
+      has_yellow: false
+      raw_score: 0
+      has_red: false
+    expect:
+      severity: 0
+      risk_level: clean
+      action: standard_monitoring
+  - input: {}
+    expect:
+      action: no_data
+      risk_level: not_assessed
+      severity: 0
+  - input:
+      raw_score: 74.999
+    expect:
+      action: standard_monitoring
+      risk_level: low
+      severity: 1
+  - input:
+      raw_score: 75.001
+    expect:
+      severity: 1
+      action: standard_monitoring
+      risk_level: low
+  - input:
+      raw_score: -0.001
+    expect:
+      severity: 0
+      action: standard_monitoring
+      risk_level: clean
+  - input:
+      raw_score: 0.001
+    expect:
+      risk_level: low
+      action: standard_monitoring
+      severity: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - severity
+    - risk_level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

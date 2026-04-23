@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-brain-pipeline
-description: 'Route brain system health: session verdicts, artifact freshness, dual-store sync'
 version: 0.1.0
+description: "Route brain system health: session verdicts, artifact freshness, dual-store sync"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Brain Pipeline
+  subtitle: "Route brain system health: session verdicts, artifact freshness, dual-store sync"
+  icon: circle
+  route: /vigilance/mg/station-brain-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-brain-pipeline
+  cli: rsk mcg run station-brain-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_verdict
   nodes:
@@ -54,118 +83,148 @@ tree:
         priority: high
         reason: Model verdict rate <50% — most sessions unmeasured
 tests:
-- input:
-    stale_artifact_count: 5
-    verdict_rate_pct: 30
-    dual_store_synced: true
-  expect:
-    route: session_discipline
-    priority: high
-    action: alert
-- input:
-    verdict_rate_pct: 60
-    dual_store_synced: false
-    stale_artifact_count: 0
-  expect:
-    priority: critical
-    route: brain_reconcile
-    action: repair
-- input:
-    verdict_rate_pct: 70
-    stale_artifact_count: 30
-    dual_store_synced: true
-  expect:
-    priority: moderate
-    route: artifact_cleanup
-    action: prune
-- input:
-    verdict_rate_pct: 80
-    stale_artifact_count: 5
-    dual_store_synced: true
-  expect:
-    priority: low
-    route: archive
-    action: certify
-- input: {}
-  expect:
-    route: session_discipline
-    action: alert
-    priority: high
-    reason: Model verdict rate <50% — most sessions unmeasured
-- input:
-    stale_artifact_count: -1
-  expect:
-    reason: Model verdict rate <50% — most sessions unmeasured
-    route: session_discipline
-    action: alert
-    priority: high
-- input:
-    stale_artifact_count: 19
-  expect:
-    action: alert
-    priority: high
-    reason: Model verdict rate <50% — most sessions unmeasured
-    route: session_discipline
-- input:
-    stale_artifact_count: 21
-  expect:
-    route: session_discipline
-    action: alert
-    reason: Model verdict rate <50% — most sessions unmeasured
-    priority: high
-- input:
-    stale_artifact_count: 2000
-  expect:
-    route: session_discipline
-    priority: high
-    action: alert
-    reason: Model verdict rate <50% — most sessions unmeasured
-- input: {}
-  expect:
-    route: session_discipline
-    reason: Model verdict rate <50% — most sessions unmeasured
-    priority: high
-    action: alert
-- input:
-    verdict_rate_pct: 0
-  expect:
-    action: alert
-    route: session_discipline
-    priority: high
-    reason: Model verdict rate <50% — most sessions unmeasured
-- input:
-    verdict_rate_pct: -1
-  expect:
-    priority: high
-    reason: Model verdict rate <50% — most sessions unmeasured
-    route: session_discipline
-    action: alert
-- input:
-    verdict_rate_pct: 49
-  expect:
-    route: session_discipline
-    action: alert
-    priority: high
-    reason: Model verdict rate <50% — most sessions unmeasured
-- input:
-    verdict_rate_pct: 51
-  expect:
-    action: repair
-    reason: Dual-store divergence — JSON and SQLite disagree
-    route: brain_reconcile
-    priority: critical
-- input:
-    verdict_rate_pct: 5000
-  expect:
-    route: brain_reconcile
-    action: repair
-    priority: critical
-    reason: Dual-store divergence — JSON and SQLite disagree
-- input: {}
-  expect:
-    reason: Model verdict rate <50% — most sessions unmeasured
-    action: alert
-    priority: high
-    route: session_discipline
-interface: null
-primitive_signature: null
+  - input:
+      stale_artifact_count: 5
+      verdict_rate_pct: 30
+      dual_store_synced: true
+    expect:
+      route: session_discipline
+      priority: high
+      action: alert
+  - input:
+      verdict_rate_pct: 60
+      dual_store_synced: false
+      stale_artifact_count: 0
+    expect:
+      priority: critical
+      route: brain_reconcile
+      action: repair
+  - input:
+      verdict_rate_pct: 70
+      stale_artifact_count: 30
+      dual_store_synced: true
+    expect:
+      priority: moderate
+      route: artifact_cleanup
+      action: prune
+  - input:
+      verdict_rate_pct: 80
+      stale_artifact_count: 5
+      dual_store_synced: true
+    expect:
+      priority: low
+      route: archive
+      action: certify
+  - input: {}
+    expect:
+      route: session_discipline
+      action: alert
+      priority: high
+      reason: Model verdict rate <50% — most sessions unmeasured
+  - input:
+      stale_artifact_count: -1
+    expect:
+      reason: Model verdict rate <50% — most sessions unmeasured
+      route: session_discipline
+      action: alert
+      priority: high
+  - input:
+      stale_artifact_count: 19
+    expect:
+      action: alert
+      priority: high
+      reason: Model verdict rate <50% — most sessions unmeasured
+      route: session_discipline
+  - input:
+      stale_artifact_count: 21
+    expect:
+      route: session_discipline
+      action: alert
+      reason: Model verdict rate <50% — most sessions unmeasured
+      priority: high
+  - input:
+      stale_artifact_count: 2000
+    expect:
+      route: session_discipline
+      priority: high
+      action: alert
+      reason: Model verdict rate <50% — most sessions unmeasured
+  - input: {}
+    expect:
+      route: session_discipline
+      reason: Model verdict rate <50% — most sessions unmeasured
+      priority: high
+      action: alert
+  - input:
+      verdict_rate_pct: 0
+    expect:
+      action: alert
+      route: session_discipline
+      priority: high
+      reason: Model verdict rate <50% — most sessions unmeasured
+  - input:
+      verdict_rate_pct: -1
+    expect:
+      priority: high
+      reason: Model verdict rate <50% — most sessions unmeasured
+      route: session_discipline
+      action: alert
+  - input:
+      verdict_rate_pct: 49
+    expect:
+      route: session_discipline
+      action: alert
+      priority: high
+      reason: Model verdict rate <50% — most sessions unmeasured
+  - input:
+      verdict_rate_pct: 51
+    expect:
+      action: repair
+      reason: Dual-store divergence — JSON and SQLite disagree
+      route: brain_reconcile
+      priority: critical
+  - input:
+      verdict_rate_pct: 5000
+    expect:
+      route: brain_reconcile
+      action: repair
+      priority: critical
+      reason: Dual-store divergence — JSON and SQLite disagree
+  - input: {}
+    expect:
+      reason: Model verdict rate <50% — most sessions unmeasured
+      action: alert
+      priority: high
+      route: session_discipline
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: domain-classifier
-description: "PDC: Classify competency domain ID (1-15) into thematic group and layer"
 version: 0.1.0
+description: "PDC: Classify competency domain ID (1-15) into thematic group and layer"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: domain_id
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: description
+    type: string
+  - name: domain_range
+    type: string
+  - name: error
+    type: string
+  - name: layer
+    type: string
+  - name: thematic_group
+    type: string
 interface:
   inputs:
     domain_id:
@@ -17,6 +43,28 @@ interface:
       type: string
     thematic_group:
       type: string
+ui:
+  title: Domain Classifier
+  subtitle: "PDC: Classify competency domain ID (1-15) into thematic group and layer"
+  icon: circle
+  route: /vigilance/mg/domain-classifier
+  steps:
+    - field: domain_id
+      label: domain id
+      help: Enter domain_id
+      widget: text
+      placeholder: null
+  result:
+    template: "description: {{description}} — domain_range: {{domain_range}} — error: {{error}} — layer: {{layer}} — thematic_group: {{thematic_group}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/domain-classifier
+  cli: rsk mcg run domain-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -60,92 +108,129 @@ tree:
       value:
         thematic_group: FOUNDATIONAL
         layer: theoretical_base
-        domain_range: "1-3"
-        description: "Foundations, Clinical ADRs, Important ADR Recognition"
+        domain_range: 1-3
+        description: Foundations, Clinical ADRs, Important ADR Recognition
     process_methodology:
       type: return
       value:
         thematic_group: PROCESS_METHODOLOGY
         layer: operational_capability
-        domain_range: "4-9"
-        description: "ICSRs, Clinical Trials, Med Errors, Spontaneous Reporting, Signal Detection, Post-Auth Studies"
+        domain_range: 4-9
+        description: ICSRs, Clinical Trials, Med Errors, Spontaneous Reporting, Signal Detection, Post-Auth Studies
     assessment_strategy:
       type: return
       value:
         thematic_group: ASSESSMENT_STRATEGY
         layer: decision_making
-        domain_range: "10-12"
-        description: "Benefit-Risk, Risk Management, Regulatory Procedures"
+        domain_range: 10-12
+        description: Benefit-Risk, Risk Management, Regulatory Procedures
     integration_communication:
       type: return
       value:
         thematic_group: INTEGRATION_COMMUNICATION
         layer: collaboration
-        domain_range: "13-15"
-        description: "Global PV, Communication, Information Sources"
+        domain_range: 13-15
+        description: Global PV, Communication, Information Sources
     invalid_domain:
       type: return
       value:
         thematic_group: INVALID
         layer: unknown
-        error: "Domain ID must be 1-15"
+        error: Domain ID must be 1-15
 tests:
-- input:
-    domain_id: 1
-  expect:
-    thematic_group: FOUNDATIONAL
-    layer: theoretical_base
-- input:
-    domain_id: 3
-  expect:
-    thematic_group: FOUNDATIONAL
-    layer: theoretical_base
-- input:
-    domain_id: 4
-  expect:
-    thematic_group: PROCESS_METHODOLOGY
-    layer: operational_capability
-- input:
-    domain_id: 8
-  expect:
-    thematic_group: PROCESS_METHODOLOGY
-    layer: operational_capability
-- input:
-    domain_id: 9
-  expect:
-    thematic_group: PROCESS_METHODOLOGY
-    layer: operational_capability
-- input:
-    domain_id: 10
-  expect:
-    thematic_group: ASSESSMENT_STRATEGY
-    layer: decision_making
-- input:
-    domain_id: 12
-  expect:
-    thematic_group: ASSESSMENT_STRATEGY
-    layer: decision_making
-- input:
-    domain_id: 13
-  expect:
-    thematic_group: INTEGRATION_COMMUNICATION
-    layer: collaboration
-- input:
-    domain_id: 15
-  expect:
-    thematic_group: INTEGRATION_COMMUNICATION
-    layer: collaboration
-- input:
-    domain_id: 16
-  expect:
-    thematic_group: INVALID
-    error: "Domain ID must be 1-15"
-- input:
-    domain_id: 0
-  expect:
-    thematic_group: FOUNDATIONAL
-    layer: theoretical_base
-- input: {}
-  expect:
-    thematic_group: FOUNDATIONAL
-    layer: theoretical_base
+  - input:
+      domain_id: 1
+    expect:
+      thematic_group: FOUNDATIONAL
+      layer: theoretical_base
+  - input:
+      domain_id: 3
+    expect:
+      thematic_group: FOUNDATIONAL
+      layer: theoretical_base
+  - input:
+      domain_id: 4
+    expect:
+      thematic_group: PROCESS_METHODOLOGY
+      layer: operational_capability
+  - input:
+      domain_id: 8
+    expect:
+      thematic_group: PROCESS_METHODOLOGY
+      layer: operational_capability
+  - input:
+      domain_id: 9
+    expect:
+      thematic_group: PROCESS_METHODOLOGY
+      layer: operational_capability
+  - input:
+      domain_id: 10
+    expect:
+      thematic_group: ASSESSMENT_STRATEGY
+      layer: decision_making
+  - input:
+      domain_id: 12
+    expect:
+      thematic_group: ASSESSMENT_STRATEGY
+      layer: decision_making
+  - input:
+      domain_id: 13
+    expect:
+      thematic_group: INTEGRATION_COMMUNICATION
+      layer: collaboration
+  - input:
+      domain_id: 15
+    expect:
+      thematic_group: INTEGRATION_COMMUNICATION
+      layer: collaboration
+  - input:
+      domain_id: 16
+    expect:
+      thematic_group: INVALID
+      error: Domain ID must be 1-15
+  - input:
+      domain_id: 0
+    expect:
+      thematic_group: FOUNDATIONAL
+      layer: theoretical_base
+  - input: {}
+    expect:
+      thematic_group: FOUNDATIONAL
+      layer: theoretical_base
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - description
+    - domain_range
+    - error
+    - layer
+    - thematic_group
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

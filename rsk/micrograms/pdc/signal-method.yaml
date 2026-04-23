@@ -1,6 +1,68 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-method
-description: "Domain 8: Route to signal detection method by data type, sample size, and analytical goal — PRR, ROR, IC, EBGM, ML, NLP."
 version: 0.1.0
+description: "Domain 8: Route to signal detection method by data type, sample size, and analytical goal — PRR, ROR, IC, EBGM, ML, NLP."
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: case_count
+    type: int
+    required: false
+    description: ""
+  - name: data_type
+    type: string
+    required: false
+    description: ""
+  - name: prefer_bayesian
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: ai_enhance
+    type: string
+  - name: approach
+    type: string
+  - name: capabilities
+    type: string
+  - name: components
+    type: string
+  - name: formula_ebgm
+    type: string
+  - name: formula_ic
+    type: string
+  - name: formula_prr
+    type: string
+  - name: formula_ror
+    type: string
+  - name: limitations
+    type: string
+  - name: nexcore_tool
+    type: string
+  - name: next_step
+    type: string
+  - name: note
+    type: string
+  - name: primary
+    type: string
+  - name: secondary
+    type: string
+  - name: signal_criteria
+    type: string
+  - name: signal_criteria_ic
+    type: string
+  - name: strengths
+    type: string
+  - name: tertiary
+    type: string
 interface:
   inputs:
     case_count:
@@ -51,6 +113,38 @@ interface:
       type: string
     tertiary:
       type: string
+ui:
+  title: Signal Method
+  subtitle: "Domain 8: Route to signal detection method by data type, sample size, and analytical goal — PRR, ROR, IC, EBGM, ML, NLP."
+  icon: activity
+  route: /vigilance/mg/signal-method
+  steps:
+    - field: case_count
+      label: case count
+      help: Enter case_count
+      widget: text
+      placeholder: null
+    - field: data_type
+      label: data type
+      help: Enter data_type
+      widget: text
+      placeholder: null
+    - field: prefer_bayesian
+      label: prefer bayesian
+      help: Enter prefer_bayesian
+      widget: toggle
+      placeholder: null
+  result:
+    template: "action: {{action}} — ai_enhance: {{ai_enhance}} — approach: {{approach}} — capabilities: {{capabilities}} — components: {{components}} — formula_ebgm: {{formula_ebgm}} — formula_ic: {{formula_ic}} — formula_prr: {{formula_prr}} — formula_ror: {{formula_ror}} — limitations: {{limitations}} — nexcore_tool: {{nexcore_tool}} — next_step: {{next_step}} — note: {{note}} — primary: {{primary}} — secondary: {{secondary}} — signal_criteria: {{signal_criteria}} — signal_criteria_ic: {{signal_criteria_ic}} — strengths: {{strengths}} — tertiary: {{tertiary}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-method
+  cli: rsk mcg run signal-method
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_data_type
   nodes:
@@ -109,124 +203,181 @@ tree:
         primary: PRR
         secondary: ROR
         approach: frequentist
-        formula_prr: "PRR = (a/(a+b)) / (c/(c+d))"
-        signal_criteria: "PRR >= 2.0, chi-squared >= 4.0, N >= 3"
-        formula_ror: "ROR = (a*d) / (b*c)"
-        strengths: "simple, interpretable, widely accepted, low computational cost"
-        limitations: "sensitive to small numbers, no shrinkage, reporting bias"
-        ai_enhance: "automated 2x2 table construction, batch analysis, temporal stratification"
-        nexcore_tool: "signal_detect, pv_signal_prr, pv_signal_ror"
+        formula_prr: PRR = (a/(a+b)) / (c/(c+d))
+        signal_criteria: PRR >= 2.0, chi-squared >= 4.0, N >= 3
+        formula_ror: ROR = (a*d) / (b*c)
+        strengths: simple, interpretable, widely accepted, low computational cost
+        limitations: sensitive to small numbers, no shrinkage, reporting bias
+        ai_enhance: automated 2x2 table construction, batch analysis, temporal stratification
+        nexcore_tool: signal_detect, pv_signal_prr, pv_signal_ror
     bayesian_methods:
       type: return
       value:
         primary: EBGM
         secondary: IC
         approach: bayesian
-        formula_ebgm: "EBGM = E[lambda | N_ij] via Multi-item Gamma Poisson Shrinker"
-        signal_criteria: "EB05 >= 2.0 (lower bound of 90% CI)"
-        formula_ic: "IC = log2(observed/expected) with Bayesian shrinkage"
-        signal_criteria_ic: "IC025 > 0 (lower bound of 95% CI)"
-        strengths: "handles sparse data, shrinkage reduces false positives, robust with large databases"
-        limitations: "computationally intensive, prior specification sensitivity"
-        ai_enhance: "GPU-accelerated computation, adaptive prior updating, multi-drug analysis"
-        nexcore_tool: "pv_signal_ebgm, pv_signal_ic"
+        formula_ebgm: EBGM = E[lambda | N_ij] via Multi-item Gamma Poisson Shrinker
+        signal_criteria: EB05 >= 2.0 (lower bound of 90% CI)
+        formula_ic: IC = log2(observed/expected) with Bayesian shrinkage
+        signal_criteria_ic: IC025 > 0 (lower bound of 95% CI)
+        strengths: handles sparse data, shrinkage reduces false positives, robust with large databases
+        limitations: computationally intensive, prior specification sensitivity
+        ai_enhance: GPU-accelerated computation, adaptive prior updating, multi-drug analysis
+        nexcore_tool: pv_signal_ebgm, pv_signal_ic
     frequentist_methods:
       type: return
       value:
         primary: PRR
         secondary: ROR
-        tertiary: "chi-squared, Fisher's exact"
+        tertiary: chi-squared, Fisher's exact
         approach: frequentist
-        strengths: "simple computation, established thresholds, regulatory acceptance"
-        limitations: "no shrinkage, multiple testing concerns, sparse data sensitivity"
-        ai_enhance: "FDR correction, stratified analysis, temporal trend detection"
-        nexcore_tool: "signal_detect, signal_batch, pv_signal_prr, pv_signal_ror"
+        strengths: simple computation, established thresholds, regulatory acceptance
+        limitations: no shrinkage, multiple testing concerns, sparse data sensitivity
+        ai_enhance: FDR correction, stratified analysis, temporal trend detection
+        nexcore_tool: signal_detect, signal_batch, pv_signal_prr, pv_signal_ror
     nlp_method:
       type: return
       value:
         primary: NLP
-        secondary: "text mining + disproportionality"
+        secondary: text mining + disproportionality
         approach: ai_enhanced
-        capabilities: "narrative analysis, medical concept extraction, severity assessment, literature screening"
-        strengths: "processes unstructured text, identifies patterns in case narratives and publications"
-        limitations: "language dependent, requires training data, validation needed"
-        nexcore_tool: "faers_search, mesh_search, mesh_enrich_pubmed"
+        capabilities: narrative analysis, medical concept extraction, severity assessment, literature screening
+        strengths: processes unstructured text, identifies patterns in case narratives and publications
+        limitations: language dependent, requires training data, validation needed
+        nexcore_tool: faers_search, mesh_search, mesh_enrich_pubmed
     ml_method:
       type: return
       value:
         primary: MACHINE_LEARNING
-        secondary: "clustering + classification"
+        secondary: clustering + classification
         approach: ai_enhanced
-        capabilities: "patient cohort identification, temporal pattern detection, risk stratification"
-        strengths: "handles high-dimensional data, captures non-linear relationships, adaptive"
-        limitations: "requires labeled data, interpretability challenges, overfitting risk"
-        nexcore_tool: "dtree_train, dtree_predict, signal_detect"
+        capabilities: patient cohort identification, temporal pattern detection, risk stratification
+        strengths: handles high-dimensional data, captures non-linear relationships, adaptive
+        limitations: requires labeled data, interpretability challenges, overfitting risk
+        nexcore_tool: dtree_train, dtree_predict, signal_detect
     ensemble_method:
       type: return
       value:
         primary: ENSEMBLE
-        secondary: "multi-method integration"
+        secondary: multi-method integration
         approach: hybrid
-        components: "PRR + EBGM + ML clustering + NLP"
-        strengths: "maximizes sensitivity and specificity, reduces single-method blind spots"
-        limitations: "complexity, computational cost, integration challenges"
-        nexcore_tool: "signal_batch, pv_signal_complete"
+        components: PRR + EBGM + ML clustering + NLP
+        strengths: maximizes sensitivity and specificity, reduces single-method blind spots
+        limitations: complexity, computational cost, integration challenges
+        nexcore_tool: signal_batch, pv_signal_complete
     insufficient:
       type: return
       value:
         primary: CASE_SERIES
         approach: qualitative
-        action: "insufficient data for statistical signal detection — conduct case series review"
-        next_step: "accumulate more reports, targeted literature review, expert consultation"
+        action: insufficient data for statistical signal detection — conduct case series review
+        next_step: accumulate more reports, targeted literature review, expert consultation
     prr_default:
       type: return
       value:
         primary: PRR
         approach: frequentist
-        note: "default to PRR for unspecified data types"
+        note: default to PRR for unspecified data types
 tests:
-- input:
-    data_type: spontaneous
-    case_count: 5
-  expect:
-    primary: PRR
-    secondary: ROR
-    approach: frequentist
-- input:
-    data_type: spontaneous
-    case_count: 500
-    prefer_bayesian: true
-  expect:
-    primary: EBGM
-    secondary: IC
-    approach: bayesian
-- input:
-    data_type: spontaneous
-    case_count: 200
-    prefer_bayesian: false
-  expect:
-    primary: PRR
-    approach: frequentist
-- input:
-    data_type: spontaneous
-    case_count: 1
-  expect:
-    primary: CASE_SERIES
-    approach: qualitative
-- input:
-    data_type: literature
-  expect:
-    primary: NLP
-    approach: ai_enhanced
-- input:
-    data_type: ehr
-  expect:
-    primary: MACHINE_LEARNING
-- input:
-    data_type: multimodal
-  expect:
-    primary: ENSEMBLE
-    approach: hybrid
-- input: {}
-  expect:
-    primary: PRR
+  - input:
+      data_type: spontaneous
+      case_count: 5
+    expect:
+      primary: PRR
+      secondary: ROR
+      approach: frequentist
+  - input:
+      data_type: spontaneous
+      case_count: 500
+      prefer_bayesian: true
+    expect:
+      primary: EBGM
+      secondary: IC
+      approach: bayesian
+  - input:
+      data_type: spontaneous
+      case_count: 200
+      prefer_bayesian: false
+    expect:
+      primary: PRR
+      approach: frequentist
+  - input:
+      data_type: spontaneous
+      case_count: 1
+    expect:
+      primary: CASE_SERIES
+      approach: qualitative
+  - input:
+      data_type: literature
+    expect:
+      primary: NLP
+      approach: ai_enhanced
+  - input:
+      data_type: ehr
+    expect:
+      primary: MACHINE_LEARNING
+  - input:
+      data_type: multimodal
+    expect:
+      primary: ENSEMBLE
+      approach: hybrid
+  - input: {}
+    expect:
+      primary: PRR
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - ai_enhance
+    - approach
+    - capabilities
+    - components
+    - formula_ebgm
+    - formula_ic
+    - formula_prr
+    - formula_ror
+    - limitations
+    - nexcore_tool
+    - next_step
+    - note
+    - primary
+    - secondary
+    - signal_criteria
+    - signal_criteria_ic
+    - strengths
+    - tertiary
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

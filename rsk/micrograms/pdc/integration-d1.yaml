@@ -1,6 +1,101 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: integration-d1
-description: 'PDC: Domain 1 cross-domain integration pathways — which domains D1 enhances, EPA connections, CPA support'
 version: 0.1.0
+description: "PDC: Domain 1 cross-domain integration pathways — which domains D1 enhances, EPA connections, CPA support"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: target_domain
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: shared_objectives
+    type: string
+  - name: joint_assessment
+    type: string
+  - name: synergy
+    type: string
+  - name: ethical_guide
+    type: string
+  - name: integration_type
+    type: string
+  - name: key_insight
+    type: string
+  - name: cpa8_preparation
+    type: string
+  - name: gateway_support
+    type: string
+  - name: module
+    type: string
+  - name: epas
+    type: string
+interface:
+  inputs:
+    target_domain:
+      type: int
+      required: false
+  outputs:
+    shared_objectives:
+      type: string
+      required: false
+    joint_assessment:
+      type: string
+      required: false
+    synergy:
+      type: string
+      required: false
+    ethical_guide:
+      type: string
+      required: false
+    integration_type:
+      type: string
+      required: false
+    key_insight:
+      type: string
+      required: false
+    cpa8_preparation:
+      type: string
+      required: false
+    gateway_support:
+      type: string
+      required: false
+    module:
+      type: string
+      required: false
+    epas:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Integration D1
+  subtitle: "PDC: Domain 1 cross-domain integration pathways — which domains D1 enhances, EPA connections, CPA support"
+  icon: circle
+  route: /vigilance/mg/integration-d1
+  steps:
+    - field: target_domain
+      label: target domain
+      help: Enter target_domain
+      widget: text
+      placeholder: null
+  result:
+    template: "shared_objectives: {{shared_objectives}} — joint_assessment: {{joint_assessment}} — synergy: {{synergy}} — ethical_guide: {{ethical_guide}} — integration_type: {{integration_type}} — key_insight: {{key_insight}} — cpa8_preparation: {{cpa8_preparation}} — gateway_support: {{gateway_support}} — module: {{module}} — epas: {{epas}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/integration-d1
+  cli: rsk mcg run integration-d1
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target
   nodes:
@@ -150,397 +245,402 @@ tree:
         synergy: regulatory foundation essential for trial safety monitoring
         integration_type: ENHANCEMENT
 tests:
-- input:
-    target_domain: 14
-  expect:
-    module: Foundation-Communication
-    integration_type: PRIMARY
-- input:
-    target_domain: 2
-  expect:
-    integration_type: PRIMARY
-    module: Clinical Foundation
-- input:
-    target_domain: 8
-  expect:
-    module: Signal Foundation
-    integration_type: PRIMARY
-- input:
-    target_domain: 3
-  expect:
-    integration_type: ENHANCEMENT
-- input:
-    target_domain: 6
-  expect:
-    module: Medication Error Enhancement
-    integration_type: ENHANCEMENT
-- input:
-    target_domain: 10
-  expect:
-    integration_type: AI_GATEWAY
-    module: EPA10 Foundation Support
-- input:
-    target_domain: 11
-  expect:
-    module: Universal Foundation
-    integration_type: GENERAL
-- input: {}
-  expect:
-    integration_type: GENERAL
-- input:
-    target_domain: 0
-  expect:
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    synergy: D1 mastery enables effective learning in all domains
-- input:
-    target_domain: -1
-  expect:
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    module: Universal Foundation
-    synergy: D1 mastery enables effective learning in all domains
-    integration_type: GENERAL
-- input:
-    target_domain: 7
-  expect:
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: 9
-  expect:
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-- input:
-    target_domain: 800
-  expect:
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-- input:
-    target_domain: 0
-  expect:
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    module: Universal Foundation
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: -1
-  expect:
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    module: Universal Foundation
-- input:
-    target_domain: 1
-  expect:
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    module: Universal Foundation
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    integration_type: GENERAL
-- input:
-    target_domain: 200
-  expect:
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    module: Universal Foundation
-    integration_type: GENERAL
-- input:
-    target_domain: 0
-  expect:
-    module: Universal Foundation
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: -1
-  expect:
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    integration_type: GENERAL
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    synergy: D1 mastery enables effective learning in all domains
-- input:
-    target_domain: 5
-  expect:
-    module: Clinical Trial Enhancement
-    synergy: regulatory foundation essential for trial safety monitoring
-    integration_type: ENHANCEMENT
-    key_insight: AI integration principles applicable to trial safety system design
-    ethical_guide: ethical frameworks balance trial continuation with safety concerns
-- input:
-    target_domain: 7
-  expect:
-    module: Universal Foundation
-    integration_type: GENERAL
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-- input:
-    target_domain: 600
-  expect:
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    module: Universal Foundation
-- input:
-    target_domain: 0
-  expect:
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    synergy: D1 mastery enables effective learning in all domains
-    integration_type: GENERAL
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: -1
-  expect:
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    synergy: D1 mastery enables effective learning in all domains
-    integration_type: GENERAL
-- input:
-    target_domain: 13
-  expect:
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    integration_type: GENERAL
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-- input:
-    target_domain: 1200
-  expect:
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-- input:
-    target_domain: 0
-  expect:
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-- input:
-    target_domain: -1
-  expect:
-    integration_type: GENERAL
-    module: Universal Foundation
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: 4
-  expect:
-    epas: EPA1, EPA9
-    shared_objectives: ICSR processing grounded in regulatory knowledge and ethics
-    module: Case Processing Foundation
-    integration_type: PRIMARY
-    synergy: regulatory and ethical foundations critical for case processing excellence
-- input:
-    target_domain: 300
-  expect:
-    module: Universal Foundation
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-- input:
-    target_domain: 0
-  expect:
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-- input:
-    target_domain: -1
-  expect:
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    module: Universal Foundation
-- input:
-    target_domain: 4
-  expect:
-    shared_objectives: ICSR processing grounded in regulatory knowledge and ethics
-    module: Case Processing Foundation
-    integration_type: PRIMARY
-    epas: EPA1, EPA9
-    synergy: regulatory and ethical foundations critical for case processing excellence
-- input:
-    target_domain: 500
-  expect:
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    integration_type: GENERAL
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    module: Universal Foundation
-    synergy: D1 mastery enables effective learning in all domains
-- input:
-    target_domain: 0
-  expect:
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    synergy: D1 mastery enables effective learning in all domains
-    module: Universal Foundation
-    integration_type: GENERAL
-- input:
-    target_domain: -1
-  expect:
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    integration_type: GENERAL
-- input:
-    target_domain: 5
-  expect:
-    key_insight: AI integration principles applicable to trial safety system design
-    module: Clinical Trial Enhancement
-    synergy: regulatory foundation essential for trial safety monitoring
-    integration_type: ENHANCEMENT
-    ethical_guide: ethical frameworks balance trial continuation with safety concerns
-- input:
-    target_domain: 400
-  expect:
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-    synergy: D1 mastery enables effective learning in all domains
-- input:
-    target_domain: 0
-  expect:
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-- input:
-    target_domain: -1
-  expect:
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    module: Universal Foundation
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-- input:
-    target_domain: 13
-  expect:
-    module: Universal Foundation
-    synergy: D1 mastery enables effective learning in all domains
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: 15
-  expect:
-    synergy: D1 mastery enables effective learning in all domains
-    module: Universal Foundation
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-- input:
-    target_domain: 1400
-  expect:
-    module: Universal Foundation
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-- input:
-    target_domain: 0
-  expect:
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    synergy: D1 mastery enables effective learning in all domains
-    integration_type: GENERAL
-    module: Universal Foundation
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: -1
-  expect:
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    module: Universal Foundation
-    integration_type: GENERAL
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: 9
-  expect:
-    module: Universal Foundation
-    integration_type: GENERAL
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-    synergy: D1 mastery enables effective learning in all domains
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-- input:
-    target_domain: 1000
-  expect:
-    key_insight: foundational knowledge reduces cognitive load in technical domain development
-    synergy: D1 mastery enables effective learning in all domains
-    module: Universal Foundation
-    integration_type: GENERAL
-    ethical_guide: ethical framework establishment supports decision-making across all areas
-- input:
-    target_domain: 12
-  expect:
-    integration_type: PRIMARY
-    module: Regulatory Foundation
-    synergy: foundational knowledge directly supports regulatory compliance competency
-    epas: EPA6, EPA9, EPA14
-    shared_objectives: compliance grounded in regulatory history and ethical frameworks
-interface:
-  inputs:
-    target_domain:
-      type: int
-      required: false
-  outputs:
-    shared_objectives:
-      type: string
-      required: false
-    joint_assessment:
-      type: string
-      required: false
-    synergy:
-      type: string
-      required: false
-    ethical_guide:
-      type: string
-      required: false
-    integration_type:
-      type: string
-      required: false
-    key_insight:
-      type: string
-      required: false
-    cpa8_preparation:
-      type: string
-      required: false
-    gateway_support:
-      type: string
-      required: false
-    module:
-      type: string
-      required: false
-    epas:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      target_domain: 14
+    expect:
+      module: Foundation-Communication
+      integration_type: PRIMARY
+  - input:
+      target_domain: 2
+    expect:
+      integration_type: PRIMARY
+      module: Clinical Foundation
+  - input:
+      target_domain: 8
+    expect:
+      module: Signal Foundation
+      integration_type: PRIMARY
+  - input:
+      target_domain: 3
+    expect:
+      integration_type: ENHANCEMENT
+  - input:
+      target_domain: 6
+    expect:
+      module: Medication Error Enhancement
+      integration_type: ENHANCEMENT
+  - input:
+      target_domain: 10
+    expect:
+      integration_type: AI_GATEWAY
+      module: EPA10 Foundation Support
+  - input:
+      target_domain: 11
+    expect:
+      module: Universal Foundation
+      integration_type: GENERAL
+  - input: {}
+    expect:
+      integration_type: GENERAL
+  - input:
+      target_domain: 0
+    expect:
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      synergy: D1 mastery enables effective learning in all domains
+  - input:
+      target_domain: -1
+    expect:
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      module: Universal Foundation
+      synergy: D1 mastery enables effective learning in all domains
+      integration_type: GENERAL
+  - input:
+      target_domain: 7
+    expect:
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: 9
+    expect:
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+  - input:
+      target_domain: 800
+    expect:
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+  - input:
+      target_domain: 0
+    expect:
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      module: Universal Foundation
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: -1
+    expect:
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      module: Universal Foundation
+  - input:
+      target_domain: 1
+    expect:
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      module: Universal Foundation
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      integration_type: GENERAL
+  - input:
+      target_domain: 200
+    expect:
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      module: Universal Foundation
+      integration_type: GENERAL
+  - input:
+      target_domain: 0
+    expect:
+      module: Universal Foundation
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: -1
+    expect:
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      integration_type: GENERAL
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      synergy: D1 mastery enables effective learning in all domains
+  - input:
+      target_domain: 5
+    expect:
+      module: Clinical Trial Enhancement
+      synergy: regulatory foundation essential for trial safety monitoring
+      integration_type: ENHANCEMENT
+      key_insight: AI integration principles applicable to trial safety system design
+      ethical_guide: ethical frameworks balance trial continuation with safety concerns
+  - input:
+      target_domain: 7
+    expect:
+      module: Universal Foundation
+      integration_type: GENERAL
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+  - input:
+      target_domain: 600
+    expect:
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      module: Universal Foundation
+  - input:
+      target_domain: 0
+    expect:
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      synergy: D1 mastery enables effective learning in all domains
+      integration_type: GENERAL
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: -1
+    expect:
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      synergy: D1 mastery enables effective learning in all domains
+      integration_type: GENERAL
+  - input:
+      target_domain: 13
+    expect:
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      integration_type: GENERAL
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+  - input:
+      target_domain: 1200
+    expect:
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+  - input:
+      target_domain: 0
+    expect:
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+  - input:
+      target_domain: -1
+    expect:
+      integration_type: GENERAL
+      module: Universal Foundation
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: 4
+    expect:
+      epas: EPA1, EPA9
+      shared_objectives: ICSR processing grounded in regulatory knowledge and ethics
+      module: Case Processing Foundation
+      integration_type: PRIMARY
+      synergy: regulatory and ethical foundations critical for case processing excellence
+  - input:
+      target_domain: 300
+    expect:
+      module: Universal Foundation
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+  - input:
+      target_domain: 0
+    expect:
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+  - input:
+      target_domain: -1
+    expect:
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      module: Universal Foundation
+  - input:
+      target_domain: 4
+    expect:
+      shared_objectives: ICSR processing grounded in regulatory knowledge and ethics
+      module: Case Processing Foundation
+      integration_type: PRIMARY
+      epas: EPA1, EPA9
+      synergy: regulatory and ethical foundations critical for case processing excellence
+  - input:
+      target_domain: 500
+    expect:
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      integration_type: GENERAL
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      module: Universal Foundation
+      synergy: D1 mastery enables effective learning in all domains
+  - input:
+      target_domain: 0
+    expect:
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      synergy: D1 mastery enables effective learning in all domains
+      module: Universal Foundation
+      integration_type: GENERAL
+  - input:
+      target_domain: -1
+    expect:
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      integration_type: GENERAL
+  - input:
+      target_domain: 5
+    expect:
+      key_insight: AI integration principles applicable to trial safety system design
+      module: Clinical Trial Enhancement
+      synergy: regulatory foundation essential for trial safety monitoring
+      integration_type: ENHANCEMENT
+      ethical_guide: ethical frameworks balance trial continuation with safety concerns
+  - input:
+      target_domain: 400
+    expect:
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+      synergy: D1 mastery enables effective learning in all domains
+  - input:
+      target_domain: 0
+    expect:
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+  - input:
+      target_domain: -1
+    expect:
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      module: Universal Foundation
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+  - input:
+      target_domain: 13
+    expect:
+      module: Universal Foundation
+      synergy: D1 mastery enables effective learning in all domains
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: 15
+    expect:
+      synergy: D1 mastery enables effective learning in all domains
+      module: Universal Foundation
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+  - input:
+      target_domain: 1400
+    expect:
+      module: Universal Foundation
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+  - input:
+      target_domain: 0
+    expect:
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      synergy: D1 mastery enables effective learning in all domains
+      integration_type: GENERAL
+      module: Universal Foundation
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: -1
+    expect:
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      module: Universal Foundation
+      integration_type: GENERAL
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: 9
+    expect:
+      module: Universal Foundation
+      integration_type: GENERAL
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+      synergy: D1 mastery enables effective learning in all domains
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+  - input:
+      target_domain: 1000
+    expect:
+      key_insight: foundational knowledge reduces cognitive load in technical domain development
+      synergy: D1 mastery enables effective learning in all domains
+      module: Universal Foundation
+      integration_type: GENERAL
+      ethical_guide: ethical framework establishment supports decision-making across all areas
+  - input:
+      target_domain: 12
+    expect:
+      integration_type: PRIMARY
+      module: Regulatory Foundation
+      synergy: foundational knowledge directly supports regulatory compliance competency
+      epas: EPA6, EPA9, EPA14
+      shared_objectives: compliance grounded in regulatory history and ethical frameworks
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - shared_objectives
+    - joint_assessment
+    - synergy
+    - ethical_guide
+    - integration_type
+    - key_insight
+    - cpa8_preparation
+    - gateway_support
+    - module
+    - epas
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

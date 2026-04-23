@@ -1,6 +1,105 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: population-risk-aggregator
-description: Aggregates patient population risk factors from special-population, pediatric-flag, and polypharmacy-risk into unified risk profile. Determines if enhanced monitoring or dose adjustment needed.
 version: 0.1.0
+description: Aggregates patient population risk factors from special-population, pediatric-flag, and polypharmacy-risk into unified risk profile. Determines if enhanced monitoring or dose adjustment needed.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: enhanced_monitoring
+    type: bool
+    required: false
+    description: ""
+  - name: flag
+    type: string
+    required: false
+    description: ""
+  - name: risk_level
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: risk_factors
+    type: string
+  - name: affects_vulnerable_population
+    type: bool
+  - name: enhanced_monitoring_needed
+    type: bool
+  - name: dose_adjustment_needed
+    type: bool
+  - name: population_risk
+    type: string
+  - name: recommended_action
+    type: string
+interface:
+  inputs:
+    enhanced_monitoring:
+      type: bool
+      required: false
+    flag:
+      type: string
+      required: false
+    risk_level:
+      type: string
+      required: false
+  outputs:
+    risk_factors:
+      type: string
+      required: false
+    affects_vulnerable_population:
+      type: bool
+      required: false
+    enhanced_monitoring_needed:
+      type: bool
+      required: false
+    dose_adjustment_needed:
+      type: bool
+      required: false
+    population_risk:
+      type: string
+      required: false
+    recommended_action:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Population Risk Aggregator
+  subtitle: Aggregates patient population risk factors from special-population, pediatric-flag, and polypharmacy-risk into unified risk profile. Determines if enhanced monitoring or dose adjustment needed.
+  icon: circle
+  route: /vigilance/mg/population-risk-aggregator
+  steps:
+    - field: enhanced_monitoring
+      label: enhanced monitoring
+      help: Enter enhanced_monitoring
+      widget: toggle
+      placeholder: null
+    - field: flag
+      label: flag
+      help: Enter flag
+      widget: text
+      placeholder: null
+    - field: risk_level
+      label: risk level
+      help: Enter risk_level
+      widget: text
+      placeholder: null
+  result:
+    template: "risk_factors: {{risk_factors}} — affects_vulnerable_population: {{affects_vulnerable_population}} — enhanced_monitoring_needed: {{enhanced_monitoring_needed}} — dose_adjustment_needed: {{dose_adjustment_needed}} — population_risk: {{population_risk}} — recommended_action: {{recommended_action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/population-risk-aggregator
+  cli: rsk mcg run population-risk-aggregator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_special_pop
   nodes:
@@ -126,157 +225,164 @@ tree:
       true_next: elevated_polypharmacy
       false_next: check_moderate_poly
 tests:
-- input:
-    risk_level: HIGH
-    flag: NONE
-    enhanced_monitoring: true
-  expect:
-    population_risk: CRITICAL
-    dose_adjustment_needed: true
-    affects_vulnerable_population: true
-- input:
-    enhanced_monitoring: true
-    risk_level: MODERATE
-    flag: MONITOR
-  expect:
-    affects_vulnerable_population: true
-    population_risk: HIGH
-- input:
-    risk_level: LOW
-    flag: NONE
-    enhanced_monitoring: true
-  expect:
-    dose_adjustment_needed: true
-    population_risk: ELEVATED
-    affects_vulnerable_population: true
-- input:
-    risk_level: HIGH
-    enhanced_monitoring: false
-    flag: MONITOR
-  expect:
-    affects_vulnerable_population: true
-    population_risk: HIGH
-- input:
-    risk_level: LOW
-    enhanced_monitoring: false
-    flag: MONITOR
-  expect:
-    affects_vulnerable_population: true
-    population_risk: ELEVATED
-- input:
-    flag: NONE
-    risk_level: HIGH
-    enhanced_monitoring: false
-  expect:
-    affects_vulnerable_population: false
-    population_risk: ELEVATED
-    enhanced_monitoring_needed: true
-- input:
-    risk_level: MODERATE
-    flag: NONE
-    enhanced_monitoring: false
-  expect:
-    affects_vulnerable_population: false
-    population_risk: MODERATE
-- input:
-    flag: NONE
-    risk_level: LOW
-    enhanced_monitoring: false
-  expect:
-    affects_vulnerable_population: false
-    population_risk: LOW
-    enhanced_monitoring_needed: false
-- input:
-    flag: MONITOR
-    risk_level: HIGH
-    enhanced_monitoring: true
-  expect:
-    affects_vulnerable_population: true
-    population_risk: CRITICAL
-- input: {}
-  expect:
-    affects_vulnerable_population: false
-    recommended_action: Standard monitoring protocol
-    enhanced_monitoring_needed: false
-    risk_factors: No significant population risk factors identified
-    population_risk: LOW
-    dose_adjustment_needed: false
-- input: {}
-  expect:
-    population_risk: LOW
-    recommended_action: Standard monitoring protocol
-    dose_adjustment_needed: false
-    enhanced_monitoring_needed: false
-    affects_vulnerable_population: false
-    risk_factors: No significant population risk factors identified
-- input: {}
-  expect:
-    dose_adjustment_needed: false
-    population_risk: LOW
-    recommended_action: Standard monitoring protocol
-    enhanced_monitoring_needed: false
-    affects_vulnerable_population: false
-    risk_factors: No significant population risk factors identified
-- input: {}
-  expect:
-    affects_vulnerable_population: false
-    risk_factors: No significant population risk factors identified
-    dose_adjustment_needed: false
-    enhanced_monitoring_needed: false
-    population_risk: LOW
-    recommended_action: Standard monitoring protocol
-- input: {}
-  expect:
-    dose_adjustment_needed: false
-    risk_factors: No significant population risk factors identified
-    enhanced_monitoring_needed: false
-    recommended_action: Standard monitoring protocol
-    affects_vulnerable_population: false
-    population_risk: LOW
-- input: {}
-  expect:
-    dose_adjustment_needed: false
-    risk_factors: No significant population risk factors identified
-    enhanced_monitoring_needed: false
-    recommended_action: Standard monitoring protocol
-    population_risk: LOW
-    affects_vulnerable_population: false
-- input: {}
-  expect:
-    risk_factors: No significant population risk factors identified
-    recommended_action: Standard monitoring protocol
-    affects_vulnerable_population: false
-    dose_adjustment_needed: false
-    enhanced_monitoring_needed: false
-    population_risk: LOW
-interface:
-  inputs:
-    enhanced_monitoring:
-      type: bool
-      required: false
-    flag:
-      type: string
-      required: false
-    risk_level:
-      type: string
-      required: false
-  outputs:
-    risk_factors:
-      type: string
-      required: false
-    affects_vulnerable_population:
-      type: bool
-      required: false
-    enhanced_monitoring_needed:
-      type: bool
-      required: false
-    dose_adjustment_needed:
-      type: bool
-      required: false
-    population_risk:
-      type: string
-      required: false
-    recommended_action:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      risk_level: HIGH
+      flag: NONE
+      enhanced_monitoring: true
+    expect:
+      population_risk: CRITICAL
+      dose_adjustment_needed: true
+      affects_vulnerable_population: true
+  - input:
+      enhanced_monitoring: true
+      risk_level: MODERATE
+      flag: MONITOR
+    expect:
+      affects_vulnerable_population: true
+      population_risk: HIGH
+  - input:
+      risk_level: LOW
+      flag: NONE
+      enhanced_monitoring: true
+    expect:
+      dose_adjustment_needed: true
+      population_risk: ELEVATED
+      affects_vulnerable_population: true
+  - input:
+      risk_level: HIGH
+      enhanced_monitoring: false
+      flag: MONITOR
+    expect:
+      affects_vulnerable_population: true
+      population_risk: HIGH
+  - input:
+      risk_level: LOW
+      enhanced_monitoring: false
+      flag: MONITOR
+    expect:
+      affects_vulnerable_population: true
+      population_risk: ELEVATED
+  - input:
+      flag: NONE
+      risk_level: HIGH
+      enhanced_monitoring: false
+    expect:
+      affects_vulnerable_population: false
+      population_risk: ELEVATED
+      enhanced_monitoring_needed: true
+  - input:
+      risk_level: MODERATE
+      flag: NONE
+      enhanced_monitoring: false
+    expect:
+      affects_vulnerable_population: false
+      population_risk: MODERATE
+  - input:
+      flag: NONE
+      risk_level: LOW
+      enhanced_monitoring: false
+    expect:
+      affects_vulnerable_population: false
+      population_risk: LOW
+      enhanced_monitoring_needed: false
+  - input:
+      flag: MONITOR
+      risk_level: HIGH
+      enhanced_monitoring: true
+    expect:
+      affects_vulnerable_population: true
+      population_risk: CRITICAL
+  - input: {}
+    expect:
+      affects_vulnerable_population: false
+      recommended_action: Standard monitoring protocol
+      enhanced_monitoring_needed: false
+      risk_factors: No significant population risk factors identified
+      population_risk: LOW
+      dose_adjustment_needed: false
+  - input: {}
+    expect:
+      population_risk: LOW
+      recommended_action: Standard monitoring protocol
+      dose_adjustment_needed: false
+      enhanced_monitoring_needed: false
+      affects_vulnerable_population: false
+      risk_factors: No significant population risk factors identified
+  - input: {}
+    expect:
+      dose_adjustment_needed: false
+      population_risk: LOW
+      recommended_action: Standard monitoring protocol
+      enhanced_monitoring_needed: false
+      affects_vulnerable_population: false
+      risk_factors: No significant population risk factors identified
+  - input: {}
+    expect:
+      affects_vulnerable_population: false
+      risk_factors: No significant population risk factors identified
+      dose_adjustment_needed: false
+      enhanced_monitoring_needed: false
+      population_risk: LOW
+      recommended_action: Standard monitoring protocol
+  - input: {}
+    expect:
+      dose_adjustment_needed: false
+      risk_factors: No significant population risk factors identified
+      enhanced_monitoring_needed: false
+      recommended_action: Standard monitoring protocol
+      affects_vulnerable_population: false
+      population_risk: LOW
+  - input: {}
+    expect:
+      dose_adjustment_needed: false
+      risk_factors: No significant population risk factors identified
+      enhanced_monitoring_needed: false
+      recommended_action: Standard monitoring protocol
+      population_risk: LOW
+      affects_vulnerable_population: false
+  - input: {}
+    expect:
+      risk_factors: No significant population risk factors identified
+      recommended_action: Standard monitoring protocol
+      affects_vulnerable_population: false
+      dose_adjustment_needed: false
+      enhanced_monitoring_needed: false
+      population_risk: LOW
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - risk_factors
+    - affects_vulnerable_population
+    - enhanced_monitoring_needed
+    - dose_adjustment_needed
+    - population_risk
+    - recommended_action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

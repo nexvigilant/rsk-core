@@ -1,12 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: maxsprt-gate
-description: 'MaxSPRT (maximized sequential probability ratio test) gate for sequential signal surveillance. Evaluates observed-to-expected ratio against critical value with look-limit enforcement.'
 version: 0.1.0
-primitive_signature:
-  dominant: '∂'
-  expression: '∂(observed/expected) at κ(critical_value) with N(look_sequence) — bounded comparison with temporal limit'
-  primes: ['∂', 'κ', 'N']
-  arguments: ['observed_count', 'expected_count', 'current_look', 'max_looks', 'critical_value']
-  chain_prediction: '∂ (boundary). MaxSPRT enforces a statistical boundary: if O/E exceeds the critical value, the boundary is breached. The look limit adds temporal bounding. Chains naturally after CUSUM to confirm whether accumulated drift constitutes a true signal.'
+description: MaxSPRT (maximized sequential probability ratio test) gate for sequential signal surveillance. Evaluates observed-to-expected ratio against critical value with look-limit enforcement.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: observed_count
+    type: int
+    required: false
+    description: Number of observed adverse events
+  - name: expected_count
+    type: int
+    required: false
+    description: Number of expected adverse events (baseline rate)
+  - name: current_look
+    type: int
+    required: false
+    description: Current sequential analysis look number
+  - name: max_looks
+    type: int
+    required: false
+    description: Maximum number of planned interim looks
+  - name: critical_value
+    type: int
+    required: false
+    description: Observed-to-expected ratio threshold for signal detection (scaled x100, e.g. 300 = ratio of 3.0)
+outputs:
+  - name: verdict
+    type: string
+  - name: action
+    type: string
+  - name: signal_confirmed
+    type: bool
 interface:
   inputs:
     observed_count:
@@ -36,6 +68,48 @@ interface:
       type: string
     signal_confirmed:
       type: bool
+ui:
+  title: Maxsprt Gate
+  subtitle: MaxSPRT (maximized sequential probability ratio test) gate for sequential signal surveillance. Evaluates observed-to-expected ratio against critical value with look-limit enforcement.
+  icon: circle
+  route: /vigilance/mg/maxsprt-gate
+  steps:
+    - field: observed_count
+      label: observed count
+      help: Number of observed adverse events
+      widget: text
+      placeholder: null
+    - field: expected_count
+      label: expected count
+      help: Number of expected adverse events (baseline rate)
+      widget: text
+      placeholder: null
+    - field: current_look
+      label: current look
+      help: Current sequential analysis look number
+      widget: text
+      placeholder: null
+    - field: max_looks
+      label: max looks
+      help: Maximum number of planned interim looks
+      widget: text
+      placeholder: null
+    - field: critical_value
+      label: critical value
+      help: Observed-to-expected ratio threshold for signal detection (scaled x100, e.g. 300 = ratio of 3.0)
+      widget: text
+      placeholder: null
+  result:
+    template: "verdict: {{verdict}} — action: {{action}} — signal_confirmed: {{signal_confirmed}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/maxsprt-gate
+  cli: rsk mcg run maxsprt-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_observed
   nodes:
@@ -134,93 +208,128 @@ tree:
         action: Missing or invalid input data. Cannot evaluate sequential test.
         signal_confirmed: false
 tests:
-- name: High O/E ratio — signal detected
-  input:
-    observed_count: 450
-    expected_count: 100
-    current_look: 3
-    max_looks: 10
-    critical_value: 300
-  expect:
-    verdict: SIGNAL_DETECTED
-    action: Observed-to-expected ratio exceeds critical value. Signal confirmed — escalate to formal assessment.
-    signal_confirmed: true
-- name: Moderate O/E ratio — signal detected (observed 200, expected 50)
-  input:
-    observed_count: 250
-    expected_count: 80
-    current_look: 5
-    max_looks: 10
-    critical_value: 300
-  expect:
-    verdict: SIGNAL_DETECTED
-    action: Observed-to-expected ratio exceeds critical value. Signal confirmed — escalate to formal assessment.
-    signal_confirmed: true
-- name: Low ratio — continue monitoring
-  input:
-    observed_count: 120
-    expected_count: 100
-    current_look: 3
-    max_looks: 10
-    critical_value: 300
-  expect:
-    verdict: CONTINUE_MONITORING
-    action: Ratio below threshold and looks remaining. Continue sequential surveillance at next interval.
-    signal_confirmed: false
-- name: Max looks reached — study complete
-  input:
-    observed_count: 130
-    expected_count: 100
-    current_look: 10
-    max_looks: 10
-    critical_value: 300
-  expect:
-    verdict: STUDY_COMPLETE_NO_SIGNAL
-    action: Maximum planned looks reached without signal detection. Close sequential analysis.
-    signal_confirmed: false
-- name: Early look — continue monitoring
-  input:
-    observed_count: 110
-    expected_count: 100
-    current_look: 2
-    max_looks: 10
-    critical_value: 300
-  expect:
-    verdict: CONTINUE_MONITORING
-    action: Ratio below threshold and looks remaining. Continue sequential surveillance at next interval.
-    signal_confirmed: false
-- name: Zero expected — insufficient data
-  input:
-    observed_count: 50
-    expected_count: 0
-    current_look: 1
-    max_looks: 10
-    critical_value: 300
-  expect:
-    verdict: INSUFFICIENT_DATA
-    action: Missing or invalid input data. Cannot evaluate sequential test.
-    signal_confirmed: false
-- name: Null safety — empty input
-  input: {}
-  expect:
-    verdict: INSUFFICIENT_DATA
-    action: Missing or invalid input data. Cannot evaluate sequential test.
-    signal_confirmed: false
-- name: Only observed provided — insufficient data
-  input:
-    observed_count: 50
-  expect:
-    verdict: INSUFFICIENT_DATA
-    action: Missing or invalid input data. Cannot evaluate sequential test.
-    signal_confirmed: false
-- name: Exact boundary — observed 300, expected 100
-  input:
-    observed_count: 300
-    expected_count: 100
-    current_look: 4
-    max_looks: 10
-    critical_value: 300
-  expect:
-    verdict: SIGNAL_DETECTED
-    action: Observed-to-expected ratio exceeds critical value. Signal confirmed — escalate to formal assessment.
-    signal_confirmed: true
+  - name: High O/E ratio — signal detected
+    input:
+      observed_count: 450
+      expected_count: 100
+      current_look: 3
+      max_looks: 10
+      critical_value: 300
+    expect:
+      verdict: SIGNAL_DETECTED
+      action: Observed-to-expected ratio exceeds critical value. Signal confirmed — escalate to formal assessment.
+      signal_confirmed: true
+  - name: Moderate O/E ratio — signal detected (observed 200, expected 50)
+    input:
+      observed_count: 250
+      expected_count: 80
+      current_look: 5
+      max_looks: 10
+      critical_value: 300
+    expect:
+      verdict: SIGNAL_DETECTED
+      action: Observed-to-expected ratio exceeds critical value. Signal confirmed — escalate to formal assessment.
+      signal_confirmed: true
+  - name: Low ratio — continue monitoring
+    input:
+      observed_count: 120
+      expected_count: 100
+      current_look: 3
+      max_looks: 10
+      critical_value: 300
+    expect:
+      verdict: CONTINUE_MONITORING
+      action: Ratio below threshold and looks remaining. Continue sequential surveillance at next interval.
+      signal_confirmed: false
+  - name: Max looks reached — study complete
+    input:
+      observed_count: 130
+      expected_count: 100
+      current_look: 10
+      max_looks: 10
+      critical_value: 300
+    expect:
+      verdict: STUDY_COMPLETE_NO_SIGNAL
+      action: Maximum planned looks reached without signal detection. Close sequential analysis.
+      signal_confirmed: false
+  - name: Early look — continue monitoring
+    input:
+      observed_count: 110
+      expected_count: 100
+      current_look: 2
+      max_looks: 10
+      critical_value: 300
+    expect:
+      verdict: CONTINUE_MONITORING
+      action: Ratio below threshold and looks remaining. Continue sequential surveillance at next interval.
+      signal_confirmed: false
+  - name: Zero expected — insufficient data
+    input:
+      observed_count: 50
+      expected_count: 0
+      current_look: 1
+      max_looks: 10
+      critical_value: 300
+    expect:
+      verdict: INSUFFICIENT_DATA
+      action: Missing or invalid input data. Cannot evaluate sequential test.
+      signal_confirmed: false
+  - name: Null safety — empty input
+    input: {}
+    expect:
+      verdict: INSUFFICIENT_DATA
+      action: Missing or invalid input data. Cannot evaluate sequential test.
+      signal_confirmed: false
+  - name: Only observed provided — insufficient data
+    input:
+      observed_count: 50
+    expect:
+      verdict: INSUFFICIENT_DATA
+      action: Missing or invalid input data. Cannot evaluate sequential test.
+      signal_confirmed: false
+  - name: Exact boundary — observed 300, expected 100
+    input:
+      observed_count: 300
+      expected_count: 100
+      current_look: 4
+      max_looks: 10
+      critical_value: 300
+    expect:
+      verdict: SIGNAL_DETECTED
+      action: Observed-to-expected ratio exceeds critical value. Signal confirmed — escalate to formal assessment.
+      signal_confirmed: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - verdict
+    - action
+    - signal_confirmed
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: interaction-severity-classifier
-description: Classify drug-drug interactions by severity based on type and mechanism
 version: 0.1.0
+description: Classify drug-drug interactions by severity based on type and mechanism
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Interaction Severity Classifier
+  subtitle: Classify drug-drug interactions by severity based on type and mechanism
+  icon: circle
+  route: /vigilance/mg/interaction-severity-classifier
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/interaction-severity-classifier
+  cli: rsk mcg run interaction-severity-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_interaction_type
   nodes:
@@ -70,42 +99,73 @@ tree:
       true_next: classify_severity
       false_next: missing_mechanism
 tests:
-- input:
-    interaction_type: ZZZZZ_NO_MATCH
-    mechanism: ZZZZZ_NO_MATCH
-  expect:
-    action_required: false
-    severity: minor
-    clinical_significance: minimal_risk
-- input:
-    interaction_type: ZZZZZ_NO_MATCH
-    mechanism: cyp3a4
-  expect:
-    severity: moderate
-    clinical_significance: monitor_recommended
-    action_required: true
-- input:
-    interaction_type: ZZZZZ_NO_MATCH
-  expect:
-    clinical_significance: null
-    action_required: true
-    severity: unknown
-- input:
-    interaction_type: contraindicated
-    mechanism: ZZZZZ_NO_MATCH
-  expect:
-    severity: major
-    action_required: true
-    clinical_significance: significant_risk
-- input:
-    mechanism: ZZZZZ_NO_MATCH
-  expect:
-    clinical_significance: null
-    action_required: true
-    severity: unknown
-- input: {}
-  expect:
-    clinical_significance: null
-    action_required: true
-    severity: unknown
-interface: null
+  - input:
+      interaction_type: ZZZZZ_NO_MATCH
+      mechanism: ZZZZZ_NO_MATCH
+    expect:
+      action_required: false
+      severity: minor
+      clinical_significance: minimal_risk
+  - input:
+      interaction_type: ZZZZZ_NO_MATCH
+      mechanism: cyp3a4
+    expect:
+      severity: moderate
+      clinical_significance: monitor_recommended
+      action_required: true
+  - input:
+      interaction_type: ZZZZZ_NO_MATCH
+    expect:
+      clinical_significance: null
+      action_required: true
+      severity: unknown
+  - input:
+      interaction_type: contraindicated
+      mechanism: ZZZZZ_NO_MATCH
+    expect:
+      severity: major
+      action_required: true
+      clinical_significance: significant_risk
+  - input:
+      mechanism: ZZZZZ_NO_MATCH
+    expect:
+      clinical_significance: null
+      action_required: true
+      severity: unknown
+  - input: {}
+    expect:
+      clinical_significance: null
+      action_required: true
+      severity: unknown
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

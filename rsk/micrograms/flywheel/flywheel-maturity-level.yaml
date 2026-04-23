@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: flywheel-maturity-level
-description: 'Flywheel operational: flywheel-maturity-level'
 version: 0.1.0
+description: "Flywheel operational: flywheel-maturity-level"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: current_value
+    type: int
+    required: false
+    description: ""
+  - name: target_value
+    type: int
+    required: false
+    description: ""
+  - name: trend
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: status
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     current_value:
@@ -17,6 +45,38 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Flywheel Maturity Level
+  subtitle: "Flywheel operational: flywheel-maturity-level"
+  icon: circle
+  route: /vigilance/mg/flywheel-maturity-level
+  steps:
+    - field: current_value
+      label: current value
+      help: Enter current_value
+      widget: text
+      placeholder: null
+    - field: target_value
+      label: target value
+      help: Enter target_value
+      widget: text
+      placeholder: null
+    - field: trend
+      label: trend
+      help: Enter trend
+      widget: text
+      placeholder: null
+  result:
+    template: "status: {{status}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/flywheel-maturity-level
+  cli: rsk mcg run flywheel-maturity-level
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_on_target
   nodes:
@@ -62,13 +122,69 @@ tree:
         status: BEHIND
         action: prioritize_growth
 tests:
-- input: {current_value: 85, target_value: 80, trend: rising}
-  expect: {status: ON_TARGET, action: maintain}
-- input: {current_value: 60, target_value: 80, trend: rising}
-  expect: {status: APPROACHING, action: sustain_momentum}
-- input: {current_value: 55, target_value: 80, trend: flat}
-  expect: {status: STALLED, action: investigate_blockers}
-- input: {current_value: 30, target_value: 80, trend: falling}
-  expect: {status: BEHIND, action: prioritize_growth}
-- input: {}
-  expect: {status: BEHIND, action: prioritize_growth}
+  - input:
+      current_value: 85
+      target_value: 80
+      trend: rising
+    expect:
+      status: ON_TARGET
+      action: maintain
+  - input:
+      current_value: 60
+      target_value: 80
+      trend: rising
+    expect:
+      status: APPROACHING
+      action: sustain_momentum
+  - input:
+      current_value: 55
+      target_value: 80
+      trend: flat
+    expect:
+      status: STALLED
+      action: investigate_blockers
+  - input:
+      current_value: 30
+      target_value: 80
+      trend: falling
+    expect:
+      status: BEHIND
+      action: prioritize_growth
+  - input: {}
+    expect:
+      status: BEHIND
+      action: prioritize_growth
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

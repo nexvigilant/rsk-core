@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: epa7-risk-minimize
-description: "EPA 7: Design risk minimization — routes by risk severity, population scope, and intervention type needed."
 version: 0.1.0
+description: "EPA 7: Design risk minimization — routes by risk severity, population scope, and intervention type needed."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: existing_labeling_adequate
+    type: bool
+    required: false
+    description: ""
+  - name: population_scope
+    type: string
+    required: false
+    description: ""
+  - name: risk_severity
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: ai_support
+    type: string
+  - name: evaluation
+    type: string
+  - name: intervention
+    type: string
+  - name: measures
+    type: string
+  - name: monitoring
+    type: string
+  - name: regulatory
+    type: string
 interface:
   inputs:
     existing_labeling_adequate:
@@ -25,6 +61,38 @@ interface:
       type: string
     regulatory:
       type: string
+ui:
+  title: Epa7 Risk Minimize
+  subtitle: "EPA 7: Design risk minimization — routes by risk severity, population scope, and intervention type needed."
+  icon: circle
+  route: /vigilance/mg/epa7-risk-minimize
+  steps:
+    - field: existing_labeling_adequate
+      label: existing labeling adequate
+      help: Enter existing_labeling_adequate
+      widget: toggle
+      placeholder: null
+    - field: population_scope
+      label: population scope
+      help: Enter population_scope
+      widget: text
+      placeholder: null
+    - field: risk_severity
+      label: risk severity
+      help: Enter risk_severity
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_support: {{ai_support}} — evaluation: {{evaluation}} — intervention: {{intervention}} — measures: {{measures}} — monitoring: {{monitoring}} — regulatory: {{regulatory}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/epa7-risk-minimize
+  cli: rsk mcg run epa7-risk-minimize
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severity
   nodes:
@@ -60,69 +128,107 @@ tree:
       type: return
       value:
         intervention: ADDITIONAL_BROAD
-        measures: "REMS/RMP, DHPC, educational program, restricted distribution"
-        monitoring: "real-time effectiveness tracking, patient registry"
-        evaluation: "quarterly effectiveness review, outcome measurement"
-        ai_support: "predictive modeling, adherence tracking, automated alerts"
-        regulatory: "submit RMP/REMS, regulatory notification required"
+        measures: REMS/RMP, DHPC, educational program, restricted distribution
+        monitoring: real-time effectiveness tracking, patient registry
+        evaluation: quarterly effectiveness review, outcome measurement
+        ai_support: predictive modeling, adherence tracking, automated alerts
+        regulatory: submit RMP/REMS, regulatory notification required
     additional_measures_targeted:
       type: return
       value:
         intervention: ADDITIONAL_TARGETED
-        measures: "targeted DHPC, HCP training, patient guide, monitoring program"
-        monitoring: "targeted effectiveness tracking, prescriber surveys"
-        evaluation: "semi-annual review, prescriber compliance assessment"
-        ai_support: "targeted analytics, compliance monitoring"
-        regulatory: "RMP update, regulatory communication"
+        measures: targeted DHPC, HCP training, patient guide, monitoring program
+        monitoring: targeted effectiveness tracking, prescriber surveys
+        evaluation: semi-annual review, prescriber compliance assessment
+        ai_support: targeted analytics, compliance monitoring
+        regulatory: RMP update, regulatory communication
     routine_measures:
       type: return
       value:
         intervention: ROUTINE
-        measures: "labeling update (SmPC/PIL), routine pharmacovigilance"
-        monitoring: "standard surveillance, periodic safety reporting"
-        evaluation: "annual review in PSUR/PBRER"
-        ai_support: "automated signal monitoring"
+        measures: labeling update (SmPC/PIL), routine pharmacovigilance
+        monitoring: standard surveillance, periodic safety reporting
+        evaluation: annual review in PSUR/PBRER
+        ai_support: automated signal monitoring
     enhanced_routine:
       type: return
       value:
         intervention: ENHANCED_ROUTINE
-        measures: "labeling update + targeted communication to HCPs"
-        monitoring: "enhanced surveillance, focused signal detection"
-        evaluation: "semi-annual review, communication impact assessment"
-        ai_support: "enhanced monitoring, communication tracking"
+        measures: labeling update + targeted communication to HCPs
+        monitoring: enhanced surveillance, focused signal detection
+        evaluation: semi-annual review, communication impact assessment
+        ai_support: enhanced monitoring, communication tracking
     low_risk:
       type: return
       value:
         intervention: ROUTINE_MINIMAL
-        measures: "standard labeling, routine surveillance"
-        monitoring: "routine pharmacovigilance"
-        evaluation: "annual PSUR review"
+        measures: standard labeling, routine surveillance
+        monitoring: routine pharmacovigilance
+        evaluation: annual PSUR review
 tests:
-- input:
-    risk_severity: 5
-    population_scope: broad
-  expect:
-    intervention: ADDITIONAL_BROAD
-    regulatory: "submit RMP/REMS, regulatory notification required"
-- input:
-    risk_severity: 4
-    population_scope: narrow
-  expect:
-    intervention: ADDITIONAL_TARGETED
-- input:
-    risk_severity: 3
-    existing_labeling_adequate: true
-  expect:
-    intervention: ROUTINE
-- input:
-    risk_severity: 2
-    existing_labeling_adequate: false
-  expect:
-    intervention: ENHANCED_ROUTINE
-- input:
-    risk_severity: 1
-  expect:
-    intervention: ROUTINE_MINIMAL
-- input: {}
-  expect:
-    intervention: ROUTINE_MINIMAL
+  - input:
+      risk_severity: 5
+      population_scope: broad
+    expect:
+      intervention: ADDITIONAL_BROAD
+      regulatory: submit RMP/REMS, regulatory notification required
+  - input:
+      risk_severity: 4
+      population_scope: narrow
+    expect:
+      intervention: ADDITIONAL_TARGETED
+  - input:
+      risk_severity: 3
+      existing_labeling_adequate: true
+    expect:
+      intervention: ROUTINE
+  - input:
+      risk_severity: 2
+      existing_labeling_adequate: false
+    expect:
+      intervention: ENHANCED_ROUTINE
+  - input:
+      risk_severity: 1
+    expect:
+      intervention: ROUTINE_MINIMAL
+  - input: {}
+    expect:
+      intervention: ROUTINE_MINIMAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_support
+    - evaluation
+    - intervention
+    - measures
+    - monitoring
+    - regulatory
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: meddra-pt-validator
-description: "Validate adverse event term against MedDRA Preferred Term (PT) dictionary"
 version: 0.1.0
+description: Validate adverse event term against MedDRA Preferred Term (PT) dictionary
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Meddra Pt Validator
+  subtitle: Validate adverse event term against MedDRA Preferred Term (PT) dictionary
+  icon: circle
+  route: /vigilance/mg/meddra-pt-validator
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/meddra-pt-validator
+  cli: rsk mcg run meddra-pt-validator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_term_input
   nodes:
@@ -29,16 +58,16 @@ tree:
       type: return
       value:
         meddra_pt_code: "10033633"
-        meddra_pt_name: "Bacterial infection"
-        validation_status: "valid_pt"
+        meddra_pt_name: Bacterial infection
+        validation_status: valid_pt
         requires_mapping: false
         meddra_compliant: true
     suggest_pt:
       type: return
       value:
         meddra_pt_code: "10033633"
-        meddra_pt_name: "Bacterial infection"
-        validation_status: "mapped_from_llt"
+        meddra_pt_name: Bacterial infection
+        validation_status: mapped_from_llt
         requires_mapping: true
         meddra_compliant: true
     validation_failed:
@@ -46,32 +75,64 @@ tree:
       value:
         meddra_pt_code: null
         meddra_pt_name: null
-        validation_status: "invalid_term"
+        validation_status: invalid_term
         requires_mapping: null
         meddra_compliant: false
 tests:
-- input:
-    adverse_event_term: "Bacterial infection"
-    is_valid_meddra_pt: true
-  expect:
-    validation_status: "valid_pt"
-    meddra_pt_code: "10033633"
-    requires_mapping: false
-- input:
-    adverse_event_term: "Infection bacterial"
-    is_valid_meddra_pt: false
-    suggested_pt: "Bacterial infection"
-  expect:
-    validation_status: "mapped_from_llt"
-    requires_mapping: true
-- input:
-    adverse_event_term: "Unknown term"
-    is_valid_meddra_pt: false
-    suggested_pt: null
-  expect:
-    validation_status: "invalid_term"
-    meddra_compliant: false
-- input: {}
-  expect:
-    validation_status: "invalid_term"
-    meddra_compliant: false
+  - input:
+      adverse_event_term: Bacterial infection
+      is_valid_meddra_pt: true
+    expect:
+      validation_status: valid_pt
+      meddra_pt_code: "10033633"
+      requires_mapping: false
+  - input:
+      adverse_event_term: Infection bacterial
+      is_valid_meddra_pt: false
+      suggested_pt: Bacterial infection
+    expect:
+      validation_status: mapped_from_llt
+      requires_mapping: true
+  - input:
+      adverse_event_term: Unknown term
+      is_valid_meddra_pt: false
+      suggested_pt: null
+    expect:
+      validation_status: invalid_term
+      meddra_compliant: false
+  - input: {}
+    expect:
+      validation_status: invalid_term
+      meddra_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

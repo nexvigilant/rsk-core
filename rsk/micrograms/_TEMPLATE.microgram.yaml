@@ -1,0 +1,125 @@
+# ═══════════════════════════════════════════════════════════════════
+# MICROGRAM++ TEMPLATE — Full-Stack Atomic Application
+# ═══════════════════════════════════════════════════════════════════
+# One YAML = UI + Transport + Logic + Tests + Persistence + Governance.
+# Replace every <PLACEHOLDER>. Delete sections you don't need (except
+# METADATA, SCHEMA, TREE, TESTS — those are required).
+# ═══════════════════════════════════════════════════════════════════
+
+# ── 1. METADATA ────────────────────────────────────────────────────
+name: <unique-kebab-name>              # e.g. signal-triage
+version: 0.1.0                         # semver
+description: <one-line intent>
+family: <domain>.<subdomain>           # e.g. pv.signal, reg.causality
+author: <email>
+created_at: 2026-04-23
+primitives: []                         # T1 grounding, e.g. [→, ∂, ς]
+tags: []
+
+# ── 2. SCHEMA (input/output contract) ──────────────────────────────
+inputs:
+  - name: <field>
+    type: <f64|u32|i32|bool|string|enum>
+    required: true
+    min: null
+    max: null
+    default: null
+    description: <what this is>
+
+outputs:
+  - name: verdict
+    type: enum
+    values: [<OPTION_A>, <OPTION_B>]
+  - name: confidence
+    type: f64
+    range: [0.0, 1.0]
+
+# ── 3. UI (Anatomy — For NexVigilants wizard) ──────────────────────
+ui:
+  title: <Plain-English Title>
+  subtitle: <One-sentence purpose>
+  icon: <lucide-icon-name>
+  route: /vigilance/<slug>
+  steps:
+    - field: <input-name>
+      label: <Plain-English Label>
+      help: <Jargon-free explanation>
+      widget: <number|text|select|slider|toggle>
+      placeholder: null
+      validation_message: null
+  result:
+    template: "{{verdict}} at {{confidence*100 | round}}% confidence"
+    show_explanation: true
+    show_tree_path: true              # visualize which nodes fired
+    next_actions: []                  # links to downstream micrograms
+
+# ── 4. TRANSPORT (Nervous System) ──────────────────────────────────
+transport:
+  mcp_tool: mcg_run                   # already exists
+  http_route: POST /api/mg/<name>
+  cli: rsk mcg run <name>
+  auth: session_required              # none | session_required | role:<r>
+  rate_limit: 60/min
+
+# ── 5. LOGIC (Physiology — decision tree) ──────────────────────────
+tree:
+  root:
+    if: "<boolean expression>"
+    then: <node-id>
+    else: <node-id>
+
+  <node-id-A>:
+    verdict: <OPTION_A>
+    confidence: 0.85
+    explanation: <why this verdict fires>
+
+  <node-id-B>:
+    verdict: <OPTION_B>
+    confidence: 0.70
+    explanation: <why this verdict fires>
+
+# ── 6. TESTS (self-validating) ─────────────────────────────────────
+tests:
+  - name: <happy-path>
+    inputs: {<field>: <value>}
+    expect: {verdict: <OPTION_A>}
+
+  - name: <edge-case>
+    inputs: {<field>: <value>}
+    expect: {verdict: <OPTION_B>}
+
+  - name: <boundary>
+    inputs: {<field>: <threshold-value>}
+    expect: {verdict: <OPTION_A>}
+
+# ── 7. PERSISTENCE ─────────────────────────────────────────────────
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted: [inputs, verdict, confidence, latency_ms, user_id]
+
+# ── 8. OBSERVABILITY ───────────────────────────────────────────────
+telemetry:
+  emit: [invocation, verdict, latency_ms, error]
+  guardian_signal_on: [error, low_confidence]
+  cytokine_family: <family>
+  log_level: info
+
+# ── 9. GOVERNANCE ──────────────────────────────────────────────────
+governance:
+  sop_ref: <SOP-XXX-###>
+  regulatory_ref: []                  # e.g. [ICH-E2E, 21CFR314.80]
+  harm_types: []                      # A-H taxonomy
+  review_cadence: quarterly
+  tov_axioms: [decomposition, conservation]
+  approved_by: <reviewer>
+  approved_at: null
+
+# ── 10. COMPOSITION ────────────────────────────────────────────────
+chain:
+  upstream: []                        # micrograms feeding this one
+  downstream: []                      # micrograms this feeds
+  parallel_safe: true
+  idempotent: true

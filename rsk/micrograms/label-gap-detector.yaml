@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: label-gap-detector
-description: 'Detects when a FAERS signal exists for a drug-event pair but the event is NOT on the drug current label'
 version: 0.1.0
+description: Detects when a FAERS signal exists for a drug-event pair but the event is NOT on the drug current label
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: signal_detected
+    type: bool
+    required: false
+    description: ""
+  - name: on_label
+    type: bool
+    required: false
+    description: ""
+  - name: prr
+    type: float
+    required: false
+    description: ""
+  - name: case_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: gap_classification
+    type: string
+  - name: urgency
+    type: string
+  - name: recommended_action
+    type: string
 interface:
   inputs:
     signal_detected:
@@ -22,6 +56,43 @@ interface:
       type: string
     recommended_action:
       type: string
+ui:
+  title: Label Gap Detector
+  subtitle: Detects when a FAERS signal exists for a drug-event pair but the event is NOT on the drug current label
+  icon: circle
+  route: /vigilance/mg/label-gap-detector
+  steps:
+    - field: signal_detected
+      label: signal detected
+      help: Enter signal_detected
+      widget: toggle
+      placeholder: null
+    - field: on_label
+      label: on label
+      help: Enter on_label
+      widget: toggle
+      placeholder: null
+    - field: prr
+      label: prr
+      help: Enter prr
+      widget: text
+      placeholder: null
+    - field: case_count
+      label: case count
+      help: Enter case_count
+      widget: text
+      placeholder: null
+  result:
+    template: "gap_classification: {{gap_classification}} — urgency: {{urgency}} — recommended_action: {{recommended_action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/label-gap-detector
+  cli: rsk mcg run label-gap-detector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signal
   nodes:
@@ -43,7 +114,7 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 4.0
+      value: 4
       true_next: check_critical_cases
       false_next: check_significant_prr
     check_critical_cases:
@@ -57,7 +128,7 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: check_significant_cases_from_critical
       false_next: check_emerging_prr
     check_significant_cases_from_critical:
@@ -71,7 +142,7 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: check_significant_cases
       false_next: check_emerging_prr
     check_significant_cases:
@@ -132,119 +203,142 @@ tree:
         urgency: none
         recommended_action: No signal detected. No label gap assessment needed
 tests:
-# Critical gap: signal, not on label, PRR>=4, cases>=10
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 6.5
-    case_count: 25
-  expect:
-    gap_classification: critical_gap
-    urgency: immediate
-    recommended_action: Escalate to safety committee for urgent label update review
-# Boundary: PRR exactly 4.0, cases exactly 10
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 4.0
-    case_count: 10
-  expect:
-    gap_classification: critical_gap
-    urgency: immediate
-    recommended_action: Escalate to safety committee for urgent label update review
-# Significant gap: PRR>=2 but <4, cases>=5
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 2.8
-    case_count: 8
-  expect:
-    gap_classification: significant_gap
-    urgency: high
-    recommended_action: Initiate formal signal evaluation and label update assessment
-# Significant gap: high PRR but cases between 5 and 9
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 5.0
-    case_count: 7
-  expect:
-    gap_classification: significant_gap
-    urgency: high
-    recommended_action: Initiate formal signal evaluation and label update assessment
-# Emerging gap: PRR>=1.5, cases>=3
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 1.8
-    case_count: 4
-  expect:
-    gap_classification: emerging_gap
-    urgency: moderate
-    recommended_action: Add to signal tracking list and schedule periodic review
-# Signal but too weak for gap: PRR<1.5
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 1.2
-    case_count: 2
-  expect:
-    gap_classification: no_gap
-    urgency: low
-    recommended_action: Signal too weak for label gap classification. Continue monitoring
-# Already on label: signal exists but event is labeled
-- input:
-    signal_detected: true
-    on_label: true
-    prr: 5.0
-    case_count: 20
-  expect:
-    gap_classification: no_gap
-    urgency: none
-    recommended_action: Event already on label. No label gap exists
-# No signal detected
-- input:
-    signal_detected: false
-    on_label: false
-    prr: 3.0
-    case_count: 15
-  expect:
-    gap_classification: no_gap
-    urgency: none
-    recommended_action: No signal detected. No label gap assessment needed
-# Empty input
-- input: {}
-  expect:
-    gap_classification: no_gap
-    urgency: none
-    recommended_action: No signal detected. No label gap assessment needed
-# Edge: PRR exactly 2.0, cases exactly 5
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 2.0
-    case_count: 5
-  expect:
-    gap_classification: significant_gap
-    urgency: high
-    recommended_action: Initiate formal signal evaluation and label update assessment
-# Edge: PRR exactly 1.5, cases exactly 3
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 1.5
-    case_count: 3
-  expect:
-    gap_classification: emerging_gap
-    urgency: moderate
-    recommended_action: Add to signal tracking list and schedule periodic review
-# Signal detected but PRR high, cases below emerging threshold
-- input:
-    signal_detected: true
-    on_label: false
-    prr: 3.0
-    case_count: 2
-  expect:
-    gap_classification: no_gap
-    urgency: low
-    recommended_action: Signal too weak for label gap classification. Continue monitoring
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 6.5
+      case_count: 25
+    expect:
+      gap_classification: critical_gap
+      urgency: immediate
+      recommended_action: Escalate to safety committee for urgent label update review
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 4
+      case_count: 10
+    expect:
+      gap_classification: critical_gap
+      urgency: immediate
+      recommended_action: Escalate to safety committee for urgent label update review
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 2.8
+      case_count: 8
+    expect:
+      gap_classification: significant_gap
+      urgency: high
+      recommended_action: Initiate formal signal evaluation and label update assessment
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 5
+      case_count: 7
+    expect:
+      gap_classification: significant_gap
+      urgency: high
+      recommended_action: Initiate formal signal evaluation and label update assessment
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 1.8
+      case_count: 4
+    expect:
+      gap_classification: emerging_gap
+      urgency: moderate
+      recommended_action: Add to signal tracking list and schedule periodic review
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 1.2
+      case_count: 2
+    expect:
+      gap_classification: no_gap
+      urgency: low
+      recommended_action: Signal too weak for label gap classification. Continue monitoring
+  - input:
+      signal_detected: true
+      on_label: true
+      prr: 5
+      case_count: 20
+    expect:
+      gap_classification: no_gap
+      urgency: none
+      recommended_action: Event already on label. No label gap exists
+  - input:
+      signal_detected: false
+      on_label: false
+      prr: 3
+      case_count: 15
+    expect:
+      gap_classification: no_gap
+      urgency: none
+      recommended_action: No signal detected. No label gap assessment needed
+  - input: {}
+    expect:
+      gap_classification: no_gap
+      urgency: none
+      recommended_action: No signal detected. No label gap assessment needed
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 2
+      case_count: 5
+    expect:
+      gap_classification: significant_gap
+      urgency: high
+      recommended_action: Initiate formal signal evaluation and label update assessment
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 1.5
+      case_count: 3
+    expect:
+      gap_classification: emerging_gap
+      urgency: moderate
+      recommended_action: Add to signal tracking list and schedule periodic review
+  - input:
+      signal_detected: true
+      on_label: false
+      prr: 3
+      case_count: 2
+    expect:
+      gap_classification: no_gap
+      urgency: low
+      recommended_action: Signal too weak for label gap classification. Continue monitoring
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - gap_classification
+    - urgency
+    - recommended_action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

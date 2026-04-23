@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: integration-d8
-description: "Domain 8 cross-domain integration — signal detection connects to databases, literature, clinical assessment, benefit-risk, and global PV."
 version: 0.1.0
+description: Domain 8 cross-domain integration — signal detection connects to databases, literature, clinical assessment, benefit-risk, and global PV.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: target_domain
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: epas
+    type: string
+  - name: integration_type
+    type: string
+  - name: module
+    type: string
+  - name: nexcore
+    type: string
+  - name: nexcore_crates
+    type: string
+  - name: synergy
+    type: string
 interface:
   inputs:
     target_domain:
@@ -19,6 +47,28 @@ interface:
       type: string
     synergy:
       type: string
+ui:
+  title: Integration D8
+  subtitle: Domain 8 cross-domain integration — signal detection connects to databases, literature, clinical assessment, benefit-risk, and global PV.
+  icon: circle
+  route: /vigilance/mg/integration-d8
+  steps:
+    - field: target_domain
+      label: target domain
+      help: Enter target_domain
+      widget: text
+      placeholder: null
+  result:
+    template: "epas: {{epas}} — integration_type: {{integration_type}} — module: {{module}} — nexcore: {{nexcore}} — nexcore_crates: {{nexcore_crates}} — synergy: {{synergy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/integration-d8
+  cli: rsk mcg run integration-d8
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target
   nodes:
@@ -68,83 +118,121 @@ tree:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Signal-Database Integration"
-        synergy: "spontaneous reporting data is the primary input for statistical signal detection"
-        epas: "EPA4, EPA5"
-        nexcore: "nexcore-faers-etl feeds nexcore-pv-core feeds nexcore-signal-pipeline"
+        module: Signal-Database Integration
+        synergy: spontaneous reporting data is the primary input for statistical signal detection
+        epas: EPA4, EPA5
+        nexcore: nexcore-faers-etl feeds nexcore-pv-core feeds nexcore-signal-pipeline
     d8_d15:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Signal-Literature Integration"
-        synergy: "literature evidence validates and contextualizes statistical signals"
-        epas: "EPA2, EPA5"
+        module: Signal-Literature Integration
+        synergy: literature evidence validates and contextualizes statistical signals
+        epas: EPA2, EPA5
     d8_d2:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Signal-Clinical Integration"
-        synergy: "clinical knowledge essential for signal validation, causality, biological plausibility"
-        epas: "EPA5, EPA8"
+        module: Signal-Clinical Integration
+        synergy: clinical knowledge essential for signal validation, causality, biological plausibility
+        epas: EPA5, EPA8
     d8_d9:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Signal-Study Integration"
-        synergy: "observational study design supports signal investigation and validation"
+        module: Signal-Study Integration
+        synergy: observational study design supports signal investigation and validation
     d8_d10:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Signal-Benefit-Risk Integration"
-        synergy: "signal characterization feeds benefit-risk assessment and risk management decisions"
-        epas: "EPA5, EPA8"
+        module: Signal-Benefit-Risk Integration
+        synergy: signal characterization feeds benefit-risk assessment and risk management decisions
+        epas: EPA5, EPA8
     d8_d13:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Signal-Global Integration"
-        synergy: "global perspective critical for international signal harmonization"
+        module: Signal-Global Integration
+        synergy: global perspective critical for international signal harmonization
     general:
       type: return
       value:
         integration_type: GENERAL
-        module: "Universal Signal Foundation"
-        synergy: "signal detection expertise enhances safety surveillance across all domains"
-        nexcore_crates: "nexcore-pv-core, nexcore-signal-pipeline, nexcore-faers-etl"
+        module: Universal Signal Foundation
+        synergy: signal detection expertise enhances safety surveillance across all domains
+        nexcore_crates: nexcore-pv-core, nexcore-signal-pipeline, nexcore-faers-etl
 tests:
-- input:
-    target_domain: 7
-  expect:
-    integration_type: PRIMARY
-    module: "Signal-Database Integration"
-- input:
-    target_domain: 15
-  expect:
-    integration_type: PRIMARY
-    module: "Signal-Literature Integration"
-- input:
-    target_domain: 2
-  expect:
-    integration_type: PRIMARY
-    module: "Signal-Clinical Integration"
-- input:
-    target_domain: 10
-  expect:
-    integration_type: PRIMARY
-    module: "Signal-Benefit-Risk Integration"
-- input:
-    target_domain: 9
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 13
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 1
-  expect:
-    integration_type: GENERAL
-- input: {}
-  expect:
-    integration_type: GENERAL
+  - input:
+      target_domain: 7
+    expect:
+      integration_type: PRIMARY
+      module: Signal-Database Integration
+  - input:
+      target_domain: 15
+    expect:
+      integration_type: PRIMARY
+      module: Signal-Literature Integration
+  - input:
+      target_domain: 2
+    expect:
+      integration_type: PRIMARY
+      module: Signal-Clinical Integration
+  - input:
+      target_domain: 10
+    expect:
+      integration_type: PRIMARY
+      module: Signal-Benefit-Risk Integration
+  - input:
+      target_domain: 9
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 13
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 1
+    expect:
+      integration_type: GENERAL
+  - input: {}
+    expect:
+      integration_type: GENERAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - epas
+    - integration_type
+    - module
+    - nexcore
+    - nexcore_crates
+    - synergy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

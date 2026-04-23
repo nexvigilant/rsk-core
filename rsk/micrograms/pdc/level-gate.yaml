@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: level-gate
-description: "PDC: Gate competency level (1-7) into progression tier with behavioral anchor requirements"
 version: 0.1.0
+description: "PDC: Gate competency level (1-7) into progression tier with behavioral anchor requirements"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: level
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: anchor_type
+    type: string
+  - name: autonomy
+    type: string
+  - name: error
+    type: string
+  - name: flywheel_tier
+    type: string
+  - name: programs
+    type: string
+  - name: supervision
+    type: string
+  - name: tier
+    type: string
 interface:
   inputs:
     level:
@@ -21,6 +51,28 @@ interface:
       type: string
     tier:
       type: string
+ui:
+  title: Level Gate
+  subtitle: "PDC: Gate competency level (1-7) into progression tier with behavioral anchor requirements"
+  icon: circle
+  route: /vigilance/mg/level-gate
+  steps:
+    - field: level
+      label: level
+      help: Enter level
+      widget: text
+      placeholder: null
+  result:
+    template: "anchor_type: {{anchor_type}} — autonomy: {{autonomy}} — error: {{error}} — flywheel_tier: {{flywheel_tier}} — programs: {{programs}} — supervision: {{supervision}} — tier: {{tier}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/level-gate
+  cli: rsk mcg run level-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -73,8 +125,8 @@ tree:
         supervision: extensive
         autonomy: guided_practice
         flywheel_tier: DRAFT
-        anchor_type: "observable_basics"
-        programs: "APPE, Fellowship_12mo"
+        anchor_type: observable_basics
+        programs: APPE, Fellowship_12mo
     independent_tier:
       type: return
       value:
@@ -82,8 +134,8 @@ tree:
         supervision: available_consultation
         autonomy: routine_autonomous
         flywheel_tier: STAGING
-        anchor_type: "comprehensive_independent"
-        programs: "Fellowship_12mo, Fellowship_18mo"
+        anchor_type: comprehensive_independent
+        programs: Fellowship_12mo, Fellowship_18mo
     advanced_tier:
       type: return
       value:
@@ -91,8 +143,8 @@ tree:
         supervision: minimal_oversight
         autonomy: complex_problem_solving
         flywheel_tier: STAGING
-        anchor_type: "innovation_development"
-        programs: "Fellowship_18mo, Fellowship_24mo"
+        anchor_type: innovation_development
+        programs: Fellowship_18mo, Fellowship_24mo
     expert_tier:
       type: return
       value:
@@ -100,8 +152,8 @@ tree:
         supervision: complete_autonomy
         autonomy: strategic_leadership
         flywheel_tier: LIVE
-        anchor_type: "field_advancement"
-        programs: "SMP"
+        anchor_type: field_advancement
+        programs: SMP
     executive_tier:
       type: return
       value:
@@ -109,66 +161,105 @@ tree:
         supervision: none
         autonomy: organizational_transformation
         flywheel_tier: LIVE
-        anchor_type: "industry_influence"
-        programs: "SMP_Executive"
+        anchor_type: industry_influence
+        programs: SMP_Executive
     invalid_level:
       type: return
       value:
         tier: INVALID
-        error: "Level must be 1-7 (1=L1, 2=L2, 3=L3, 4=L4, 5=L5, 6=L5+, 7=L5++)"
+        error: Level must be 1-7 (1=L1, 2=L2, 3=L3, 4=L4, 5=L5, 6=L5+, 7=L5++)
 tests:
-- input:
-    level: 1
-  expect:
-    tier: FOUNDATION
-    supervision: extensive
-    flywheel_tier: DRAFT
-- input:
-    level: 2
-  expect:
-    tier: FOUNDATION
-    supervision: extensive
-    flywheel_tier: DRAFT
-- input:
-    level: 3
-  expect:
-    tier: INDEPENDENT
-    supervision: available_consultation
-    flywheel_tier: STAGING
-- input:
-    level: 4
-  expect:
-    tier: ADVANCED
-    supervision: minimal_oversight
-    flywheel_tier: STAGING
-- input:
-    level: 5
-  expect:
-    tier: EXPERT
-    supervision: complete_autonomy
-    flywheel_tier: LIVE
-- input:
-    level: 6
-  expect:
-    tier: EXECUTIVE
-    supervision: none
-    flywheel_tier: LIVE
-- input:
-    level: 7
-  expect:
-    tier: EXECUTIVE
-    supervision: none
-    flywheel_tier: LIVE
-- input:
-    level: 8
-  expect:
-    tier: INVALID
-- input:
-    level: 0
-  expect:
-    tier: FOUNDATION
-    flywheel_tier: DRAFT
-- input: {}
-  expect:
-    tier: FOUNDATION
-    flywheel_tier: DRAFT
+  - input:
+      level: 1
+    expect:
+      tier: FOUNDATION
+      supervision: extensive
+      flywheel_tier: DRAFT
+  - input:
+      level: 2
+    expect:
+      tier: FOUNDATION
+      supervision: extensive
+      flywheel_tier: DRAFT
+  - input:
+      level: 3
+    expect:
+      tier: INDEPENDENT
+      supervision: available_consultation
+      flywheel_tier: STAGING
+  - input:
+      level: 4
+    expect:
+      tier: ADVANCED
+      supervision: minimal_oversight
+      flywheel_tier: STAGING
+  - input:
+      level: 5
+    expect:
+      tier: EXPERT
+      supervision: complete_autonomy
+      flywheel_tier: LIVE
+  - input:
+      level: 6
+    expect:
+      tier: EXECUTIVE
+      supervision: none
+      flywheel_tier: LIVE
+  - input:
+      level: 7
+    expect:
+      tier: EXECUTIVE
+      supervision: none
+      flywheel_tier: LIVE
+  - input:
+      level: 8
+    expect:
+      tier: INVALID
+  - input:
+      level: 0
+    expect:
+      tier: FOUNDATION
+      flywheel_tier: DRAFT
+  - input: {}
+    expect:
+      tier: FOUNDATION
+      flywheel_tier: DRAFT
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - anchor_type
+    - autonomy
+    - error
+    - flywheel_tier
+    - programs
+    - supervision
+    - tier
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

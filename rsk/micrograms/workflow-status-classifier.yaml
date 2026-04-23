@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workflow-status-classifier
-description: 'PVOS workflow status: classifies workflow execution status from step completion and failure flag - NOT_STARTED/IN_PROGRESS/COMPLETED/FAILED'
 version: 0.1.0
+description: "PVOS workflow status: classifies workflow execution status from step completion and failure flag - NOT_STARTED/IN_PROGRESS/COMPLETED/FAILED"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_failure
+    type: bool
+    required: false
+    description: ""
+  - name: is_complete
+    type: bool
+    required: false
+    description: ""
+  - name: steps_completed
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: description
+    type: string
+  - name: status
+    type: string
 interface:
   inputs:
     has_failure:
@@ -17,6 +45,38 @@ interface:
       type: string
     status:
       type: string
+ui:
+  title: Workflow Status Classifier
+  subtitle: "PVOS workflow status: classifies workflow execution status from step completion and failure flag - NOT_STARTED/IN_PROGRESS/COMPLETED/FAILED"
+  icon: circle
+  route: /vigilance/mg/workflow-status-classifier
+  steps:
+    - field: has_failure
+      label: has failure
+      help: Enter has_failure
+      widget: toggle
+      placeholder: null
+    - field: is_complete
+      label: is complete
+      help: Enter is_complete
+      widget: toggle
+      placeholder: null
+    - field: steps_completed
+      label: steps completed
+      help: Enter steps_completed
+      widget: text
+      placeholder: null
+  result:
+    template: "description: {{description}} — status: {{status}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workflow-status-classifier
+  cli: rsk mcg run workflow-status-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_failure
   nodes:
@@ -62,47 +122,81 @@ tree:
         status: COMPLETED
         description: All steps completed successfully - workflow is done
 tests:
-- input:
-    steps_total: 5
-    steps_completed: 0
-    is_complete: false
-    has_failure: false
-  expect:
-    status: NOT_STARTED
-    description: No steps completed - workflow has not begun execution
-- input:
-    steps_total: 5
-    steps_completed: 3
-    is_complete: false
-    has_failure: false
-  expect:
-    status: IN_PROGRESS
-    description: Workflow is executing - some steps complete, more remaining
-- input:
-    steps_total: 5
-    steps_completed: 5
-    is_complete: true
-    has_failure: false
-  expect:
-    status: COMPLETED
-    description: All steps completed successfully - workflow is done
-- input:
-    steps_total: 5
-    steps_completed: 3
-    is_complete: false
-    has_failure: true
-  expect:
-    status: FAILED
-    description: Workflow has a failed step - requires investigation and remediation
-- input:
-    steps_total: 5
-    steps_completed: 0
-    is_complete: false
-    has_failure: true
-  expect:
-    status: FAILED
-    description: Workflow has a failed step - requires investigation and remediation
-- input: {}
-  expect:
-    description: No steps completed - workflow has not begun execution
-    status: NOT_STARTED
+  - input:
+      steps_total: 5
+      steps_completed: 0
+      is_complete: false
+      has_failure: false
+    expect:
+      status: NOT_STARTED
+      description: No steps completed - workflow has not begun execution
+  - input:
+      steps_total: 5
+      steps_completed: 3
+      is_complete: false
+      has_failure: false
+    expect:
+      status: IN_PROGRESS
+      description: Workflow is executing - some steps complete, more remaining
+  - input:
+      steps_total: 5
+      steps_completed: 5
+      is_complete: true
+      has_failure: false
+    expect:
+      status: COMPLETED
+      description: All steps completed successfully - workflow is done
+  - input:
+      steps_total: 5
+      steps_completed: 3
+      is_complete: false
+      has_failure: true
+    expect:
+      status: FAILED
+      description: Workflow has a failed step - requires investigation and remediation
+  - input:
+      steps_total: 5
+      steps_completed: 0
+      is_complete: false
+      has_failure: true
+    expect:
+      status: FAILED
+      description: Workflow has a failed step - requires investigation and remediation
+  - input: {}
+    expect:
+      description: No steps completed - workflow has not begun execution
+      status: NOT_STARTED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - description
+    - status
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

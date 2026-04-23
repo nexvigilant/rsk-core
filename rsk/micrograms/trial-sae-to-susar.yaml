@@ -1,7 +1,90 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: trial-sae-to-susar
-description: Routes serious adverse event classification to SUSAR determination and
-  reporting timeline
 version: 0.1.0
+description: Routes serious adverse event classification to SUSAR determination and reporting timeline
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_unexpected
+    type: boolean
+    required: true
+    description: ""
+  - name: is_serious
+    type: boolean
+    required: true
+    description: ""
+  - name: is_related
+    type: boolean
+    required: true
+    description: ""
+outputs:
+  - name: rationale
+    type: string
+  - name: is_susar
+    type: boolean
+  - name: reporting_timeline_days
+    type: integer
+interface:
+  inputs:
+    is_unexpected:
+      type: boolean
+      required: true
+    is_serious:
+      type: boolean
+      required: true
+    is_related:
+      type: boolean
+      required: true
+  outputs:
+    rationale:
+      type: string
+      required: false
+    is_susar:
+      type: boolean
+      required: false
+    reporting_timeline_days:
+      type: integer
+      required: false
+  aliases: {}
+ui:
+  title: Trial Sae To Susar
+  subtitle: Routes serious adverse event classification to SUSAR determination and reporting timeline
+  icon: circle
+  route: /vigilance/mg/trial-sae-to-susar
+  steps:
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_related
+      label: is related
+      help: Enter is_related
+      widget: toggle
+      placeholder: null
+  result:
+    template: "rationale: {{rationale}} — is_susar: {{is_susar}} — reporting_timeline_days: {{reporting_timeline_days}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/trial-sae-to-susar
+  cli: rsk mcg run trial-sae-to-susar
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_seriousness
   nodes:
@@ -22,8 +105,7 @@ tree:
     susar_true:
       type: return
       value:
-        rationale: Serious, unexpected, and related event qualifies as SUSAR - report
-          within 7 days
+        rationale: Serious, unexpected, and related event qualifies as SUSAR - report within 7 days
         is_susar: true
         reporting_timeline_days: 7
     non_serious_unexpected_related:
@@ -31,8 +113,7 @@ tree:
       value:
         is_susar: false
         reporting_timeline_days: 60
-        rationale: Non-serious but unexpected and related event - report within 60
-          days
+        rationale: Non-serious but unexpected and related event - report within 60 days
     check_seriousness:
       type: condition
       variable: is_serious
@@ -50,8 +131,7 @@ tree:
     serious_unexpected_unrelated:
       type: return
       value:
-        rationale: Serious unexpected but unrelated event - standard reporting within
-          30 days
+        rationale: Serious unexpected but unrelated event - standard reporting within 30 days
         is_susar: false
         reporting_timeline_days: 30
     check_unexpected:
@@ -80,80 +160,91 @@ tree:
         reporting_timeline_days: 60
         rationale: Non-serious unexpected unrelated event - report within 60 days
 tests:
-- input:
-    is_related: false
-    is_serious: false
-    is_unexpected: false
-  expect:
-    is_susar: false
-    rationale: Non-serious expected event - routine reporting within 90 days
-    reporting_timeline_days: 90
-- input:
-    is_related: false
-    is_serious: false
-    is_unexpected: true
-  expect:
-    is_susar: false
-    reporting_timeline_days: 60
-    rationale: Non-serious unexpected unrelated event - report within 60 days
-- input:
-    is_related: false
-    is_serious: true
-    is_unexpected: false
-  expect:
-    reporting_timeline_days: 30
-    rationale: Serious expected event - standard reporting within 30 days
-    is_susar: false
-- input:
-    is_related: false
-    is_serious: true
-    is_unexpected: true
-  expect:
-    rationale: Serious unexpected but unrelated event - standard reporting within
-      30 days
-    is_susar: false
-    reporting_timeline_days: 30
-- input:
-    is_related: true
-    is_serious: false
-    is_unexpected: true
-  expect:
-    is_susar: false
-    reporting_timeline_days: 60
-    rationale: Non-serious but unexpected and related event - report within 60 days
-- input:
-    is_related: true
-    is_serious: true
-    is_unexpected: true
-  expect:
-    rationale: Serious, unexpected, and related event qualifies as SUSAR - report
-      within 7 days
-    is_susar: true
-    reporting_timeline_days: 7
-- input: {}
-  expect:
-    is_susar: false
-    rationale: Non-serious expected event - routine reporting within 90 days
-    reporting_timeline_days: 90
-interface:
-  inputs:
-    is_unexpected:
-      type: boolean
-      required: true
-    is_serious:
-      type: boolean
-      required: true
-    is_related:
-      type: boolean
-      required: true
-  outputs:
-    rationale:
-      type: string
-      required: false
-    is_susar:
-      type: boolean
-      required: false
-    reporting_timeline_days:
-      type: integer
-      required: false
-  aliases: {}
+  - input:
+      is_related: false
+      is_serious: false
+      is_unexpected: false
+    expect:
+      is_susar: false
+      rationale: Non-serious expected event - routine reporting within 90 days
+      reporting_timeline_days: 90
+  - input:
+      is_related: false
+      is_serious: false
+      is_unexpected: true
+    expect:
+      is_susar: false
+      reporting_timeline_days: 60
+      rationale: Non-serious unexpected unrelated event - report within 60 days
+  - input:
+      is_related: false
+      is_serious: true
+      is_unexpected: false
+    expect:
+      reporting_timeline_days: 30
+      rationale: Serious expected event - standard reporting within 30 days
+      is_susar: false
+  - input:
+      is_related: false
+      is_serious: true
+      is_unexpected: true
+    expect:
+      rationale: Serious unexpected but unrelated event - standard reporting within 30 days
+      is_susar: false
+      reporting_timeline_days: 30
+  - input:
+      is_related: true
+      is_serious: false
+      is_unexpected: true
+    expect:
+      is_susar: false
+      reporting_timeline_days: 60
+      rationale: Non-serious but unexpected and related event - report within 60 days
+  - input:
+      is_related: true
+      is_serious: true
+      is_unexpected: true
+    expect:
+      rationale: Serious, unexpected, and related event qualifies as SUSAR - report within 7 days
+      is_susar: true
+      reporting_timeline_days: 7
+  - input: {}
+    expect:
+      is_susar: false
+      rationale: Non-serious expected event - routine reporting within 90 days
+      reporting_timeline_days: 90
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - rationale
+    - is_susar
+    - reporting_timeline_days
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

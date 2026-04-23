@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: gate-qbri-favorable
-description: Favorable benefit-risk
 version: 0.1.0
+description: Favorable benefit-risk
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Gate Qbri Favorable
+  subtitle: Favorable benefit-risk
+  icon: circle
+  route: /vigilance/mg/gate-qbri-favorable
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/gate-qbri-favorable
+  cli: rsk mcg run gate-qbri-favorable
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -20,30 +49,60 @@ tree:
       type: condition
       variable: qbri_score
       operator: gte
-      value: 1.0
+      value: 1
       true_next: pass
       false_next: fail
 tests:
-- input:
-    qbri_score: 1.0
-  expect:
-    met: true
-    gate: true
-- input: {}
-  expect:
-    met: false
-    gate: false
-- input:
-    qbri_score: 0.999
-  expect:
-    threshold: qbri_score
-    gate: false
-    met: false
-- input:
-    qbri_score: 1.001
-  expect:
-    gate: true
-    met: true
-    threshold: qbri_score
-interface: null
-primitive_signature: null
+  - input:
+      qbri_score: 1
+    expect:
+      met: true
+      gate: true
+  - input: {}
+    expect:
+      met: false
+      gate: false
+  - input:
+      qbri_score: 0.999
+    expect:
+      threshold: qbri_score
+      gate: false
+      met: false
+  - input:
+      qbri_score: 1.001
+    expect:
+      gate: true
+      met: true
+      threshold: qbri_score
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

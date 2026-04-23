@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: polypharmacy-risk
-description: 'Polypharmacy risk assessment: HIGH_RISK if >5 drugs + interaction + elderly, MODERATE_RISK for intermediate combinations, LOW_RISK otherwise'
 version: 0.1.0
+description: "Polypharmacy risk assessment: HIGH_RISK if >5 drugs + interaction + elderly, MODERATE_RISK for intermediate combinations, LOW_RISK otherwise"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: drug_count
+    type: int
+    required: false
+    description: ""
+  - name: has_known_interaction
+    type: bool
+    required: false
+    description: ""
+  - name: patient_age_over_65
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: monitoring_frequency
+    type: string
+  - name: recommendation
+    type: string
+  - name: risk_level
+    type: string
 interface:
   inputs:
     drug_count:
@@ -19,6 +49,38 @@ interface:
       type: string
     risk_level:
       type: string
+ui:
+  title: Polypharmacy Risk
+  subtitle: "Polypharmacy risk assessment: HIGH_RISK if >5 drugs + interaction + elderly, MODERATE_RISK for intermediate combinations, LOW_RISK otherwise"
+  icon: circle
+  route: /vigilance/mg/polypharmacy-risk
+  steps:
+    - field: drug_count
+      label: drug count
+      help: Enter drug_count
+      widget: text
+      placeholder: null
+    - field: has_known_interaction
+      label: has known interaction
+      help: Enter has_known_interaction
+      widget: toggle
+      placeholder: null
+    - field: patient_age_over_65
+      label: patient age over 65
+      help: Enter patient_age_over_65
+      widget: toggle
+      placeholder: null
+  result:
+    template: "monitoring_frequency: {{monitoring_frequency}} — recommendation: {{recommendation}} — risk_level: {{risk_level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/polypharmacy-risk
+  cli: rsk mcg run polypharmacy-risk
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_high_drug_count
   nodes:
@@ -82,56 +144,91 @@ tree:
         recommendation: Routine medication reconciliation at next scheduled visit
         monitoring_frequency: Standard monitoring per disease management protocol
 tests:
-- input:
-    drug_count: 6
-    has_known_interaction: true
-    patient_age_over_65: true
-  expect:
-    risk_level: HIGH_RISK
-    recommendation: Immediate medication review by clinical pharmacist and prescriber
-    monitoring_frequency: Daily clinical monitoring required
-- input:
-    drug_count: 8
-    has_known_interaction: true
-    patient_age_over_65: true
-  expect:
-    risk_level: HIGH_RISK
-    recommendation: Immediate medication review by clinical pharmacist and prescriber
-    monitoring_frequency: Daily clinical monitoring required
-- input:
-    drug_count: 6
-    has_known_interaction: true
-    patient_age_over_65: false
-  expect:
-    risk_level: MODERATE_RISK
-    recommendation: Pharmacist review of drug interactions within 48 hours
-    monitoring_frequency: Weekly monitoring for adverse drug reactions
-- input:
-    drug_count: 4
-    has_known_interaction: false
-    patient_age_over_65: true
-  expect:
-    risk_level: MODERATE_RISK
-    recommendation: Geriatric medication review using Beers Criteria within 72 hours
-    monitoring_frequency: Weekly monitoring for adverse drug reactions
-- input:
-    drug_count: 3
-    has_known_interaction: true
-    patient_age_over_65: true
-  expect:
-    risk_level: LOW_RISK
-    recommendation: Routine medication reconciliation at next scheduled visit
-    monitoring_frequency: Standard monitoring per disease management protocol
-- input:
-    drug_count: 2
-    has_known_interaction: false
-    patient_age_over_65: false
-  expect:
-    risk_level: LOW_RISK
-    recommendation: Routine medication reconciliation at next scheduled visit
-    monitoring_frequency: Standard monitoring per disease management protocol
-- input: {}
-  expect:
-    monitoring_frequency: Standard monitoring per disease management protocol
-    recommendation: Routine medication reconciliation at next scheduled visit
-    risk_level: LOW_RISK
+  - input:
+      drug_count: 6
+      has_known_interaction: true
+      patient_age_over_65: true
+    expect:
+      risk_level: HIGH_RISK
+      recommendation: Immediate medication review by clinical pharmacist and prescriber
+      monitoring_frequency: Daily clinical monitoring required
+  - input:
+      drug_count: 8
+      has_known_interaction: true
+      patient_age_over_65: true
+    expect:
+      risk_level: HIGH_RISK
+      recommendation: Immediate medication review by clinical pharmacist and prescriber
+      monitoring_frequency: Daily clinical monitoring required
+  - input:
+      drug_count: 6
+      has_known_interaction: true
+      patient_age_over_65: false
+    expect:
+      risk_level: MODERATE_RISK
+      recommendation: Pharmacist review of drug interactions within 48 hours
+      monitoring_frequency: Weekly monitoring for adverse drug reactions
+  - input:
+      drug_count: 4
+      has_known_interaction: false
+      patient_age_over_65: true
+    expect:
+      risk_level: MODERATE_RISK
+      recommendation: Geriatric medication review using Beers Criteria within 72 hours
+      monitoring_frequency: Weekly monitoring for adverse drug reactions
+  - input:
+      drug_count: 3
+      has_known_interaction: true
+      patient_age_over_65: true
+    expect:
+      risk_level: LOW_RISK
+      recommendation: Routine medication reconciliation at next scheduled visit
+      monitoring_frequency: Standard monitoring per disease management protocol
+  - input:
+      drug_count: 2
+      has_known_interaction: false
+      patient_age_over_65: false
+    expect:
+      risk_level: LOW_RISK
+      recommendation: Routine medication reconciliation at next scheduled visit
+      monitoring_frequency: Standard monitoring per disease management protocol
+  - input: {}
+    expect:
+      monitoring_frequency: Standard monitoring per disease management protocol
+      recommendation: Routine medication reconciliation at next scheduled visit
+      risk_level: LOW_RISK
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - monitoring_frequency
+    - recommendation
+    - risk_level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

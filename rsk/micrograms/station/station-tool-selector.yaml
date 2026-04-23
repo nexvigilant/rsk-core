@@ -1,6 +1,73 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-tool-selector
-description: Select specific tool name from domain and intent
 version: 0.1.0
+description: Select specific tool name from domain and intent
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: intent
+    type: string
+    required: false
+    description: ""
+  - name: domain
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: tool_name
+    type: string
+  - name: requires_id
+    type: bool
+interface:
+  inputs:
+    intent:
+      type: string
+      required: false
+    domain:
+      type: string
+      required: false
+  outputs:
+    tool_name:
+      type: string
+      required: false
+    requires_id:
+      type: bool
+      required: false
+  aliases: {}
+ui:
+  title: Station Tool Selector
+  subtitle: Select specific tool name from domain and intent
+  icon: circle
+  route: /vigilance/mg/station-tool-selector
+  steps:
+    - field: intent
+      label: intent
+      help: Enter intent
+      widget: text
+      placeholder: null
+    - field: domain
+      label: domain
+      help: Enter domain
+      widget: text
+      placeholder: null
+  result:
+    template: "tool_name: {{tool_name}} — requires_id: {{requires_id}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-tool-selector
+  cli: rsk mcg run station-tool-selector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: route_by_domain
   nodes:
@@ -202,125 +269,143 @@ tree:
       true_next: return_faers_safety
       false_next: return_faers_default
 tests:
-- input:
-    domain: ''
-    intent: ''
-  expect:
-    tool_name: unknown
-    requires_id: false
-- input:
-    domain: clinical_trials
-    intent: ''
-  expect:
-    requires_id: false
-    tool_name: clinical_trials_search
-- input:
-    domain: clinical_trials
-    intent: get_detail
-  expect:
-    tool_name: clinical_trials_get_study
-    requires_id: true
-- input:
-    domain: clinical_trials
-    intent: search
-  expect:
-    requires_id: false
-    tool_name: clinical_trials_search
-- input:
-    domain: dailymed
-    intent: ''
-  expect:
-    tool_name: dailymed_search_drugs
-    requires_id: false
-- input:
-    domain: dailymed
-    intent: get_detail
-  expect:
-    requires_id: true
-    tool_name: dailymed_get_label
-- input:
-    domain: dailymed
-    intent: search
-  expect:
-    requires_id: false
-    tool_name: dailymed_search_drugs
-- input:
-    domain: faers
-    intent: ''
-  expect:
-    requires_id: false
-    tool_name: faers_search_reports
-- input:
-    domain: faers
-    intent: get_detail
-  expect:
-    tool_name: faers_get_report
-    requires_id: true
-- input:
-    domain: faers
-    intent: get_safety
-  expect:
-    tool_name: faers_signal_detection
-    requires_id: false
-- input:
-    domain: faers
-    intent: search
-  expect:
-    requires_id: false
-    tool_name: faers_search_reports
-- input:
-    domain: pubmed
-    intent: ''
-  expect:
-    requires_id: false
-    tool_name: pubmed_search_articles
-- input:
-    domain: pubmed
-    intent: get_detail
-  expect:
-    requires_id: true
-    tool_name: pubmed_get_abstract
-- input:
-    domain: pubmed
-    intent: search
-  expect:
-    requires_id: false
-    tool_name: pubmed_search_articles
-- input:
-    domain: rxnav
-    intent: ''
-  expect:
-    requires_id: false
-    tool_name: rxnav_search_drugs
-- input:
-    domain: rxnav
-    intent: get_interactions
-  expect:
-    tool_name: rxnav_get_interactions
-    requires_id: true
-- input:
-    domain: rxnav
-    intent: search
-  expect:
-    requires_id: false
-    tool_name: rxnav_search_drugs
-- input: {}
-  expect:
-    tool_name: unknown
-    requires_id: false
-interface:
-  inputs:
-    intent:
-      type: string
-      required: false
-    domain:
-      type: string
-      required: false
-  outputs:
-    tool_name:
-      type: string
-      required: false
-    requires_id:
-      type: bool
-      required: false
-  aliases: {}
+  - input:
+      domain: ""
+      intent: ""
+    expect:
+      tool_name: unknown
+      requires_id: false
+  - input:
+      domain: clinical_trials
+      intent: ""
+    expect:
+      requires_id: false
+      tool_name: clinical_trials_search
+  - input:
+      domain: clinical_trials
+      intent: get_detail
+    expect:
+      tool_name: clinical_trials_get_study
+      requires_id: true
+  - input:
+      domain: clinical_trials
+      intent: search
+    expect:
+      requires_id: false
+      tool_name: clinical_trials_search
+  - input:
+      domain: dailymed
+      intent: ""
+    expect:
+      tool_name: dailymed_search_drugs
+      requires_id: false
+  - input:
+      domain: dailymed
+      intent: get_detail
+    expect:
+      requires_id: true
+      tool_name: dailymed_get_label
+  - input:
+      domain: dailymed
+      intent: search
+    expect:
+      requires_id: false
+      tool_name: dailymed_search_drugs
+  - input:
+      domain: faers
+      intent: ""
+    expect:
+      requires_id: false
+      tool_name: faers_search_reports
+  - input:
+      domain: faers
+      intent: get_detail
+    expect:
+      tool_name: faers_get_report
+      requires_id: true
+  - input:
+      domain: faers
+      intent: get_safety
+    expect:
+      tool_name: faers_signal_detection
+      requires_id: false
+  - input:
+      domain: faers
+      intent: search
+    expect:
+      requires_id: false
+      tool_name: faers_search_reports
+  - input:
+      domain: pubmed
+      intent: ""
+    expect:
+      requires_id: false
+      tool_name: pubmed_search_articles
+  - input:
+      domain: pubmed
+      intent: get_detail
+    expect:
+      requires_id: true
+      tool_name: pubmed_get_abstract
+  - input:
+      domain: pubmed
+      intent: search
+    expect:
+      requires_id: false
+      tool_name: pubmed_search_articles
+  - input:
+      domain: rxnav
+      intent: ""
+    expect:
+      requires_id: false
+      tool_name: rxnav_search_drugs
+  - input:
+      domain: rxnav
+      intent: get_interactions
+    expect:
+      tool_name: rxnav_get_interactions
+      requires_id: true
+  - input:
+      domain: rxnav
+      intent: search
+    expect:
+      requires_id: false
+      tool_name: rxnav_search_drugs
+  - input: {}
+    expect:
+      tool_name: unknown
+      requires_id: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tool_name
+    - requires_id
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,25 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: wiring-gate
-description: 'Session wiring quality gate — requires 3+ components wired across NexVigilant surfaces before session close'
 version: 0.2.0
-primitive_signature:
-  dominant: '∂'
-  expression: '∂(total >= threshold) → ς(verdict) — boundary gate on pre-computed component count'
-  primes: ['∂', 'N', 'ς']
-  arguments: ['total', 'surfaces', 'threshold']
+description: Session wiring quality gate — requires 3+ components wired across NexVigilant surfaces before session close
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: total
+    type: float
+    required: true
+    description: Total components wired (sum of all surfaces, computed by wrapper)
+  - name: surfaces
+    type: float
+    required: true
+    description: Number of distinct surfaces with activity
+  - name: threshold
+    type: float
+    required: false
+    description: Minimum components required (default 3)
+outputs:
+  - name: verdict
+    type: string
+  - name: gate
+    type: string
+  - name: deficit
+    type: float
 interface:
   inputs:
     total:
       type: float
       required: true
-      description: 'Total components wired (sum of all surfaces, computed by wrapper)'
+      description: Total components wired (sum of all surfaces, computed by wrapper)
     surfaces:
       type: float
       required: true
-      description: 'Number of distinct surfaces with activity'
+      description: Number of distinct surfaces with activity
     threshold:
       type: float
       required: false
-      description: 'Minimum components required (default 3)'
+      description: Minimum components required (default 3)
   outputs:
     verdict:
       type: string
@@ -27,6 +52,38 @@ interface:
       type: string
     deficit:
       type: float
+ui:
+  title: Wiring Gate
+  subtitle: Session wiring quality gate — requires 3+ components wired across NexVigilant surfaces before session close
+  icon: circle
+  route: /vigilance/mg/wiring-gate
+  steps:
+    - field: total
+      label: total
+      help: Total components wired (sum of all surfaces, computed by wrapper)
+      widget: text
+      placeholder: null
+    - field: surfaces
+      label: surfaces
+      help: Number of distinct surfaces with activity
+      widget: text
+      placeholder: null
+    - field: threshold
+      label: threshold
+      help: Minimum components required (default 3)
+      widget: text
+      placeholder: null
+  result:
+    template: "verdict: {{verdict}} — gate: {{gate}} — deficit: {{deficit}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/wiring-gate
+  cli: rsk mcg run wiring-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_total
   nodes:
@@ -63,7 +120,7 @@ tree:
         gate: blocked
         deficit: 1
 tests:
-  - name: 'pass_strong_3_across_2_surfaces'
+  - name: pass_strong_3_across_2_surfaces
     input:
       total: 5
       surfaces: 2
@@ -71,7 +128,7 @@ tests:
     expect:
       verdict: PASS
       gate: strong
-  - name: 'pass_weak_3_on_1_surface'
+  - name: pass_weak_3_on_1_surface
     input:
       total: 3
       surfaces: 1
@@ -79,7 +136,7 @@ tests:
     expect:
       verdict: PASS
       gate: weak
-  - name: 'fail_with_2_total'
+  - name: fail_with_2_total
     input:
       total: 2
       surfaces: 2
@@ -87,14 +144,14 @@ tests:
     expect:
       verdict: FAIL
       gate: blocked
-  - name: 'fail_with_zero'
+  - name: fail_with_zero
     input:
       total: 0
       surfaces: 0
       threshold: 3
     expect:
       verdict: FAIL
-  - name: 'pass_strong_many_components'
+  - name: pass_strong_many_components
     input:
       total: 15
       surfaces: 4
@@ -102,7 +159,42 @@ tests:
     expect:
       verdict: PASS
       gate: strong
-  - name: 'null_safety'
+  - name: null_safety
     input: {}
     expect:
       verdict: FAIL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - verdict
+    - gate
+    - deficit
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

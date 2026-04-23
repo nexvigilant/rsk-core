@@ -1,0 +1,163 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: cs-publishable-gate
+version: 0.1.0
+description: Classifies Compendious Score (Cs = I/E x C x R) into tier — draft, acceptable, good, publishable. Used post knowledge_score to decide whether to archive or ship.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: cs
+    type: float
+    required: true
+    description: ""
+outputs:
+  - name: tier
+    type: string
+  - name: publishable
+    type: bool
+interface:
+  inputs:
+    cs:
+      type: float
+      required: true
+  outputs:
+    tier:
+      type: string
+    publishable:
+      type: bool
+ui:
+  title: Cs Publishable Gate
+  subtitle: Classifies Compendious Score (Cs = I/E x C x R) into tier — draft, acceptable, good, publishable. Used post knowledge_score to decide whether to archive or ship.
+  icon: circle
+  route: /vigilance/mg/cs-publishable-gate
+  steps:
+    - field: cs
+      label: cs
+      help: Enter cs
+      widget: text
+      placeholder: null
+  result:
+    template: "tier: {{tier}} — publishable: {{publishable}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/cs-publishable-gate
+  cli: rsk mcg run cs-publishable-gate
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_publishable
+  nodes:
+    check_publishable:
+      type: condition
+      variable: cs
+      operator: gte
+      value: 2
+      true_next: ret_publishable
+      false_next: check_good
+    check_good:
+      type: condition
+      variable: cs
+      operator: gte
+      value: 1.5
+      true_next: ret_good
+      false_next: check_acceptable
+    check_acceptable:
+      type: condition
+      variable: cs
+      operator: gte
+      value: 0.5
+      true_next: ret_acceptable
+      false_next: ret_draft
+    ret_publishable:
+      type: return
+      value:
+        tier: publishable
+        publishable: true
+    ret_good:
+      type: return
+      value:
+        tier: good
+        publishable: true
+    ret_acceptable:
+      type: return
+      value:
+        tier: acceptable
+        publishable: false
+    ret_draft:
+      type: return
+      value:
+        tier: draft
+        publishable: false
+tests:
+  - input:
+      cs: 2.32
+    expect:
+      tier: publishable
+      publishable: true
+  - input:
+      cs: 2
+    expect:
+      tier: publishable
+      publishable: true
+  - input:
+      cs: 1.8
+    expect:
+      tier: good
+      publishable: true
+  - input:
+      cs: 0.75
+    expect:
+      tier: acceptable
+      publishable: false
+  - input:
+      cs: 0.3
+    expect:
+      tier: draft
+      publishable: false
+  - input: {}
+    expect:
+      tier: draft
+      publishable: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tier
+    - publishable
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: case-narrative-quality
-description: "Assess quality and completeness of case narrative in adverse event report"
 version: 0.1.0
+description: Assess quality and completeness of case narrative in adverse event report
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Case Narrative Quality
+  subtitle: Assess quality and completeness of case narrative in adverse event report
+  icon: circle
+  route: /vigilance/mg/case-narrative-quality
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/case-narrative-quality
+  cli: rsk mcg run case-narrative-quality
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_narrative
   nodes:
@@ -35,7 +64,7 @@ tree:
     quality_good:
       type: return
       value:
-        narrative_quality: "high"
+        narrative_quality: high
         quality_score: 9
         reviewable_without_follow_up: true
         case_completeness_percent: 95
@@ -43,7 +72,7 @@ tree:
     quality_fair:
       type: return
       value:
-        narrative_quality: "moderate"
+        narrative_quality: moderate
         quality_score: 6
         reviewable_without_follow_up: false
         case_completeness_percent: 70
@@ -51,35 +80,67 @@ tree:
     quality_poor:
       type: return
       value:
-        narrative_quality: "low"
+        narrative_quality: low
         quality_score: 3
         reviewable_without_follow_up: false
         case_completeness_percent: 40
         processing_compliant: false
 tests:
-- input:
-    narrative_text_length: 300
-    medical_history_included: true
-    temporal_sequence_clear: true
-    outcome_described: true
-  expect:
-    narrative_quality: "high"
-    quality_score: 9
-    reviewable_without_follow_up: true
-- input:
-    narrative_text_length: 150
-    medical_history_included: false
-    temporal_sequence_clear: true
-    outcome_described: true
-  expect:
-    narrative_quality: "moderate"
-    quality_score: 6
-- input:
-    narrative_text_length: 20
-  expect:
-    narrative_quality: "low"
-    quality_score: 3
-- input: {}
-  expect:
-    narrative_quality: "low"
-    processing_compliant: false
+  - input:
+      narrative_text_length: 300
+      medical_history_included: true
+      temporal_sequence_clear: true
+      outcome_described: true
+    expect:
+      narrative_quality: high
+      quality_score: 9
+      reviewable_without_follow_up: true
+  - input:
+      narrative_text_length: 150
+      medical_history_included: false
+      temporal_sequence_clear: true
+      outcome_described: true
+    expect:
+      narrative_quality: moderate
+      quality_score: 6
+  - input:
+      narrative_text_length: 20
+    expect:
+      narrative_quality: low
+      quality_score: 3
+  - input: {}
+    expect:
+      narrative_quality: low
+      processing_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

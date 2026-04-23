@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: refinery-conversion
-description: "Compute conversion rate (processed/raw) and classify. Measures what % of crude enters unit processes vs stripped as noise."
 version: 0.1.0
+description: Compute conversion rate (processed/raw) and classify. Measures what % of crude enters unit processes vs stripped as noise.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Refinery Conversion
+  subtitle: Compute conversion rate (processed/raw) and classify. Measures what % of crude enters unit processes vs stripped as noise.
+  icon: circle
+  route: /vigilance/mg/refinery-conversion
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/refinery-conversion
+  cli: rsk mcg run refinery-conversion
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_input
   nodes:
@@ -29,37 +58,81 @@ tree:
       type: return
       value:
         conversion_class: FULL
-        action: "Nearly all signals entering processing streams"
-        refinery_analog: "Deep conversion cracking; minimal unconverted residuum"
+        action: Nearly all signals entering processing streams
+        refinery_analog: Deep conversion cracking; minimal unconverted residuum
     return_partial_conversion:
       type: return
       value:
         conversion_class: PARTIAL
-        action: "Significant signals bypassing processing; check fractionation"
-        refinery_analog: "Moderate conversion; heavy gas oil requires secondary cracking"
+        action: Significant signals bypassing processing; check fractionation
+        refinery_analog: Moderate conversion; heavy gas oil requires secondary cracking
     return_poor_conversion:
       type: return
       value:
         conversion_class: POOR
-        action: "Most signals unprocessed; fractionation stage failing"
-        refinery_analog: "Low conversion; feedstock passing through unreacted"
+        action: Most signals unprocessed; fractionation stage failing
+        refinery_analog: Low conversion; feedstock passing through unreacted
     return_no_input:
       type: return
       value:
         conversion_class: NO_INPUT
-        action: "No crude feedstock"
-        refinery_analog: "Refinery idle"
+        action: No crude feedstock
+        refinery_analog: Refinery idle
 tests:
-  - input: { crude_in: 100, conversion_pct: 95 }
-    expect: { conversion_class: FULL }
-  - input: { crude_in: 100, conversion_pct: 75 }
-    expect: { conversion_class: PARTIAL }
-  - input: { crude_in: 100, conversion_pct: 40 }
-    expect: { conversion_class: POOR }
-  - input: { crude_in: 0, conversion_pct: 0 }
-    expect: { conversion_class: NO_INPUT }
+  - input:
+      crude_in: 100
+      conversion_pct: 95
+    expect:
+      conversion_class: FULL
+  - input:
+      crude_in: 100
+      conversion_pct: 75
+    expect:
+      conversion_class: PARTIAL
+  - input:
+      crude_in: 100
+      conversion_pct: 40
+    expect:
+      conversion_class: POOR
+  - input:
+      crude_in: 0
+      conversion_pct: 0
+    expect:
+      conversion_class: NO_INPUT
   - input: {}
     expect:
       action: No crude feedstock
       conversion_class: NO_INPUT
       refinery_analog: Refinery idle
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

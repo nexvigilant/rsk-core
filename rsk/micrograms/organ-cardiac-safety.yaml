@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: organ-cardiac-safety
-description: "Cardiac (heart) safety assessment. Evaluates QT prolongation, heart failure, and myocarditis risk."
 version: 0.1.0
+description: Cardiac (heart) safety assessment. Evaluates QT prolongation, heart failure, and myocarditis risk.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Organ Cardiac Safety
+  subtitle: Cardiac (heart) safety assessment. Evaluates QT prolongation, heart failure, and myocarditis risk.
+  icon: circle
+  route: /vigilance/mg/organ-cardiac-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/organ-cardiac-safety
+  cli: rsk mcg run organ-cardiac-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_baseline_qt
   nodes:
@@ -17,7 +46,7 @@ tree:
         organ: heart
         risk_level: high
         arrhythmia_risk: true
-        message: "Baseline QTc >=500 ms; QT-prolonging drugs contraindicated"
+        message: Baseline QTc >=500 ms; QT-prolonging drugs contraindicated
     check_ejection_fraction:
       type: condition
       variable: ejection_fraction_percent
@@ -31,7 +60,7 @@ tree:
         organ: heart
         risk_level: high
         cardiomyopathy_risk: true
-        message: "Reduced EF <35%; cardiotoxic drugs contraindicated"
+        message: Reduced EF <35%; cardiotoxic drugs contraindicated
     check_troponin:
       type: condition
       variable: baseline_troponin_ng_ml
@@ -53,13 +82,68 @@ tree:
         risk_level: low
         baseline_ecg: recommended
 tests:
-  - input: { baseline_qtc_ms: 520, ejection_fraction_percent: 50, baseline_troponin_ng_ml: 0.02 }
-    expect: { organ: heart, risk_level: high, arrhythmia_risk: true }
-  - input: { baseline_qtc_ms: 420, ejection_fraction_percent: 30, baseline_troponin_ng_ml: 0.02 }
-    expect: { organ: heart, risk_level: high, cardiomyopathy_risk: true }
-  - input: { baseline_qtc_ms: 420, ejection_fraction_percent: 50, baseline_troponin_ng_ml: 0.06 }
-    expect: { organ: heart, risk_level: moderate, myocardial_damage: present }
-  - input: { baseline_qtc_ms: 400, ejection_fraction_percent: 55, baseline_troponin_ng_ml: 0.01 }
-    expect: { organ: heart, risk_level: low }
+  - input:
+      baseline_qtc_ms: 520
+      ejection_fraction_percent: 50
+      baseline_troponin_ng_ml: 0.02
+    expect:
+      organ: heart
+      risk_level: high
+      arrhythmia_risk: true
+  - input:
+      baseline_qtc_ms: 420
+      ejection_fraction_percent: 30
+      baseline_troponin_ng_ml: 0.02
+    expect:
+      organ: heart
+      risk_level: high
+      cardiomyopathy_risk: true
+  - input:
+      baseline_qtc_ms: 420
+      ejection_fraction_percent: 50
+      baseline_troponin_ng_ml: 0.06
+    expect:
+      organ: heart
+      risk_level: moderate
+      myocardial_damage: present
+  - input:
+      baseline_qtc_ms: 400
+      ejection_fraction_percent: 55
+      baseline_troponin_ng_ml: 0.01
+    expect:
+      organ: heart
+      risk_level: low
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

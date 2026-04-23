@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tox-ototoxic
-description: 'Ototoxic toxicity gate: hearing_loss_db thresholds for ear'
 version: 0.1.0
+description: "Ototoxic toxicity gate: hearing_loss_db thresholds for ear"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Tox Ototoxic
+  subtitle: "Ototoxic toxicity gate: hearing_loss_db thresholds for ear"
+  icon: circle
+  route: /vigilance/mg/tox-ototoxic
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tox-ototoxic
+  cli: rsk mcg run tox-ototoxic
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severe
   nodes:
@@ -40,73 +69,103 @@ tree:
         severity: normal
         target: ear
 tests:
-- input:
-    hearing_loss_db: 26
-  expect:
-    organ: ototoxic
-    severity: severe
-- input:
-    hearing_loss_db: 15
-  expect:
-    severity: mild
-    organ: ototoxic
-- input:
-    hearing_loss_db: 0
-  expect:
-    organ: ototoxic
-    severity: normal
-- input: {}
-  expect:
-    severity: normal
-    organ: ototoxic
-- input:
-    hearing_loss_db: -1
-  expect:
-    target: ear
-    action: continue
-    organ: ototoxic
-    severity: normal
-- input:
-    hearing_loss_db: 24
-  expect:
-    target: ear
-    action: monitor_closely
-    severity: mild
-    organ: ototoxic
-- input:
-    hearing_loss_db: 2500
-  expect:
-    severity: severe
-    organ: ototoxic
-    action: discontinue
-    target: ear
-- input:
-    hearing_loss_db: -1
-  expect:
-    target: ear
-    action: continue
-    severity: normal
-    organ: ototoxic
-- input:
-    hearing_loss_db: 14
-  expect:
-    organ: ototoxic
-    severity: normal
-    action: continue
-    target: ear
-- input:
-    hearing_loss_db: 16
-  expect:
-    action: monitor_closely
-    severity: mild
-    target: ear
-    organ: ototoxic
-- input:
-    hearing_loss_db: 1500
-  expect:
-    target: ear
-    organ: ototoxic
-    severity: severe
-    action: discontinue
-interface: null
-primitive_signature: null
+  - input:
+      hearing_loss_db: 26
+    expect:
+      organ: ototoxic
+      severity: severe
+  - input:
+      hearing_loss_db: 15
+    expect:
+      severity: mild
+      organ: ototoxic
+  - input:
+      hearing_loss_db: 0
+    expect:
+      organ: ototoxic
+      severity: normal
+  - input: {}
+    expect:
+      severity: normal
+      organ: ototoxic
+  - input:
+      hearing_loss_db: -1
+    expect:
+      target: ear
+      action: continue
+      organ: ototoxic
+      severity: normal
+  - input:
+      hearing_loss_db: 24
+    expect:
+      target: ear
+      action: monitor_closely
+      severity: mild
+      organ: ototoxic
+  - input:
+      hearing_loss_db: 2500
+    expect:
+      severity: severe
+      organ: ototoxic
+      action: discontinue
+      target: ear
+  - input:
+      hearing_loss_db: -1
+    expect:
+      target: ear
+      action: continue
+      severity: normal
+      organ: ototoxic
+  - input:
+      hearing_loss_db: 14
+    expect:
+      organ: ototoxic
+      severity: normal
+      action: continue
+      target: ear
+  - input:
+      hearing_loss_db: 16
+    expect:
+      action: monitor_closely
+      severity: mild
+      target: ear
+      organ: ototoxic
+  - input:
+      hearing_loss_db: 1500
+    expect:
+      target: ear
+      organ: ototoxic
+      severity: severe
+      action: discontinue
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

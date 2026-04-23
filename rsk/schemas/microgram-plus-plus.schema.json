@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexvigilant.com/schemas/microgram-plus-plus.schema.json",
+  "title": "MICROGRAM++",
+  "description": "Full-stack atomic application: UI + Transport + Logic + Tests + Governance in one YAML.",
+  "type": "object",
+  "required": ["name", "version", "description", "inputs", "outputs", "tree", "tests"],
+  "additionalProperties": true,
+  "properties": {
+    "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "description": { "type": "string", "minLength": 1 },
+    "family": { "type": "string" },
+    "author": { "type": "string" },
+    "created_at": { "type": "string" },
+    "primitives": { "type": "array", "items": { "type": "string" } },
+    "tags": { "type": "array", "items": { "type": "string" } },
+
+    "inputs": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "required": { "type": "boolean" },
+          "min": { "type": ["number", "null"] },
+          "max": { "type": ["number", "null"] },
+          "default": {},
+          "description": { "type": "string" }
+        }
+      }
+    },
+
+    "outputs": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": { "type": "string" },
+          "type": { "type": "string" },
+          "values": { "type": "array" },
+          "range": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+        }
+      }
+    },
+
+    "interface": { "type": "object" },
+
+    "ui": {
+      "type": "object",
+      "required": ["title", "steps"],
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "icon": { "type": "string" },
+        "route": { "type": "string", "pattern": "^/" },
+        "steps": {
+          "type": "array",
+          "minItems": 0,
+          "items": {
+            "type": "object",
+            "required": ["field", "label", "widget"],
+            "properties": {
+              "field": { "type": "string" },
+              "label": { "type": "string" },
+              "help": { "type": "string" },
+              "widget": { "enum": ["number", "text", "select", "slider", "toggle"] },
+              "placeholder": { "type": ["string", "null"] },
+              "validation_message": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "result": {
+          "type": "object",
+          "properties": {
+            "template": { "type": "string" },
+            "show_explanation": { "type": "boolean" },
+            "show_tree_path": { "type": "boolean" },
+            "next_actions": { "type": "array" }
+          }
+        }
+      }
+    },
+
+    "transport": {
+      "type": "object",
+      "properties": {
+        "mcp_tool": { "type": "string" },
+        "http_route": { "type": "string" },
+        "cli": { "type": "string" },
+        "auth": { "type": "string" },
+        "rate_limit": { "type": "string" }
+      }
+    },
+
+    "tree": {
+      "type": "object",
+      "required": ["start", "nodes"],
+      "properties": {
+        "start": { "type": "string" },
+        "nodes": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "enum": ["condition", "return"] },
+              "variable": { "type": "string" },
+              "operator": { "enum": ["eq", "neq", "gt", "gte", "lt", "lte", "contains", "not_contains", "matches", "is_null", "is_not_null"] },
+              "value": {},
+              "true_next": { "type": "string" },
+              "false_next": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "tests": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["input", "expect"],
+        "properties": {
+          "name": { "type": "string" },
+          "input": { "type": "object" },
+          "expect": { "type": "object" }
+        }
+      }
+    },
+
+    "persistence": {
+      "type": "object",
+      "properties": {
+        "save_to": { "type": "string" },
+        "artifact_type": { "type": "string" },
+        "retention_days": { "type": "integer", "minimum": 0 },
+        "pii_scrub": { "type": "boolean" },
+        "fields_persisted": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "telemetry": {
+      "type": "object",
+      "properties": {
+        "emit": { "type": "array", "items": { "type": "string" } },
+        "guardian_signal_on": { "type": "array", "items": { "type": "string" } },
+        "cytokine_family": { "type": "string" },
+        "log_level": { "enum": ["debug", "info", "warn", "error"] }
+      }
+    },
+
+    "governance": {
+      "type": "object",
+      "properties": {
+        "sop_ref": { "type": ["string", "null"] },
+        "regulatory_ref": { "type": "array" },
+        "harm_types": { "type": "array", "items": { "type": "string", "pattern": "^[A-H]$" } },
+        "review_cadence": { "enum": ["monthly", "quarterly", "annual", "as_needed"] },
+        "tov_axioms": { "type": "array", "items": { "type": "string" } },
+        "approved_by": { "type": ["string", "null"] },
+        "approved_at": { "type": ["string", "null"] }
+      }
+    },
+
+    "chain": {
+      "type": "object",
+      "properties": {
+        "upstream": { "type": "array", "items": { "type": "string" } },
+        "downstream": { "type": "array", "items": { "type": "string" } },
+        "parallel_safe": { "type": "boolean" },
+        "idempotent": { "type": "boolean" }
+      }
+    }
+  }
+}

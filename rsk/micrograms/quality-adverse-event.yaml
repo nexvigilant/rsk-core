@@ -1,32 +1,96 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: quality-adverse-event
-description: "Adverse event described"
 version: 0.1.0
-
+description: Adverse event described
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Quality Adverse Event
+  subtitle: Adverse event described
+  icon: circle
+  route: /vigilance/mg/quality-adverse-event
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/quality-adverse-event
+  cli: rsk mcg run quality-adverse-event
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
     check:
-      type: "condition"
-      variable: "event_described"
-      operator: "eq"
+      type: condition
+      variable: event_described
+      operator: eq
       value: true
-      true_next: "pass"
-      false_next: "fail"
+      true_next: pass
+      false_next: fail
     pass:
-      type: "return"
+      type: return
       value:
-        check: "quality-adverse-event"
+        check: quality-adverse-event
         passed: true
-        action: "accept"
+        action: accept
     fail:
-      type: "return"
+      type: return
       value:
-        check: "quality-adverse-event"
+        check: quality-adverse-event
         passed: false
-        action: "flag_for_review"
-
+        action: flag_for_review
 tests:
-  - input: {"event_described": true}
-    expect: {"check": "quality-adverse-event", "passed": true}
+  - input:
+      event_described: true
+    expect:
+      check: quality-adverse-event
+      passed: true
   - input: {}
-    expect: {"check": "quality-adverse-event", "passed": false}
+    expect:
+      check: quality-adverse-event
+      passed: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

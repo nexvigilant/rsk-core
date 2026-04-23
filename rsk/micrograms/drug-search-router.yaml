@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-search-router
-description: "Route DailyMed drug searches to appropriate endpoint based on search type"
 version: 0.1.0
-
+description: Route DailyMed drug searches to appropriate endpoint based on search type
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Search Router
+  subtitle: Route DailyMed drug searches to appropriate endpoint based on search type
+  icon: circle
+  route: /vigilance/mg/drug-search-router
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-search-router
+  cli: rsk mcg run drug-search-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_search_type
   nodes:
@@ -11,101 +39,141 @@ tree:
       operator: is_not_null
       true_next: classify_search_type
       false_next: missing_input
-
     classify_search_type:
       type: condition
       variable: search_type
       operator: matches
-      value: "(?i)^brand$"
+      value: (?i)^brand$
       true_next: route_brand
       false_next: check_generic
-
     check_generic:
       type: condition
       variable: search_type
       operator: matches
-      value: "(?i)^generic$"
+      value: (?i)^generic$
       true_next: route_generic
       false_next: check_ndc
-
     check_ndc:
       type: condition
       variable: search_type
       operator: matches
-      value: "(?i)^ndc$"
+      value: (?i)^ndc$
       true_next: route_ndc
       false_next: check_ingredient
-
     check_ingredient:
       type: condition
       variable: search_type
       operator: matches
-      value: "(?i)^ingredient$"
+      value: (?i)^ingredient$
       true_next: route_ingredient
       false_next: invalid_type
-
     route_brand:
       type: return
       value:
-        search_endpoint: "/drugs?type=brand"
-        query_format: "brand_name"
-        result_type: "branded_drugs"
-
+        search_endpoint: /drugs?type=brand
+        query_format: brand_name
+        result_type: branded_drugs
     route_generic:
       type: return
       value:
-        search_endpoint: "/drugs?type=generic"
-        query_format: "generic_name"
-        result_type: "generic_drugs"
-
+        search_endpoint: /drugs?type=generic
+        query_format: generic_name
+        result_type: generic_drugs
     route_ndc:
       type: return
       value:
-        search_endpoint: "/drugs?type=ndc"
-        query_format: "ndc_code"
-        result_type: "drug_by_ndc"
-
+        search_endpoint: /drugs?type=ndc
+        query_format: ndc_code
+        result_type: drug_by_ndc
     route_ingredient:
       type: return
       value:
-        search_endpoint: "/drugs?type=ingredient"
-        query_format: "active_ingredient"
-        result_type: "drugs_with_ingredient"
-
+        search_endpoint: /drugs?type=ingredient
+        query_format: active_ingredient
+        result_type: drugs_with_ingredient
     invalid_type:
       type: return
       value:
         search_endpoint: null
         query_format: null
         result_type: null
-
     missing_input:
       type: return
       value:
         search_endpoint: null
         query_format: null
         result_type: null
-
 tests:
-  - input: { search_type: "brand" }
-    expect: { search_endpoint: "/drugs?type=brand", query_format: "brand_name", result_type: "branded_drugs" }
-
-  - input: { search_type: "generic" }
-    expect: { search_endpoint: "/drugs?type=generic", query_format: "generic_name", result_type: "generic_drugs" }
-
-  - input: { search_type: "ndc" }
-    expect: { search_endpoint: "/drugs?type=ndc", query_format: "ndc_code", result_type: "drug_by_ndc" }
-
-  - input: { search_type: "ingredient" }
-    expect: { search_endpoint: "/drugs?type=ingredient", query_format: "active_ingredient", result_type: "drugs_with_ingredient" }
-
-  - input: { search_type: "invalid" }
-    expect: { search_endpoint: null, query_format: null, result_type: null }
-
-  - input: { search_type: null }
-    expect: { search_endpoint: null, query_format: null, result_type: null }
+  - input:
+      search_type: brand
+    expect:
+      search_endpoint: /drugs?type=brand
+      query_format: brand_name
+      result_type: branded_drugs
+  - input:
+      search_type: generic
+    expect:
+      search_endpoint: /drugs?type=generic
+      query_format: generic_name
+      result_type: generic_drugs
+  - input:
+      search_type: ndc
+    expect:
+      search_endpoint: /drugs?type=ndc
+      query_format: ndc_code
+      result_type: drug_by_ndc
+  - input:
+      search_type: ingredient
+    expect:
+      search_endpoint: /drugs?type=ingredient
+      query_format: active_ingredient
+      result_type: drugs_with_ingredient
+  - input:
+      search_type: invalid
+    expect:
+      search_endpoint: null
+      query_format: null
+      result_type: null
+  - input:
+      search_type: null
+    expect:
+      search_endpoint: null
+      query_format: null
+      result_type: null
   - input: {}
     expect:
       query_format: null
       result_type: null
       search_endpoint: null
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

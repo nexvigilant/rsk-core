@@ -1,6 +1,52 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: conservation-checker
-description: "Validates primitive compositions against the conservation law ∃ = ∂(×(ς, ∅)). Routes compositions through existence, boundary, state, and void checks. Exercises the × (Product) axiomatic operator."
 version: 0.1.0
+description: Validates primitive compositions against the conservation law ∃ = ∂(×(ς, ∅)). Routes compositions through existence, boundary, state, and void checks. Exercises the × (Product) axiomatic operator.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_existence
+    type: bool
+    required: true
+    description: ""
+  - name: has_boundary
+    type: bool
+    required: true
+    description: ""
+  - name: has_state
+    type: bool
+    required: true
+    description: ""
+  - name: has_void
+    type: bool
+    required: true
+    description: ""
+  - name: primitive_count
+    type: int
+    required: false
+    description: ""
+  - name: composition_tier
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: conservation_status
+    type: string
+  - name: missing_terms
+    type: string
+  - name: verdict
+    type: string
+  - name: recommendation
+    type: string
+  - name: completeness
+    type: string
 interface:
   inputs:
     has_existence:
@@ -32,6 +78,53 @@ interface:
       type: string
     completeness:
       type: string
+ui:
+  title: Conservation Checker
+  subtitle: Validates primitive compositions against the conservation law ∃ = ∂(×(ς, ∅)). Routes compositions through existence, boundary, state, and void checks. Exercises the × (Product) axiomatic operator.
+  icon: circle
+  route: /vigilance/mg/conservation-checker
+  steps:
+    - field: has_existence
+      label: has existence
+      help: Enter has_existence
+      widget: toggle
+      placeholder: null
+    - field: has_boundary
+      label: has boundary
+      help: Enter has_boundary
+      widget: toggle
+      placeholder: null
+    - field: has_state
+      label: has state
+      help: Enter has_state
+      widget: toggle
+      placeholder: null
+    - field: has_void
+      label: has void
+      help: Enter has_void
+      widget: toggle
+      placeholder: null
+    - field: primitive_count
+      label: primitive count
+      help: Enter primitive_count
+      widget: text
+      placeholder: null
+    - field: composition_tier
+      label: composition tier
+      help: Enter composition_tier
+      widget: text
+      placeholder: null
+  result:
+    template: "conservation_status: {{conservation_status}} — missing_terms: {{missing_terms}} — verdict: {{verdict}} — recommendation: {{recommendation}} — completeness: {{completeness}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/conservation-checker
+  cli: rsk mcg run conservation-checker
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_existence
   nodes:
@@ -46,9 +139,9 @@ tree:
       type: return
       value:
         conservation_status: VIOLATED
-        missing_terms: "∃ (Existence)"
-        verdict: "Conservation law violated — no existence term. The composition produces nothing."
-        recommendation: "Add an existence-producing primitive. Without ∃, ∂(×(ς, ∅)) has no output."
+        missing_terms: ∃ (Existence)
+        verdict: Conservation law violated — no existence term. The composition produces nothing.
+        recommendation: Add an existence-producing primitive. Without ∃, ∂(×(ς, ∅)) has no output.
         completeness: incomplete
     check_boundary:
       type: condition
@@ -61,9 +154,9 @@ tree:
       type: return
       value:
         conservation_status: VIOLATED
-        missing_terms: "∂ (Boundary)"
-        verdict: "Conservation law violated — no boundary. The composition has no identity function."
-        recommendation: "Add a boundary primitive. ∂ is the function that creates identity from ×(ς, ∅)."
+        missing_terms: ∂ (Boundary)
+        verdict: Conservation law violated — no boundary. The composition has no identity function.
+        recommendation: Add a boundary primitive. ∂ is the function that creates identity from ×(ς, ∅).
         completeness: incomplete
     check_state:
       type: condition
@@ -76,9 +169,9 @@ tree:
       type: return
       value:
         conservation_status: VIOLATED
-        missing_terms: "ς (State)"
-        verdict: "Conservation law violated — no state. Nothing changes, so nothing can exist."
-        recommendation: "Add a state primitive. ×(ς, ∅) requires ς as the variable that ∂ fixes."
+        missing_terms: ς (State)
+        verdict: Conservation law violated — no state. Nothing changes, so nothing can exist.
+        recommendation: Add a state primitive. ×(ς, ∅) requires ς as the variable that ∂ fixes.
         completeness: incomplete
     check_void:
       type: condition
@@ -91,9 +184,9 @@ tree:
       type: return
       value:
         conservation_status: VIOLATED
-        missing_terms: "∅ (Void)"
-        verdict: "Conservation law violated — no void. Without ∅, state has no contrast."
-        recommendation: "Add a void primitive. ×(ς, ∅) requires ∅ as the absence that defines presence."
+        missing_terms: ∅ (Void)
+        verdict: Conservation law violated — no void. Without ∅, state has no contrast.
+        recommendation: Add a void primitive. ×(ς, ∅) requires ∅ as the absence that defines presence.
         completeness: incomplete
     check_tier:
       type: condition
@@ -107,112 +200,149 @@ tree:
       value:
         conservation_status: CONSERVED
         missing_terms: none
-        verdict: "Conservation law satisfied with rich composition. All four terms present with 8+ primitives."
-        recommendation: "Composition is conservation-complete and expressively rich. Ready for deployment."
+        verdict: Conservation law satisfied with rich composition. All four terms present with 8+ primitives.
+        recommendation: Composition is conservation-complete and expressively rich. Ready for deployment.
         completeness: rich
     minimal_conservation:
       type: return
       value:
         conservation_status: CONSERVED
         missing_terms: none
-        verdict: "Conservation law satisfied. All four terms present."
-        recommendation: "Composition conserves identity. Consider adding more primitives for expressive power."
+        verdict: Conservation law satisfied. All four terms present.
+        recommendation: Composition conserves identity. Consider adding more primitives for expressive power.
         completeness: minimal
 tests:
-- name: all_four_terms_rich
-  input:
-    has_existence: true
-    has_boundary: true
-    has_state: true
-    has_void: true
-    primitive_count: 10
-  expect:
-    conservation_status: CONSERVED
-    missing_terms: none
-    completeness: rich
-- name: all_four_terms_minimal
-  input:
-    has_existence: true
-    has_boundary: true
-    has_state: true
-    has_void: true
-    primitive_count: 4
-  expect:
-    conservation_status: CONSERVED
-    missing_terms: none
-    completeness: minimal
-- name: missing_existence
-  input:
-    has_existence: false
-    has_boundary: true
-    has_state: true
-    has_void: true
-  expect:
-    conservation_status: VIOLATED
-    missing_terms: "∃ (Existence)"
-    completeness: incomplete
-- name: missing_boundary
-  input:
-    has_existence: true
-    has_boundary: false
-    has_state: true
-    has_void: true
-  expect:
-    conservation_status: VIOLATED
-    missing_terms: "∂ (Boundary)"
-    completeness: incomplete
-- name: missing_state
-  input:
-    has_existence: true
-    has_boundary: true
-    has_state: false
-    has_void: true
-  expect:
-    conservation_status: VIOLATED
-    missing_terms: "ς (State)"
-    completeness: incomplete
-- name: missing_void
-  input:
-    has_existence: true
-    has_boundary: true
-    has_state: true
-    has_void: false
-  expect:
-    conservation_status: VIOLATED
-    missing_terms: "∅ (Void)"
-    completeness: incomplete
-- name: all_missing
-  input:
-    has_existence: false
-    has_boundary: false
-    has_state: false
-    has_void: false
-  expect:
-    conservation_status: VIOLATED
-    missing_terms: "∃ (Existence)"
-    completeness: incomplete
-- name: exactly_eight_primitives
-  input:
-    has_existence: true
-    has_boundary: true
-    has_state: true
-    has_void: true
-    primitive_count: 8
-  expect:
-    conservation_status: CONSERVED
-    completeness: rich
-- name: seven_primitives_minimal
-  input:
-    has_existence: true
-    has_boundary: true
-    has_state: true
-    has_void: true
-    primitive_count: 7
-  expect:
-    conservation_status: CONSERVED
-    completeness: minimal
-- name: empty_input_fails
-  input: {}
-  expect:
-    conservation_status: VIOLATED
-    completeness: incomplete
+  - name: all_four_terms_rich
+    input:
+      has_existence: true
+      has_boundary: true
+      has_state: true
+      has_void: true
+      primitive_count: 10
+    expect:
+      conservation_status: CONSERVED
+      missing_terms: none
+      completeness: rich
+  - name: all_four_terms_minimal
+    input:
+      has_existence: true
+      has_boundary: true
+      has_state: true
+      has_void: true
+      primitive_count: 4
+    expect:
+      conservation_status: CONSERVED
+      missing_terms: none
+      completeness: minimal
+  - name: missing_existence
+    input:
+      has_existence: false
+      has_boundary: true
+      has_state: true
+      has_void: true
+    expect:
+      conservation_status: VIOLATED
+      missing_terms: ∃ (Existence)
+      completeness: incomplete
+  - name: missing_boundary
+    input:
+      has_existence: true
+      has_boundary: false
+      has_state: true
+      has_void: true
+    expect:
+      conservation_status: VIOLATED
+      missing_terms: ∂ (Boundary)
+      completeness: incomplete
+  - name: missing_state
+    input:
+      has_existence: true
+      has_boundary: true
+      has_state: false
+      has_void: true
+    expect:
+      conservation_status: VIOLATED
+      missing_terms: ς (State)
+      completeness: incomplete
+  - name: missing_void
+    input:
+      has_existence: true
+      has_boundary: true
+      has_state: true
+      has_void: false
+    expect:
+      conservation_status: VIOLATED
+      missing_terms: ∅ (Void)
+      completeness: incomplete
+  - name: all_missing
+    input:
+      has_existence: false
+      has_boundary: false
+      has_state: false
+      has_void: false
+    expect:
+      conservation_status: VIOLATED
+      missing_terms: ∃ (Existence)
+      completeness: incomplete
+  - name: exactly_eight_primitives
+    input:
+      has_existence: true
+      has_boundary: true
+      has_state: true
+      has_void: true
+      primitive_count: 8
+    expect:
+      conservation_status: CONSERVED
+      completeness: rich
+  - name: seven_primitives_minimal
+    input:
+      has_existence: true
+      has_boundary: true
+      has_state: true
+      has_void: true
+      primitive_count: 7
+    expect:
+      conservation_status: CONSERVED
+      completeness: minimal
+  - name: empty_input_fails
+    input: {}
+    expect:
+      conservation_status: VIOLATED
+      completeness: incomplete
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - conservation_status
+    - missing_terms
+    - verdict
+    - recommendation
+    - completeness
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

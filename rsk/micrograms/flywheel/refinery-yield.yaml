@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: refinery-yield
-description: "Compute refinery yield (products/crude) and classify efficiency. Mass balance law: what enters must exit or accumulate."
 version: 0.1.0
+description: "Compute refinery yield (products/crude) and classify efficiency. Mass balance law: what enters must exit or accumulate."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Refinery Yield
+  subtitle: "Compute refinery yield (products/crude) and classify efficiency. Mass balance law: what enters must exit or accumulate."
+  icon: circle
+  route: /vigilance/mg/refinery-yield
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/refinery-yield
+  cli: rsk mcg run refinery-yield
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_crude
   nodes:
@@ -43,45 +72,97 @@ tree:
       type: return
       value:
         yield_class: HIGH
-        action: "Refinery operating at target efficiency"
-        refinery_analog: "Optimal cracking temperature; maximum product extraction"
+        action: Refinery operating at target efficiency
+        refinery_analog: Optimal cracking temperature; maximum product extraction
     return_medium_yield:
       type: return
       value:
         yield_class: MEDIUM
-        action: "Acceptable yield; check for fractionation losses"
-        refinery_analog: "Moderate conversion; some heavy residue remaining"
+        action: Acceptable yield; check for fractionation losses
+        refinery_analog: Moderate conversion; some heavy residue remaining
     return_low_yield:
       type: return
       value:
         yield_class: LOW
-        action: "Significant signal loss; audit unit processes for leaks"
-        refinery_analog: "Poor cracking efficiency; excessive heavy ends in bottoms"
+        action: Significant signal loss; audit unit processes for leaks
+        refinery_analog: Poor cracking efficiency; excessive heavy ends in bottoms
     return_critical_yield:
       type: return
       value:
         yield_class: CRITICAL
-        action: "Most signals lost; system leak or processing failure"
-        refinery_analog: "Catalyst poisoning; feedstock bypassing reaction zone"
+        action: Most signals lost; system leak or processing failure
+        refinery_analog: Catalyst poisoning; feedstock bypassing reaction zone
     return_no_input:
       type: return
       value:
         yield_class: NO_INPUT
-        action: "No crude feedstock; flywheel idle"
-        refinery_analog: "Refinery shutdown; no feedstock in pipeline"
+        action: No crude feedstock; flywheel idle
+        refinery_analog: Refinery shutdown; no feedstock in pipeline
 tests:
-  - input: { crude_in: 100, products_out: 85, yield_pct: 85 }
-    expect: { yield_class: HIGH }
-  - input: { crude_in: 100, products_out: 60, yield_pct: 60 }
-    expect: { yield_class: MEDIUM }
-  - input: { crude_in: 100, products_out: 30, yield_pct: 30 }
-    expect: { yield_class: LOW }
-  - input: { crude_in: 100, products_out: 10, yield_pct: 10 }
-    expect: { yield_class: CRITICAL }
-  - input: { crude_in: 0, products_out: 0, yield_pct: 0 }
-    expect: { yield_class: NO_INPUT }
+  - input:
+      crude_in: 100
+      products_out: 85
+      yield_pct: 85
+    expect:
+      yield_class: HIGH
+  - input:
+      crude_in: 100
+      products_out: 60
+      yield_pct: 60
+    expect:
+      yield_class: MEDIUM
+  - input:
+      crude_in: 100
+      products_out: 30
+      yield_pct: 30
+    expect:
+      yield_class: LOW
+  - input:
+      crude_in: 100
+      products_out: 10
+      yield_pct: 10
+    expect:
+      yield_class: CRITICAL
+  - input:
+      crude_in: 0
+      products_out: 0
+      yield_pct: 0
+    expect:
+      yield_class: NO_INPUT
   - input: {}
     expect:
       action: No crude feedstock; flywheel idle
       refinery_analog: Refinery shutdown; no feedstock in pipeline
       yield_class: NO_INPUT
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

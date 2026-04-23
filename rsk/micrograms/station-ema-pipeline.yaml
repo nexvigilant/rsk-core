@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-ema-pipeline
-description: 'Triage EMA data: route EPAR safety, PSUR assessments, referrals, and signal summaries'
 version: 0.1.0
+description: "Triage EMA data: route EPAR safety, PSUR assessments, referrals, and signal summaries"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Ema Pipeline
+  subtitle: "Triage EMA data: route EPAR safety, PSUR assessments, referrals, and signal summaries"
+  icon: circle
+  route: /vigilance/mg/station-ema-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-ema-pipeline
+  cli: rsk mcg run station-ema-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_source
   nodes:
@@ -68,51 +97,81 @@ tree:
         action: investigate
         priority: high
 tests:
-- input:
-    source_type: signal
-    signal_confirmed: true
-  expect:
-    action: investigate
-    priority: high
-    route: signal_investigation
-- input:
-    source_type: signal
-    signal_confirmed: false
-  expect:
-    route: signal_validation
-    priority: moderate
-    action: validate
-- input:
-    benefit_risk_changed: true
-    source_type: psur
-  expect:
-    action: escalate
-    route: benefit_risk_assessment
-    priority: critical
-- input:
-    source_type: psur
-    benefit_risk_changed: false
-  expect:
-    priority: low
-    route: periodic_review
-    action: review
-- input:
-    source_type: epar
-  expect:
-    action: review
-    priority: low
-    route: label_comparison
-- input: {}
-  expect:
-    action: review
-    route: label_comparison
-    priority: low
-    reason: EPAR data — extract safety section for baseline comparison
-- input: {}
-  expect:
-    priority: low
-    route: label_comparison
-    reason: EPAR data — extract safety section for baseline comparison
-    action: review
-interface: null
-primitive_signature: null
+  - input:
+      source_type: signal
+      signal_confirmed: true
+    expect:
+      action: investigate
+      priority: high
+      route: signal_investigation
+  - input:
+      source_type: signal
+      signal_confirmed: false
+    expect:
+      route: signal_validation
+      priority: moderate
+      action: validate
+  - input:
+      benefit_risk_changed: true
+      source_type: psur
+    expect:
+      action: escalate
+      route: benefit_risk_assessment
+      priority: critical
+  - input:
+      source_type: psur
+      benefit_risk_changed: false
+    expect:
+      priority: low
+      route: periodic_review
+      action: review
+  - input:
+      source_type: epar
+    expect:
+      action: review
+      priority: low
+      route: label_comparison
+  - input: {}
+    expect:
+      action: review
+      route: label_comparison
+      priority: low
+      reason: EPAR data — extract safety section for baseline comparison
+  - input: {}
+    expect:
+      priority: low
+      route: label_comparison
+      reason: EPAR data — extract safety section for baseline comparison
+      action: review
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

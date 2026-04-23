@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: timeline-eu-15day
-description: EU 15-day expedited
 version: 0.1.0
+description: EU 15-day expedited
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Timeline Eu 15day
+  subtitle: EU 15-day expedited
+  icon: circle
+  route: /vigilance/mg/timeline-eu-15day
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/timeline-eu-15day
+  cli: rsk mcg run timeline-eu-15day
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -26,49 +55,79 @@ tree:
         jurisdiction: EU
         report_type: expedited
 tests:
-- input:
-    days_to_deadline: 15
-  expect:
-    due: true
-    jurisdiction: EU
-- input: {}
-  expect:
-    due: false
-    jurisdiction: EU
-- input:
-    days_to_deadline: 0
-  expect:
-    action: submit
-    due: true
-    report_type: expedited
-    jurisdiction: EU
-- input:
-    days_to_deadline: -1
-  expect:
-    report_type: expedited
-    due: true
-    jurisdiction: EU
-    action: submit
-- input:
-    days_to_deadline: 14
-  expect:
-    report_type: expedited
-    jurisdiction: EU
-    due: true
-    action: submit
-- input:
-    days_to_deadline: 16
-  expect:
-    action: schedule
-    jurisdiction: EU
-    report_type: expedited
-    due: false
-- input:
-    days_to_deadline: 1500
-  expect:
-    jurisdiction: EU
-    report_type: expedited
-    action: schedule
-    due: false
-interface: null
-primitive_signature: null
+  - input:
+      days_to_deadline: 15
+    expect:
+      due: true
+      jurisdiction: EU
+  - input: {}
+    expect:
+      due: false
+      jurisdiction: EU
+  - input:
+      days_to_deadline: 0
+    expect:
+      action: submit
+      due: true
+      report_type: expedited
+      jurisdiction: EU
+  - input:
+      days_to_deadline: -1
+    expect:
+      report_type: expedited
+      due: true
+      jurisdiction: EU
+      action: submit
+  - input:
+      days_to_deadline: 14
+    expect:
+      report_type: expedited
+      jurisdiction: EU
+      due: true
+      action: submit
+  - input:
+      days_to_deadline: 16
+    expect:
+      action: schedule
+      jurisdiction: EU
+      report_type: expedited
+      due: false
+  - input:
+      days_to_deadline: 1500
+    expect:
+      jurisdiction: EU
+      report_type: expedited
+      action: schedule
+      due: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

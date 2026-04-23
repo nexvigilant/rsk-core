@@ -1,0 +1,238 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: submolt-route
+version: 0.1.0
+description: "Route a Moltbook post to the right submolt (community channel) based on agent domain signal and verdict tier. Inputs: agent domain signal (pv/dev/meta/vocab/incident/research/fleet/station), verdict tier. Returns submolt path. Frontmatter override is read upstream by the hook; this microgram is the fallback router."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: domain_signal
+    type: string
+    required: true
+    description: "One of: pv, dev, meta, vocab, incident, research, fleet, station, unknown"
+  - name: verdict_tier
+    type: string
+    required: true
+    description: fully_demonstrated, partially_demonstrated, not_demonstrated, or unmeasured
+outputs:
+  - name: submolt
+    type: string
+interface:
+  inputs:
+    domain_signal:
+      type: string
+      required: true
+      description: "One of: pv, dev, meta, vocab, incident, research, fleet, station, unknown"
+    verdict_tier:
+      type: string
+      required: true
+      description: fully_demonstrated, partially_demonstrated, not_demonstrated, or unmeasured
+  outputs:
+    submolt:
+      type: string
+ui:
+  title: Submolt Route
+  subtitle: "Route a Moltbook post to the right submolt (community channel) based on agent domain signal and verdict tier. Inputs: agent domain signal (pv/dev/meta/vocab/incident/research/fleet/station), verdict tier. Returns submolt path. Frontmatter override is read upstream by the hook; this microgram is the fallback router."
+  icon: circle
+  route: /vigilance/mg/submolt-route
+  steps:
+    - field: domain_signal
+      label: domain signal
+      help: "One of: pv, dev, meta, vocab, incident, research, fleet, station, unknown"
+      widget: text
+      placeholder: null
+    - field: verdict_tier
+      label: verdict tier
+      help: fully_demonstrated, partially_demonstrated, not_demonstrated, or unmeasured
+      widget: text
+      placeholder: null
+  result:
+    template: "submolt: {{submolt}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/submolt-route
+  cli: rsk mcg run submolt-route
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_incident
+  nodes:
+    check_incident:
+      type: condition
+      variable: verdict_tier
+      operator: eq
+      value: not_demonstrated
+      true_next: route_incidents
+      false_next: check_domain_pv
+    check_domain_pv:
+      type: condition
+      variable: domain_signal
+      operator: eq
+      value: pv
+      true_next: route_pv
+      false_next: check_domain_dev
+    check_domain_dev:
+      type: condition
+      variable: domain_signal
+      operator: eq
+      value: dev
+      true_next: route_dev
+      false_next: check_domain_meta
+    check_domain_meta:
+      type: condition
+      variable: domain_signal
+      operator: eq
+      value: meta
+      true_next: route_meta
+      false_next: check_domain_vocab
+    check_domain_vocab:
+      type: condition
+      variable: domain_signal
+      operator: eq
+      value: vocab
+      true_next: route_vocab
+      false_next: check_domain_research
+    check_domain_research:
+      type: condition
+      variable: domain_signal
+      operator: eq
+      value: research
+      true_next: route_research
+      false_next: check_domain_fleet
+    check_domain_fleet:
+      type: condition
+      variable: domain_signal
+      operator: eq
+      value: fleet
+      true_next: route_fleet
+      false_next: check_domain_station
+    check_domain_station:
+      type: condition
+      variable: domain_signal
+      operator: eq
+      value: station
+      true_next: route_station
+      false_next: route_meta
+    route_pv:
+      type: return
+      value:
+        submolt: /m/pv
+    route_dev:
+      type: return
+      value:
+        submolt: /m/dev
+    route_meta:
+      type: return
+      value:
+        submolt: /m/meta
+    route_vocab:
+      type: return
+      value:
+        submolt: /m/vocab
+    route_research:
+      type: return
+      value:
+        submolt: /m/research
+    route_fleet:
+      type: return
+      value:
+        submolt: /m/fleet
+    route_station:
+      type: return
+      value:
+        submolt: /m/station
+    route_incidents:
+      type: return
+      value:
+        submolt: /m/incidents
+tests:
+  - name: not_demonstrated_goes_to_incidents
+    input:
+      domain_signal: pv
+      verdict_tier: not_demonstrated
+    expect:
+      submolt: /m/incidents
+  - name: pv_demonstrated
+    input:
+      domain_signal: pv
+      verdict_tier: fully_demonstrated
+    expect:
+      submolt: /m/pv
+  - name: dev_partial
+    input:
+      domain_signal: dev
+      verdict_tier: partially_demonstrated
+    expect:
+      submolt: /m/dev
+  - name: vocab_signal
+    input:
+      domain_signal: vocab
+      verdict_tier: fully_demonstrated
+    expect:
+      submolt: /m/vocab
+  - name: research_signal
+    input:
+      domain_signal: research
+      verdict_tier: fully_demonstrated
+    expect:
+      submolt: /m/research
+  - name: fleet_signal
+    input:
+      domain_signal: fleet
+      verdict_tier: fully_demonstrated
+    expect:
+      submolt: /m/fleet
+  - name: station_signal
+    input:
+      domain_signal: station
+      verdict_tier: fully_demonstrated
+    expect:
+      submolt: /m/station
+  - name: unknown_falls_to_meta
+    input:
+      domain_signal: unknown
+      verdict_tier: fully_demonstrated
+    expect:
+      submolt: /m/meta
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - submolt
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

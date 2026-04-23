@@ -1,47 +1,115 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workflow-compliance-audit
-description: "Select compliance audit chain by regulatory framework"
 version: 0.1.0
-
+description: Select compliance audit chain by regulatory framework
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Workflow Compliance Audit
+  subtitle: Select compliance audit chain by regulatory framework
+  icon: circle
+  route: /vigilance/mg/workflow-compliance-audit
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workflow-compliance-audit
+  cli: rsk mcg run workflow-compliance-audit
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_framework
   nodes:
     check_framework:
-      type: "condition"
-      variable: "framework"
-      operator: "eq"
-      value: "ich"
-      true_next: "ich_audit"
-      false_next: "check_fda"
+      type: condition
+      variable: framework
+      operator: eq
+      value: ich
+      true_next: ich_audit
+      false_next: check_fda
     ich_audit:
-      type: "return"
+      type: return
       value:
-        audit: "ich_compliance"
-        chain: "ich \u2192 compliance \u2192 cioms"
-        scope: "global"
+        audit: ich_compliance
+        chain: ich → compliance → cioms
+        scope: global
     check_fda:
-      type: "condition"
-      variable: "framework"
-      operator: "eq"
-      value: "fda"
-      true_next: "fda_audit"
-      false_next: "ema_audit"
+      type: condition
+      variable: framework
+      operator: eq
+      value: fda
+      true_next: fda_audit
+      false_next: ema_audit
     fda_audit:
-      type: "return"
+      type: return
       value:
-        audit: "fda_compliance"
-        chain: "fda-safety \u2192 fda-accessdata \u2192 compliance"
-        scope: "us"
+        audit: fda_compliance
+        chain: fda-safety → fda-accessdata → compliance
+        scope: us
     ema_audit:
-      type: "return"
+      type: return
       value:
-        audit: "ema_compliance"
-        chain: "ema \u2192 eudravigilance \u2192 compliance"
-        scope: "eu"
-
+        audit: ema_compliance
+        chain: ema → eudravigilance → compliance
+        scope: eu
 tests:
-  - input: {"framework": "ich"}
-    expect: {"audit": "ich_compliance", "scope": "global"}
-  - input: {"framework": "fda"}
-    expect: {"audit": "fda_compliance", "scope": "us"}
-  - input: {"framework": "ema"}
-    expect: {"audit": "ema_compliance", "scope": "eu"}
+  - input:
+      framework: ich
+    expect:
+      audit: ich_compliance
+      scope: global
+  - input:
+      framework: fda
+    expect:
+      audit: fda_compliance
+      scope: us
+  - input:
+      framework: ema
+    expect:
+      audit: ema_compliance
+      scope: eu
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tox-pancreatic
-description: 'Pancreatic toxicity gate: lipase_ratio thresholds for pancreas'
 version: 0.1.0
+description: "Pancreatic toxicity gate: lipase_ratio thresholds for pancreas"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Tox Pancreatic
+  subtitle: "Pancreatic toxicity gate: lipase_ratio thresholds for pancreas"
+  icon: circle
+  route: /vigilance/mg/tox-pancreatic
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tox-pancreatic
+  cli: rsk mcg run tox-pancreatic
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severe
   nodes:
@@ -40,73 +69,103 @@ tree:
         organ: pancreatic
         target: pancreas
 tests:
-- input:
-    lipase_ratio: 6
-  expect:
-    severity: severe
-    organ: pancreatic
-- input:
-    lipase_ratio: 3
-  expect:
-    organ: pancreatic
-    severity: mild
-- input:
-    lipase_ratio: 0
-  expect:
-    organ: pancreatic
-    severity: normal
-- input: {}
-  expect:
-    severity: normal
-    organ: pancreatic
-- input:
-    lipase_ratio: -1
-  expect:
-    organ: pancreatic
-    severity: normal
-    action: continue
-    target: pancreas
-- input:
-    lipase_ratio: 4
-  expect:
-    action: monitor_closely
-    severity: mild
-    organ: pancreatic
-    target: pancreas
-- input:
-    lipase_ratio: 500
-  expect:
-    organ: pancreatic
-    severity: severe
-    action: discontinue
-    target: pancreas
-- input:
-    lipase_ratio: -1
-  expect:
-    action: continue
-    organ: pancreatic
-    severity: normal
-    target: pancreas
-- input:
-    lipase_ratio: 2
-  expect:
-    organ: pancreatic
-    target: pancreas
-    action: continue
-    severity: normal
-- input:
-    lipase_ratio: 4
-  expect:
-    target: pancreas
-    organ: pancreatic
-    action: monitor_closely
-    severity: mild
-- input:
-    lipase_ratio: 300
-  expect:
-    target: pancreas
-    organ: pancreatic
-    severity: severe
-    action: discontinue
-interface: null
-primitive_signature: null
+  - input:
+      lipase_ratio: 6
+    expect:
+      severity: severe
+      organ: pancreatic
+  - input:
+      lipase_ratio: 3
+    expect:
+      organ: pancreatic
+      severity: mild
+  - input:
+      lipase_ratio: 0
+    expect:
+      organ: pancreatic
+      severity: normal
+  - input: {}
+    expect:
+      severity: normal
+      organ: pancreatic
+  - input:
+      lipase_ratio: -1
+    expect:
+      organ: pancreatic
+      severity: normal
+      action: continue
+      target: pancreas
+  - input:
+      lipase_ratio: 4
+    expect:
+      action: monitor_closely
+      severity: mild
+      organ: pancreatic
+      target: pancreas
+  - input:
+      lipase_ratio: 500
+    expect:
+      organ: pancreatic
+      severity: severe
+      action: discontinue
+      target: pancreas
+  - input:
+      lipase_ratio: -1
+    expect:
+      action: continue
+      organ: pancreatic
+      severity: normal
+      target: pancreas
+  - input:
+      lipase_ratio: 2
+    expect:
+      organ: pancreatic
+      target: pancreas
+      action: continue
+      severity: normal
+  - input:
+      lipase_ratio: 4
+    expect:
+      target: pancreas
+      organ: pancreatic
+      action: monitor_closely
+      severity: mild
+  - input:
+      lipase_ratio: 300
+    expect:
+      target: pancreas
+      organ: pancreatic
+      severity: severe
+      action: discontinue
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

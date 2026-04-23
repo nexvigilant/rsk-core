@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: multi-signal-combiner
-description: Combines PRR, ROR, IC, and EBGM signal classifications into an overall pharmacovigilance signal assessment. Two or more STRONG signals yield CONFIRMED; one STRONG yields PROBABLE; MODERATE counts determine POSSIBLE/SUGGESTIVE.
 version: 0.1.0
+description: Combines PRR, ROR, IC, and EBGM signal classifications into an overall pharmacovigilance signal assessment. Two or more STRONG signals yield CONFIRMED; one STRONG yields PROBABLE; MODERATE counts determine POSSIBLE/SUGGESTIVE.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: ebgm_signal
+    type: string
+    required: false
+    description: ""
+  - name: ic_signal
+    type: string
+    required: false
+    description: ""
+  - name: prr_signal
+    type: string
+    required: false
+    description: ""
+  - name: ror_signal
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: overall
+    type: string
+  - name: priority
+    type: string
+  - name: signal_detected
+    type: bool
 interface:
   inputs:
     ebgm_signal:
@@ -22,10 +56,46 @@ interface:
       type: string
     signal_detected:
       type: bool
+ui:
+  title: Multi Signal Combiner
+  subtitle: Combines PRR, ROR, IC, and EBGM signal classifications into an overall pharmacovigilance signal assessment. Two or more STRONG signals yield CONFIRMED; one STRONG yields PROBABLE; MODERATE counts determine POSSIBLE/SUGGESTIVE.
+  icon: activity
+  route: /vigilance/mg/multi-signal-combiner
+  steps:
+    - field: ebgm_signal
+      label: ebgm signal
+      help: Enter ebgm_signal
+      widget: text
+      placeholder: null
+    - field: ic_signal
+      label: ic signal
+      help: Enter ic_signal
+      widget: text
+      placeholder: null
+    - field: prr_signal
+      label: prr signal
+      help: Enter prr_signal
+      widget: text
+      placeholder: null
+    - field: ror_signal
+      label: ror signal
+      help: Enter ror_signal
+      widget: text
+      placeholder: null
+  result:
+    template: "overall: {{overall}} — priority: {{priority}} — signal_detected: {{signal_detected}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/multi-signal-combiner
+  cli: rsk mcg run multi-signal-combiner
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_prr_strong
   nodes:
-    # --- Count STRONG signals (prr, ror, ic, ebgm) ---
     check_prr_strong:
       type: condition
       variable: prr_signal
@@ -33,7 +103,6 @@ tree:
       value: STRONG
       true_next: prr_strong_check_ror
       false_next: prr_not_strong_check_ror
-    # prr=STRONG branch: check ror for second strong
     prr_strong_check_ror:
       type: condition
       variable: ror_signal
@@ -55,7 +124,6 @@ tree:
       value: STRONG
       true_next: confirmed
       false_next: probable_one_strong
-    # prr=NOT_STRONG branch: check ror for first strong
     prr_not_strong_check_ror:
       type: condition
       variable: ror_signal
@@ -63,7 +131,6 @@ tree:
       value: STRONG
       true_next: ror_strong_check_ic
       false_next: no_strong_check_ic
-    # ror=STRONG branch: check ic for second strong
     ror_strong_check_ic:
       type: condition
       variable: ic_signal
@@ -78,7 +145,6 @@ tree:
       value: STRONG
       true_next: confirmed
       false_next: probable_one_strong
-    # no strong from prr/ror: check ic for first strong
     no_strong_check_ic:
       type: condition
       variable: ic_signal
@@ -86,7 +152,6 @@ tree:
       value: STRONG
       true_next: ic_strong_check_ebgm
       false_next: no_strong_check_ebgm
-    # ic=STRONG branch: check ebgm for second strong
     ic_strong_check_ebgm:
       type: condition
       variable: ebgm_signal
@@ -94,7 +159,6 @@ tree:
       value: STRONG
       true_next: confirmed
       false_next: probable_one_strong
-    # ebgm only: check if ebgm alone is strong
     no_strong_check_ebgm:
       type: condition
       variable: ebgm_signal
@@ -102,8 +166,6 @@ tree:
       value: STRONG
       true_next: probable_one_strong
       false_next: count_moderate_prr
-    # --- No STRONG found: count MODERATE-or-STRONG (using MODERATE check since STRONG already ruled out) ---
-    # Check each signal for MODERATE and accumulate count via cascading nodes
     count_moderate_prr:
       type: condition
       variable: prr_signal
@@ -202,7 +264,6 @@ tree:
       value: MODERATE
       true_next: suggestive_one_moderate
       false_next: no_signal
-    # --- Return nodes ---
     confirmed:
       type: return
       value:
@@ -239,253 +300,275 @@ tree:
         overall: NO_SIGNAL
         priority: NONE
         signal_detected: false
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-# CONFIRMED: 2+ STRONG
-- input:
-    prr_signal: STRONG
-    ror_signal: STRONG
-    ic_signal: MODERATE
-    ebgm_signal: NONE
-  expect:
-    overall: CONFIRMED
-    priority: CRITICAL
-    signal_detected: true
-- input:
-    prr_signal: STRONG
-    ror_signal: NONE
-    ic_signal: STRONG
-    ebgm_signal: NONE
-  expect:
-    overall: CONFIRMED
-    priority: CRITICAL
-    signal_detected: true
-- input:
-    prr_signal: STRONG
-    ror_signal: NONE
-    ic_signal: NONE
-    ebgm_signal: STRONG
-  expect:
-    overall: CONFIRMED
-    priority: CRITICAL
-    signal_detected: true
-- input:
-    prr_signal: NONE
-    ror_signal: STRONG
-    ic_signal: STRONG
-    ebgm_signal: NONE
-  expect:
-    overall: CONFIRMED
-    priority: CRITICAL
-    signal_detected: true
-- input:
-    prr_signal: STRONG
-    ror_signal: STRONG
-    ic_signal: STRONG
-    ebgm_signal: STRONG
-  expect:
-    overall: CONFIRMED
-    priority: CRITICAL
-    signal_detected: true
-# PROBABLE: exactly 1 STRONG
-- input:
-    prr_signal: STRONG
-    ror_signal: NONE
-    ic_signal: NONE
-    ebgm_signal: NONE
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-- input:
-    prr_signal: NONE
-    ror_signal: STRONG
-    ic_signal: NONE
-    ebgm_signal: NONE
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-- input:
-    prr_signal: NONE
-    ror_signal: NONE
-    ic_signal: NONE
-    ebgm_signal: STRONG
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-# PROBABLE: 3 MODERATE
-- input:
-    prr_signal: MODERATE
-    ror_signal: MODERATE
-    ic_signal: MODERATE
-    ebgm_signal: NONE
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-- input:
-    prr_signal: MODERATE
-    ror_signal: MODERATE
-    ic_signal: NONE
-    ebgm_signal: MODERATE
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-- input:
-    prr_signal: MODERATE
-    ror_signal: MODERATE
-    ic_signal: MODERATE
-    ebgm_signal: MODERATE
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-# POSSIBLE: 2 MODERATE
-- input:
-    prr_signal: MODERATE
-    ror_signal: MODERATE
-    ic_signal: NONE
-    ebgm_signal: NONE
-  expect:
-    overall: POSSIBLE
-    priority: MEDIUM
-    signal_detected: true
-- input:
-    prr_signal: NONE
-    ror_signal: NONE
-    ic_signal: MODERATE
-    ebgm_signal: MODERATE
-  expect:
-    overall: POSSIBLE
-    priority: MEDIUM
-    signal_detected: true
-# SUGGESTIVE: 1 MODERATE
-- input:
-    prr_signal: MODERATE
-    ror_signal: NONE
-    ic_signal: NONE
-    ebgm_signal: NONE
-  expect:
-    overall: SUGGESTIVE
-    priority: LOW
-    signal_detected: true
-- input:
-    prr_signal: NONE
-    ror_signal: NONE
-    ic_signal: NONE
-    ebgm_signal: MODERATE
-  expect:
-    overall: SUGGESTIVE
-    priority: LOW
-    signal_detected: true
-# NO_SIGNAL: all NONE or WEAK
-- input:
-    prr_signal: NONE
-    ror_signal: NONE
-    ic_signal: NONE
-    ebgm_signal: NONE
-  expect:
-    overall: NO_SIGNAL
-    priority: NONE
-    signal_detected: false
-- input:
-    prr_signal: WEAK
-    ror_signal: WEAK
-    ic_signal: WEAK
-    ebgm_signal: WEAK
-  expect:
-    overall: NO_SIGNAL
-    priority: NONE
-    signal_detected: false
-- input: {}
-  expect:
-    overall: NO_SIGNAL
-    priority: NONE
-    signal_detected: false
-# -- covers ror_mod_check_ic + ror_mod_only_check_ic_false (ebgm=MODERATE -> POSSIBLE) --
-- input:
-    prr_signal: NONE
-    ror_signal: MODERATE
-    ic_signal: NONE
-    ebgm_signal: MODERATE
-  expect:
-    overall: POSSIBLE
-    priority: MEDIUM
-    signal_detected: true
-# -- covers ror_mod_check_ic + ror_mod_only_check_ic_false (ebgm=NONE -> SUGGESTIVE) --
-- input:
-    prr_signal: NONE
-    ror_signal: MODERATE
-    ic_signal: NONE
-    ebgm_signal: NONE
-  expect:
-    overall: SUGGESTIVE
-    priority: LOW
-    signal_detected: true
-# -- covers ror_mod_check_ic + ror_ic_mod_check_ebgm (ebgm=MODERATE -> PROBABLE) --
-- input:
-    prr_signal: NONE
-    ror_signal: MODERATE
-    ic_signal: MODERATE
-    ebgm_signal: MODERATE
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-# -- covers ror_mod_check_ic + ror_ic_mod_check_ebgm (ebgm=NONE -> POSSIBLE) --
-- input:
-    prr_signal: NONE
-    ror_signal: MODERATE
-    ic_signal: MODERATE
-    ebgm_signal: NONE
-  expect:
-    overall: POSSIBLE
-    priority: MEDIUM
-    signal_detected: true
-# -- covers ic_strong_check_ebgm (ebgm=STRONG -> CONFIRMED) --
-- input:
-    prr_signal: NONE
-    ror_signal: NONE
-    ic_signal: STRONG
-    ebgm_signal: STRONG
-  expect:
-    overall: CONFIRMED
-    priority: CRITICAL
-    signal_detected: true
-# -- covers ic_strong_check_ebgm (ebgm=NONE -> PROBABLE) --
-- input:
-    prr_signal: NONE
-    ror_signal: NONE
-    ic_signal: STRONG
-    ebgm_signal: NONE
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-# -- covers prr_ic_mod_check_ebgm (ebgm=MODERATE -> PROBABLE) --
-- input:
-    prr_signal: MODERATE
-    ror_signal: NONE
-    ic_signal: MODERATE
-    ebgm_signal: MODERATE
-  expect:
-    overall: PROBABLE
-    priority: HIGH
-    signal_detected: true
-# -- covers prr_ic_mod_check_ebgm (ebgm=NONE -> POSSIBLE) --
-- input:
-    prr_signal: MODERATE
-    ror_signal: NONE
-    ic_signal: MODERATE
-    ebgm_signal: NONE
-  expect:
-    overall: POSSIBLE
-    priority: MEDIUM
-    signal_detected: true
+  - input:
+      prr_signal: STRONG
+      ror_signal: STRONG
+      ic_signal: MODERATE
+      ebgm_signal: NONE
+    expect:
+      overall: CONFIRMED
+      priority: CRITICAL
+      signal_detected: true
+  - input:
+      prr_signal: STRONG
+      ror_signal: NONE
+      ic_signal: STRONG
+      ebgm_signal: NONE
+    expect:
+      overall: CONFIRMED
+      priority: CRITICAL
+      signal_detected: true
+  - input:
+      prr_signal: STRONG
+      ror_signal: NONE
+      ic_signal: NONE
+      ebgm_signal: STRONG
+    expect:
+      overall: CONFIRMED
+      priority: CRITICAL
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: STRONG
+      ic_signal: STRONG
+      ebgm_signal: NONE
+    expect:
+      overall: CONFIRMED
+      priority: CRITICAL
+      signal_detected: true
+  - input:
+      prr_signal: STRONG
+      ror_signal: STRONG
+      ic_signal: STRONG
+      ebgm_signal: STRONG
+    expect:
+      overall: CONFIRMED
+      priority: CRITICAL
+      signal_detected: true
+  - input:
+      prr_signal: STRONG
+      ror_signal: NONE
+      ic_signal: NONE
+      ebgm_signal: NONE
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: STRONG
+      ic_signal: NONE
+      ebgm_signal: NONE
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: NONE
+      ic_signal: NONE
+      ebgm_signal: STRONG
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: MODERATE
+      ror_signal: MODERATE
+      ic_signal: MODERATE
+      ebgm_signal: NONE
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: MODERATE
+      ror_signal: MODERATE
+      ic_signal: NONE
+      ebgm_signal: MODERATE
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: MODERATE
+      ror_signal: MODERATE
+      ic_signal: MODERATE
+      ebgm_signal: MODERATE
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: MODERATE
+      ror_signal: MODERATE
+      ic_signal: NONE
+      ebgm_signal: NONE
+    expect:
+      overall: POSSIBLE
+      priority: MEDIUM
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: NONE
+      ic_signal: MODERATE
+      ebgm_signal: MODERATE
+    expect:
+      overall: POSSIBLE
+      priority: MEDIUM
+      signal_detected: true
+  - input:
+      prr_signal: MODERATE
+      ror_signal: NONE
+      ic_signal: NONE
+      ebgm_signal: NONE
+    expect:
+      overall: SUGGESTIVE
+      priority: LOW
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: NONE
+      ic_signal: NONE
+      ebgm_signal: MODERATE
+    expect:
+      overall: SUGGESTIVE
+      priority: LOW
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: NONE
+      ic_signal: NONE
+      ebgm_signal: NONE
+    expect:
+      overall: NO_SIGNAL
+      priority: NONE
+      signal_detected: false
+  - input:
+      prr_signal: WEAK
+      ror_signal: WEAK
+      ic_signal: WEAK
+      ebgm_signal: WEAK
+    expect:
+      overall: NO_SIGNAL
+      priority: NONE
+      signal_detected: false
+  - input: {}
+    expect:
+      overall: NO_SIGNAL
+      priority: NONE
+      signal_detected: false
+  - input:
+      prr_signal: NONE
+      ror_signal: MODERATE
+      ic_signal: NONE
+      ebgm_signal: MODERATE
+    expect:
+      overall: POSSIBLE
+      priority: MEDIUM
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: MODERATE
+      ic_signal: NONE
+      ebgm_signal: NONE
+    expect:
+      overall: SUGGESTIVE
+      priority: LOW
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: MODERATE
+      ic_signal: MODERATE
+      ebgm_signal: MODERATE
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: MODERATE
+      ic_signal: MODERATE
+      ebgm_signal: NONE
+    expect:
+      overall: POSSIBLE
+      priority: MEDIUM
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: NONE
+      ic_signal: STRONG
+      ebgm_signal: STRONG
+    expect:
+      overall: CONFIRMED
+      priority: CRITICAL
+      signal_detected: true
+  - input:
+      prr_signal: NONE
+      ror_signal: NONE
+      ic_signal: STRONG
+      ebgm_signal: NONE
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: MODERATE
+      ror_signal: NONE
+      ic_signal: MODERATE
+      ebgm_signal: MODERATE
+    expect:
+      overall: PROBABLE
+      priority: HIGH
+      signal_detected: true
+  - input:
+      prr_signal: MODERATE
+      ror_signal: NONE
+      ic_signal: MODERATE
+      ebgm_signal: NONE
+    expect:
+      overall: POSSIBLE
+      priority: MEDIUM
+      signal_detected: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - overall
+    - priority
+    - signal_detected
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,7 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: adapt-signal-strength
-description: "Adapter: convert configmigram signal_strength to signal pipeline inputs (signal_detected + synthetic prr)"
 version: 0.1.0
-
+description: "Adapter: convert configmigram signal_strength to signal pipeline inputs (signal_detected + synthetic prr)"
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: signal_strength
+    type: string
+    required: false
+    description: "From configmigram: strong, moderate, weak, none"
+outputs:
+  - name: signal_detected
+    type: bool
+  - name: prr
+    type: float
 interface:
   inputs:
     signal_strength:
@@ -13,7 +32,28 @@ interface:
       type: bool
     prr:
       type: float
-
+ui:
+  title: Adapt Signal Strength
+  subtitle: "Adapter: convert configmigram signal_strength to signal pipeline inputs (signal_detected + synthetic prr)"
+  icon: activity
+  route: /vigilance/mg/adapt-signal-strength
+  steps:
+    - field: signal_strength
+      label: signal strength
+      help: "From configmigram: strong, moderate, weak, none"
+      widget: text
+      placeholder: null
+  result:
+    template: "signal_detected: {{signal_detected}} — prr: {{prr}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/adapt-signal-strength
+  cli: rsk mcg run adapt-signal-strength
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_strength
   nodes:
@@ -23,68 +63,109 @@ tree:
       operator: is_null
       true_next: no_signal
       false_next: check_strong
-
     check_strong:
       type: condition
       variable: signal_strength
       operator: eq
-      value: "strong"
+      value: strong
       true_next: strong_out
       false_next: check_moderate
-
     check_moderate:
       type: condition
       variable: signal_strength
       operator: eq
-      value: "moderate"
+      value: moderate
       true_next: moderate_out
       false_next: check_weak
-
     check_weak:
       type: condition
       variable: signal_strength
       operator: eq
-      value: "weak"
+      value: weak
       true_next: weak_out
       false_next: no_signal
-
     strong_out:
       type: return
       value:
         signal_detected: true
-        prr: 6.0
-
+        prr: 6
     moderate_out:
       type: return
       value:
         signal_detected: true
-        prr: 3.0
-
+        prr: 3
     weak_out:
       type: return
       value:
         signal_detected: true
         prr: 1.5
-
     no_signal:
       type: return
       value:
         signal_detected: false
         prr: 0.5
-
-primitive_signature:
-  dominant: 'μ'
-  expression: 'μ — domain mapping or format conversion'
-  primes: ['μ']
-  arguments: []
 tests:
-  - input: { signal_strength: "strong" }
-    expect: { signal_detected: true, prr: 6.0 }
-  - input: { signal_strength: "moderate" }
-    expect: { signal_detected: true, prr: 3.0 }
-  - input: { signal_strength: "weak" }
-    expect: { signal_detected: true, prr: 1.5 }
-  - input: { signal_strength: "none" }
-    expect: { signal_detected: false, prr: 0.5 }
+  - input:
+      signal_strength: strong
+    expect:
+      signal_detected: true
+      prr: 6
+  - input:
+      signal_strength: moderate
+    expect:
+      signal_detected: true
+      prr: 3
+  - input:
+      signal_strength: weak
+    expect:
+      signal_detected: true
+      prr: 1.5
+  - input:
+      signal_strength: none
+    expect:
+      signal_detected: false
+      prr: 0.5
   - input: {}
-    expect: { signal_detected: false, prr: 0.5 }
+    expect:
+      signal_detected: false
+      prr: 0.5
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - signal_detected
+    - prr
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

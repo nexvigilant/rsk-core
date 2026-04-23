@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: integration-d13
-description: "Domain 13 cross-domain integration — global PV connects to communication, risk management, regulatory, and information sources."
 version: 0.1.0
+description: Domain 13 cross-domain integration — global PV connects to communication, risk management, regulatory, and information sources.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: target_domain
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: epas
+    type: string
+  - name: integration_type
+    type: string
+  - name: module
+    type: string
+  - name: synergy
+    type: string
 interface:
   inputs:
     target_domain:
@@ -15,6 +39,28 @@ interface:
       type: string
     synergy:
       type: string
+ui:
+  title: Integration D13
+  subtitle: Domain 13 cross-domain integration — global PV connects to communication, risk management, regulatory, and information sources.
+  icon: circle
+  route: /vigilance/mg/integration-d13
+  steps:
+    - field: target_domain
+      label: target domain
+      help: Enter target_domain
+      widget: text
+      placeholder: null
+  result:
+    template: "epas: {{epas}} — integration_type: {{integration_type}} — module: {{module}} — synergy: {{synergy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/integration-d13
+  cli: rsk mcg run integration-d13
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target
   nodes:
@@ -57,67 +103,103 @@ tree:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Global-Communication Integration"
-        synergy: "global perspective shapes culturally appropriate stakeholder communication across markets"
-        epas: "EPA3, EPA18, EPA19"
+        module: Global-Communication Integration
+        synergy: global perspective shapes culturally appropriate stakeholder communication across markets
+        epas: EPA3, EPA18, EPA19
     d13_d11:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Global-Risk Management"
-        synergy: "global perspective enables culturally appropriate risk interventions across populations"
-        epas: "EPA7, EPA16"
+        module: Global-Risk Management
+        synergy: global perspective enables culturally appropriate risk interventions across populations
+        epas: EPA7, EPA16
     d13_d12:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Global-Regulatory"
-        synergy: "global knowledge essential for multi-jurisdictional regulatory coordination"
-        epas: "EPA11, EPA14"
+        module: Global-Regulatory
+        synergy: global knowledge essential for multi-jurisdictional regulatory coordination
+        epas: EPA11, EPA14
     d13_d10:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Global-Assessment"
-        synergy: "global perspective enriches benefit-risk assessment with diverse population data"
+        module: Global-Assessment
+        synergy: global perspective enriches benefit-risk assessment with diverse population data
     d13_d15:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Global-Information"
-        synergy: "global information management supports international intelligence coordination"
+        module: Global-Information
+        synergy: global information management supports international intelligence coordination
     general:
       type: return
       value:
         integration_type: GENERAL
-        module: "Universal Global Foundation"
-        synergy: "global and cultural perspective enhances effectiveness across all PV domains"
+        module: Universal Global Foundation
+        synergy: global and cultural perspective enhances effectiveness across all PV domains
 tests:
-- input:
-    target_domain: 14
-  expect:
-    integration_type: PRIMARY
-    module: "Global-Communication Integration"
-- input:
-    target_domain: 11
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 12
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 10
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 15
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 1
-  expect:
-    integration_type: GENERAL
-- input: {}
-  expect:
-    integration_type: GENERAL
+  - input:
+      target_domain: 14
+    expect:
+      integration_type: PRIMARY
+      module: Global-Communication Integration
+  - input:
+      target_domain: 11
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 12
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 10
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 15
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 1
+    expect:
+      integration_type: GENERAL
+  - input: {}
+    expect:
+      integration_type: GENERAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - epas
+    - integration_type
+    - module
+    - synergy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

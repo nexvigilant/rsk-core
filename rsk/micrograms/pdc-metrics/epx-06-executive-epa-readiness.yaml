@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: epx-06-executive-epa-readiness
-description: "Executive EPA readiness ≥70% of L4+ participants"
 version: 0.1.0
-
+description: Executive EPA readiness ≥70% of L4+ participants
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Epx 06 Executive Epa Readiness
+  subtitle: Executive EPA readiness ≥70% of L4+ participants
+  icon: circle
+  route: /vigilance/mg/epx-06-executive-epa-readiness
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/epx-06-executive-epa-readiness
+  cli: rsk mcg run epx-06-executive-epa-readiness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -15,22 +43,58 @@ tree:
     pass:
       type: return
       value:
-        metric: "epx-06-executive-epa-readiness"
-        category: "EPA Progression"
+        metric: epx-06-executive-epa-readiness
+        category: EPA Progression
         met: true
-        action: "on_track"
-        frequency: "annual"
+        action: on_track
+        frequency: annual
     fail:
       type: return
       value:
-        metric: "epx-06-executive-epa-readiness"
-        category: "EPA Progression"
+        metric: epx-06-executive-epa-readiness
+        category: EPA Progression
         met: false
-        action: "remediate"
-        frequency: "annual"
-
+        action: remediate
+        frequency: annual
 tests:
-  - input: {exec_epa_readiness_pct: 70}
-    expect: {met: true, category: "EPA Progression"}
+  - input:
+      exec_epa_readiness_pct: 70
+    expect:
+      met: true
+      category: EPA Progression
   - input: {}
-    expect: {met: false, category: "EPA Progression"}
+    expect:
+      met: false
+      category: EPA Progression
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

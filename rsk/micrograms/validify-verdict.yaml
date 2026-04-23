@@ -1,0 +1,183 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: validify-verdict
+version: 0.1.0
+description: "VALIDIFY 8-gate verdict aggregator. Input: per-gate pass counts. Output: PASS/WARN/FAIL tier + recommended action based on how many of the 8 gates (Verify/Assemble/Lint/Inspect/Deny/Integrate/Forge/Yield) passed."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: gates_passed
+    type: integer
+    required: true
+    description: Count of gates that passed (0-8)
+  - name: critical_fail
+    type: bool
+    required: false
+    description: True if any critical gate (Deny) failed
+outputs:
+  - name: tier
+    type: string
+  - name: recommended_action
+    type: string
+interface:
+  inputs:
+    gates_passed:
+      type: integer
+      required: true
+      description: Count of gates that passed (0-8)
+    critical_fail:
+      type: bool
+      required: false
+      description: True if any critical gate (Deny) failed
+  outputs:
+    tier:
+      type: string
+    recommended_action:
+      type: string
+ui:
+  title: Validify Verdict
+  subtitle: "VALIDIFY 8-gate verdict aggregator. Input: per-gate pass counts. Output: PASS/WARN/FAIL tier + recommended action based on how many of the 8 gates (Verify/Assemble/Lint/Inspect/Deny/Integrate/Forge/Yield) passed."
+  icon: circle
+  route: /vigilance/mg/validify-verdict
+  steps:
+    - field: gates_passed
+      label: gates passed
+      help: Count of gates that passed (0-8)
+      widget: number
+      placeholder: null
+    - field: critical_fail
+      label: critical fail
+      help: True if any critical gate (Deny) failed
+      widget: toggle
+      placeholder: null
+  result:
+    template: "tier: {{tier}} — recommended_action: {{recommended_action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/validify-verdict
+  cli: rsk mcg run validify-verdict
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_critical
+  nodes:
+    check_critical:
+      type: condition
+      variable: critical_fail
+      operator: eq
+      value: true
+      true_next: critical_fail_state
+      false_next: check_all_pass
+    check_all_pass:
+      type: condition
+      variable: gates_passed
+      operator: gte
+      value: 8
+      true_next: all_pass
+      false_next: check_warn
+    check_warn:
+      type: condition
+      variable: gates_passed
+      operator: gte
+      value: 6
+      true_next: warn_state
+      false_next: fail_state
+    all_pass:
+      type: return
+      value:
+        tier: PASS
+        recommended_action: ship
+    warn_state:
+      type: return
+      value:
+        tier: WARN
+        recommended_action: fix-soft-gates
+    fail_state:
+      type: return
+      value:
+        tier: FAIL
+        recommended_action: block-and-fix
+    critical_fail_state:
+      type: return
+      value:
+        tier: FAIL
+        recommended_action: block-deny-gate-failed
+tests:
+  - name: all_eight_pass
+    input:
+      gates_passed: 8
+      critical_fail: false
+    expect:
+      tier: PASS
+      recommended_action: ship
+  - name: six_pass_warn
+    input:
+      gates_passed: 6
+      critical_fail: false
+    expect:
+      tier: WARN
+      recommended_action: fix-soft-gates
+  - name: three_pass_fail
+    input:
+      gates_passed: 3
+      critical_fail: false
+    expect:
+      tier: FAIL
+      recommended_action: block-and-fix
+  - name: critical_deny_fail
+    input:
+      gates_passed: 7
+      critical_fail: true
+    expect:
+      tier: FAIL
+      recommended_action: block-deny-gate-failed
+  - name: zero_gates
+    input:
+      gates_passed: 0
+      critical_fail: false
+    expect:
+      tier: FAIL
+      recommended_action: block-and-fix
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tier
+    - recommended_action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

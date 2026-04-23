@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2d-psur-interval-gate
-description: 'ICH E2D Section 6 / ICH E2C(R2): Determines PSUR/PBRER submission interval and due date trigger based on product lifecycle and regulatory status'
 version: 0.1.0
+description: "ICH E2D Section 6 / ICH E2C(R2): Determines PSUR/PBRER submission interval and due date trigger based on product lifecycle and regulatory status"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: years_since_first_approval
+    type: int
+    required: false
+    description: ""
+  - name: ibdd_defined
+    type: bool
+    required: false
+    description: ""
+  - name: under_additional_monitoring
+    type: bool
+    required: false
+    description: ""
+  - name: eu_registered
+    type: bool
+    required: false
+    description: ""
+  - name: signal_identified
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: submission_interval_months
+    type: int
+  - name: report_type
+    type: string
+  - name: trigger
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     years_since_first_approval:
@@ -27,6 +67,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2d Psur Interval Gate
+  subtitle: "ICH E2D Section 6 / ICH E2C(R2): Determines PSUR/PBRER submission interval and due date trigger based on product lifecycle and regulatory status"
+  icon: circle
+  route: /vigilance/mg/e2d-psur-interval-gate
+  steps:
+    - field: years_since_first_approval
+      label: years since first approval
+      help: Enter years_since_first_approval
+      widget: text
+      placeholder: null
+    - field: ibdd_defined
+      label: ibdd defined
+      help: Enter ibdd_defined
+      widget: toggle
+      placeholder: null
+    - field: under_additional_monitoring
+      label: under additional monitoring
+      help: Enter under_additional_monitoring
+      widget: toggle
+      placeholder: null
+    - field: eu_registered
+      label: eu registered
+      help: Enter eu_registered
+      widget: toggle
+      placeholder: null
+    - field: signal_identified
+      label: signal identified
+      help: Enter signal_identified
+      widget: toggle
+      placeholder: null
+  result:
+    template: "submission_interval_months: {{submission_interval_months}} — report_type: {{report_type}} — trigger: {{trigger}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2d-psur-interval-gate
+  cli: rsk mcg run e2d-psur-interval-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signal_identified
   nodes:
@@ -107,81 +189,112 @@ tree:
         report_type: SIGNAL_TRIGGERED_PSUR
         trigger: SAFETY_SIGNAL_DETECTED
         regulatory_reference: ICH E2D Section 6 / ICH E2C(R2) Appendix
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — PSUR/PBRER submission interval determination per ICH E2C(R2) lifecycle rules'
-  primes: ['σ', '∂', 'κ', 'N']
-  arguments: ['years_since_first_approval', 'ibdd_defined', 'under_additional_monitoring', 'eu_registered', 'signal_identified']
 tests:
-- input:
-    years_since_first_approval: 1
-    ibdd_defined: true
-    under_additional_monitoring: false
-    eu_registered: false
-    signal_identified: false
-  expect:
-    submission_interval_months: 6
-    report_type: PSUR_PBRER
-    trigger: IBDD_EARLY_PHASE_OR_ADDITIONAL_MONITORING
-    regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
-- input:
-    years_since_first_approval: 3
-    ibdd_defined: true
-    under_additional_monitoring: false
-    eu_registered: false
-    signal_identified: false
-  expect:
-    submission_interval_months: 12
-    report_type: PSUR_PBRER
-    trigger: IBDD_STANDARD_INTERVAL
-    regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
-- input:
-    years_since_first_approval: 7
-    ibdd_defined: true
-    under_additional_monitoring: false
-    eu_registered: false
-    signal_identified: false
-  expect:
-    submission_interval_months: 36
-    report_type: PSUR_PBRER
-    trigger: IBDD_MATURE_PRODUCT
-    regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
-- input:
-    years_since_first_approval: 5
-    ibdd_defined: false
-    under_additional_monitoring: false
-    eu_registered: true
-    signal_identified: false
-  expect:
-    submission_interval_months: 12
-    report_type: PSUR_EU_SINGLE_ASSESSMENT
-    trigger: EU_EURD_LIST
-    regulatory_reference: ICH E2C(R2) Section 4 / EU 726-2004 Article 107e
-- input:
-    years_since_first_approval: 2
-    ibdd_defined: true
-    under_additional_monitoring: true
-    eu_registered: false
-    signal_identified: false
-  expect:
-    submission_interval_months: 6
-    report_type: PSUR_PBRER
-    trigger: IBDD_EARLY_PHASE_OR_ADDITIONAL_MONITORING
-    regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
-- input:
-    years_since_first_approval: 10
-    ibdd_defined: true
-    under_additional_monitoring: false
-    eu_registered: false
-    signal_identified: true
-  expect:
-    submission_interval_months: 0
-    report_type: SIGNAL_TRIGGERED_PSUR
-    trigger: SAFETY_SIGNAL_DETECTED
-    regulatory_reference: ICH E2D Section 6 / ICH E2C(R2) Appendix
-- input: {}
-  expect:
-    submission_interval_months: 12
-    report_type: PSUR_PBRER
-    trigger: IBDD_STANDARD_INTERVAL
-    regulatory_reference: "ICH E2C(R2) Section 4 / ICH E2D Section 6"
+  - input:
+      years_since_first_approval: 1
+      ibdd_defined: true
+      under_additional_monitoring: false
+      eu_registered: false
+      signal_identified: false
+    expect:
+      submission_interval_months: 6
+      report_type: PSUR_PBRER
+      trigger: IBDD_EARLY_PHASE_OR_ADDITIONAL_MONITORING
+      regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
+  - input:
+      years_since_first_approval: 3
+      ibdd_defined: true
+      under_additional_monitoring: false
+      eu_registered: false
+      signal_identified: false
+    expect:
+      submission_interval_months: 12
+      report_type: PSUR_PBRER
+      trigger: IBDD_STANDARD_INTERVAL
+      regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
+  - input:
+      years_since_first_approval: 7
+      ibdd_defined: true
+      under_additional_monitoring: false
+      eu_registered: false
+      signal_identified: false
+    expect:
+      submission_interval_months: 36
+      report_type: PSUR_PBRER
+      trigger: IBDD_MATURE_PRODUCT
+      regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
+  - input:
+      years_since_first_approval: 5
+      ibdd_defined: false
+      under_additional_monitoring: false
+      eu_registered: true
+      signal_identified: false
+    expect:
+      submission_interval_months: 12
+      report_type: PSUR_EU_SINGLE_ASSESSMENT
+      trigger: EU_EURD_LIST
+      regulatory_reference: ICH E2C(R2) Section 4 / EU 726-2004 Article 107e
+  - input:
+      years_since_first_approval: 2
+      ibdd_defined: true
+      under_additional_monitoring: true
+      eu_registered: false
+      signal_identified: false
+    expect:
+      submission_interval_months: 6
+      report_type: PSUR_PBRER
+      trigger: IBDD_EARLY_PHASE_OR_ADDITIONAL_MONITORING
+      regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
+  - input:
+      years_since_first_approval: 10
+      ibdd_defined: true
+      under_additional_monitoring: false
+      eu_registered: false
+      signal_identified: true
+    expect:
+      submission_interval_months: 0
+      report_type: SIGNAL_TRIGGERED_PSUR
+      trigger: SAFETY_SIGNAL_DETECTED
+      regulatory_reference: ICH E2D Section 6 / ICH E2C(R2) Appendix
+  - input: {}
+    expect:
+      submission_interval_months: 12
+      report_type: PSUR_PBRER
+      trigger: IBDD_STANDARD_INTERVAL
+      regulatory_reference: ICH E2C(R2) Section 4 / ICH E2D Section 6
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - submission_interval_months
+    - report_type
+    - trigger
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

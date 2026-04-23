@@ -1,15 +1,55 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: health-traffic-classifier
-description: 'System health to traffic level mapper: converts health status string to traffic level for PV operations dashboard'
 version: 0.1.0
+description: "System health to traffic level mapper: converts health status string to traffic level for PV operations dashboard"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: status
+    type: string
+    required: true
+    description: System health status (healthy, degraded, or other)
+outputs:
+  - name: traffic_level
+    type: string
 interface:
   inputs:
     status:
       type: string
       required: true
-      description: 'System health status (healthy, degraded, or other)'
+      description: System health status (healthy, degraded, or other)
   outputs:
     traffic_level:
       type: string
+ui:
+  title: Health Traffic Classifier
+  subtitle: "System health to traffic level mapper: converts health status string to traffic level for PV operations dashboard"
+  icon: circle
+  route: /vigilance/mg/health-traffic-classifier
+  steps:
+    - field: status
+      label: status
+      help: System health status (healthy, degraded, or other)
+      widget: text
+      placeholder: null
+  result:
+    template: "traffic_level: {{traffic_level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/health-traffic-classifier
+  cli: rsk mcg run health-traffic-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_healthy
   nodes:
@@ -40,31 +80,59 @@ tree:
       value:
         traffic_level: red
 tests:
-# Healthy = green
-- input:
-    status: healthy
-  expect:
-    traffic_level: green
-# Degraded = yellow
-- input:
-    status: degraded
-  expect:
-    traffic_level: yellow
-# Down = red
-- input:
-    status: down
-  expect:
-    traffic_level: red
-# Unknown status = red (safe default)
-- input:
-    status: error
-  expect:
-    traffic_level: red
-# Empty string = red
-- input:
-    status: ""
-  expect:
-    traffic_level: red
-- input: {}
-  expect:
-    traffic_level: red
+  - input:
+      status: healthy
+    expect:
+      traffic_level: green
+  - input:
+      status: degraded
+    expect:
+      traffic_level: yellow
+  - input:
+      status: down
+    expect:
+      traffic_level: red
+  - input:
+      status: error
+    expect:
+      traffic_level: red
+  - input:
+      status: ""
+    expect:
+      traffic_level: red
+  - input: {}
+    expect:
+      traffic_level: red
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - traffic_level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

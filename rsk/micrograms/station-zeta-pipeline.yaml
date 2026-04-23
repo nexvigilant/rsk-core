@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-zeta-pipeline
-description: Route Riemann zeta function results for number-theoretic PV applications
 version: 0.1.0
+description: Route Riemann zeta function results for number-theoretic PV applications
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Zeta Pipeline
+  subtitle: Route Riemann zeta function results for number-theoretic PV applications
+  icon: circle
+  route: /vigilance/mg/station-zeta-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-zeta-pipeline
+  cli: rsk mcg run station-zeta-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_zeros
   nodes:
@@ -40,73 +69,103 @@ tree:
         action: catalog
         priority: moderate
 tests:
-- input:
-    on_critical_line: false
-    imaginary_part: 14.13
-  expect:
-    action: alert
-    priority: critical
-    route: precision_verification
-- input:
-    on_critical_line: true
-    imaginary_part: 5000
-  expect:
-    route: zero_catalog
-    action: catalog
-    priority: moderate
-- input:
-    on_critical_line: true
-    imaginary_part: 14.13
-  expect:
-    route: archive
-    action: verify
-    priority: low
-- input:
-    imaginary_part: 0
-  expect:
-    route: precision_verification
-    action: alert
-    reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
-    priority: critical
-- input:
-    imaginary_part: -1
-  expect:
-    reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
-    action: alert
-    priority: critical
-    route: precision_verification
-- input:
-    imaginary_part: 999
-  expect:
-    action: alert
-    route: precision_verification
-    priority: critical
-    reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
-- input:
-    imaginary_part: 1001
-  expect:
-    reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
-    action: alert
-    priority: critical
-    route: precision_verification
-- input:
-    imaginary_part: 100000
-  expect:
-    reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
-    priority: critical
-    action: alert
-    route: precision_verification
-- input: {}
-  expect:
-    reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
-    priority: critical
-    route: precision_verification
-    action: alert
-- input: {}
-  expect:
-    action: alert
-    priority: critical
-    reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
-    route: precision_verification
-interface: null
-primitive_signature: null
+  - input:
+      on_critical_line: false
+      imaginary_part: 14.13
+    expect:
+      action: alert
+      priority: critical
+      route: precision_verification
+  - input:
+      on_critical_line: true
+      imaginary_part: 5000
+    expect:
+      route: zero_catalog
+      action: catalog
+      priority: moderate
+  - input:
+      on_critical_line: true
+      imaginary_part: 14.13
+    expect:
+      route: archive
+      action: verify
+      priority: low
+  - input:
+      imaginary_part: 0
+    expect:
+      route: precision_verification
+      action: alert
+      reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
+      priority: critical
+  - input:
+      imaginary_part: -1
+    expect:
+      reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
+      action: alert
+      priority: critical
+      route: precision_verification
+  - input:
+      imaginary_part: 999
+    expect:
+      action: alert
+      route: precision_verification
+      priority: critical
+      reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
+  - input:
+      imaginary_part: 1001
+    expect:
+      reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
+      action: alert
+      priority: critical
+      route: precision_verification
+  - input:
+      imaginary_part: 100000
+    expect:
+      reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
+      priority: critical
+      action: alert
+      route: precision_verification
+  - input: {}
+    expect:
+      reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
+      priority: critical
+      route: precision_verification
+      action: alert
+  - input: {}
+    expect:
+      action: alert
+      priority: critical
+      reason: Zero NOT on critical line — RH counterexample candidate (verify precision)
+      route: precision_verification
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

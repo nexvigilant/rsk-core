@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-archive
-description: "Archive closed signal with complete documentation and retention metadata"
 version: 0.1.0
+description: Archive closed signal with complete documentation and retention metadata
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Signal Archive
+  subtitle: Archive closed signal with complete documentation and retention metadata
+  icon: activity
+  route: /vigilance/mg/signal-archive
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-archive
+  cli: rsk mcg run signal-archive
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_closure
   nodes:
@@ -28,7 +57,7 @@ tree:
     archive_approved:
       type: return
       value:
-        archive_status: "archived"
+        archive_status: archived
         retention_period_years: 10
         searchable: true
         retrievable: true
@@ -36,7 +65,7 @@ tree:
     archive_not_ready:
       type: return
       value:
-        archive_status: "not_ready"
+        archive_status: not_ready
         retention_period_years: null
         searchable: false
         retrievable: false
@@ -44,7 +73,7 @@ tree:
     documentation_incomplete:
       type: return
       value:
-        archive_status: "pending_documents"
+        archive_status: pending_documents
         retention_period_years: null
         searchable: false
         retrievable: false
@@ -52,31 +81,69 @@ tree:
     qc_pending:
       type: return
       value:
-        archive_status: "pending_qc"
+        archive_status: pending_qc
         retention_period_years: null
         searchable: false
         retrievable: false
         archive_compliant: false
 tests:
-- input:
-    signal_closed: true
-    all_documents_attached: true
-    qc_approved: true
-  expect:
-    archive_status: "archived"
-    retention_period_years: 10
-    searchable: true
-- input:
-    signal_closed: false
-  expect:
-    archive_status: "not_ready"
-    archive_compliant: false
-- input:
-    signal_closed: true
-    all_documents_attached: false
-  expect:
-    archive_status: "pending_documents"
-- input: {}
-  expect:
-    archive_status: "not_ready"
-    archive_compliant: false
+  - input:
+      signal_closed: true
+      all_documents_attached: true
+      qc_approved: true
+    expect:
+      archive_status: archived
+      retention_period_years: 10
+      searchable: true
+  - input:
+      signal_closed: false
+    expect:
+      archive_status: not_ready
+      archive_compliant: false
+  - input:
+      signal_closed: true
+      all_documents_attached: false
+    expect:
+      archive_status: pending_documents
+  - input: {}
+    expect:
+      archive_status: not_ready
+      archive_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

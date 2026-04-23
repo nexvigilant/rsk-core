@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-heligram-pipeline
-description: Route heligram execution results through conservation verification
 version: 0.1.0
+description: Route heligram execution results through conservation verification
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Heligram Pipeline
+  subtitle: Route heligram execution results through conservation verification
+  icon: circle
+  route: /vigilance/mg/station-heligram-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-heligram-pipeline
+  cli: rsk mcg run station-heligram-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_result
   nodes:
@@ -40,52 +69,82 @@ tree:
       true_next: check_conservation
       false_next: fail
 tests:
-- input:
-    heligram_pass: false
-    conservation_score: 0.0
-  expect:
-    route: heligram_debug
-    action: retry
-    priority: moderate
-- input:
-    heligram_pass: true
-    conservation_score: 0.9
-  expect:
-    priority: low
-    route: archive
-    action: certify
-- input:
-    conservation_score: 0.5
-    heligram_pass: true
-  expect:
-    route: conservation_repair
-    action: strengthen
-    priority: moderate
-- input:
-    conservation_score: 0.799
-  expect:
-    action: retry
-    priority: moderate
-    route: heligram_debug
-    reason: Heligram execution failed — check input encoding
-- input:
-    conservation_score: 0.801
-  expect:
-    action: retry
-    priority: moderate
-    route: heligram_debug
-    reason: Heligram execution failed — check input encoding
-- input: {}
-  expect:
-    action: retry
-    reason: Heligram execution failed — check input encoding
-    priority: moderate
-    route: heligram_debug
-- input: {}
-  expect:
-    reason: Heligram execution failed — check input encoding
-    route: heligram_debug
-    priority: moderate
-    action: retry
-interface: null
-primitive_signature: null
+  - input:
+      heligram_pass: false
+      conservation_score: 0
+    expect:
+      route: heligram_debug
+      action: retry
+      priority: moderate
+  - input:
+      heligram_pass: true
+      conservation_score: 0.9
+    expect:
+      priority: low
+      route: archive
+      action: certify
+  - input:
+      conservation_score: 0.5
+      heligram_pass: true
+    expect:
+      route: conservation_repair
+      action: strengthen
+      priority: moderate
+  - input:
+      conservation_score: 0.799
+    expect:
+      action: retry
+      priority: moderate
+      route: heligram_debug
+      reason: Heligram execution failed — check input encoding
+  - input:
+      conservation_score: 0.801
+    expect:
+      action: retry
+      priority: moderate
+      route: heligram_debug
+      reason: Heligram execution failed — check input encoding
+  - input: {}
+    expect:
+      action: retry
+      reason: Heligram execution failed — check input encoding
+      priority: moderate
+      route: heligram_debug
+  - input: {}
+    expect:
+      reason: Heligram execution failed — check input encoding
+      route: heligram_debug
+      priority: moderate
+      action: retry
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

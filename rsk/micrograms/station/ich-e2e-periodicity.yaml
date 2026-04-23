@@ -1,8 +1,90 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ich-e2e-periodicity
-description: Determines PBRER/PSUR reporting period based on ICH E2E guideline. Assigns
-  reporting type and interval based on years since approval, safety concerns, and
-  NME status.
 version: 0.1.0
+description: Determines PBRER/PSUR reporting period based on ICH E2E guideline. Assigns reporting type and interval based on years since approval, safety concerns, and NME status.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_new_molecular_entity
+    type: bool
+    required: false
+    description: ""
+  - name: has_safety_concern
+    type: bool
+    required: false
+    description: ""
+  - name: years_since_approval
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: next_due
+    type: string
+  - name: report_type
+    type: string
+  - name: period_months
+    type: int
+interface:
+  inputs:
+    is_new_molecular_entity:
+      type: bool
+      required: false
+    has_safety_concern:
+      type: bool
+      required: false
+    years_since_approval:
+      type: int
+      required: false
+  outputs:
+    next_due:
+      type: string
+      required: false
+    report_type:
+      type: string
+      required: false
+    period_months:
+      type: int
+      required: false
+  aliases: {}
+ui:
+  title: Ich E2e Periodicity
+  subtitle: Determines PBRER/PSUR reporting period based on ICH E2E guideline. Assigns reporting type and interval based on years since approval, safety concerns, and NME status.
+  icon: circle
+  route: /vigilance/mg/ich-e2e-periodicity
+  steps:
+    - field: is_new_molecular_entity
+      label: is new molecular entity
+      help: Enter is_new_molecular_entity
+      widget: toggle
+      placeholder: null
+    - field: has_safety_concern
+      label: has safety concern
+      help: Enter has_safety_concern
+      widget: toggle
+      placeholder: null
+    - field: years_since_approval
+      label: years since approval
+      help: Enter years_since_approval
+      widget: text
+      placeholder: null
+  result:
+    template: "next_due: {{next_due}} — report_type: {{report_type}} — period_months: {{period_months}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ich-e2e-periodicity
+  cli: rsk mcg run ich-e2e-periodicity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_approval_period
   nodes:
@@ -65,70 +147,83 @@ tree:
         period_months: 12
         next_due: in_12_months
 tests:
-- input:
-    has_safety_concern: false
-    is_new_molecular_entity: false
-    years_since_approval: 0
-  expect:
-    next_due: in_6_months
-    period_months: 6
-    report_type: PBRER
-- input:
-    has_safety_concern: false
-    is_new_molecular_entity: false
-    years_since_approval: 2
-  expect:
-    report_type: PSUR
-    period_months: 24
-    next_due: in_24_months
-- input:
-    has_safety_concern: false
-    is_new_molecular_entity: true
-    years_since_approval: 2
-  expect:
-    report_type: PBRER
-    period_months: 12
-    next_due: in_12_months
-- input:
-    has_safety_concern: true
-    is_new_molecular_entity: false
-    years_since_approval: 2
-  expect:
-    next_due: in_12_months
-    report_type: PSUR
-    period_months: 12
-- input:
-    has_safety_concern: true
-    is_new_molecular_entity: true
-    years_since_approval: 2
-  expect:
-    period_months: 6
-    report_type: PBRER
-    next_due: in_6_months
-- input: {}
-  expect:
-    report_type: PSUR
-    period_months: 24
-    next_due: in_24_months
-interface:
-  inputs:
-    is_new_molecular_entity:
-      type: bool
-      required: false
-    has_safety_concern:
-      type: bool
-      required: false
-    years_since_approval:
-      type: int
-      required: false
-  outputs:
-    next_due:
-      type: string
-      required: false
-    report_type:
-      type: string
-      required: false
-    period_months:
-      type: int
-      required: false
-  aliases: {}
+  - input:
+      has_safety_concern: false
+      is_new_molecular_entity: false
+      years_since_approval: 0
+    expect:
+      next_due: in_6_months
+      period_months: 6
+      report_type: PBRER
+  - input:
+      has_safety_concern: false
+      is_new_molecular_entity: false
+      years_since_approval: 2
+    expect:
+      report_type: PSUR
+      period_months: 24
+      next_due: in_24_months
+  - input:
+      has_safety_concern: false
+      is_new_molecular_entity: true
+      years_since_approval: 2
+    expect:
+      report_type: PBRER
+      period_months: 12
+      next_due: in_12_months
+  - input:
+      has_safety_concern: true
+      is_new_molecular_entity: false
+      years_since_approval: 2
+    expect:
+      next_due: in_12_months
+      report_type: PSUR
+      period_months: 12
+  - input:
+      has_safety_concern: true
+      is_new_molecular_entity: true
+      years_since_approval: 2
+    expect:
+      period_months: 6
+      report_type: PBRER
+      next_due: in_6_months
+  - input: {}
+    expect:
+      report_type: PSUR
+      period_months: 24
+      next_due: in_24_months
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - next_due
+    - report_type
+    - period_months
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

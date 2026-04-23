@@ -1,47 +1,118 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workflow-drug-safety-profile
-description: "Build complete drug safety profile by selecting data source chain"
 version: 0.1.0
-
+description: Build complete drug safety profile by selecting data source chain
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Workflow Drug Safety Profile
+  subtitle: Build complete drug safety profile by selecting data source chain
+  icon: circle
+  route: /vigilance/mg/workflow-drug-safety-profile
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workflow-drug-safety-profile
+  cli: rsk mcg run workflow-drug-safety-profile
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_marketed
   nodes:
     check_marketed:
-      type: "condition"
-      variable: "is_marketed"
-      operator: "eq"
+      type: condition
+      variable: is_marketed
+      operator: eq
       value: true
-      true_next: "marketed_path"
-      false_next: "premarket_path"
+      true_next: marketed_path
+      false_next: premarket_path
     marketed_path:
-      type: "return"
+      type: return
       value:
-        profile: "post_market"
-        chain: "openfda \u2192 drugbank \u2192 dailymed \u2192 eudravigilance \u2192 vigiaccess \u2192 calculation"
+        profile: post_market
+        chain: openfda → drugbank → dailymed → eudravigilance → vigiaccess → calculation
         sources: 6
     premarket_path:
-      type: "condition"
-      variable: "has_trials"
-      operator: "eq"
+      type: condition
+      variable: has_trials
+      operator: eq
       value: true
-      true_next: "trial_path"
-      false_next: "preclinical_path"
+      true_next: trial_path
+      false_next: preclinical_path
     trial_path:
-      type: "return"
+      type: return
       value:
-        profile: "clinical_trial"
-        chain: "clinicaltrials \u2192 chemivigilance \u2192 molecular-weight \u2192 benefit-risk"
+        profile: clinical_trial
+        chain: clinicaltrials → chemivigilance → molecular-weight → benefit-risk
         sources: 4
     preclinical_path:
-      type: "return"
+      type: return
       value:
-        profile: "preclinical"
-        chain: "chemivigilance \u2192 molecular-weight \u2192 bicone \u2192 drugbank"
+        profile: preclinical
+        chain: chemivigilance → molecular-weight → bicone → drugbank
         sources: 4
-
 tests:
-  - input: {"is_marketed": true, "has_trials": true}
-    expect: {"profile": "post_market", "sources": 6}
-  - input: {"is_marketed": false, "has_trials": true}
-    expect: {"profile": "clinical_trial", "sources": 4}
-  - input: {"is_marketed": false, "has_trials": false}
-    expect: {"profile": "preclinical", "sources": 4}
+  - input:
+      is_marketed: true
+      has_trials: true
+    expect:
+      profile: post_market
+      sources: 6
+  - input:
+      is_marketed: false
+      has_trials: true
+    expect:
+      profile: clinical_trial
+      sources: 4
+  - input:
+      is_marketed: false
+      has_trials: false
+    expect:
+      profile: preclinical
+      sources: 4
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,39 +1,105 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: flywheel-mirror
-description: 'Self-observation gate for the brain flywheel. Takes brain health metrics and determines if the flywheel can see itself spinning. Checks implicit store health, verdict coverage (sigma), tracker integrity, and guardian responsiveness. GREEN = full self-observation, YELLOW = partial (degraded tools), RED = blind (cannot measure own state).'
 version: 0.1.0
-primitive_signature:
-  dominant: state
-  expression: 'state(comparison(frequency, boundary))'
-  primes: [state, comparison, frequency, boundary]
-  arguments: [implicit_healthy, verdict_pct, tracker_ok, guardian_ok]
+description: Self-observation gate for the brain flywheel. Takes brain health metrics and determines if the flywheel can see itself spinning. Checks implicit store health, verdict coverage (sigma), tracker integrity, and guardian responsiveness. GREEN = full self-observation, YELLOW = partial (degraded tools), RED = blind (cannot measure own state).
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: implicit_healthy
+    type: bool
+    required: false
+    description: Whether implicit_stats tool returns successfully
+  - name: verdict_pct
+    type: int
+    required: false
+    description: Percentage of sessions with model-authored verdicts (0-100)
+  - name: tracker_ok
+    type: bool
+    required: false
+    description: Whether brain tracker index parses without error
+  - name: guardian_ok
+    type: bool
+    required: false
+    description: Whether guardian_homeostasis_tick completes
+outputs:
+  - name: mirror_health
+    type: string
+  - name: blind_spots
+    type: string
+  - name: self_aware
+    type: bool
 interface:
   inputs:
     implicit_healthy:
       type: bool
       required: false
-      description: 'Whether implicit_stats tool returns successfully'
+      description: Whether implicit_stats tool returns successfully
     verdict_pct:
       type: int
       required: false
-      description: 'Percentage of sessions with model-authored verdicts (0-100)'
+      description: Percentage of sessions with model-authored verdicts (0-100)
     tracker_ok:
       type: bool
       required: false
-      description: 'Whether brain tracker index parses without error'
+      description: Whether brain tracker index parses without error
     guardian_ok:
       type: bool
       required: false
-      description: 'Whether guardian_homeostasis_tick completes'
+      description: Whether guardian_homeostasis_tick completes
   outputs:
     mirror_health:
       type: string
-      description: 'GREEN, YELLOW, or RED'
+      description: GREEN, YELLOW, or RED
     blind_spots:
       type: string
-      description: 'Comma-separated list of degraded observation channels'
+      description: Comma-separated list of degraded observation channels
     self_aware:
       type: bool
-      description: 'Whether the flywheel can observe its own state'
+      description: Whether the flywheel can observe its own state
+ui:
+  title: Flywheel Mirror
+  subtitle: Self-observation gate for the brain flywheel. Takes brain health metrics and determines if the flywheel can see itself spinning. Checks implicit store health, verdict coverage (sigma), tracker integrity, and guardian responsiveness. GREEN = full self-observation, YELLOW = partial (degraded tools), RED = blind (cannot measure own state).
+  icon: circle
+  route: /vigilance/mg/flywheel-mirror
+  steps:
+    - field: implicit_healthy
+      label: implicit healthy
+      help: Whether implicit_stats tool returns successfully
+      widget: toggle
+      placeholder: null
+    - field: verdict_pct
+      label: verdict pct
+      help: Percentage of sessions with model-authored verdicts (0-100)
+      widget: text
+      placeholder: null
+    - field: tracker_ok
+      label: tracker ok
+      help: Whether brain tracker index parses without error
+      widget: toggle
+      placeholder: null
+    - field: guardian_ok
+      label: guardian ok
+      help: Whether guardian_homeostasis_tick completes
+      widget: toggle
+      placeholder: null
+  result:
+    template: "mirror_health: {{mirror_health}} — blind_spots: {{blind_spots}} — self_aware: {{self_aware}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/flywheel-mirror
+  cli: rsk mcg run flywheel-mirror
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_implicit
   nodes:
@@ -62,7 +128,7 @@ tree:
       type: return
       value:
         mirror_health: YELLOW
-        blind_spots: 'implicit_stats,tracker_index'
+        blind_spots: implicit_stats,tracker_index
         self_aware: true
     check_verdict_partial:
       type: condition
@@ -75,13 +141,13 @@ tree:
       type: return
       value:
         mirror_health: YELLOW
-        blind_spots: 'implicit_stats'
+        blind_spots: implicit_stats
         self_aware: true
     yellow_implicit_sigma:
       type: return
       value:
         mirror_health: YELLOW
-        blind_spots: 'implicit_stats,low_sigma'
+        blind_spots: implicit_stats,low_sigma
         self_aware: true
     check_verdict:
       type: condition
@@ -108,19 +174,19 @@ tree:
       type: return
       value:
         mirror_health: YELLOW
-        blind_spots: 'tracker_index'
+        blind_spots: tracker_index
         self_aware: true
     yellow_sigma_only:
       type: return
       value:
         mirror_health: YELLOW
-        blind_spots: 'low_sigma'
+        blind_spots: low_sigma
         self_aware: true
     yellow_sigma_tracker:
       type: return
       value:
         mirror_health: YELLOW
-        blind_spots: 'low_sigma,tracker_index'
+        blind_spots: low_sigma,tracker_index
         self_aware: true
     check_guardian:
       type: condition
@@ -133,74 +199,103 @@ tree:
       type: return
       value:
         mirror_health: YELLOW
-        blind_spots: 'guardian'
+        blind_spots: guardian
         self_aware: true
     green:
       type: return
       value:
         mirror_health: GREEN
-        blind_spots: 'none'
+        blind_spots: none
         self_aware: true
     red:
       type: return
       value:
         mirror_health: RED
-        blind_spots: 'implicit_stats,tracker_index,guardian'
+        blind_spots: implicit_stats,tracker_index,guardian
         self_aware: false
 tests:
-# All healthy
-- input:
-    implicit_healthy: true
-    verdict_pct: 80
-    tracker_ok: true
-    guardian_ok: true
-  expect:
-    mirror_health: GREEN
-    blind_spots: 'none'
-    self_aware: true
-# Current brain state: implicit broken, tracker broken, guardian ok
-- input:
-    implicit_healthy: false
-    verdict_pct: 17
-    tracker_ok: false
-    guardian_ok: true
-  expect:
-    mirror_health: YELLOW
-    blind_spots: 'implicit_stats,tracker_index'
-    self_aware: true
-# Everything broken
-- input:
-    implicit_healthy: false
-    verdict_pct: 10
-    tracker_ok: false
-    guardian_ok: false
-  expect:
-    mirror_health: RED
-    blind_spots: 'implicit_stats,tracker_index,guardian'
-    self_aware: false
-# Only low sigma
-- input:
-    implicit_healthy: true
-    verdict_pct: 17
-    tracker_ok: true
-    guardian_ok: true
-  expect:
-    mirror_health: YELLOW
-    blind_spots: 'low_sigma'
-    self_aware: true
-# Implicit broken but high sigma and tracker ok
-- input:
-    implicit_healthy: false
-    verdict_pct: 80
-    tracker_ok: true
-    guardian_ok: true
-  expect:
-    mirror_health: YELLOW
-    blind_spots: 'implicit_stats'
-    self_aware: true
-# Null input = safe default
-- input: {}
-  expect:
-    mirror_health: RED
-    blind_spots: 'implicit_stats,tracker_index,guardian'
-    self_aware: false
+  - input:
+      implicit_healthy: true
+      verdict_pct: 80
+      tracker_ok: true
+      guardian_ok: true
+    expect:
+      mirror_health: GREEN
+      blind_spots: none
+      self_aware: true
+  - input:
+      implicit_healthy: false
+      verdict_pct: 17
+      tracker_ok: false
+      guardian_ok: true
+    expect:
+      mirror_health: YELLOW
+      blind_spots: implicit_stats,tracker_index
+      self_aware: true
+  - input:
+      implicit_healthy: false
+      verdict_pct: 10
+      tracker_ok: false
+      guardian_ok: false
+    expect:
+      mirror_health: RED
+      blind_spots: implicit_stats,tracker_index,guardian
+      self_aware: false
+  - input:
+      implicit_healthy: true
+      verdict_pct: 17
+      tracker_ok: true
+      guardian_ok: true
+    expect:
+      mirror_health: YELLOW
+      blind_spots: low_sigma
+      self_aware: true
+  - input:
+      implicit_healthy: false
+      verdict_pct: 80
+      tracker_ok: true
+      guardian_ok: true
+    expect:
+      mirror_health: YELLOW
+      blind_spots: implicit_stats
+      self_aware: true
+  - input: {}
+    expect:
+      mirror_health: RED
+      blind_spots: implicit_stats,tracker_index,guardian
+      self_aware: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - mirror_health
+    - blind_spots
+    - self_aware
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

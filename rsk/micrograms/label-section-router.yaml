@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: label-section-router
-description: 'Routes DailyMed SPL label queries to the correct section ID, name, and PV relevance tier'
 version: 0.1.0
+description: Routes DailyMed SPL label queries to the correct section ID, name, and PV relevance tier
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: section_query
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: spl_section_id
+    type: string
+  - name: section_name
+    type: string
+  - name: relevance_tier
+    type: string
+  - name: pv_relevant
+    type: bool
 interface:
   inputs:
     section_query:
@@ -15,6 +39,28 @@ interface:
       type: string
     pv_relevant:
       type: bool
+ui:
+  title: Label Section Router
+  subtitle: Routes DailyMed SPL label queries to the correct section ID, name, and PV relevance tier
+  icon: circle
+  route: /vigilance/mg/label-section-router
+  steps:
+    - field: section_query
+      label: section query
+      help: Enter section_query
+      widget: text
+      placeholder: null
+  result:
+    template: "spl_section_id: {{spl_section_id}} — section_name: {{section_name}} — relevance_tier: {{relevance_tier}} — pv_relevant: {{pv_relevant}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/label-section-router
+  cli: rsk mcg run label-section-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_boxed
   nodes:
@@ -70,108 +116,144 @@ tree:
     boxed_warning:
       type: return
       value:
-        spl_section_id: "34066-1"
+        spl_section_id: 34066-1
         section_name: BOXED WARNING
         relevance_tier: critical
         pv_relevant: true
     adverse_reactions:
       type: return
       value:
-        spl_section_id: "34084-4"
+        spl_section_id: 34084-4
         section_name: ADVERSE REACTIONS
         relevance_tier: critical
         pv_relevant: true
     warnings:
       type: return
       value:
-        spl_section_id: "43685-7"
+        spl_section_id: 43685-7
         section_name: WARNINGS AND PRECAUTIONS
         relevance_tier: critical
         pv_relevant: true
     contraindications:
       type: return
       value:
-        spl_section_id: "34070-3"
+        spl_section_id: 34070-3
         section_name: CONTRAINDICATIONS
         relevance_tier: important
         pv_relevant: true
     drug_interactions:
       type: return
       value:
-        spl_section_id: "34073-7"
+        spl_section_id: 34073-7
         section_name: DRUG INTERACTIONS
         relevance_tier: important
         pv_relevant: true
     dosage:
       type: return
       value:
-        spl_section_id: "34068-7"
+        spl_section_id: 34068-7
         section_name: DOSAGE AND ADMINISTRATION
         relevance_tier: informational
         pv_relevant: false
     clinical_pharmacology:
       type: return
       value:
-        spl_section_id: "34090-1"
+        spl_section_id: 34090-1
         section_name: CLINICAL PHARMACOLOGY
         relevance_tier: informational
         pv_relevant: false
     unknown_section:
       type: return
       value:
-        spl_section_id: "unknown"
+        spl_section_id: unknown
         section_name: UNKNOWN SECTION
         relevance_tier: informational
         pv_relevant: false
 tests:
-- input:
-    section_query: boxed_warning
-  expect:
-    spl_section_id: "34066-1"
-    section_name: BOXED WARNING
-    relevance_tier: critical
-    pv_relevant: true
-- input:
-    section_query: adverse_reactions
-  expect:
-    spl_section_id: "34084-4"
-    section_name: ADVERSE REACTIONS
-    relevance_tier: critical
-    pv_relevant: true
-- input:
-    section_query: warnings
-  expect:
-    spl_section_id: "43685-7"
-    relevance_tier: critical
-    pv_relevant: true
-- input:
-    section_query: contraindications
-  expect:
-    spl_section_id: "34070-3"
-    relevance_tier: important
-    pv_relevant: true
-- input:
-    section_query: drug_interactions
-  expect:
-    spl_section_id: "34073-7"
-    relevance_tier: important
-    pv_relevant: true
-- input:
-    section_query: dosage
-  expect:
-    relevance_tier: informational
-    pv_relevant: false
-- input:
-    section_query: clinical_pharmacology
-  expect:
-    relevance_tier: informational
-    pv_relevant: false
-- input:
-    section_query: some_unknown
-  expect:
-    spl_section_id: "unknown"
-    pv_relevant: false
-- input: {}
-  expect:
-    spl_section_id: "unknown"
-    pv_relevant: false
+  - input:
+      section_query: boxed_warning
+    expect:
+      spl_section_id: 34066-1
+      section_name: BOXED WARNING
+      relevance_tier: critical
+      pv_relevant: true
+  - input:
+      section_query: adverse_reactions
+    expect:
+      spl_section_id: 34084-4
+      section_name: ADVERSE REACTIONS
+      relevance_tier: critical
+      pv_relevant: true
+  - input:
+      section_query: warnings
+    expect:
+      spl_section_id: 43685-7
+      relevance_tier: critical
+      pv_relevant: true
+  - input:
+      section_query: contraindications
+    expect:
+      spl_section_id: 34070-3
+      relevance_tier: important
+      pv_relevant: true
+  - input:
+      section_query: drug_interactions
+    expect:
+      spl_section_id: 34073-7
+      relevance_tier: important
+      pv_relevant: true
+  - input:
+      section_query: dosage
+    expect:
+      relevance_tier: informational
+      pv_relevant: false
+  - input:
+      section_query: clinical_pharmacology
+    expect:
+      relevance_tier: informational
+      pv_relevant: false
+  - input:
+      section_query: some_unknown
+    expect:
+      spl_section_id: unknown
+      pv_relevant: false
+  - input: {}
+    expect:
+      spl_section_id: unknown
+      pv_relevant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - spl_section_id
+    - section_name
+    - relevance_tier
+    - pv_relevant
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

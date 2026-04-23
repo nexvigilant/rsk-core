@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: organ-metabolic-safety
-description: "Metabolic safety assessment. Evaluates lactic acidosis, metabolic acidosis, and electrolyte imbalance risks."
 version: 0.1.0
+description: Metabolic safety assessment. Evaluates lactic acidosis, metabolic acidosis, and electrolyte imbalance risks.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Organ Metabolic Safety
+  subtitle: Metabolic safety assessment. Evaluates lactic acidosis, metabolic acidosis, and electrolyte imbalance risks.
+  icon: circle
+  route: /vigilance/mg/organ-metabolic-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/organ-metabolic-safety
+  cli: rsk mcg run organ-metabolic-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_baseline_lactate
   nodes:
@@ -8,7 +37,7 @@ tree:
       type: condition
       variable: baseline_lactate_mmol_l
       operator: gte
-      value: 4.0
+      value: 4
       true_next: elevated_lactate_alert
       false_next: check_renal_function
     elevated_lactate_alert:
@@ -18,7 +47,7 @@ tree:
         risk_level: high
         lactic_acidosis_risk: true
         monitoring: required
-        message: "Elevated baseline lactate; metformin/nucleosides contraindicated"
+        message: Elevated baseline lactate; metformin/nucleosides contraindicated
     check_renal_function:
       type: condition
       variable: renal_clearance_ml_min
@@ -32,7 +61,7 @@ tree:
         organ: metabolic
         risk_level: moderate
         drug_accumulation_risk: true
-        message: "Severe renal impairment; metabolic acidosis risk from drug accumulation"
+        message: Severe renal impairment; metabolic acidosis risk from drug accumulation
     check_electrolytes:
       type: condition
       variable: has_electrolyte_abnormality
@@ -46,7 +75,7 @@ tree:
         organ: metabolic
         risk_level: moderate
         electrolyte_monitoring: required
-        message: "Baseline electrolyte abnormality; monitor closely"
+        message: Baseline electrolyte abnormality; monitor closely
     standard_dosing:
       type: return
       value:
@@ -54,13 +83,68 @@ tree:
         risk_level: low
         baseline_metabolic_panel: recommended
 tests:
-  - input: { baseline_lactate_mmol_l: 5.0, renal_clearance_ml_min: 70, has_electrolyte_abnormality: false }
-    expect: { organ: metabolic, risk_level: high, lactic_acidosis_risk: true }
-  - input: { baseline_lactate_mmol_l: 2.0, renal_clearance_ml_min: 20, has_electrolyte_abnormality: false }
-    expect: { organ: metabolic, risk_level: moderate, drug_accumulation_risk: true }
-  - input: { baseline_lactate_mmol_l: 2.0, renal_clearance_ml_min: 70, has_electrolyte_abnormality: true }
-    expect: { organ: metabolic, risk_level: moderate, electrolyte_monitoring: required }
-  - input: { baseline_lactate_mmol_l: 2.0, renal_clearance_ml_min: 70, has_electrolyte_abnormality: false }
-    expect: { organ: metabolic, risk_level: low }
+  - input:
+      baseline_lactate_mmol_l: 5
+      renal_clearance_ml_min: 70
+      has_electrolyte_abnormality: false
+    expect:
+      organ: metabolic
+      risk_level: high
+      lactic_acidosis_risk: true
+  - input:
+      baseline_lactate_mmol_l: 2
+      renal_clearance_ml_min: 20
+      has_electrolyte_abnormality: false
+    expect:
+      organ: metabolic
+      risk_level: moderate
+      drug_accumulation_risk: true
+  - input:
+      baseline_lactate_mmol_l: 2
+      renal_clearance_ml_min: 70
+      has_electrolyte_abnormality: true
+    expect:
+      organ: metabolic
+      risk_level: moderate
+      electrolyte_monitoring: required
+  - input:
+      baseline_lactate_mmol_l: 2
+      renal_clearance_ml_min: 70
+      has_electrolyte_abnormality: false
+    expect:
+      organ: metabolic
+      risk_level: low
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

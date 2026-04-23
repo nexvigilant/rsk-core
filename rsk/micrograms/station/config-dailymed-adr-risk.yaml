@@ -1,6 +1,114 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: config-dailymed-adr-risk
-description: Classify ADR risk level from DailyMed label adverse reactions section. Uses frequency category and seriousness indicators.
 version: 0.1.0
+description: Classify ADR risk level from DailyMed label adverse reactions section. Uses frequency category and seriousness indicators.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: frequency_category
+    type: string
+    required: false
+    description: ""
+  - name: has_rems
+    type: bool
+    required: false
+    description: ""
+  - name: has_boxed_warning
+    type: bool
+    required: false
+    description: ""
+  - name: serious_reactions_count
+    type: int
+    required: false
+    description: ""
+  - name: total_reactions_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: monitoring_level
+    type: string
+  - name: risk_tier
+    type: string
+  - name: label_signal
+    type: bool
+interface:
+  inputs:
+    frequency_category:
+      type: string
+      required: false
+    has_rems:
+      type: bool
+      required: false
+    has_boxed_warning:
+      type: bool
+      required: false
+    serious_reactions_count:
+      type: int
+      required: false
+    total_reactions_count:
+      type: int
+      required: false
+  outputs:
+    monitoring_level:
+      type: string
+      required: false
+    risk_tier:
+      type: string
+      required: false
+    label_signal:
+      type: bool
+      required: false
+  aliases: {}
+ui:
+  title: Config Dailymed Adr Risk
+  subtitle: Classify ADR risk level from DailyMed label adverse reactions section. Uses frequency category and seriousness indicators.
+  icon: circle
+  route: /vigilance/mg/config-dailymed-adr-risk
+  steps:
+    - field: frequency_category
+      label: frequency category
+      help: Enter frequency_category
+      widget: text
+      placeholder: null
+    - field: has_rems
+      label: has rems
+      help: Enter has_rems
+      widget: toggle
+      placeholder: null
+    - field: has_boxed_warning
+      label: has boxed warning
+      help: Enter has_boxed_warning
+      widget: toggle
+      placeholder: null
+    - field: serious_reactions_count
+      label: serious reactions count
+      help: Enter serious_reactions_count
+      widget: text
+      placeholder: null
+    - field: total_reactions_count
+      label: total reactions count
+      help: Enter total_reactions_count
+      widget: text
+      placeholder: null
+  result:
+    template: "monitoring_level: {{monitoring_level}} — risk_tier: {{risk_tier}} — label_signal: {{label_signal}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/config-dailymed-adr-risk
+  cli: rsk mcg run config-dailymed-adr-risk
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_boxed
   nodes:
@@ -104,169 +212,171 @@ tree:
       value: common
       true_next: moderate_risk
       false_next: low_risk
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-- input:
-    has_boxed_warning: true
-    total_reactions_count: 25
-    serious_reactions_count: 3
-    has_rems: false
-  expect:
-    monitoring_level: active_surveillance
-    label_signal: true
-    risk_tier: critical
-- input:
-    total_reactions_count: 20
-    has_boxed_warning: false
-    serious_reactions_count: 4
-    has_rems: true
-  expect:
-    risk_tier: high
-    label_signal: true
-    monitoring_level: rems_monitoring
-- input:
-    serious_reactions_count: 7
-    has_rems: false
-    total_reactions_count: 40
-    has_boxed_warning: false
-  expect:
-    label_signal: true
-    risk_tier: high
-    monitoring_level: enhanced_monitoring
-- input:
-    has_rems: false
-    serious_reactions_count: 3
-    has_boxed_warning: false
-    total_reactions_count: 15
-  expect:
-    monitoring_level: routine_monitoring
-    risk_tier: moderate
-    label_signal: false
-- input:
-    has_rems: false
-    total_reactions_count: 20
-    has_boxed_warning: false
-    serious_reactions_count: 1
-    frequency_category: very_common
-  expect:
-    risk_tier: moderate
-    label_signal: false
-    monitoring_level: routine_monitoring
-- input:
-    frequency_category: rare
-    total_reactions_count: 8
-    has_boxed_warning: false
-    has_rems: false
-  expect:
-    label_signal: false
-    monitoring_level: standard
-    risk_tier: low
-- input: {}
-  expect:
-    monitoring_level: standard
-    label_signal: false
-    risk_tier: low
-- input:
-    serious_reactions_count: 0
-  expect:
-    risk_tier: low
-    monitoring_level: standard
-    label_signal: false
-- input:
-    serious_reactions_count: -1
-  expect:
-    label_signal: false
-    monitoring_level: standard
-    risk_tier: low
-- input:
-    serious_reactions_count: 6
-  expect:
-    monitoring_level: enhanced_monitoring
-    label_signal: true
-    risk_tier: high
-- input:
-    serious_reactions_count: 500
-  expect:
-    label_signal: true
-    monitoring_level: enhanced_monitoring
-    risk_tier: high
-- input:
-    total_reactions_count: 0
-  expect:
-    label_signal: false
-    risk_tier: low
-    monitoring_level: standard
-- input:
-    total_reactions_count: -1
-  expect:
-    label_signal: false
-    risk_tier: low
-    monitoring_level: standard
-- input:
-    total_reactions_count: 29
-  expect:
-    monitoring_level: standard
-    risk_tier: low
-    label_signal: false
-- input:
-    total_reactions_count: 31
-  expect:
-    label_signal: false
-    risk_tier: moderate
-    monitoring_level: routine_monitoring
-- input:
-    total_reactions_count: 3000
-  expect:
-    monitoring_level: routine_monitoring
-    label_signal: false
-    risk_tier: moderate
-- input:
-    serious_reactions_count: 0
-  expect:
-    monitoring_level: standard
-    label_signal: false
-    risk_tier: low
-- input:
-    serious_reactions_count: -1
-  expect:
-    monitoring_level: standard
-    label_signal: false
-    risk_tier: low
-- input:
-    serious_reactions_count: 200
-  expect:
-    risk_tier: high
-    monitoring_level: enhanced_monitoring
-    label_signal: true
-interface:
-  inputs:
-    frequency_category:
-      type: string
-      required: false
-    has_rems:
-      type: bool
-      required: false
-    has_boxed_warning:
-      type: bool
-      required: false
-    serious_reactions_count:
-      type: int
-      required: false
-    total_reactions_count:
-      type: int
-      required: false
-  outputs:
-    monitoring_level:
-      type: string
-      required: false
-    risk_tier:
-      type: string
-      required: false
-    label_signal:
-      type: bool
-      required: false
-  aliases: {}
+  - input:
+      has_boxed_warning: true
+      total_reactions_count: 25
+      serious_reactions_count: 3
+      has_rems: false
+    expect:
+      monitoring_level: active_surveillance
+      label_signal: true
+      risk_tier: critical
+  - input:
+      total_reactions_count: 20
+      has_boxed_warning: false
+      serious_reactions_count: 4
+      has_rems: true
+    expect:
+      risk_tier: high
+      label_signal: true
+      monitoring_level: rems_monitoring
+  - input:
+      serious_reactions_count: 7
+      has_rems: false
+      total_reactions_count: 40
+      has_boxed_warning: false
+    expect:
+      label_signal: true
+      risk_tier: high
+      monitoring_level: enhanced_monitoring
+  - input:
+      has_rems: false
+      serious_reactions_count: 3
+      has_boxed_warning: false
+      total_reactions_count: 15
+    expect:
+      monitoring_level: routine_monitoring
+      risk_tier: moderate
+      label_signal: false
+  - input:
+      has_rems: false
+      total_reactions_count: 20
+      has_boxed_warning: false
+      serious_reactions_count: 1
+      frequency_category: very_common
+    expect:
+      risk_tier: moderate
+      label_signal: false
+      monitoring_level: routine_monitoring
+  - input:
+      frequency_category: rare
+      total_reactions_count: 8
+      has_boxed_warning: false
+      has_rems: false
+    expect:
+      label_signal: false
+      monitoring_level: standard
+      risk_tier: low
+  - input: {}
+    expect:
+      monitoring_level: standard
+      label_signal: false
+      risk_tier: low
+  - input:
+      serious_reactions_count: 0
+    expect:
+      risk_tier: low
+      monitoring_level: standard
+      label_signal: false
+  - input:
+      serious_reactions_count: -1
+    expect:
+      label_signal: false
+      monitoring_level: standard
+      risk_tier: low
+  - input:
+      serious_reactions_count: 6
+    expect:
+      monitoring_level: enhanced_monitoring
+      label_signal: true
+      risk_tier: high
+  - input:
+      serious_reactions_count: 500
+    expect:
+      label_signal: true
+      monitoring_level: enhanced_monitoring
+      risk_tier: high
+  - input:
+      total_reactions_count: 0
+    expect:
+      label_signal: false
+      risk_tier: low
+      monitoring_level: standard
+  - input:
+      total_reactions_count: -1
+    expect:
+      label_signal: false
+      risk_tier: low
+      monitoring_level: standard
+  - input:
+      total_reactions_count: 29
+    expect:
+      monitoring_level: standard
+      risk_tier: low
+      label_signal: false
+  - input:
+      total_reactions_count: 31
+    expect:
+      label_signal: false
+      risk_tier: moderate
+      monitoring_level: routine_monitoring
+  - input:
+      total_reactions_count: 3000
+    expect:
+      monitoring_level: routine_monitoring
+      label_signal: false
+      risk_tier: moderate
+  - input:
+      serious_reactions_count: 0
+    expect:
+      monitoring_level: standard
+      label_signal: false
+      risk_tier: low
+  - input:
+      serious_reactions_count: -1
+    expect:
+      monitoring_level: standard
+      label_signal: false
+      risk_tier: low
+  - input:
+      serious_reactions_count: 200
+    expect:
+      risk_tier: high
+      monitoring_level: enhanced_monitoring
+      label_signal: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - monitoring_level
+    - risk_tier
+    - label_signal
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ich-m4-ctd-section
-description: "ICH M4: Route documentation content to appropriate CTD section (Module 2-5)"
 version: 0.1.0
+description: "ICH M4: Route documentation content to appropriate CTD section (Module 2-5)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Ich M4 Ctd Section
+  subtitle: "ICH M4: Route documentation content to appropriate CTD section (Module 2-5)"
+  icon: circle
+  route: /vigilance/mg/ich-m4-ctd-section
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ich-m4-ctd-section
+  cli: rsk mcg run ich-m4-ctd-section
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_document_type
   nodes:
@@ -15,57 +44,57 @@ tree:
       type: condition
       variable: document_category
       operator: eq
-      value: "administrative"
+      value: administrative
       true_next: route_to_module2
       false_next: check_chemistry
     check_chemistry:
       type: condition
       variable: document_category
       operator: eq
-      value: "chemistry"
+      value: chemistry
       true_next: route_to_module3
       false_next: check_nonclinical
     check_nonclinical:
       type: condition
       variable: document_category
       operator: eq
-      value: "nonclinical"
+      value: nonclinical
       true_next: route_to_module4
       false_next: check_clinical
     check_clinical:
       type: condition
       variable: document_category
       operator: eq
-      value: "clinical"
+      value: clinical
       true_next: route_to_module5
       false_next: section_unknown
     route_to_module2:
       type: return
       value:
         ctd_module: 2
-        module_name: "summaries"
-        ctd_location: "2.1 administrative_info"
+        module_name: summaries
+        ctd_location: 2.1 administrative_info
         ich_m4_compliant: true
     route_to_module3:
       type: return
       value:
         ctd_module: 3
-        module_name: "quality"
-        ctd_location: "3.2.S chemistry"
+        module_name: quality
+        ctd_location: 3.2.S chemistry
         ich_m4_compliant: true
     route_to_module4:
       type: return
       value:
         ctd_module: 4
-        module_name: "nonclinical"
-        ctd_location: "4.2 nonclinical_reports"
+        module_name: nonclinical
+        ctd_location: 4.2 nonclinical_reports
         ich_m4_compliant: true
     route_to_module5:
       type: return
       value:
         ctd_module: 5
-        module_name: "clinical"
-        ctd_location: "5.3 clinical_reports"
+        module_name: clinical
+        ctd_location: 5.3 clinical_reports
         ich_m4_compliant: true
     section_unknown:
       type: return
@@ -75,31 +104,63 @@ tree:
         ctd_location: null
         ich_m4_compliant: false
 tests:
-- input:
-    document_type: "marketing_authorization"
-    document_category: "administrative"
-  expect:
-    ctd_module: 2
-    module_name: "summaries"
-- input:
-    document_type: "stability_report"
-    document_category: "chemistry"
-  expect:
-    ctd_module: 3
-    module_name: "quality"
-- input:
-    document_type: "toxicology_study"
-    document_category: "nonclinical"
-  expect:
-    ctd_module: 4
-    module_name: "nonclinical"
-- input:
-    document_type: "clinical_trial_report"
-    document_category: "clinical"
-  expect:
-    ctd_module: 5
-    module_name: "clinical"
-- input: {}
-  expect:
-    ctd_module: null
-    ich_m4_compliant: false
+  - input:
+      document_type: marketing_authorization
+      document_category: administrative
+    expect:
+      ctd_module: 2
+      module_name: summaries
+  - input:
+      document_type: stability_report
+      document_category: chemistry
+    expect:
+      ctd_module: 3
+      module_name: quality
+  - input:
+      document_type: toxicology_study
+      document_category: nonclinical
+    expect:
+      ctd_module: 4
+      module_name: nonclinical
+  - input:
+      document_type: clinical_trial_report
+      document_category: clinical
+    expect:
+      ctd_module: 5
+      module_name: clinical
+  - input: {}
+    expect:
+      ctd_module: null
+      ich_m4_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

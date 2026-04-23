@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: icsr-triage
-description: 'ICSR case intake: classify drug reaction by signal strength, seriousness, causality, and route to appropriate deadline'
 version: 0.1.0
+description: "ICSR case intake: classify drug reaction by signal strength, seriousness, causality, and route to appropriate deadline"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: death
+    type: bool
+    required: false
+    description: ""
+  - name: hospitalization
+    type: bool
+    required: false
+    description: ""
+  - name: naranjo_score
+    type: int
+    required: false
+    description: ""
+  - name: prr
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: channel
+    type: string
+  - name: deadline_days
+    type: int
+  - name: triage
+    type: string
 interface:
   inputs:
     death:
@@ -24,6 +60,43 @@ interface:
       type: int
     triage:
       type: string
+ui:
+  title: Icsr Triage
+  subtitle: "ICSR case intake: classify drug reaction by signal strength, seriousness, causality, and route to appropriate deadline"
+  icon: circle
+  route: /vigilance/mg/icsr-triage
+  steps:
+    - field: death
+      label: death
+      help: Enter death
+      widget: toggle
+      placeholder: null
+    - field: hospitalization
+      label: hospitalization
+      help: Enter hospitalization
+      widget: toggle
+      placeholder: null
+    - field: naranjo_score
+      label: naranjo score
+      help: Enter naranjo_score
+      widget: text
+      placeholder: null
+    - field: prr
+      label: prr
+      help: Enter prr
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — channel: {{channel}} — deadline_days: {{deadline_days}} — triage: {{triage}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/icsr-triage
+  cli: rsk mcg run icsr-triage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: signal_check
   nodes:
@@ -91,137 +164,173 @@ tree:
       true_next: serious_case
       false_next: causality_check
 tests:
-- input:
-    hospitalization: false
-    death: true
-    prr: 3.5
-    naranjo_score: 8
-  expect:
-    deadline_days: 7
-    action: expedited_report
-    triage: CRITICAL
-- input:
-    prr: 2.5
-    hospitalization: true
-    naranjo_score: 6
-    death: false
-  expect:
-    triage: SERIOUS
-    action: expedited_report
-    deadline_days: 15
-- input:
-    hospitalization: false
-    prr: 4.0
-    death: false
-    naranjo_score: 7
-  expect:
-    deadline_days: 30
-    triage: PROBABLE
-    action: investigate
-- input:
-    naranjo_score: 2
-    hospitalization: false
-    death: false
-    prr: 2.1
-  expect:
-    deadline_days: 90
-    triage: MONITOR
-    action: periodic_review
-- input:
-    hospitalization: true
-    death: true
-    naranjo_score: 9
-    prr: 1.5
-  expect:
-    action: document
-    triage: LOW_SIGNAL
-    deadline_days: 90
-- input:
-    death: false
-    prr: 0.5
-    naranjo_score: 0
-    hospitalization: false
-  expect:
-    deadline_days: 90
-    action: document
-    triage: LOW_SIGNAL
-- input: {}
-  expect:
-    triage: LOW_SIGNAL
-    channel: archive
-    action: document
-    deadline_days: 90
-- input:
-    naranjo_score: -1
-  expect:
-    triage: LOW_SIGNAL
-    action: document
-    deadline_days: 90
-    channel: archive
-- input:
-    naranjo_score: 4
-  expect:
-    action: document
-    deadline_days: 90
-    channel: archive
-    triage: LOW_SIGNAL
-- input:
-    naranjo_score: 500
-  expect:
-    action: document
-    channel: archive
-    triage: LOW_SIGNAL
-    deadline_days: 90
-- input: {}
-  expect:
-    triage: LOW_SIGNAL
-    channel: archive
-    action: document
-    deadline_days: 90
-- input:
-    prr: 0
-  expect:
-    deadline_days: 90
-    action: document
-    channel: archive
-    triage: LOW_SIGNAL
-- input:
-    prr: -1
-  expect:
-    triage: LOW_SIGNAL
-    channel: archive
-    action: document
-    deadline_days: 90
-- input:
-    prr: 1
-  expect:
-    deadline_days: 90
-    action: document
-    triage: LOW_SIGNAL
-    channel: archive
-- input:
-    prr: 3
-  expect:
-    triage: MONITOR
-    channel: backlog
-    action: periodic_review
-    deadline_days: 90
-- input:
-    prr: 200
-  expect:
-    channel: backlog
-    deadline_days: 90
-    action: periodic_review
-    triage: MONITOR
-- input: {}
-  expect:
-    action: document
-    channel: archive
-    triage: LOW_SIGNAL
-    deadline_days: 90
-- input: {}
-  expect:
-    action: document
-    triage: LOW_SIGNAL
-    deadline_days: 90
-    channel: archive
+  - input:
+      hospitalization: false
+      death: true
+      prr: 3.5
+      naranjo_score: 8
+    expect:
+      deadline_days: 7
+      action: expedited_report
+      triage: CRITICAL
+  - input:
+      prr: 2.5
+      hospitalization: true
+      naranjo_score: 6
+      death: false
+    expect:
+      triage: SERIOUS
+      action: expedited_report
+      deadline_days: 15
+  - input:
+      hospitalization: false
+      prr: 4
+      death: false
+      naranjo_score: 7
+    expect:
+      deadline_days: 30
+      triage: PROBABLE
+      action: investigate
+  - input:
+      naranjo_score: 2
+      hospitalization: false
+      death: false
+      prr: 2.1
+    expect:
+      deadline_days: 90
+      triage: MONITOR
+      action: periodic_review
+  - input:
+      hospitalization: true
+      death: true
+      naranjo_score: 9
+      prr: 1.5
+    expect:
+      action: document
+      triage: LOW_SIGNAL
+      deadline_days: 90
+  - input:
+      death: false
+      prr: 0.5
+      naranjo_score: 0
+      hospitalization: false
+    expect:
+      deadline_days: 90
+      action: document
+      triage: LOW_SIGNAL
+  - input: {}
+    expect:
+      triage: LOW_SIGNAL
+      channel: archive
+      action: document
+      deadline_days: 90
+  - input:
+      naranjo_score: -1
+    expect:
+      triage: LOW_SIGNAL
+      action: document
+      deadline_days: 90
+      channel: archive
+  - input:
+      naranjo_score: 4
+    expect:
+      action: document
+      deadline_days: 90
+      channel: archive
+      triage: LOW_SIGNAL
+  - input:
+      naranjo_score: 500
+    expect:
+      action: document
+      channel: archive
+      triage: LOW_SIGNAL
+      deadline_days: 90
+  - input: {}
+    expect:
+      triage: LOW_SIGNAL
+      channel: archive
+      action: document
+      deadline_days: 90
+  - input:
+      prr: 0
+    expect:
+      deadline_days: 90
+      action: document
+      channel: archive
+      triage: LOW_SIGNAL
+  - input:
+      prr: -1
+    expect:
+      triage: LOW_SIGNAL
+      channel: archive
+      action: document
+      deadline_days: 90
+  - input:
+      prr: 1
+    expect:
+      deadline_days: 90
+      action: document
+      triage: LOW_SIGNAL
+      channel: archive
+  - input:
+      prr: 3
+    expect:
+      triage: MONITOR
+      channel: backlog
+      action: periodic_review
+      deadline_days: 90
+  - input:
+      prr: 200
+    expect:
+      channel: backlog
+      deadline_days: 90
+      action: periodic_review
+      triage: MONITOR
+  - input: {}
+    expect:
+      action: document
+      channel: archive
+      triage: LOW_SIGNAL
+      deadline_days: 90
+  - input: {}
+    expect:
+      action: document
+      triage: LOW_SIGNAL
+      deadline_days: 90
+      channel: archive
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - channel
+    - deadline_days
+    - triage
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

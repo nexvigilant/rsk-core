@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: musculoskeletal-severity-gate
-description: 'Musculoskeletal safety classifier: maps muscular adverse reactions to severity grades for rhabdomyolysis, myopathy, and tendon disorders'
 version: 0.1.0
+description: "Musculoskeletal safety classifier: maps muscular adverse reactions to severity grades for rhabdomyolysis, myopathy, and tendon disorders"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: reaction_pt
+    type: string
+    required: true
+    description: MedDRA preferred term for the musculoskeletal reaction
+  - name: ck_xuln
+    type: float
+    required: false
+    description: Creatine kinase as x ULN
+outputs:
+  - name: severity
+    type: string
+  - name: soc
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     reaction_pt:
@@ -14,11 +40,38 @@ interface:
   outputs:
     severity:
       type: string
-      description: 'critical | serious | moderate | mild'
+      description: critical | serious | moderate | mild
     soc:
       type: string
     action:
       type: string
+ui:
+  title: Musculoskeletal Severity Gate
+  subtitle: "Musculoskeletal safety classifier: maps muscular adverse reactions to severity grades for rhabdomyolysis, myopathy, and tendon disorders"
+  icon: circle
+  route: /vigilance/mg/musculoskeletal-severity-gate
+  steps:
+    - field: reaction_pt
+      label: reaction pt
+      help: MedDRA preferred term for the musculoskeletal reaction
+      widget: text
+      placeholder: null
+    - field: ck_xuln
+      label: ck xuln
+      help: Creatine kinase as x ULN
+      widget: text
+      placeholder: null
+  result:
+    template: "severity: {{severity}} — soc: {{soc}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/musculoskeletal-severity-gate
+  cli: rsk mcg run musculoskeletal-severity-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_rhabdo
   nodes:
@@ -125,3 +178,38 @@ tests:
     input: {}
     expect:
       severity: mild
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - severity
+    - soc
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

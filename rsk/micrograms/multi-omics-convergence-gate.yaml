@@ -1,8 +1,124 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: multi-omics-convergence-gate
-description: Multi-omics convergence gate for biomarker validation. Scores weighted
-  convergence across transcriptomics, genomics, literature, and proteomics dimensions.
-  Designed for HEXIM1/P-TEFb but applicable to any convergent biomarker hypothesis.
 version: 0.1.0
+description: Multi-omics convergence gate for biomarker validation. Scores weighted convergence across transcriptomics, genomics, literature, and proteomics dimensions. Designed for HEXIM1/P-TEFb but applicable to any convergent biomarker hypothesis.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: min_dimensions_required
+    type: number
+    required: true
+    description: ""
+  - name: literature_score
+    type: number
+    required: true
+    description: ""
+  - name: transcriptomics_score
+    type: number
+    required: true
+    description: ""
+  - name: genomics_score
+    type: number
+    required: true
+    description: ""
+  - name: proteomics_score
+    type: number
+    required: true
+    description: ""
+outputs:
+  - name: dimensions_active
+    type: number
+  - name: convergence_score
+    type: number
+  - name: recommendation
+    type: string
+  - name: verdict
+    type: string
+  - name: weakest_dimension
+    type: string
+interface:
+  inputs:
+    min_dimensions_required:
+      type: number
+      required: true
+    literature_score:
+      type: number
+      required: true
+    transcriptomics_score:
+      type: number
+      required: true
+    genomics_score:
+      type: number
+      required: true
+    proteomics_score:
+      type: number
+      required: true
+  outputs:
+    dimensions_active:
+      type: number
+      required: false
+    convergence_score:
+      type: number
+      required: false
+    recommendation:
+      type: string
+      required: false
+    verdict:
+      type: string
+      required: false
+    weakest_dimension:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Multi Omics Convergence Gate
+  subtitle: Multi-omics convergence gate for biomarker validation. Scores weighted convergence across transcriptomics, genomics, literature, and proteomics dimensions. Designed for HEXIM1/P-TEFb but applicable to any convergent biomarker hypothesis.
+  icon: circle
+  route: /vigilance/mg/multi-omics-convergence-gate
+  steps:
+    - field: min_dimensions_required
+      label: min dimensions required
+      help: Enter min_dimensions_required
+      widget: number
+      placeholder: null
+    - field: literature_score
+      label: literature score
+      help: Enter literature_score
+      widget: number
+      placeholder: null
+    - field: transcriptomics_score
+      label: transcriptomics score
+      help: Enter transcriptomics_score
+      widget: number
+      placeholder: null
+    - field: genomics_score
+      label: genomics score
+      help: Enter genomics_score
+      widget: number
+      placeholder: null
+    - field: proteomics_score
+      label: proteomics score
+      help: Enter proteomics_score
+      widget: number
+      placeholder: null
+  result:
+    template: "dimensions_active: {{dimensions_active}} — convergence_score: {{convergence_score}} — recommendation: {{recommendation}} — verdict: {{verdict}} — weakest_dimension: {{weakest_dimension}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/multi-omics-convergence-gate
+  cli: rsk mcg run multi-omics-convergence-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: count_active
   nodes:
@@ -25,8 +141,7 @@ tree:
     score_3dim_no_trans:
       type: return
       value:
-        recommendation: 3-way convergence without expression data. Mine GEO for treatment
-          expression datasets.
+        recommendation: 3-way convergence without expression data. Mine GEO for treatment expression datasets.
         verdict: PARTIAL_CONVERGENCE
         dimensions_active: 3
         weakest_dimension: transcriptomics
@@ -45,8 +160,7 @@ tree:
         convergence_score: 0
         weakest_dimension: multiple
         verdict: INSUFFICIENT
-        recommendation: Active dimensions below minimum required. Expand evidence
-          base.
+        recommendation: Active dimensions below minimum required. Expand evidence base.
     active_4:
       type: condition
       variable: min_dimensions_required
@@ -89,8 +203,7 @@ tree:
         dimensions_active: 4
         verdict: CONVERGED
         weakest_dimension: none
-        recommendation: Full convergence across all 4 omics dimensions. Ready for
-          clinical development.
+        recommendation: Full convergence across all 4 omics dimensions. Ready for clinical development.
     count_l_t1g0:
       type: condition
       variable: literature_score
@@ -102,8 +215,7 @@ tree:
       type: return
       value:
         weakest_dimension: literature
-        recommendation: Strong convergence. Strengthen literature evidence for complete
-          validation.
+        recommendation: Strong convergence. Strengthen literature evidence for complete validation.
         dimensions_active: 4
         verdict: CONVERGED
     active_2e:
@@ -119,8 +231,7 @@ tree:
         weakest_dimension: proteomics
         dimensions_active: 3
         verdict: PARTIAL_CONVERGENCE
-        recommendation: Strong 3-way convergence. Proteomics data needed to complete
-          validation. Query PRIDE/ProteomeXchange.
+        recommendation: Strong 3-way convergence. Proteomics data needed to complete validation. Query PRIDE/ProteomeXchange.
     count_l_t0g0:
       type: condition
       variable: literature_score
@@ -148,15 +259,13 @@ tree:
         weakest_dimension: proteomics
         dimensions_active: 4
         verdict: PARTIAL_CONVERGENCE
-        recommendation: Proteomics evidence incomplete. Prioritize mass-spec validation
-          (PRIDE datasets).
+        recommendation: Proteomics evidence incomplete. Prioritize mass-spec validation (PRIDE datasets).
     converged_weak_multi:
       type: return
       value:
         verdict: PARTIAL_CONVERGENCE
         dimensions_active: 4
-        recommendation: Both proteomics and literature weak. Strengthen evidence base
-          before development.
+        recommendation: Both proteomics and literature weak. Strengthen evidence base before development.
         weakest_dimension: proteomics_and_literature
     partial_2:
       type: return
@@ -204,8 +313,7 @@ tree:
       type: return
       value:
         weakest_dimension: literature
-        recommendation: 3-way convergence without literature support. Systematic review
-          needed.
+        recommendation: 3-way convergence without literature support. Systematic review needed.
         verdict: PARTIAL_CONVERGENCE
         dimensions_active: 3
     active_2a:
@@ -261,8 +369,7 @@ tree:
       type: return
       value:
         weakest_dimension: proteomics
-        recommendation: 3-way convergence with moderate transcriptomics. Prioritize
-          protein-level confirmation.
+        recommendation: 3-way convergence with moderate transcriptomics. Prioritize protein-level confirmation.
         verdict: PARTIAL_CONVERGENCE
         dimensions_active: 3
     count_g_t1:
@@ -320,8 +427,7 @@ tree:
         weakest_dimension: genomics
         verdict: PARTIAL_CONVERGENCE
         dimensions_active: 3
-        recommendation: 3-way convergence without genomic binding data. CUT&RUN or
-          ChIP-seq recommended.
+        recommendation: 3-way convergence without genomic binding data. CUT&RUN or ChIP-seq recommended.
     active_0:
       type: return
       value:
@@ -345,410 +451,404 @@ tree:
       true_next: active_4
       false_next: active_3a
 tests:
-- input:
-    genomics_score: -0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    verdict: NO_DATA
-    weakest_dimension: all
-    recommendation: No evidence in any dimension. Cannot assess convergence.
-    convergence_score: 0
-    dimensions_active: 0
-- input:
-    genomics_score: -0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    recommendation: Only 1 dimension active. Need multi-omics evidence for convergence.
-    convergence_score: 0
-    verdict: INSUFFICIENT
-    dimensions_active: 1
-    weakest_dimension: multiple
-- input:
-    genomics_score: -0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    recommendation: Only 1 dimension active. Need multi-omics evidence for convergence.
-    convergence_score: 0
-    verdict: INSUFFICIENT
-    dimensions_active: 1
-    weakest_dimension: multiple
-- input:
-    genomics_score: -0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 2
-    weakest_dimension: multiple
-    recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
-    verdict: EMERGING
-- input:
-    genomics_score: -0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 2.5
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: -0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    weakest_dimension: multiple
-    convergence_score: 0
-    verdict: INSUFFICIENT
-    recommendation: Only 1 dimension active. Need multi-omics evidence for convergence.
-    dimensions_active: 1
-- input:
-    genomics_score: -0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 2
-    weakest_dimension: multiple
-    recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
-    verdict: EMERGING
-- input:
-    genomics_score: -0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    dimensions_active: 2
-    weakest_dimension: multiple
-    recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
-    verdict: EMERGING
-- input:
-    genomics_score: -0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    weakest_dimension: genomics
-    verdict: PARTIAL_CONVERGENCE
-    dimensions_active: 3
-    recommendation: 3-way convergence without genomic binding data. CUT&RUN or ChIP-seq
-      recommended.
-- input:
-    genomics_score: -0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 2.5
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: -0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 2.5
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: -0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 3.5
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: 0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    weakest_dimension: multiple
-    recommendation: Only 1 dimension active. Need multi-omics evidence for convergence.
-    convergence_score: 0
-    verdict: INSUFFICIENT
-    dimensions_active: 1
-- input:
-    genomics_score: 0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 2
-    weakest_dimension: multiple
-    recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
-    verdict: EMERGING
-- input:
-    genomics_score: 0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    dimensions_active: 2
-    weakest_dimension: multiple
-    recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
-    verdict: EMERGING
-- input:
-    genomics_score: 0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    weakest_dimension: literature
-    recommendation: 3-way convergence without literature support. Systematic review
-      needed.
-    verdict: PARTIAL_CONVERGENCE
-    dimensions_active: 3
-- input:
-    genomics_score: 0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 2.5
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: 0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 2.5
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: 0.5
-    literature_score: -0.30000000000000004
-    min_dimensions_required: 3.5
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    dimensions_active: 2
-    weakest_dimension: multiple
-    recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
-    verdict: EMERGING
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    weakest_dimension: proteomics
-    recommendation: 3-way convergence with moderate transcriptomics. Prioritize protein-level
-      confirmation.
-    verdict: PARTIAL_CONVERGENCE
-    dimensions_active: 3
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: 0.8
-  expect:
-    weakest_dimension: proteomics
-    dimensions_active: 3
-    verdict: PARTIAL_CONVERGENCE
-    recommendation: Strong 3-way convergence. Proteomics data needed to complete validation.
-      Query PRIDE/ProteomeXchange.
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    recommendation: 3-way convergence without expression data. Mine GEO for treatment
-      expression datasets.
-    verdict: PARTIAL_CONVERGENCE
-    dimensions_active: 3
-    weakest_dimension: transcriptomics
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    verdict: PARTIAL_CONVERGENCE
-    dimensions_active: 4
-    recommendation: Both proteomics and literature weak. Strengthen evidence base
-      before development.
-    weakest_dimension: proteomics_and_literature
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 0
-    proteomics_score: 0.7
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    weakest_dimension: literature
-    recommendation: Strong convergence. Strengthen literature evidence for complete
-      validation.
-    dimensions_active: 4
-    verdict: CONVERGED
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 2.5
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 3.5
-    proteomics_score: -0.30000000000000004
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 3.5
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: -0.19999999999999996
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: 0.5
-    literature_score: 0.19999999999999996
-    min_dimensions_required: 4.5
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 0
-    convergence_score: 0
-    weakest_dimension: multiple
-    verdict: INSUFFICIENT
-    recommendation: Active dimensions below minimum required. Expand evidence base.
-- input:
-    genomics_score: 0.5
-    literature_score: 0.7
-    min_dimensions_required: 0
-    proteomics_score: 0.19999999999999996
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    weakest_dimension: proteomics
-    dimensions_active: 4
-    verdict: PARTIAL_CONVERGENCE
-    recommendation: Proteomics evidence incomplete. Prioritize mass-spec validation
-      (PRIDE datasets).
-- input:
-    genomics_score: 0.5
-    literature_score: 0.7
-    min_dimensions_required: 0
-    proteomics_score: 0.7
-    transcriptomics_score: 0.30000000000000004
-  expect:
-    dimensions_active: 4
-    verdict: CONVERGED
-    weakest_dimension: none
-    recommendation: Full convergence across all 4 omics dimensions. Ready for clinical
-      development.
-- input: {}
-  expect:
-    verdict: NO_DATA
-    weakest_dimension: all
-    recommendation: No evidence in any dimension. Cannot assess convergence.
-    convergence_score: 0
-    dimensions_active: 0
-interface:
-  inputs:
-    min_dimensions_required:
-      type: number
-      required: true
-    literature_score:
-      type: number
-      required: true
-    transcriptomics_score:
-      type: number
-      required: true
-    genomics_score:
-      type: number
-      required: true
-    proteomics_score:
-      type: number
-      required: true
-  outputs:
-    dimensions_active:
-      type: number
-      required: false
-    convergence_score:
-      type: number
-      required: false
-    recommendation:
-      type: string
-      required: false
-    verdict:
-      type: string
-      required: false
-    weakest_dimension:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      genomics_score: -0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      verdict: NO_DATA
+      weakest_dimension: all
+      recommendation: No evidence in any dimension. Cannot assess convergence.
+      convergence_score: 0
+      dimensions_active: 0
+  - input:
+      genomics_score: -0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      recommendation: Only 1 dimension active. Need multi-omics evidence for convergence.
+      convergence_score: 0
+      verdict: INSUFFICIENT
+      dimensions_active: 1
+      weakest_dimension: multiple
+  - input:
+      genomics_score: -0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      recommendation: Only 1 dimension active. Need multi-omics evidence for convergence.
+      convergence_score: 0
+      verdict: INSUFFICIENT
+      dimensions_active: 1
+      weakest_dimension: multiple
+  - input:
+      genomics_score: -0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 2
+      weakest_dimension: multiple
+      recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
+      verdict: EMERGING
+  - input:
+      genomics_score: -0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 2.5
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: -0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      weakest_dimension: multiple
+      convergence_score: 0
+      verdict: INSUFFICIENT
+      recommendation: Only 1 dimension active. Need multi-omics evidence for convergence.
+      dimensions_active: 1
+  - input:
+      genomics_score: -0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 2
+      weakest_dimension: multiple
+      recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
+      verdict: EMERGING
+  - input:
+      genomics_score: -0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      dimensions_active: 2
+      weakest_dimension: multiple
+      recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
+      verdict: EMERGING
+  - input:
+      genomics_score: -0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      weakest_dimension: genomics
+      verdict: PARTIAL_CONVERGENCE
+      dimensions_active: 3
+      recommendation: 3-way convergence without genomic binding data. CUT&RUN or ChIP-seq recommended.
+  - input:
+      genomics_score: -0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 2.5
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: -0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 2.5
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: -0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 3.5
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: 0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      weakest_dimension: multiple
+      recommendation: Only 1 dimension active. Need multi-omics evidence for convergence.
+      convergence_score: 0
+      verdict: INSUFFICIENT
+      dimensions_active: 1
+  - input:
+      genomics_score: 0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 2
+      weakest_dimension: multiple
+      recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
+      verdict: EMERGING
+  - input:
+      genomics_score: 0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      dimensions_active: 2
+      weakest_dimension: multiple
+      recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
+      verdict: EMERGING
+  - input:
+      genomics_score: 0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      weakest_dimension: literature
+      recommendation: 3-way convergence without literature support. Systematic review needed.
+      verdict: PARTIAL_CONVERGENCE
+      dimensions_active: 3
+  - input:
+      genomics_score: 0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 2.5
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: 0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 2.5
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: 0.5
+      literature_score: -0.30000000000000004
+      min_dimensions_required: 3.5
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      dimensions_active: 2
+      weakest_dimension: multiple
+      recommendation: Only 2 dimensions active. Expand to 3+ for convergence assessment.
+      verdict: EMERGING
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      weakest_dimension: proteomics
+      recommendation: 3-way convergence with moderate transcriptomics. Prioritize protein-level confirmation.
+      verdict: PARTIAL_CONVERGENCE
+      dimensions_active: 3
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: 0.8
+    expect:
+      weakest_dimension: proteomics
+      dimensions_active: 3
+      verdict: PARTIAL_CONVERGENCE
+      recommendation: Strong 3-way convergence. Proteomics data needed to complete validation. Query PRIDE/ProteomeXchange.
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      recommendation: 3-way convergence without expression data. Mine GEO for treatment expression datasets.
+      verdict: PARTIAL_CONVERGENCE
+      dimensions_active: 3
+      weakest_dimension: transcriptomics
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      verdict: PARTIAL_CONVERGENCE
+      dimensions_active: 4
+      recommendation: Both proteomics and literature weak. Strengthen evidence base before development.
+      weakest_dimension: proteomics_and_literature
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 0
+      proteomics_score: 0.7
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      weakest_dimension: literature
+      recommendation: Strong convergence. Strengthen literature evidence for complete validation.
+      dimensions_active: 4
+      verdict: CONVERGED
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 2.5
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 3.5
+      proteomics_score: -0.30000000000000004
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 3.5
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: -0.19999999999999996
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.19999999999999996
+      min_dimensions_required: 4.5
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 0
+      convergence_score: 0
+      weakest_dimension: multiple
+      verdict: INSUFFICIENT
+      recommendation: Active dimensions below minimum required. Expand evidence base.
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.7
+      min_dimensions_required: 0
+      proteomics_score: 0.19999999999999996
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      weakest_dimension: proteomics
+      dimensions_active: 4
+      verdict: PARTIAL_CONVERGENCE
+      recommendation: Proteomics evidence incomplete. Prioritize mass-spec validation (PRIDE datasets).
+  - input:
+      genomics_score: 0.5
+      literature_score: 0.7
+      min_dimensions_required: 0
+      proteomics_score: 0.7
+      transcriptomics_score: 0.30000000000000004
+    expect:
+      dimensions_active: 4
+      verdict: CONVERGED
+      weakest_dimension: none
+      recommendation: Full convergence across all 4 omics dimensions. Ready for clinical development.
+  - input: {}
+    expect:
+      verdict: NO_DATA
+      weakest_dimension: all
+      recommendation: No evidence in any dimension. Cannot assess convergence.
+      convergence_score: 0
+      dimensions_active: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - dimensions_active
+    - convergence_score
+    - recommendation
+    - verdict
+    - weakest_dimension
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

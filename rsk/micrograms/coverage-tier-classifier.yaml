@@ -1,17 +1,59 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: coverage-tier-classifier
-description: 'Data coverage tier classifier: maps a 0-100 coverage percentage to quality tiers for PV data source assessment'
 version: 0.1.0
+description: "Data coverage tier classifier: maps a 0-100 coverage percentage to quality tiers for PV data source assessment"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: coverage_pct
+    type: number
+    required: true
+    description: Data coverage percentage (0-100)
+outputs:
+  - name: tier
+    type: string
+  - name: color
+    type: string
 interface:
   inputs:
     coverage_pct:
       type: number
       required: true
-      description: 'Data coverage percentage (0-100)'
+      description: Data coverage percentage (0-100)
   outputs:
     tier:
       type: string
     color:
       type: string
+ui:
+  title: Coverage Tier Classifier
+  subtitle: "Data coverage tier classifier: maps a 0-100 coverage percentage to quality tiers for PV data source assessment"
+  icon: circle
+  route: /vigilance/mg/coverage-tier-classifier
+  steps:
+    - field: coverage_pct
+      label: coverage pct
+      help: Data coverage percentage (0-100)
+      widget: number
+      placeholder: null
+  result:
+    template: "tier: {{tier}} — color: {{color}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/coverage-tier-classifier
+  cli: rsk mcg run coverage-tier-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_high
   nodes:
@@ -57,61 +99,86 @@ tree:
         tier: CRITICAL_GAP
         color: red
 tests:
-# Full coverage
-- input:
-    coverage_pct: 100
-  expect:
-    tier: HIGH
-    color: emerald
-# High
-- input:
-    coverage_pct: 80
-  expect:
-    tier: HIGH
-    color: emerald
-# Boundary: exactly 75 = HIGH
-- input:
-    coverage_pct: 75
-  expect:
-    tier: HIGH
-    color: emerald
-# Moderate
-- input:
-    coverage_pct: 60
-  expect:
-    tier: MODERATE
-    color: amber
-# Boundary: exactly 50 = MODERATE
-- input:
-    coverage_pct: 50
-  expect:
-    tier: MODERATE
-    color: amber
-# Low
-- input:
-    coverage_pct: 30
-  expect:
-    tier: LOW
-    color: orange
-# Boundary: exactly 25 = LOW
-- input:
-    coverage_pct: 25
-  expect:
-    tier: LOW
-    color: orange
-# Critical gap
-- input:
-    coverage_pct: 10
-  expect:
-    tier: CRITICAL_GAP
-    color: red
-# Zero coverage
-- input:
-    coverage_pct: 0
-  expect:
-    tier: CRITICAL_GAP
-    color: red
-- input: {}
-  expect:
-    color: red
-    tier: CRITICAL_GAP
+  - input:
+      coverage_pct: 100
+    expect:
+      tier: HIGH
+      color: emerald
+  - input:
+      coverage_pct: 80
+    expect:
+      tier: HIGH
+      color: emerald
+  - input:
+      coverage_pct: 75
+    expect:
+      tier: HIGH
+      color: emerald
+  - input:
+      coverage_pct: 60
+    expect:
+      tier: MODERATE
+      color: amber
+  - input:
+      coverage_pct: 50
+    expect:
+      tier: MODERATE
+      color: amber
+  - input:
+      coverage_pct: 30
+    expect:
+      tier: LOW
+      color: orange
+  - input:
+      coverage_pct: 25
+    expect:
+      tier: LOW
+      color: orange
+  - input:
+      coverage_pct: 10
+    expect:
+      tier: CRITICAL_GAP
+      color: red
+  - input:
+      coverage_pct: 0
+    expect:
+      tier: CRITICAL_GAP
+      color: red
+  - input: {}
+    expect:
+      color: red
+      tier: CRITICAL_GAP
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tier
+    - color
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

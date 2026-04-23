@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: adverse-reaction-extractor
-description: Extract frequency category and numeric range from adverse reaction text
-  in DailyMed labels
 version: 0.1.0
+description: Extract frequency category and numeric range from adverse reaction text in DailyMed labels
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Adverse Reaction Extractor
+  subtitle: Extract frequency category and numeric range from adverse reaction text in DailyMed labels
+  icon: circle
+  route: /vigilance/mg/adverse-reaction-extractor
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/adverse-reaction-extractor
+  cli: rsk mcg run adverse-reaction-extractor
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_reaction_text
   nodes:
@@ -15,7 +43,7 @@ tree:
     frequency_very_common:
       type: return
       value:
-        numeric_range: '>=10%'
+        numeric_range: ">=10%"
         frequency_category: very_common
     check_very_rare:
       type: condition
@@ -90,54 +118,85 @@ tree:
       true_next: classify_frequency
       false_next: frequency_unknown
 tests:
-- input:
-    frequency_text: ZZZZZ_NO_MATCH
-    reaction_text: ZZZZZ_NO_MATCH
-  expect:
-    numeric_range: null
-    frequency_category: unknown
-- input:
-    frequency_text: ZZZZZ_NO_MATCH
-  expect:
-    frequency_category: unknown
-    numeric_range: null
-- input:
-    frequency_text: common
-    reaction_text: ZZZZZ_NO_MATCH
-  expect:
-    numeric_range: 1-10%
-    frequency_category: common
-- input:
-    frequency_text: uncommon
-    reaction_text: ZZZZZ_NO_MATCH
-  expect:
-    frequency_category: uncommon
-    numeric_range: 0.1-1%
-- input:
-    frequency_text: very common
-    reaction_text: ZZZZZ_NO_MATCH
-  expect:
-    numeric_range: '>=10%'
-    frequency_category: very_common
-- input:
-    frequency_text: very rare
-    reaction_text: ZZZZZ_NO_MATCH
-  expect:
-    frequency_category: very_rare
-    numeric_range: <0.01%
-- input:
-    reaction_text: ZZZZZ_NO_MATCH
-  expect:
-    numeric_range: null
-    frequency_category: unknown
-- input:
-    reaction_text: nausea
-    frequency_text: "rare (0.01-0.1%)"
-  expect:
-    frequency_category: rare
-    numeric_range: 0.01-0.1%
-- input: {}
-  expect:
-    frequency_category: unknown
-    numeric_range: null
-interface: null
+  - input:
+      frequency_text: ZZZZZ_NO_MATCH
+      reaction_text: ZZZZZ_NO_MATCH
+    expect:
+      numeric_range: null
+      frequency_category: unknown
+  - input:
+      frequency_text: ZZZZZ_NO_MATCH
+    expect:
+      frequency_category: unknown
+      numeric_range: null
+  - input:
+      frequency_text: common
+      reaction_text: ZZZZZ_NO_MATCH
+    expect:
+      numeric_range: 1-10%
+      frequency_category: common
+  - input:
+      frequency_text: uncommon
+      reaction_text: ZZZZZ_NO_MATCH
+    expect:
+      frequency_category: uncommon
+      numeric_range: 0.1-1%
+  - input:
+      frequency_text: very common
+      reaction_text: ZZZZZ_NO_MATCH
+    expect:
+      numeric_range: ">=10%"
+      frequency_category: very_common
+  - input:
+      frequency_text: very rare
+      reaction_text: ZZZZZ_NO_MATCH
+    expect:
+      frequency_category: very_rare
+      numeric_range: <0.01%
+  - input:
+      reaction_text: ZZZZZ_NO_MATCH
+    expect:
+      numeric_range: null
+      frequency_category: unknown
+  - input:
+      reaction_text: nausea
+      frequency_text: rare (0.01-0.1%)
+    expect:
+      frequency_category: rare
+      numeric_range: 0.01-0.1%
+  - input: {}
+    expect:
+      frequency_category: unknown
+      numeric_range: null
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

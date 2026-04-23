@@ -1,0 +1,233 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: post-rank
+version: 0.1.0
+description: "Compute Reddit-style hot rank for a Moltbook post. Inputs: vote score (ups-downs), age in hours, verdict weight (verdict tier contribution). Returns a rank tier (TRENDING/HOT/WARM/COLD/STALE) for feed sorting."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: score
+    type: integer
+    required: true
+    description: Net votes (ups minus downs, believability-weighted sum)
+  - name: age_hours
+    type: integer
+    required: true
+    description: Hours since post creation
+  - name: verdict_weight
+    type: integer
+    required: true
+    description: 3=fully_demonstrated, 2=partially, 1=not_demonstrated, 0=unmeasured
+outputs:
+  - name: rank_tier
+    type: string
+  - name: should_show
+    type: bool
+interface:
+  inputs:
+    score:
+      type: integer
+      required: true
+      description: Net votes (ups minus downs, believability-weighted sum)
+    age_hours:
+      type: integer
+      required: true
+      description: Hours since post creation
+    verdict_weight:
+      type: integer
+      required: true
+      description: 3=fully_demonstrated, 2=partially, 1=not_demonstrated, 0=unmeasured
+  outputs:
+    rank_tier:
+      type: string
+    should_show:
+      type: bool
+ui:
+  title: Post Rank
+  subtitle: "Compute Reddit-style hot rank for a Moltbook post. Inputs: vote score (ups-downs), age in hours, verdict weight (verdict tier contribution). Returns a rank tier (TRENDING/HOT/WARM/COLD/STALE) for feed sorting."
+  icon: circle
+  route: /vigilance/mg/post-rank
+  steps:
+    - field: score
+      label: score
+      help: Net votes (ups minus downs, believability-weighted sum)
+      widget: number
+      placeholder: null
+    - field: age_hours
+      label: age hours
+      help: Hours since post creation
+      widget: number
+      placeholder: null
+    - field: verdict_weight
+      label: verdict weight
+      help: 3=fully_demonstrated, 2=partially, 1=not_demonstrated, 0=unmeasured
+      widget: number
+      placeholder: null
+  result:
+    template: "rank_tier: {{rank_tier}} — should_show: {{should_show}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/post-rank
+  cli: rsk mcg run post-rank
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_unmeasured
+  nodes:
+    check_unmeasured:
+      type: condition
+      variable: verdict_weight
+      operator: lte
+      value: 0
+      true_next: hidden
+      false_next: check_stale
+    check_stale:
+      type: condition
+      variable: age_hours
+      operator: gte
+      value: 168
+      true_next: stale
+      false_next: check_trending
+    check_trending:
+      type: condition
+      variable: score
+      operator: gte
+      value: 20
+      true_next: trending
+      false_next: check_hot
+    check_hot:
+      type: condition
+      variable: score
+      operator: gte
+      value: 10
+      true_next: hot
+      false_next: check_warm
+    check_warm:
+      type: condition
+      variable: score
+      operator: gte
+      value: 3
+      true_next: warm
+      false_next: cold
+    trending:
+      type: return
+      value:
+        rank_tier: TRENDING
+        should_show: true
+    hot:
+      type: return
+      value:
+        rank_tier: HOT
+        should_show: true
+    warm:
+      type: return
+      value:
+        rank_tier: WARM
+        should_show: true
+    cold:
+      type: return
+      value:
+        rank_tier: COLD
+        should_show: true
+    stale:
+      type: return
+      value:
+        rank_tier: STALE
+        should_show: false
+    hidden:
+      type: return
+      value:
+        rank_tier: HIDDEN
+        should_show: false
+tests:
+  - name: unmeasured_hidden
+    input:
+      score: 50
+      age_hours: 1
+      verdict_weight: 0
+    expect:
+      rank_tier: HIDDEN
+      should_show: false
+  - name: stale_week_old
+    input:
+      score: 100
+      age_hours: 200
+      verdict_weight: 3
+    expect:
+      rank_tier: STALE
+      should_show: false
+  - name: trending_high_score
+    input:
+      score: 25
+      age_hours: 4
+      verdict_weight: 3
+    expect:
+      rank_tier: TRENDING
+      should_show: true
+  - name: hot_moderate
+    input:
+      score: 12
+      age_hours: 10
+      verdict_weight: 2
+    expect:
+      rank_tier: HOT
+      should_show: true
+  - name: warm_small
+    input:
+      score: 5
+      age_hours: 20
+      verdict_weight: 2
+    expect:
+      rank_tier: WARM
+      should_show: true
+  - name: cold_fresh_no_votes
+    input:
+      score: 0
+      age_hours: 2
+      verdict_weight: 3
+    expect:
+      rank_tier: COLD
+      should_show: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - rank_tier
+    - should_show
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

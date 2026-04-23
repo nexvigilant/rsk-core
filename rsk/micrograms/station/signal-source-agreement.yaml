@@ -1,7 +1,102 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-source-agreement
-description: Determines if multiple data sources agree on a safety signal and quantifies
-  agreement strength
 version: 0.1.0
+description: Determines if multiple data sources agree on a safety signal and quantifies agreement strength
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: literature_signal
+    type: boolean
+    required: false
+    description: ""
+  - name: label_mentions
+    type: boolean
+    required: false
+    description: ""
+  - name: faers_signal
+    type: boolean
+    required: false
+    description: ""
+  - name: trial_signal
+    type: boolean
+    required: false
+    description: ""
+outputs:
+  - name: agreement_level
+    type: string
+  - name: source_count
+    type: integer
+  - name: confidence
+    type: string
+interface:
+  inputs:
+    literature_signal:
+      type: boolean
+      required: false
+    label_mentions:
+      type: boolean
+      required: false
+    faers_signal:
+      type: boolean
+      required: false
+    trial_signal:
+      type: boolean
+      required: false
+  outputs:
+    agreement_level:
+      type: string
+      required: false
+    source_count:
+      type: integer
+      required: false
+    confidence:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Signal Source Agreement
+  subtitle: Determines if multiple data sources agree on a safety signal and quantifies agreement strength
+  icon: activity
+  route: /vigilance/mg/signal-source-agreement
+  steps:
+    - field: literature_signal
+      label: literature signal
+      help: Enter literature_signal
+      widget: toggle
+      placeholder: null
+    - field: label_mentions
+      label: label mentions
+      help: Enter label_mentions
+      widget: toggle
+      placeholder: null
+    - field: faers_signal
+      label: faers signal
+      help: Enter faers_signal
+      widget: toggle
+      placeholder: null
+    - field: trial_signal
+      label: trial signal
+      help: Enter trial_signal
+      widget: toggle
+      placeholder: null
+  result:
+    template: "agreement_level: {{agreement_level}} — source_count: {{source_count}} — confidence: {{confidence}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-source-agreement
+  cli: rsk mcg run signal-source-agreement
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_any_signal
   nodes:
@@ -141,177 +236,193 @@ tree:
         agreement_level: weak
         source_count: 1
 tests:
-- input:
-    faers_signal: false
-    label_mentions: false
-    literature_signal: false
-    trial_signal: false
-  expect:
-    agreement_level: none
-    source_count: 0
-    confidence: low
-- input:
-    faers_signal: false
-    label_mentions: false
-    literature_signal: false
-    trial_signal: true
-  expect:
-    confidence: low
-    agreement_level: weak
-    source_count: 1
-- input:
-    faers_signal: false
-    label_mentions: false
-    literature_signal: true
-    trial_signal: false
-  expect:
-    confidence: low
-    agreement_level: weak
-    source_count: 1
-- input:
-    faers_signal: false
-    label_mentions: false
-    literature_signal: true
-    trial_signal: true
-  expect:
-    source_count: 2
-    agreement_level: moderate
-    confidence: medium
-- input:
-    faers_signal: false
-    label_mentions: true
-    literature_signal: false
-    trial_signal: false
-  expect:
-    confidence: low
-    agreement_level: weak
-    source_count: 1
-- input:
-    faers_signal: false
-    label_mentions: true
-    literature_signal: false
-    trial_signal: true
-  expect:
-    source_count: 2
-    agreement_level: moderate
-    confidence: medium
-- input:
-    faers_signal: false
-    label_mentions: true
-    literature_signal: true
-    trial_signal: false
-  expect:
-    source_count: 2
-    agreement_level: moderate
-    confidence: medium
-- input:
-    faers_signal: false
-    label_mentions: true
-    literature_signal: true
-    trial_signal: true
-  expect:
-    agreement_level: strong
-    source_count: 3
-    confidence: high
-- input:
-    faers_signal: true
-    label_mentions: false
-    literature_signal: false
-    trial_signal: false
-  expect:
-    confidence: low
-    agreement_level: weak
-    source_count: 1
-- input:
-    faers_signal: true
-    label_mentions: false
-    literature_signal: false
-    trial_signal: true
-  expect:
-    source_count: 2
-    agreement_level: moderate
-    confidence: medium
-- input:
-    faers_signal: true
-    label_mentions: false
-    literature_signal: true
-    trial_signal: false
-  expect:
-    source_count: 2
-    agreement_level: moderate
-    confidence: medium
-- input:
-    faers_signal: true
-    label_mentions: false
-    literature_signal: true
-    trial_signal: true
-  expect:
-    agreement_level: strong
-    source_count: 3
-    confidence: high
-- input:
-    faers_signal: true
-    label_mentions: true
-    literature_signal: false
-    trial_signal: false
-  expect:
-    source_count: 2
-    agreement_level: moderate
-    confidence: medium
-- input:
-    faers_signal: true
-    label_mentions: true
-    literature_signal: false
-    trial_signal: true
-  expect:
-    agreement_level: strong
-    source_count: 3
-    confidence: high
-- input:
-    faers_signal: true
-    label_mentions: true
-    literature_signal: true
-    trial_signal: false
-  expect:
-    agreement_level: strong
-    source_count: 3
-    confidence: high
-- input:
-    faers_signal: true
-    label_mentions: true
-    literature_signal: true
-    trial_signal: true
-  expect:
-    confidence: high
-    agreement_level: strong
-    source_count: 4
-- input: {}
-  expect:
-    confidence: low
-    agreement_level: weak
-    source_count: 1
-interface:
-  inputs:
-    literature_signal:
-      type: boolean
-      required: false
-    label_mentions:
-      type: boolean
-      required: false
-    faers_signal:
-      type: boolean
-      required: false
-    trial_signal:
-      type: boolean
-      required: false
-  outputs:
-    agreement_level:
-      type: string
-      required: false
-    source_count:
-      type: integer
-      required: false
-    confidence:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      faers_signal: false
+      label_mentions: false
+      literature_signal: false
+      trial_signal: false
+    expect:
+      agreement_level: none
+      source_count: 0
+      confidence: low
+  - input:
+      faers_signal: false
+      label_mentions: false
+      literature_signal: false
+      trial_signal: true
+    expect:
+      confidence: low
+      agreement_level: weak
+      source_count: 1
+  - input:
+      faers_signal: false
+      label_mentions: false
+      literature_signal: true
+      trial_signal: false
+    expect:
+      confidence: low
+      agreement_level: weak
+      source_count: 1
+  - input:
+      faers_signal: false
+      label_mentions: false
+      literature_signal: true
+      trial_signal: true
+    expect:
+      source_count: 2
+      agreement_level: moderate
+      confidence: medium
+  - input:
+      faers_signal: false
+      label_mentions: true
+      literature_signal: false
+      trial_signal: false
+    expect:
+      confidence: low
+      agreement_level: weak
+      source_count: 1
+  - input:
+      faers_signal: false
+      label_mentions: true
+      literature_signal: false
+      trial_signal: true
+    expect:
+      source_count: 2
+      agreement_level: moderate
+      confidence: medium
+  - input:
+      faers_signal: false
+      label_mentions: true
+      literature_signal: true
+      trial_signal: false
+    expect:
+      source_count: 2
+      agreement_level: moderate
+      confidence: medium
+  - input:
+      faers_signal: false
+      label_mentions: true
+      literature_signal: true
+      trial_signal: true
+    expect:
+      agreement_level: strong
+      source_count: 3
+      confidence: high
+  - input:
+      faers_signal: true
+      label_mentions: false
+      literature_signal: false
+      trial_signal: false
+    expect:
+      confidence: low
+      agreement_level: weak
+      source_count: 1
+  - input:
+      faers_signal: true
+      label_mentions: false
+      literature_signal: false
+      trial_signal: true
+    expect:
+      source_count: 2
+      agreement_level: moderate
+      confidence: medium
+  - input:
+      faers_signal: true
+      label_mentions: false
+      literature_signal: true
+      trial_signal: false
+    expect:
+      source_count: 2
+      agreement_level: moderate
+      confidence: medium
+  - input:
+      faers_signal: true
+      label_mentions: false
+      literature_signal: true
+      trial_signal: true
+    expect:
+      agreement_level: strong
+      source_count: 3
+      confidence: high
+  - input:
+      faers_signal: true
+      label_mentions: true
+      literature_signal: false
+      trial_signal: false
+    expect:
+      source_count: 2
+      agreement_level: moderate
+      confidence: medium
+  - input:
+      faers_signal: true
+      label_mentions: true
+      literature_signal: false
+      trial_signal: true
+    expect:
+      agreement_level: strong
+      source_count: 3
+      confidence: high
+  - input:
+      faers_signal: true
+      label_mentions: true
+      literature_signal: true
+      trial_signal: false
+    expect:
+      agreement_level: strong
+      source_count: 3
+      confidence: high
+  - input:
+      faers_signal: true
+      label_mentions: true
+      literature_signal: true
+      trial_signal: true
+    expect:
+      confidence: high
+      agreement_level: strong
+      source_count: 4
+  - input: {}
+    expect:
+      confidence: low
+      agreement_level: weak
+      source_count: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - agreement_level
+    - source_count
+    - confidence
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

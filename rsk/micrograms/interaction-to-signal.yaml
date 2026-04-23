@@ -1,7 +1,78 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: interaction-to-signal
-description: Routes drug-drug interaction characteristics to signal hypothesis and
-  priority
 version: 0.1.0
+description: Routes drug-drug interaction characteristics to signal hypothesis and priority
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: interaction_type
+    type: string
+    required: true
+    description: ""
+  - name: severity
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: mechanism_class
+    type: string
+  - name: signal_hypothesis
+    type: boolean
+  - name: priority
+    type: string
+interface:
+  inputs:
+    interaction_type:
+      type: string
+      required: true
+    severity:
+      type: string
+      required: true
+  outputs:
+    mechanism_class:
+      type: string
+      required: false
+    signal_hypothesis:
+      type: boolean
+      required: false
+    priority:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Interaction To Signal
+  subtitle: Routes drug-drug interaction characteristics to signal hypothesis and priority
+  icon: activity
+  route: /vigilance/mg/interaction-to-signal
+  steps:
+    - field: interaction_type
+      label: interaction type
+      help: Enter interaction_type
+      widget: text
+      placeholder: null
+    - field: severity
+      label: severity
+      help: Enter severity
+      widget: text
+      placeholder: null
+  result:
+    template: "mechanism_class: {{mechanism_class}} — signal_hypothesis: {{signal_hypothesis}} — priority: {{priority}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/interaction-to-signal
+  cli: rsk mcg run interaction-to-signal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_type
   nodes:
@@ -155,111 +226,133 @@ tree:
       true_next: additive_severe
       false_next: check_severity_additive_moderate
 tests:
-- input:
-    interaction_type: ''
-    severity: ''
-  expect:
-    priority: low
-    signal_hypothesis: false
-    mechanism_class: additive
-- input:
-    interaction_type: ''
-    severity: moderate
-  expect:
-    priority: low
-    mechanism_class: additive
-    signal_hypothesis: false
-- input:
-    interaction_type: ''
-    severity: severe
-  expect:
-    priority: medium
-    mechanism_class: additive
-    signal_hypothesis: true
-- input:
-    interaction_type: pd
-    severity: ''
-  expect:
-    signal_hypothesis: false
-    priority: low
-    mechanism_class: pharmacodynamic
-- input:
-    interaction_type: pd
-    severity: moderate
-  expect:
-    signal_hypothesis: true
-    priority: medium
-    mechanism_class: pharmacodynamic
-- input:
-    interaction_type: pd
-    severity: severe
-  expect:
-    signal_hypothesis: true
-    mechanism_class: pharmacodynamic
-    priority: high
-- input:
-    interaction_type: pk
-    severity: ''
-  expect:
-    signal_hypothesis: false
-    priority: low
-    mechanism_class: pharmacokinetic
-- input:
-    interaction_type: pk
-    severity: moderate
-  expect:
-    signal_hypothesis: true
-    mechanism_class: pharmacokinetic
-    priority: medium
-- input:
-    interaction_type: pk
-    severity: severe
-  expect:
-    signal_hypothesis: true
-    mechanism_class: pharmacokinetic
-    priority: high
-- input:
-    interaction_type: synergistic
-    severity: ''
-  expect:
-    signal_hypothesis: false
-    mechanism_class: enhanced_pharmacodynamic
-    priority: low
-- input:
-    interaction_type: synergistic
-    severity: moderate
-  expect:
-    priority: medium
-    mechanism_class: enhanced_pharmacodynamic
-    signal_hypothesis: true
-- input:
-    interaction_type: synergistic
-    severity: severe
-  expect:
-    priority: high
-    signal_hypothesis: true
-    mechanism_class: enhanced_pharmacodynamic
-- input: {}
-  expect:
-    priority: low
-    signal_hypothesis: false
-    mechanism_class: additive
-interface:
-  inputs:
-    interaction_type:
-      type: string
-      required: true
-    severity:
-      type: string
-      required: true
-  outputs:
-    mechanism_class:
-      type: string
-      required: false
-    signal_hypothesis:
-      type: boolean
-      required: false
-    priority:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      interaction_type: ""
+      severity: ""
+    expect:
+      priority: low
+      signal_hypothesis: false
+      mechanism_class: additive
+  - input:
+      interaction_type: ""
+      severity: moderate
+    expect:
+      priority: low
+      mechanism_class: additive
+      signal_hypothesis: false
+  - input:
+      interaction_type: ""
+      severity: severe
+    expect:
+      priority: medium
+      mechanism_class: additive
+      signal_hypothesis: true
+  - input:
+      interaction_type: pd
+      severity: ""
+    expect:
+      signal_hypothesis: false
+      priority: low
+      mechanism_class: pharmacodynamic
+  - input:
+      interaction_type: pd
+      severity: moderate
+    expect:
+      signal_hypothesis: true
+      priority: medium
+      mechanism_class: pharmacodynamic
+  - input:
+      interaction_type: pd
+      severity: severe
+    expect:
+      signal_hypothesis: true
+      mechanism_class: pharmacodynamic
+      priority: high
+  - input:
+      interaction_type: pk
+      severity: ""
+    expect:
+      signal_hypothesis: false
+      priority: low
+      mechanism_class: pharmacokinetic
+  - input:
+      interaction_type: pk
+      severity: moderate
+    expect:
+      signal_hypothesis: true
+      mechanism_class: pharmacokinetic
+      priority: medium
+  - input:
+      interaction_type: pk
+      severity: severe
+    expect:
+      signal_hypothesis: true
+      mechanism_class: pharmacokinetic
+      priority: high
+  - input:
+      interaction_type: synergistic
+      severity: ""
+    expect:
+      signal_hypothesis: false
+      mechanism_class: enhanced_pharmacodynamic
+      priority: low
+  - input:
+      interaction_type: synergistic
+      severity: moderate
+    expect:
+      priority: medium
+      mechanism_class: enhanced_pharmacodynamic
+      signal_hypothesis: true
+  - input:
+      interaction_type: synergistic
+      severity: severe
+    expect:
+      priority: high
+      signal_hypothesis: true
+      mechanism_class: enhanced_pharmacodynamic
+  - input: {}
+    expect:
+      priority: low
+      signal_hypothesis: false
+      mechanism_class: additive
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - mechanism_class
+    - signal_hypothesis
+    - priority
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

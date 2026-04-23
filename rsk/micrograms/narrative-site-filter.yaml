@@ -1,6 +1,52 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: narrative-site-filter
-description: "Gate 2 of narrative safe-extract: detect clinical trial site identifiers, institution names, and investigator details that could compromise trial blinding or reveal proprietary relationships"
 version: 0.1.0
+description: "Gate 2 of narrative safe-extract: detect clinical trial site identifiers, institution names, and investigator details that could compromise trial blinding or reveal proprietary relationships"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_site_number
+    type: bool
+    required: false
+    description: ""
+  - name: has_institution_name
+    type: bool
+    required: false
+    description: ""
+  - name: has_investigator_name
+    type: bool
+    required: false
+    description: ""
+  - name: has_irb_identifier
+    type: bool
+    required: false
+    description: ""
+  - name: has_protocol_number
+    type: bool
+    required: false
+    description: ""
+  - name: is_blinded_study
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: site_id_detected
+    type: bool
+  - name: risk_level
+    type: string
+  - name: gate_pass
+    type: bool
+  - name: action
+    type: string
+  - name: detected_categories
+    type: string
 interface:
   inputs:
     has_site_number:
@@ -32,6 +78,53 @@ interface:
       type: string
     detected_categories:
       type: string
+ui:
+  title: Narrative Site Filter
+  subtitle: "Gate 2 of narrative safe-extract: detect clinical trial site identifiers, institution names, and investigator details that could compromise trial blinding or reveal proprietary relationships"
+  icon: circle
+  route: /vigilance/mg/narrative-site-filter
+  steps:
+    - field: has_site_number
+      label: has site number
+      help: Enter has_site_number
+      widget: toggle
+      placeholder: null
+    - field: has_institution_name
+      label: has institution name
+      help: Enter has_institution_name
+      widget: toggle
+      placeholder: null
+    - field: has_investigator_name
+      label: has investigator name
+      help: Enter has_investigator_name
+      widget: toggle
+      placeholder: null
+    - field: has_irb_identifier
+      label: has irb identifier
+      help: Enter has_irb_identifier
+      widget: toggle
+      placeholder: null
+    - field: has_protocol_number
+      label: has protocol number
+      help: Enter has_protocol_number
+      widget: toggle
+      placeholder: null
+    - field: is_blinded_study
+      label: is blinded study
+      help: Enter is_blinded_study
+      widget: toggle
+      placeholder: null
+  result:
+    template: "site_id_detected: {{site_id_detected}} — risk_level: {{risk_level}} — gate_pass: {{gate_pass}} — action: {{action}} — detected_categories: {{detected_categories}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/narrative-site-filter
+  cli: rsk mcg run narrative-site-filter
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_blinded
   nodes:
@@ -69,8 +162,8 @@ tree:
         site_id_detected: true
         risk_level: CRITICAL
         gate_pass: false
-        action: "BLOCK — site identifier in blinded study risks unblinding"
-        detected_categories: "unblinding_risk"
+        action: BLOCK — site identifier in blinded study risks unblinding
+        detected_categories: unblinding_risk
     open_site_check:
       type: condition
       variable: has_site_number
@@ -126,131 +219,168 @@ tree:
         site_id_detected: true
         risk_level: HIGH
         gate_pass: false
-        action: "BLOCK — site + investigator combination enables site identification"
-        detected_categories: "site_investigator_pair"
+        action: BLOCK — site + investigator combination enables site identification
+        detected_categories: site_investigator_pair
     moderate_site_number:
       type: return
       value:
         site_id_detected: true
         risk_level: MODERATE
         gate_pass: false
-        action: "BLOCK — site number present, replace with generic identifier"
-        detected_categories: "site_number"
+        action: BLOCK — site number present, replace with generic identifier
+        detected_categories: site_number
     moderate_institution:
       type: return
       value:
         site_id_detected: true
         risk_level: MODERATE
         gate_pass: false
-        action: "BLOCK — institution name present, generalize to region"
-        detected_categories: "institution"
+        action: BLOCK — institution name present, generalize to region
+        detected_categories: institution
     moderate_investigator:
       type: return
       value:
         site_id_detected: true
         risk_level: MODERATE
         gate_pass: false
-        action: "BLOCK — investigator name present, remove"
-        detected_categories: "investigator"
+        action: BLOCK — investigator name present, remove
+        detected_categories: investigator
     low_irb:
       type: return
       value:
         site_id_detected: true
         risk_level: LOW
         gate_pass: false
-        action: "REVIEW — IRB identifier may enable site identification"
-        detected_categories: "irb_id"
+        action: REVIEW — IRB identifier may enable site identification
+        detected_categories: irb_id
     low_protocol:
       type: return
       value:
         site_id_detected: true
         risk_level: LOW
         gate_pass: true
-        action: "PASS with note — protocol numbers are generally acceptable in regulatory submissions"
-        detected_categories: "protocol_number"
+        action: PASS with note — protocol numbers are generally acceptable in regulatory submissions
+        detected_categories: protocol_number
     no_site_ids:
       type: return
       value:
         site_id_detected: false
         risk_level: NONE
         gate_pass: true
-        action: "PASS — no site identifiers detected"
-        detected_categories: "none"
+        action: PASS — no site identifiers detected
+        detected_categories: none
 tests:
-- input:
-    is_blinded_study: true
-    has_site_number: true
-  expect:
-    site_id_detected: true
-    risk_level: CRITICAL
-    gate_pass: false
-- input:
-    is_blinded_study: true
-    has_institution_name: true
-  expect:
-    site_id_detected: true
-    risk_level: CRITICAL
-    gate_pass: false
-- input:
-    is_blinded_study: true
-    has_investigator_name: true
-  expect:
-    risk_level: CRITICAL
-    gate_pass: false
-- input:
-    is_blinded_study: true
-  expect:
-    gate_pass: true
-    risk_level: NONE
-- input:
-    has_site_number: true
-    has_investigator_name: true
-  expect:
-    risk_level: HIGH
-    gate_pass: false
-- input:
-    has_site_number: true
-  expect:
-    risk_level: MODERATE
-    gate_pass: false
-- input:
-    has_institution_name: true
-    has_investigator_name: true
-  expect:
-    risk_level: HIGH
-    gate_pass: false
-- input:
-    has_institution_name: true
-  expect:
-    risk_level: MODERATE
-    gate_pass: false
-- input:
-    has_investigator_name: true
-  expect:
-    risk_level: MODERATE
-    gate_pass: false
-- input:
-    has_irb_identifier: true
-  expect:
-    risk_level: LOW
-    gate_pass: false
-- input:
-    has_protocol_number: true
-  expect:
-    risk_level: LOW
-    gate_pass: true
-- input: {}
-  expect:
-    site_id_detected: false
-    risk_level: NONE
-    gate_pass: true
-- input:
-    is_blinded_study: false
-    has_site_number: false
-    has_institution_name: false
-    has_investigator_name: false
-    has_irb_identifier: false
-    has_protocol_number: false
-  expect:
-    gate_pass: true
-    risk_level: NONE
+  - input:
+      is_blinded_study: true
+      has_site_number: true
+    expect:
+      site_id_detected: true
+      risk_level: CRITICAL
+      gate_pass: false
+  - input:
+      is_blinded_study: true
+      has_institution_name: true
+    expect:
+      site_id_detected: true
+      risk_level: CRITICAL
+      gate_pass: false
+  - input:
+      is_blinded_study: true
+      has_investigator_name: true
+    expect:
+      risk_level: CRITICAL
+      gate_pass: false
+  - input:
+      is_blinded_study: true
+    expect:
+      gate_pass: true
+      risk_level: NONE
+  - input:
+      has_site_number: true
+      has_investigator_name: true
+    expect:
+      risk_level: HIGH
+      gate_pass: false
+  - input:
+      has_site_number: true
+    expect:
+      risk_level: MODERATE
+      gate_pass: false
+  - input:
+      has_institution_name: true
+      has_investigator_name: true
+    expect:
+      risk_level: HIGH
+      gate_pass: false
+  - input:
+      has_institution_name: true
+    expect:
+      risk_level: MODERATE
+      gate_pass: false
+  - input:
+      has_investigator_name: true
+    expect:
+      risk_level: MODERATE
+      gate_pass: false
+  - input:
+      has_irb_identifier: true
+    expect:
+      risk_level: LOW
+      gate_pass: false
+  - input:
+      has_protocol_number: true
+    expect:
+      risk_level: LOW
+      gate_pass: true
+  - input: {}
+    expect:
+      site_id_detected: false
+      risk_level: NONE
+      gate_pass: true
+  - input:
+      is_blinded_study: false
+      has_site_number: false
+      has_institution_name: false
+      has_investigator_name: false
+      has_irb_identifier: false
+      has_protocol_number: false
+    expect:
+      gate_pass: true
+      risk_level: NONE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - site_id_detected
+    - risk_level
+    - gate_pass
+    - action
+    - detected_categories
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

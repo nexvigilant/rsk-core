@@ -1,7 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: config-who-causality-action
-description: "Route WHO-UMC causality assessment categories to PV actions. Maps certain/probable/possible/unlikely/conditional/unassessable to concrete next steps."
 version: 0.1.0
-
+description: Route WHO-UMC causality assessment categories to PV actions. Maps certain/probable/possible/unlikely/conditional/unassessable to concrete next steps.
+family: pv.causality
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: causality_category
+    type: string
+    required: false
+    description: "WHO-UMC category: certain, probable, possible, unlikely, conditional, unassessable"
+  - name: is_serious
+    type: bool
+    required: false
+    description: The adverse event is serious per ICH E2A criteria
+  - name: is_expected
+    type: bool
+    required: false
+    description: The reaction is listed in the reference safety information
+outputs:
+  - name: action
+    type: string
+  - name: reporting_obligation
+    type: string
+  - name: escalation_level
+    type: int
 interface:
   inputs:
     causality_category:
@@ -11,21 +40,52 @@ interface:
     is_serious:
       type: bool
       required: false
-      description: "The adverse event is serious per ICH E2A criteria"
+      description: The adverse event is serious per ICH E2A criteria
     is_expected:
       type: bool
       required: false
-      description: "The reaction is listed in the reference safety information"
+      description: The reaction is listed in the reference safety information
   outputs:
     action:
       type: string
     reporting_obligation:
       type: string
-      description: "expedited, periodic, none"
+      description: expedited, periodic, none
     escalation_level:
       type: int
-      description: "1=immediate, 2=urgent, 3=routine, 4=monitor, 5=archive"
-
+      description: 1=immediate, 2=urgent, 3=routine, 4=monitor, 5=archive
+ui:
+  title: Config Who Causality Action
+  subtitle: Route WHO-UMC causality assessment categories to PV actions. Maps certain/probable/possible/unlikely/conditional/unassessable to concrete next steps.
+  icon: git-branch
+  route: /vigilance/mg/config-who-causality-action
+  steps:
+    - field: causality_category
+      label: causality category
+      help: "WHO-UMC category: certain, probable, possible, unlikely, conditional, unassessable"
+      widget: text
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: The adverse event is serious per ICH E2A criteria
+      widget: toggle
+      placeholder: null
+    - field: is_expected
+      label: is expected
+      help: The reaction is listed in the reference safety information
+      widget: toggle
+      placeholder: null
+  result:
+    template: "action: {{action}} — reporting_obligation: {{reporting_obligation}} — escalation_level: {{escalation_level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/config-who-causality-action
+  cli: rsk mcg run config-who-causality-action
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_category
   nodes:
@@ -35,15 +95,13 @@ tree:
       operator: is_null
       true_next: unassessable_action
       false_next: check_certain
-
     check_certain:
       type: condition
       variable: causality_category
       operator: eq
-      value: "certain"
+      value: certain
       true_next: check_certain_serious
       false_next: check_probable
-
     check_certain_serious:
       type: condition
       variable: is_serious
@@ -51,7 +109,6 @@ tree:
       value: true
       true_next: certain_serious
       false_next: check_certain_expected
-
     check_certain_expected:
       type: condition
       variable: is_expected
@@ -59,15 +116,13 @@ tree:
       value: true
       true_next: certain_expected
       false_next: certain_unexpected
-
     check_probable:
       type: condition
       variable: causality_category
       operator: eq
-      value: "probable"
+      value: probable
       true_next: check_probable_serious
       false_next: check_possible
-
     check_probable_serious:
       type: condition
       variable: is_serious
@@ -75,168 +130,186 @@ tree:
       value: true
       true_next: probable_serious
       false_next: probable_routine
-
     check_possible:
       type: condition
       variable: causality_category
       operator: eq
-      value: "possible"
+      value: possible
       true_next: possible_action
       false_next: check_unlikely
-
     check_unlikely:
       type: condition
       variable: causality_category
       operator: eq
-      value: "unlikely"
+      value: unlikely
       true_next: unlikely_action
       false_next: check_conditional
-
     check_conditional:
       type: condition
       variable: causality_category
       operator: eq
-      value: "conditional"
+      value: conditional
       true_next: conditional_action
       false_next: unassessable_action
-
     certain_serious:
       type: return
       value:
         action: expedited_report_and_signal_review
         reporting_obligation: expedited
         escalation_level: 1
-
     certain_unexpected:
       type: return
       value:
         action: expedited_report_new_signal
         reporting_obligation: expedited
         escalation_level: 1
-
     certain_expected:
       type: return
       value:
         action: periodic_report_update_rsi
         reporting_obligation: periodic
         escalation_level: 3
-
     probable_serious:
       type: return
       value:
         action: expedited_report_investigate
         reporting_obligation: expedited
         escalation_level: 2
-
     probable_routine:
       type: return
       value:
         action: periodic_report
         reporting_obligation: periodic
         escalation_level: 3
-
     possible_action:
       type: return
       value:
         action: document_and_monitor
         reporting_obligation: periodic
         escalation_level: 4
-
     unlikely_action:
       type: return
       value:
         action: document_only
         reporting_obligation: none
         escalation_level: 5
-
     conditional_action:
       type: return
       value:
         action: request_followup_data
         reporting_obligation: none
         escalation_level: 4
-
     unassessable_action:
       type: return
       value:
         action: request_missing_information
         reporting_obligation: none
         escalation_level: 4
-
 tests:
   - input:
-      causality_category: "certain"
+      causality_category: certain
       is_serious: true
       is_expected: false
     expect:
       action: expedited_report_and_signal_review
       reporting_obligation: expedited
       escalation_level: 1
-
   - input:
-      causality_category: "certain"
+      causality_category: certain
       is_serious: false
       is_expected: false
     expect:
       action: expedited_report_new_signal
       reporting_obligation: expedited
       escalation_level: 1
-
   - input:
-      causality_category: "certain"
+      causality_category: certain
       is_serious: false
       is_expected: true
     expect:
       action: periodic_report_update_rsi
       reporting_obligation: periodic
       escalation_level: 3
-
   - input:
-      causality_category: "probable"
+      causality_category: probable
       is_serious: true
     expect:
       action: expedited_report_investigate
       reporting_obligation: expedited
       escalation_level: 2
-
   - input:
-      causality_category: "probable"
+      causality_category: probable
       is_serious: false
     expect:
       action: periodic_report
       reporting_obligation: periodic
       escalation_level: 3
-
   - input:
-      causality_category: "possible"
+      causality_category: possible
     expect:
       action: document_and_monitor
       reporting_obligation: periodic
       escalation_level: 4
-
   - input:
-      causality_category: "unlikely"
+      causality_category: unlikely
     expect:
       action: document_only
       reporting_obligation: none
       escalation_level: 5
-
   - input:
-      causality_category: "conditional"
+      causality_category: conditional
     expect:
       action: request_followup_data
       reporting_obligation: none
       escalation_level: 4
-
   - input:
-      causality_category: "unassessable"
+      causality_category: unassessable
     expect:
       action: request_missing_information
       reporting_obligation: none
       escalation_level: 4
-
   - input: {}
     expect:
       action: request_missing_information
       reporting_obligation: none
       escalation_level: 4
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - reporting_obligation
+    - escalation_level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.causality
+  log_level: info
+governance:
+  sop_ref: SOP-PV-002
+  regulatory_ref:
+    - ICH-E2A
+    - WHO-UMC
+  harm_types:
+    - A
+    - B
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - hierarchy
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

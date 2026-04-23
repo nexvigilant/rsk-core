@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: lesson-router
-description: 'Session lesson triage router. Classifies a lesson by root cause type and impact, routes to the appropriate permanent mechanism: new hook, new MCG, memory update, or skill update. Closes the learning flywheel by converting ephemeral observations into permanent behavior.'
 version: 0.1.0
+description: "Session lesson triage router. Classifies a lesson by root cause type and impact, routes to the appropriate permanent mechanism: new hook, new MCG, memory update, or skill update. Closes the learning flywheel by converting ephemeral observations into permanent behavior."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: root_cause_type
+    type: string
+    required: true
+    description: ""
+  - name: recurrence_count
+    type: int
+    required: true
+    description: ""
+  - name: impact
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: mechanism
+    type: string
+  - name: priority
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     root_cause_type:
@@ -19,6 +49,38 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Lesson Router
+  subtitle: "Session lesson triage router. Classifies a lesson by root cause type and impact, routes to the appropriate permanent mechanism: new hook, new MCG, memory update, or skill update. Closes the learning flywheel by converting ephemeral observations into permanent behavior."
+  icon: circle
+  route: /vigilance/mg/lesson-router
+  steps:
+    - field: root_cause_type
+      label: root cause type
+      help: Enter root_cause_type
+      widget: text
+      placeholder: null
+    - field: recurrence_count
+      label: recurrence count
+      help: Enter recurrence_count
+      widget: text
+      placeholder: null
+    - field: impact
+      label: impact
+      help: Enter impact
+      widget: text
+      placeholder: null
+  result:
+    template: "mechanism: {{mechanism}} — priority: {{priority}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/lesson-router
+  cli: rsk mcg run lesson-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_impact
   nodes:
@@ -127,72 +189,107 @@ tree:
         priority: low
         action: note_in_memory
 tests:
-- input:
-    root_cause_type: infrastructure
-    recurrence_count: 1
-    impact: blocking
-  expect:
-    mechanism: hook
-    priority: urgent
-    action: create_prevention_hook
-- input:
-    root_cause_type: architecture
-    recurrence_count: 1
-    impact: blocking
-  expect:
-    mechanism: mcg
-    priority: urgent
-    action: create_decision_tree
-- input:
-    root_cause_type: process
-    recurrence_count: 1
-    impact: blocking
-  expect:
-    mechanism: skill
-    priority: urgent
-    action: update_skill_procedure
-- input:
-    root_cause_type: infrastructure
-    recurrence_count: 5
-    impact: degraded
-  expect:
-    mechanism: hook
-    priority: standard
-    action: create_prevention_hook
-- input:
-    root_cause_type: architecture
-    recurrence_count: 3
-    impact: degraded
-  expect:
-    mechanism: mcg
-    priority: standard
-    action: create_decision_tree
-- input:
-    root_cause_type: process
-    recurrence_count: 1
-    impact: degraded
-  expect:
-    mechanism: memory
-    priority: standard
-    action: update_memory
-- input:
-    root_cause_type: knowledge
-    recurrence_count: 1
-    impact: minor
-  expect:
-    mechanism: memory
-    priority: low
-    action: note_in_memory
-- input:
-    root_cause_type: knowledge
-    recurrence_count: 1
-    impact: blocking
-  expect:
-    mechanism: memory
-    priority: urgent
-    action: update_memory_and_claude_md
-- input: {}
-  expect:
-    action: note_in_memory
-    mechanism: memory
-    priority: low
+  - input:
+      root_cause_type: infrastructure
+      recurrence_count: 1
+      impact: blocking
+    expect:
+      mechanism: hook
+      priority: urgent
+      action: create_prevention_hook
+  - input:
+      root_cause_type: architecture
+      recurrence_count: 1
+      impact: blocking
+    expect:
+      mechanism: mcg
+      priority: urgent
+      action: create_decision_tree
+  - input:
+      root_cause_type: process
+      recurrence_count: 1
+      impact: blocking
+    expect:
+      mechanism: skill
+      priority: urgent
+      action: update_skill_procedure
+  - input:
+      root_cause_type: infrastructure
+      recurrence_count: 5
+      impact: degraded
+    expect:
+      mechanism: hook
+      priority: standard
+      action: create_prevention_hook
+  - input:
+      root_cause_type: architecture
+      recurrence_count: 3
+      impact: degraded
+    expect:
+      mechanism: mcg
+      priority: standard
+      action: create_decision_tree
+  - input:
+      root_cause_type: process
+      recurrence_count: 1
+      impact: degraded
+    expect:
+      mechanism: memory
+      priority: standard
+      action: update_memory
+  - input:
+      root_cause_type: knowledge
+      recurrence_count: 1
+      impact: minor
+    expect:
+      mechanism: memory
+      priority: low
+      action: note_in_memory
+  - input:
+      root_cause_type: knowledge
+      recurrence_count: 1
+      impact: blocking
+    expect:
+      mechanism: memory
+      priority: urgent
+      action: update_memory_and_claude_md
+  - input: {}
+    expect:
+      action: note_in_memory
+      mechanism: memory
+      priority: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - mechanism
+    - priority
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,24 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: is-positive
-description: Check if a number is positive
 version: 0.1.0
+description: Check if a number is positive
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: n
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: positive
+    type: bool
 interface:
   inputs:
     n:
@@ -9,6 +27,28 @@ interface:
   outputs:
     positive:
       type: bool
+ui:
+  title: Is Positive
+  subtitle: Check if a number is positive
+  icon: circle
+  route: /vigilance/mg/is-positive
+  steps:
+    - field: n
+      label: n
+      help: Enter n
+      widget: text
+      placeholder: null
+  result:
+    template: "positive: {{positive}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/is-positive
+  cli: rsk mcg run is-positive
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -28,26 +68,59 @@ tree:
       value:
         positive: false
 tests:
-- input:
-    n: 5
-  expect:
-    positive: true
-- input:
-    n: -3
-  expect:
-    positive: false
-- input:
-    n: 0
-  expect:
-    positive: false
-- input:
-    n: -1
-  expect:
-    positive: false
-- input:
-    n: 1
-  expect:
-    positive: true
-- input: {}
-  expect:
-    positive: false
+  - input:
+      n: 5
+    expect:
+      positive: true
+  - input:
+      n: -3
+    expect:
+      positive: false
+  - input:
+      n: 0
+    expect:
+      positive: false
+  - input:
+      n: -1
+    expect:
+      positive: false
+  - input:
+      n: 1
+    expect:
+      positive: true
+  - input: {}
+    expect:
+      positive: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - positive
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

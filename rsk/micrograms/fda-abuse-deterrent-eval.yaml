@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: fda-abuse-deterrent-eval
-description: "FDA abuse-deterrent opioid evaluation: routes by formulation properties and abuse pathway per FDA Guidance 'Abuse-Deterrent Opioids - Evaluation and Labeling' (2015)"
 version: 0.1.0
+description: "FDA abuse-deterrent opioid evaluation: routes by formulation properties and abuse pathway per FDA Guidance 'Abuse-Deterrent Opioids - Evaluation and Labeling' (2015)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: abuse_pathway
+    type: string
+    required: true
+    description: "Route of abuse: oral_excessive, intranasal, injection, smoking, combined"
+  - name: formulation_category
+    type: string
+    required: true
+    description: "Abuse-deterrent category: physical_chemical_barrier, agonist_antagonist, aversion, delivery_system, prodrug, combination"
+  - name: in_vitro_result
+    type: string
+    required: false
+    description: "In vitro manipulation study result: resistant, partially_resistant, not_resistant"
+  - name: clinical_abuse_study
+    type: bool
+    required: false
+    description: Whether clinical abuse potential study (Category 3) has been completed
+outputs:
+  - name: evaluation_category
+    type: string
+  - name: labeling_claim
+    type: string
+  - name: study_requirements
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     abuse_pathway:
@@ -18,7 +54,7 @@ interface:
     clinical_abuse_study:
       type: bool
       required: false
-      description: "Whether clinical abuse potential study (Category 3) has been completed"
+      description: Whether clinical abuse potential study (Category 3) has been completed
   outputs:
     evaluation_category:
       type: string
@@ -28,6 +64,43 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: Fda Abuse Deterrent Eval
+  subtitle: "FDA abuse-deterrent opioid evaluation: routes by formulation properties and abuse pathway per FDA Guidance 'Abuse-Deterrent Opioids - Evaluation and Labeling' (2015)"
+  icon: circle
+  route: /vigilance/mg/fda-abuse-deterrent-eval
+  steps:
+    - field: abuse_pathway
+      label: abuse pathway
+      help: "Route of abuse: oral_excessive, intranasal, injection, smoking, combined"
+      widget: text
+      placeholder: null
+    - field: formulation_category
+      label: formulation category
+      help: "Abuse-deterrent category: physical_chemical_barrier, agonist_antagonist, aversion, delivery_system, prodrug, combination"
+      widget: text
+      placeholder: null
+    - field: in_vitro_result
+      label: in vitro result
+      help: "In vitro manipulation study result: resistant, partially_resistant, not_resistant"
+      widget: text
+      placeholder: null
+    - field: clinical_abuse_study
+      label: clinical abuse study
+      help: Whether clinical abuse potential study (Category 3) has been completed
+      widget: toggle
+      placeholder: null
+  result:
+    template: "evaluation_category: {{evaluation_category}} — labeling_claim: {{labeling_claim}} — study_requirements: {{study_requirements}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/fda-abuse-deterrent-eval
+  cli: rsk mcg run fda-abuse-deterrent-eval
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_in_vitro
   nodes:
@@ -35,19 +108,16 @@ tree:
       type: condition
       variable: in_vitro_result
       operator: eq
-      value: "resistant"
+      value: resistant
       true_next: check_clinical_study
       false_next: check_partial
-
     check_partial:
       type: condition
       variable: in_vitro_result
       operator: eq
-      value: "partially_resistant"
+      value: partially_resistant
       true_next: partial_resistant_path
       false_next: not_resistant_path
-
-    # IN VITRO RESISTANT — check clinical
     check_clinical_study:
       type: condition
       variable: clinical_abuse_study
@@ -55,55 +125,97 @@ tree:
       value: true
       true_next: full_evaluation
       false_next: in_vitro_only
-
     full_evaluation:
       type: return
       value:
-        evaluation_category: "CATEGORY_1_2_3"
-        labeling_claim: "Labeling may describe abuse-deterrent properties with Categories 1-3 data. Include specific abuse pathways tested and limitations."
+        evaluation_category: CATEGORY_1_2_3
+        labeling_claim: Labeling may describe abuse-deterrent properties with Categories 1-3 data. Include specific abuse pathways tested and limitations.
         study_requirements: "Complete: In vitro manipulation (Cat 1), PK (Cat 2), Clinical abuse potential (Cat 3). Category 4 (postmarket) studies recommended."
         regulatory_reference: "FDA Guidance: Abuse-Deterrent Opioids - Evaluation and Labeling (2015), Sections III-IV"
-
     in_vitro_only:
       type: return
       value:
-        evaluation_category: "CATEGORY_1_2_ONLY"
-        labeling_claim: "Labeling may describe physical/chemical properties but cannot claim reduced abuse without clinical (Cat 3) data"
-        study_requirements: "Category 3 clinical abuse potential study needed to support abuse-deterrent labeling claim"
+        evaluation_category: CATEGORY_1_2_ONLY
+        labeling_claim: Labeling may describe physical/chemical properties but cannot claim reduced abuse without clinical (Cat 3) data
+        study_requirements: Category 3 clinical abuse potential study needed to support abuse-deterrent labeling claim
         regulatory_reference: "FDA Guidance: Abuse-Deterrent Opioids (2015), Section III.C"
-
-    # PARTIALLY RESISTANT
     partial_resistant_path:
       type: return
       value:
-        evaluation_category: "PARTIAL_DETERRENCE"
-        labeling_claim: "Labeling may describe partial resistance to specific manipulation pathways. Must specify which pathways are and are not deterred."
-        study_requirements: "Category 1-2 data supports partial claim. Category 3 clinical study recommended for the specific abuse pathway."
+        evaluation_category: PARTIAL_DETERRENCE
+        labeling_claim: Labeling may describe partial resistance to specific manipulation pathways. Must specify which pathways are and are not deterred.
+        study_requirements: Category 1-2 data supports partial claim. Category 3 clinical study recommended for the specific abuse pathway.
         regulatory_reference: "FDA Guidance: Abuse-Deterrent Opioids (2015), Section III.B"
-
-    # NOT RESISTANT
     not_resistant_path:
       type: return
       value:
-        evaluation_category: "NO_DETERRENT_CLAIM"
-        labeling_claim: "No abuse-deterrent labeling claim supportable. Product may still be approved as standard opioid formulation."
-        study_requirements: "Standard NDA requirements apply. Consider REMS with ETASS for opioid products."
+        evaluation_category: NO_DETERRENT_CLAIM
+        labeling_claim: No abuse-deterrent labeling claim supportable. Product may still be approved as standard opioid formulation.
+        study_requirements: Standard NDA requirements apply. Consider REMS with ETASS for opioid products.
         regulatory_reference: "FDA Guidance: Abuse-Deterrent Opioids (2015), Section II; Opioid REMS"
-
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(∂, ∃) — abuse deterrence classification by manipulation resistance boundary and clinical evidence existence'
-  primes: ['κ', '∂', '∃']
-  arguments: ['in_vitro_result', 'clinical_abuse_study', 'abuse_pathway']
-
 tests:
-- input: { abuse_pathway: "intranasal", formulation_category: "physical_chemical_barrier", in_vitro_result: "resistant", clinical_abuse_study: true }
-  expect: { evaluation_category: "CATEGORY_1_2_3" }
-- input: { abuse_pathway: "injection", formulation_category: "agonist_antagonist", in_vitro_result: "resistant", clinical_abuse_study: false }
-  expect: { evaluation_category: "CATEGORY_1_2_ONLY" }
-- input: { abuse_pathway: "oral_excessive", formulation_category: "aversion", in_vitro_result: "partially_resistant" }
-  expect: { evaluation_category: "PARTIAL_DETERRENCE" }
-- input: { abuse_pathway: "smoking", formulation_category: "delivery_system", in_vitro_result: "not_resistant" }
-  expect: { evaluation_category: "NO_DETERRENT_CLAIM" }
-- input: {}
-  expect: { evaluation_category: "NO_DETERRENT_CLAIM" }
+  - input:
+      abuse_pathway: intranasal
+      formulation_category: physical_chemical_barrier
+      in_vitro_result: resistant
+      clinical_abuse_study: true
+    expect:
+      evaluation_category: CATEGORY_1_2_3
+  - input:
+      abuse_pathway: injection
+      formulation_category: agonist_antagonist
+      in_vitro_result: resistant
+      clinical_abuse_study: false
+    expect:
+      evaluation_category: CATEGORY_1_2_ONLY
+  - input:
+      abuse_pathway: oral_excessive
+      formulation_category: aversion
+      in_vitro_result: partially_resistant
+    expect:
+      evaluation_category: PARTIAL_DETERRENCE
+  - input:
+      abuse_pathway: smoking
+      formulation_category: delivery_system
+      in_vitro_result: not_resistant
+    expect:
+      evaluation_category: NO_DETERRENT_CLAIM
+  - input: {}
+    expect:
+      evaluation_category: NO_DETERRENT_CLAIM
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - evaluation_category
+    - labeling_claim
+    - study_requirements
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

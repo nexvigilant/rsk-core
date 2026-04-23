@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tox-hepatic
-description: 'Hepatic toxicity gate: ALT_ULN thresholds for liver'
 version: 0.1.0
+description: "Hepatic toxicity gate: ALT_ULN thresholds for liver"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Tox Hepatic
+  subtitle: "Hepatic toxicity gate: ALT_ULN thresholds for liver"
+  icon: circle
+  route: /vigilance/mg/tox-hepatic
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tox-hepatic
+  cli: rsk mcg run tox-hepatic
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severe
   nodes:
@@ -40,73 +69,103 @@ tree:
         severity: severe
         action: discontinue
 tests:
-- input:
-    ALT_ULN: 11
-  expect:
-    severity: severe
-    organ: hepatic
-- input:
-    ALT_ULN: 3
-  expect:
-    organ: hepatic
-    severity: mild
-- input:
-    ALT_ULN: 0
-  expect:
-    organ: hepatic
-    severity: normal
-- input: {}
-  expect:
-    organ: hepatic
-    severity: normal
-- input:
-    ALT_ULN: -1
-  expect:
-    organ: hepatic
-    action: continue
-    severity: normal
-    target: liver
-- input:
-    ALT_ULN: 2
-  expect:
-    action: continue
-    organ: hepatic
-    severity: normal
-    target: liver
-- input:
-    ALT_ULN: 4
-  expect:
-    severity: mild
-    action: monitor_closely
-    target: liver
-    organ: hepatic
-- input:
-    ALT_ULN: 300
-  expect:
-    target: liver
-    action: discontinue
-    severity: severe
-    organ: hepatic
-- input:
-    ALT_ULN: -1
-  expect:
-    target: liver
-    severity: normal
-    organ: hepatic
-    action: continue
-- input:
-    ALT_ULN: 9
-  expect:
-    organ: hepatic
-    action: monitor_closely
-    target: liver
-    severity: mild
-- input:
-    ALT_ULN: 1000
-  expect:
-    severity: severe
-    organ: hepatic
-    action: discontinue
-    target: liver
-interface: null
-primitive_signature: null
+  - input:
+      ALT_ULN: 11
+    expect:
+      severity: severe
+      organ: hepatic
+  - input:
+      ALT_ULN: 3
+    expect:
+      organ: hepatic
+      severity: mild
+  - input:
+      ALT_ULN: 0
+    expect:
+      organ: hepatic
+      severity: normal
+  - input: {}
+    expect:
+      organ: hepatic
+      severity: normal
+  - input:
+      ALT_ULN: -1
+    expect:
+      organ: hepatic
+      action: continue
+      severity: normal
+      target: liver
+  - input:
+      ALT_ULN: 2
+    expect:
+      action: continue
+      organ: hepatic
+      severity: normal
+      target: liver
+  - input:
+      ALT_ULN: 4
+    expect:
+      severity: mild
+      action: monitor_closely
+      target: liver
+      organ: hepatic
+  - input:
+      ALT_ULN: 300
+    expect:
+      target: liver
+      action: discontinue
+      severity: severe
+      organ: hepatic
+  - input:
+      ALT_ULN: -1
+    expect:
+      target: liver
+      severity: normal
+      organ: hepatic
+      action: continue
+  - input:
+      ALT_ULN: 9
+    expect:
+      organ: hepatic
+      action: monitor_closely
+      target: liver
+      severity: mild
+  - input:
+      ALT_ULN: 1000
+    expect:
+      severity: severe
+      organ: hepatic
+      action: discontinue
+      target: liver
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

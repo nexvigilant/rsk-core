@@ -1,13 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: causality-assessment-exercise
-description: "Academy L2: Given a Naranjo score and WHO-UMC categorical inputs, validate dual causality assessment and provide learning feedback on agreement/disagreement between the two methods."
 version: 0.1.0
-
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(→₁, →₂) — compares two independent causality assessments (Naranjo quantitative vs WHO-UMC categorical) to surface agreement and disagreement patterns'
-  primes: ['κ', '→', 'ς', '∂']
-  arguments: ['naranjo_score', 'temporal', 'dechallenge', 'rechallenge', 'alternatives']
-
+description: "Academy L2: Given a Naranjo score and WHO-UMC categorical inputs, validate dual causality assessment and provide learning feedback on agreement/disagreement between the two methods."
+family: pv.causality
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: naranjo_score
+    type: int
+    required: true
+    description: ""
+  - name: temporal
+    type: string
+    required: true
+    description: reasonable | unreasonable | unknown
+  - name: dechallenge
+    type: string
+    required: true
+    description: positive | negative | not_done | unknown
+  - name: rechallenge
+    type: string
+    required: true
+    description: positive | negative | not_done | unknown
+  - name: alternatives
+    type: string
+    required: true
+    description: unlikely | possible | unknown
+outputs:
+  - name: naranjo_category
+    type: string
+  - name: who_umc_category
+    type: string
+  - name: agreement
+    type: string
+  - name: learning_note
+    type: string
 interface:
   inputs:
     naranjo_score:
@@ -16,19 +49,19 @@ interface:
     temporal:
       type: string
       required: true
-      description: "reasonable | unreasonable | unknown"
+      description: reasonable | unreasonable | unknown
     dechallenge:
       type: string
       required: true
-      description: "positive | negative | not_done | unknown"
+      description: positive | negative | not_done | unknown
     rechallenge:
       type: string
       required: true
-      description: "positive | negative | not_done | unknown"
+      description: positive | negative | not_done | unknown
     alternatives:
       type: string
       required: true
-      description: "unlikely | possible | unknown"
+      description: unlikely | possible | unknown
   outputs:
     naranjo_category:
       type: string
@@ -38,7 +71,48 @@ interface:
       type: string
     learning_note:
       type: string
-
+ui:
+  title: Causality Assessment Exercise
+  subtitle: "Academy L2: Given a Naranjo score and WHO-UMC categorical inputs, validate dual causality assessment and provide learning feedback on agreement/disagreement between the two methods."
+  icon: git-branch
+  route: /vigilance/mg/causality-assessment-exercise
+  steps:
+    - field: naranjo_score
+      label: naranjo score
+      help: Enter naranjo_score
+      widget: text
+      placeholder: null
+    - field: temporal
+      label: temporal
+      help: reasonable | unreasonable | unknown
+      widget: text
+      placeholder: null
+    - field: dechallenge
+      label: dechallenge
+      help: positive | negative | not_done | unknown
+      widget: text
+      placeholder: null
+    - field: rechallenge
+      label: rechallenge
+      help: positive | negative | not_done | unknown
+      widget: text
+      placeholder: null
+    - field: alternatives
+      label: alternatives
+      help: unlikely | possible | unknown
+      widget: text
+      placeholder: null
+  result:
+    template: "naranjo_category: {{naranjo_category}} — who_umc_category: {{who_umc_category}} — agreement: {{agreement}} — learning_note: {{learning_note}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/causality-assessment-exercise
+  cli: rsk mcg run causality-assessment-exercise
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_naranjo
   nodes:
@@ -49,15 +123,13 @@ tree:
       value: null
       true_next: reject_missing
       false_next: classify_naranjo
-
     reject_missing:
       type: return
       value:
         naranjo_category: REJECTED
         who_umc_category: REJECTED
         agreement: N/A
-        learning_note: "Both Naranjo score and WHO-UMC inputs are required for dual assessment comparison."
-
+        learning_note: Both Naranjo score and WHO-UMC inputs are required for dual assessment comparison.
     classify_naranjo:
       type: condition
       variable: naranjo_score
@@ -65,47 +137,41 @@ tree:
       value: 9
       true_next: naranjo_definite
       false_next: check_probable
-
     naranjo_definite:
       type: condition
       variable: temporal
       operator: eq
-      value: "reasonable"
+      value: reasonable
       true_next: definite_certain_check
       false_next: definite_disagree
-
     definite_certain_check:
       type: condition
       variable: rechallenge
       operator: eq
-      value: "positive"
+      value: positive
       true_next: both_highest
       false_next: definite_probable_match
-
     both_highest:
       type: return
       value:
         naranjo_category: Definite
         who_umc_category: Certain
         agreement: STRONG_AGREEMENT
-        learning_note: "Both methods agree on the highest causality category. Naranjo Definite (>=9) aligns with WHO-UMC Certain (temporal + dechallenge + rechallenge + no alternatives). This is the strongest possible evidence of drug causality."
-
+        learning_note: Both methods agree on the highest causality category. Naranjo Definite (>=9) aligns with WHO-UMC Certain (temporal + dechallenge + rechallenge + no alternatives). This is the strongest possible evidence of drug causality.
     definite_probable_match:
       type: return
       value:
         naranjo_category: Definite
         who_umc_category: Probable/Likely
         agreement: PARTIAL_AGREEMENT
-        learning_note: "Naranjo scores Definite but WHO-UMC gives Probable (no positive rechallenge). The quantitative Naranjo can reach 9+ without rechallenge if other questions score high. This shows why dual assessment catches nuances a single method misses."
-
+        learning_note: Naranjo scores Definite but WHO-UMC gives Probable (no positive rechallenge). The quantitative Naranjo can reach 9+ without rechallenge if other questions score high. This shows why dual assessment catches nuances a single method misses.
     definite_disagree:
       type: return
       value:
         naranjo_category: Definite
         who_umc_category: Unlikely
         agreement: DISAGREEMENT
-        learning_note: "Naranjo Definite but WHO-UMC categorizes as Unlikely due to unreasonable temporal relationship. This disagreement flags a potential scoring error — review Q2 (temporal sequence). High Naranjo scores with poor temporality warrant re-evaluation."
-
+        learning_note: Naranjo Definite but WHO-UMC categorizes as Unlikely due to unreasonable temporal relationship. This disagreement flags a potential scoring error — review Q2 (temporal sequence). High Naranjo scores with poor temporality warrant re-evaluation.
     check_probable:
       type: condition
       variable: naranjo_score
@@ -113,23 +179,20 @@ tree:
       value: 5
       true_next: naranjo_probable
       false_next: check_possible
-
     naranjo_probable:
       type: condition
       variable: dechallenge
       operator: eq
-      value: "positive"
+      value: positive
       true_next: probable_agree
       false_next: probable_partial
-
     probable_agree:
       type: condition
       variable: alternatives
       operator: eq
-      value: "unlikely"
+      value: unlikely
       true_next: probable_strong
       false_next: probable_possible_who
-
     probable_strong:
       type: return
       value:
@@ -137,23 +200,20 @@ tree:
         who_umc_category: Probable/Likely
         agreement: STRONG_AGREEMENT
         learning_note: "Both methods agree: Probable causality. Positive dechallenge and no plausible alternatives support the drug-event relationship. In regulatory practice, this triggers expedited reporting for serious cases."
-
     probable_possible_who:
       type: return
       value:
         naranjo_category: Probable
         who_umc_category: Possible
         agreement: PARTIAL_AGREEMENT
-        learning_note: "Naranjo Probable but WHO-UMC downgrades to Possible because alternative causes exist. WHO-UMC weighs alternative explanations more heavily. Consider whether the alternatives were adequately investigated."
-
+        learning_note: Naranjo Probable but WHO-UMC downgrades to Possible because alternative causes exist. WHO-UMC weighs alternative explanations more heavily. Consider whether the alternatives were adequately investigated.
     probable_partial:
       type: return
       value:
         naranjo_category: Probable
         who_umc_category: Possible
         agreement: PARTIAL_AGREEMENT
-        learning_note: "Naranjo Probable but WHO-UMC Possible — dechallenge was not positive. WHO-UMC requires positive dechallenge for Probable. Quantitative scoring (Naranjo) can compensate for missing dechallenge with other strong evidence."
-
+        learning_note: Naranjo Probable but WHO-UMC Possible — dechallenge was not positive. WHO-UMC requires positive dechallenge for Probable. Quantitative scoring (Naranjo) can compensate for missing dechallenge with other strong evidence.
     check_possible:
       type: condition
       variable: naranjo_score
@@ -161,15 +221,13 @@ tree:
       value: 1
       true_next: naranjo_possible
       false_next: naranjo_doubtful
-
     naranjo_possible:
       type: condition
       variable: temporal
       operator: eq
-      value: "reasonable"
+      value: reasonable
       true_next: possible_agree
       false_next: possible_disagree
-
     possible_agree:
       type: return
       value:
@@ -177,23 +235,20 @@ tree:
         who_umc_category: Possible
         agreement: AGREEMENT
         learning_note: "Both methods agree: Possible causality. The evidence is suggestive but not conclusive. Collect more information — especially dechallenge data and alternative cause investigation."
-
     possible_disagree:
       type: return
       value:
         naranjo_category: Possible
         who_umc_category: Unlikely
         agreement: DISAGREEMENT
-        learning_note: "Naranjo scores Possible (1-4) but WHO-UMC says Unlikely because temporal relationship is not reasonable. Temporal plausibility is a threshold requirement for WHO-UMC. Naranjo can accumulate small positive scores without strong temporality."
-
+        learning_note: Naranjo scores Possible (1-4) but WHO-UMC says Unlikely because temporal relationship is not reasonable. Temporal plausibility is a threshold requirement for WHO-UMC. Naranjo can accumulate small positive scores without strong temporality.
     naranjo_doubtful:
       type: condition
       variable: temporal
       operator: eq
-      value: "unreasonable"
+      value: unreasonable
       true_next: doubtful_unlikely
       false_next: doubtful_unknown
-
     doubtful_unlikely:
       type: return
       value:
@@ -201,7 +256,6 @@ tree:
         who_umc_category: Unlikely
         agreement: STRONG_AGREEMENT
         learning_note: "Both methods agree: causality is doubtful/unlikely. The low Naranjo score (<=0) and unreasonable temporal relationship both point away from drug causality. Document this clearly in the case narrative."
-
     doubtful_unknown:
       type: return
       value:
@@ -209,40 +263,135 @@ tree:
         who_umc_category: Unassessable
         agreement: AGREEMENT
         learning_note: "Low Naranjo (<=0) and insufficient WHO-UMC data. Both methods indicate the case lacks sufficient evidence for causality assessment. Priority: gather more clinical information before re-assessing."
-
 tests:
-  - name: "Perfect agreement — Definite/Certain"
-    input: { naranjo_score: 10, temporal: "reasonable", dechallenge: "positive", rechallenge: "positive", alternatives: "unlikely" }
-    expect: { agreement: STRONG_AGREEMENT, naranjo_category: Definite, who_umc_category: Certain }
-
-  - name: "High Naranjo but no rechallenge — Definite/Probable"
-    input: { naranjo_score: 9, temporal: "reasonable", dechallenge: "positive", rechallenge: "not_done", alternatives: "unlikely" }
-    expect: { agreement: PARTIAL_AGREEMENT, naranjo_category: Definite }
-
-  - name: "Probable agreement — strong case"
-    input: { naranjo_score: 7, temporal: "reasonable", dechallenge: "positive", rechallenge: "not_done", alternatives: "unlikely" }
-    expect: { agreement: STRONG_AGREEMENT, naranjo_category: Probable, who_umc_category: "Probable/Likely" }
-
-  - name: "Probable/Possible split — alternatives exist"
-    input: { naranjo_score: 6, temporal: "reasonable", dechallenge: "positive", rechallenge: "not_done", alternatives: "possible" }
-    expect: { agreement: PARTIAL_AGREEMENT, naranjo_category: Probable, who_umc_category: Possible }
-
-  - name: "Possible agreement"
-    input: { naranjo_score: 3, temporal: "reasonable", dechallenge: "unknown", rechallenge: "not_done", alternatives: "possible" }
-    expect: { agreement: AGREEMENT, naranjo_category: Possible, who_umc_category: Possible }
-
-  - name: "Possible/Unlikely disagreement — bad temporal"
-    input: { naranjo_score: 2, temporal: "unreasonable", dechallenge: "unknown", rechallenge: "not_done", alternatives: "possible" }
-    expect: { agreement: DISAGREEMENT, naranjo_category: Possible }
-
-  - name: "Doubtful/Unlikely agreement"
-    input: { naranjo_score: -1, temporal: "unreasonable", dechallenge: "negative", rechallenge: "not_done", alternatives: "possible" }
-    expect: { agreement: STRONG_AGREEMENT, naranjo_category: Doubtful, who_umc_category: Unlikely }
-
-  - name: "Doubtful/Unassessable — insufficient data"
-    input: { naranjo_score: 0, temporal: "unknown", dechallenge: "unknown", rechallenge: "not_done", alternatives: "unknown" }
-    expect: { agreement: AGREEMENT, naranjo_category: Doubtful, who_umc_category: Unassessable }
-
-  - name: "Empty input — rejection"
+  - name: Perfect agreement — Definite/Certain
+    input:
+      naranjo_score: 10
+      temporal: reasonable
+      dechallenge: positive
+      rechallenge: positive
+      alternatives: unlikely
+    expect:
+      agreement: STRONG_AGREEMENT
+      naranjo_category: Definite
+      who_umc_category: Certain
+  - name: High Naranjo but no rechallenge — Definite/Probable
+    input:
+      naranjo_score: 9
+      temporal: reasonable
+      dechallenge: positive
+      rechallenge: not_done
+      alternatives: unlikely
+    expect:
+      agreement: PARTIAL_AGREEMENT
+      naranjo_category: Definite
+  - name: Probable agreement — strong case
+    input:
+      naranjo_score: 7
+      temporal: reasonable
+      dechallenge: positive
+      rechallenge: not_done
+      alternatives: unlikely
+    expect:
+      agreement: STRONG_AGREEMENT
+      naranjo_category: Probable
+      who_umc_category: Probable/Likely
+  - name: Probable/Possible split — alternatives exist
+    input:
+      naranjo_score: 6
+      temporal: reasonable
+      dechallenge: positive
+      rechallenge: not_done
+      alternatives: possible
+    expect:
+      agreement: PARTIAL_AGREEMENT
+      naranjo_category: Probable
+      who_umc_category: Possible
+  - name: Possible agreement
+    input:
+      naranjo_score: 3
+      temporal: reasonable
+      dechallenge: unknown
+      rechallenge: not_done
+      alternatives: possible
+    expect:
+      agreement: AGREEMENT
+      naranjo_category: Possible
+      who_umc_category: Possible
+  - name: Possible/Unlikely disagreement — bad temporal
+    input:
+      naranjo_score: 2
+      temporal: unreasonable
+      dechallenge: unknown
+      rechallenge: not_done
+      alternatives: possible
+    expect:
+      agreement: DISAGREEMENT
+      naranjo_category: Possible
+  - name: Doubtful/Unlikely agreement
+    input:
+      naranjo_score: -1
+      temporal: unreasonable
+      dechallenge: negative
+      rechallenge: not_done
+      alternatives: possible
+    expect:
+      agreement: STRONG_AGREEMENT
+      naranjo_category: Doubtful
+      who_umc_category: Unlikely
+  - name: Doubtful/Unassessable — insufficient data
+    input:
+      naranjo_score: 0
+      temporal: unknown
+      dechallenge: unknown
+      rechallenge: not_done
+      alternatives: unknown
+    expect:
+      agreement: AGREEMENT
+      naranjo_category: Doubtful
+      who_umc_category: Unassessable
+  - name: Empty input — rejection
     input: {}
-    expect: { naranjo_category: REJECTED }
+    expect:
+      naranjo_category: REJECTED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - naranjo_category
+    - who_umc_category
+    - agreement
+    - learning_note
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.causality
+  log_level: info
+governance:
+  sop_ref: SOP-PV-002
+  regulatory_ref:
+    - ICH-E2A
+    - WHO-UMC
+  harm_types:
+    - A
+    - B
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - hierarchy
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

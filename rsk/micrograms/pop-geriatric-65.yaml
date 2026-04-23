@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pop-geriatric-65
-description: Geriatric — polypharmacy and renal decline
 version: 0.1.0
+description: Geriatric — polypharmacy and renal decline
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Pop Geriatric 65
+  subtitle: Geriatric — polypharmacy and renal decline
+  icon: circle
+  route: /vigilance/mg/pop-geriatric-65
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pop-geriatric-65
+  cli: rsk mcg run pop-geriatric-65
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -25,46 +54,76 @@ tree:
         population: geriatric-65
         action: standard_care
 tests:
-- input:
-    age_years: 65
-  expect:
-    population: geriatric-65
-    at_risk: true
-- input: {}
-  expect:
-    population: geriatric-65
-    at_risk: false
-- input:
-    age_years: 0
-  expect:
-    population: geriatric-65
-    at_risk: false
-    action: standard_care
-- input:
-    age_years: -1
-  expect:
-    action: standard_care
-    population: geriatric-65
-    at_risk: false
-- input:
-    age_years: 64
-  expect:
-    action: standard_care
-    population: geriatric-65
-    at_risk: false
-- input:
-    age_years: 66
-  expect:
-    at_risk: true
-    population: geriatric-65
-    action: special_monitoring
-    reason: Geriatric — polypharmacy and renal decline
-- input:
-    age_years: 6500
-  expect:
-    action: special_monitoring
-    reason: Geriatric — polypharmacy and renal decline
-    at_risk: true
-    population: geriatric-65
-interface: null
-primitive_signature: null
+  - input:
+      age_years: 65
+    expect:
+      population: geriatric-65
+      at_risk: true
+  - input: {}
+    expect:
+      population: geriatric-65
+      at_risk: false
+  - input:
+      age_years: 0
+    expect:
+      population: geriatric-65
+      at_risk: false
+      action: standard_care
+  - input:
+      age_years: -1
+    expect:
+      action: standard_care
+      population: geriatric-65
+      at_risk: false
+  - input:
+      age_years: 64
+    expect:
+      action: standard_care
+      population: geriatric-65
+      at_risk: false
+  - input:
+      age_years: 66
+    expect:
+      at_risk: true
+      population: geriatric-65
+      action: special_monitoring
+      reason: Geriatric — polypharmacy and renal decline
+  - input:
+      age_years: 6500
+    expect:
+      action: special_monitoring
+      reason: Geriatric — polypharmacy and renal decline
+      at_risk: true
+      population: geriatric-65
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

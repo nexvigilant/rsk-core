@@ -1,12 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: transbeyesian-propagator
-description: 'Transbeyesian belief propagator: computes cross-domain signal updates using shared primitive structure (transfer_weight) as the propagation channel. posterior_B = prior_B * (1 + weight * evidence_A / threshold). Higher transfer weight + weaker prior = stronger update.'
 version: 0.1.0
-primitive_signature:
-  dominant: '→'
-  expression: '→(evidence_A, belief_B) through ∂(shared_primitives) — causal propagation gated by structural similarity'
-  primes: ['→', '∂', 'κ']
-  arguments: ['source_prr', 'signal_threshold', 'transfer_weight', 'prior_strength']
-  chain_prediction: '→ (causal propagation). Transfer weight encodes ∂ (boundary overlap between domains). PRR is κ (observed correlation in source). Propagation promotes κ → → only when ∂ is sufficiently shared. Degrades gracefully: none=no channel, same_class=direct channel.'
+description: "Transbeyesian belief propagator: computes cross-domain signal updates using shared primitive structure (transfer_weight) as the propagation channel. posterior_B = prior_B * (1 + weight * evidence_A / threshold). Higher transfer weight + weaker prior = stronger update."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: source_prr
+    type: float
+    required: false
+    description: ""
+  - name: signal_threshold
+    type: float
+    required: false
+    description: ""
+  - name: transfer_weight
+    type: string
+    required: false
+    description: ""
+  - name: prior_strength
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: posterior_class
+    type: string
+  - name: propagation_confidence
+    type: string
+  - name: action
+    type: string
+  - name: algorithm
+    type: string
 interface:
   inputs:
     source_prr:
@@ -30,10 +60,46 @@ interface:
       type: string
     algorithm:
       type: string
+ui:
+  title: Transbeyesian Propagator
+  subtitle: "Transbeyesian belief propagator: computes cross-domain signal updates using shared primitive structure (transfer_weight) as the propagation channel. posterior_B = prior_B * (1 + weight * evidence_A / threshold). Higher transfer weight + weaker prior = stronger update."
+  icon: circle
+  route: /vigilance/mg/transbeyesian-propagator
+  steps:
+    - field: source_prr
+      label: source prr
+      help: Enter source_prr
+      widget: text
+      placeholder: null
+    - field: signal_threshold
+      label: signal threshold
+      help: Enter signal_threshold
+      widget: text
+      placeholder: null
+    - field: transfer_weight
+      label: transfer weight
+      help: Enter transfer_weight
+      widget: text
+      placeholder: null
+    - field: prior_strength
+      label: prior strength
+      help: Enter prior_strength
+      widget: text
+      placeholder: null
+  result:
+    template: "posterior_class: {{posterior_class}} — propagation_confidence: {{propagation_confidence}} — action: {{action}} — algorithm: {{algorithm}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/transbeyesian-propagator
+  cli: rsk mcg run transbeyesian-propagator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_weight_none
   nodes:
-    # Gate 1: transfer_weight dispatch
     check_weight_none:
       type: condition
       variable: transfer_weight
@@ -69,8 +135,6 @@ tree:
       value: high
       true_next: high_check_prior_unknown
       false_next: no_update_fallback
-
-    # same_class → always STRONG_UPDATE
     strong_update_same_class:
       type: return
       value:
@@ -78,16 +142,13 @@ tree:
         propagation_confidence: HIGH
         action: Propagate signal to this drug without direct query — class evidence sufficient
         algorithm: same_class transfer — shared receptor and mechanism = direct propagation channel
-
-    # low → only propagate if source_prr > 5.0 (very strong evidence)
     low_check_prr:
       type: condition
       variable: source_prr
       operator: gt
-      value: 5.0
+      value: 5
       true_next: weak_update_low
       false_next: no_update_low
-
     weak_update_low:
       type: return
       value:
@@ -95,7 +156,6 @@ tree:
         propagation_confidence: LOW
         action: Weak propagation — direct investigation required for this drug
         algorithm: low transfer weight — only very strong source evidence (PRR > 5.0) crosses the gap
-
     no_update_low:
       type: return
       value:
@@ -103,16 +163,13 @@ tree:
         propagation_confidence: NONE
         action: No propagation channel — independent investigation required
         algorithm: low transfer weight with insufficient source evidence (PRR <= 5.0)
-
-    # moderate → check if source_prr > threshold
     moderate_check_threshold:
       type: condition
       variable: source_prr
       operator: gt
-      value: 2.0
+      value: 2
       true_next: moderate_update
       false_next: weak_update_moderate
-
     moderate_update:
       type: return
       value:
@@ -120,7 +177,6 @@ tree:
         propagation_confidence: MODERATE
         action: Signal propagated with moderate confidence — confirm with direct FAERS query
         algorithm: moderate transfer weight with source PRR above threshold — partial propagation
-
     weak_update_moderate:
       type: return
       value:
@@ -128,8 +184,6 @@ tree:
         propagation_confidence: LOW
         action: Weak propagation — direct investigation required for this drug
         algorithm: moderate transfer weight but source PRR below threshold — insufficient evidence to propagate
-
-    # high → dispatch on prior_strength
     high_check_prior_unknown:
       type: condition
       variable: prior_strength
@@ -151,7 +205,6 @@ tree:
       value: established
       true_next: weak_update_established
       false_next: moderate_update_high
-
     strong_update_high:
       type: return
       value:
@@ -159,7 +212,6 @@ tree:
         propagation_confidence: HIGH
         action: Propagate signal to this drug without direct query — class evidence sufficient
         algorithm: high transfer weight on empty/weak prior — maximum belief update (Bayesian surprise)
-
     weak_update_established:
       type: return
       value:
@@ -167,8 +219,6 @@ tree:
         propagation_confidence: LOW
         action: Weak propagation — direct investigation required for this drug
         algorithm: high transfer weight but established prior (e.g. boxed warning already present) — little information gain
-
-    # moderate or strong prior with high weight → MODERATE_UPDATE
     moderate_update_high:
       type: return
       value:
@@ -176,8 +226,6 @@ tree:
         propagation_confidence: MODERATE
         action: Signal propagated with moderate confidence — confirm with direct FAERS query
         algorithm: high transfer weight with moderate/strong prior — prior already has partial data
-
-    # Fallback for unrecognized transfer_weight or null
     no_update_fallback:
       type: return
       value:
@@ -185,8 +233,6 @@ tree:
         propagation_confidence: NONE
         action: No propagation channel — independent investigation required
         algorithm: unrecognized or missing transfer weight — no propagation possible
-
-    # none → NO_UPDATE
     no_update:
       type: return
       value:
@@ -194,167 +240,177 @@ tree:
         propagation_confidence: NONE
         action: No propagation channel — independent investigation required
         algorithm: different mechanism — no shared primitive structure to propagate through
-
 tests:
-# 1. same_class + strong PRR → STRONG_UPDATE (semaglutide → liraglutide for pancreatitis)
-- name: same_class always propagates (GLP-1 class signal)
-  input:
-    source_prr: 8.5
-    signal_threshold: 2.0
-    transfer_weight: same_class
-    prior_strength: weak
-  expect:
-    posterior_class: STRONG_UPDATE
-    propagation_confidence: HIGH
-    action: Propagate signal to this drug without direct query — class evidence sufficient
-    algorithm: same_class transfer — shared receptor and mechanism = direct propagation channel
-
-# 2. none + strong PRR → NO_UPDATE (semaglutide → metformin for pancreatitis — different mechanism)
-- name: no transfer channel blocks even strong evidence
-  input:
-    source_prr: 12.0
-    signal_threshold: 2.0
-    transfer_weight: none
-    prior_strength: unknown
-  expect:
-    posterior_class: NO_UPDATE
-    propagation_confidence: NONE
-    action: No propagation channel — independent investigation required
-    algorithm: different mechanism — no shared primitive structure to propagate through
-
-# 3. high + weak prior + strong PRR → STRONG_UPDATE
-- name: high weight on weak prior — maximum Bayesian update
-  input:
-    source_prr: 6.0
-    signal_threshold: 2.0
-    transfer_weight: high
-    prior_strength: weak
-  expect:
-    posterior_class: STRONG_UPDATE
-    propagation_confidence: HIGH
-    action: Propagate signal to this drug without direct query — class evidence sufficient
-    algorithm: high transfer weight on empty/weak prior — maximum belief update (Bayesian surprise)
-
-# 4. high + established prior → WEAK_UPDATE (metformin lactic acidosis already boxed)
-- name: established prior absorbs little from transfer
-  input:
-    source_prr: 10.0
-    signal_threshold: 2.0
-    transfer_weight: high
-    prior_strength: established
-  expect:
-    posterior_class: WEAK_UPDATE
-    propagation_confidence: LOW
-    action: Weak propagation — direct investigation required for this drug
-    algorithm: high transfer weight but established prior (e.g. boxed warning already present) — little information gain
-
-# 5. moderate + PRR above threshold → MODERATE_UPDATE
-- name: moderate weight with above-threshold PRR propagates partially
-  input:
-    source_prr: 4.5
-    signal_threshold: 2.0
-    transfer_weight: moderate
-    prior_strength: moderate
-  expect:
-    posterior_class: MODERATE_UPDATE
-    propagation_confidence: MODERATE
-    action: Signal propagated with moderate confidence — confirm with direct FAERS query
-    algorithm: moderate transfer weight with source PRR above threshold — partial propagation
-
-# 6. moderate + PRR below threshold → WEAK_UPDATE
-- name: moderate weight with below-threshold PRR — insufficient to propagate
-  input:
-    source_prr: 1.5
-    signal_threshold: 2.0
-    transfer_weight: moderate
-    prior_strength: strong
-  expect:
-    posterior_class: WEAK_UPDATE
-    propagation_confidence: LOW
-    action: Weak propagation — direct investigation required for this drug
-    algorithm: moderate transfer weight but source PRR below threshold — insufficient evidence to propagate
-
-# 7. low + strong PRR (> 5.0) → WEAK_UPDATE
-- name: low weight only propagates with very strong evidence
-  input:
-    source_prr: 7.0
-    signal_threshold: 2.0
-    transfer_weight: low
-    prior_strength: moderate
-  expect:
-    posterior_class: WEAK_UPDATE
-    propagation_confidence: LOW
-    action: Weak propagation — direct investigation required for this drug
-    algorithm: low transfer weight — only very strong source evidence (PRR > 5.0) crosses the gap
-
-# 8. low + moderate PRR (< 5.0) → NO_UPDATE
-- name: low weight blocks moderate evidence
-  input:
-    source_prr: 3.5
-    signal_threshold: 2.0
-    transfer_weight: low
-    prior_strength: weak
-  expect:
-    posterior_class: NO_UPDATE
-    propagation_confidence: NONE
-    action: No propagation channel — independent investigation required
-    algorithm: low transfer weight with insufficient source evidence (PRR <= 5.0)
-
-# 9. null safety — all missing inputs → NO_UPDATE
-- name: null safety — missing inputs default to no propagation
-  input: {}
-  expect:
-    posterior_class: NO_UPDATE
-    propagation_confidence: NONE
-    action: No propagation channel — independent investigation required
-    algorithm: unrecognized or missing transfer weight — no propagation possible
-
-# 10. high + unknown prior → STRONG_UPDATE (empty prior gets maximum update)
-- name: high weight on unknown prior — Bayesian surprise
-  input:
-    source_prr: 3.0
-    signal_threshold: 2.0
-    transfer_weight: high
-    prior_strength: unknown
-  expect:
-    posterior_class: STRONG_UPDATE
-    propagation_confidence: HIGH
-    action: Propagate signal to this drug without direct query — class evidence sufficient
-    algorithm: high transfer weight on empty/weak prior — maximum belief update (Bayesian surprise)
-
-# 11. high + moderate prior → MODERATE_UPDATE
-- name: high weight on moderate prior — prior already has data
-  input:
-    source_prr: 5.0
-    signal_threshold: 2.0
-    transfer_weight: high
-    prior_strength: moderate
-  expect:
-    posterior_class: MODERATE_UPDATE
-    propagation_confidence: MODERATE
-    action: Signal propagated with moderate confidence — confirm with direct FAERS query
-    algorithm: high transfer weight with moderate/strong prior — prior already has partial data
-
-# 12. high + strong prior → MODERATE_UPDATE
-- name: high weight on strong prior — still moderate (prior already robust)
-  input:
-    source_prr: 8.0
-    signal_threshold: 2.0
-    transfer_weight: high
-    prior_strength: strong
-  expect:
-    posterior_class: MODERATE_UPDATE
-    propagation_confidence: MODERATE
-    action: Signal propagated with moderate confidence — confirm with direct FAERS query
-    algorithm: high transfer weight with moderate/strong prior — prior already has partial data
-
-# 13. same_class with no PRR (null) — still STRONG_UPDATE (class membership is the evidence)
-- name: same_class propagates even without PRR data
-  input:
-    transfer_weight: same_class
-    prior_strength: established
-  expect:
-    posterior_class: STRONG_UPDATE
-    propagation_confidence: HIGH
-    action: Propagate signal to this drug without direct query — class evidence sufficient
-    algorithm: same_class transfer — shared receptor and mechanism = direct propagation channel
+  - name: same_class always propagates (GLP-1 class signal)
+    input:
+      source_prr: 8.5
+      signal_threshold: 2
+      transfer_weight: same_class
+      prior_strength: weak
+    expect:
+      posterior_class: STRONG_UPDATE
+      propagation_confidence: HIGH
+      action: Propagate signal to this drug without direct query — class evidence sufficient
+      algorithm: same_class transfer — shared receptor and mechanism = direct propagation channel
+  - name: no transfer channel blocks even strong evidence
+    input:
+      source_prr: 12
+      signal_threshold: 2
+      transfer_weight: none
+      prior_strength: unknown
+    expect:
+      posterior_class: NO_UPDATE
+      propagation_confidence: NONE
+      action: No propagation channel — independent investigation required
+      algorithm: different mechanism — no shared primitive structure to propagate through
+  - name: high weight on weak prior — maximum Bayesian update
+    input:
+      source_prr: 6
+      signal_threshold: 2
+      transfer_weight: high
+      prior_strength: weak
+    expect:
+      posterior_class: STRONG_UPDATE
+      propagation_confidence: HIGH
+      action: Propagate signal to this drug without direct query — class evidence sufficient
+      algorithm: high transfer weight on empty/weak prior — maximum belief update (Bayesian surprise)
+  - name: established prior absorbs little from transfer
+    input:
+      source_prr: 10
+      signal_threshold: 2
+      transfer_weight: high
+      prior_strength: established
+    expect:
+      posterior_class: WEAK_UPDATE
+      propagation_confidence: LOW
+      action: Weak propagation — direct investigation required for this drug
+      algorithm: high transfer weight but established prior (e.g. boxed warning already present) — little information gain
+  - name: moderate weight with above-threshold PRR propagates partially
+    input:
+      source_prr: 4.5
+      signal_threshold: 2
+      transfer_weight: moderate
+      prior_strength: moderate
+    expect:
+      posterior_class: MODERATE_UPDATE
+      propagation_confidence: MODERATE
+      action: Signal propagated with moderate confidence — confirm with direct FAERS query
+      algorithm: moderate transfer weight with source PRR above threshold — partial propagation
+  - name: moderate weight with below-threshold PRR — insufficient to propagate
+    input:
+      source_prr: 1.5
+      signal_threshold: 2
+      transfer_weight: moderate
+      prior_strength: strong
+    expect:
+      posterior_class: WEAK_UPDATE
+      propagation_confidence: LOW
+      action: Weak propagation — direct investigation required for this drug
+      algorithm: moderate transfer weight but source PRR below threshold — insufficient evidence to propagate
+  - name: low weight only propagates with very strong evidence
+    input:
+      source_prr: 7
+      signal_threshold: 2
+      transfer_weight: low
+      prior_strength: moderate
+    expect:
+      posterior_class: WEAK_UPDATE
+      propagation_confidence: LOW
+      action: Weak propagation — direct investigation required for this drug
+      algorithm: low transfer weight — only very strong source evidence (PRR > 5.0) crosses the gap
+  - name: low weight blocks moderate evidence
+    input:
+      source_prr: 3.5
+      signal_threshold: 2
+      transfer_weight: low
+      prior_strength: weak
+    expect:
+      posterior_class: NO_UPDATE
+      propagation_confidence: NONE
+      action: No propagation channel — independent investigation required
+      algorithm: low transfer weight with insufficient source evidence (PRR <= 5.0)
+  - name: null safety — missing inputs default to no propagation
+    input: {}
+    expect:
+      posterior_class: NO_UPDATE
+      propagation_confidence: NONE
+      action: No propagation channel — independent investigation required
+      algorithm: unrecognized or missing transfer weight — no propagation possible
+  - name: high weight on unknown prior — Bayesian surprise
+    input:
+      source_prr: 3
+      signal_threshold: 2
+      transfer_weight: high
+      prior_strength: unknown
+    expect:
+      posterior_class: STRONG_UPDATE
+      propagation_confidence: HIGH
+      action: Propagate signal to this drug without direct query — class evidence sufficient
+      algorithm: high transfer weight on empty/weak prior — maximum belief update (Bayesian surprise)
+  - name: high weight on moderate prior — prior already has data
+    input:
+      source_prr: 5
+      signal_threshold: 2
+      transfer_weight: high
+      prior_strength: moderate
+    expect:
+      posterior_class: MODERATE_UPDATE
+      propagation_confidence: MODERATE
+      action: Signal propagated with moderate confidence — confirm with direct FAERS query
+      algorithm: high transfer weight with moderate/strong prior — prior already has partial data
+  - name: high weight on strong prior — still moderate (prior already robust)
+    input:
+      source_prr: 8
+      signal_threshold: 2
+      transfer_weight: high
+      prior_strength: strong
+    expect:
+      posterior_class: MODERATE_UPDATE
+      propagation_confidence: MODERATE
+      action: Signal propagated with moderate confidence — confirm with direct FAERS query
+      algorithm: high transfer weight with moderate/strong prior — prior already has partial data
+  - name: same_class propagates even without PRR data
+    input:
+      transfer_weight: same_class
+      prior_strength: established
+    expect:
+      posterior_class: STRONG_UPDATE
+      propagation_confidence: HIGH
+      action: Propagate signal to this drug without direct query — class evidence sufficient
+      algorithm: same_class transfer — shared receptor and mechanism = direct propagation channel
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - posterior_class
+    - propagation_confidence
+    - action
+    - algorithm
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

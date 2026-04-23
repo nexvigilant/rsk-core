@@ -1,6 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ab-frequency-zero
-description: 'Antibody: detects zero/negative frequency (stem-phys Frequency — period becomes infinity). Division-by-zero sentinel.'
 version: 0.1.0
+description: "Antibody: detects zero/negative frequency (stem-phys Frequency — period becomes infinity). Division-by-zero sentinel."
+family: antibody.chemistry
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - antibody
+inputs:
+  - name: frequency
+    type: number
+    required: true
+    description: ""
+outputs:
+  - name: threat
+    type: boolean
+  - name: response
+    type: string
 interface:
   inputs:
     frequency:
@@ -11,6 +31,28 @@ interface:
       type: boolean
     response:
       type: string
+ui:
+  title: Frequency Zero
+  subtitle: "Antibody: detects zero/negative frequency (stem-phys Frequency — period becomes infinity). Division-by-zero sentinel."
+  icon: shield
+  route: /vigilance/mg/ab-frequency-zero
+  steps:
+    - field: frequency
+      label: frequency
+      help: Enter frequency
+      widget: number
+      placeholder: null
+  result:
+    template: "threat: {{threat}} — response: {{response}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ab-frequency-zero
+  cli: rsk mcg run ab-frequency-zero
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -25,20 +67,62 @@ tree:
       type: return
       value:
         threat: true
-        response: 'BLOCK: zero/negative frequency — period is infinity, oscillation undefined'
+        response: "BLOCK: zero/negative frequency — period is infinity, oscillation undefined"
     clean:
       type: return
       value:
         threat: false
-        response: 'PASS'
+        response: PASS
 tests:
-- input: { frequency: 2.0 }
-  expect: { threat: false }
-- input: { frequency: 0 }
-  expect: { threat: true }
-- input: { frequency: -1.0 }
-  expect: { threat: true }
-- input: {}
-  expect:
-    response: PASS
-    threat: false
+  - input:
+      frequency: 2
+    expect:
+      threat: false
+  - input:
+      frequency: 0
+    expect:
+      threat: true
+  - input:
+      frequency: -1
+    expect:
+      threat: true
+  - input: {}
+    expect:
+      response: PASS
+      threat: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - threat
+    - response
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: antibody.chemistry
+  log_level: info
+governance:
+  sop_ref: SOP-CHEM-001
+  regulatory_ref: []
+  harm_types:
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - conservation
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,129 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: appe-ai-ethics-gate
-description: 'APPE Ch7.5: AI ethics decision gate — evaluates ethical reasoning about AI in pharmacovigilance across 5 core principles'
 version: 0.1.0
+description: "APPE Ch7.5: AI ethics decision gate — evaluates ethical reasoning about AI in pharmacovigilance across 5 core principles"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: validation_protocol_exists
+    type: bool
+    required: false
+    description: ""
+  - name: bias_assessment_done
+    type: bool
+    required: false
+    description: ""
+  - name: transparency_documented
+    type: bool
+    required: false
+    description: ""
+  - name: privacy_protected
+    type: bool
+    required: false
+    description: ""
+  - name: human_oversight_maintained
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: ready_for_epa10
+    type: bool
+  - name: remediation
+    type: string
+  - name: ethics_score
+    type: int
+  - name: principle_violated
+    type: string
+  - name: gaps
+    type: array
+  - name: ethics_level
+    type: string
+interface:
+  inputs:
+    validation_protocol_exists:
+      type: bool
+      required: false
+    bias_assessment_done:
+      type: bool
+      required: false
+    transparency_documented:
+      type: bool
+      required: false
+    privacy_protected:
+      type: bool
+      required: false
+    human_oversight_maintained:
+      type: bool
+      required: false
+  outputs:
+    ready_for_epa10:
+      type: bool
+      required: false
+    remediation:
+      type: string
+      required: false
+    ethics_score:
+      type: int
+      required: false
+    principle_violated:
+      type: string
+      required: false
+    gaps:
+      type: array
+      required: false
+    ethics_level:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Appe Ai Ethics Gate
+  subtitle: "APPE Ch7.5: AI ethics decision gate — evaluates ethical reasoning about AI in pharmacovigilance across 5 core principles"
+  icon: circle
+  route: /vigilance/mg/appe-ai-ethics-gate
+  steps:
+    - field: validation_protocol_exists
+      label: validation protocol exists
+      help: Enter validation_protocol_exists
+      widget: toggle
+      placeholder: null
+    - field: bias_assessment_done
+      label: bias assessment done
+      help: Enter bias_assessment_done
+      widget: toggle
+      placeholder: null
+    - field: transparency_documented
+      label: transparency documented
+      help: Enter transparency_documented
+      widget: toggle
+      placeholder: null
+    - field: privacy_protected
+      label: privacy protected
+      help: Enter privacy_protected
+      widget: toggle
+      placeholder: null
+    - field: human_oversight_maintained
+      label: human oversight maintained
+      help: Enter human_oversight_maintained
+      widget: toggle
+      placeholder: null
+  result:
+    template: "ready_for_epa10: {{ready_for_epa10}} — remediation: {{remediation}} — ethics_score: {{ethics_score}} — principle_violated: {{principle_violated}} — gaps: {{gaps}} — ethics_level: {{ethics_level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/appe-ai-ethics-gate
+  cli: rsk mcg run appe-ai-ethics-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_ho
   nodes:
@@ -27,7 +150,7 @@ tree:
         remediation: Implement privacy-by-design principles and document data protection measures
         principle_violated: AI Privacy
         gaps:
-        - privacy_protected
+          - privacy_protected
         ready_for_epa10: true
         ethics_score: 4
     xpp_td:
@@ -43,7 +166,7 @@ tree:
         ethics_level: PROFICIENT
         ethics_score: 4
         gaps:
-        - validation_protocol_exists
+          - validation_protocol_exists
         remediation: Develop and document AI validation protocol with performance benchmarks
         principle_violated: AI Validation
         ready_for_epa10: true
@@ -58,7 +181,7 @@ tree:
       type: return
       value:
         gaps:
-        - transparency_documented
+          - transparency_documented
         ethics_level: PROFICIENT
         ethics_score: 4
         remediation: Document AI decision-making rationale and explainability methods
@@ -71,7 +194,7 @@ tree:
         ethics_level: DEVELOPING
         ready_for_epa10: false
         gaps:
-        - multiple_principles
+          - multiple_principles
         remediation: Address identified AI ethics gaps through targeted training and protocol development before EPA10
         principle_violated: Multiple AI ethics principles require attention
     xho_bat_pp:
@@ -86,7 +209,7 @@ tree:
       value:
         principle_violated: Human Oversight
         gaps:
-        - human_oversight_maintained
+          - human_oversight_maintained
         ethics_score: 4
         ready_for_epa10: true
         remediation: Establish and document human oversight protocols for all AI-assisted PV decisions
@@ -211,7 +334,7 @@ tree:
         remediation: Conduct and document comprehensive AI bias assessment before deployment
         principle_violated: AI Fairness
         gaps:
-        - bias_assessment_done
+          - bias_assessment_done
         ethics_score: 4
     xba_ppf_tdt_vp:
       type: condition
@@ -226,7 +349,7 @@ tree:
         ready_for_epa10: false
         ethics_score: 1
         gaps:
-        - critical_foundation_missing
+          - critical_foundation_missing
         ethics_level: INSUFFICIENT
         remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
         principle_violated: Core AI ethics principles not demonstrated
@@ -259,505 +382,495 @@ tree:
       true_next: xho_bat_pp
       false_next: xho_baf_pp
 tests:
-- input:
-    bias_assessment_done: true
-    transparency_documented: true
-    privacy_protected: true
-    human_oversight_maintained: true
-    validation_protocol_exists: true
-  expect:
-    ready_for_epa10: true
-    ethics_level: EXEMPLARY
-    ethics_score: 5
-- input:
-    validation_protocol_exists: true
-    bias_assessment_done: true
-    transparency_documented: true
-    human_oversight_maintained: false
-    privacy_protected: true
-  expect:
-    gaps:
-    - human_oversight_maintained
-    ready_for_epa10: true
-    ethics_level: PROFICIENT
-- input:
-    privacy_protected: true
-    validation_protocol_exists: true
-    human_oversight_maintained: true
-    transparency_documented: true
-    bias_assessment_done: false
-  expect:
-    ethics_level: PROFICIENT
-    ready_for_epa10: true
-    gaps:
-    - bias_assessment_done
-- input:
-    transparency_documented: true
-    privacy_protected: false
-    bias_assessment_done: true
-    human_oversight_maintained: true
-    validation_protocol_exists: true
-  expect:
-    gaps:
-    - privacy_protected
-    ethics_level: PROFICIENT
-    ready_for_epa10: true
-- input:
-    validation_protocol_exists: true
-    bias_assessment_done: true
-    human_oversight_maintained: true
-    transparency_documented: false
-    privacy_protected: true
-  expect:
-    gaps:
-    - transparency_documented
-    ethics_level: PROFICIENT
-    ready_for_epa10: true
-- input:
-    bias_assessment_done: true
-    transparency_documented: true
-    privacy_protected: true
-    human_oversight_maintained: true
-    validation_protocol_exists: false
-  expect:
-    ethics_level: PROFICIENT
-    gaps:
-    - validation_protocol_exists
-    ready_for_epa10: true
-- input:
-    privacy_protected: true
-    transparency_documented: true
-    human_oversight_maintained: false
-    validation_protocol_exists: true
-    bias_assessment_done: false
-  expect:
-    ethics_level: DEVELOPING
-    ready_for_epa10: false
-- input:
-    validation_protocol_exists: false
-    transparency_documented: true
-    privacy_protected: true
-    human_oversight_maintained: false
-    bias_assessment_done: true
-  expect:
-    ready_for_epa10: false
-    ethics_level: DEVELOPING
-- input:
-    human_oversight_maintained: false
-    transparency_documented: true
-    bias_assessment_done: false
-    validation_protocol_exists: true
-    privacy_protected: false
-  expect:
-    ready_for_epa10: false
-    ethics_level: INSUFFICIENT
-- input:
-    human_oversight_maintained: false
-    bias_assessment_done: false
-    validation_protocol_exists: true
-    privacy_protected: false
-    transparency_documented: false
-  expect:
-    ready_for_epa10: false
-    ethics_level: INSUFFICIENT
-- input:
-    transparency_documented: false
-    bias_assessment_done: false
-    validation_protocol_exists: false
-    human_oversight_maintained: false
-    privacy_protected: false
-  expect:
-    ethics_level: INSUFFICIENT
-    ready_for_epa10: false
-- input:
-    validation_protocol_exists: false
-    privacy_protected: false
-    human_oversight_maintained: true
-    bias_assessment_done: false
-    transparency_documented: false
-  expect:
-    ethics_level: INSUFFICIENT
-    ready_for_epa10: false
-- input: {}
-  expect:
-    ready_for_epa10: false
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    gaps:
-    - critical_foundation_missing
-    principle_violated: Core AI ethics principles not demonstrated
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-- input: {}
-  expect:
-    ready_for_epa10: false
-    gaps:
-    - critical_foundation_missing
-    ethics_score: 1
-    ethics_level: INSUFFICIENT
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-- input: {}
-  expect:
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-    gaps:
-    - critical_foundation_missing
-    ready_for_epa10: false
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-- input: {}
-  expect:
-    ready_for_epa10: false
-    ethics_score: 1
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    gaps:
-    - critical_foundation_missing
-    principle_violated: Core AI ethics principles not demonstrated
-    ethics_level: INSUFFICIENT
-- input: {}
-  expect:
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ready_for_epa10: false
-    gaps:
-    - critical_foundation_missing
-    principle_violated: Core AI ethics principles not demonstrated
-    ethics_score: 1
-    ethics_level: INSUFFICIENT
-- input: {}
-  expect:
-    ethics_level: INSUFFICIENT
-    principle_violated: Core AI ethics principles not demonstrated
-    ready_for_epa10: false
-    ethics_score: 1
-    gaps:
-    - critical_foundation_missing
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-- input: {}
-  expect:
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ready_for_epa10: false
-    ethics_score: 1
-    gaps:
-    - critical_foundation_missing
-    principle_violated: Core AI ethics principles not demonstrated
-    ethics_level: INSUFFICIENT
-- input: {}
-  expect:
-    gaps:
-    - critical_foundation_missing
-    ready_for_epa10: false
-    ethics_score: 1
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ethics_level: INSUFFICIENT
-    principle_violated: Core AI ethics principles not demonstrated
-- input: {}
-  expect:
-    ready_for_epa10: false
-    ethics_level: INSUFFICIENT
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-    gaps:
-    - critical_foundation_missing
-    ethics_score: 1
-- input: {}
-  expect:
-    principle_violated: Core AI ethics principles not demonstrated
-    ready_for_epa10: false
-    ethics_score: 1
-    ethics_level: INSUFFICIENT
-    gaps:
-    - critical_foundation_missing
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-- input: {}
-  expect:
-    ethics_level: INSUFFICIENT
-    principle_violated: Core AI ethics principles not demonstrated
-    ready_for_epa10: false
-    ethics_score: 1
-    gaps:
-    - critical_foundation_missing
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-- input: {}
-  expect:
-    ready_for_epa10: false
-    ethics_level: INSUFFICIENT
-    principle_violated: Core AI ethics principles not demonstrated
-    gaps:
-    - critical_foundation_missing
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ethics_score: 1
-- input: {}
-  expect:
-    gaps:
-    - critical_foundation_missing
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ready_for_epa10: false
-    principle_violated: Core AI ethics principles not demonstrated
-- input: {}
-  expect:
-    ethics_score: 1
-    gaps:
-    - critical_foundation_missing
-    principle_violated: Core AI ethics principles not demonstrated
-    ready_for_epa10: false
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ethics_level: INSUFFICIENT
-- input: {}
-  expect:
-    ethics_level: INSUFFICIENT
-    gaps:
-    - critical_foundation_missing
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-    ready_for_epa10: false
-    ethics_score: 1
-- input: {}
-  expect:
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-    ready_for_epa10: false
-    ethics_score: 1
-    gaps:
-    - critical_foundation_missing
-    ethics_level: INSUFFICIENT
-- input: {}
-  expect:
-    ethics_score: 1
-    principle_violated: Core AI ethics principles not demonstrated
-    gaps:
-    - critical_foundation_missing
-    ethics_level: INSUFFICIENT
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ready_for_epa10: false
-- input: {}
-  expect:
-    ethics_score: 1
-    gaps:
-    - critical_foundation_missing
-    ready_for_epa10: false
-    ethics_level: INSUFFICIENT
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-- input: {}
-  expect:
-    ethics_score: 1
-    ready_for_epa10: false
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-    ethics_level: INSUFFICIENT
-    gaps:
-    - critical_foundation_missing
-- input: {}
-  expect:
-    ethics_score: 1
-    gaps:
-    - critical_foundation_missing
-    ethics_level: INSUFFICIENT
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ready_for_epa10: false
-    principle_violated: Core AI ethics principles not demonstrated
-- input: {}
-  expect:
-    ethics_score: 1
-    ethics_level: INSUFFICIENT
-    principle_violated: Core AI ethics principles not demonstrated
-    gaps:
-    - critical_foundation_missing
-    ready_for_epa10: false
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-- input: {}
-  expect:
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-    gaps:
-    - critical_foundation_missing
-    ethics_level: INSUFFICIENT
-    ready_for_epa10: false
-    ethics_score: 1
-- input: {}
-  expect:
-    ethics_level: INSUFFICIENT
-    gaps:
-    - critical_foundation_missing
-    ready_for_epa10: false
-    principle_violated: Core AI ethics principles not demonstrated
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    ethics_score: 1
-- input: {}
-  expect:
-    ethics_level: INSUFFICIENT
-    ready_for_epa10: false
-    gaps:
-    - critical_foundation_missing
-    principle_violated: Core AI ethics principles not demonstrated
-    ethics_score: 1
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-- input: {}
-  expect:
-    remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
-    principle_violated: Core AI ethics principles not demonstrated
-    ethics_score: 1
-    ready_for_epa10: false
-    gaps:
-    - critical_foundation_missing
-    ethics_level: INSUFFICIENT
-# -- covers xba_ppt_tdf_vp (true branch -> DEVELOPING) --
-- input:
-    human_oversight_maintained: true
-    bias_assessment_done: false
-    privacy_protected: true
-    transparency_documented: false
-    validation_protocol_exists: true
-  expect:
-    ethics_level: DEVELOPING
-    ethics_score: 3
-    ready_for_epa10: false
-# -- covers xba_ppt_tdf_vp (false branch -> INSUFFICIENT) --
-- input:
-    human_oversight_maintained: true
-    bias_assessment_done: false
-    privacy_protected: true
-    transparency_documented: false
-    validation_protocol_exists: false
-  expect:
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-    ready_for_epa10: false
-# -- covers xpp_tdf_vp (true branch -> DEVELOPING) --
-- input:
-    human_oversight_maintained: true
-    bias_assessment_done: true
-    privacy_protected: false
-    transparency_documented: false
-    validation_protocol_exists: true
-  expect:
-    ethics_level: DEVELOPING
-    ethics_score: 3
-    ready_for_epa10: false
-# -- covers xpp_tdf_vp (false branch -> INSUFFICIENT) --
-- input:
-    human_oversight_maintained: true
-    bias_assessment_done: true
-    privacy_protected: false
-    transparency_documented: false
-    validation_protocol_exists: false
-  expect:
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-    ready_for_epa10: false
-# -- covers xba_ppf_tdt_vp (true branch -> DEVELOPING) --
-- input:
-    human_oversight_maintained: true
-    bias_assessment_done: false
-    privacy_protected: false
-    transparency_documented: true
-    validation_protocol_exists: true
-  expect:
-    ethics_level: DEVELOPING
-    ethics_score: 3
-    ready_for_epa10: false
-# -- covers xba_ppf_tdt_vp (false branch -> INSUFFICIENT) --
-- input:
-    human_oversight_maintained: true
-    bias_assessment_done: false
-    privacy_protected: false
-    transparency_documented: true
-    validation_protocol_exists: false
-  expect:
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-    ready_for_epa10: false
-# -- covers xho_bat_ppf_td (true branch) + xho_bat_ppf_tdt_vp (true branch -> DEVELOPING) --
-- input:
-    human_oversight_maintained: false
-    bias_assessment_done: true
-    privacy_protected: false
-    transparency_documented: true
-    validation_protocol_exists: true
-  expect:
-    ethics_level: DEVELOPING
-    ethics_score: 3
-    ready_for_epa10: false
-# -- covers xho_bat_ppf_td (true branch) + xho_bat_ppf_tdt_vp (false branch -> INSUFFICIENT) --
-- input:
-    human_oversight_maintained: false
-    bias_assessment_done: true
-    privacy_protected: false
-    transparency_documented: true
-    validation_protocol_exists: false
-  expect:
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-    ready_for_epa10: false
-# -- covers xho_bat_ppf_td (false branch -> INSUFFICIENT) --
-- input:
-    human_oversight_maintained: false
-    bias_assessment_done: true
-    privacy_protected: false
-    transparency_documented: false
-    validation_protocol_exists: true
-  expect:
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-    ready_for_epa10: false
-# -- covers xho_bat_ppt_tdf_vp (true branch -> DEVELOPING) --
-- input:
-    human_oversight_maintained: false
-    bias_assessment_done: true
-    privacy_protected: true
-    transparency_documented: false
-    validation_protocol_exists: true
-  expect:
-    ethics_level: DEVELOPING
-    ethics_score: 3
-    ready_for_epa10: false
-# -- covers xho_bat_ppt_tdf_vp (false branch -> INSUFFICIENT) --
-- input:
-    human_oversight_maintained: false
-    bias_assessment_done: true
-    privacy_protected: true
-    transparency_documented: false
-    validation_protocol_exists: false
-  expect:
-    ethics_level: INSUFFICIENT
-    ethics_score: 1
-    ready_for_epa10: false
-interface:
-  inputs:
-    validation_protocol_exists:
-      type: bool
-      required: false
-    bias_assessment_done:
-      type: bool
-      required: false
-    transparency_documented:
-      type: bool
-      required: false
-    privacy_protected:
-      type: bool
-      required: false
-    human_oversight_maintained:
-      type: bool
-      required: false
-  outputs:
-    ready_for_epa10:
-      type: bool
-      required: false
-    remediation:
-      type: string
-      required: false
-    ethics_score:
-      type: int
-      required: false
-    principle_violated:
-      type: string
-      required: false
-    gaps:
-      type: array
-      required: false
-    ethics_level:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      bias_assessment_done: true
+      transparency_documented: true
+      privacy_protected: true
+      human_oversight_maintained: true
+      validation_protocol_exists: true
+    expect:
+      ready_for_epa10: true
+      ethics_level: EXEMPLARY
+      ethics_score: 5
+  - input:
+      validation_protocol_exists: true
+      bias_assessment_done: true
+      transparency_documented: true
+      human_oversight_maintained: false
+      privacy_protected: true
+    expect:
+      gaps:
+        - human_oversight_maintained
+      ready_for_epa10: true
+      ethics_level: PROFICIENT
+  - input:
+      privacy_protected: true
+      validation_protocol_exists: true
+      human_oversight_maintained: true
+      transparency_documented: true
+      bias_assessment_done: false
+    expect:
+      ethics_level: PROFICIENT
+      ready_for_epa10: true
+      gaps:
+        - bias_assessment_done
+  - input:
+      transparency_documented: true
+      privacy_protected: false
+      bias_assessment_done: true
+      human_oversight_maintained: true
+      validation_protocol_exists: true
+    expect:
+      gaps:
+        - privacy_protected
+      ethics_level: PROFICIENT
+      ready_for_epa10: true
+  - input:
+      validation_protocol_exists: true
+      bias_assessment_done: true
+      human_oversight_maintained: true
+      transparency_documented: false
+      privacy_protected: true
+    expect:
+      gaps:
+        - transparency_documented
+      ethics_level: PROFICIENT
+      ready_for_epa10: true
+  - input:
+      bias_assessment_done: true
+      transparency_documented: true
+      privacy_protected: true
+      human_oversight_maintained: true
+      validation_protocol_exists: false
+    expect:
+      ethics_level: PROFICIENT
+      gaps:
+        - validation_protocol_exists
+      ready_for_epa10: true
+  - input:
+      privacy_protected: true
+      transparency_documented: true
+      human_oversight_maintained: false
+      validation_protocol_exists: true
+      bias_assessment_done: false
+    expect:
+      ethics_level: DEVELOPING
+      ready_for_epa10: false
+  - input:
+      validation_protocol_exists: false
+      transparency_documented: true
+      privacy_protected: true
+      human_oversight_maintained: false
+      bias_assessment_done: true
+    expect:
+      ready_for_epa10: false
+      ethics_level: DEVELOPING
+  - input:
+      human_oversight_maintained: false
+      transparency_documented: true
+      bias_assessment_done: false
+      validation_protocol_exists: true
+      privacy_protected: false
+    expect:
+      ready_for_epa10: false
+      ethics_level: INSUFFICIENT
+  - input:
+      human_oversight_maintained: false
+      bias_assessment_done: false
+      validation_protocol_exists: true
+      privacy_protected: false
+      transparency_documented: false
+    expect:
+      ready_for_epa10: false
+      ethics_level: INSUFFICIENT
+  - input:
+      transparency_documented: false
+      bias_assessment_done: false
+      validation_protocol_exists: false
+      human_oversight_maintained: false
+      privacy_protected: false
+    expect:
+      ethics_level: INSUFFICIENT
+      ready_for_epa10: false
+  - input:
+      validation_protocol_exists: false
+      privacy_protected: false
+      human_oversight_maintained: true
+      bias_assessment_done: false
+      transparency_documented: false
+    expect:
+      ethics_level: INSUFFICIENT
+      ready_for_epa10: false
+  - input: {}
+    expect:
+      ready_for_epa10: false
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      gaps:
+        - critical_foundation_missing
+      principle_violated: Core AI ethics principles not demonstrated
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+  - input: {}
+    expect:
+      ready_for_epa10: false
+      gaps:
+        - critical_foundation_missing
+      ethics_score: 1
+      ethics_level: INSUFFICIENT
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+  - input: {}
+    expect:
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+      gaps:
+        - critical_foundation_missing
+      ready_for_epa10: false
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+  - input: {}
+    expect:
+      ready_for_epa10: false
+      ethics_score: 1
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      gaps:
+        - critical_foundation_missing
+      principle_violated: Core AI ethics principles not demonstrated
+      ethics_level: INSUFFICIENT
+  - input: {}
+    expect:
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ready_for_epa10: false
+      gaps:
+        - critical_foundation_missing
+      principle_violated: Core AI ethics principles not demonstrated
+      ethics_score: 1
+      ethics_level: INSUFFICIENT
+  - input: {}
+    expect:
+      ethics_level: INSUFFICIENT
+      principle_violated: Core AI ethics principles not demonstrated
+      ready_for_epa10: false
+      ethics_score: 1
+      gaps:
+        - critical_foundation_missing
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+  - input: {}
+    expect:
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ready_for_epa10: false
+      ethics_score: 1
+      gaps:
+        - critical_foundation_missing
+      principle_violated: Core AI ethics principles not demonstrated
+      ethics_level: INSUFFICIENT
+  - input: {}
+    expect:
+      gaps:
+        - critical_foundation_missing
+      ready_for_epa10: false
+      ethics_score: 1
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ethics_level: INSUFFICIENT
+      principle_violated: Core AI ethics principles not demonstrated
+  - input: {}
+    expect:
+      ready_for_epa10: false
+      ethics_level: INSUFFICIENT
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+      gaps:
+        - critical_foundation_missing
+      ethics_score: 1
+  - input: {}
+    expect:
+      principle_violated: Core AI ethics principles not demonstrated
+      ready_for_epa10: false
+      ethics_score: 1
+      ethics_level: INSUFFICIENT
+      gaps:
+        - critical_foundation_missing
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+  - input: {}
+    expect:
+      ethics_level: INSUFFICIENT
+      principle_violated: Core AI ethics principles not demonstrated
+      ready_for_epa10: false
+      ethics_score: 1
+      gaps:
+        - critical_foundation_missing
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+  - input: {}
+    expect:
+      ready_for_epa10: false
+      ethics_level: INSUFFICIENT
+      principle_violated: Core AI ethics principles not demonstrated
+      gaps:
+        - critical_foundation_missing
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ethics_score: 1
+  - input: {}
+    expect:
+      gaps:
+        - critical_foundation_missing
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ready_for_epa10: false
+      principle_violated: Core AI ethics principles not demonstrated
+  - input: {}
+    expect:
+      ethics_score: 1
+      gaps:
+        - critical_foundation_missing
+      principle_violated: Core AI ethics principles not demonstrated
+      ready_for_epa10: false
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ethics_level: INSUFFICIENT
+  - input: {}
+    expect:
+      ethics_level: INSUFFICIENT
+      gaps:
+        - critical_foundation_missing
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+      ready_for_epa10: false
+      ethics_score: 1
+  - input: {}
+    expect:
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+      ready_for_epa10: false
+      ethics_score: 1
+      gaps:
+        - critical_foundation_missing
+      ethics_level: INSUFFICIENT
+  - input: {}
+    expect:
+      ethics_score: 1
+      principle_violated: Core AI ethics principles not demonstrated
+      gaps:
+        - critical_foundation_missing
+      ethics_level: INSUFFICIENT
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ready_for_epa10: false
+  - input: {}
+    expect:
+      ethics_score: 1
+      gaps:
+        - critical_foundation_missing
+      ready_for_epa10: false
+      ethics_level: INSUFFICIENT
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+  - input: {}
+    expect:
+      ethics_score: 1
+      ready_for_epa10: false
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+      ethics_level: INSUFFICIENT
+      gaps:
+        - critical_foundation_missing
+  - input: {}
+    expect:
+      ethics_score: 1
+      gaps:
+        - critical_foundation_missing
+      ethics_level: INSUFFICIENT
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ready_for_epa10: false
+      principle_violated: Core AI ethics principles not demonstrated
+  - input: {}
+    expect:
+      ethics_score: 1
+      ethics_level: INSUFFICIENT
+      principle_violated: Core AI ethics principles not demonstrated
+      gaps:
+        - critical_foundation_missing
+      ready_for_epa10: false
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+  - input: {}
+    expect:
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+      gaps:
+        - critical_foundation_missing
+      ethics_level: INSUFFICIENT
+      ready_for_epa10: false
+      ethics_score: 1
+  - input: {}
+    expect:
+      ethics_level: INSUFFICIENT
+      gaps:
+        - critical_foundation_missing
+      ready_for_epa10: false
+      principle_violated: Core AI ethics principles not demonstrated
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      ethics_score: 1
+  - input: {}
+    expect:
+      ethics_level: INSUFFICIENT
+      ready_for_epa10: false
+      gaps:
+        - critical_foundation_missing
+      principle_violated: Core AI ethics principles not demonstrated
+      ethics_score: 1
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+  - input: {}
+    expect:
+      remediation: Comprehensive AI ethics training required — complete foundational modules before advanced PV work
+      principle_violated: Core AI ethics principles not demonstrated
+      ethics_score: 1
+      ready_for_epa10: false
+      gaps:
+        - critical_foundation_missing
+      ethics_level: INSUFFICIENT
+  - input:
+      human_oversight_maintained: true
+      bias_assessment_done: false
+      privacy_protected: true
+      transparency_documented: false
+      validation_protocol_exists: true
+    expect:
+      ethics_level: DEVELOPING
+      ethics_score: 3
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: true
+      bias_assessment_done: false
+      privacy_protected: true
+      transparency_documented: false
+      validation_protocol_exists: false
+    expect:
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: true
+      bias_assessment_done: true
+      privacy_protected: false
+      transparency_documented: false
+      validation_protocol_exists: true
+    expect:
+      ethics_level: DEVELOPING
+      ethics_score: 3
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: true
+      bias_assessment_done: true
+      privacy_protected: false
+      transparency_documented: false
+      validation_protocol_exists: false
+    expect:
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: true
+      bias_assessment_done: false
+      privacy_protected: false
+      transparency_documented: true
+      validation_protocol_exists: true
+    expect:
+      ethics_level: DEVELOPING
+      ethics_score: 3
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: true
+      bias_assessment_done: false
+      privacy_protected: false
+      transparency_documented: true
+      validation_protocol_exists: false
+    expect:
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: false
+      bias_assessment_done: true
+      privacy_protected: false
+      transparency_documented: true
+      validation_protocol_exists: true
+    expect:
+      ethics_level: DEVELOPING
+      ethics_score: 3
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: false
+      bias_assessment_done: true
+      privacy_protected: false
+      transparency_documented: true
+      validation_protocol_exists: false
+    expect:
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: false
+      bias_assessment_done: true
+      privacy_protected: false
+      transparency_documented: false
+      validation_protocol_exists: true
+    expect:
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: false
+      bias_assessment_done: true
+      privacy_protected: true
+      transparency_documented: false
+      validation_protocol_exists: true
+    expect:
+      ethics_level: DEVELOPING
+      ethics_score: 3
+      ready_for_epa10: false
+  - input:
+      human_oversight_maintained: false
+      bias_assessment_done: true
+      privacy_protected: true
+      transparency_documented: false
+      validation_protocol_exists: false
+    expect:
+      ethics_level: INSUFFICIENT
+      ethics_score: 1
+      ready_for_epa10: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ready_for_epa10
+    - remediation
+    - ethics_score
+    - principle_violated
+    - gaps
+    - ethics_level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

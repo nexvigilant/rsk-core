@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: action-router
-description: 'Route flywheel composite health actions to specific remediation strategies. GREEN→no-op, YELLOW→monitor path, RED→intervention cascade.'
 version: 0.1.0
+description: Route flywheel composite health actions to specific remediation strategies. GREEN→no-op, YELLOW→monitor path, RED→intervention cascade.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: action
+    type: string
+    required: false
+    description: ""
+  - name: degraded_dimension
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: steps
+    type: array
+  - name: strategy
+    type: string
 interface:
   inputs:
     action:
@@ -14,6 +38,33 @@ interface:
       type: array
     strategy:
       type: string
+ui:
+  title: Action Router
+  subtitle: Route flywheel composite health actions to specific remediation strategies. GREEN→no-op, YELLOW→monitor path, RED→intervention cascade.
+  icon: circle
+  route: /vigilance/mg/action-router
+  steps:
+    - field: action
+      label: action
+      help: Enter action
+      widget: text
+      placeholder: null
+    - field: degraded_dimension
+      label: degraded dimension
+      help: Enter degraded_dimension
+      widget: text
+      placeholder: null
+  result:
+    template: "steps: {{steps}} — strategy: {{strategy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/action-router
+  cli: rsk mcg run action-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_action
   nodes:
@@ -113,77 +164,104 @@ tree:
         strategy: NO_OP
         steps: []
 tests:
-# GREEN path
-- input:
-    action: none
-    degraded_dimension: none
-  expect:
-    strategy: NO_OP
-    steps: []
-# YELLOW: velocity degradation
-- input:
-    action: monitor
-    degraded_dimension: velocity
-  expect:
-    strategy: MONITOR_VELOCITY
-    steps:
-      - check_bottleneck_crates
-      - review_session_velocity_trend
-      - adjust_wiring_priority
-# YELLOW: event health degradation
-- input:
-    action: monitor
-    degraded_dimension: events
-  expect:
-    strategy: MONITOR_EVENTS
-    steps:
-      - drain_pending_events
-      - verify_consumer_health
-      - check_bus_backlog
-# YELLOW: coverage degradation
-- input:
-    action: monitor
-    degraded_dimension: coverage
-  expect:
-    strategy: MONITOR_COVERAGE
-    steps:
-      - identify_dormant_nodes
-      - wire_missing_emitters
-      - promote_ready_nodes
-# RED: velocity critical
-- input:
-    action: intervene
-    degraded_dimension: velocity
-  expect:
-    strategy: INTERVENE_VELOCITY
-    steps:
-      - escalate_to_session_lead
-      - identify_stalled_chains
-      - emergency_scope_reduction
-# RED: events critical
-- input:
-    action: intervene
-    degraded_dimension: events
-  expect:
-    strategy: INTERVENE_EVENTS
-    steps:
-      - verify_mcp_server_health
-      - restart_flywheel_bus
-      - rewire_dead_emitters
-# RED: coverage critical
-- input:
-    action: intervene
-    degraded_dimension: coverage
-  expect:
-    strategy: INTERVENE_COVERAGE
-    steps:
-      - audit_node_registry
-      - rebuild_missing_bridges
-      - force_promote_if_emitters_exist
-- input: {}
-  expect:
-    steps:
-      - audit_node_registry
-      - rebuild_missing_bridges
-      - force_promote_if_emitters_exist
-    strategy: INTERVENE_COVERAGE
+  - input:
+      action: none
+      degraded_dimension: none
+    expect:
+      strategy: NO_OP
+      steps: []
+  - input:
+      action: monitor
+      degraded_dimension: velocity
+    expect:
+      strategy: MONITOR_VELOCITY
+      steps:
+        - check_bottleneck_crates
+        - review_session_velocity_trend
+        - adjust_wiring_priority
+  - input:
+      action: monitor
+      degraded_dimension: events
+    expect:
+      strategy: MONITOR_EVENTS
+      steps:
+        - drain_pending_events
+        - verify_consumer_health
+        - check_bus_backlog
+  - input:
+      action: monitor
+      degraded_dimension: coverage
+    expect:
+      strategy: MONITOR_COVERAGE
+      steps:
+        - identify_dormant_nodes
+        - wire_missing_emitters
+        - promote_ready_nodes
+  - input:
+      action: intervene
+      degraded_dimension: velocity
+    expect:
+      strategy: INTERVENE_VELOCITY
+      steps:
+        - escalate_to_session_lead
+        - identify_stalled_chains
+        - emergency_scope_reduction
+  - input:
+      action: intervene
+      degraded_dimension: events
+    expect:
+      strategy: INTERVENE_EVENTS
+      steps:
+        - verify_mcp_server_health
+        - restart_flywheel_bus
+        - rewire_dead_emitters
+  - input:
+      action: intervene
+      degraded_dimension: coverage
+    expect:
+      strategy: INTERVENE_COVERAGE
+      steps:
+        - audit_node_registry
+        - rebuild_missing_bridges
+        - force_promote_if_emitters_exist
+  - input: {}
+    expect:
+      steps:
+        - audit_node_registry
+        - rebuild_missing_bridges
+        - force_promote_if_emitters_exist
+      strategy: INTERVENE_COVERAGE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - steps
+    - strategy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

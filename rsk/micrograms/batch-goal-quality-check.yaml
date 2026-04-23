@@ -1,12 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: batch-goal-quality-check
-description: Classifies a SMART goal batch by count — zero goals (empty session), few (focused), many (ambitious), excessive (overloaded). Pre-filter before per-goal quality scoring.
 version: 0.1.0
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(goal_count, band_thresholds) — batch-level session health gate before per-goal analysis'
-  primes: ['κ', '∂', 'N']
-  arguments: ['goal_count']
-  chain_prediction: 'κ on count. Chains with smart-goal-quality (per-goal) — this is the batch-level pre-filter that catches empty and overloaded sessions.'
+description: Classifies a SMART goal batch by count — zero goals (empty session), few (focused), many (ambitious), excessive (overloaded). Pre-filter before per-goal quality scoring.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: goal_count
+    type: int
+    required: true
+    description: ""
+outputs:
+  - name: batch_tier
+    type: string
+  - name: healthy
+    type: bool
 interface:
   inputs:
     goal_count:
@@ -17,6 +31,28 @@ interface:
       type: string
     healthy:
       type: bool
+ui:
+  title: Batch Goal Quality Check
+  subtitle: Classifies a SMART goal batch by count — zero goals (empty session), few (focused), many (ambitious), excessive (overloaded). Pre-filter before per-goal quality scoring.
+  icon: circle
+  route: /vigilance/mg/batch-goal-quality-check
+  steps:
+    - field: goal_count
+      label: goal count
+      help: Enter goal_count
+      widget: text
+      placeholder: null
+  result:
+    template: "batch_tier: {{batch_tier}} — healthy: {{healthy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/batch-goal-quality-check
+  cli: rsk mcg run batch-goal-quality-check
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_excessive
   nodes:
@@ -44,45 +80,79 @@ tree:
     ret_excessive:
       type: return
       value:
-        batch_tier: "excessive"
+        batch_tier: excessive
         healthy: false
     ret_ambitious:
       type: return
       value:
-        batch_tier: "ambitious"
+        batch_tier: ambitious
         healthy: true
     ret_focused:
       type: return
       value:
-        batch_tier: "focused"
+        batch_tier: focused
         healthy: true
     ret_empty:
       type: return
       value:
-        batch_tier: "empty"
+        batch_tier: empty
         healthy: false
 tests:
-- input:
-    goal_count: 0
-  expect:
-    batch_tier: "empty"
-    healthy: false
-- input:
-    goal_count: 3
-  expect:
-    batch_tier: "focused"
-    healthy: true
-- input:
-    goal_count: 6
-  expect:
-    batch_tier: "ambitious"
-    healthy: true
-- input:
-    goal_count: 10
-  expect:
-    batch_tier: "excessive"
-    healthy: false
-- input: {}
-  expect:
-    batch_tier: "empty"
-    healthy: false
+  - input:
+      goal_count: 0
+    expect:
+      batch_tier: empty
+      healthy: false
+  - input:
+      goal_count: 3
+    expect:
+      batch_tier: focused
+      healthy: true
+  - input:
+      goal_count: 6
+    expect:
+      batch_tier: ambitious
+      healthy: true
+  - input:
+      goal_count: 10
+    expect:
+      batch_tier: excessive
+      healthy: false
+  - input: {}
+    expect:
+      batch_tier: empty
+      healthy: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - batch_tier
+    - healthy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

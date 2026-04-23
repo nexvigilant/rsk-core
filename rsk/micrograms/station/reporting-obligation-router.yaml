@@ -1,8 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: reporting-obligation-router
-description: Routes serious adverse event reports to appropriate regulatory authorities
-  based on occurrence location, marketing authorization, seriousness, and urgency.
-  Determines submission method.
 version: 0.1.0
+description: Routes serious adverse event reports to appropriate regulatory authorities based on occurrence location, marketing authorization, seriousness, and urgency. Determines submission method.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: country_of_occurrence
+    type: string
+    required: false
+    description: ""
+  - name: marketing_authorization_holder
+    type: bool
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_expedited
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: authority
+    type: string
+  - name: submission_method
+    type: string
 interface:
   inputs:
     country_of_occurrence:
@@ -22,6 +52,43 @@ interface:
       type: string
     submission_method:
       type: string
+ui:
+  title: Reporting Obligation Router
+  subtitle: Routes serious adverse event reports to appropriate regulatory authorities based on occurrence location, marketing authorization, seriousness, and urgency. Determines submission method.
+  icon: circle
+  route: /vigilance/mg/reporting-obligation-router
+  steps:
+    - field: country_of_occurrence
+      label: country of occurrence
+      help: Enter country_of_occurrence
+      widget: text
+      placeholder: null
+    - field: marketing_authorization_holder
+      label: marketing authorization holder
+      help: Enter marketing_authorization_holder
+      widget: toggle
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_expedited
+      label: is expedited
+      help: Enter is_expedited
+      widget: toggle
+      placeholder: null
+  result:
+    template: "authority: {{authority}} — submission_method: {{submission_method}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/reporting-obligation-router
+  cli: rsk mcg run reporting-obligation-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_country
   nodes:
@@ -139,87 +206,121 @@ tree:
         authority: multiple
         submission_method: local_health_authority_standard
 tests:
-- input:
-    country_of_occurrence: AU
-    is_expedited: false
-    is_serious: false
-    marketing_authorization_holder: false
-  expect:
-    authority: TGA
-    submission_method: TGA_DAEN
-- input:
-    country_of_occurrence: EU
-    is_expedited: false
-    is_serious: false
-    marketing_authorization_holder: false
-  expect:
-    authority: EMA
-    submission_method: eudravigilance_standard
-- input:
-    country_of_occurrence: EU
-    is_expedited: false
-    is_serious: false
-    marketing_authorization_holder: true
-  expect:
-    authority: EMA
-    submission_method: eudravigilance_standard
-- input:
-    country_of_occurrence: EU
-    is_expedited: true
-    is_serious: false
-    marketing_authorization_holder: true
-  expect:
-    authority: EMA
-    submission_method: eudravigilance_urgent
-- input:
-    country_of_occurrence: JP
-    is_expedited: false
-    is_serious: false
-    marketing_authorization_holder: false
-  expect:
-    authority: PMDA
-    submission_method: periodic_safety_update
-- input:
-    country_of_occurrence: JP
-    is_expedited: false
-    is_serious: true
-    marketing_authorization_holder: false
-  expect:
-    authority: PMDA
-    submission_method: PMDA_serious_adverse_event
-- input:
-    country_of_occurrence: UK
-    is_expedited: false
-    is_serious: false
-    marketing_authorization_holder: false
-  expect:
-    authority: MHRA
-    submission_method: periodic_submission
-- input:
-    country_of_occurrence: UK
-    is_expedited: false
-    is_serious: true
-    marketing_authorization_holder: false
-  expect:
-    authority: MHRA
-    submission_method: MHRA_report
-- input:
-    country_of_occurrence: US
-    is_expedited: false
-    is_serious: false
-    marketing_authorization_holder: false
-  expect:
-    authority: FDA
-    submission_method: MedWatch_E2A
-- input:
-    country_of_occurrence: ZZZZZ_NO_MATCH
-    is_expedited: false
-    is_serious: false
-    marketing_authorization_holder: false
-  expect:
-    authority: multiple
-    submission_method: local_health_authority_standard
-- input: {}
-  expect:
-    authority: multiple
-    submission_method: local_health_authority_standard
+  - input:
+      country_of_occurrence: AU
+      is_expedited: false
+      is_serious: false
+      marketing_authorization_holder: false
+    expect:
+      authority: TGA
+      submission_method: TGA_DAEN
+  - input:
+      country_of_occurrence: EU
+      is_expedited: false
+      is_serious: false
+      marketing_authorization_holder: false
+    expect:
+      authority: EMA
+      submission_method: eudravigilance_standard
+  - input:
+      country_of_occurrence: EU
+      is_expedited: false
+      is_serious: false
+      marketing_authorization_holder: true
+    expect:
+      authority: EMA
+      submission_method: eudravigilance_standard
+  - input:
+      country_of_occurrence: EU
+      is_expedited: true
+      is_serious: false
+      marketing_authorization_holder: true
+    expect:
+      authority: EMA
+      submission_method: eudravigilance_urgent
+  - input:
+      country_of_occurrence: JP
+      is_expedited: false
+      is_serious: false
+      marketing_authorization_holder: false
+    expect:
+      authority: PMDA
+      submission_method: periodic_safety_update
+  - input:
+      country_of_occurrence: JP
+      is_expedited: false
+      is_serious: true
+      marketing_authorization_holder: false
+    expect:
+      authority: PMDA
+      submission_method: PMDA_serious_adverse_event
+  - input:
+      country_of_occurrence: UK
+      is_expedited: false
+      is_serious: false
+      marketing_authorization_holder: false
+    expect:
+      authority: MHRA
+      submission_method: periodic_submission
+  - input:
+      country_of_occurrence: UK
+      is_expedited: false
+      is_serious: true
+      marketing_authorization_holder: false
+    expect:
+      authority: MHRA
+      submission_method: MHRA_report
+  - input:
+      country_of_occurrence: US
+      is_expedited: false
+      is_serious: false
+      marketing_authorization_holder: false
+    expect:
+      authority: FDA
+      submission_method: MedWatch_E2A
+  - input:
+      country_of_occurrence: ZZZZZ_NO_MATCH
+      is_expedited: false
+      is_serious: false
+      marketing_authorization_holder: false
+    expect:
+      authority: multiple
+      submission_method: local_health_authority_standard
+  - input: {}
+    expect:
+      authority: multiple
+      submission_method: local_health_authority_standard
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - authority
+    - submission_method
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

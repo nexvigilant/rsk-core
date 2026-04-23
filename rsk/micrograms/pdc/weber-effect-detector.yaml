@@ -1,23 +1,54 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: weber-effect-detector
-description: "Detect Weber effect (enterohepatic recycling analog) — reporting rate spike following a regulatory action (label change, DHPC, safety communication). A label change that generates new reports creates a feedback loop where Excrete feeds back into Absorb."
 version: 0.1.0
-primitive_signature:
-  dominant: frequency
-  expression: "ν(post_action) / ν(pre_action) > threshold → Weber effect"
-  primes: [frequency, causality, state]
-  arguments:
-    - pre_action_rate
-    - post_action_rate
+description: Detect Weber effect (enterohepatic recycling analog) — reporting rate spike following a regulatory action (label change, DHPC, safety communication). A label change that generates new reports creates a feedback loop where Excrete feeds back into Absorb.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: pre_action_rate
+    type: float
+    required: true
+    description: Reports per quarter before regulatory action
+  - name: post_action_rate
+    type: float
+    required: true
+    description: Reports per quarter after regulatory action
+  - name: action_type
+    type: string
+    required: false
+    description: "Type of regulatory action: label_change, dhpc, dear_doctor, withdrawal, rems"
+  - name: quarters_since_action
+    type: int
+    required: false
+    description: Number of quarters since the regulatory action
+outputs:
+  - name: weber_detected
+    type: bool
+  - name: rate_ratio
+    type: float
+  - name: weber_severity
+    type: string
+  - name: interpretation
+    type: string
+  - name: pipeline_impact
+    type: string
 interface:
   inputs:
     pre_action_rate:
       type: float
       required: true
-      description: "Reports per quarter before regulatory action"
+      description: Reports per quarter before regulatory action
     post_action_rate:
       type: float
       required: true
-      description: "Reports per quarter after regulatory action"
+      description: Reports per quarter after regulatory action
     action_type:
       type: string
       required: false
@@ -25,7 +56,7 @@ interface:
     quarters_since_action:
       type: int
       required: false
-      description: "Number of quarters since the regulatory action"
+      description: Number of quarters since the regulatory action
   outputs:
     weber_detected:
       type: bool
@@ -37,6 +68,43 @@ interface:
       type: string
     pipeline_impact:
       type: string
+ui:
+  title: Weber Effect Detector
+  subtitle: Detect Weber effect (enterohepatic recycling analog) — reporting rate spike following a regulatory action (label change, DHPC, safety communication). A label change that generates new reports creates a feedback loop where Excrete feeds back into Absorb.
+  icon: circle
+  route: /vigilance/mg/weber-effect-detector
+  steps:
+    - field: pre_action_rate
+      label: pre action rate
+      help: Reports per quarter before regulatory action
+      widget: text
+      placeholder: null
+    - field: post_action_rate
+      label: post action rate
+      help: Reports per quarter after regulatory action
+      widget: text
+      placeholder: null
+    - field: action_type
+      label: action type
+      help: "Type of regulatory action: label_change, dhpc, dear_doctor, withdrawal, rems"
+      widget: text
+      placeholder: null
+    - field: quarters_since_action
+      label: quarters since action
+      help: Number of quarters since the regulatory action
+      widget: text
+      placeholder: null
+  result:
+    template: "weber_detected: {{weber_detected}} — rate_ratio: {{rate_ratio}} — weber_severity: {{weber_severity}} — interpretation: {{interpretation}} — pipeline_impact: {{pipeline_impact}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/weber-effect-detector
+  cli: rsk mcg run weber-effect-detector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_pre_null
   nodes:
@@ -47,7 +115,6 @@ tree:
       value: null
       true_next: no_baseline
       false_next: check_pre_rate
-
     check_pre_rate:
       type: condition
       variable: pre_action_rate
@@ -55,16 +122,14 @@ tree:
       value: 0
       true_next: no_baseline
       false_next: compute_ratio
-
     no_baseline:
       type: return
       value:
         weber_detected: false
         rate_ratio: 0
         weber_severity: INDETERMINATE
-        interpretation: "No pre-action baseline — cannot assess Weber effect"
-        pipeline_impact: "none"
-
+        interpretation: No pre-action baseline — cannot assess Weber effect
+        pipeline_impact: none
     compute_ratio:
       type: condition
       variable: post_action_rate
@@ -72,16 +137,14 @@ tree:
       value: 0
       true_next: check_spike_severe
       false_next: reporting_ceased
-
     reporting_ceased:
       type: return
       value:
         weber_detected: false
         rate_ratio: 0
         weber_severity: NONE
-        interpretation: "Reporting ceased post-action — no Weber effect, possible withdrawal from market"
-        pipeline_impact: "none"
-
+        interpretation: Reporting ceased post-action — no Weber effect, possible withdrawal from market
+        pipeline_impact: none
     check_spike_severe:
       type: condition
       variable: post_action_rate
@@ -89,7 +152,6 @@ tree:
       value: 500
       true_next: check_ratio_severe
       false_next: check_spike_moderate
-
     check_ratio_severe:
       type: condition
       variable: pre_action_rate
@@ -97,15 +159,13 @@ tree:
       value: 100
       true_next: severe_weber
       false_next: check_spike_moderate
-
     severe_weber:
       type: return
       value:
         weber_detected: true
         weber_severity: SEVERE
         interpretation: "Severe Weber effect — reporting rate increased >5x post-action. Signal pipeline is recycling: regulatory action generated reports re-entering Absorb stage."
-        pipeline_impact: "Adjust signal thresholds — current PRR/ROR inflated by stimulated reporting. Apply Weber correction before disproportionality computation."
-
+        pipeline_impact: Adjust signal thresholds — current PRR/ROR inflated by stimulated reporting. Apply Weber correction before disproportionality computation.
     check_spike_moderate:
       type: condition
       variable: post_action_rate
@@ -113,7 +173,6 @@ tree:
       value: 200
       true_next: check_ratio_moderate
       false_next: check_mild
-
     check_ratio_moderate:
       type: condition
       variable: pre_action_rate
@@ -121,15 +180,13 @@ tree:
       value: 100
       true_next: moderate_weber
       false_next: check_mild
-
     moderate_weber:
       type: return
       value:
         weber_detected: true
         weber_severity: MODERATE
-        interpretation: "Moderate Weber effect — reporting rate increased 2-5x post-action. Stimulated reporting inflating signal metrics."
-        pipeline_impact: "Flag signals detected in post-action window as potentially Weber-inflated. Cross-reference with pre-action signal strength."
-
+        interpretation: Moderate Weber effect — reporting rate increased 2-5x post-action. Stimulated reporting inflating signal metrics.
+        pipeline_impact: Flag signals detected in post-action window as potentially Weber-inflated. Cross-reference with pre-action signal strength.
     check_mild:
       type: condition
       variable: post_action_rate
@@ -137,7 +194,6 @@ tree:
       value: 120
       true_next: check_ratio_mild
       false_next: no_weber
-
     check_ratio_mild:
       type: condition
       variable: pre_action_rate
@@ -145,88 +201,115 @@ tree:
       value: 100
       true_next: mild_weber
       false_next: no_weber
-
     mild_weber:
       type: return
       value:
         weber_detected: true
         weber_severity: MILD
-        interpretation: "Mild Weber effect — reporting rate increased 1.2-2x post-action. Expected awareness effect from safety communication."
-        pipeline_impact: "Monitor for 2-4 quarters — mild Weber typically decays to baseline. No threshold adjustment needed."
-
+        interpretation: Mild Weber effect — reporting rate increased 1.2-2x post-action. Expected awareness effect from safety communication.
+        pipeline_impact: Monitor for 2-4 quarters — mild Weber typically decays to baseline. No threshold adjustment needed.
     no_weber:
       type: return
       value:
         weber_detected: false
         weber_severity: NONE
-        interpretation: "No Weber effect detected — reporting rate stable or decreased post-action"
-        pipeline_impact: "none"
-
+        interpretation: No Weber effect detected — reporting rate stable or decreased post-action
+        pipeline_impact: none
 tests:
-- name: severe Weber — label change causes 10x spike
-  input:
-    pre_action_rate: 50
-    post_action_rate: 500
-    action_type: label_change
-  expect:
-    weber_detected: true
-    weber_severity: SEVERE
-
-- name: moderate Weber — DHPC causes 3x spike
-  input:
-    pre_action_rate: 80
-    post_action_rate: 250
-    action_type: dhpc
-  expect:
-    weber_detected: true
-    weber_severity: MODERATE
-
-- name: mild Weber — awareness causes 1.5x increase
-  input:
-    pre_action_rate: 90
-    post_action_rate: 130
-    action_type: dear_doctor
-  expect:
-    weber_detected: true
-    weber_severity: MILD
-
-- name: no Weber — rate stable post-action
-  input:
-    pre_action_rate: 100
-    post_action_rate: 105
-    action_type: label_change
-  expect:
-    weber_detected: false
-    weber_severity: NONE
-
-- name: reporting ceased — possible market withdrawal
-  input:
-    pre_action_rate: 200
-    post_action_rate: 0
-    action_type: withdrawal
-  expect:
-    weber_detected: false
-    weber_severity: NONE
-
-- name: no baseline — cannot assess
-  input:
-    pre_action_rate: 0
-    post_action_rate: 100
-  expect:
-    weber_detected: false
-    weber_severity: INDETERMINATE
-
-- name: null safety
-  input: {}
-  expect:
-    weber_detected: false
-    weber_severity: INDETERMINATE
-
-- name: high baseline with proportional increase — not Weber
-  input:
-    pre_action_rate: 500
-    post_action_rate: 600
-    action_type: label_change
-  expect:
-    weber_detected: false
-    weber_severity: NONE
+  - name: severe Weber — label change causes 10x spike
+    input:
+      pre_action_rate: 50
+      post_action_rate: 500
+      action_type: label_change
+    expect:
+      weber_detected: true
+      weber_severity: SEVERE
+  - name: moderate Weber — DHPC causes 3x spike
+    input:
+      pre_action_rate: 80
+      post_action_rate: 250
+      action_type: dhpc
+    expect:
+      weber_detected: true
+      weber_severity: MODERATE
+  - name: mild Weber — awareness causes 1.5x increase
+    input:
+      pre_action_rate: 90
+      post_action_rate: 130
+      action_type: dear_doctor
+    expect:
+      weber_detected: true
+      weber_severity: MILD
+  - name: no Weber — rate stable post-action
+    input:
+      pre_action_rate: 100
+      post_action_rate: 105
+      action_type: label_change
+    expect:
+      weber_detected: false
+      weber_severity: NONE
+  - name: reporting ceased — possible market withdrawal
+    input:
+      pre_action_rate: 200
+      post_action_rate: 0
+      action_type: withdrawal
+    expect:
+      weber_detected: false
+      weber_severity: NONE
+  - name: no baseline — cannot assess
+    input:
+      pre_action_rate: 0
+      post_action_rate: 100
+    expect:
+      weber_detected: false
+      weber_severity: INDETERMINATE
+  - name: null safety
+    input: {}
+    expect:
+      weber_detected: false
+      weber_severity: INDETERMINATE
+  - name: high baseline with proportional increase — not Weber
+    input:
+      pre_action_rate: 500
+      post_action_rate: 600
+      action_type: label_change
+    expect:
+      weber_detected: false
+      weber_severity: NONE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - weber_detected
+    - rate_ratio
+    - weber_severity
+    - interpretation
+    - pipeline_impact
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,7 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: adapt-risk-tier
-description: "Adapter: convert risk_tier from DailyMed/recall configmigrams to signal pipeline inputs"
 version: 0.1.0
-
+description: "Adapter: convert risk_tier from DailyMed/recall configmigrams to signal pipeline inputs"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: risk_tier
+    type: string
+    required: false
+    description: "From config-dailymed-adr-risk: critical, high, moderate, low"
+  - name: urgency
+    type: string
+    required: false
+    description: "From config-fda-recall-severity: critical, high, moderate, low, informational"
+outputs:
+  - name: signal_detected
+    type: bool
+  - name: is_serious
+    type: bool
+  - name: prr
+    type: float
 interface:
   inputs:
     risk_tier:
@@ -19,7 +44,33 @@ interface:
       type: bool
     prr:
       type: float
-
+ui:
+  title: Adapt Risk Tier
+  subtitle: "Adapter: convert risk_tier from DailyMed/recall configmigrams to signal pipeline inputs"
+  icon: circle
+  route: /vigilance/mg/adapt-risk-tier
+  steps:
+    - field: risk_tier
+      label: risk tier
+      help: "From config-dailymed-adr-risk: critical, high, moderate, low"
+      widget: text
+      placeholder: null
+    - field: urgency
+      label: urgency
+      help: "From config-fda-recall-severity: critical, high, moderate, low, informational"
+      widget: text
+      placeholder: null
+  result:
+    template: "signal_detected: {{signal_detected}} — is_serious: {{is_serious}} — prr: {{prr}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/adapt-risk-tier
+  cli: rsk mcg run adapt-risk-tier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_risk_tier
   nodes:
@@ -29,111 +80,164 @@ tree:
       operator: is_null
       true_next: check_urgency
       false_next: check_critical_risk
-
     check_critical_risk:
       type: condition
       variable: risk_tier
       operator: eq
-      value: "critical"
+      value: critical
       true_next: critical_out
       false_next: check_high_risk
-
     check_high_risk:
       type: condition
       variable: risk_tier
       operator: eq
-      value: "high"
+      value: high
       true_next: high_out
       false_next: check_moderate_risk
-
     check_moderate_risk:
       type: condition
       variable: risk_tier
       operator: eq
-      value: "moderate"
+      value: moderate
       true_next: moderate_out
       false_next: low_out
-
     check_urgency:
       type: condition
       variable: urgency
       operator: is_null
       true_next: low_out
       false_next: check_critical_urgency
-
     check_critical_urgency:
       type: condition
       variable: urgency
       operator: eq
-      value: "critical"
+      value: critical
       true_next: critical_out
       false_next: check_high_urgency
-
     check_high_urgency:
       type: condition
       variable: urgency
       operator: eq
-      value: "high"
+      value: high
       true_next: high_out
       false_next: check_moderate_urgency
-
     check_moderate_urgency:
       type: condition
       variable: urgency
       operator: eq
-      value: "moderate"
+      value: moderate
       true_next: moderate_out
       false_next: low_out
-
     critical_out:
       type: return
       value:
         signal_detected: true
         is_serious: true
-        prr: 8.0
-
+        prr: 8
     high_out:
       type: return
       value:
         signal_detected: true
         is_serious: true
-        prr: 5.0
-
+        prr: 5
     moderate_out:
       type: return
       value:
         signal_detected: true
         is_serious: false
         prr: 2.5
-
     low_out:
       type: return
       value:
         signal_detected: false
         is_serious: false
         prr: 0.5
-
-primitive_signature:
-  dominant: 'μ'
-  expression: 'μ — domain mapping or format conversion'
-  primes: ['μ']
-  arguments: []
 tests:
-  - input: { risk_tier: "critical" }
-    expect: { signal_detected: true, is_serious: true, prr: 8.0 }
-  - input: { risk_tier: "high" }
-    expect: { signal_detected: true, is_serious: true, prr: 5.0 }
-  - input: { risk_tier: "moderate" }
-    expect: { signal_detected: true, is_serious: false, prr: 2.5 }
-  - input: { risk_tier: "low" }
-    expect: { signal_detected: false, is_serious: false, prr: 0.5 }
-  - input: { urgency: "critical" }
-    expect: { signal_detected: true, is_serious: true, prr: 8.0 }
-  - input: { urgency: "high" }
-    expect: { signal_detected: true, is_serious: true, prr: 5.0 }
-  - input: { urgency: "moderate" }
-    expect: { signal_detected: true, is_serious: false, prr: 2.5 }
-  - input: { urgency: "low" }
-    expect: { signal_detected: false, is_serious: false, prr: 0.5 }
+  - input:
+      risk_tier: critical
+    expect:
+      signal_detected: true
+      is_serious: true
+      prr: 8
+  - input:
+      risk_tier: high
+    expect:
+      signal_detected: true
+      is_serious: true
+      prr: 5
+  - input:
+      risk_tier: moderate
+    expect:
+      signal_detected: true
+      is_serious: false
+      prr: 2.5
+  - input:
+      risk_tier: low
+    expect:
+      signal_detected: false
+      is_serious: false
+      prr: 0.5
+  - input:
+      urgency: critical
+    expect:
+      signal_detected: true
+      is_serious: true
+      prr: 8
+  - input:
+      urgency: high
+    expect:
+      signal_detected: true
+      is_serious: true
+      prr: 5
+  - input:
+      urgency: moderate
+    expect:
+      signal_detected: true
+      is_serious: false
+      prr: 2.5
+  - input:
+      urgency: low
+    expect:
+      signal_detected: false
+      is_serious: false
+      prr: 0.5
   - input: {}
-    expect: { signal_detected: false, is_serious: false, prr: 0.5 }
+    expect:
+      signal_detected: false
+      is_serious: false
+      prr: 0.5
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - signal_detected
+    - is_serious
+    - prr
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

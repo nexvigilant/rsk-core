@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tool-schema-validator
-description: 'Station operations: tool-schema-validator'
 version: 0.1.0
+description: "Station operations: tool-schema-validator"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: metric
+    type: int
+    required: false
+    description: ""
+  - name: threshold
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: health
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     metric:
@@ -14,6 +38,33 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Tool Schema Validator
+  subtitle: "Station operations: tool-schema-validator"
+  icon: circle
+  route: /vigilance/mg/tool-schema-validator
+  steps:
+    - field: metric
+      label: metric
+      help: Enter metric
+      widget: text
+      placeholder: null
+    - field: threshold
+      label: threshold
+      help: Enter threshold
+      widget: text
+      placeholder: null
+  result:
+    template: "health: {{health}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tool-schema-validator
+  cli: rsk mcg run tool-schema-validator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_healthy
   nodes:
@@ -47,11 +98,59 @@ tree:
         health: UNHEALTHY
         action: alert
 tests:
-- input: {metric: 95, threshold: 90}
-  expect: {health: HEALTHY, action: none}
-- input: {metric: 70, threshold: 90}
-  expect: {health: DEGRADED, action: investigate}
-- input: {metric: 30, threshold: 90}
-  expect: {health: UNHEALTHY, action: alert}
-- input: {}
-  expect: {health: UNHEALTHY, action: alert}
+  - input:
+      metric: 95
+      threshold: 90
+    expect:
+      health: HEALTHY
+      action: none
+  - input:
+      metric: 70
+      threshold: 90
+    expect:
+      health: DEGRADED
+      action: investigate
+  - input:
+      metric: 30
+      threshold: 90
+    expect:
+      health: UNHEALTHY
+      action: alert
+  - input: {}
+    expect:
+      health: UNHEALTHY
+      action: alert
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - health
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

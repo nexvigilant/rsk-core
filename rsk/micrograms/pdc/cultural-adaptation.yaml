@@ -1,6 +1,56 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: cultural-adaptation
-description: "Domain 13: Route to cultural adaptation strategy by dimension — communication, decision-making, authority, safety reporting."
 version: 0.1.0
+description: "Domain 13: Route to cultural adaptation strategy by dimension — communication, decision-making, authority, safety reporting."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: cultural_dimension
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: adaptation
+    type: string
+  - name: ai_assist
+    type: string
+  - name: approach
+    type: string
+  - name: collective
+    type: string
+  - name: consideration
+    type: string
+  - name: developing
+    type: string
+  - name: dimension
+    type: string
+  - name: egalitarian
+    type: string
+  - name: framework
+    type: string
+  - name: hierarchical
+    type: string
+  - name: high_context
+    type: string
+  - name: individualistic
+    type: string
+  - name: low_context
+    type: string
+  - name: proactive
+    type: string
+  - name: quality_gate
+    type: string
+  - name: reluctant
+    type: string
+  - name: risk
+    type: string
 interface:
   inputs:
     cultural_dimension:
@@ -41,6 +91,28 @@ interface:
       type: string
     risk:
       type: string
+ui:
+  title: Cultural Adaptation
+  subtitle: "Domain 13: Route to cultural adaptation strategy by dimension — communication, decision-making, authority, safety reporting."
+  icon: circle
+  route: /vigilance/mg/cultural-adaptation
+  steps:
+    - field: cultural_dimension
+      label: cultural dimension
+      help: Enter cultural_dimension
+      widget: text
+      placeholder: null
+  result:
+    template: "adaptation: {{adaptation}} — ai_assist: {{ai_assist}} — approach: {{approach}} — collective: {{collective}} — consideration: {{consideration}} — developing: {{developing}} — dimension: {{dimension}} — egalitarian: {{egalitarian}} — framework: {{framework}} — hierarchical: {{hierarchical}} — high_context: {{high_context}} — individualistic: {{individualistic}} — low_context: {{low_context}} — proactive: {{proactive}} — quality_gate: {{quality_gate}} — reluctant: {{reluctant}} — risk: {{risk}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/cultural-adaptation
+  cli: rsk mcg run cultural-adaptation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_dimension
   nodes:
@@ -83,72 +155,121 @@ tree:
       type: return
       value:
         dimension: COMMUNICATION_STYLE
-        high_context: "indirect, implicit, relationship-first (East Asia, Middle East, Latin America)"
-        low_context: "direct, explicit, task-first (US, Northern Europe, Australia)"
-        adaptation: "match directness level, adjust formality, respect silence, adapt visual aids"
-        ai_assist: "automated translation, cultural tone analysis, health literacy adaptation"
-        quality_gate: "core safety information must remain unchanged regardless of cultural adaptation"
+        high_context: indirect, implicit, relationship-first (East Asia, Middle East, Latin America)
+        low_context: direct, explicit, task-first (US, Northern Europe, Australia)
+        adaptation: match directness level, adjust formality, respect silence, adapt visual aids
+        ai_assist: automated translation, cultural tone analysis, health literacy adaptation
+        quality_gate: core safety information must remain unchanged regardless of cultural adaptation
     decision_making:
       type: return
       value:
         dimension: DECISION_MAKING
-        individualistic: "patient decides autonomously, informed consent emphasis (Western)"
-        collective: "family/community involved, consensus-seeking, elder consultation (Asian, African, Indigenous)"
-        adaptation: "identify decision-maker(s), include family when culturally appropriate, respect hierarchy"
-        ai_assist: "stakeholder mapping, decision-maker identification, consent process adaptation"
+        individualistic: patient decides autonomously, informed consent emphasis (Western)
+        collective: family/community involved, consensus-seeking, elder consultation (Asian, African, Indigenous)
+        adaptation: identify decision-maker(s), include family when culturally appropriate, respect hierarchy
+        ai_assist: stakeholder mapping, decision-maker identification, consent process adaptation
     authority:
       type: return
       value:
         dimension: AUTHORITY_RELATIONSHIP
-        hierarchical: "deference to authority, top-down communication, formal titles (Japan, Korea, many Asian)"
-        egalitarian: "flat communication, challenge encouraged, informal (Scandinavia, Netherlands)"
-        adaptation: "match formality level, respect hierarchy in reporting, adapt feedback mechanisms"
-        ai_assist: "organizational hierarchy mapping, authority pattern recognition"
+        hierarchical: deference to authority, top-down communication, formal titles (Japan, Korea, many Asian)
+        egalitarian: flat communication, challenge encouraged, informal (Scandinavia, Netherlands)
+        adaptation: match formality level, respect hierarchy in reporting, adapt feedback mechanisms
+        ai_assist: organizational hierarchy mapping, authority pattern recognition
     safety_reporting:
       type: return
       value:
         dimension: SAFETY_REPORTING_CULTURE
-        proactive: "strong reporting culture, just culture, learning focus (Nordic, UK, US)"
-        developing: "growing awareness, training needed, system building (many emerging markets)"
-        reluctant: "fear of blame, underreporting, cultural barriers (varies widely)"
-        adaptation: "build trust first, train locally, demonstrate non-punitive approach, celebrate reporting"
-        ai_assist: "underreporting detection, reporting barrier analysis, cultural training customization"
+        proactive: strong reporting culture, just culture, learning focus (Nordic, UK, US)
+        developing: growing awareness, training needed, system building (many emerging markets)
+        reluctant: fear of blame, underreporting, cultural barriers (varies widely)
+        adaptation: build trust first, train locally, demonstrate non-punitive approach, celebrate reporting
+        ai_assist: underreporting detection, reporting barrier analysis, cultural training customization
     traditional_medicine:
       type: return
       value:
         dimension: TRADITIONAL_MEDICINE_INTEGRATION
-        consideration: "many cultures use traditional medicine alongside pharmaceuticals"
-        risk: "unreported traditional medicine use can confound ADR assessment"
-        adaptation: "ask about traditional medicines non-judgmentally, document interactions, respect beliefs"
-        ai_assist: "traditional medicine interaction databases, cultural health practice mapping"
+        consideration: many cultures use traditional medicine alongside pharmaceuticals
+        risk: unreported traditional medicine use can confound ADR assessment
+        adaptation: ask about traditional medicines non-judgmentally, document interactions, respect beliefs
+        ai_assist: traditional medicine interaction databases, cultural health practice mapping
     holistic:
       type: return
       value:
         dimension: HOLISTIC
-        approach: "assess all cultural dimensions together — they interact and compound"
-        framework: "communication + decision-making + authority + reporting + traditional medicine"
-        ai_assist: "comprehensive cultural profile generation, adaptation strategy optimization"
+        approach: assess all cultural dimensions together — they interact and compound
+        framework: communication + decision-making + authority + reporting + traditional medicine
+        ai_assist: comprehensive cultural profile generation, adaptation strategy optimization
 tests:
-- input:
-    cultural_dimension: communication
-  expect:
-    dimension: COMMUNICATION_STYLE
-- input:
-    cultural_dimension: decision_making
-  expect:
-    dimension: DECISION_MAKING
-- input:
-    cultural_dimension: authority
-  expect:
-    dimension: AUTHORITY_RELATIONSHIP
-- input:
-    cultural_dimension: safety_reporting
-  expect:
-    dimension: SAFETY_REPORTING_CULTURE
-- input:
-    cultural_dimension: traditional_medicine
-  expect:
-    dimension: TRADITIONAL_MEDICINE_INTEGRATION
-- input: {}
-  expect:
-    dimension: HOLISTIC
+  - input:
+      cultural_dimension: communication
+    expect:
+      dimension: COMMUNICATION_STYLE
+  - input:
+      cultural_dimension: decision_making
+    expect:
+      dimension: DECISION_MAKING
+  - input:
+      cultural_dimension: authority
+    expect:
+      dimension: AUTHORITY_RELATIONSHIP
+  - input:
+      cultural_dimension: safety_reporting
+    expect:
+      dimension: SAFETY_REPORTING_CULTURE
+  - input:
+      cultural_dimension: traditional_medicine
+    expect:
+      dimension: TRADITIONAL_MEDICINE_INTEGRATION
+  - input: {}
+    expect:
+      dimension: HOLISTIC
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - adaptation
+    - ai_assist
+    - approach
+    - collective
+    - consideration
+    - developing
+    - dimension
+    - egalitarian
+    - framework
+    - hierarchical
+    - high_context
+    - individualistic
+    - low_context
+    - proactive
+    - quality_gate
+    - reluctant
+    - risk
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

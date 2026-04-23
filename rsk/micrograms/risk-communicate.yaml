@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: risk-communicate
-description: "Plan risk communication strategy for healthcare providers and patients"
 version: 0.1.0
+description: Plan risk communication strategy for healthcare providers and patients
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Risk Communicate
+  subtitle: Plan risk communication strategy for healthcare providers and patients
+  icon: circle
+  route: /vigilance/mg/risk-communicate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/risk-communicate
+  cli: rsk mcg run risk-communicate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_minimization
   nodes:
@@ -15,37 +44,37 @@ tree:
       type: condition
       variable: urgency_level
       operator: eq
-      value: "urgent"
+      value: urgent
       true_next: urgent_communication
       false_next: check_routine_urgency
     check_routine_urgency:
       type: condition
       variable: urgency_level
       operator: eq
-      value: "routine"
+      value: routine
       true_next: routine_communication
       false_next: informational_communication
     urgent_communication:
       type: return
       value:
-        communication_type: "dear_healthcare_provider"
-        target_audience: "prescribers,pharmacists,patients"
+        communication_type: dear_healthcare_provider
+        target_audience: prescribers,pharmacists,patients
         communication_timeline_days: 30
         requires_signature: true
         communication_compliant: true
     routine_communication:
       type: return
       value:
-        communication_type: "product_information_update"
-        target_audience: "prescribers,pharmacists"
+        communication_type: product_information_update
+        target_audience: prescribers,pharmacists
         communication_timeline_days: 90
         requires_signature: false
         communication_compliant: true
     informational_communication:
       type: return
       value:
-        communication_type: "information_letter"
-        target_audience: "prescribers"
+        communication_type: information_letter
+        target_audience: prescribers
         communication_timeline_days: 180
         requires_signature: false
         communication_compliant: true
@@ -58,25 +87,57 @@ tree:
         requires_signature: null
         communication_compliant: false
 tests:
-- input:
-    minimization_plan: "risk_management"
-    urgency_level: "urgent"
-  expect:
-    communication_type: "dear_healthcare_provider"
-    communication_timeline_days: 30
-    requires_signature: true
-- input:
-    minimization_plan: "monitoring"
-    urgency_level: "routine"
-  expect:
-    communication_type: "product_information_update"
-    communication_timeline_days: 90
-- input:
-    minimization_plan: "routine"
-    urgency_level: "low"
-  expect:
-    communication_type: "information_letter"
-- input: {}
-  expect:
-    communication_type: null
-    communication_compliant: false
+  - input:
+      minimization_plan: risk_management
+      urgency_level: urgent
+    expect:
+      communication_type: dear_healthcare_provider
+      communication_timeline_days: 30
+      requires_signature: true
+  - input:
+      minimization_plan: monitoring
+      urgency_level: routine
+    expect:
+      communication_type: product_information_update
+      communication_timeline_days: 90
+  - input:
+      minimization_plan: routine
+      urgency_level: low
+    expect:
+      communication_type: information_letter
+  - input: {}
+    expect:
+      communication_type: null
+      communication_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

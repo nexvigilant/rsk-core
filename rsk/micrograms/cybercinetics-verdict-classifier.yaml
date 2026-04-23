@@ -1,12 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: cybercinetics-verdict-classifier
-description: Classifies Controller::tick verdicts into escalation tiers. Maps STABLE/FREQ_DECAY/FIDELITY_DEGRADED/RECURSION_SATURATED/COMPOUND to T0-T3 escalation with recommended actions.
 version: 0.1.0
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(verdict, tier_thresholds) at ∂(escalation) — classification of controller output'
-  primes: ['κ', '∂', 'μ']
-  arguments: ['verdict', 'f_total', 'nu_health_ratio']
-  chain_prediction: 'κ only — verdict classification is static mapping, no temporal causality.'
+description: Classifies Controller::tick verdicts into escalation tiers. Maps STABLE/FREQ_DECAY/FIDELITY_DEGRADED/RECURSION_SATURATED/COMPOUND to T0-T3 escalation with recommended actions.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: verdict
+    type: string
+    required: true
+    description: ""
+  - name: f_total
+    type: float
+    required: false
+    description: ""
+  - name: nu_health_ratio
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: tier
+    type: string
+  - name: escalation
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     verdict:
@@ -25,6 +49,38 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Cybercinetics Verdict Classifier
+  subtitle: Classifies Controller::tick verdicts into escalation tiers. Maps STABLE/FREQ_DECAY/FIDELITY_DEGRADED/RECURSION_SATURATED/COMPOUND to T0-T3 escalation with recommended actions.
+  icon: circle
+  route: /vigilance/mg/cybercinetics-verdict-classifier
+  steps:
+    - field: verdict
+      label: verdict
+      help: Enter verdict
+      widget: text
+      placeholder: null
+    - field: f_total
+      label: f total
+      help: Enter f_total
+      widget: text
+      placeholder: null
+    - field: nu_health_ratio
+      label: nu health ratio
+      help: Enter nu_health_ratio
+      widget: text
+      placeholder: null
+  result:
+    template: "tier: {{tier}} — escalation: {{escalation}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/cybercinetics-verdict-classifier
+  cli: rsk mcg run cybercinetics-verdict-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_stable
   nodes:
@@ -100,39 +156,74 @@ tree:
         escalation: ESCALATE
         action: Multiple failure modes active — escalate to Matthew for review
 tests:
-- input:
-    verdict: STABLE
-  expect:
-    tier: T0
-    escalation: NONE
-- input:
-    verdict: FREQ_DECAY
-  expect:
-    tier: T1
-    escalation: MONITOR
-- input:
-    verdict: FIDELITY_DEGRADED
-    f_total: 0.3
-  expect:
-    tier: T2
-    escalation: INTERVENE
-- input:
-    verdict: FIDELITY_DEGRADED
-    f_total: 0.7
-  expect:
-    tier: T1
-    escalation: MONITOR
-- input:
-    verdict: RECURSION_SATURATED
-  expect:
-    tier: T2
-    escalation: INTERVENE
-- input:
-    verdict: "COMPOUND(FREQ_DECAY+FIDELITY_DEGRADED)"
-  expect:
-    tier: T3
-    escalation: ESCALATE
-- input: {}
-  expect:
-    tier: T3
-    escalation: ESCALATE
+  - input:
+      verdict: STABLE
+    expect:
+      tier: T0
+      escalation: NONE
+  - input:
+      verdict: FREQ_DECAY
+    expect:
+      tier: T1
+      escalation: MONITOR
+  - input:
+      verdict: FIDELITY_DEGRADED
+      f_total: 0.3
+    expect:
+      tier: T2
+      escalation: INTERVENE
+  - input:
+      verdict: FIDELITY_DEGRADED
+      f_total: 0.7
+    expect:
+      tier: T1
+      escalation: MONITOR
+  - input:
+      verdict: RECURSION_SATURATED
+    expect:
+      tier: T2
+      escalation: INTERVENE
+  - input:
+      verdict: COMPOUND(FREQ_DECAY+FIDELITY_DEGRADED)
+    expect:
+      tier: T3
+      escalation: ESCALATE
+  - input: {}
+    expect:
+      tier: T3
+      escalation: ESCALATE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tier
+    - escalation
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

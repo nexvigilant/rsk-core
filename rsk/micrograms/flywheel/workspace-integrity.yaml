@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workspace-integrity
-description: 'Workspace health classifier: checks orphan_dirs, broken_members, and cache_gb against thresholds. HEALTHY (all zero, cache < 15GB), DEGRADED (1-2 issues), UNHEALTHY (3+). Prevents build-breaking workspace state from accumulating silently.'
 version: 0.1.0
+description: "Workspace health classifier: checks orphan_dirs, broken_members, and cache_gb against thresholds. HEALTHY (all zero, cache < 15GB), DEGRADED (1-2 issues), UNHEALTHY (3+). Prevents build-breaking workspace state from accumulating silently."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: orphan_dirs
+    type: int
+    required: true
+    description: ""
+  - name: broken_members
+    type: int
+    required: true
+    description: ""
+  - name: cache_gb
+    type: int
+    required: true
+    description: ""
+outputs:
+  - name: state
+    type: string
+  - name: issues
+    type: int
+  - name: action
+    type: string
 interface:
   inputs:
     orphan_dirs:
@@ -19,6 +49,38 @@ interface:
       type: int
     action:
       type: string
+ui:
+  title: Workspace Integrity
+  subtitle: "Workspace health classifier: checks orphan_dirs, broken_members, and cache_gb against thresholds. HEALTHY (all zero, cache < 15GB), DEGRADED (1-2 issues), UNHEALTHY (3+). Prevents build-breaking workspace state from accumulating silently."
+  icon: circle
+  route: /vigilance/mg/workspace-integrity
+  steps:
+    - field: orphan_dirs
+      label: orphan dirs
+      help: Enter orphan_dirs
+      widget: text
+      placeholder: null
+    - field: broken_members
+      label: broken members
+      help: Enter broken_members
+      widget: text
+      placeholder: null
+    - field: cache_gb
+      label: cache gb
+      help: Enter cache_gb
+      widget: text
+      placeholder: null
+  result:
+    template: "state: {{state}} — issues: {{issues}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workspace-integrity
+  cli: rsk mcg run workspace-integrity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: count_issues
   nodes:
@@ -101,56 +163,91 @@ tree:
         issues: 0
         action: none
 tests:
-- input:
-    orphan_dirs: 0
-    broken_members: 0
-    cache_gb: 5
-  expect:
-    state: healthy
-    issues: 0
-    action: none
-- input:
-    orphan_dirs: 2
-    broken_members: 1
-    cache_gb: 20
-  expect:
-    state: unhealthy
-    issues: 3
-    action: run_cleanup
-- input:
-    orphan_dirs: 1
-    broken_members: 0
-    cache_gb: 5
-  expect:
-    state: degraded
-    issues: 1
-    action: fix_workspace
-- input:
-    orphan_dirs: 0
-    broken_members: 0
-    cache_gb: 20
-  expect:
-    state: degraded
-    issues: 1
-    action: prune_cache
-- input:
-    orphan_dirs: 0
-    broken_members: 1
-    cache_gb: 18
-  expect:
-    state: degraded
-    issues: 2
-    action: prune_and_fix
-- input:
-    orphan_dirs: 1
-    broken_members: 1
-    cache_gb: 5
-  expect:
-    state: degraded
-    issues: 2
-    action: fix_workspace
-- input: {}
-  expect:
-    action: none
-    issues: 0
-    state: healthy
+  - input:
+      orphan_dirs: 0
+      broken_members: 0
+      cache_gb: 5
+    expect:
+      state: healthy
+      issues: 0
+      action: none
+  - input:
+      orphan_dirs: 2
+      broken_members: 1
+      cache_gb: 20
+    expect:
+      state: unhealthy
+      issues: 3
+      action: run_cleanup
+  - input:
+      orphan_dirs: 1
+      broken_members: 0
+      cache_gb: 5
+    expect:
+      state: degraded
+      issues: 1
+      action: fix_workspace
+  - input:
+      orphan_dirs: 0
+      broken_members: 0
+      cache_gb: 20
+    expect:
+      state: degraded
+      issues: 1
+      action: prune_cache
+  - input:
+      orphan_dirs: 0
+      broken_members: 1
+      cache_gb: 18
+    expect:
+      state: degraded
+      issues: 2
+      action: prune_and_fix
+  - input:
+      orphan_dirs: 1
+      broken_members: 1
+      cache_gb: 5
+    expect:
+      state: degraded
+      issues: 2
+      action: fix_workspace
+  - input: {}
+    expect:
+      action: none
+      issues: 0
+      state: healthy
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - state
+    - issues
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

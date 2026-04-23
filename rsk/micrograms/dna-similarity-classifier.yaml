@@ -1,11 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dna-similarity-classifier
-description: 'Classifies DNA strand similarity level between two encoded PV feature vectors based on Hamming distance and GC divergence'
 version: 0.1.0
-family: dna-ml
-primitive_signature:
-  dominant: comparison
-  expression: 'κ(hamming, gc_divergence) → similarity_level'
-  primes: [comparison, causality, boundary]
+description: Classifies DNA strand similarity level between two encoded PV feature vectors based on Hamming distance and GC divergence
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: hamming_distance
+    type: float
+    required: true
+    description: ""
+  - name: gc_divergence
+    type: float
+    required: true
+    description: ""
+  - name: lcs_ratio
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: similarity_level
+    type: string
+  - name: interpretation
+    type: string
+  - name: same_class_likely
+    type: bool
 interface:
   inputs:
     hamming_distance:
@@ -24,6 +49,38 @@ interface:
       type: string
     same_class_likely:
       type: bool
+ui:
+  title: Dna Similarity Classifier
+  subtitle: Classifies DNA strand similarity level between two encoded PV feature vectors based on Hamming distance and GC divergence
+  icon: circle
+  route: /vigilance/mg/dna-similarity-classifier
+  steps:
+    - field: hamming_distance
+      label: hamming distance
+      help: Enter hamming_distance
+      widget: text
+      placeholder: null
+    - field: gc_divergence
+      label: gc divergence
+      help: Enter gc_divergence
+      widget: text
+      placeholder: null
+    - field: lcs_ratio
+      label: lcs ratio
+      help: Enter lcs_ratio
+      widget: text
+      placeholder: null
+  result:
+    template: "similarity_level: {{similarity_level}} — interpretation: {{interpretation}} — same_class_likely: {{same_class_likely}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dna-similarity-classifier
+  cli: rsk mcg run dna-similarity-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_identical
   nodes:
@@ -34,7 +91,6 @@ tree:
       value: 0.05
       true_next: identical
       false_next: check_high_similarity
-
     check_high_similarity:
       type: condition
       variable: hamming_distance
@@ -42,7 +98,6 @@ tree:
       value: 0.2
       true_next: check_gc_high
       false_next: check_moderate
-
     check_gc_high:
       type: condition
       variable: gc_divergence
@@ -50,7 +105,6 @@ tree:
       value: 0.1
       true_next: high_similarity
       false_next: moderate_similarity
-
     check_moderate:
       type: condition
       variable: hamming_distance
@@ -58,7 +112,6 @@ tree:
       value: 0.5
       true_next: moderate_similarity
       false_next: check_divergent
-
     check_divergent:
       type: condition
       variable: hamming_distance
@@ -66,52 +119,45 @@ tree:
       value: 0.8
       true_next: low_similarity
       false_next: divergent
-
     identical:
       type: return
       value:
         similarity_level: identical
-        interpretation: 'Feature vectors encode to nearly identical DNA strands — same pharmacological fingerprint'
+        interpretation: Feature vectors encode to nearly identical DNA strands — same pharmacological fingerprint
         same_class_likely: true
-
     high_similarity:
       type: return
       value:
         similarity_level: high
-        interpretation: 'Similar DNA encoding with matching GC content — likely same signal/noise class'
+        interpretation: Similar DNA encoding with matching GC content — likely same signal/noise class
         same_class_likely: true
-
     moderate_similarity:
       type: return
       value:
         similarity_level: moderate
-        interpretation: 'Partial DNA similarity — pairs may or may not share class membership'
+        interpretation: Partial DNA similarity — pairs may or may not share class membership
         same_class_likely: false
-
     low_similarity:
       type: return
       value:
         similarity_level: low
-        interpretation: 'Substantial DNA divergence — different pharmacological profiles'
+        interpretation: Substantial DNA divergence — different pharmacological profiles
         same_class_likely: false
-
     divergent:
       type: return
       value:
         similarity_level: divergent
-        interpretation: 'Maximally different DNA encoding — opposite signal/noise signatures'
+        interpretation: Maximally different DNA encoding — opposite signal/noise signatures
         same_class_likely: false
-
 tests:
   - name: identical_strands
     input:
-      hamming_distance: 0.0
-      gc_divergence: 0.0
-      lcs_ratio: 1.0
+      hamming_distance: 0
+      gc_divergence: 0
+      lcs_ratio: 1
     expect:
       similarity_level: identical
       same_class_likely: true
-
   - name: high_similarity
     input:
       hamming_distance: 0.15
@@ -119,14 +165,12 @@ tests:
     expect:
       similarity_level: high
       same_class_likely: true
-
   - name: moderate_with_gc_divergence
     input:
       hamming_distance: 0.15
       gc_divergence: 0.2
     expect:
       similarity_level: moderate
-
   - name: low_similarity
     input:
       hamming_distance: 0.6
@@ -134,15 +178,48 @@ tests:
     expect:
       similarity_level: low
       same_class_likely: false
-
   - name: fully_divergent
     input:
       hamming_distance: 0.9
       gc_divergence: 0.5
     expect:
       similarity_level: divergent
-
   - name: null_safety
     input: {}
     expect:
       similarity_level: divergent
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - similarity_level
+    - interpretation
+    - same_class_likely
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

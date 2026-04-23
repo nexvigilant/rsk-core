@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: age-neonate
-description: "Neonate age classifier. Identifies subjects aged 0-28 days (neonatal period)."
 version: 0.1.0
+description: Neonate age classifier. Identifies subjects aged 0-28 days (neonatal period).
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Age Neonate
+  subtitle: Neonate age classifier. Identifies subjects aged 0-28 days (neonatal period).
+  icon: circle
+  route: /vigilance/mg/age-neonate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/age-neonate
+  cli: rsk mcg run age-neonate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_age_days
   nodes:
@@ -15,7 +44,7 @@ tree:
       type: return
       value:
         age_group: neonate
-        age_range: "0-28 days"
+        age_range: 0-28 days
         immature_systems: true
         special_monitoring: required
     not_neonate:
@@ -24,13 +53,55 @@ tree:
         age_group: other
         is_neonate: false
 tests:
-  - input: { age_days: 7 }
-    expect: { age_group: neonate, immature_systems: true }
-  - input: { age_days: 28 }
-    expect: { age_group: neonate }
-  - input: { age_days: 29 }
-    expect: { age_group: other, is_neonate: false }
-  - input: { age_days: 0 }
-    expect: { age_group: neonate }
+  - input:
+      age_days: 7
+    expect:
+      age_group: neonate
+      immature_systems: true
+  - input:
+      age_days: 28
+    expect:
+      age_group: neonate
+  - input:
+      age_days: 29
+    expect:
+      age_group: other
+      is_neonate: false
+  - input:
+      age_days: 0
+    expect:
+      age_group: neonate
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

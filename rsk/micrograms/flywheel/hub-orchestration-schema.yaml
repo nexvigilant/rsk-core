@@ -1,8 +1,114 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: hub-orchestration-schema
-description: 'Component: Hub (Nucleus) — Spec §2.2. Schema validator for hub orchestration
-  data completeness. Validates that module coordination metrics exist before attempting
-  health classification.'
 version: 0.1.0
+description: "Component: Hub (Nucleus) — Spec §2.2. Schema validator for hub orchestration data completeness. Validates that module coordination metrics exist before attempting health classification."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: orchestration_latency_ms
+    type: float
+    required: false
+    description: ""
+  - name: event_bus_depth
+    type: int
+    required: false
+    description: ""
+  - name: cross_module_calls_30d
+    type: int
+    required: false
+    description: ""
+  - name: active_modules
+    type: int
+    required: false
+    description: ""
+  - name: failed_handoffs_30d
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: data_complete
+    type: bool
+  - name: can_compute_hub
+    type: bool
+  - name: missing_fields
+    type: string
+interface:
+  inputs:
+    orchestration_latency_ms:
+      type: float
+      required: false
+    event_bus_depth:
+      type: int
+      required: false
+    cross_module_calls_30d:
+      type: int
+      required: false
+    active_modules:
+      type: int
+      required: false
+    failed_handoffs_30d:
+      type: int
+      required: false
+  outputs:
+    data_complete:
+      type: bool
+      required: false
+    can_compute_hub:
+      type: bool
+      required: false
+    missing_fields:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Hub Orchestration Schema
+  subtitle: "Component: Hub (Nucleus) — Spec §2.2. Schema validator for hub orchestration data completeness. Validates that module coordination metrics exist before attempting health classification."
+  icon: circle
+  route: /vigilance/mg/hub-orchestration-schema
+  steps:
+    - field: orchestration_latency_ms
+      label: orchestration latency ms
+      help: Enter orchestration_latency_ms
+      widget: text
+      placeholder: null
+    - field: event_bus_depth
+      label: event bus depth
+      help: Enter event_bus_depth
+      widget: text
+      placeholder: null
+    - field: cross_module_calls_30d
+      label: cross module calls 30d
+      help: Enter cross_module_calls_30d
+      widget: text
+      placeholder: null
+    - field: active_modules
+      label: active modules
+      help: Enter active_modules
+      widget: text
+      placeholder: null
+    - field: failed_handoffs_30d
+      label: failed handoffs 30d
+      help: Enter failed_handoffs_30d
+      widget: text
+      placeholder: null
+  result:
+    template: "data_complete: {{data_complete}} — can_compute_hub: {{can_compute_hub}} — missing_fields: {{missing_fields}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/hub-orchestration-schema
+  cli: rsk mcg run hub-orchestration-schema
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_modules
   nodes:
@@ -62,7 +168,7 @@ tree:
       type: condition
       variable: orchestration_latency_ms
       operator: gt
-      value: 0.0
+      value: 0
       true_next: complete
       false_next: missing_latency
     missing_cross_module:
@@ -78,93 +184,100 @@ tree:
         missing_fields: failed_handoffs_30d
         can_compute_hub: false
 tests:
-- input:
-    active_modules: -0.5
-    cross_module_calls_30d: false
-    event_bus_depth: false
-    failed_handoffs_30d: false
-    orchestration_latency_ms: -0.5
-  expect:
-    missing_fields: active_modules
-    data_complete: false
-    can_compute_hub: false
-- input:
-    active_modules: 0.5
-    cross_module_calls_30d: false
-    event_bus_depth: false
-    failed_handoffs_30d: false
-    orchestration_latency_ms: -0.5
-  expect:
-    can_compute_hub: false
-    data_complete: false
-    missing_fields: orchestration_latency_ms
-- input:
-    active_modules: 0.5
-    cross_module_calls_30d: false
-    event_bus_depth: false
-    failed_handoffs_30d: false
-    orchestration_latency_ms: 0.5
-  expect:
-    missing_fields: none
-    can_compute_hub: true
-    data_complete: true
-- input:
-    active_modules: 0.5
-    cross_module_calls_30d: false
-    event_bus_depth: false
-    orchestration_latency_ms: -0.5
-  expect:
-    data_complete: false
-    missing_fields: failed_handoffs_30d
-    can_compute_hub: false
-- input:
-    active_modules: 0.5
-    cross_module_calls_30d: false
-    failed_handoffs_30d: false
-    orchestration_latency_ms: -0.5
-  expect:
-    missing_fields: event_bus_depth
-    data_complete: false
-    can_compute_hub: false
-- input:
-    active_modules: 0.5
-    event_bus_depth: false
-    failed_handoffs_30d: false
-    orchestration_latency_ms: -0.5
-  expect:
-    data_complete: false
-    can_compute_hub: false
-    missing_fields: cross_module_calls_30d
-- input: {}
-  expect:
-    missing_fields: active_modules
-    data_complete: false
-    can_compute_hub: false
-interface:
-  inputs:
-    orchestration_latency_ms:
-      type: float
-      required: false
-    event_bus_depth:
-      type: int
-      required: false
-    cross_module_calls_30d:
-      type: int
-      required: false
-    active_modules:
-      type: int
-      required: false
-    failed_handoffs_30d:
-      type: int
-      required: false
-  outputs:
-    data_complete:
-      type: bool
-      required: false
-    can_compute_hub:
-      type: bool
-      required: false
-    missing_fields:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      active_modules: -0.5
+      cross_module_calls_30d: false
+      event_bus_depth: false
+      failed_handoffs_30d: false
+      orchestration_latency_ms: -0.5
+    expect:
+      missing_fields: active_modules
+      data_complete: false
+      can_compute_hub: false
+  - input:
+      active_modules: 0.5
+      cross_module_calls_30d: false
+      event_bus_depth: false
+      failed_handoffs_30d: false
+      orchestration_latency_ms: -0.5
+    expect:
+      can_compute_hub: false
+      data_complete: false
+      missing_fields: orchestration_latency_ms
+  - input:
+      active_modules: 0.5
+      cross_module_calls_30d: false
+      event_bus_depth: false
+      failed_handoffs_30d: false
+      orchestration_latency_ms: 0.5
+    expect:
+      missing_fields: none
+      can_compute_hub: true
+      data_complete: true
+  - input:
+      active_modules: 0.5
+      cross_module_calls_30d: false
+      event_bus_depth: false
+      orchestration_latency_ms: -0.5
+    expect:
+      data_complete: false
+      missing_fields: failed_handoffs_30d
+      can_compute_hub: false
+  - input:
+      active_modules: 0.5
+      cross_module_calls_30d: false
+      failed_handoffs_30d: false
+      orchestration_latency_ms: -0.5
+    expect:
+      missing_fields: event_bus_depth
+      data_complete: false
+      can_compute_hub: false
+  - input:
+      active_modules: 0.5
+      event_bus_depth: false
+      failed_handoffs_30d: false
+      orchestration_latency_ms: -0.5
+    expect:
+      data_complete: false
+      can_compute_hub: false
+      missing_fields: cross_module_calls_30d
+  - input: {}
+    expect:
+      missing_fields: active_modules
+      data_complete: false
+      can_compute_hub: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - data_complete
+    - can_compute_hub
+    - missing_fields
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

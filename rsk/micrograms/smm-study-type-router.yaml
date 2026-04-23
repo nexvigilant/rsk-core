@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: smm-study-type-router
-description: "Routes scientific works to the correct evaluation standard (SMM-001 for empirical, SMM-002 for pre-empirical). Override-first, then boolean signals, conservative default."
 version: 0.1.0
+description: Routes scientific works to the correct evaluation standard (SMM-001 for empirical, SMM-002 for pre-empirical). Override-first, then boolean signals, conservative default.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: study_type_override
+    type: string
+    required: false
+    description: ""
+  - name: has_hypothesis
+    type: bool
+    required: false
+    description: ""
+  - name: has_empirical_data
+    type: bool
+    required: false
+    description: ""
+  - name: has_statistical_analysis
+    type: bool
+    required: false
+    description: ""
+  - name: is_framework
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: study_type
+    type: string
+  - name: standard
+    type: string
+  - name: phase_count
+    type: int
+  - name: routing_basis
+    type: string
 interface:
   inputs:
     study_type_override:
@@ -27,6 +67,48 @@ interface:
       type: int
     routing_basis:
       type: string
+ui:
+  title: Smm Study Type Router
+  subtitle: Routes scientific works to the correct evaluation standard (SMM-001 for empirical, SMM-002 for pre-empirical). Override-first, then boolean signals, conservative default.
+  icon: circle
+  route: /vigilance/mg/smm-study-type-router
+  steps:
+    - field: study_type_override
+      label: study type override
+      help: Enter study_type_override
+      widget: text
+      placeholder: null
+    - field: has_hypothesis
+      label: has hypothesis
+      help: Enter has_hypothesis
+      widget: toggle
+      placeholder: null
+    - field: has_empirical_data
+      label: has empirical data
+      help: Enter has_empirical_data
+      widget: toggle
+      placeholder: null
+    - field: has_statistical_analysis
+      label: has statistical analysis
+      help: Enter has_statistical_analysis
+      widget: toggle
+      placeholder: null
+    - field: is_framework
+      label: is framework
+      help: Enter is_framework
+      widget: toggle
+      placeholder: null
+  result:
+    template: "study_type: {{study_type}} — standard: {{standard}} — phase_count: {{phase_count}} — routing_basis: {{routing_basis}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/smm-study-type-router
+  cli: rsk mcg run smm-study-type-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_override
   nodes:
@@ -101,111 +183,136 @@ tree:
         phase_count: 6
         routing_basis: pre_empirical_default
 tests:
-# Override tests
-- input:
-    study_type_override: empirical
-  expect:
-    study_type: empirical
-    standard: NVG-SMM-001
-    phase_count: 10
-    routing_basis: empirical_signals_detected
-- input:
-    study_type_override: pre_empirical
-  expect:
-    study_type: pre_empirical
-    standard: NVG-SMM-002
-    phase_count: 6
-    routing_basis: pre_empirical_default
-# Override takes precedence over contradicting signals
-- input:
-    study_type_override: empirical
-    is_framework: true
-  expect:
-    study_type: empirical
-    standard: NVG-SMM-001
-    phase_count: 10
-- input:
-    study_type_override: pre_empirical
-    has_empirical_data: true
-    has_statistical_analysis: true
-  expect:
-    study_type: pre_empirical
-    standard: NVG-SMM-002
-    phase_count: 6
-# Framework flag routes to pre-empirical
-- input:
-    is_framework: true
-  expect:
-    study_type: pre_empirical
-    standard: NVG-SMM-002
-    phase_count: 6
-- input:
-    is_framework: true
-    has_empirical_data: true
-  expect:
-    study_type: pre_empirical
-    standard: NVG-SMM-002
-    phase_count: 6
-# Full empirical signals
-- input:
-    has_empirical_data: true
-    has_statistical_analysis: true
-    has_hypothesis: true
-  expect:
-    study_type: empirical
-    standard: NVG-SMM-001
-    phase_count: 10
-# Data + stats = empirical
-- input:
-    has_empirical_data: true
-    has_statistical_analysis: true
-  expect:
-    study_type: empirical
-    standard: NVG-SMM-001
-    phase_count: 10
-# Data + hypothesis but no stats = empirical
-- input:
-    has_empirical_data: true
-    has_hypothesis: true
-  expect:
-    study_type: empirical
-    standard: NVG-SMM-001
-    phase_count: 10
-# Data only, no hypothesis or stats = pre-empirical (conservative)
-- input:
-    has_empirical_data: true
-  expect:
-    study_type: pre_empirical
-    standard: NVG-SMM-002
-    phase_count: 6
-# Hypothesis + stats but no data = empirical (likely protocol/design paper)
-- input:
-    has_hypothesis: true
-    has_statistical_analysis: true
-  expect:
-    study_type: empirical
-    standard: NVG-SMM-001
-    phase_count: 10
-# Hypothesis only = pre-empirical
-- input:
-    has_hypothesis: true
-  expect:
-    study_type: pre_empirical
-    standard: NVG-SMM-002
-    phase_count: 6
-# Empty input = pre-empirical (conservative default)
-- input: {}
-  expect:
-    study_type: pre_empirical
-    standard: NVG-SMM-002
-    phase_count: 6
-    routing_basis: pre_empirical_default
-# Unknown override value falls through to signal checks
-- input:
-    study_type_override: unknown
-    has_empirical_data: true
-    has_statistical_analysis: true
-  expect:
-    study_type: empirical
-    standard: NVG-SMM-001
-    phase_count: 10
+  - input:
+      study_type_override: empirical
+    expect:
+      study_type: empirical
+      standard: NVG-SMM-001
+      phase_count: 10
+      routing_basis: empirical_signals_detected
+  - input:
+      study_type_override: pre_empirical
+    expect:
+      study_type: pre_empirical
+      standard: NVG-SMM-002
+      phase_count: 6
+      routing_basis: pre_empirical_default
+  - input:
+      study_type_override: empirical
+      is_framework: true
+    expect:
+      study_type: empirical
+      standard: NVG-SMM-001
+      phase_count: 10
+  - input:
+      study_type_override: pre_empirical
+      has_empirical_data: true
+      has_statistical_analysis: true
+    expect:
+      study_type: pre_empirical
+      standard: NVG-SMM-002
+      phase_count: 6
+  - input:
+      is_framework: true
+    expect:
+      study_type: pre_empirical
+      standard: NVG-SMM-002
+      phase_count: 6
+  - input:
+      is_framework: true
+      has_empirical_data: true
+    expect:
+      study_type: pre_empirical
+      standard: NVG-SMM-002
+      phase_count: 6
+  - input:
+      has_empirical_data: true
+      has_statistical_analysis: true
+      has_hypothesis: true
+    expect:
+      study_type: empirical
+      standard: NVG-SMM-001
+      phase_count: 10
+  - input:
+      has_empirical_data: true
+      has_statistical_analysis: true
+    expect:
+      study_type: empirical
+      standard: NVG-SMM-001
+      phase_count: 10
+  - input:
+      has_empirical_data: true
+      has_hypothesis: true
+    expect:
+      study_type: empirical
+      standard: NVG-SMM-001
+      phase_count: 10
+  - input:
+      has_empirical_data: true
+    expect:
+      study_type: pre_empirical
+      standard: NVG-SMM-002
+      phase_count: 6
+  - input:
+      has_hypothesis: true
+      has_statistical_analysis: true
+    expect:
+      study_type: empirical
+      standard: NVG-SMM-001
+      phase_count: 10
+  - input:
+      has_hypothesis: true
+    expect:
+      study_type: pre_empirical
+      standard: NVG-SMM-002
+      phase_count: 6
+  - input: {}
+    expect:
+      study_type: pre_empirical
+      standard: NVG-SMM-002
+      phase_count: 6
+      routing_basis: pre_empirical_default
+  - input:
+      study_type_override: unknown
+      has_empirical_data: true
+      has_statistical_analysis: true
+    expect:
+      study_type: empirical
+      standard: NVG-SMM-001
+      phase_count: 10
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - study_type
+    - standard
+    - phase_count
+    - routing_basis
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

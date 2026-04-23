@@ -1,15 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: session-velocity
-version: "1.0"
+version: 0.1.0
 description: "Session productivity velocity classifier. Bands: EXCEPTIONAL (mcp_ratio>=0.3 AND density>=0.5), TARGET (mcp_ratio>=0.15 AND density>=0.25), ACCEPTABLE (mcp_ratio>=0.05 OR density>=0.1), SLOW (else). Inputs are pre-computed ratios. chains_to: momentum-tracker."
-
-input:
-  - name: mcp_ratio
-    type: number
-    description: "MCP calls / total tool calls (pre-computed by caller from session metrics)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
   - name: density
-    type: number
-    description: "(files_modified + commits) / duration_minutes (pre-computed by caller)"
-
+    type: float
+    required: false
+    description: ""
+  - name: mcp_ratio
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: feeds_momentum
+    type: bool
+  - name: velocity_class
+    type: string
 interface:
   inputs:
     density:
@@ -23,6 +38,33 @@ interface:
       type: bool
     velocity_class:
       type: string
+ui:
+  title: Session Velocity
+  subtitle: "Session productivity velocity classifier. Bands: EXCEPTIONAL (mcp_ratio>=0.3 AND density>=0.5), TARGET (mcp_ratio>=0.15 AND density>=0.25), ACCEPTABLE (mcp_ratio>=0.05 OR density>=0.1), SLOW (else). Inputs are pre-computed ratios. chains_to: momentum-tracker."
+  icon: circle
+  route: /vigilance/mg/session-velocity
+  steps:
+    - field: density
+      label: density
+      help: Enter density
+      widget: text
+      placeholder: null
+    - field: mcp_ratio
+      label: mcp ratio
+      help: Enter mcp_ratio
+      widget: text
+      placeholder: null
+  result:
+    template: "feeds_momentum: {{feeds_momentum}} — velocity_class: {{velocity_class}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/session-velocity
+  cli: rsk mcg run session-velocity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_exceptional_mcp
   nodes:
@@ -33,7 +75,6 @@ tree:
       value: 0.3
       true_next: check_exceptional_density
       false_next: check_target_mcp
-
     check_exceptional_density:
       type: condition
       variable: density
@@ -41,7 +82,6 @@ tree:
       value: 0.5
       true_next: exceptional
       false_next: check_target_mcp
-
     check_target_mcp:
       type: condition
       variable: mcp_ratio
@@ -49,7 +89,6 @@ tree:
       value: 0.15
       true_next: check_target_density
       false_next: check_acceptable_mcp
-
     check_target_density:
       type: condition
       variable: density
@@ -57,7 +96,6 @@ tree:
       value: 0.25
       true_next: target
       false_next: check_acceptable_mcp
-
     check_acceptable_mcp:
       type: condition
       variable: mcp_ratio
@@ -65,7 +103,6 @@ tree:
       value: 0.05
       true_next: acceptable
       false_next: check_acceptable_density
-
     check_acceptable_density:
       type: condition
       variable: density
@@ -73,97 +110,80 @@ tree:
       value: 0.1
       true_next: acceptable
       false_next: slow
-
     exceptional:
       type: return
       value:
         velocity_class: EXCEPTIONAL
         feeds_momentum: true
-
     target:
       type: return
       value:
         velocity_class: TARGET
         feeds_momentum: true
-
     acceptable:
       type: return
       value:
         velocity_class: ACCEPTABLE
         feeds_momentum: true
-
     slow:
       type: return
       value:
         velocity_class: SLOW
         feeds_momentum: true
-
-primitive_signature:
-  dominant: 'ς'
-  expression: 'ς — state monitoring or drift detection'
-  primes: ['ς']
-  arguments: []
 tests:
-  - name: "exceptional - both thresholds exceeded"
+  - name: exceptional - both thresholds exceeded
     input:
       mcp_ratio: 0.4
       density: 0.6
     expect:
       velocity_class: EXCEPTIONAL
       feeds_momentum: true
-
-  - name: "exceptional - exact boundary values"
+  - name: exceptional - exact boundary values
     input:
       mcp_ratio: 0.3
       density: 0.5
     expect:
       velocity_class: EXCEPTIONAL
       feeds_momentum: true
-
-  - name: "target - meets mcp and density thresholds"
+  - name: target - meets mcp and density thresholds
     input:
       mcp_ratio: 0.2
       density: 0.3
     expect:
       velocity_class: TARGET
       feeds_momentum: true
-
-  - name: "target - high mcp but insufficient density for exceptional"
+  - name: target - high mcp but insufficient density for exceptional
     input:
       mcp_ratio: 0.35
       density: 0.3
     expect:
       velocity_class: TARGET
       feeds_momentum: true
-
-  - name: "acceptable - via mcp_ratio only, low density"
+  - name: acceptable - via mcp_ratio only, low density
     input:
       mcp_ratio: 0.1
       density: 0.05
     expect:
       velocity_class: ACCEPTABLE
       feeds_momentum: true
-
-  - name: "acceptable - via density only, low mcp_ratio"
+  - name: acceptable - via density only, low mcp_ratio
     input:
       mcp_ratio: 0.02
       density: 0.15
     expect:
       velocity_class: ACCEPTABLE
       feeds_momentum: true
-
-  - name: "slow - below all thresholds"
+  - name: slow - below all thresholds
     input:
       mcp_ratio: 0.02
       density: 0.05
     expect:
       velocity_class: SLOW
       feeds_momentum: true
-
-  - name: "edge case - zero mcp_ratio and zero density"
+  - name: edge case - zero mcp_ratio and zero density
     input:
-      mcp_ratio: 0.0
-      density: 0.0
+      mcp_ratio: 0
+      density: 0
     expect:
       velocity_class: SLOW
       feeds_momentum: true
@@ -172,3 +192,37 @@ tests:
     expect:
       feeds_momentum: true
       velocity_class: SLOW
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - feeds_momentum
+    - velocity_class
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: gi-hepato-safety-gate
-description: 'GI and hepatic safety classifier: maps digestive system adverse reactions using Hy''s Law criteria for DILI and GI severity'
 version: 0.1.0
+description: "GI and hepatic safety classifier: maps digestive system adverse reactions using Hy's Law criteria for DILI and GI severity"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: reaction_pt
+    type: string
+    required: true
+    description: MedDRA preferred term for the GI/hepatic reaction
+  - name: alt_xuln
+    type: float
+    required: false
+    description: ALT elevation as x ULN (e.g., 3.0 = 3x upper limit of normal)
+  - name: tbili_xuln
+    type: float
+    required: false
+    description: Total bilirubin elevation as x ULN
+outputs:
+  - name: severity
+    type: string
+  - name: soc
+    type: string
+  - name: dili_signal
+    type: bool
+  - name: action
+    type: string
 interface:
   inputs:
     reaction_pt:
@@ -18,7 +50,7 @@ interface:
   outputs:
     severity:
       type: string
-      description: 'critical | serious | moderate | mild'
+      description: critical | serious | moderate | mild
     soc:
       type: string
     dili_signal:
@@ -26,6 +58,38 @@ interface:
       description: Whether Hy's Law criteria are met (ALT>=3xULN + TBili>=2xULN)
     action:
       type: string
+ui:
+  title: Gi Hepato Safety Gate
+  subtitle: "GI and hepatic safety classifier: maps digestive system adverse reactions using Hy's Law criteria for DILI and GI severity"
+  icon: circle
+  route: /vigilance/mg/gi-hepato-safety-gate
+  steps:
+    - field: reaction_pt
+      label: reaction pt
+      help: MedDRA preferred term for the GI/hepatic reaction
+      widget: text
+      placeholder: null
+    - field: alt_xuln
+      label: alt xuln
+      help: ALT elevation as x ULN (e.g., 3.0 = 3x upper limit of normal)
+      widget: text
+      placeholder: null
+    - field: tbili_xuln
+      label: tbili xuln
+      help: Total bilirubin elevation as x ULN
+      widget: text
+      placeholder: null
+  result:
+    template: "severity: {{severity}} — soc: {{soc}} — dili_signal: {{dili_signal}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/gi-hepato-safety-gate
+  cli: rsk mcg run gi-hepato-safety-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_hys_law
   nodes:
@@ -138,16 +202,16 @@ tests:
   - name: hys_law_met
     input:
       reaction_pt: HEPATOCELLULAR INJURY
-      alt_xuln: 5.0
-      tbili_xuln: 3.0
+      alt_xuln: 5
+      tbili_xuln: 3
     expect:
       severity: critical
       dili_signal: true
   - name: alt_elevated_only
     input:
       reaction_pt: ALANINE AMINOTRANSFERASE INCREASED
-      alt_xuln: 4.0
-      tbili_xuln: 1.0
+      alt_xuln: 4
+      tbili_xuln: 1
     expect:
       severity: serious
       dili_signal: false
@@ -185,3 +249,39 @@ tests:
     input: {}
     expect:
       severity: mild
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - severity
+    - soc
+    - dili_signal
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

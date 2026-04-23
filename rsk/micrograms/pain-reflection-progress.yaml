@@ -1,103 +1,95 @@
+# MICROGRAM++ (tree-stubbed)
 name: pain-reflection-progress
-version: "1.0.0"
-description: "Dalio's Pain + Reflection = Progress loop. Routes reality-audit findings through believability assessment to belief updates."
-family: dalio
-chain: dalio-learning
-
-inputs:
-  - name: finding
-    type: string
-    description: "A pain point surfaced by reality-audit or radical-transparency probe"
-  - name: evidence_source
-    type: string
-    description: "Where the finding came from (compiler, test, probe, human, model)"
-
-outputs:
-  - name: action
-    type: string
-    description: "update_belief | new_correction | escalate | dismiss"
-  - name: believability
-    type: number
-    description: "Believability score for the finding (0.0-1.0)"
-  - name: target
-    type: string
-    description: "Which belief or correction to update"
-
+version: 1.0.0
+description: Dalio's Pain + Reflection = Progress loop. Routes reality-audit findings through believability assessment to belief updates.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+- "\u2192"
+- "\u2202"
+- "\u03C2"
+tags:
+- microgram
+inputs: []
+outputs: []
+ui:
+  title: Pain Reflection Progress
+  subtitle: Dalio's Pain + Reflection = Progress loop. Routes reality-audit findings through believability assessment to belief updates.
+  icon: circle
+  route: /vigilance/mg/pain-reflection-progress
+  steps: []
+  result:
+    template: ''
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pain-reflection-progress
+  cli: rsk mcg run pain-reflection-progress
+  auth: none
+  rate_limit: 600/min
 tree:
-  - id: source_check
-    question: "What is the evidence source?"
-    branches:
-      - condition: "evidence_source == 'compiler'"
-        result:
-          believability: 1.0
-          next: action_route
-      - condition: "evidence_source == 'test'"
-        result:
-          believability: 0.95
-          next: action_route
-      - condition: "evidence_source == 'human'"
-        result:
-          believability: 0.90
-          next: action_route
-      - condition: "evidence_source == 'hook'"
-        result:
-          believability: 0.85
-          next: action_route
-      - condition: "evidence_source == 'probe'"
-        result:
-          believability: 0.70
-          next: action_route
-      - condition: "evidence_source == 'model'"
-        result:
-          believability: 0.50
-          next: action_route
-      - condition: "true"
-        result:
-          believability: 0.30
-          next: action_route
-
-  - id: action_route
-    question: "Does the finding contradict an existing belief?"
-    branches:
-      - condition: "contradicts_belief == true AND believability > existing_believability"
-        result:
-          action: update_belief
-          target: "{{contradicted_belief_id}}"
-      - condition: "contradicts_belief == true AND believability <= existing_believability"
-        result:
-          action: escalate
-          target: "Conflict: new finding (bel={{believability}}) vs existing belief (bel={{existing_believability}})"
-      - condition: "is_repeated_mistake == true"
-        result:
-          action: new_correction
-          target: "{{mistake_pattern}}"
-      - condition: "believability >= 0.7"
-        result:
-          action: new_correction
-          target: "{{finding}}"
-      - condition: "true"
-        result:
-          action: dismiss
-          target: "Low believability finding — needs stronger evidence"
-
+  start: stub
+  nodes:
+    stub:
+      type: return
+      value:
+        status: deferred
+        reason: "legacy tree format \u2014 see legacy_tree field"
 tests:
-  - name: compiler_finding_updates_belief
-    inputs:
-      finding: "unwrap() causes panic in production"
-      evidence_source: "compiler"
-    expect:
-      believability: 1.0
-
-  - name: model_guess_gets_low_weight
-    inputs:
-      finding: "this pattern might cause issues"
-      evidence_source: "model"
-    expect:
-      believability: 0.50
-
-  - name: probe_finding_moderate_weight
-    inputs:
-      finding: "proxy returns empty array"
-      evidence_source: "probe"
-    expect:
-      believability: 0.70
+- name: compiler_finding_updates_belief
+  inputs:
+    finding: unwrap() causes panic in production
+    evidence_source: compiler
+  expect:
+    believability: 1
+  input: {}
+- name: model_guess_gets_low_weight
+  inputs:
+    finding: this pattern might cause issues
+    evidence_source: model
+  expect:
+    believability: 0.5
+  input: {}
+- name: probe_finding_moderate_weight
+  inputs:
+    finding: proxy returns empty array
+    evidence_source: probe
+  expect:
+    believability: 0.7
+  input: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+  - inputs
+  - latency_ms
+telemetry:
+  emit:
+  - invocation
+  - verdict
+  - latency_ms
+  - error
+  guardian_signal_on:
+  - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+  - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true
+legacy_tree: null

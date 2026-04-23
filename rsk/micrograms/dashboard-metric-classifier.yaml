@@ -1,6 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dashboard-metric-classifier
-description: 'PVOS dashboard: classifies metric health as HEALTHY/WARNING/CRITICAL using standard PV operational thresholds (warn>=70, critical>=90)'
 version: 0.1.0
+description: "PVOS dashboard: classifies metric health as HEALTHY/WARNING/CRITICAL using standard PV operational thresholds (warn>=70, critical>=90)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: metric_value
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: description
+    type: string
+  - name: health
+    type: string
 interface:
   inputs:
     metric_value:
@@ -11,6 +31,28 @@ interface:
       type: string
     health:
       type: string
+ui:
+  title: Dashboard Metric Classifier
+  subtitle: "PVOS dashboard: classifies metric health as HEALTHY/WARNING/CRITICAL using standard PV operational thresholds (warn>=70, critical>=90)"
+  icon: circle
+  route: /vigilance/mg/dashboard-metric-classifier
+  steps:
+    - field: metric_value
+      label: metric value
+      help: Enter metric_value
+      widget: text
+      placeholder: null
+  result:
+    template: "description: {{description}} — health: {{health}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dashboard-metric-classifier
+  cli: rsk mcg run dashboard-metric-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_critical
   nodes:
@@ -44,35 +86,69 @@ tree:
         health: HEALTHY
         description: Metric within normal range - no action required
 tests:
-- input:
-    metric_value: 95
-    threshold_warn: 70
-    threshold_critical: 90
-  expect:
-    health: CRITICAL
-    description: Metric exceeds critical threshold - immediate action required
-- input:
-    metric_value: 75
-    threshold_warn: 70
-    threshold_critical: 90
-  expect:
-    health: WARNING
-    description: Metric exceeds warning threshold - monitor and investigate
-- input:
-    metric_value: 50
-    threshold_warn: 70
-    threshold_critical: 90
-  expect:
-    health: HEALTHY
-    description: Metric within normal range - no action required
-- input:
-    metric_value: 90
-    threshold_warn: 70
-    threshold_critical: 90
-  expect:
-    health: CRITICAL
-    description: Metric exceeds critical threshold - immediate action required
-- input: {}
-  expect:
-    description: Metric within normal range - no action required
-    health: HEALTHY
+  - input:
+      metric_value: 95
+      threshold_warn: 70
+      threshold_critical: 90
+    expect:
+      health: CRITICAL
+      description: Metric exceeds critical threshold - immediate action required
+  - input:
+      metric_value: 75
+      threshold_warn: 70
+      threshold_critical: 90
+    expect:
+      health: WARNING
+      description: Metric exceeds warning threshold - monitor and investigate
+  - input:
+      metric_value: 50
+      threshold_warn: 70
+      threshold_critical: 90
+    expect:
+      health: HEALTHY
+      description: Metric within normal range - no action required
+  - input:
+      metric_value: 90
+      threshold_warn: 70
+      threshold_critical: 90
+    expect:
+      health: CRITICAL
+      description: Metric exceeds critical threshold - immediate action required
+  - input: {}
+    expect:
+      description: Metric within normal range - no action required
+      health: HEALTHY
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - description
+    - health
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

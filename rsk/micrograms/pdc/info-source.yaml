@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: info-source
-description: "Domain 15: Route to information source type by data need — literature, regulatory databases, RWD, social media, genomic, digital health."
 version: 0.1.0
+description: "Domain 15: Route to information source type by data need — literature, regulatory databases, RWD, social media, genomic, digital health."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: source_type
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: access
+    type: string
+  - name: ai_assist
+    type: string
+  - name: approach
+    type: string
+  - name: bias_risk
+    type: string
+  - name: databases
+    type: string
+  - name: framework
+    type: string
+  - name: quality
+    type: string
+  - name: search_tip
+    type: string
+  - name: source
+    type: string
 interface:
   inputs:
     source_type:
@@ -25,6 +59,28 @@ interface:
       type: string
     source:
       type: string
+ui:
+  title: Info Source
+  subtitle: "Domain 15: Route to information source type by data need — literature, regulatory databases, RWD, social media, genomic, digital health."
+  icon: circle
+  route: /vigilance/mg/info-source
+  steps:
+    - field: source_type
+      label: source type
+      help: Enter source_type
+      widget: text
+      placeholder: null
+  result:
+    template: "access: {{access}} — ai_assist: {{ai_assist}} — approach: {{approach}} — bias_risk: {{bias_risk}} — databases: {{databases}} — framework: {{framework}} — quality: {{quality}} — search_tip: {{search_tip}} — source: {{source}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/info-source
+  cli: rsk mcg run info-source
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_type
   nodes:
@@ -81,111 +137,152 @@ tree:
       type: return
       value:
         source: SCIENTIFIC_LITERATURE
-        databases: "PubMed, Embase, Cochrane Library, Web of Science"
-        quality: "peer-reviewed, highest evidence credibility"
-        access: "subscription/open access, institutional licenses"
-        bias_risk: "publication bias, positive result bias, language bias"
-        ai_assist: "automated monitoring, relevance ranking, NLP extraction, systematic review acceleration"
-        search_tip: "use MeSH/Emtree controlled vocabulary + free text, document strategy for reproducibility"
+        databases: PubMed, Embase, Cochrane Library, Web of Science
+        quality: peer-reviewed, highest evidence credibility
+        access: subscription/open access, institutional licenses
+        bias_risk: publication bias, positive result bias, language bias
+        ai_assist: automated monitoring, relevance ranking, NLP extraction, systematic review acceleration
+        search_tip: use MeSH/Emtree controlled vocabulary + free text, document strategy for reproducibility
     regulatory_db:
       type: return
       value:
         source: REGULATORY_DATABASE
-        databases: "FAERS, EudraVigilance, VigiBase, JADER, Canada Vigilance"
-        quality: "standardized reporting, variable completeness, reporter-dependent"
-        access: "public (FAERS, adrreports.eu) or restricted (VigiBase, EV)"
-        bias_risk: "reporting bias, stimulated reporting, Weber effect, underreporting"
-        ai_assist: "disproportionality analysis, duplicate detection, trend monitoring"
-        search_tip: "understand reporting biases before interpreting — not all signals are real"
+        databases: FAERS, EudraVigilance, VigiBase, JADER, Canada Vigilance
+        quality: standardized reporting, variable completeness, reporter-dependent
+        access: public (FAERS, adrreports.eu) or restricted (VigiBase, EV)
+        bias_risk: reporting bias, stimulated reporting, Weber effect, underreporting
+        ai_assist: disproportionality analysis, duplicate detection, trend monitoring
+        search_tip: understand reporting biases before interpreting — not all signals are real
     rwd:
       type: return
       value:
         source: REAL_WORLD_DATA
-        databases: "EHR systems, claims databases, patient registries, linked datasets"
-        quality: "large populations, longitudinal, but collected for non-research purposes"
-        access: "data use agreements, IRB/ethics approval, privacy compliance"
-        bias_risk: "selection bias, misclassification, confounding by indication, missing data"
-        ai_assist: "NLP for outcome phenotyping, ML cohort identification, causal inference"
-        search_tip: "validate outcome definitions — codes alone are not diagnoses"
+        databases: EHR systems, claims databases, patient registries, linked datasets
+        quality: large populations, longitudinal, but collected for non-research purposes
+        access: data use agreements, IRB/ethics approval, privacy compliance
+        bias_risk: selection bias, misclassification, confounding by indication, missing data
+        ai_assist: NLP for outcome phenotyping, ML cohort identification, causal inference
+        search_tip: validate outcome definitions — codes alone are not diagnoses
     social_media:
       type: return
       value:
         source: SOCIAL_MEDIA
-        databases: "Twitter/X, patient forums, Reddit, Facebook groups, health apps"
-        quality: "unverified, unstructured, but captures patient experience"
-        access: "API access, web scraping, social listening platforms"
-        bias_risk: "self-selection, no verification, context loss, demographic skew"
-        ai_assist: "NLP for AE extraction, sentiment analysis, trend detection"
-        search_tip: "supplement, never replace — social media signals need clinical validation"
+        databases: Twitter/X, patient forums, Reddit, Facebook groups, health apps
+        quality: unverified, unstructured, but captures patient experience
+        access: API access, web scraping, social listening platforms
+        bias_risk: self-selection, no verification, context loss, demographic skew
+        ai_assist: NLP for AE extraction, sentiment analysis, trend detection
+        search_tip: supplement, never replace — social media signals need clinical validation
     genomic:
       type: return
       value:
         source: GENOMIC_BIOMARKER
-        databases: "PharmGKB, ClinVar, CPIC, dbSNP, 1000 Genomes"
-        quality: "curated genetic variant databases, evidence-graded"
-        access: "mostly open access, some institutional"
-        bias_risk: "population representation bias, variant interpretation uncertainty"
-        ai_assist: "pharmacogenomic risk prediction, variant classification, interaction modeling"
-        search_tip: "check CPIC guidelines for clinically actionable pharmacogenomic associations"
+        databases: PharmGKB, ClinVar, CPIC, dbSNP, 1000 Genomes
+        quality: curated genetic variant databases, evidence-graded
+        access: mostly open access, some institutional
+        bias_risk: population representation bias, variant interpretation uncertainty
+        ai_assist: pharmacogenomic risk prediction, variant classification, interaction modeling
+        search_tip: check CPIC guidelines for clinically actionable pharmacogenomic associations
     digital_health:
       type: return
       value:
         source: DIGITAL_HEALTH
-        databases: "wearable device data, mHealth apps, digital therapeutics, IoT medical devices"
-        quality: "continuous monitoring, high volume, variable validation"
-        access: "device manufacturer partnerships, research collaborations"
-        bias_risk: "device accuracy, user compliance, digital divide"
-        ai_assist: "real-time monitoring, pattern detection, anomaly alerts"
-        search_tip: "emerging source — establish validation framework before relying on signals"
+        databases: wearable device data, mHealth apps, digital therapeutics, IoT medical devices
+        quality: continuous monitoring, high volume, variable validation
+        access: device manufacturer partnerships, research collaborations
+        bias_risk: device accuracy, user compliance, digital divide
+        ai_assist: real-time monitoring, pattern detection, anomaly alerts
+        search_tip: emerging source — establish validation framework before relying on signals
     grey_literature:
       type: return
       value:
         source: GREY_LITERATURE
-        databases: "conference abstracts, regulatory docs, HTA reports, industry white papers"
-        quality: "variable, limited peer review, potential publication bias countermeasure"
-        access: "conference proceedings, regulatory websites, industry contacts"
-        bias_risk: "limited peer review, selective reporting, access barriers"
-        ai_assist: "automated conference monitoring, document classification"
-        search_tip: "valuable for emerging data not yet published — verify with primary sources when available"
+        databases: conference abstracts, regulatory docs, HTA reports, industry white papers
+        quality: variable, limited peer review, potential publication bias countermeasure
+        access: conference proceedings, regulatory websites, industry contacts
+        bias_risk: limited peer review, selective reporting, access barriers
+        ai_assist: automated conference monitoring, document classification
+        search_tip: valuable for emerging data not yet published — verify with primary sources when available
     multi_source:
       type: return
       value:
         source: MULTI_SOURCE
-        approach: "combine multiple source types for comprehensive safety assessment"
-        framework: "literature + regulatory + RWD = triangulation of evidence"
-        ai_assist: "cross-source integration, network analysis, knowledge graphs"
-        search_tip: "no single source is sufficient — triangulate across source types"
+        approach: combine multiple source types for comprehensive safety assessment
+        framework: literature + regulatory + RWD = triangulation of evidence
+        ai_assist: cross-source integration, network analysis, knowledge graphs
+        search_tip: no single source is sufficient — triangulate across source types
 tests:
-- input:
-    source_type: literature
-  expect:
-    source: SCIENTIFIC_LITERATURE
-    databases: "PubMed, Embase, Cochrane Library, Web of Science"
-- input:
-    source_type: regulatory_database
-  expect:
-    source: REGULATORY_DATABASE
-- input:
-    source_type: real_world_data
-  expect:
-    source: REAL_WORLD_DATA
-- input:
-    source_type: social_media
-  expect:
-    source: SOCIAL_MEDIA
-    search_tip: "supplement, never replace — social media signals need clinical validation"
-- input:
-    source_type: genomic
-  expect:
-    source: GENOMIC_BIOMARKER
-- input:
-    source_type: digital_health
-  expect:
-    source: DIGITAL_HEALTH
-- input:
-    source_type: grey_literature
-  expect:
-    source: GREY_LITERATURE
-- input: {}
-  expect:
-    source: MULTI_SOURCE
+  - input:
+      source_type: literature
+    expect:
+      source: SCIENTIFIC_LITERATURE
+      databases: PubMed, Embase, Cochrane Library, Web of Science
+  - input:
+      source_type: regulatory_database
+    expect:
+      source: REGULATORY_DATABASE
+  - input:
+      source_type: real_world_data
+    expect:
+      source: REAL_WORLD_DATA
+  - input:
+      source_type: social_media
+    expect:
+      source: SOCIAL_MEDIA
+      search_tip: supplement, never replace — social media signals need clinical validation
+  - input:
+      source_type: genomic
+    expect:
+      source: GENOMIC_BIOMARKER
+  - input:
+      source_type: digital_health
+    expect:
+      source: DIGITAL_HEALTH
+  - input:
+      source_type: grey_literature
+    expect:
+      source: GREY_LITERATURE
+  - input: {}
+    expect:
+      source: MULTI_SOURCE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - access
+    - ai_assist
+    - approach
+    - bias_risk
+    - databases
+    - framework
+    - quality
+    - search_tip
+    - source
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

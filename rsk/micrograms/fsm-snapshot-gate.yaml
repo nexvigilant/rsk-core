@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: fsm-snapshot-gate
-description: 'PVOS FSM snapshots: gates snapshot creation based on state change and time since last snapshot - avoid redundant captures'
 version: 0.1.0
+description: "PVOS FSM snapshots: gates snapshot creation based on state change and time since last snapshot - avoid redundant captures"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: minutes_since_last_snapshot
+    type: int
+    required: false
+    description: ""
+  - name: state_changed
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: decision
+    type: string
+  - name: description
+    type: string
 interface:
   inputs:
     minutes_since_last_snapshot:
@@ -14,6 +38,33 @@ interface:
       type: string
     description:
       type: string
+ui:
+  title: Fsm Snapshot Gate
+  subtitle: "PVOS FSM snapshots: gates snapshot creation based on state change and time since last snapshot - avoid redundant captures"
+  icon: circle
+  route: /vigilance/mg/fsm-snapshot-gate
+  steps:
+    - field: minutes_since_last_snapshot
+      label: minutes since last snapshot
+      help: Enter minutes_since_last_snapshot
+      widget: text
+      placeholder: null
+    - field: state_changed
+      label: state changed
+      help: Enter state_changed
+      widget: toggle
+      placeholder: null
+  result:
+    template: "decision: {{decision}} — description: {{description}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/fsm-snapshot-gate
+  cli: rsk mcg run fsm-snapshot-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_state_changed
   nodes:
@@ -42,31 +93,65 @@ tree:
         decision: SKIP
         description: State unchanged and snapshot recent - skip redundant snapshot
 tests:
-- input:
-    state_changed: true
-    minutes_since_last_snapshot: 5
-  expect:
-    decision: SNAPSHOT
-    description: State changed or 60+ minutes elapsed - create FSM snapshot
-- input:
-    state_changed: false
-    minutes_since_last_snapshot: 90
-  expect:
-    decision: SNAPSHOT
-    description: State changed or 60+ minutes elapsed - create FSM snapshot
-- input:
-    state_changed: false
-    minutes_since_last_snapshot: 30
-  expect:
-    decision: SKIP
-    description: State unchanged and snapshot recent - skip redundant snapshot
-- input:
-    state_changed: true
-    minutes_since_last_snapshot: 120
-  expect:
-    decision: SNAPSHOT
-    description: State changed or 60+ minutes elapsed - create FSM snapshot
-- input: {}
-  expect:
-    decision: SKIP
-    description: State unchanged and snapshot recent - skip redundant snapshot
+  - input:
+      state_changed: true
+      minutes_since_last_snapshot: 5
+    expect:
+      decision: SNAPSHOT
+      description: State changed or 60+ minutes elapsed - create FSM snapshot
+  - input:
+      state_changed: false
+      minutes_since_last_snapshot: 90
+    expect:
+      decision: SNAPSHOT
+      description: State changed or 60+ minutes elapsed - create FSM snapshot
+  - input:
+      state_changed: false
+      minutes_since_last_snapshot: 30
+    expect:
+      decision: SKIP
+      description: State unchanged and snapshot recent - skip redundant snapshot
+  - input:
+      state_changed: true
+      minutes_since_last_snapshot: 120
+    expect:
+      decision: SNAPSHOT
+      description: State changed or 60+ minutes elapsed - create FSM snapshot
+  - input: {}
+    expect:
+      decision: SKIP
+      description: State unchanged and snapshot recent - skip redundant snapshot
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - decision
+    - description
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

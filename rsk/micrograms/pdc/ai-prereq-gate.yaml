@@ -1,6 +1,86 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ai-prereq-gate
-description: "PDC: Validate EPA10 AI Gateway prerequisites by phase — checks domain levels, exam scores, and project evidence"
 version: 0.1.0
+description: "PDC: Validate EPA10 AI Gateway prerequisites by phase — checks domain levels, exam scores, and project evidence"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: ai_exam_score
+    type: int
+    required: false
+    description: ""
+  - name: cross_functional_experience
+    type: bool
+    required: false
+    description: ""
+  - name: domain_1_level
+    type: int
+    required: false
+    description: ""
+  - name: domain_4_level
+    type: int
+    required: false
+    description: ""
+  - name: domain_8_level
+    type: int
+    required: false
+    description: ""
+  - name: domains_at_l3
+    type: int
+    required: false
+    description: ""
+  - name: domains_at_l4
+    type: int
+    required: false
+    description: ""
+  - name: epa10_level
+    type: int
+    required: false
+    description: ""
+  - name: ethics_training
+    type: bool
+    required: false
+    description: ""
+  - name: leadership_experience
+    type: bool
+    required: false
+    description: ""
+  - name: project_roi_pct
+    type: int
+    required: false
+    description: ""
+  - name: supervised_project_complete
+    type: bool
+    required: false
+    description: ""
+  - name: target_phase
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: approved
+    type: bool
+  - name: cpa8_unlocked
+    type: bool
+  - name: error
+    type: string
+  - name: gap
+    type: string
+  - name: next_phase
+    type: any
+  - name: outcome
+    type: string
+  - name: phase
+    type: string
+  - name: phase_name
+    type: string
 interface:
   inputs:
     ai_exam_score:
@@ -59,6 +139,88 @@ interface:
       type: string
     phase_name:
       type: string
+ui:
+  title: Ai Prereq Gate
+  subtitle: "PDC: Validate EPA10 AI Gateway prerequisites by phase — checks domain levels, exam scores, and project evidence"
+  icon: circle
+  route: /vigilance/mg/ai-prereq-gate
+  steps:
+    - field: ai_exam_score
+      label: ai exam score
+      help: Enter ai_exam_score
+      widget: text
+      placeholder: null
+    - field: cross_functional_experience
+      label: cross functional experience
+      help: Enter cross_functional_experience
+      widget: toggle
+      placeholder: null
+    - field: domain_1_level
+      label: domain 1 level
+      help: Enter domain_1_level
+      widget: text
+      placeholder: null
+    - field: domain_4_level
+      label: domain 4 level
+      help: Enter domain_4_level
+      widget: text
+      placeholder: null
+    - field: domain_8_level
+      label: domain 8 level
+      help: Enter domain_8_level
+      widget: text
+      placeholder: null
+    - field: domains_at_l3
+      label: domains at l3
+      help: Enter domains_at_l3
+      widget: text
+      placeholder: null
+    - field: domains_at_l4
+      label: domains at l4
+      help: Enter domains_at_l4
+      widget: text
+      placeholder: null
+    - field: epa10_level
+      label: epa10 level
+      help: Enter epa10_level
+      widget: text
+      placeholder: null
+    - field: ethics_training
+      label: ethics training
+      help: Enter ethics_training
+      widget: toggle
+      placeholder: null
+    - field: leadership_experience
+      label: leadership experience
+      help: Enter leadership_experience
+      widget: toggle
+      placeholder: null
+    - field: project_roi_pct
+      label: project roi pct
+      help: Enter project_roi_pct
+      widget: text
+      placeholder: null
+    - field: supervised_project_complete
+      label: supervised project complete
+      help: Enter supervised_project_complete
+      widget: toggle
+      placeholder: null
+    - field: target_phase
+      label: target phase
+      help: Enter target_phase
+      widget: text
+      placeholder: null
+  result:
+    template: "approved: {{approved}} — cpa8_unlocked: {{cpa8_unlocked}} — error: {{error}} — gap: {{gap}} — next_phase: {{next_phase}} — outcome: {{outcome}} — phase: {{phase}} — phase_name: {{phase_name}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ai-prereq-gate
+  cli: rsk mcg run ai-prereq-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_phase
   nodes:
@@ -115,16 +277,16 @@ tree:
       type: return
       value:
         phase: ENTRY
-        phase_name: "AI Foundation and Observation"
+        phase_name: AI Foundation and Observation
         approved: true
         next_phase: 2
-        outcome: "Basic AI literacy across all domains"
+        outcome: Basic AI literacy across all domains
     entry_blocked:
       type: return
       value:
         phase: ENTRY
         approved: false
-        gap: "Requires ethics training AND AI exam score >= 80%"
+        gap: Requires ethics training AND AI exam score >= 80%
     check_dev_prereqs:
       type: condition
       variable: domain_1_level
@@ -157,16 +319,16 @@ tree:
       type: return
       value:
         phase: DEVELOPMENT
-        phase_name: "Supervised AI Application"
+        phase_name: Supervised AI Application
         approved: true
         next_phase: 3
-        outcome: "Independent AI tool utilization capability"
+        outcome: Independent AI tool utilization capability
     dev_blocked:
       type: return
       value:
         phase: DEVELOPMENT
         approved: false
-        gap: "Requires L2+ in Domains 1,4,8 AND supervised project completion"
+        gap: Requires L2+ in Domains 1,4,8 AND supervised project completion
     check_advanced_prereqs:
       type: condition
       variable: domains_at_l3
@@ -192,16 +354,16 @@ tree:
       type: return
       value:
         phase: ADVANCED
-        phase_name: "Independent AI Implementation"
+        phase_name: Independent AI Implementation
         approved: true
         next_phase: 4
-        outcome: "AI optimization and leadership capabilities"
+        outcome: AI optimization and leadership capabilities
     advanced_blocked:
       type: return
       value:
         phase: ADVANCED
         approved: false
-        gap: "Requires L3 in 5+ domains AND EPA10 at L3 AND project ROI >= 15%"
+        gap: Requires L3 in 5+ domains AND EPA10 at L3 AND project ROI >= 15%
     check_expert_prereqs:
       type: condition
       variable: domains_at_l4
@@ -220,16 +382,16 @@ tree:
       type: return
       value:
         phase: EXPERT
-        phase_name: "AI Innovation and Governance"
+        phase_name: AI Innovation and Governance
         approved: true
         next_phase: 5
-        outcome: "AI thought leadership and transformation capability"
+        outcome: AI thought leadership and transformation capability
     expert_blocked:
       type: return
       value:
         phase: EXPERT
         approved: false
-        gap: "Requires L4 in 8+ domains AND demonstrated leadership experience"
+        gap: Requires L4 in 8+ domains AND demonstrated leadership experience
     check_capstone_prereqs:
       type: condition
       variable: epa10_level
@@ -248,104 +410,144 @@ tree:
       type: return
       value:
         phase: CAPSTONE
-        phase_name: "CPA8 - AI-Enhanced Pharmacovigilance Activities"
+        phase_name: CPA8 - AI-Enhanced Pharmacovigilance Activities
         approved: true
         next_phase: null
-        outcome: "Complete AI-Enhanced PV Activities mastery"
+        outcome: Complete AI-Enhanced PV Activities mastery
         cpa8_unlocked: true
     capstone_blocked:
       type: return
       value:
         phase: CAPSTONE
         approved: false
-        gap: "Requires EPA10 at L4+ AND cross-functional experience"
+        gap: Requires EPA10 at L4+ AND cross-functional experience
         cpa8_unlocked: false
     invalid_phase:
       type: return
       value:
         approved: false
-        error: "Phase must be 1-5 (Entry, Development, Advanced, Expert, Capstone)"
+        error: Phase must be 1-5 (Entry, Development, Advanced, Expert, Capstone)
 tests:
-- input:
-    target_phase: 1
-    ethics_training: true
-    ai_exam_score: 85
-  expect:
-    phase: ENTRY
-    approved: true
-- input:
-    target_phase: 1
-    ethics_training: false
-    ai_exam_score: 90
-  expect:
-    phase: ENTRY
-    approved: false
-- input:
-    target_phase: 1
-    ethics_training: true
-    ai_exam_score: 75
-  expect:
-    approved: false
-- input:
-    target_phase: 2
-    domain_1_level: 2
-    domain_4_level: 2
-    domain_8_level: 2
-    supervised_project_complete: true
-  expect:
-    phase: DEVELOPMENT
-    approved: true
-- input:
-    target_phase: 2
-    domain_1_level: 2
-    domain_4_level: 1
-    domain_8_level: 2
-    supervised_project_complete: true
-  expect:
-    approved: false
-- input:
-    target_phase: 3
-    domains_at_l3: 6
-    epa10_level: 3
-    project_roi_pct: 20
-  expect:
-    phase: ADVANCED
-    approved: true
-- input:
-    target_phase: 3
-    domains_at_l3: 4
-    epa10_level: 3
-    project_roi_pct: 20
-  expect:
-    approved: false
-- input:
-    target_phase: 4
-    domains_at_l4: 9
-    leadership_experience: true
-  expect:
-    phase: EXPERT
-    approved: true
-- input:
-    target_phase: 4
-    domains_at_l4: 7
-    leadership_experience: true
-  expect:
-    approved: false
-- input:
-    target_phase: 5
-    epa10_level: 4
-    cross_functional_experience: true
-  expect:
-    phase: CAPSTONE
-    approved: true
-    cpa8_unlocked: true
-- input:
-    target_phase: 5
-    epa10_level: 3
-    cross_functional_experience: true
-  expect:
-    approved: false
-    cpa8_unlocked: false
-- input: {}
-  expect:
-    approved: false
+  - input:
+      target_phase: 1
+      ethics_training: true
+      ai_exam_score: 85
+    expect:
+      phase: ENTRY
+      approved: true
+  - input:
+      target_phase: 1
+      ethics_training: false
+      ai_exam_score: 90
+    expect:
+      phase: ENTRY
+      approved: false
+  - input:
+      target_phase: 1
+      ethics_training: true
+      ai_exam_score: 75
+    expect:
+      approved: false
+  - input:
+      target_phase: 2
+      domain_1_level: 2
+      domain_4_level: 2
+      domain_8_level: 2
+      supervised_project_complete: true
+    expect:
+      phase: DEVELOPMENT
+      approved: true
+  - input:
+      target_phase: 2
+      domain_1_level: 2
+      domain_4_level: 1
+      domain_8_level: 2
+      supervised_project_complete: true
+    expect:
+      approved: false
+  - input:
+      target_phase: 3
+      domains_at_l3: 6
+      epa10_level: 3
+      project_roi_pct: 20
+    expect:
+      phase: ADVANCED
+      approved: true
+  - input:
+      target_phase: 3
+      domains_at_l3: 4
+      epa10_level: 3
+      project_roi_pct: 20
+    expect:
+      approved: false
+  - input:
+      target_phase: 4
+      domains_at_l4: 9
+      leadership_experience: true
+    expect:
+      phase: EXPERT
+      approved: true
+  - input:
+      target_phase: 4
+      domains_at_l4: 7
+      leadership_experience: true
+    expect:
+      approved: false
+  - input:
+      target_phase: 5
+      epa10_level: 4
+      cross_functional_experience: true
+    expect:
+      phase: CAPSTONE
+      approved: true
+      cpa8_unlocked: true
+  - input:
+      target_phase: 5
+      epa10_level: 3
+      cross_functional_experience: true
+    expect:
+      approved: false
+      cpa8_unlocked: false
+  - input: {}
+    expect:
+      approved: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - approved
+    - cpa8_unlocked
+    - error
+    - gap
+    - next_phase
+    - outcome
+    - phase
+    - phase_name
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

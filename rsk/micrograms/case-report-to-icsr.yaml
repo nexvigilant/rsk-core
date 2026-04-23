@@ -1,6 +1,102 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: case-report-to-icsr
-description: Evaluates case report completeness against ICSR criteria
 version: 0.1.0
+description: Evaluates case report completeness against ICSR criteria
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_reporter
+    type: boolean
+    required: true
+    description: ""
+  - name: has_drug
+    type: boolean
+    required: true
+    description: ""
+  - name: has_event
+    type: boolean
+    required: true
+    description: ""
+  - name: has_patient
+    type: boolean
+    required: true
+    description: ""
+outputs:
+  - name: meets_icsr_criteria
+    type: boolean
+  - name: missing_fields
+    type: array
+  - name: completeness_score
+    type: integer
+interface:
+  inputs:
+    has_reporter:
+      type: boolean
+      required: true
+    has_drug:
+      type: boolean
+      required: true
+    has_event:
+      type: boolean
+      required: true
+    has_patient:
+      type: boolean
+      required: true
+  outputs:
+    meets_icsr_criteria:
+      type: boolean
+      required: false
+    missing_fields:
+      type: array
+      required: false
+    completeness_score:
+      type: integer
+      required: false
+  aliases: {}
+ui:
+  title: Case Report To Icsr
+  subtitle: Evaluates case report completeness against ICSR criteria
+  icon: circle
+  route: /vigilance/mg/case-report-to-icsr
+  steps:
+    - field: has_reporter
+      label: has reporter
+      help: Enter has_reporter
+      widget: toggle
+      placeholder: null
+    - field: has_drug
+      label: has drug
+      help: Enter has_drug
+      widget: toggle
+      placeholder: null
+    - field: has_event
+      label: has event
+      help: Enter has_event
+      widget: toggle
+      placeholder: null
+    - field: has_patient
+      label: has patient
+      help: Enter has_patient
+      widget: toggle
+      placeholder: null
+  result:
+    template: "meets_icsr_criteria: {{meets_icsr_criteria}} — missing_fields: {{missing_fields}} — completeness_score: {{completeness_score}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/case-report-to-icsr
+  cli: rsk mcg run case-report-to-icsr
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_all_present
   nodes:
@@ -21,8 +117,8 @@ tree:
     three_present_drug_missing:
       type: return
       value:
-        missing_fields: &id003
-        - drug
+        missing_fields: &a3
+          - drug
         meets_icsr_criteria: false
         completeness_score: 75
     patient_missing:
@@ -44,23 +140,23 @@ tree:
       value:
         completeness_score: 50
         meets_icsr_criteria: false
-        missing_fields: &id007
-        - reporter
-        - drug
+        missing_fields: &a7
+          - reporter
+          - drug
     all_present:
       type: return
       value:
         meets_icsr_criteria: true
-        missing_fields: &id001 []
+        missing_fields: &a1 []
         completeness_score: 100
     two_present_patient_event_missing:
       type: return
       value:
         meets_icsr_criteria: false
         completeness_score: 50
-        missing_fields: &id010
-        - patient
-        - event
+        missing_fields: &a10
+          - patient
+          - event
     check_event_patient_only:
       type: condition
       variable: has_event
@@ -71,9 +167,9 @@ tree:
     two_present_patient_reporter_missing:
       type: return
       value:
-        missing_fields: &id013
-        - patient
-        - reporter
+        missing_fields: &a13
+          - patient
+          - reporter
         meets_icsr_criteria: false
         completeness_score: 50
     check_event_none:
@@ -101,18 +197,18 @@ tree:
       type: return
       value:
         completeness_score: 25
-        missing_fields: &id012
-        - patient
-        - drug
-        - event
+        missing_fields: &a12
+          - patient
+          - drug
+          - event
         meets_icsr_criteria: false
     one_present_patient_only:
       type: return
       value:
-        missing_fields: &id008
-        - reporter
-        - drug
-        - event
+        missing_fields: &a8
+          - reporter
+          - drug
+          - event
         completeness_score: 25
         meets_icsr_criteria: false
     one_present_drug_only:
@@ -120,10 +216,10 @@ tree:
       value:
         meets_icsr_criteria: false
         completeness_score: 25
-        missing_fields: &id014
-        - patient
-        - reporter
-        - event
+        missing_fields: &a14
+          - patient
+          - reporter
+          - event
     check_event_reporter_only:
       type: condition
       variable: has_event
@@ -155,17 +251,17 @@ tree:
     two_present_reporter_event_missing:
       type: return
       value:
-        missing_fields: &id006
-        - reporter
-        - event
+        missing_fields: &a6
+          - reporter
+          - event
         meets_icsr_criteria: false
         completeness_score: 50
     three_present_reporter_missing:
       type: return
       value:
         meets_icsr_criteria: false
-        missing_fields: &id005
-        - reporter
+        missing_fields: &a5
+          - reporter
         completeness_score: 75
     check_event_reporter_drug_ok:
       type: condition
@@ -177,8 +273,8 @@ tree:
     three_present_patient_missing:
       type: return
       value:
-        missing_fields: &id009
-        - patient
+        missing_fields: &a9
+          - patient
         completeness_score: 75
         meets_icsr_criteria: false
     one_present_event_only:
@@ -186,23 +282,23 @@ tree:
       value:
         meets_icsr_criteria: false
         completeness_score: 25
-        missing_fields: &id015
-        - patient
-        - reporter
-        - drug
+        missing_fields: &a15
+          - patient
+          - reporter
+          - drug
     three_present_event_missing:
       type: return
       value:
         meets_icsr_criteria: false
-        missing_fields: &id002
-        - event
+        missing_fields: &a2
+          - event
         completeness_score: 75
     two_present_drug_event_missing:
       type: return
       value:
-        missing_fields: &id004
-        - drug
-        - event
+        missing_fields: &a4
+          - drug
+          - event
         meets_icsr_criteria: false
         completeness_score: 50
     all_missing:
@@ -210,18 +306,18 @@ tree:
       value:
         meets_icsr_criteria: false
         completeness_score: 0
-        missing_fields: &id016
-        - patient
-        - reporter
-        - drug
-        - event
+        missing_fields: &a16
+          - patient
+          - reporter
+          - drug
+          - event
     two_present_patient_drug_missing:
       type: return
       value:
         meets_icsr_criteria: false
-        missing_fields: &id011
-        - patient
-        - drug
+        missing_fields: &a11
+          - patient
+          - drug
         completeness_score: 50
     check_all_present:
       type: condition
@@ -238,177 +334,187 @@ tree:
       true_next: check_event_reporter_drug_ok
       false_next: check_event_reporter_only
 tests:
-- input:
-    has_patient: true
-    has_reporter: true
-    has_drug: true
-    has_event: true
-  expect:
-    meets_icsr_criteria: true
-    missing_fields: *id001
-    completeness_score: 100
-- input:
-    has_patient: true
-    has_reporter: true
-    has_drug: true
-    has_event: false
-  expect:
-    meets_icsr_criteria: false
-    missing_fields: *id002
-    completeness_score: 75
-- input:
-    has_patient: true
-    has_reporter: true
-    has_drug: false
-    has_event: true
-  expect:
-    missing_fields: *id003
-    meets_icsr_criteria: false
-    completeness_score: 75
-- input:
-    has_patient: true
-    has_reporter: true
-    has_drug: false
-    has_event: false
-  expect:
-    missing_fields: *id004
-    meets_icsr_criteria: false
-    completeness_score: 50
-- input:
-    has_patient: true
-    has_reporter: false
-    has_drug: true
-    has_event: true
-  expect:
-    meets_icsr_criteria: false
-    missing_fields: *id005
-    completeness_score: 75
-- input:
-    has_patient: true
-    has_reporter: false
-    has_drug: true
-    has_event: false
-  expect:
-    missing_fields: *id006
-    meets_icsr_criteria: false
-    completeness_score: 50
-- input:
-    has_patient: true
-    has_reporter: false
-    has_drug: false
-    has_event: true
-  expect:
-    completeness_score: 50
-    meets_icsr_criteria: false
-    missing_fields: *id007
-- input:
-    has_patient: true
-    has_reporter: false
-    has_drug: false
-    has_event: false
-  expect:
-    missing_fields: *id008
-    completeness_score: 25
-    meets_icsr_criteria: false
-- input:
-    has_patient: false
-    has_reporter: true
-    has_drug: true
-    has_event: true
-  expect:
-    missing_fields: *id009
-    completeness_score: 75
-    meets_icsr_criteria: false
-- input:
-    has_patient: false
-    has_reporter: true
-    has_drug: true
-    has_event: false
-  expect:
-    meets_icsr_criteria: false
-    completeness_score: 50
-    missing_fields: *id010
-- input:
-    has_patient: false
-    has_reporter: true
-    has_drug: false
-    has_event: true
-  expect:
-    meets_icsr_criteria: false
-    missing_fields: *id011
-    completeness_score: 50
-- input:
-    has_patient: false
-    has_reporter: true
-    has_drug: false
-    has_event: false
-  expect:
-    completeness_score: 25
-    missing_fields: *id012
-    meets_icsr_criteria: false
-- input:
-    has_patient: false
-    has_reporter: false
-    has_drug: true
-    has_event: true
-  expect:
-    missing_fields: *id013
-    meets_icsr_criteria: false
-    completeness_score: 50
-- input:
-    has_patient: false
-    has_reporter: false
-    has_drug: true
-    has_event: false
-  expect:
-    meets_icsr_criteria: false
-    completeness_score: 25
-    missing_fields: *id014
-- input:
-    has_patient: false
-    has_reporter: false
-    has_drug: false
-    has_event: true
-  expect:
-    meets_icsr_criteria: false
-    completeness_score: 25
-    missing_fields: *id015
-- input:
-    has_patient: false
-    has_reporter: false
-    has_drug: false
-    has_event: false
-  expect:
-    meets_icsr_criteria: false
-    completeness_score: 0
-    missing_fields: *id016
-- input: {}
-  expect:
-    meets_icsr_criteria: false
-    completeness_score: 0
-    missing_fields: *id016
-interface:
-  inputs:
-    has_reporter:
-      type: boolean
-      required: true
-    has_drug:
-      type: boolean
-      required: true
-    has_event:
-      type: boolean
-      required: true
-    has_patient:
-      type: boolean
-      required: true
-  outputs:
-    meets_icsr_criteria:
-      type: boolean
-      required: false
-    missing_fields:
-      type: array
-      required: false
-    completeness_score:
-      type: integer
-      required: false
-  aliases: {}
+  - input:
+      has_patient: true
+      has_reporter: true
+      has_drug: true
+      has_event: true
+    expect:
+      meets_icsr_criteria: true
+      missing_fields: *a1
+      completeness_score: 100
+  - input:
+      has_patient: true
+      has_reporter: true
+      has_drug: true
+      has_event: false
+    expect:
+      meets_icsr_criteria: false
+      missing_fields: *a2
+      completeness_score: 75
+  - input:
+      has_patient: true
+      has_reporter: true
+      has_drug: false
+      has_event: true
+    expect:
+      missing_fields: *a3
+      meets_icsr_criteria: false
+      completeness_score: 75
+  - input:
+      has_patient: true
+      has_reporter: true
+      has_drug: false
+      has_event: false
+    expect:
+      missing_fields: *a4
+      meets_icsr_criteria: false
+      completeness_score: 50
+  - input:
+      has_patient: true
+      has_reporter: false
+      has_drug: true
+      has_event: true
+    expect:
+      meets_icsr_criteria: false
+      missing_fields: *a5
+      completeness_score: 75
+  - input:
+      has_patient: true
+      has_reporter: false
+      has_drug: true
+      has_event: false
+    expect:
+      missing_fields: *a6
+      meets_icsr_criteria: false
+      completeness_score: 50
+  - input:
+      has_patient: true
+      has_reporter: false
+      has_drug: false
+      has_event: true
+    expect:
+      completeness_score: 50
+      meets_icsr_criteria: false
+      missing_fields: *a7
+  - input:
+      has_patient: true
+      has_reporter: false
+      has_drug: false
+      has_event: false
+    expect:
+      missing_fields: *a8
+      completeness_score: 25
+      meets_icsr_criteria: false
+  - input:
+      has_patient: false
+      has_reporter: true
+      has_drug: true
+      has_event: true
+    expect:
+      missing_fields: *a9
+      completeness_score: 75
+      meets_icsr_criteria: false
+  - input:
+      has_patient: false
+      has_reporter: true
+      has_drug: true
+      has_event: false
+    expect:
+      meets_icsr_criteria: false
+      completeness_score: 50
+      missing_fields: *a10
+  - input:
+      has_patient: false
+      has_reporter: true
+      has_drug: false
+      has_event: true
+    expect:
+      meets_icsr_criteria: false
+      missing_fields: *a11
+      completeness_score: 50
+  - input:
+      has_patient: false
+      has_reporter: true
+      has_drug: false
+      has_event: false
+    expect:
+      completeness_score: 25
+      missing_fields: *a12
+      meets_icsr_criteria: false
+  - input:
+      has_patient: false
+      has_reporter: false
+      has_drug: true
+      has_event: true
+    expect:
+      missing_fields: *a13
+      meets_icsr_criteria: false
+      completeness_score: 50
+  - input:
+      has_patient: false
+      has_reporter: false
+      has_drug: true
+      has_event: false
+    expect:
+      meets_icsr_criteria: false
+      completeness_score: 25
+      missing_fields: *a14
+  - input:
+      has_patient: false
+      has_reporter: false
+      has_drug: false
+      has_event: true
+    expect:
+      meets_icsr_criteria: false
+      completeness_score: 25
+      missing_fields: *a15
+  - input:
+      has_patient: false
+      has_reporter: false
+      has_drug: false
+      has_event: false
+    expect:
+      meets_icsr_criteria: false
+      completeness_score: 0
+      missing_fields: *a16
+  - input: {}
+    expect:
+      meets_icsr_criteria: false
+      completeness_score: 0
+      missing_fields: *a16
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - meets_icsr_criteria
+    - missing_fields
+    - completeness_score
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

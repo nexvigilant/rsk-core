@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pop-pregnancy-t3
-description: Third trimester — fetal effects
 version: 0.1.0
+description: Third trimester — fetal effects
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Pop Pregnancy T3
+  subtitle: Third trimester — fetal effects
+  icon: circle
+  route: /vigilance/mg/pop-pregnancy-t3
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pop-pregnancy-t3
+  cli: rsk mcg run pop-pregnancy-t3
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -25,44 +54,74 @@ tree:
         at_risk: true
         reason: Third trimester — fetal effects
 tests:
-- input:
-    trimester: 3
-  expect:
-    at_risk: true
-    population: pregnancy-t3
-- input: {}
-  expect:
-    at_risk: false
-    population: pregnancy-t3
-- input:
-    trimester: 0
-  expect:
-    at_risk: false
-    action: standard_care
-    population: pregnancy-t3
-- input:
-    trimester: -1
-  expect:
-    population: pregnancy-t3
-    at_risk: false
-    action: standard_care
-- input:
-    trimester: 2
-  expect:
-    at_risk: false
-    action: standard_care
-    population: pregnancy-t3
-- input:
-    trimester: 4
-  expect:
-    action: standard_care
-    population: pregnancy-t3
-    at_risk: false
-- input:
-    trimester: 300
-  expect:
-    at_risk: false
-    action: standard_care
-    population: pregnancy-t3
-interface: null
-primitive_signature: null
+  - input:
+      trimester: 3
+    expect:
+      at_risk: true
+      population: pregnancy-t3
+  - input: {}
+    expect:
+      at_risk: false
+      population: pregnancy-t3
+  - input:
+      trimester: 0
+    expect:
+      at_risk: false
+      action: standard_care
+      population: pregnancy-t3
+  - input:
+      trimester: -1
+    expect:
+      population: pregnancy-t3
+      at_risk: false
+      action: standard_care
+  - input:
+      trimester: 2
+    expect:
+      at_risk: false
+      action: standard_care
+      population: pregnancy-t3
+  - input:
+      trimester: 4
+    expect:
+      action: standard_care
+      population: pregnancy-t3
+      at_risk: false
+  - input:
+      trimester: 300
+    expect:
+      at_risk: false
+      action: standard_care
+      population: pregnancy-t3
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

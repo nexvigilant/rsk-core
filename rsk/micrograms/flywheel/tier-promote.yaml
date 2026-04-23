@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tier-promote
-description: 'Flywheel tier promotion gate: validates node can advance Draft→Staging→Live based on emitter count, test pass rate, and reality score'
 version: 0.1.0
+description: "Flywheel tier promotion gate: validates node can advance Draft→Staging→Live based on emitter count, test pass rate, and reality score"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: automation
+    type: int
+    required: false
+    description: ""
+  - name: current_tier
+    type: string
+    required: false
+    description: ""
+  - name: emitters
+    type: int
+    required: false
+    description: ""
+  - name: reality_score
+    type: int
+    required: false
+    description: ""
+  - name: test_pass_rate
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: approved
+    type: bool
+  - name: decision
+    type: string
 interface:
   inputs:
     automation:
@@ -23,6 +59,48 @@ interface:
       type: bool
     decision:
       type: string
+ui:
+  title: Tier Promote
+  subtitle: "Flywheel tier promotion gate: validates node can advance Draft→Staging→Live based on emitter count, test pass rate, and reality score"
+  icon: circle
+  route: /vigilance/mg/tier-promote
+  steps:
+    - field: automation
+      label: automation
+      help: Enter automation
+      widget: text
+      placeholder: null
+    - field: current_tier
+      label: current tier
+      help: Enter current_tier
+      widget: text
+      placeholder: null
+    - field: emitters
+      label: emitters
+      help: Enter emitters
+      widget: text
+      placeholder: null
+    - field: reality_score
+      label: reality score
+      help: Enter reality_score
+      widget: text
+      placeholder: null
+    - field: test_pass_rate
+      label: test pass rate
+      help: Enter test_pass_rate
+      widget: text
+      placeholder: null
+  result:
+    template: "approved: {{approved}} — decision: {{decision}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tier-promote
+  cli: rsk mcg run tier-promote
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_tier
   nodes:
@@ -84,61 +162,95 @@ tree:
         decision: ALREADY_LIVE
         approved: false
 tests:
-- input:
-    current_tier: draft
-    emitters: 1
-    test_pass_rate: 100
-    reality_score: 18
-    automation: 20
-  expect:
-    decision: PROMOTE
-    approved: true
-- input:
-    current_tier: draft
-    emitters: 0
-    test_pass_rate: 100
-    reality_score: 18
-    automation: 20
-  expect:
-    decision: BLOCKED
-    approved: false
-- input:
-    current_tier: staging
-    emitters: 2
-    test_pass_rate: 100
-    reality_score: 66
-    automation: 92
-  expect:
-    decision: PROMOTE
-    approved: true
-- input:
-    current_tier: staging
-    emitters: 2
-    test_pass_rate: 100
-    reality_score: 35
-    automation: 15
-  expect:
-    decision: BLOCKED
-    approved: false
-- input:
-    current_tier: live
-    emitters: 3
-    test_pass_rate: 100
-    reality_score: 66
-    automation: 92
-  expect:
-    decision: ALREADY_LIVE
-    approved: false
-- input:
-    current_tier: draft
-    emitters: 1
-    test_pass_rate: 80
-    reality_score: 10
-    automation: 5
-  expect:
-    decision: BLOCKED
-    approved: false
-- input: {}
-  expect:
-    approved: false
-    decision: ALREADY_LIVE
+  - input:
+      current_tier: draft
+      emitters: 1
+      test_pass_rate: 100
+      reality_score: 18
+      automation: 20
+    expect:
+      decision: PROMOTE
+      approved: true
+  - input:
+      current_tier: draft
+      emitters: 0
+      test_pass_rate: 100
+      reality_score: 18
+      automation: 20
+    expect:
+      decision: BLOCKED
+      approved: false
+  - input:
+      current_tier: staging
+      emitters: 2
+      test_pass_rate: 100
+      reality_score: 66
+      automation: 92
+    expect:
+      decision: PROMOTE
+      approved: true
+  - input:
+      current_tier: staging
+      emitters: 2
+      test_pass_rate: 100
+      reality_score: 35
+      automation: 15
+    expect:
+      decision: BLOCKED
+      approved: false
+  - input:
+      current_tier: live
+      emitters: 3
+      test_pass_rate: 100
+      reality_score: 66
+      automation: 92
+    expect:
+      decision: ALREADY_LIVE
+      approved: false
+  - input:
+      current_tier: draft
+      emitters: 1
+      test_pass_rate: 80
+      reality_score: 10
+      automation: 5
+    expect:
+      decision: BLOCKED
+      approved: false
+  - input: {}
+    expect:
+      approved: false
+      decision: ALREADY_LIVE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - approved
+    - decision
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

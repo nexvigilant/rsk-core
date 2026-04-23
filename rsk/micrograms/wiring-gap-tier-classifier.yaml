@@ -1,0 +1,228 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: wiring-gap-tier-classifier
+version: 0.1.0
+description: "Classify capability wiring gap severity from event counts and produce tier + recommended structural action. Input: gap counts per class. Output: tier (GREEN/AMBER/RED) + action (monitor/template/promote-to-blocking)."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: skill_advisory_count
+    type: integer
+    required: true
+    description: Skill+agent advisory gap events in window
+  - name: microgram_blocking_count
+    type: integer
+    required: true
+    description: Microgram blocking gap events in window
+  - name: config_blocking_count
+    type: integer
+    required: true
+    description: Station config blocking gap events in window
+outputs:
+  - name: tier
+    type: string
+  - name: recommended_action
+    type: string
+  - name: dominant_class
+    type: string
+interface:
+  inputs:
+    skill_advisory_count:
+      type: integer
+      required: true
+      description: Skill+agent advisory gap events in window
+    microgram_blocking_count:
+      type: integer
+      required: true
+      description: Microgram blocking gap events in window
+    config_blocking_count:
+      type: integer
+      required: true
+      description: Station config blocking gap events in window
+  outputs:
+    tier:
+      type: string
+    recommended_action:
+      type: string
+    dominant_class:
+      type: string
+ui:
+  title: Wiring Gap Tier Classifier
+  subtitle: "Classify capability wiring gap severity from event counts and produce tier + recommended structural action. Input: gap counts per class. Output: tier (GREEN/AMBER/RED) + action (monitor/template/promote-to-blocking)."
+  icon: circle
+  route: /vigilance/mg/wiring-gap-tier-classifier
+  steps:
+    - field: skill_advisory_count
+      label: skill advisory count
+      help: Skill+agent advisory gap events in window
+      widget: number
+      placeholder: null
+    - field: microgram_blocking_count
+      label: microgram blocking count
+      help: Microgram blocking gap events in window
+      widget: number
+      placeholder: null
+    - field: config_blocking_count
+      label: config blocking count
+      help: Station config blocking gap events in window
+      widget: number
+      placeholder: null
+  result:
+    template: "tier: {{tier}} — recommended_action: {{recommended_action}} — dominant_class: {{dominant_class}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/wiring-gap-tier-classifier
+  cli: rsk mcg run wiring-gap-tier-classifier
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_config_red
+  nodes:
+    check_config_red:
+      type: condition
+      variable: config_blocking_count
+      operator: gte
+      value: 5
+      true_next: config_red
+      false_next: check_microgram_red
+    check_microgram_red:
+      type: condition
+      variable: microgram_blocking_count
+      operator: gte
+      value: 5
+      true_next: microgram_red
+      false_next: check_skill_amber
+    check_skill_amber:
+      type: condition
+      variable: skill_advisory_count
+      operator: gte
+      value: 10
+      true_next: skill_amber
+      false_next: check_any_amber
+    check_any_amber:
+      type: condition
+      variable: skill_advisory_count
+      operator: gte
+      value: 3
+      true_next: mild_amber
+      false_next: green_state
+    config_red:
+      type: return
+      value:
+        tier: RED
+        recommended_action: promote-to-blocking
+        dominant_class: config
+    microgram_red:
+      type: return
+      value:
+        tier: RED
+        recommended_action: scaffolding-template
+        dominant_class: microgram
+    skill_amber:
+      type: return
+      value:
+        tier: AMBER
+        recommended_action: scaffolding-template
+        dominant_class: skill
+    mild_amber:
+      type: return
+      value:
+        tier: AMBER
+        recommended_action: monitor
+        dominant_class: skill
+    green_state:
+      type: return
+      value:
+        tier: GREEN
+        recommended_action: monitor
+        dominant_class: none
+tests:
+  - name: many_config_gaps_force_red_promote
+    input:
+      skill_advisory_count: 0
+      microgram_blocking_count: 0
+      config_blocking_count: 7
+    expect:
+      tier: RED
+      recommended_action: promote-to-blocking
+      dominant_class: config
+  - name: many_microgram_gaps_red_template
+    input:
+      skill_advisory_count: 0
+      microgram_blocking_count: 6
+      config_blocking_count: 0
+    expect:
+      tier: RED
+      recommended_action: scaffolding-template
+      dominant_class: microgram
+  - name: many_skill_advisories_amber_template
+    input:
+      skill_advisory_count: 12
+      microgram_blocking_count: 0
+      config_blocking_count: 0
+    expect:
+      tier: AMBER
+      recommended_action: scaffolding-template
+      dominant_class: skill
+  - name: some_skill_advisories_mild_amber
+    input:
+      skill_advisory_count: 4
+      microgram_blocking_count: 0
+      config_blocking_count: 0
+    expect:
+      tier: AMBER
+      recommended_action: monitor
+      dominant_class: skill
+  - name: no_gaps_green
+    input:
+      skill_advisory_count: 0
+      microgram_blocking_count: 0
+      config_blocking_count: 0
+    expect:
+      tier: GREEN
+      recommended_action: monitor
+      dominant_class: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tier
+    - recommended_action
+    - dominant_class
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

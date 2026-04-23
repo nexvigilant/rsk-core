@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-safety-profile
-description: 'Classifies overall drug safety profile based on multiple signal dimensions: signal count, serious proportion, fatal count, REMS, and boxed warning status'
 version: 0.1.0
+description: "Classifies overall drug safety profile based on multiple signal dimensions: signal count, serious proportion, fatal count, REMS, and boxed warning status"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: signal_count
+    type: int
+    required: false
+    description: ""
+  - name: serious_proportion
+    type: float
+    required: false
+    description: ""
+  - name: fatal_count
+    type: int
+    required: false
+    description: ""
+  - name: has_rems
+    type: bool
+    required: false
+    description: ""
+  - name: has_boxed_warning
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: risk_tier
+    type: string
+  - name: monitoring_level
+    type: string
+  - name: regulatory_status_summary
+    type: string
 interface:
   inputs:
     signal_count:
@@ -25,6 +63,48 @@ interface:
       type: string
     regulatory_status_summary:
       type: string
+ui:
+  title: Drug Safety Profile
+  subtitle: "Classifies overall drug safety profile based on multiple signal dimensions: signal count, serious proportion, fatal count, REMS, and boxed warning status"
+  icon: circle
+  route: /vigilance/mg/drug-safety-profile
+  steps:
+    - field: signal_count
+      label: signal count
+      help: Enter signal_count
+      widget: text
+      placeholder: null
+    - field: serious_proportion
+      label: serious proportion
+      help: Enter serious_proportion
+      widget: text
+      placeholder: null
+    - field: fatal_count
+      label: fatal count
+      help: Enter fatal_count
+      widget: text
+      placeholder: null
+    - field: has_rems
+      label: has rems
+      help: Enter has_rems
+      widget: toggle
+      placeholder: null
+    - field: has_boxed_warning
+      label: has boxed warning
+      help: Enter has_boxed_warning
+      widget: toggle
+      placeholder: null
+  result:
+    template: "risk_tier: {{risk_tier}} — monitoring_level: {{monitoring_level}} — regulatory_status_summary: {{regulatory_status_summary}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-safety-profile
+  cli: rsk mcg run drug-safety-profile
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fatal
   nodes:
@@ -114,130 +194,153 @@ tree:
         monitoring_level: routine
         regulatory_status_summary: No safety signals detected. Standard post-marketing surveillance
 tests:
-# High risk: fatal + boxed warning
-- input:
-    signal_count: 10
-    serious_proportion: 0.8
-    fatal_count: 3
-    has_rems: true
-    has_boxed_warning: true
-  expect:
-    risk_tier: high_risk
-    monitoring_level: intensive
-    regulatory_status_summary: Fatal cases with boxed warning. Intensive monitoring and potential market action required
-# Fatal but no boxed warning -> checks REMS next
-- input:
-    signal_count: 5
-    serious_proportion: 0.4
-    fatal_count: 1
-    has_rems: true
-    has_boxed_warning: false
-  expect:
-    risk_tier: elevated_risk
-    monitoring_level: enhanced
-    regulatory_status_summary: REMS program active. Enhanced monitoring with restricted distribution or use requirements
-# REMS without fatalities
-- input:
-    signal_count: 3
-    serious_proportion: 0.2
-    fatal_count: 0
-    has_rems: true
-    has_boxed_warning: false
-  expect:
-    risk_tier: elevated_risk
-    monitoring_level: enhanced
-    regulatory_status_summary: REMS program active. Enhanced monitoring with restricted distribution or use requirements
-# High serious proportion (>0.5) without REMS or fatal
-- input:
-    signal_count: 4
-    serious_proportion: 0.65
-    fatal_count: 0
-    has_rems: false
-    has_boxed_warning: false
-  expect:
-    risk_tier: elevated_risk
-    monitoring_level: enhanced
-    regulatory_status_summary: Majority of reports are serious. Enhanced monitoring and benefit-risk reassessment recommended
-# Moderate risk: signal_count>5 AND serious_proportion>0.3
-- input:
-    signal_count: 8
-    serious_proportion: 0.4
-    fatal_count: 0
-    has_rems: false
-    has_boxed_warning: false
-  expect:
-    risk_tier: moderate_risk
-    monitoring_level: active
-    regulatory_status_summary: Multiple signals with notable serious proportion. Active surveillance and periodic safety review
-# Low risk: some signals but no other flags
-- input:
-    signal_count: 2
-    serious_proportion: 0.1
-    fatal_count: 0
-    has_rems: false
-    has_boxed_warning: false
-  expect:
-    risk_tier: low_risk
-    monitoring_level: routine
-    regulatory_status_summary: Signals detected but within expected safety profile. Routine pharmacovigilance monitoring
-# Baseline: no signals at all
-- input:
-    signal_count: 0
-    serious_proportion: 0.0
-    fatal_count: 0
-    has_rems: false
-    has_boxed_warning: false
-  expect:
-    risk_tier: baseline
-    monitoring_level: routine
-    regulatory_status_summary: No safety signals detected. Standard post-marketing surveillance
-# Empty input defaults to baseline
-- input: {}
-  expect:
-    risk_tier: baseline
-    monitoring_level: routine
-    regulatory_status_summary: No safety signals detected. Standard post-marketing surveillance
-# Edge: serious_proportion exactly 0.5 (not > 0.5, so not elevated)
-- input:
-    signal_count: 3
-    serious_proportion: 0.5
-    fatal_count: 0
-    has_rems: false
-    has_boxed_warning: false
-  expect:
-    risk_tier: low_risk
-    monitoring_level: routine
-    regulatory_status_summary: Signals detected but within expected safety profile. Routine pharmacovigilance monitoring
-# Edge: signal_count exactly 5, serious_proportion exactly 0.3 (not >5 and not >0.3)
-- input:
-    signal_count: 5
-    serious_proportion: 0.3
-    fatal_count: 0
-    has_rems: false
-    has_boxed_warning: false
-  expect:
-    risk_tier: low_risk
-    monitoring_level: routine
-    regulatory_status_summary: Signals detected but within expected safety profile. Routine pharmacovigilance monitoring
-# High signal count but low serious proportion -> low_risk (not moderate)
-- input:
-    signal_count: 10
-    serious_proportion: 0.2
-    fatal_count: 0
-    has_rems: false
-    has_boxed_warning: false
-  expect:
-    risk_tier: low_risk
-    monitoring_level: routine
-    regulatory_status_summary: Signals detected but within expected safety profile. Routine pharmacovigilance monitoring
-# Edge: signal_count 6, serious_proportion 0.31 -> moderate
-- input:
-    signal_count: 6
-    serious_proportion: 0.31
-    fatal_count: 0
-    has_rems: false
-    has_boxed_warning: false
-  expect:
-    risk_tier: moderate_risk
-    monitoring_level: active
-    regulatory_status_summary: Multiple signals with notable serious proportion. Active surveillance and periodic safety review
+  - input:
+      signal_count: 10
+      serious_proportion: 0.8
+      fatal_count: 3
+      has_rems: true
+      has_boxed_warning: true
+    expect:
+      risk_tier: high_risk
+      monitoring_level: intensive
+      regulatory_status_summary: Fatal cases with boxed warning. Intensive monitoring and potential market action required
+  - input:
+      signal_count: 5
+      serious_proportion: 0.4
+      fatal_count: 1
+      has_rems: true
+      has_boxed_warning: false
+    expect:
+      risk_tier: elevated_risk
+      monitoring_level: enhanced
+      regulatory_status_summary: REMS program active. Enhanced monitoring with restricted distribution or use requirements
+  - input:
+      signal_count: 3
+      serious_proportion: 0.2
+      fatal_count: 0
+      has_rems: true
+      has_boxed_warning: false
+    expect:
+      risk_tier: elevated_risk
+      monitoring_level: enhanced
+      regulatory_status_summary: REMS program active. Enhanced monitoring with restricted distribution or use requirements
+  - input:
+      signal_count: 4
+      serious_proportion: 0.65
+      fatal_count: 0
+      has_rems: false
+      has_boxed_warning: false
+    expect:
+      risk_tier: elevated_risk
+      monitoring_level: enhanced
+      regulatory_status_summary: Majority of reports are serious. Enhanced monitoring and benefit-risk reassessment recommended
+  - input:
+      signal_count: 8
+      serious_proportion: 0.4
+      fatal_count: 0
+      has_rems: false
+      has_boxed_warning: false
+    expect:
+      risk_tier: moderate_risk
+      monitoring_level: active
+      regulatory_status_summary: Multiple signals with notable serious proportion. Active surveillance and periodic safety review
+  - input:
+      signal_count: 2
+      serious_proportion: 0.1
+      fatal_count: 0
+      has_rems: false
+      has_boxed_warning: false
+    expect:
+      risk_tier: low_risk
+      monitoring_level: routine
+      regulatory_status_summary: Signals detected but within expected safety profile. Routine pharmacovigilance monitoring
+  - input:
+      signal_count: 0
+      serious_proportion: 0
+      fatal_count: 0
+      has_rems: false
+      has_boxed_warning: false
+    expect:
+      risk_tier: baseline
+      monitoring_level: routine
+      regulatory_status_summary: No safety signals detected. Standard post-marketing surveillance
+  - input: {}
+    expect:
+      risk_tier: baseline
+      monitoring_level: routine
+      regulatory_status_summary: No safety signals detected. Standard post-marketing surveillance
+  - input:
+      signal_count: 3
+      serious_proportion: 0.5
+      fatal_count: 0
+      has_rems: false
+      has_boxed_warning: false
+    expect:
+      risk_tier: low_risk
+      monitoring_level: routine
+      regulatory_status_summary: Signals detected but within expected safety profile. Routine pharmacovigilance monitoring
+  - input:
+      signal_count: 5
+      serious_proportion: 0.3
+      fatal_count: 0
+      has_rems: false
+      has_boxed_warning: false
+    expect:
+      risk_tier: low_risk
+      monitoring_level: routine
+      regulatory_status_summary: Signals detected but within expected safety profile. Routine pharmacovigilance monitoring
+  - input:
+      signal_count: 10
+      serious_proportion: 0.2
+      fatal_count: 0
+      has_rems: false
+      has_boxed_warning: false
+    expect:
+      risk_tier: low_risk
+      monitoring_level: routine
+      regulatory_status_summary: Signals detected but within expected safety profile. Routine pharmacovigilance monitoring
+  - input:
+      signal_count: 6
+      serious_proportion: 0.31
+      fatal_count: 0
+      has_rems: false
+      has_boxed_warning: false
+    expect:
+      risk_tier: moderate_risk
+      monitoring_level: active
+      regulatory_status_summary: Multiple signals with notable serious proportion. Active surveillance and periodic safety review
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - risk_tier
+    - monitoring_level
+    - regulatory_status_summary
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: fda-e19-selective-safety
-description: "ICH E19 selective safety data collection scope: routes by trial phase and prior data availability per ICH E19 'A Selective Approach to Safety Data Collection in Specific Late-Stage Pre-Approval or Post-Approval Clinical Trials' (2022)"
 version: 0.1.0
+description: "ICH E19 selective safety data collection scope: routes by trial phase and prior data availability per ICH E19 'A Selective Approach to Safety Data Collection in Specific Late-Stage Pre-Approval or Post-Approval Clinical Trials' (2022)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: trial_phase
+    type: string
+    required: true
+    description: "Trial phase: late_phase3, phase3b, phase4, post_approval_commitment"
+  - name: prior_safety_database
+    type: string
+    required: true
+    description: "Size of prior safety database: large_adequate, moderate, limited"
+  - name: well_characterized_safety
+    type: bool
+    required: true
+    description: Whether the safety profile is well-characterized from prior development
+  - name: population_differs
+    type: bool
+    required: false
+    description: Whether trial population significantly differs from prior studied population
+outputs:
+  - name: collection_scope
+    type: string
+  - name: ae_collection
+    type: string
+  - name: lab_monitoring
+    type: string
+  - name: rationale
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     trial_phase:
@@ -14,11 +52,11 @@ interface:
     well_characterized_safety:
       type: bool
       required: true
-      description: "Whether the safety profile is well-characterized from prior development"
+      description: Whether the safety profile is well-characterized from prior development
     population_differs:
       type: bool
       required: false
-      description: "Whether trial population significantly differs from prior studied population"
+      description: Whether trial population significantly differs from prior studied population
   outputs:
     collection_scope:
       type: string
@@ -30,6 +68,43 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: Fda E19 Selective Safety
+  subtitle: "ICH E19 selective safety data collection scope: routes by trial phase and prior data availability per ICH E19 'A Selective Approach to Safety Data Collection in Specific Late-Stage Pre-Approval or Post-Approval Clinical Trials' (2022)"
+  icon: circle
+  route: /vigilance/mg/fda-e19-selective-safety
+  steps:
+    - field: trial_phase
+      label: trial phase
+      help: "Trial phase: late_phase3, phase3b, phase4, post_approval_commitment"
+      widget: text
+      placeholder: null
+    - field: prior_safety_database
+      label: prior safety database
+      help: "Size of prior safety database: large_adequate, moderate, limited"
+      widget: text
+      placeholder: null
+    - field: well_characterized_safety
+      label: well characterized safety
+      help: Whether the safety profile is well-characterized from prior development
+      widget: toggle
+      placeholder: null
+    - field: population_differs
+      label: population differs
+      help: Whether trial population significantly differs from prior studied population
+      widget: toggle
+      placeholder: null
+  result:
+    template: "collection_scope: {{collection_scope}} — ae_collection: {{ae_collection}} — lab_monitoring: {{lab_monitoring}} — rationale: {{rationale}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/fda-e19-selective-safety
+  cli: rsk mcg run fda-e19-selective-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_phase
   nodes:
@@ -37,27 +112,23 @@ tree:
       type: condition
       variable: trial_phase
       operator: eq
-      value: "late_phase3"
+      value: late_phase3
       true_next: late_phase3_check
       false_next: check_phase3b
-
     check_phase3b:
       type: condition
       variable: trial_phase
       operator: eq
-      value: "phase3b"
+      value: phase3b
       true_next: postapproval_check
       false_next: check_phase4
-
     check_phase4:
       type: condition
       variable: trial_phase
       operator: eq
-      value: "phase4"
+      value: phase4
       true_next: postapproval_check
       false_next: post_commitment_check
-
-    # LATE PHASE 3 — E19 applicability check
     late_phase3_check:
       type: condition
       variable: well_characterized_safety
@@ -65,15 +136,13 @@ tree:
       value: true
       true_next: late3_database_check
       false_next: full_collection
-
     late3_database_check:
       type: condition
       variable: prior_safety_database
       operator: eq
-      value: "large_adequate"
+      value: large_adequate
       true_next: late3_population_check
       false_next: full_collection
-
     late3_population_check:
       type: condition
       variable: population_differs
@@ -81,17 +150,14 @@ tree:
       value: true
       true_next: full_collection
       false_next: selective_late3
-
     selective_late3:
       type: return
       value:
-        collection_scope: "SELECTIVE_E19"
-        ae_collection: "Collect only SAEs, AESIs (adverse events of special interest), and AEs leading to discontinuation. Routine non-serious AE collection may be omitted."
-        lab_monitoring: "Targeted labs for known risks only; routine comprehensive labs may be reduced"
+        collection_scope: SELECTIVE_E19
+        ae_collection: Collect only SAEs, AESIs (adverse events of special interest), and AEs leading to discontinuation. Routine non-serious AE collection may be omitted.
+        lab_monitoring: Targeted labs for known risks only; routine comprehensive labs may be reduced
         rationale: "E19 criteria met: well-characterized safety, large prior database, similar population — selective collection justified"
-        regulatory_reference: "ICH E19 (2022), Section 3.1; FDA Implementation Guidance"
-
-    # POST-APPROVAL (Phase 3b, 4)
+        regulatory_reference: ICH E19 (2022), Section 3.1; FDA Implementation Guidance
     postapproval_check:
       type: condition
       variable: well_characterized_safety
@@ -99,23 +165,20 @@ tree:
       value: true
       true_next: postapproval_db_check
       false_next: enhanced_collection
-
     postapproval_db_check:
       type: condition
       variable: prior_safety_database
       operator: eq
-      value: "large_adequate"
+      value: large_adequate
       true_next: postapproval_population
       false_next: postapproval_moderate_db
-
     postapproval_moderate_db:
       type: condition
       variable: prior_safety_database
       operator: eq
-      value: "moderate"
+      value: moderate
       true_next: postapproval_population
       false_next: enhanced_collection
-
     postapproval_population:
       type: condition
       variable: population_differs
@@ -123,17 +186,14 @@ tree:
       value: true
       true_next: enhanced_collection
       false_next: selective_postapproval
-
     selective_postapproval:
       type: return
       value:
-        collection_scope: "SELECTIVE_E19"
-        ae_collection: "Collect SAEs, AESIs, and AEs leading to discontinuation. Non-serious AE collection limited to predefined list of known risks."
-        lab_monitoring: "Safety labs only for identified risks; no routine comprehensive panels"
-        rationale: "Post-approval with well-characterized safety and adequate database — selective E19 approach appropriate"
-        regulatory_reference: "ICH E19 (2022), Section 3.2"
-
-    # POST-APPROVAL COMMITMENT
+        collection_scope: SELECTIVE_E19
+        ae_collection: Collect SAEs, AESIs, and AEs leading to discontinuation. Non-serious AE collection limited to predefined list of known risks.
+        lab_monitoring: Safety labs only for identified risks; no routine comprehensive panels
+        rationale: Post-approval with well-characterized safety and adequate database — selective E19 approach appropriate
+        regulatory_reference: ICH E19 (2022), Section 3.2
     post_commitment_check:
       type: condition
       variable: well_characterized_safety
@@ -141,111 +201,121 @@ tree:
       value: true
       true_next: commitment_db_check
       false_next: full_collection
-
     commitment_db_check:
       type: condition
       variable: prior_safety_database
       operator: eq
-      value: "large_adequate"
+      value: large_adequate
       true_next: selective_commitment
       false_next: enhanced_collection
-
     selective_commitment:
       type: return
       value:
-        collection_scope: "SELECTIVE_E19"
-        ae_collection: "Focus on SAEs and predefined AESIs relevant to commitment objective. Minimize routine AE collection."
-        lab_monitoring: "Per commitment protocol; generally targeted"
-        rationale: "Post-approval commitment with established safety — selective collection aligned with commitment objectives"
-        regulatory_reference: "ICH E19 (2022), Section 3.3"
-
-    # FALLBACKS
+        collection_scope: SELECTIVE_E19
+        ae_collection: Focus on SAEs and predefined AESIs relevant to commitment objective. Minimize routine AE collection.
+        lab_monitoring: Per commitment protocol; generally targeted
+        rationale: Post-approval commitment with established safety — selective collection aligned with commitment objectives
+        regulatory_reference: ICH E19 (2022), Section 3.3
     full_collection:
       type: return
       value:
-        collection_scope: "FULL_COMPREHENSIVE"
-        ae_collection: "Collect all AEs (serious and non-serious), regardless of causality. Standard comprehensive approach per ICH E2A."
-        lab_monitoring: "Full safety laboratory panel at protocol-specified intervals"
-        rationale: "E19 selective approach NOT applicable — safety profile not well-characterized or database insufficient"
-        regulatory_reference: "ICH E2A; ICH E19 (2022), Section 2 (exclusion criteria)"
-
+        collection_scope: FULL_COMPREHENSIVE
+        ae_collection: Collect all AEs (serious and non-serious), regardless of causality. Standard comprehensive approach per ICH E2A.
+        lab_monitoring: Full safety laboratory panel at protocol-specified intervals
+        rationale: E19 selective approach NOT applicable — safety profile not well-characterized or database insufficient
+        regulatory_reference: ICH E2A; ICH E19 (2022), Section 2 (exclusion criteria)
     enhanced_collection:
       type: return
       value:
-        collection_scope: "ENHANCED_TARGETED"
-        ae_collection: "Collect all SAEs plus targeted non-serious AEs for known and potential risks. Enhanced monitoring for new population."
-        lab_monitoring: "Full safety labs plus additional targeted monitoring for identified risks"
-        rationale: "Some prior data exists but either safety not fully characterized, database moderate, or new population — enhanced approach"
-        regulatory_reference: "ICH E19 (2022), Section 2; ICH E2A"
-
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ(∃, ∂) — safety collection scope routing by evidence existence and population boundary'
-  primes: ['σ', '∃', '∂', 'κ']
-  arguments: ['trial_phase', 'prior_safety_database', 'well_characterized_safety']
-
+        collection_scope: ENHANCED_TARGETED
+        ae_collection: Collect all SAEs plus targeted non-serious AEs for known and potential risks. Enhanced monitoring for new population.
+        lab_monitoring: Full safety labs plus additional targeted monitoring for identified risks
+        rationale: Some prior data exists but either safety not fully characterized, database moderate, or new population — enhanced approach
+        regulatory_reference: ICH E19 (2022), Section 2; ICH E2A
 tests:
-# Late phase 3, well-characterized, large DB, same population -> selective
-- input:
-    trial_phase: "late_phase3"
-    well_characterized_safety: true
-    prior_safety_database: "large_adequate"
-    population_differs: false
-  expect:
-    collection_scope: "SELECTIVE_E19"
-
-# Late phase 3, not well-characterized -> full
-- input:
-    trial_phase: "late_phase3"
-    well_characterized_safety: false
-    prior_safety_database: "large_adequate"
-  expect:
-    collection_scope: "FULL_COMPREHENSIVE"
-
-# Late phase 3, different population -> full
-- input:
-    trial_phase: "late_phase3"
-    well_characterized_safety: true
-    prior_safety_database: "large_adequate"
-    population_differs: true
-  expect:
-    collection_scope: "FULL_COMPREHENSIVE"
-
-# Phase 4, well-characterized, large DB -> selective
-- input:
-    trial_phase: "phase4"
-    well_characterized_safety: true
-    prior_safety_database: "large_adequate"
-    population_differs: false
-  expect:
-    collection_scope: "SELECTIVE_E19"
-
-# Phase 4, moderate DB -> selective
-- input:
-    trial_phase: "phase4"
-    well_characterized_safety: true
-    prior_safety_database: "moderate"
-    population_differs: false
-  expect:
-    collection_scope: "SELECTIVE_E19"
-
-# Phase 4, limited DB -> enhanced
-- input:
-    trial_phase: "phase4"
-    well_characterized_safety: true
-    prior_safety_database: "limited"
-  expect:
-    collection_scope: "ENHANCED_TARGETED"
-
-# Post-approval commitment, well-characterized, large DB
-- input:
-    trial_phase: "post_approval_commitment"
-    well_characterized_safety: true
-    prior_safety_database: "large_adequate"
-  expect:
-    collection_scope: "SELECTIVE_E19"
-
-# Empty input -> full comprehensive
-- input: {}
-  expect:
-    collection_scope: "FULL_COMPREHENSIVE"
+  - input:
+      trial_phase: late_phase3
+      well_characterized_safety: true
+      prior_safety_database: large_adequate
+      population_differs: false
+    expect:
+      collection_scope: SELECTIVE_E19
+  - input:
+      trial_phase: late_phase3
+      well_characterized_safety: false
+      prior_safety_database: large_adequate
+    expect:
+      collection_scope: FULL_COMPREHENSIVE
+  - input:
+      trial_phase: late_phase3
+      well_characterized_safety: true
+      prior_safety_database: large_adequate
+      population_differs: true
+    expect:
+      collection_scope: FULL_COMPREHENSIVE
+  - input:
+      trial_phase: phase4
+      well_characterized_safety: true
+      prior_safety_database: large_adequate
+      population_differs: false
+    expect:
+      collection_scope: SELECTIVE_E19
+  - input:
+      trial_phase: phase4
+      well_characterized_safety: true
+      prior_safety_database: moderate
+      population_differs: false
+    expect:
+      collection_scope: SELECTIVE_E19
+  - input:
+      trial_phase: phase4
+      well_characterized_safety: true
+      prior_safety_database: limited
+    expect:
+      collection_scope: ENHANCED_TARGETED
+  - input:
+      trial_phase: post_approval_commitment
+      well_characterized_safety: true
+      prior_safety_database: large_adequate
+    expect:
+      collection_scope: SELECTIVE_E19
+  - input: {}
+    expect:
+      collection_scope: FULL_COMPREHENSIVE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - collection_scope
+    - ae_collection
+    - lab_monitoring
+    - rationale
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

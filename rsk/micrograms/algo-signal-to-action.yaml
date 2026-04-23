@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: algo-signal-to-action
-description: 'Algovigilance: route a classified algo signal to the correct response action based on signal type and severity'
 version: 0.1.0
+description: "Algovigilance: route a classified algo signal to the correct response action based on signal type and severity"
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: signal_type
+    type: string
+    required: false
+    description: ""
+  - name: severity
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: notify
+    type: string
+  - name: observer_visible
+    type: bool
+  - name: operator_action_required
+    type: bool
 interface:
   inputs:
     signal_type:
@@ -18,6 +46,33 @@ interface:
       type: bool
     operator_action_required:
       type: bool
+ui:
+  title: Algo Signal To Action
+  subtitle: "Algovigilance: route a classified algo signal to the correct response action based on signal type and severity"
+  icon: activity
+  route: /vigilance/mg/algo-signal-to-action
+  steps:
+    - field: signal_type
+      label: signal type
+      help: Enter signal_type
+      widget: text
+      placeholder: null
+    - field: severity
+      label: severity
+      help: Enter severity
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — notify: {{notify}} — observer_visible: {{observer_visible}} — operator_action_required: {{operator_action_required}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/algo-signal-to-action
+  cli: rsk mcg run algo-signal-to-action
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signal_type
   nodes:
@@ -140,87 +195,124 @@ tree:
         notify: operator_dashboard
         observer_visible: false
         operator_action_required: false
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-- input:
-    signal_type: drift
-    severity: P1
-  expect:
-    action: halt_pipeline_and_revert
-    notify: operator_pager
-    observer_visible: true
-    operator_action_required: true
-- input:
-    signal_type: drift
-    severity: P3
-  expect:
-    action: flag_for_review
-    notify: operator_dashboard
-    observer_visible: true
-    operator_action_required: false
-- input:
-    signal_type: bias
-    severity: P1
-  expect:
-    action: quarantine_outputs
-    notify: operator_pager
-    observer_visible: true
-    operator_action_required: true
-- input:
-    signal_type: bias
-    severity: P4
-  expect:
-    action: add_to_fairness_report
-    notify: operator_dashboard
-    observer_visible: true
-    operator_action_required: false
-- input:
-    signal_type: hallucination
-    severity: P1
-  expect:
-    action: increase_guardrails
-    notify: operator_pager
-    observer_visible: true
-    operator_action_required: true
-- input:
-    signal_type: hallucination
-    severity: P5
-  expect:
-    action: log_confabulation_rate
-    notify: operator_dashboard
-    observer_visible: true
-    operator_action_required: false
-- input:
-    signal_type: alignment
-    severity: P1
-  expect:
-    action: freeze_reward_model
-    notify: operator_pager
-    observer_visible: true
-    operator_action_required: true
-- input:
-    signal_type: alignment
-    severity: P3
-  expect:
-    action: track_reward_divergence
-    notify: operator_dashboard
-    observer_visible: true
-    operator_action_required: false
-- input: {}
-  expect:
-    action: log_unknown
-    notify: operator_dashboard
-    observer_visible: false
-    operator_action_required: false
-- input:
-    signal_type: unknown_type
-    severity: P1
-  expect:
-    action: log_unknown
-    notify: operator_dashboard
-    observer_visible: false
-    operator_action_required: false
+  - input:
+      signal_type: drift
+      severity: P1
+    expect:
+      action: halt_pipeline_and_revert
+      notify: operator_pager
+      observer_visible: true
+      operator_action_required: true
+  - input:
+      signal_type: drift
+      severity: P3
+    expect:
+      action: flag_for_review
+      notify: operator_dashboard
+      observer_visible: true
+      operator_action_required: false
+  - input:
+      signal_type: bias
+      severity: P1
+    expect:
+      action: quarantine_outputs
+      notify: operator_pager
+      observer_visible: true
+      operator_action_required: true
+  - input:
+      signal_type: bias
+      severity: P4
+    expect:
+      action: add_to_fairness_report
+      notify: operator_dashboard
+      observer_visible: true
+      operator_action_required: false
+  - input:
+      signal_type: hallucination
+      severity: P1
+    expect:
+      action: increase_guardrails
+      notify: operator_pager
+      observer_visible: true
+      operator_action_required: true
+  - input:
+      signal_type: hallucination
+      severity: P5
+    expect:
+      action: log_confabulation_rate
+      notify: operator_dashboard
+      observer_visible: true
+      operator_action_required: false
+  - input:
+      signal_type: alignment
+      severity: P1
+    expect:
+      action: freeze_reward_model
+      notify: operator_pager
+      observer_visible: true
+      operator_action_required: true
+  - input:
+      signal_type: alignment
+      severity: P3
+    expect:
+      action: track_reward_divergence
+      notify: operator_dashboard
+      observer_visible: true
+      operator_action_required: false
+  - input: {}
+    expect:
+      action: log_unknown
+      notify: operator_dashboard
+      observer_visible: false
+      operator_action_required: false
+  - input:
+      signal_type: unknown_type
+      severity: P1
+    expect:
+      action: log_unknown
+      notify: operator_dashboard
+      observer_visible: false
+      operator_action_required: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - notify
+    - observer_visible
+    - operator_action_required
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

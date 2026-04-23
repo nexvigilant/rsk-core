@@ -1,6 +1,24 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: high-risk
-description: Critical risk threshold
 version: 0.1.0
+description: Critical risk threshold
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: score
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: result
+    type: bool
 interface:
   inputs:
     score:
@@ -9,6 +27,28 @@ interface:
   outputs:
     result:
       type: bool
+ui:
+  title: High Risk
+  subtitle: Critical risk threshold
+  icon: circle
+  route: /vigilance/mg/high-risk
+  steps:
+    - field: score
+      label: score
+      help: Enter score
+      widget: text
+      placeholder: null
+  result:
+    template: "result: {{result}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/high-risk
+  cli: rsk mcg run high-risk
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -28,30 +68,63 @@ tree:
       value:
         result: true
 tests:
-- input:
-    score: 90
-  expect:
-    result: true
-- input:
-    score: 91
-  expect:
-    result: true
-- input:
-    score: 89
-  expect:
-    result: false
-- input:
-    score: 0
-  expect:
-    result: false
-- input:
-    score: -1
-  expect:
-    result: false
-- input:
-    score: 9000
-  expect:
-    result: true
-- input: {}
-  expect:
-    result: false
+  - input:
+      score: 90
+    expect:
+      result: true
+  - input:
+      score: 91
+    expect:
+      result: true
+  - input:
+      score: 89
+    expect:
+      result: false
+  - input:
+      score: 0
+    expect:
+      result: false
+  - input:
+      score: -1
+    expect:
+      result: false
+  - input:
+      score: 9000
+    expect:
+      result: true
+  - input: {}
+    expect:
+      result: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - result
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

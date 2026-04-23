@@ -1,0 +1,154 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: session-e5af7a23-dag
+version: 1.0.0
+description: Auto-generated DAG from session e5af7a23 fast-food prompts (2 nodes)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: step_0_done
+    type: bool
+    required: false
+    description: ""
+  - name: step_1_done
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: task
+    type: string
+  - name: prompt
+    type: string
+  - name: priority
+    type: int
+interface:
+  inputs:
+    step_0_done:
+      type: bool
+      required: false
+    step_1_done:
+      type: bool
+      required: false
+  outputs:
+    task:
+      type: string
+    prompt:
+      type: string
+    priority:
+      type: int
+ui:
+  title: Session E5af7a23 Dag
+  subtitle: Auto-generated DAG from session e5af7a23 fast-food prompts (2 nodes)
+  icon: circle
+  route: /vigilance/mg/session-e5af7a23-dag
+  steps:
+    - field: step_0_done
+      label: step 0 done
+      help: Enter step_0_done
+      widget: toggle
+      placeholder: null
+    - field: step_1_done
+      label: step 1 done
+      help: Enter step_1_done
+      widget: toggle
+      placeholder: null
+  result:
+    template: "task: {{task}} — prompt: {{prompt}} — priority: {{priority}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/session-e5af7a23-dag
+  cli: rsk mcg run session-e5af7a23-dag
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: gate_0
+  nodes:
+    gate_0:
+      type: condition
+      variable: step_0_done
+      operator: eq
+      value: true
+      true_next: gate_1
+      false_next: node_0
+    node_0:
+      type: return
+      value:
+        task: step-0
+        prompt: '{"session_id":"e5af7a23-8a34-4087-a3ef-c93cf72f98b4","transcript_path":"/home/matthew/.claude/projects/-home-matthew/e5af7a23-8a34-4087-a3ef-c93cf72f98b4.jsonl","cwd":"/home/matthew/Projects/Active/nucleus","permission_mode":"bypassPermissions","hook_event_name":"Stop","stop_hook_active":false,"last_assistant_message":"NexVigilant Terminal is up. Navigate to `localhost:9002` in it to see the homepage changes."}'
+        priority: 1
+    gate_1:
+      type: condition
+      variable: step_1_done
+      operator: eq
+      value: true
+      true_next: node_1
+      false_next: node_1
+    node_1:
+      type: return
+      value:
+        task: step-1
+        prompt: |-
+          {"session_id":"e5af7a23-8a34-4087-a3ef-c93cf72f98b4","transcript_path":"/home/matthew/.claude/projects/-home-matthew/e5af7a23-8a34-4087-a3ef-c93cf72f98b4.jsonl","cwd":"/home/matthew/Projects/Active/nucleus","permission_mode":"bypassPermissions","hook_event_name":"Stop","stop_hook_active":true,"last_assistant_message":"Stop codon expressed. ς=84%.
+
+          > Commit the nav + color system + homepage changes and deploy Nucleus to Vercel
+          > Test the homepage in the Tauri terminal at localhost:9002
+          > Run a live signal check through the freshly deployed Station to prove end-to-end
+          > Build the telemetry dashboard page to close the observability void
+          > Write the 60-second demo script for the lighthouse playbook"}
+        priority: 2
+tests:
+  - name: empty input routes to first prompt
+    input: {}
+    expect:
+      task: step-0
+      priority: 1
+  - name: first done routes to second
+    input:
+      step_0_done: true
+    expect:
+      task: step-1
+      priority: 2
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - task
+    - prompt
+    - priority
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

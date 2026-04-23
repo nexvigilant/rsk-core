@@ -1,6 +1,28 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: immunogenicity-risk-gate
-description: 'Immunogenicity risk classifier: maps immune-mediated adverse reactions including anaphylaxis, autoimmune conditions, and immunosuppression'
 version: 0.1.0
+description: "Immunogenicity risk classifier: maps immune-mediated adverse reactions including anaphylaxis, autoimmune conditions, and immunosuppression"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: reaction_pt
+    type: string
+    required: true
+    description: MedDRA preferred term for the immune reaction
+outputs:
+  - name: severity
+    type: string
+  - name: soc
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     reaction_pt:
@@ -10,11 +32,33 @@ interface:
   outputs:
     severity:
       type: string
-      description: 'critical | serious | moderate | mild'
+      description: critical | serious | moderate | mild
     soc:
       type: string
     action:
       type: string
+ui:
+  title: Immunogenicity Risk Gate
+  subtitle: "Immunogenicity risk classifier: maps immune-mediated adverse reactions including anaphylaxis, autoimmune conditions, and immunosuppression"
+  icon: circle
+  route: /vigilance/mg/immunogenicity-risk-gate
+  steps:
+    - field: reaction_pt
+      label: reaction pt
+      help: MedDRA preferred term for the immune reaction
+      widget: text
+      placeholder: null
+  result:
+    template: "severity: {{severity}} — soc: {{soc}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/immunogenicity-risk-gate
+  cli: rsk mcg run immunogenicity-risk-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_anaphylaxis
   nodes:
@@ -112,3 +156,38 @@ tests:
     input: {}
     expect:
       severity: mild
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - severity
+    - soc
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

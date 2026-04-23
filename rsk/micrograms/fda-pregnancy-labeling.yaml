@@ -1,12 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: fda-pregnancy-labeling
-description: "FDA pregnancy and lactation labeling decision tree: routes by data availability and risk level per FDA Guidance 'Pregnancy, Lactation, and Reproductive Potential: Labeling for Human Prescription Drug and Biological Products' (2015) and PLLR rule (21 CFR 201.57(c)(9))"
 version: 0.1.0
+description: "FDA pregnancy and lactation labeling decision tree: routes by data availability and risk level per FDA Guidance 'Pregnancy, Lactation, and Reproductive Potential: Labeling for Human Prescription Drug and Biological Products' (2015) and PLLR rule (21 CFR 201.57(c)(9))"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: human_data_available
+    type: bool
+    required: true
+    description: Whether controlled human pregnancy data exists
+  - name: animal_data_result
+    type: string
+    required: true
+    description: "Animal reproductive toxicology result: positive_teratogen, developmental_toxicity, no_adverse, no_data"
+  - name: pregnancy_registry
+    type: bool
+    required: false
+    description: Whether an active pregnancy exposure registry exists
+  - name: contraception_required
+    type: bool
+    required: false
+    description: Whether females of reproductive potential require contraception
+outputs:
+  - name: risk_summary
+    type: string
+  - name: labeling_content
+    type: string
+  - name: registry_statement
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     human_data_available:
       type: bool
       required: true
-      description: "Whether controlled human pregnancy data exists"
+      description: Whether controlled human pregnancy data exists
     animal_data_result:
       type: string
       required: true
@@ -14,11 +50,11 @@ interface:
     pregnancy_registry:
       type: bool
       required: false
-      description: "Whether an active pregnancy exposure registry exists"
+      description: Whether an active pregnancy exposure registry exists
     contraception_required:
       type: bool
       required: false
-      description: "Whether females of reproductive potential require contraception"
+      description: Whether females of reproductive potential require contraception
   outputs:
     risk_summary:
       type: string
@@ -28,6 +64,43 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: Fda Pregnancy Labeling
+  subtitle: "FDA pregnancy and lactation labeling decision tree: routes by data availability and risk level per FDA Guidance 'Pregnancy, Lactation, and Reproductive Potential: Labeling for Human Prescription Drug and Biological Products' (2015) and PLLR rule (21 CFR 201.57(c)(9))"
+  icon: circle
+  route: /vigilance/mg/fda-pregnancy-labeling
+  steps:
+    - field: human_data_available
+      label: human data available
+      help: Whether controlled human pregnancy data exists
+      widget: toggle
+      placeholder: null
+    - field: animal_data_result
+      label: animal data result
+      help: "Animal reproductive toxicology result: positive_teratogen, developmental_toxicity, no_adverse, no_data"
+      widget: text
+      placeholder: null
+    - field: pregnancy_registry
+      label: pregnancy registry
+      help: Whether an active pregnancy exposure registry exists
+      widget: toggle
+      placeholder: null
+    - field: contraception_required
+      label: contraception required
+      help: Whether females of reproductive potential require contraception
+      widget: toggle
+      placeholder: null
+  result:
+    template: "risk_summary: {{risk_summary}} — labeling_content: {{labeling_content}} — registry_statement: {{registry_statement}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/fda-pregnancy-labeling
+  cli: rsk mcg run fda-pregnancy-labeling
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_human_data
   nodes:
@@ -38,40 +111,34 @@ tree:
       value: true
       true_next: human_data_animal_check
       false_next: no_human_data_animal_check
-
-    # HUMAN DATA AVAILABLE
     human_data_animal_check:
       type: condition
       variable: animal_data_result
       operator: eq
-      value: "positive_teratogen"
+      value: positive_teratogen
       true_next: human_positive_teratogen
       false_next: human_animal_dev_tox
-
     human_animal_dev_tox:
       type: condition
       variable: animal_data_result
       operator: eq
-      value: "developmental_toxicity"
+      value: developmental_toxicity
       true_next: human_dev_tox
       false_next: human_no_adverse
-
     human_positive_teratogen:
       type: return
       value:
-        risk_summary: "KNOWN_HUMAN_TERATOGEN"
+        risk_summary: KNOWN_HUMAN_TERATOGEN
         labeling_content: "Risk Summary: [Drug] can cause fetal harm based on human and animal data. Contraindicated in pregnancy unless no alternatives. Include specific malformation data."
-        registry_statement: "Pregnancy exposure registry available if applicable"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.A; 21 CFR 201.57(c)(9)(i)"
-
+        registry_statement: Pregnancy exposure registry available if applicable
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.A; 21 CFR 201.57(c)(9)(i)
     human_dev_tox:
       type: return
       value:
-        risk_summary: "POTENTIAL_FETAL_RISK"
+        risk_summary: POTENTIAL_FETAL_RISK
         labeling_content: "Risk Summary: Based on animal findings and limited human data, [Drug] may cause fetal harm. Advise pregnant women of potential risk. Include human and animal data summaries."
-        registry_statement: "Pregnancy exposure registry available if applicable"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.A; 21 CFR 201.57(c)(9)(i)"
-
+        registry_statement: Pregnancy exposure registry available if applicable
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.A; 21 CFR 201.57(c)(9)(i)
     human_no_adverse:
       type: condition
       variable: pregnancy_registry
@@ -79,48 +146,41 @@ tree:
       value: true
       true_next: human_no_adverse_registry
       false_next: human_no_adverse_no_registry
-
     human_no_adverse_registry:
       type: return
       value:
-        risk_summary: "NO_INCREASED_RISK_IDENTIFIED"
+        risk_summary: NO_INCREASED_RISK_IDENTIFIED
         labeling_content: "Risk Summary: Available human data from pregnancy registry and/or epidemiologic studies have not identified a drug-associated risk. Animal data summary included."
-        registry_statement: "Reference active pregnancy exposure registry with enrollment information"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.A; 21 CFR 201.57(c)(9)(i)"
-
+        registry_statement: Reference active pregnancy exposure registry with enrollment information
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.A; 21 CFR 201.57(c)(9)(i)
     human_no_adverse_no_registry:
       type: return
       value:
-        risk_summary: "NO_INCREASED_RISK_IDENTIFIED"
+        risk_summary: NO_INCREASED_RISK_IDENTIFIED
         labeling_content: "Risk Summary: Available human data have not identified a drug-associated risk. Include study limitations."
-        registry_statement: "No active pregnancy exposure registry"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.A; 21 CFR 201.57(c)(9)(i)"
-
-    # NO HUMAN DATA
+        registry_statement: No active pregnancy exposure registry
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.A; 21 CFR 201.57(c)(9)(i)
     no_human_data_animal_check:
       type: condition
       variable: animal_data_result
       operator: eq
-      value: "positive_teratogen"
+      value: positive_teratogen
       true_next: no_human_teratogen
       false_next: no_human_dev_tox_check
-
     no_human_dev_tox_check:
       type: condition
       variable: animal_data_result
       operator: eq
-      value: "developmental_toxicity"
+      value: developmental_toxicity
       true_next: no_human_dev_tox
       false_next: no_human_no_adverse_check
-
     no_human_no_adverse_check:
       type: condition
       variable: animal_data_result
       operator: eq
-      value: "no_adverse"
+      value: no_adverse
       true_next: no_human_clean_animal
       false_next: no_data_at_all
-
     no_human_teratogen:
       type: condition
       variable: contraception_required
@@ -128,122 +188,127 @@ tree:
       value: true
       true_next: no_human_teratogen_contra
       false_next: no_human_teratogen_standard
-
     no_human_teratogen_contra:
       type: return
       value:
-        risk_summary: "ANIMAL_TERATOGEN_CONTRACEPTION_REQUIRED"
+        risk_summary: ANIMAL_TERATOGEN_CONTRACEPTION_REQUIRED
         labeling_content: "Risk Summary: Based on animal data, [Drug] may cause fetal harm. No human data. Advise females of reproductive potential to use effective contraception. Include animal dose multiples."
-        registry_statement: "Consider establishing pregnancy exposure registry"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.B; 21 CFR 201.57(c)(9)(i)(A)"
-
+        registry_statement: Consider establishing pregnancy exposure registry
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.B; 21 CFR 201.57(c)(9)(i)(A)
     no_human_teratogen_standard:
       type: return
       value:
-        risk_summary: "ANIMAL_TERATOGEN"
+        risk_summary: ANIMAL_TERATOGEN
         labeling_content: "Risk Summary: Based on animal data, [Drug] may cause fetal harm. No human data available. Advise pregnant women of potential risk to fetus."
-        registry_statement: "Consider establishing pregnancy exposure registry"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.B; 21 CFR 201.57(c)(9)(i)(A)"
-
+        registry_statement: Consider establishing pregnancy exposure registry
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.B; 21 CFR 201.57(c)(9)(i)(A)
     no_human_dev_tox:
       type: return
       value:
-        risk_summary: "ANIMAL_DEVELOPMENTAL_TOXICITY"
+        risk_summary: ANIMAL_DEVELOPMENTAL_TOXICITY
         labeling_content: "Risk Summary: [Drug] caused developmental toxicity in animals at doses [X] times the human dose. No human data. Advise of potential risk."
-        registry_statement: "Consider establishing pregnancy exposure registry"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.B; 21 CFR 201.57(c)(9)(i)(A)"
-
+        registry_statement: Consider establishing pregnancy exposure registry
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.B; 21 CFR 201.57(c)(9)(i)(A)
     no_human_clean_animal:
       type: return
       value:
-        risk_summary: "NO_ANIMAL_RISK_NO_HUMAN_DATA"
+        risk_summary: NO_ANIMAL_RISK_NO_HUMAN_DATA
         labeling_content: "Risk Summary: No adverse developmental effects observed in animal studies. No human data available. State background risk."
-        registry_statement: "Consider establishing pregnancy exposure registry"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.B; 21 CFR 201.57(c)(9)(i)(A)"
-
+        registry_statement: Consider establishing pregnancy exposure registry
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.B; 21 CFR 201.57(c)(9)(i)(A)
     no_data_at_all:
       type: return
       value:
-        risk_summary: "INSUFFICIENT_DATA"
+        risk_summary: INSUFFICIENT_DATA
         labeling_content: "Risk Summary: There are no available data on [Drug] use in pregnant women and no animal data to inform drug-associated risk. Advise of unknown risk."
-        registry_statement: "Consider establishing pregnancy exposure registry"
-        regulatory_reference: "FDA PLLR Guidance (2015), Section III.C; 21 CFR 201.57(c)(9)(i)(A)"
-
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(∂, ∃) — pregnancy risk classification by evidence boundary and data existence'
-  primes: ['κ', '∂', '∃']
-  arguments: ['human_data_available', 'animal_data_result', 'pregnancy_registry']
-
+        registry_statement: Consider establishing pregnancy exposure registry
+        regulatory_reference: FDA PLLR Guidance (2015), Section III.C; 21 CFR 201.57(c)(9)(i)(A)
 tests:
-# Human data + animal teratogen = known teratogen
-- input:
-    human_data_available: true
-    animal_data_result: "positive_teratogen"
-  expect:
-    risk_summary: "KNOWN_HUMAN_TERATOGEN"
-
-# Human data + dev tox = potential risk
-- input:
-    human_data_available: true
-    animal_data_result: "developmental_toxicity"
-  expect:
-    risk_summary: "POTENTIAL_FETAL_RISK"
-
-# Human data + no adverse + registry
-- input:
-    human_data_available: true
-    animal_data_result: "no_adverse"
-    pregnancy_registry: true
-  expect:
-    risk_summary: "NO_INCREASED_RISK_IDENTIFIED"
-
-# No human data + animal teratogen + contraception
-- input:
-    human_data_available: false
-    animal_data_result: "positive_teratogen"
-    contraception_required: true
-  expect:
-    risk_summary: "ANIMAL_TERATOGEN_CONTRACEPTION_REQUIRED"
-
-# No human data + animal teratogen, no contraception
-- input:
-    human_data_available: false
-    animal_data_result: "positive_teratogen"
-    contraception_required: false
-  expect:
-    risk_summary: "ANIMAL_TERATOGEN"
-
-# No human data + dev tox
-- input:
-    human_data_available: false
-    animal_data_result: "developmental_toxicity"
-  expect:
-    risk_summary: "ANIMAL_DEVELOPMENTAL_TOXICITY"
-
-# No human data + clean animal
-- input:
-    human_data_available: false
-    animal_data_result: "no_adverse"
-  expect:
-    risk_summary: "NO_ANIMAL_RISK_NO_HUMAN_DATA"
-
-# No data at all
-- input:
-    human_data_available: false
-    animal_data_result: "no_data"
-  expect:
-    risk_summary: "INSUFFICIENT_DATA"
-
-# Human data, no adverse, no registry
-- input:
-    human_data_available: true
-    animal_data_result: "no_adverse"
-    pregnancy_registry: false
-  expect:
-    risk_summary: "NO_INCREASED_RISK_IDENTIFIED"
-
-# Empty input -> insufficient
-- input: {}
-  expect:
-    risk_summary: "INSUFFICIENT_DATA"
+  - input:
+      human_data_available: true
+      animal_data_result: positive_teratogen
+    expect:
+      risk_summary: KNOWN_HUMAN_TERATOGEN
+  - input:
+      human_data_available: true
+      animal_data_result: developmental_toxicity
+    expect:
+      risk_summary: POTENTIAL_FETAL_RISK
+  - input:
+      human_data_available: true
+      animal_data_result: no_adverse
+      pregnancy_registry: true
+    expect:
+      risk_summary: NO_INCREASED_RISK_IDENTIFIED
+  - input:
+      human_data_available: false
+      animal_data_result: positive_teratogen
+      contraception_required: true
+    expect:
+      risk_summary: ANIMAL_TERATOGEN_CONTRACEPTION_REQUIRED
+  - input:
+      human_data_available: false
+      animal_data_result: positive_teratogen
+      contraception_required: false
+    expect:
+      risk_summary: ANIMAL_TERATOGEN
+  - input:
+      human_data_available: false
+      animal_data_result: developmental_toxicity
+    expect:
+      risk_summary: ANIMAL_DEVELOPMENTAL_TOXICITY
+  - input:
+      human_data_available: false
+      animal_data_result: no_adverse
+    expect:
+      risk_summary: NO_ANIMAL_RISK_NO_HUMAN_DATA
+  - input:
+      human_data_available: false
+      animal_data_result: no_data
+    expect:
+      risk_summary: INSUFFICIENT_DATA
+  - input:
+      human_data_available: true
+      animal_data_result: no_adverse
+      pregnancy_registry: false
+    expect:
+      risk_summary: NO_INCREASED_RISK_IDENTIFIED
+  - input: {}
+    expect:
+      risk_summary: INSUFFICIENT_DATA
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - risk_summary
+    - labeling_content
+    - registry_statement
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

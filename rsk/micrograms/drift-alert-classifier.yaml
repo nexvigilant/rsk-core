@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drift-alert-classifier
-description: 'PVOS drift alerting: classifies signal drift severity based on PRR change magnitude and time window'
 version: 0.1.0
+description: "PVOS drift alerting: classifies signal drift severity based on PRR change magnitude and time window"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: prr_change_pct
+    type: int
+    required: false
+    description: ""
+  - name: time_window_days
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: alert_level
+    type: string
+  - name: description
+    type: string
+  - name: severity
+    type: string
 interface:
   inputs:
     prr_change_pct:
@@ -16,6 +42,33 @@ interface:
       type: string
     severity:
       type: string
+ui:
+  title: Drift Alert Classifier
+  subtitle: "PVOS drift alerting: classifies signal drift severity based on PRR change magnitude and time window"
+  icon: circle
+  route: /vigilance/mg/drift-alert-classifier
+  steps:
+    - field: prr_change_pct
+      label: prr change pct
+      help: Enter prr_change_pct
+      widget: text
+      placeholder: null
+    - field: time_window_days
+      label: time window days
+      help: Enter time_window_days
+      widget: text
+      placeholder: null
+  result:
+    template: "alert_level: {{alert_level}} — description: {{description}} — severity: {{severity}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drift-alert-classifier
+  cli: rsk mcg run drift-alert-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_critical
   nodes:
@@ -86,56 +139,91 @@ tree:
         alert_level: NONE
         description: Signal within normal variation - no drift alert needed
 tests:
-- input:
-    prr_change_pct: 75
-    signal_count_change: 50
-    time_window_days: 3
-  expect:
-    severity: CRITICAL_DRIFT
-    alert_level: P1
-    description: Rapid signal drift (>50% PRR change in <7 days) - immediate investigation required
-- input:
-    prr_change_pct: 60
-    signal_count_change: 20
-    time_window_days: 10
-  expect:
-    severity: MODERATE_DRIFT
-    alert_level: P2
-    description: Significant signal drift (>25% PRR change in <14 days) - schedule review
-- input:
-    prr_change_pct: 30
-    signal_count_change: 10
-    time_window_days: 8
-  expect:
-    severity: MODERATE_DRIFT
-    alert_level: P2
-    description: Significant signal drift (>25% PRR change in <14 days) - schedule review
-- input:
-    prr_change_pct: 15
-    signal_count_change: 5
-    time_window_days: 20
-  expect:
-    severity: MINOR_DRIFT
-    alert_level: P3
-    description: Gradual signal drift (>10% PRR change in <30 days) - add to monitoring queue
-- input:
-    prr_change_pct: 5
-    signal_count_change: 2
-    time_window_days: 45
-  expect:
-    severity: STABLE
-    alert_level: NONE
-    description: Signal within normal variation - no drift alert needed
-- input:
-    prr_change_pct: 55
-    signal_count_change: 30
-    time_window_days: 13
-  expect:
-    severity: MODERATE_DRIFT
-    alert_level: P2
-    description: Significant signal drift (>25% PRR change in <14 days) - schedule review
-- input: {}
-  expect:
-    alert_level: NONE
-    description: Signal within normal variation - no drift alert needed
-    severity: STABLE
+  - input:
+      prr_change_pct: 75
+      signal_count_change: 50
+      time_window_days: 3
+    expect:
+      severity: CRITICAL_DRIFT
+      alert_level: P1
+      description: Rapid signal drift (>50% PRR change in <7 days) - immediate investigation required
+  - input:
+      prr_change_pct: 60
+      signal_count_change: 20
+      time_window_days: 10
+    expect:
+      severity: MODERATE_DRIFT
+      alert_level: P2
+      description: Significant signal drift (>25% PRR change in <14 days) - schedule review
+  - input:
+      prr_change_pct: 30
+      signal_count_change: 10
+      time_window_days: 8
+    expect:
+      severity: MODERATE_DRIFT
+      alert_level: P2
+      description: Significant signal drift (>25% PRR change in <14 days) - schedule review
+  - input:
+      prr_change_pct: 15
+      signal_count_change: 5
+      time_window_days: 20
+    expect:
+      severity: MINOR_DRIFT
+      alert_level: P3
+      description: Gradual signal drift (>10% PRR change in <30 days) - add to monitoring queue
+  - input:
+      prr_change_pct: 5
+      signal_count_change: 2
+      time_window_days: 45
+    expect:
+      severity: STABLE
+      alert_level: NONE
+      description: Signal within normal variation - no drift alert needed
+  - input:
+      prr_change_pct: 55
+      signal_count_change: 30
+      time_window_days: 13
+    expect:
+      severity: MODERATE_DRIFT
+      alert_level: P2
+      description: Significant signal drift (>25% PRR change in <14 days) - schedule review
+  - input: {}
+    expect:
+      alert_level: NONE
+      description: Signal within normal variation - no drift alert needed
+      severity: STABLE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - alert_level
+    - description
+    - severity
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

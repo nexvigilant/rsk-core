@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: crisis-comm
-description: "Domain 14: Crisis communication routing by severity and timeline — immediate response through recovery."
 version: 0.1.0
+description: "Domain 14: Crisis communication routing by severity and timeline — immediate response through recovery."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: crisis_phase
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: actions
+    type: string
+  - name: ai_assist
+    type: string
+  - name: communication
+    type: string
+  - name: phase
+    type: string
+  - name: rule
+    type: string
+  - name: stakeholders
+    type: string
+  - name: timeline
+    type: string
 interface:
   inputs:
     crisis_phase:
@@ -21,6 +51,28 @@ interface:
       type: string
     timeline:
       type: string
+ui:
+  title: Crisis Comm
+  subtitle: "Domain 14: Crisis communication routing by severity and timeline — immediate response through recovery."
+  icon: circle
+  route: /vigilance/mg/crisis-comm
+  steps:
+    - field: crisis_phase
+      label: crisis phase
+      help: Enter crisis_phase
+      widget: text
+      placeholder: null
+  result:
+    template: "actions: {{actions}} — ai_assist: {{ai_assist}} — communication: {{communication}} — phase: {{phase}} — rule: {{rule}} — stakeholders: {{stakeholders}} — timeline: {{timeline}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/crisis-comm
+  cli: rsk mcg run crisis-comm
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_phase
   nodes:
@@ -56,71 +108,110 @@ tree:
       type: return
       value:
         phase: IMMEDIATE
-        timeline: "0-24 hours"
-        actions: "activate crisis team, assess scope, prepare holding statement, notify key stakeholders"
-        communication: "acknowledge issue, state commitment to investigation, avoid speculation"
-        stakeholders: "internal leadership, regulatory authorities, key partners"
-        ai_assist: "social media monitoring, stakeholder alert system, template activation"
-        rule: "speed over perfection — say what you know, say what you do not know, say what you are doing"
+        timeline: 0-24 hours
+        actions: activate crisis team, assess scope, prepare holding statement, notify key stakeholders
+        communication: acknowledge issue, state commitment to investigation, avoid speculation
+        stakeholders: internal leadership, regulatory authorities, key partners
+        ai_assist: social media monitoring, stakeholder alert system, template activation
+        rule: speed over perfection — say what you know, say what you do not know, say what you are doing
     active:
       type: return
       value:
         phase: ACTIVE
-        timeline: "24 hours - 7 days"
-        actions: "coordinate multi-channel response, regular stakeholder updates, media management"
-        communication: "provide updates with new information, maintain consistency across channels"
-        stakeholders: "all stakeholder groups, media, public"
-        ai_assist: "sentiment tracking, message consistency checking, stakeholder feedback analysis"
-        rule: "consistency and frequency — stakeholders need regular updates even if nothing has changed"
+        timeline: 24 hours - 7 days
+        actions: coordinate multi-channel response, regular stakeholder updates, media management
+        communication: provide updates with new information, maintain consistency across channels
+        stakeholders: all stakeholder groups, media, public
+        ai_assist: sentiment tracking, message consistency checking, stakeholder feedback analysis
+        rule: consistency and frequency — stakeholders need regular updates even if nothing has changed
     sustained:
       type: return
       value:
         phase: SUSTAINED
-        timeline: "1-4 weeks"
-        actions: "manage ongoing investigation communication, address misinformation, support stakeholders"
-        communication: "detailed updates as investigation progresses, address emerging concerns proactively"
-        stakeholders: "targeted updates by stakeholder group"
-        ai_assist: "misinformation detection, communication impact analysis, fatigue monitoring"
-        rule: "proactive over reactive — anticipate questions and address them before they are asked"
+        timeline: 1-4 weeks
+        actions: manage ongoing investigation communication, address misinformation, support stakeholders
+        communication: detailed updates as investigation progresses, address emerging concerns proactively
+        stakeholders: targeted updates by stakeholder group
+        ai_assist: misinformation detection, communication impact analysis, fatigue monitoring
+        rule: proactive over reactive — anticipate questions and address them before they are asked
     recovery:
       type: return
       value:
         phase: RECOVERY
-        timeline: "1-6 months"
-        actions: "restore confidence, communicate outcomes, implement lessons learned, rebuild trust"
-        communication: "transparent outcome reporting, corrective action communication, trust rebuilding"
-        stakeholders: "all groups with focus on most affected"
-        ai_assist: "trust sentiment tracking, recovery metrics, effectiveness measurement"
-        rule: "demonstrate learning — show what changed because of this crisis"
+        timeline: 1-6 months
+        actions: restore confidence, communicate outcomes, implement lessons learned, rebuild trust
+        communication: transparent outcome reporting, corrective action communication, trust rebuilding
+        stakeholders: all groups with focus on most affected
+        ai_assist: trust sentiment tracking, recovery metrics, effectiveness measurement
+        rule: demonstrate learning — show what changed because of this crisis
     preparedness:
       type: return
       value:
         phase: PREPAREDNESS
-        timeline: "ongoing"
-        actions: "maintain crisis plan, train spokespersons, update templates, conduct simulations"
-        communication: "build stakeholder relationships before crises occur"
-        ai_assist: "predictive crisis detection, simulation automation, readiness scoring"
-        rule: "the best crisis communication starts years before the crisis"
+        timeline: ongoing
+        actions: maintain crisis plan, train spokespersons, update templates, conduct simulations
+        communication: build stakeholder relationships before crises occur
+        ai_assist: predictive crisis detection, simulation automation, readiness scoring
+        rule: the best crisis communication starts years before the crisis
 tests:
-- input:
-    crisis_phase: immediate
-  expect:
-    phase: IMMEDIATE
-    timeline: "0-24 hours"
-- input:
-    crisis_phase: active
-  expect:
-    phase: ACTIVE
-    timeline: "24 hours - 7 days"
-- input:
-    crisis_phase: sustained
-  expect:
-    phase: SUSTAINED
-- input:
-    crisis_phase: recovery
-  expect:
-    phase: RECOVERY
-- input: {}
-  expect:
-    phase: PREPAREDNESS
-    rule: "the best crisis communication starts years before the crisis"
+  - input:
+      crisis_phase: immediate
+    expect:
+      phase: IMMEDIATE
+      timeline: 0-24 hours
+  - input:
+      crisis_phase: active
+    expect:
+      phase: ACTIVE
+      timeline: 24 hours - 7 days
+  - input:
+      crisis_phase: sustained
+    expect:
+      phase: SUSTAINED
+  - input:
+      crisis_phase: recovery
+    expect:
+      phase: RECOVERY
+  - input: {}
+    expect:
+      phase: PREPAREDNESS
+      rule: the best crisis communication starts years before the crisis
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - actions
+    - ai_assist
+    - communication
+    - phase
+    - rule
+    - stakeholders
+    - timeline
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

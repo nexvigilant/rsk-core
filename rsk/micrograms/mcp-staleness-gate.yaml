@@ -1,7 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: mcp-staleness-gate
-version: "1.0"
+version: 0.1.0
 description: "Decide action for stale MCP server binary. Hook computes is_stale (binary_mtime > process_start). Microgram decides action. chains_to: session-velocity (feeds_momentum flag)."
-
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: build_detected
+    type: bool
+    required: true
+    description: ""
+  - name: is_stale
+    type: bool
+    required: true
+    description: ""
+  - name: staleness_seconds
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: status
+    type: string
+  - name: action
+    type: string
+  - name: message
+    type: string
+  - name: feeds_momentum
+    type: bool
 interface:
   inputs:
     build_detected:
@@ -22,6 +53,38 @@ interface:
       type: string
     feeds_momentum:
       type: bool
+ui:
+  title: Mcp Staleness Gate
+  subtitle: "Decide action for stale MCP server binary. Hook computes is_stale (binary_mtime > process_start). Microgram decides action. chains_to: session-velocity (feeds_momentum flag)."
+  icon: circle
+  route: /vigilance/mg/mcp-staleness-gate
+  steps:
+    - field: build_detected
+      label: build detected
+      help: Enter build_detected
+      widget: toggle
+      placeholder: null
+    - field: is_stale
+      label: is stale
+      help: Enter is_stale
+      widget: toggle
+      placeholder: null
+    - field: staleness_seconds
+      label: staleness seconds
+      help: Enter staleness_seconds
+      widget: text
+      placeholder: null
+  result:
+    template: "status: {{status}} — action: {{action}} — message: {{message}} — feeds_momentum: {{feeds_momentum}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/mcp-staleness-gate
+  cli: rsk mcg run mcp-staleness-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_build_detected
   nodes:
@@ -32,7 +95,6 @@ tree:
       value: true
       true_next: check_staleness
       false_next: no_action
-
     check_staleness:
       type: condition
       variable: is_stale
@@ -40,7 +102,6 @@ tree:
       value: true
       true_next: check_severity
       false_next: fresh
-
     check_severity:
       type: condition
       variable: staleness_seconds
@@ -48,41 +109,36 @@ tree:
       value: 300
       true_next: critical_stale
       false_next: stale
-
     critical_stale:
       type: return
       value:
         status: CRITICAL_STALE
         action: reconnect_needed
-        message: "MCP binary stale >5min — /mcp reconnect urgently needed"
+        message: MCP binary stale >5min — /mcp reconnect urgently needed
         feeds_momentum: true
-
     stale:
       type: return
       value:
         status: STALE
         action: reconnect_needed
-        message: "MCP binary rebuilt — /mcp reconnect needed"
+        message: MCP binary rebuilt — /mcp reconnect needed
         feeds_momentum: true
-
     fresh:
       type: return
       value:
         status: FRESH
         action: none
-        message: "MCP binary matches running process"
+        message: MCP binary matches running process
         feeds_momentum: false
-
     no_action:
       type: return
       value:
         status: SKIPPED
         action: none
-        message: "No build detected"
+        message: No build detected
         feeds_momentum: false
-
 tests:
-  - name: "stale binary after rebuild — short gap"
+  - name: stale binary after rebuild — short gap
     input:
       build_detected: true
       is_stale: true
@@ -90,8 +146,7 @@ tests:
     expect:
       status: STALE
       action: reconnect_needed
-
-  - name: "critical stale — over 5 minutes"
+  - name: critical stale — over 5 minutes
     input:
       build_detected: true
       is_stale: true
@@ -99,8 +154,7 @@ tests:
     expect:
       status: CRITICAL_STALE
       action: reconnect_needed
-
-  - name: "fresh binary — process started after build"
+  - name: fresh binary — process started after build
     input:
       build_detected: true
       is_stale: false
@@ -108,8 +162,7 @@ tests:
     expect:
       status: FRESH
       action: none
-
-  - name: "no build detected — skip entirely"
+  - name: no build detected — skip entirely
     input:
       build_detected: false
       is_stale: true
@@ -117,8 +170,7 @@ tests:
     expect:
       status: SKIPPED
       action: none
-
-  - name: "boundary — exactly 300s is not critical"
+  - name: boundary — exactly 300s is not critical
     input:
       build_detected: true
       is_stale: true
@@ -126,8 +178,7 @@ tests:
     expect:
       status: STALE
       action: reconnect_needed
-
-  - name: "boundary — 301s is critical"
+  - name: boundary — 301s is critical
     input:
       build_detected: true
       is_stale: true
@@ -142,3 +193,39 @@ tests:
       feeds_momentum: false
       message: No build detected
       status: SKIPPED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - action
+    - message
+    - feeds_momentum
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: epa-classifier
-description: "PDC: Classify EPA (1-20) into Core/Executive tier with AI gateway detection"
 version: 0.1.0
+description: "PDC: Classify EPA (1-20) into Core/Executive tier with AI gateway detection"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: epa_id
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: classification
+    type: string
+  - name: description
+    type: string
+  - name: error
+    type: string
+  - name: is_gateway
+    type: bool
+  - name: min_level_for_cpa8
+    type: int
+  - name: phases
+    type: string
+  - name: tier
+    type: string
+  - name: unlocks_cpa8
+    type: bool
 interface:
   inputs:
     epa_id:
@@ -23,6 +55,28 @@ interface:
       type: string
     unlocks_cpa8:
       type: bool
+ui:
+  title: Epa Classifier
+  subtitle: "PDC: Classify EPA (1-20) into Core/Executive tier with AI gateway detection"
+  icon: circle
+  route: /vigilance/mg/epa-classifier
+  steps:
+    - field: epa_id
+      label: epa id
+      help: Enter epa_id
+      widget: text
+      placeholder: null
+  result:
+    template: "classification: {{classification}} — description: {{description}} — error: {{error}} — is_gateway: {{is_gateway}} — min_level_for_cpa8: {{min_level_for_cpa8}} — phases: {{phases}} — tier: {{tier}} — unlocks_cpa8: {{unlocks_cpa8}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/epa-classifier
+  cli: rsk mcg run epa-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_valid
   nodes:
@@ -62,8 +116,8 @@ tree:
         is_gateway: true
         unlocks_cpa8: true
         min_level_for_cpa8: 4
-        description: "Implement and Validate AI Tools for Pharmacovigilance"
-        phases: "Foundation, Application, Integration, Innovation"
+        description: Implement and Validate AI Tools for Pharmacovigilance
+        phases: Foundation, Application, Integration, Innovation
     core_epa:
       type: return
       value:
@@ -83,46 +137,86 @@ tree:
       value:
         tier: INVALID
         classification: UNKNOWN
-        error: "EPA ID must be 1-20"
+        error: EPA ID must be 1-20
 tests:
-- input:
-    epa_id: 1
-  expect:
-    tier: CORE
-    classification: PRACTICE
-    is_gateway: false
-- input:
-    epa_id: 9
-  expect:
-    tier: CORE
-    classification: PRACTICE
-    is_gateway: false
-- input:
-    epa_id: 10
-  expect:
-    tier: CORE
-    classification: AI_GATEWAY
-    is_gateway: true
-    unlocks_cpa8: true
-    min_level_for_cpa8: 4
-- input:
-    epa_id: 11
-  expect:
-    tier: EXECUTIVE
-    classification: LEADERSHIP
-- input:
-    epa_id: 20
-  expect:
-    tier: EXECUTIVE
-    classification: LEADERSHIP
-- input:
-    epa_id: 0
-  expect:
-    tier: INVALID
-- input:
-    epa_id: 21
-  expect:
-    tier: INVALID
-- input: {}
-  expect:
-    tier: INVALID
+  - input:
+      epa_id: 1
+    expect:
+      tier: CORE
+      classification: PRACTICE
+      is_gateway: false
+  - input:
+      epa_id: 9
+    expect:
+      tier: CORE
+      classification: PRACTICE
+      is_gateway: false
+  - input:
+      epa_id: 10
+    expect:
+      tier: CORE
+      classification: AI_GATEWAY
+      is_gateway: true
+      unlocks_cpa8: true
+      min_level_for_cpa8: 4
+  - input:
+      epa_id: 11
+    expect:
+      tier: EXECUTIVE
+      classification: LEADERSHIP
+  - input:
+      epa_id: 20
+    expect:
+      tier: EXECUTIVE
+      classification: LEADERSHIP
+  - input:
+      epa_id: 0
+    expect:
+      tier: INVALID
+  - input:
+      epa_id: 21
+    expect:
+      tier: INVALID
+  - input: {}
+    expect:
+      tier: INVALID
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - classification
+    - description
+    - error
+    - is_gateway
+    - min_level_for_cpa8
+    - phases
+    - tier
+    - unlocks_cpa8
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

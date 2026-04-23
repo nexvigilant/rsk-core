@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: session-velocity
-description: 'Classify session development velocity from tool calls, commits, and files modified. Maps session metrics to flywheel velocity input for momentum tracking.'
 version: 0.1.0
+description: Classify session development velocity from tool calls, commits, and files modified. Maps session metrics to flywheel velocity input for momentum tracking.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: commits
+    type: int
+    required: false
+    description: ""
+  - name: files_modified
+    type: int
+    required: false
+    description: ""
+  - name: tool_calls
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: contributes_to
+    type: string
+  - name: estimated_fix_time_ms
+    type: int
+  - name: session_band
+    type: string
 interface:
   inputs:
     commits:
@@ -19,6 +49,38 @@ interface:
       type: int
     session_band:
       type: string
+ui:
+  title: Session Velocity
+  subtitle: Classify session development velocity from tool calls, commits, and files modified. Maps session metrics to flywheel velocity input for momentum tracking.
+  icon: circle
+  route: /vigilance/mg/session-velocity
+  steps:
+    - field: commits
+      label: commits
+      help: Enter commits
+      widget: text
+      placeholder: null
+    - field: files_modified
+      label: files modified
+      help: Enter files_modified
+      widget: text
+      placeholder: null
+    - field: tool_calls
+      label: tool calls
+      help: Enter tool_calls
+      widget: text
+      placeholder: null
+  result:
+    template: "contributes_to: {{contributes_to}} — estimated_fix_time_ms: {{estimated_fix_time_ms}} — session_band: {{session_band}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/session-velocity
+  cli: rsk mcg run session-velocity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_high_output
   nodes:
@@ -88,79 +150,107 @@ tree:
         estimated_fix_time_ms: 604800000
         contributes_to: deceleration
 tests:
-# HIGH: 3+ commits, 5+ files
-- input:
-    commits: 5
-    files_modified: 10
-    tool_calls: 80
-  expect:
-    session_band: HIGH
-    estimated_fix_time_ms: 7200000
-    contributes_to: acceleration
-# HIGH requires both commits and files
-- input:
-    commits: 3
-    files_modified: 3
-    tool_calls: 50
-  expect:
-    session_band: MODERATE
-    estimated_fix_time_ms: 43200000
-    contributes_to: maintenance
-# MODERATE: 1+ commits, 20+ tool calls
-- input:
-    commits: 1
-    files_modified: 2
-    tool_calls: 25
-  expect:
-    session_band: MODERATE
-    estimated_fix_time_ms: 43200000
-    contributes_to: maintenance
-# LOW: 1+ commits but few tool calls
-- input:
-    commits: 1
-    files_modified: 1
-    tool_calls: 10
-  expect:
-    session_band: LOW
-    estimated_fix_time_ms: 172800000
-    contributes_to: deceleration
-# RESEARCH: no commits but lots of tool calls
-- input:
-    commits: 0
-    files_modified: 0
-    tool_calls: 50
-  expect:
-    session_band: RESEARCH
-    estimated_fix_time_ms: 86400000
-    contributes_to: maintenance
-# STALLED: no commits, few tool calls
-- input:
-    commits: 0
-    files_modified: 0
-    tool_calls: 5
-  expect:
-    session_band: STALLED
-    estimated_fix_time_ms: 604800000
-    contributes_to: deceleration
-# Edge: exactly at thresholds
-- input:
-    commits: 3
-    files_modified: 5
-    tool_calls: 100
-  expect:
-    session_band: HIGH
-    estimated_fix_time_ms: 7200000
-    contributes_to: acceleration
-- input:
-    commits: 0
-    files_modified: 0
-    tool_calls: 30
-  expect:
-    session_band: RESEARCH
-    estimated_fix_time_ms: 86400000
-    contributes_to: maintenance
-- input: {}
-  expect:
-    contributes_to: deceleration
-    estimated_fix_time_ms: 604800000
-    session_band: STALLED
+  - input:
+      commits: 5
+      files_modified: 10
+      tool_calls: 80
+    expect:
+      session_band: HIGH
+      estimated_fix_time_ms: 7200000
+      contributes_to: acceleration
+  - input:
+      commits: 3
+      files_modified: 3
+      tool_calls: 50
+    expect:
+      session_band: MODERATE
+      estimated_fix_time_ms: 43200000
+      contributes_to: maintenance
+  - input:
+      commits: 1
+      files_modified: 2
+      tool_calls: 25
+    expect:
+      session_band: MODERATE
+      estimated_fix_time_ms: 43200000
+      contributes_to: maintenance
+  - input:
+      commits: 1
+      files_modified: 1
+      tool_calls: 10
+    expect:
+      session_band: LOW
+      estimated_fix_time_ms: 172800000
+      contributes_to: deceleration
+  - input:
+      commits: 0
+      files_modified: 0
+      tool_calls: 50
+    expect:
+      session_band: RESEARCH
+      estimated_fix_time_ms: 86400000
+      contributes_to: maintenance
+  - input:
+      commits: 0
+      files_modified: 0
+      tool_calls: 5
+    expect:
+      session_band: STALLED
+      estimated_fix_time_ms: 604800000
+      contributes_to: deceleration
+  - input:
+      commits: 3
+      files_modified: 5
+      tool_calls: 100
+    expect:
+      session_band: HIGH
+      estimated_fix_time_ms: 7200000
+      contributes_to: acceleration
+  - input:
+      commits: 0
+      files_modified: 0
+      tool_calls: 30
+    expect:
+      session_band: RESEARCH
+      estimated_fix_time_ms: 86400000
+      contributes_to: maintenance
+  - input: {}
+    expect:
+      contributes_to: deceleration
+      estimated_fix_time_ms: 604800000
+      session_band: STALLED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - contributes_to
+    - estimated_fix_time_ms
+    - session_band
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

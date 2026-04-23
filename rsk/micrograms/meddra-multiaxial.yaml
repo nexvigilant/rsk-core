@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: meddra-multiaxial
-description: "Apply MedDRA multiaxial coding structure to determine appropriate classification level"
 version: 0.1.0
+description: Apply MedDRA multiaxial coding structure to determine appropriate classification level
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Meddra Multiaxial
+  subtitle: Apply MedDRA multiaxial coding structure to determine appropriate classification level
+  icon: circle
+  route: /vigilance/mg/meddra-multiaxial
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/meddra-multiaxial
+  cli: rsk mcg run meddra-multiaxial
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_pt_code
   nodes:
@@ -35,11 +64,11 @@ tree:
     multiaxial_complete:
       type: return
       value:
-        anatomical_classification: "cardiac"
-        aetiological_classification: "drug_induced"
-        pathophysiological_classification: "arrhythmia"
-        temporal_classification: "acute"
-        severity_classification: "severe"
+        anatomical_classification: cardiac
+        aetiological_classification: drug_induced
+        pathophysiological_classification: arrhythmia
+        temporal_classification: acute
+        severity_classification: severe
         multiaxial_compliant: true
     multiaxial_unknown:
       type: return
@@ -51,22 +80,54 @@ tree:
         severity_classification: null
         multiaxial_compliant: false
 tests:
-- input:
-    meddra_pt_code: "10007585"
-    anatomical_system: "cardiac"
-    aetiology: "drug_induced"
-    pathophysiological_axis: "arrhythmia"
-  expect:
-    anatomical_classification: "cardiac"
-    aetiological_classification: "drug_induced"
-    pathophysiological_classification: "arrhythmia"
-    multiaxial_compliant: true
-- input:
-    meddra_pt_code: "10007585"
-    anatomical_system: null
-  expect:
-    anatomical_classification: null
-    multiaxial_compliant: false
-- input: {}
-  expect:
-    multiaxial_compliant: false
+  - input:
+      meddra_pt_code: "10007585"
+      anatomical_system: cardiac
+      aetiology: drug_induced
+      pathophysiological_axis: arrhythmia
+    expect:
+      anatomical_classification: cardiac
+      aetiological_classification: drug_induced
+      pathophysiological_classification: arrhythmia
+      multiaxial_compliant: true
+  - input:
+      meddra_pt_code: "10007585"
+      anatomical_system: null
+    expect:
+      anatomical_classification: null
+      multiaxial_compliant: false
+  - input: {}
+    expect:
+      multiaxial_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

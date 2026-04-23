@@ -1,47 +1,130 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workflow-signal-investigation
-description: "Select the optimal signal investigation path based on data source and signal strength"
 version: 0.1.0
-
+description: Select the optimal signal investigation path based on data source and signal strength
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Workflow Signal Investigation
+  subtitle: Select the optimal signal investigation path based on data source and signal strength
+  icon: activity
+  route: /vigilance/mg/workflow-signal-investigation
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workflow-signal-investigation
+  cli: rsk mcg run workflow-signal-investigation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_source
   nodes:
     check_source:
-      type: "condition"
-      variable: "source"
-      operator: "eq"
-      value: "faers"
-      true_next: "faers_path"
-      false_next: "check_eu"
+      type: condition
+      variable: source
+      operator: eq
+      value: faers
+      true_next: faers_path
+      false_next: check_eu
     faers_path:
-      type: "return"
+      type: return
       value:
-        chain: "openfda \u2192 calculation \u2192 signal-theory \u2192 vigilance"
-        steps: ["station-openfda-pipeline", "station-calculation-pipeline", "station-signal-theory-pipeline", "station-vigilance-pipeline"]
+        chain: openfda → calculation → signal-theory → vigilance
+        steps:
+          - station-openfda-pipeline
+          - station-calculation-pipeline
+          - station-signal-theory-pipeline
+          - station-vigilance-pipeline
         hop_count: 4
     check_eu:
-      type: "condition"
-      variable: "source"
-      operator: "eq"
-      value: "eudravigilance"
-      true_next: "eu_path"
-      false_next: "global_path"
+      type: condition
+      variable: source
+      operator: eq
+      value: eudravigilance
+      true_next: eu_path
+      false_next: global_path
     eu_path:
-      type: "return"
+      type: return
       value:
-        chain: "ema \u2192 eudravigilance \u2192 compliance \u2192 benefit-risk"
-        steps: ["station-ema-pipeline", "station-eudravigilance-pipeline", "station-compliance-pipeline", "station-benefit-risk-pipeline"]
+        chain: ema → eudravigilance → compliance → benefit-risk
+        steps:
+          - station-ema-pipeline
+          - station-eudravigilance-pipeline
+          - station-compliance-pipeline
+          - station-benefit-risk-pipeline
         hop_count: 4
     global_path:
-      type: "return"
+      type: return
       value:
-        chain: "vigiaccess \u2192 who-umc \u2192 harm-taxonomy \u2192 preemptive-pv"
-        steps: ["station-vigiaccess-pipeline", "station-who-umc-pipeline", "station-harm-taxonomy-pipeline", "station-preemptive-pv-pipeline"]
+        chain: vigiaccess → who-umc → harm-taxonomy → preemptive-pv
+        steps:
+          - station-vigiaccess-pipeline
+          - station-who-umc-pipeline
+          - station-harm-taxonomy-pipeline
+          - station-preemptive-pv-pipeline
         hop_count: 4
-
 tests:
-  - input: {"source": "faers"}
-    expect: {"hop_count": 4}
-  - input: {"source": "eudravigilance"}
-    expect: {"hop_count": 4}
-  - input: {"source": "vigibase"}
-    expect: {"hop_count": 4}
+  - input:
+      source: faers
+    expect:
+      hop_count: 4
+  - input:
+      source: eudravigilance
+    expect:
+      hop_count: 4
+  - input:
+      source: vigibase
+    expect:
+      hop_count: 4
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

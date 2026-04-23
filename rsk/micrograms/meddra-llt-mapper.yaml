@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: meddra-llt-mapper
-description: "Map free-text adverse event to MedDRA Lower Level Term (LLT) with PT assignment"
 version: 0.1.0
+description: Map free-text adverse event to MedDRA Lower Level Term (LLT) with PT assignment
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Meddra Llt Mapper
+  subtitle: Map free-text adverse event to MedDRA Lower Level Term (LLT) with PT assignment
+  icon: circle
+  route: /vigilance/mg/meddra-llt-mapper
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/meddra-llt-mapper
+  cli: rsk mcg run meddra-llt-mapper
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_input_text
   nodes:
@@ -29,9 +58,9 @@ tree:
       type: return
       value:
         llt_code: "10001234"
-        llt_name: "Fever"
+        llt_name: Fever
         assigned_pt_code: "10033633"
-        assigned_pt_name: "Bacterial infection"
+        assigned_pt_name: Bacterial infection
         match_confidence_percent: 98
         requires_review: false
         meddra_compliant: true
@@ -39,9 +68,9 @@ tree:
       type: return
       value:
         llt_code: "10001234"
-        llt_name: "High fever"
+        llt_name: High fever
         assigned_pt_code: "10033633"
-        assigned_pt_name: "Bacterial infection"
+        assigned_pt_name: Bacterial infection
         match_confidence_percent: 80
         requires_review: true
         meddra_compliant: true
@@ -49,9 +78,9 @@ tree:
       type: return
       value:
         llt_code: "10001234"
-        llt_name: "Elevated temperature"
+        llt_name: Elevated temperature
         assigned_pt_code: "10033633"
-        assigned_pt_name: "Bacterial infection"
+        assigned_pt_name: Bacterial infection
         match_confidence_percent: 50
         requires_review: true
         meddra_compliant: false
@@ -66,26 +95,58 @@ tree:
         requires_review: true
         meddra_compliant: false
 tests:
-- input:
-    free_text_term: "fever"
-    match_confidence_percent: 98
-  expect:
-    llt_code: "10001234"
-    match_confidence_percent: 98
-    requires_review: false
-- input:
-    free_text_term: "high fever"
-    match_confidence_percent: 80
-  expect:
-    match_confidence_percent: 80
-    requires_review: true
-- input:
-    free_text_term: "temp rise"
-    match_confidence_percent: 50
-  expect:
-    match_confidence_percent: 50
-    meddra_compliant: false
-- input: {}
-  expect:
-    llt_code: null
-    meddra_compliant: false
+  - input:
+      free_text_term: fever
+      match_confidence_percent: 98
+    expect:
+      llt_code: "10001234"
+      match_confidence_percent: 98
+      requires_review: false
+  - input:
+      free_text_term: high fever
+      match_confidence_percent: 80
+    expect:
+      match_confidence_percent: 80
+      requires_review: true
+  - input:
+      free_text_term: temp rise
+      match_confidence_percent: 50
+    expect:
+      match_confidence_percent: 50
+      meddra_compliant: false
+  - input: {}
+    expect:
+      llt_code: null
+      meddra_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

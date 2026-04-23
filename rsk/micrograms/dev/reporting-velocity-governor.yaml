@@ -1,18 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: reporting-velocity-governor
-description: "Governor for RSK chain execution. Reads signal velocity (reporting rate) and outputs throttle decision: run_now, wait, or escalate. Prevents chain thrashing and detects Weber effect (reporting spikes)."
 version: 0.1.0
+description: "Governor for RSK chain execution. Reads signal velocity (reporting rate) and outputs throttle decision: run_now, wait, or escalate. Prevents chain thrashing and detects Weber effect (reporting spikes)."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Reporting Velocity Governor
+  subtitle: "Governor for RSK chain execution. Reads signal velocity (reporting rate) and outputs throttle decision: run_now, wait, or escalate. Prevents chain thrashing and detects Weber effect (reporting spikes)."
+  icon: circle
+  route: /vigilance/mg/reporting-velocity-governor
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/reporting-velocity-governor
+  cli: rsk mcg run reporting-velocity-governor
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_current_rate_null
   nodes:
-    # Phase 1: Null safety
     check_current_rate_null:
       type: condition
       variable: current_rate
       operator: is_null
       true_next: no_data_available
       false_next: check_spike_first
-
-    # Phase 2: High-priority spike detection (check before velocity)
     check_spike_first:
       type: condition
       variable: current_rate
@@ -30,26 +56,23 @@ tree:
       type: condition
       variable: rate_ratio
       operator: gt
-      value: 3.0
+      value: 3
       true_next: spike_escalate
       false_next: check_velocity
     spike_escalate:
       type: return
       value:
-        action: "escalate"
-        reason: "Reporting rate spike — possible Weber effect or safety event"
-        urgency: "critical"
-        governor_state: "throttle_escalated"
-
-    # Phase 3: Velocity-based decisions
+        action: escalate
+        reason: Reporting rate spike — possible Weber effect or safety event
+        urgency: critical
+        governor_state: throttle_escalated
     check_velocity:
       type: condition
       variable: signal_velocity
       operator: eq
-      value: "ACCELERATING"
+      value: ACCELERATING
       true_next: accelerating_check_staleness
       false_next: check_stable
-
     accelerating_check_staleness:
       type: condition
       variable: hours_since_last_run
@@ -60,23 +83,22 @@ tree:
     accelerating_stale:
       type: return
       value:
-        action: "run_now"
-        reason: "Signal accelerating and chain stale"
-        urgency: "high"
-        governor_state: "throttle_open"
+        action: run_now
+        reason: Signal accelerating and chain stale
+        urgency: high
+        governor_state: throttle_open
     accelerating_fresh:
       type: return
       value:
-        action: "wait"
-        reason: "Signal accelerating but chain is fresh"
-        urgency: "low"
-        governor_state: "throttle_closed"
-
+        action: wait
+        reason: Signal accelerating but chain is fresh
+        urgency: low
+        governor_state: throttle_closed
     check_stable:
       type: condition
       variable: signal_velocity
       operator: eq
-      value: "STABLE"
+      value: STABLE
       true_next: stable_check_staleness
       false_next: check_decelerating
     stable_check_staleness:
@@ -89,38 +111,36 @@ tree:
     stable_stale:
       type: return
       value:
-        action: "run_now"
-        reason: "Scheduled cadence — 24h since last run"
-        urgency: "medium"
-        governor_state: "throttle_open"
+        action: run_now
+        reason: Scheduled cadence — 24h since last run
+        urgency: medium
+        governor_state: throttle_open
     stable_fresh:
       type: return
       value:
-        action: "wait"
-        reason: "Signal stable and chain is fresh"
-        urgency: "none"
-        governor_state: "throttle_closed"
-
+        action: wait
+        reason: Signal stable and chain is fresh
+        urgency: none
+        governor_state: throttle_closed
     check_decelerating:
       type: condition
       variable: signal_velocity
       operator: eq
-      value: "DECELERATING"
+      value: DECELERATING
       true_next: decelerating_no_urgency
       false_next: check_stalled
     decelerating_no_urgency:
       type: return
       value:
-        action: "wait"
-        reason: "Signal decelerating — no urgency"
-        urgency: "none"
-        governor_state: "throttle_closed"
-
+        action: wait
+        reason: Signal decelerating — no urgency
+        urgency: none
+        governor_state: throttle_closed
     check_stalled:
       type: condition
       variable: signal_velocity
       operator: eq
-      value: "STALLED"
+      value: STALLED
       true_next: stalled_check_active_signals
       false_next: default_wait
     stalled_check_active_signals:
@@ -133,183 +153,190 @@ tree:
     stalled_with_signals:
       type: return
       value:
-        action: "run_now"
-        reason: "Stalled with active signals — check for data source failure"
-        urgency: "high"
-        governor_state: "throttle_open"
+        action: run_now
+        reason: Stalled with active signals — check for data source failure
+        urgency: high
+        governor_state: throttle_open
     stalled_no_signals:
       type: return
       value:
-        action: "wait"
-        reason: "Stalled with no active signals — dormant drug"
-        urgency: "none"
-        governor_state: "throttle_closed"
-
+        action: wait
+        reason: Stalled with no active signals — dormant drug
+        urgency: none
+        governor_state: throttle_closed
     no_data_available:
       type: return
       value:
-        action: "wait"
-        reason: "No reporting data available"
-        urgency: "none"
-        governor_state: "throttle_closed"
+        action: wait
+        reason: No reporting data available
+        urgency: none
+        governor_state: throttle_closed
     default_wait:
       type: return
       value:
-        action: "wait"
-        reason: "No high-priority condition met"
-        urgency: "low"
-        governor_state: "throttle_closed"
-
+        action: wait
+        reason: No high-priority condition met
+        urgency: low
+        governor_state: throttle_closed
 tests:
-  # Test 1: Null current_rate (decision path 1)
   - input:
       current_rate: null
-      baseline_rate: 100.0
+      baseline_rate: 100
       hours_since_last_run: 12
-      signal_velocity: "STABLE"
+      signal_velocity: STABLE
       active_signals: 2
     expect:
-      action: "wait"
-      reason: "No reporting data available"
-      urgency: "none"
-      governor_state: "throttle_closed"
-
-  # Test 2: ACCELERATING + stale (hours > 6) (decision path 2)
+      action: wait
+      reason: No reporting data available
+      urgency: none
+      governor_state: throttle_closed
   - input:
-      current_rate: 150.0
-      baseline_rate: 100.0
+      current_rate: 150
+      baseline_rate: 100
       hours_since_last_run: 8
-      signal_velocity: "ACCELERATING"
+      signal_velocity: ACCELERATING
       active_signals: 1
     expect:
-      action: "run_now"
-      reason: "Signal accelerating and chain stale"
-      urgency: "high"
-      governor_state: "throttle_open"
-
-  # Test 3: ACCELERATING + fresh (hours <= 6) (decision path 3)
+      action: run_now
+      reason: Signal accelerating and chain stale
+      urgency: high
+      governor_state: throttle_open
   - input:
-      current_rate: 180.0
-      baseline_rate: 100.0
+      current_rate: 180
+      baseline_rate: 100
       hours_since_last_run: 3
-      signal_velocity: "ACCELERATING"
+      signal_velocity: ACCELERATING
       active_signals: 2
     expect:
-      action: "wait"
-      reason: "Signal accelerating but chain is fresh"
-      urgency: "low"
-      governor_state: "throttle_closed"
-
-  # Test 4: STABLE + stale (hours > 24) (decision path 4)
+      action: wait
+      reason: Signal accelerating but chain is fresh
+      urgency: low
+      governor_state: throttle_closed
   - input:
-      current_rate: 110.0
-      baseline_rate: 100.0
+      current_rate: 110
+      baseline_rate: 100
       hours_since_last_run: 30
-      signal_velocity: "STABLE"
+      signal_velocity: STABLE
       active_signals: 1
     expect:
-      action: "run_now"
-      reason: "Scheduled cadence — 24h since last run"
-      urgency: "medium"
-      governor_state: "throttle_open"
-
-  # Test 5: STABLE + fresh (hours <= 24) (decision path 5)
+      action: run_now
+      reason: Scheduled cadence — 24h since last run
+      urgency: medium
+      governor_state: throttle_open
   - input:
-      current_rate: 105.0
-      baseline_rate: 100.0
+      current_rate: 105
+      baseline_rate: 100
       hours_since_last_run: 12
-      signal_velocity: "STABLE"
+      signal_velocity: STABLE
       active_signals: 1
     expect:
-      action: "wait"
-      reason: "Signal stable and chain is fresh"
-      urgency: "none"
-      governor_state: "throttle_closed"
-
-  # Test 6: DECELERATING (decision path 6)
+      action: wait
+      reason: Signal stable and chain is fresh
+      urgency: none
+      governor_state: throttle_closed
   - input:
-      current_rate: 80.0
-      baseline_rate: 100.0
+      current_rate: 80
+      baseline_rate: 100
       hours_since_last_run: 48
-      signal_velocity: "DECELERATING"
+      signal_velocity: DECELERATING
       active_signals: 0
     expect:
-      action: "wait"
-      reason: "Signal decelerating — no urgency"
-      urgency: "none"
-      governor_state: "throttle_closed"
-
-  # Test 7: STALLED + active_signals > 0 (decision path 7)
+      action: wait
+      reason: Signal decelerating — no urgency
+      urgency: none
+      governor_state: throttle_closed
   - input:
-      current_rate: 0.0
-      baseline_rate: 100.0
+      current_rate: 0
+      baseline_rate: 100
       hours_since_last_run: 72
-      signal_velocity: "STALLED"
+      signal_velocity: STALLED
       active_signals: 3
     expect:
-      action: "run_now"
-      reason: "Stalled with active signals — check for data source failure"
-      urgency: "high"
-      governor_state: "throttle_open"
-
-  # Test 8: STALLED + active_signals == 0 (decision path 8)
+      action: run_now
+      reason: Stalled with active signals — check for data source failure
+      urgency: high
+      governor_state: throttle_open
   - input:
-      current_rate: 0.0
-      baseline_rate: 100.0
+      current_rate: 0
+      baseline_rate: 100
       hours_since_last_run: 120
-      signal_velocity: "STALLED"
+      signal_velocity: STALLED
       active_signals: 0
     expect:
-      action: "wait"
-      reason: "Stalled with no active signals — dormant drug"
-      urgency: "none"
-      governor_state: "throttle_closed"
-
-  # Test 9: Spike detection (current_rate > 500, ratio > 3) (decision path 9)
+      action: wait
+      reason: Stalled with no active signals — dormant drug
+      urgency: none
+      governor_state: throttle_closed
   - input:
-      current_rate: 550.0
-      baseline_rate: 150.0
+      current_rate: 550
+      baseline_rate: 150
       hours_since_last_run: 2
-      signal_velocity: "ACCELERATING"
+      signal_velocity: ACCELERATING
       active_signals: 5
       rate_ratio: 3.67
     expect:
-      action: "escalate"
-      reason: "Reporting rate spike — possible Weber effect or safety event"
-      urgency: "critical"
-      governor_state: "throttle_escalated"
-
-  # Test 10: High rate but ratio <= 3 (no escalation, falls through to velocity check)
+      action: escalate
+      reason: Reporting rate spike — possible Weber effect or safety event
+      urgency: critical
+      governor_state: throttle_escalated
   - input:
-      current_rate: 600.0
-      baseline_rate: 250.0
+      current_rate: 600
+      baseline_rate: 250
       hours_since_last_run: 6
-      signal_velocity: "STABLE"
+      signal_velocity: STABLE
       active_signals: 2
       rate_ratio: 2.4
     expect:
-      action: "wait"
-      reason: "Signal stable and chain is fresh"
-      urgency: "none"
-      governor_state: "throttle_closed"
-
-  # Test 11: Empty input (null safety check)
+      action: wait
+      reason: Signal stable and chain is fresh
+      urgency: none
+      governor_state: throttle_closed
   - input: {}
     expect:
-      action: "wait"
-      reason: "No reporting data available"
-      urgency: "none"
-      governor_state: "throttle_closed"
-
-  # Test 12: Edge case — ACCELERATING at exactly 6 hours (boundary)
+      action: wait
+      reason: No reporting data available
+      urgency: none
+      governor_state: throttle_closed
   - input:
-      current_rate: 200.0
-      baseline_rate: 100.0
+      current_rate: 200
+      baseline_rate: 100
       hours_since_last_run: 6
-      signal_velocity: "ACCELERATING"
+      signal_velocity: ACCELERATING
       active_signals: 1
     expect:
-      action: "wait"
-      reason: "Signal accelerating but chain is fresh"
-      urgency: "low"
-      governor_state: "throttle_closed"
+      action: wait
+      reason: Signal accelerating but chain is fresh
+      urgency: low
+      governor_state: throttle_closed
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: faers-event-classifier
-description: "Classify FAERS adverse event terms into seriousness categories, estimate MedDRA SOC, and flag for followup"
 version: 0.1.0
-
+description: Classify FAERS adverse event terms into seriousness categories, estimate MedDRA SOC, and flag for followup
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Faers Event Classifier
+  subtitle: Classify FAERS adverse event terms into seriousness categories, estimate MedDRA SOC, and flag for followup
+  icon: circle
+  route: /vigilance/mg/faers-event-classifier
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/faers-event-classifier
+  cli: rsk mcg run faers-event-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_event_term
   nodes:
@@ -11,90 +39,133 @@ tree:
       operator: is_not_null
       true_next: check_outcome
       false_next: missing_input
-
     check_outcome:
       type: condition
       variable: outcome
       operator: is_not_null
       true_next: classify_by_outcome
       false_next: missing_input
-
     classify_by_outcome:
       type: condition
       variable: outcome
       operator: matches
-      value: "(?i)(death|fatal|died|expired)"
+      value: (?i)(death|fatal|died|expired)
       true_next: serious_fatal
       false_next: check_hospitalization
-
     check_hospitalization:
       type: condition
       variable: outcome
       operator: matches
-      value: "(?i)(hospitalized|inpatient|admission|emergency)"
+      value: (?i)(hospitalized|inpatient|admission|emergency)
       true_next: serious_hospitalized
       false_next: check_serious_keywords
-
     check_serious_keywords:
       type: condition
       variable: event_term
       operator: matches
-      value: "(?i)(arrest|failure|infarction|stroke|hemorrhage|perforation|sepsis|cancer)"
+      value: (?i)(arrest|failure|infarction|stroke|hemorrhage|perforation|sepsis|cancer)
       true_next: serious_other
       false_next: non_serious
-
     serious_fatal:
       type: return
       value:
-        seriousness_category: "fatal"
-        meddra_soc_guess: "unclassified"
+        seriousness_category: fatal
+        meddra_soc_guess: unclassified
         requires_followup: true
-
     serious_hospitalized:
       type: return
       value:
-        seriousness_category: "serious_hospitalized"
-        meddra_soc_guess: "system_organ_class_unspecified"
+        seriousness_category: serious_hospitalized
+        meddra_soc_guess: system_organ_class_unspecified
         requires_followup: true
-
     serious_other:
       type: return
       value:
-        seriousness_category: "serious_other"
-        meddra_soc_guess: "general_disorders"
+        seriousness_category: serious_other
+        meddra_soc_guess: general_disorders
         requires_followup: true
-
     non_serious:
       type: return
       value:
-        seriousness_category: "non_serious"
-        meddra_soc_guess: "general_disorders"
+        seriousness_category: non_serious
+        meddra_soc_guess: general_disorders
         requires_followup: false
-
     missing_input:
       type: return
       value:
-        seriousness_category: "unknown"
+        seriousness_category: unknown
         meddra_soc_guess: null
         requires_followup: true
-
 tests:
-  - input: { event_term: "myocardial infarction", outcome: "death" }
-    expect: { seriousness_category: "fatal", meddra_soc_guess: "unclassified", requires_followup: true }
-
-  - input: { event_term: "nausea", outcome: "patient recovered" }
-    expect: { seriousness_category: "non_serious", meddra_soc_guess: "general_disorders", requires_followup: false }
-
-  - input: { event_term: "cardiac arrest", outcome: "emergency admission" }
-    expect: { seriousness_category: "serious_hospitalized", meddra_soc_guess: "system_organ_class_unspecified", requires_followup: true }
-
-  - input: { event_term: null, outcome: "hospitalized" }
-    expect: { seriousness_category: "unknown", meddra_soc_guess: null, requires_followup: true }
-
-  - input: { event_term: "sepsis", outcome: "admitted" }
-    expect: { seriousness_category: "serious_other", meddra_soc_guess: "general_disorders", requires_followup: true }
+  - input:
+      event_term: myocardial infarction
+      outcome: death
+    expect:
+      seriousness_category: fatal
+      meddra_soc_guess: unclassified
+      requires_followup: true
+  - input:
+      event_term: nausea
+      outcome: patient recovered
+    expect:
+      seriousness_category: non_serious
+      meddra_soc_guess: general_disorders
+      requires_followup: false
+  - input:
+      event_term: cardiac arrest
+      outcome: emergency admission
+    expect:
+      seriousness_category: serious_hospitalized
+      meddra_soc_guess: system_organ_class_unspecified
+      requires_followup: true
+  - input:
+      event_term: null
+      outcome: hospitalized
+    expect:
+      seriousness_category: unknown
+      meddra_soc_guess: null
+      requires_followup: true
+  - input:
+      event_term: sepsis
+      outcome: admitted
+    expect:
+      seriousness_category: serious_other
+      meddra_soc_guess: general_disorders
+      requires_followup: true
   - input: {}
     expect:
       meddra_soc_guess: null
       requires_followup: true
       seriousness_category: unknown
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

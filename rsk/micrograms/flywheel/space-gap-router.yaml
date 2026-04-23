@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: space-gap-router
-description: 'Route to the weakest space surface for growth: CONFIG, MCG, ROUTE, or CRATE'
 version: 0.1.0
+description: "Route to the weakest space surface for growth: CONFIG, MCG, ROUTE, or CRATE"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: config_pct
+    type: int
+    required: false
+    description: ""
+  - name: mcg_pct
+    type: int
+    required: false
+    description: ""
+  - name: route_pct
+    type: int
+    required: false
+    description: ""
+  - name: crate_pct
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: weakest
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     config_pct:
@@ -20,6 +52,43 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Space Gap Router
+  subtitle: "Route to the weakest space surface for growth: CONFIG, MCG, ROUTE, or CRATE"
+  icon: circle
+  route: /vigilance/mg/space-gap-router
+  steps:
+    - field: config_pct
+      label: config pct
+      help: Enter config_pct
+      widget: text
+      placeholder: null
+    - field: mcg_pct
+      label: mcg pct
+      help: Enter mcg_pct
+      widget: text
+      placeholder: null
+    - field: route_pct
+      label: route pct
+      help: Enter route_pct
+      widget: text
+      placeholder: null
+    - field: crate_pct
+      label: crate pct
+      help: Enter crate_pct
+      widget: text
+      placeholder: null
+  result:
+    template: "weakest: {{weakest}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/space-gap-router
+  cli: rsk mcg run space-gap-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_config_lowest
   nodes:
@@ -77,15 +146,85 @@ tree:
         weakest: NONE
         action: raise_targets
 tests:
-- input: {config_pct: 30, mcg_pct: 60, route_pct: 70, crate_pct: 90}
-  expect: {weakest: CONFIG, action: add_station_configs}
-- input: {config_pct: 60, mcg_pct: 40, route_pct: 70, crate_pct: 90}
-  expect: {weakest: MCG, action: create_micrograms}
-- input: {config_pct: 60, mcg_pct: 60, route_pct: 40, crate_pct: 90}
-  expect: {weakest: ROUTE, action: add_nucleus_pages}
-- input: {config_pct: 60, mcg_pct: 60, route_pct: 70, crate_pct: 70}
-  expect: {weakest: CRATE, action: add_nexcore_crates}
-- input: {config_pct: 90, mcg_pct: 90, route_pct: 90, crate_pct: 90}
-  expect: {weakest: NONE, action: raise_targets}
-- input: {config_pct: 0, mcg_pct: 0, route_pct: 0, crate_pct: 0}
-  expect: {weakest: CONFIG, action: add_station_configs}
+  - input:
+      config_pct: 30
+      mcg_pct: 60
+      route_pct: 70
+      crate_pct: 90
+    expect:
+      weakest: CONFIG
+      action: add_station_configs
+  - input:
+      config_pct: 60
+      mcg_pct: 40
+      route_pct: 70
+      crate_pct: 90
+    expect:
+      weakest: MCG
+      action: create_micrograms
+  - input:
+      config_pct: 60
+      mcg_pct: 60
+      route_pct: 40
+      crate_pct: 90
+    expect:
+      weakest: ROUTE
+      action: add_nucleus_pages
+  - input:
+      config_pct: 60
+      mcg_pct: 60
+      route_pct: 70
+      crate_pct: 70
+    expect:
+      weakest: CRATE
+      action: add_nexcore_crates
+  - input:
+      config_pct: 90
+      mcg_pct: 90
+      route_pct: 90
+      crate_pct: 90
+    expect:
+      weakest: NONE
+      action: raise_targets
+  - input:
+      config_pct: 0
+      mcg_pct: 0
+      route_pct: 0
+      crate_pct: 0
+    expect:
+      weakest: CONFIG
+      action: add_station_configs
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - weakest
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

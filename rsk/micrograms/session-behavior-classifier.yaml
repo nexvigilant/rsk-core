@@ -1,13 +1,49 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: session-behavior-classifier
-description: 'Chain: routes session activities through primitive-recognizer to produce a session primitive profile. Consumes primitive-recognizer output.'
 version: 0.1.0
+description: "Chain: routes session activities through primitive-recognizer to produce a session primitive profile. Consumes primitive-recognizer output."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: activity
+    type: string
+    required: true
+    description: ""
+  - name: produced_artifact
+    type: bool
+    required: false
+    description: ""
+  - name: changed_infrastructure
+    type: bool
+    required: false
+    description: ""
+  - name: test_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: behavior_type
+    type: string
+  - name: primitive_profile
+    type: string
+  - name: session_contribution
+    type: string
+  - name: risk_level
+    type: string
+  - name: failure_expected
+    type: bool
 interface:
   inputs:
     activity:
       type: string
       required: true
-      # One of: audit, commit, build_hook, build_microgram, test, diagnose, 
-      #         signal_detect, visualize, research, chain
     produced_artifact:
       type: bool
       required: false
@@ -28,7 +64,43 @@ interface:
       type: string
     failure_expected:
       type: bool
-
+ui:
+  title: Session Behavior Classifier
+  subtitle: "Chain: routes session activities through primitive-recognizer to produce a session primitive profile. Consumes primitive-recognizer output."
+  icon: circle
+  route: /vigilance/mg/session-behavior-classifier
+  steps:
+    - field: activity
+      label: activity
+      help: Enter activity
+      widget: text
+      placeholder: null
+    - field: produced_artifact
+      label: produced artifact
+      help: Enter produced_artifact
+      widget: toggle
+      placeholder: null
+    - field: changed_infrastructure
+      label: changed infrastructure
+      help: Enter changed_infrastructure
+      widget: toggle
+      placeholder: null
+    - field: test_count
+      label: test count
+      help: Enter test_count
+      widget: text
+      placeholder: null
+  result:
+    template: "behavior_type: {{behavior_type}} — primitive_profile: {{primitive_profile}} — session_contribution: {{session_contribution}} — risk_level: {{risk_level}} — failure_expected: {{failure_expected}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/session-behavior-classifier
+  cli: rsk mcg run session-behavior-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: route_activity
   nodes:
@@ -39,7 +111,6 @@ tree:
       value: audit
       true_next: audit_behavior
       false_next: check_commit
-
     check_commit:
       type: condition
       variable: activity
@@ -47,7 +118,6 @@ tree:
       value: commit
       true_next: commit_behavior
       false_next: check_build_hook
-
     check_build_hook:
       type: condition
       variable: activity
@@ -55,7 +125,6 @@ tree:
       value: build_hook
       true_next: hook_behavior
       false_next: check_build_mcg
-
     check_build_mcg:
       type: condition
       variable: activity
@@ -63,7 +132,6 @@ tree:
       value: build_microgram
       true_next: microgram_behavior
       false_next: check_test
-
     check_test:
       type: condition
       variable: activity
@@ -71,7 +139,6 @@ tree:
       value: test
       true_next: test_behavior
       false_next: check_signal
-
     check_signal:
       type: condition
       variable: activity
@@ -79,7 +146,6 @@ tree:
       value: signal_detect
       true_next: signal_behavior
       false_next: check_visualize
-
     check_visualize:
       type: condition
       variable: activity
@@ -87,7 +153,6 @@ tree:
       value: visualize
       true_next: viz_behavior
       false_next: check_research
-
     check_research:
       type: condition
       variable: activity
@@ -95,7 +160,6 @@ tree:
       value: research
       true_next: research_behavior
       false_next: check_chain
-
     check_chain:
       type: condition
       variable: activity
@@ -103,7 +167,6 @@ tree:
       value: chain
       true_next: chain_behavior
       false_next: check_diagnose
-
     check_diagnose:
       type: condition
       variable: activity
@@ -111,18 +174,14 @@ tree:
       value: diagnose
       true_next: diagnose_behavior
       false_next: unknown_activity
-
-    # ─── Behaviors ───
-
     audit_behavior:
       type: return
       value:
         behavior_type: measurement
-        primitive_profile: "varsigma(partial(system))"
-        session_contribution: "observation"
-        risk_level: "none"
+        primitive_profile: varsigma(partial(system))
+        session_contribution: observation
+        risk_level: none
         failure_expected: false
-
     commit_behavior:
       type: condition
       variable: changed_infrastructure
@@ -130,34 +189,30 @@ tree:
       value: true
       true_next: infra_commit
       false_next: code_commit
-
     infra_commit:
       type: return
       value:
         behavior_type: persistence
-        primitive_profile: "proportional(pi(varsigma))"
-        session_contribution: "irreversible_progress"
-        risk_level: "low"
+        primitive_profile: proportional(pi(varsigma))
+        session_contribution: irreversible_progress
+        risk_level: low
         failure_expected: false
-
     code_commit:
       type: return
       value:
         behavior_type: persistence
-        primitive_profile: "pi(varsigma)"
-        session_contribution: "progress"
-        risk_level: "none"
+        primitive_profile: pi(varsigma)
+        session_contribution: progress
+        risk_level: none
         failure_expected: false
-
     hook_behavior:
       type: return
       value:
         behavior_type: boundary_crossing
-        primitive_profile: "partial(arrow(varsigma))"
-        session_contribution: "capability"
-        risk_level: "medium"
+        primitive_profile: partial(arrow(varsigma))
+        session_contribution: capability
+        risk_level: medium
         failure_expected: true
-
     microgram_behavior:
       type: condition
       variable: test_count
@@ -165,115 +220,127 @@ tree:
       value: 10
       true_next: tested_microgram
       false_next: untested_microgram
-
     tested_microgram:
       type: return
       value:
         behavior_type: transformation
-        primitive_profile: "arrow(varsigma) [tested]"
-        session_contribution: "validated_capability"
-        risk_level: "low"
+        primitive_profile: arrow(varsigma) [tested]
+        session_contribution: validated_capability
+        risk_level: low
         failure_expected: false
-
     untested_microgram:
       type: return
       value:
         behavior_type: transformation
-        primitive_profile: "arrow(varsigma) [untested]"
-        session_contribution: "speculative_capability"
-        risk_level: "high"
+        primitive_profile: arrow(varsigma) [untested]
+        session_contribution: speculative_capability
+        risk_level: high
         failure_expected: true
-
     test_behavior:
       type: return
       value:
         behavior_type: comparison
-        primitive_profile: "kappa(varsigma_actual, varsigma_expected)"
-        session_contribution: "verification"
-        risk_level: "none"
+        primitive_profile: kappa(varsigma_actual, varsigma_expected)
+        session_contribution: verification
+        risk_level: none
         failure_expected: false
-
     signal_behavior:
       type: return
       value:
         behavior_type: measurement
-        primitive_profile: "varsigma(N(events)/N(exposure))"
-        session_contribution: "intelligence"
-        risk_level: "none"
+        primitive_profile: varsigma(N(events)/N(exposure))
+        session_contribution: intelligence
+        risk_level: none
         failure_expected: false
-
     viz_behavior:
       type: return
       value:
         behavior_type: state_change
-        primitive_profile: "sigma(varsigma) [visual encoding]"
-        session_contribution: "communication"
-        risk_level: "none"
+        primitive_profile: sigma(varsigma) [visual encoding]
+        session_contribution: communication
+        risk_level: none
         failure_expected: false
-
     research_behavior:
       type: return
       value:
         behavior_type: accumulation
-        primitive_profile: "N(kappa(sources))"
-        session_contribution: "knowledge"
-        risk_level: "none"
+        primitive_profile: N(kappa(sources))
+        session_contribution: knowledge
+        risk_level: none
         failure_expected: false
-
     chain_behavior:
       type: return
       value:
         behavior_type: convergence
-        primitive_profile: "rho(pi(chain(mcg_a, mcg_b)))"
-        session_contribution: "compound_capability"
-        risk_level: "medium"
+        primitive_profile: rho(pi(chain(mcg_a, mcg_b)))
+        session_contribution: compound_capability
+        risk_level: medium
         failure_expected: true
-
     diagnose_behavior:
       type: return
       value:
         behavior_type: boundary_crossing
-        primitive_profile: "partial(kappa(varsigma_observed, varsigma_expected))"
-        session_contribution: "root_cause"
-        risk_level: "low"
+        primitive_profile: partial(kappa(varsigma_observed, varsigma_expected))
+        session_contribution: root_cause
+        risk_level: low
         failure_expected: false
-
     unknown_activity:
       type: return
       value:
         behavior_type: convergence
-        primitive_profile: "emptyset"
-        session_contribution: "unknown"
-        risk_level: "high"
+        primitive_profile: emptyset
+        session_contribution: unknown
+        risk_level: high
         failure_expected: true
-
 tests:
-  - input: { activity: audit }
-    expect: { behavior_type: measurement, risk_level: "none" }
-
-  - input: { activity: commit, changed_infrastructure: true }
-    expect: { session_contribution: "irreversible_progress" }
-
-  - input: { activity: commit, changed_infrastructure: false }
-    expect: { session_contribution: "progress", primitive_profile: "pi(varsigma)" }
-
-  - input: { activity: build_hook }
-    expect: { failure_expected: true, risk_level: "medium" }
-
-  - input: { activity: build_microgram, test_count: 13 }
-    expect: { session_contribution: "validated_capability", failure_expected: false }
-
-  - input: { activity: build_microgram, test_count: 2 }
-    expect: { session_contribution: "speculative_capability", failure_expected: true }
-
-  - input: { activity: signal_detect }
-    expect: { behavior_type: measurement, primitive_profile: "varsigma(N(events)/N(exposure))" }
-
-  - input: { activity: chain }
-    expect: { failure_expected: true, session_contribution: "compound_capability" }
-
-  - input: { activity: something_new }
-    expect: { risk_level: "high", failure_expected: true }
+  - input:
+      activity: audit
+    expect:
+      behavior_type: measurement
+      risk_level: none
+  - input:
+      activity: commit
+      changed_infrastructure: true
+    expect:
+      session_contribution: irreversible_progress
+  - input:
+      activity: commit
+      changed_infrastructure: false
+    expect:
+      session_contribution: progress
+      primitive_profile: pi(varsigma)
+  - input:
+      activity: build_hook
+    expect:
+      failure_expected: true
+      risk_level: medium
+  - input:
+      activity: build_microgram
+      test_count: 13
+    expect:
+      session_contribution: validated_capability
+      failure_expected: false
+  - input:
+      activity: build_microgram
+      test_count: 2
+    expect:
+      session_contribution: speculative_capability
+      failure_expected: true
+  - input:
+      activity: signal_detect
+    expect:
+      behavior_type: measurement
+      primitive_profile: varsigma(N(events)/N(exposure))
+  - input:
+      activity: chain
+    expect:
+      failure_expected: true
+      session_contribution: compound_capability
+  - input:
+      activity: something_new
+    expect:
+      risk_level: high
+      failure_expected: true
   - input: {}
     expect:
       behavior_type: convergence
@@ -281,3 +348,40 @@ tests:
       primitive_profile: emptyset
       risk_level: high
       session_contribution: unknown
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - behavior_type
+    - primitive_profile
+    - session_contribution
+    - risk_level
+    - failure_expected
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

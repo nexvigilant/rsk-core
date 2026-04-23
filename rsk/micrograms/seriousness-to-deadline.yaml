@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: seriousness-to-deadline
-description: 'Bridge: routes seriousness classification to ICH E2B reporting deadline. Chains from case-seriousness output.'
 version: 0.1.0
+description: "Bridge: routes seriousness classification to ICH E2B reporting deadline. Chains from case-seriousness output."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_fatal
+    type: bool
+    required: false
+    description: ""
+  - name: is_life_threatening
+    type: bool
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: deadline_days
+    type: int
+  - name: deadline_type
+    type: string
+  - name: regulatory_basis
+    type: string
+  - name: report_category
+    type: string
 interface:
   inputs:
     is_fatal:
@@ -24,6 +60,43 @@ interface:
       type: string
     report_category:
       type: string
+ui:
+  title: Seriousness To Deadline
+  subtitle: "Bridge: routes seriousness classification to ICH E2B reporting deadline. Chains from case-seriousness output."
+  icon: circle
+  route: /vigilance/mg/seriousness-to-deadline
+  steps:
+    - field: is_fatal
+      label: is fatal
+      help: Enter is_fatal
+      widget: toggle
+      placeholder: null
+    - field: is_life_threatening
+      label: is life threatening
+      help: Enter is_life_threatening
+      widget: toggle
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+  result:
+    template: "deadline_days: {{deadline_days}} — deadline_type: {{deadline_type}} — regulatory_basis: {{regulatory_basis}} — report_category: {{report_category}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/seriousness-to-deadline
+  cli: rsk mcg run seriousness-to-deadline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fatal
   nodes:
@@ -112,79 +185,115 @@ tree:
         report_category: periodic
         regulatory_basis: ICH E2B - non-serious reaction included in standard periodic reporting
 tests:
-- input:
-    is_serious: true
-    is_fatal: true
-    is_life_threatening: false
-    is_unexpected: true
-  expect:
-    deadline_type: 7_DAY_EXPEDITED
-    deadline_days: 7
-    report_category: expedited
-    regulatory_basis: ICH E2B - fatal/life-threatening unexpected reaction requires 7-day expedited report
-- input:
-    is_serious: true
-    is_fatal: false
-    is_life_threatening: true
-    is_unexpected: true
-  expect:
-    deadline_type: 7_DAY_EXPEDITED
-    deadline_days: 7
-    report_category: expedited
-    regulatory_basis: ICH E2B - fatal/life-threatening unexpected reaction requires 7-day expedited report
-- input:
-    is_serious: true
-    is_fatal: false
-    is_life_threatening: false
-    is_unexpected: true
-  expect:
-    deadline_type: 15_DAY_EXPEDITED
-    deadline_days: 15
-    report_category: expedited
-    regulatory_basis: ICH E2B - serious unexpected reaction requires 15-day expedited report
-- input:
-    is_serious: true
-    is_fatal: false
-    is_life_threatening: false
-    is_unexpected: false
-  expect:
-    deadline_type: PERIODIC_PSUR
-    deadline_days: 90
-    report_category: periodic
-    regulatory_basis: ICH E2B - serious expected reaction included in PSUR/PBRER cycle
-- input:
-    is_serious: false
-    is_fatal: false
-    is_life_threatening: false
-    is_unexpected: false
-  expect:
-    deadline_type: PERIODIC_STANDARD
-    deadline_days: 180
-    report_category: periodic
-    regulatory_basis: ICH E2B - non-serious reaction included in standard periodic reporting
-- input:
-    is_serious: true
-    is_fatal: true
-    is_life_threatening: true
-    is_unexpected: false
-  expect:
-    deadline_type: PERIODIC_PSUR
-    deadline_days: 90
-    report_category: periodic
-    regulatory_basis: ICH E2B - fatal but expected reaction included in periodic safety update
-- input:
-    is_fatal: false
-    is_life_threatening: true
-    is_unexpected: false
-    is_serious: true
-  expect:
-    deadline_type: PERIODIC_PSUR
-    deadline_days: 90
-    report_category: periodic
-    regulatory_basis: ICH E2B - life-threatening but expected reaction included in periodic safety update
-- input: {}
-  expect:
-    deadline_days: 180
-    deadline_type: PERIODIC_STANDARD
-    regulatory_basis: ICH E2B - non-serious reaction included in standard periodic reporting
-    report_category: periodic
+  - input:
+      is_serious: true
+      is_fatal: true
+      is_life_threatening: false
+      is_unexpected: true
+    expect:
+      deadline_type: 7_DAY_EXPEDITED
+      deadline_days: 7
+      report_category: expedited
+      regulatory_basis: ICH E2B - fatal/life-threatening unexpected reaction requires 7-day expedited report
+  - input:
+      is_serious: true
+      is_fatal: false
+      is_life_threatening: true
+      is_unexpected: true
+    expect:
+      deadline_type: 7_DAY_EXPEDITED
+      deadline_days: 7
+      report_category: expedited
+      regulatory_basis: ICH E2B - fatal/life-threatening unexpected reaction requires 7-day expedited report
+  - input:
+      is_serious: true
+      is_fatal: false
+      is_life_threatening: false
+      is_unexpected: true
+    expect:
+      deadline_type: 15_DAY_EXPEDITED
+      deadline_days: 15
+      report_category: expedited
+      regulatory_basis: ICH E2B - serious unexpected reaction requires 15-day expedited report
+  - input:
+      is_serious: true
+      is_fatal: false
+      is_life_threatening: false
+      is_unexpected: false
+    expect:
+      deadline_type: PERIODIC_PSUR
+      deadline_days: 90
+      report_category: periodic
+      regulatory_basis: ICH E2B - serious expected reaction included in PSUR/PBRER cycle
+  - input:
+      is_serious: false
+      is_fatal: false
+      is_life_threatening: false
+      is_unexpected: false
+    expect:
+      deadline_type: PERIODIC_STANDARD
+      deadline_days: 180
+      report_category: periodic
+      regulatory_basis: ICH E2B - non-serious reaction included in standard periodic reporting
+  - input:
+      is_serious: true
+      is_fatal: true
+      is_life_threatening: true
+      is_unexpected: false
+    expect:
+      deadline_type: PERIODIC_PSUR
+      deadline_days: 90
+      report_category: periodic
+      regulatory_basis: ICH E2B - fatal but expected reaction included in periodic safety update
+  - input:
+      is_fatal: false
+      is_life_threatening: true
+      is_unexpected: false
+      is_serious: true
+    expect:
+      deadline_type: PERIODIC_PSUR
+      deadline_days: 90
+      report_category: periodic
+      regulatory_basis: ICH E2B - life-threatening but expected reaction included in periodic safety update
+  - input: {}
+    expect:
+      deadline_days: 180
+      deadline_type: PERIODIC_STANDARD
+      regulatory_basis: ICH E2B - non-serious reaction included in standard periodic reporting
+      report_category: periodic
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - deadline_days
+    - deadline_type
+    - regulatory_basis
+    - report_category
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

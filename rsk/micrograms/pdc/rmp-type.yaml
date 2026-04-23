@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: rmp-type
-description: "Domain 11: Route to risk minimization measure type by risk severity, population scope, and regulatory requirement."
 version: 0.1.0
+description: "Domain 11: Route to risk minimization measure type by risk severity, population scope, and regulatory requirement."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: labeling_adequate
+    type: bool
+    required: false
+    description: ""
+  - name: requires_rems
+    type: bool
+    required: false
+    description: ""
+  - name: risk_severity
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: ai_assist
+    type: string
+  - name: behavioral
+    type: string
+  - name: components
+    type: string
+  - name: examples
+    type: string
+  - name: monitoring
+    type: string
+  - name: name
+    type: string
+  - name: regulatory
+    type: string
+  - name: type
+    type: string
 interface:
   inputs:
     labeling_adequate:
@@ -29,6 +69,38 @@ interface:
       type: string
     type:
       type: string
+ui:
+  title: Rmp Type
+  subtitle: "Domain 11: Route to risk minimization measure type by risk severity, population scope, and regulatory requirement."
+  icon: circle
+  route: /vigilance/mg/rmp-type
+  steps:
+    - field: labeling_adequate
+      label: labeling adequate
+      help: Enter labeling_adequate
+      widget: toggle
+      placeholder: null
+    - field: requires_rems
+      label: requires rems
+      help: Enter requires_rems
+      widget: toggle
+      placeholder: null
+    - field: risk_severity
+      label: risk severity
+      help: Enter risk_severity
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_assist: {{ai_assist}} — behavioral: {{behavioral}} — components: {{components}} — examples: {{examples}} — monitoring: {{monitoring}} — name: {{name}} — regulatory: {{regulatory}} — type: {{type}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/rmp-type
+  cli: rsk mcg run rmp-type
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_rems
   nodes:
@@ -64,67 +136,107 @@ tree:
       type: return
       value:
         type: REMS
-        name: "Risk Evaluation and Mitigation Strategy (FDA)"
-        components: "medication guide, communication plan, ETASU (restricted distribution, prescriber certification, patient registry)"
-        regulatory: "FDA 21 USC 355-1"
-        monitoring: "REMS assessment at 18mo, 3yr, 7yr"
-        ai_assist: "adherence tracking, prescriber certification monitoring, patient outcome prediction"
-        examples: "iPLEDGE (isotretinoin), Clozapine REMS, opioid REMS"
+        name: Risk Evaluation and Mitigation Strategy (FDA)
+        components: medication guide, communication plan, ETASU (restricted distribution, prescriber certification, patient registry)
+        regulatory: FDA 21 USC 355-1
+        monitoring: REMS assessment at 18mo, 3yr, 7yr
+        ai_assist: adherence tracking, prescriber certification monitoring, patient outcome prediction
+        examples: iPLEDGE (isotretinoin), Clozapine REMS, opioid REMS
     additional_measures:
       type: return
       value:
         type: ADDITIONAL_RMM
-        name: "Additional Risk Minimization Measures (EU RMP)"
-        components: "DHPC, educational materials, controlled access, patient card, HCP training"
-        regulatory: "EU GVP Module V, Module XVI"
-        monitoring: "effectiveness evaluation per PRAC requirements"
-        ai_assist: "distribution tracking, HCP engagement analytics, patient awareness measurement"
-        behavioral: "targets prescriber behavior, patient awareness, system safeguards"
+        name: Additional Risk Minimization Measures (EU RMP)
+        components: DHPC, educational materials, controlled access, patient card, HCP training
+        regulatory: EU GVP Module V, Module XVI
+        monitoring: effectiveness evaluation per PRAC requirements
+        ai_assist: distribution tracking, HCP engagement analytics, patient awareness measurement
+        behavioral: targets prescriber behavior, patient awareness, system safeguards
     enhanced_routine:
       type: return
       value:
         type: ENHANCED_ROUTINE
-        name: "Enhanced Routine Risk Minimization"
-        components: "targeted SmPC/PIL updates, boxed warning, contraindication strengthening, dose guidance"
-        regulatory: "safety variation Type II"
-        monitoring: "PSUR/PBRER effectiveness section"
-        ai_assist: "labeling impact analysis, prescribing pattern monitoring"
+        name: Enhanced Routine Risk Minimization
+        components: targeted SmPC/PIL updates, boxed warning, contraindication strengthening, dose guidance
+        regulatory: safety variation Type II
+        monitoring: PSUR/PBRER effectiveness section
+        ai_assist: labeling impact analysis, prescribing pattern monitoring
     routine_only:
       type: return
       value:
         type: ROUTINE
-        name: "Routine Risk Minimization"
-        components: "SmPC, PIL, labeling, pack size optimization"
-        regulatory: "standard labeling requirements"
-        monitoring: "routine pharmacovigilance, PSUR review"
-        ai_assist: "automated signal monitoring, prescribing trend analysis"
+        name: Routine Risk Minimization
+        components: SmPC, PIL, labeling, pack size optimization
+        regulatory: standard labeling requirements
+        monitoring: routine pharmacovigilance, PSUR review
+        ai_assist: automated signal monitoring, prescribing trend analysis
 tests:
-- input:
-    requires_rems: true
-  expect:
-    type: REMS
-    regulatory: "FDA 21 USC 355-1"
-- input:
-    risk_severity: 5
-    requires_rems: false
-  expect:
-    type: ADDITIONAL_RMM
-- input:
-    risk_severity: 3
-    labeling_adequate: false
-    requires_rems: false
-  expect:
-    type: ENHANCED_ROUTINE
-- input:
-    risk_severity: 3
-    labeling_adequate: true
-    requires_rems: false
-  expect:
-    type: ROUTINE
-- input:
-    risk_severity: 1
-  expect:
-    type: ROUTINE
-- input: {}
-  expect:
-    type: ROUTINE
+  - input:
+      requires_rems: true
+    expect:
+      type: REMS
+      regulatory: FDA 21 USC 355-1
+  - input:
+      risk_severity: 5
+      requires_rems: false
+    expect:
+      type: ADDITIONAL_RMM
+  - input:
+      risk_severity: 3
+      labeling_adequate: false
+      requires_rems: false
+    expect:
+      type: ENHANCED_ROUTINE
+  - input:
+      risk_severity: 3
+      labeling_adequate: true
+      requires_rems: false
+    expect:
+      type: ROUTINE
+  - input:
+      risk_severity: 1
+    expect:
+      type: ROUTINE
+  - input: {}
+    expect:
+      type: ROUTINE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_assist
+    - behavioral
+    - components
+    - examples
+    - monitoring
+    - name
+    - regulatory
+    - type
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

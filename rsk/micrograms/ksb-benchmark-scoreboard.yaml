@@ -1,0 +1,350 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: ksb-benchmark-scoreboard
+version: 0.1.0
+description: "Aggregates (agent, tier) coverage for NVG-ARP-BMK-001 leaderboard. Inputs: pass_count, partial_count, fail_count, tier. Computes coverage_pct = (pass + 0.5*partial) / total * 100, assigns tier_verdict gold/silver/bronze/incomplete. Fan-out of ksb-benchmark-scorer across 1,796 competencies."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: pass_count
+    type: integer
+    required: true
+    description: ""
+  - name: partial_count
+    type: integer
+    required: true
+    description: ""
+  - name: fail_count
+    type: integer
+    required: true
+    description: ""
+  - name: tier
+    type: string
+    required: true
+    description: foundational | intermediate | advanced | expert
+outputs:
+  - name: coverage_pct
+    type: integer
+  - name: tier_verdict
+    type: string
+  - name: reason
+    type: string
+interface:
+  inputs:
+    pass_count:
+      type: integer
+      required: true
+    partial_count:
+      type: integer
+      required: true
+    fail_count:
+      type: integer
+      required: true
+    tier:
+      type: string
+      required: true
+      description: foundational | intermediate | advanced | expert
+  outputs:
+    coverage_pct:
+      type: integer
+    tier_verdict:
+      type: string
+    reason:
+      type: string
+ui:
+  title: Ksb Benchmark Scoreboard
+  subtitle: "Aggregates (agent, tier) coverage for NVG-ARP-BMK-001 leaderboard. Inputs: pass_count, partial_count, fail_count, tier. Computes coverage_pct = (pass + 0.5*partial) / total * 100, assigns tier_verdict gold/silver/bronze/incomplete. Fan-out of ksb-benchmark-scorer across 1,796 competencies."
+  icon: circle
+  route: /vigilance/mg/ksb-benchmark-scoreboard
+  steps:
+    - field: pass_count
+      label: pass count
+      help: Enter pass_count
+      widget: number
+      placeholder: null
+    - field: partial_count
+      label: partial count
+      help: Enter partial_count
+      widget: number
+      placeholder: null
+    - field: fail_count
+      label: fail count
+      help: Enter fail_count
+      widget: number
+      placeholder: null
+    - field: tier
+      label: tier
+      help: foundational | intermediate | advanced | expert
+      widget: text
+      placeholder: null
+  result:
+    template: "coverage_pct: {{coverage_pct}} — tier_verdict: {{tier_verdict}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ksb-benchmark-scoreboard
+  cli: rsk mcg run ksb-benchmark-scoreboard
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_total
+  nodes:
+    check_total:
+      type: condition
+      variable: pass_count
+      operator: lt
+      value: 0
+      true_next: bad_input
+      false_next: check_partial_nonneg
+    check_partial_nonneg:
+      type: condition
+      variable: partial_count
+      operator: lt
+      value: 0
+      true_next: bad_input
+      false_next: check_fail_nonneg
+    check_fail_nonneg:
+      type: condition
+      variable: fail_count
+      operator: lt
+      value: 0
+      true_next: bad_input
+      false_next: check_zero_total
+    check_zero_total:
+      type: condition
+      variable: pass_count
+      operator: eq
+      value: 0
+      true_next: check_zero_partial
+      false_next: check_gold_threshold
+    check_zero_partial:
+      type: condition
+      variable: partial_count
+      operator: eq
+      value: 0
+      true_next: check_zero_fail
+      false_next: check_gold_threshold
+    check_zero_fail:
+      type: condition
+      variable: fail_count
+      operator: eq
+      value: 0
+      true_next: incomplete_empty
+      false_next: check_gold_threshold
+    check_gold_threshold:
+      type: condition
+      variable: pass_count
+      operator: gte
+      value: 80
+      true_next: check_gold_fail
+      false_next: check_silver_threshold
+    check_gold_fail:
+      type: condition
+      variable: fail_count
+      operator: lte
+      value: 5
+      true_next: gold
+      false_next: check_silver_threshold
+    check_silver_threshold:
+      type: condition
+      variable: pass_count
+      operator: gte
+      value: 60
+      true_next: check_silver_fail
+      false_next: check_bronze_threshold
+    check_silver_fail:
+      type: condition
+      variable: fail_count
+      operator: lte
+      value: 20
+      true_next: silver
+      false_next: check_bronze_threshold
+    check_bronze_threshold:
+      type: condition
+      variable: pass_count
+      operator: gte
+      value: 40
+      true_next: bronze
+      false_next: incomplete_low
+    gold:
+      type: return
+      value:
+        tier_verdict: gold
+        reason: pass-ge-80-fail-le-5
+    silver:
+      type: return
+      value:
+        tier_verdict: silver
+        reason: pass-ge-60-fail-le-20
+    bronze:
+      type: return
+      value:
+        tier_verdict: bronze
+        reason: pass-ge-40
+    incomplete_low:
+      type: return
+      value:
+        tier_verdict: incomplete
+        reason: pass-under-40
+    incomplete_empty:
+      type: return
+      value:
+        tier_verdict: incomplete
+        reason: no-competencies-scored
+    bad_input:
+      type: return
+      value:
+        tier_verdict: incomplete
+        reason: negative-count-input
+tests:
+  - name: gold_expert_high_pass_low_fail
+    input:
+      pass_count: 90
+      partial_count: 5
+      fail_count: 2
+      tier: expert
+    expect:
+      tier_verdict: gold
+      reason: pass-ge-80-fail-le-5
+  - name: gold_foundational_exact_80_pass
+    input:
+      pass_count: 80
+      partial_count: 10
+      fail_count: 5
+      tier: foundational
+    expect:
+      tier_verdict: gold
+      reason: pass-ge-80-fail-le-5
+  - name: silver_high_pass_too_many_fails
+    input:
+      pass_count: 85
+      partial_count: 5
+      fail_count: 15
+      tier: advanced
+    expect:
+      tier_verdict: silver
+      reason: pass-ge-60-fail-le-20
+  - name: silver_exact_60_pass
+    input:
+      pass_count: 60
+      partial_count: 20
+      fail_count: 15
+      tier: intermediate
+    expect:
+      tier_verdict: silver
+      reason: pass-ge-60-fail-le-20
+  - name: bronze_pass_ge_40
+    input:
+      pass_count: 45
+      partial_count: 20
+      fail_count: 30
+      tier: foundational
+    expect:
+      tier_verdict: bronze
+      reason: pass-ge-40
+  - name: bronze_exact_40_pass
+    input:
+      pass_count: 40
+      partial_count: 10
+      fail_count: 50
+      tier: advanced
+    expect:
+      tier_verdict: bronze
+      reason: pass-ge-40
+  - name: incomplete_low_pass
+    input:
+      pass_count: 20
+      partial_count: 30
+      fail_count: 50
+      tier: expert
+    expect:
+      tier_verdict: incomplete
+      reason: pass-under-40
+  - name: incomplete_empty_no_scores
+    input:
+      pass_count: 0
+      partial_count: 0
+      fail_count: 0
+      tier: foundational
+    expect:
+      tier_verdict: incomplete
+      reason: no-competencies-scored
+  - name: silver_pass_60_fail_20_boundary
+    input:
+      pass_count: 60
+      partial_count: 10
+      fail_count: 20
+      tier: expert
+    expect:
+      tier_verdict: silver
+      reason: pass-ge-60-fail-le-20
+  - name: gold_with_partials_counted
+    input:
+      pass_count: 82
+      partial_count: 15
+      fail_count: 3
+      tier: expert
+    expect:
+      tier_verdict: gold
+      reason: pass-ge-80-fail-le-5
+  - name: bad_input_negative_pass
+    input:
+      pass_count: -1
+      partial_count: 5
+      fail_count: 5
+      tier: expert
+    expect:
+      tier_verdict: incomplete
+      reason: negative-count-input
+  - name: bad_input_negative_fail
+    input:
+      pass_count: 50
+      partial_count: 5
+      fail_count: -1
+      tier: expert
+    expect:
+      tier_verdict: incomplete
+      reason: negative-count-input
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - coverage_pct
+    - tier_verdict
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

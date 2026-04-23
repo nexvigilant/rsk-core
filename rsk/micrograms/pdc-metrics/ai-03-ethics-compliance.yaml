@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ai-03-ethics-compliance
-description: "AI ethics and governance 100% compliance"
 version: 0.1.0
-
+description: AI ethics and governance 100% compliance
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Ai 03 Ethics Compliance
+  subtitle: AI ethics and governance 100% compliance
+  icon: circle
+  route: /vigilance/mg/ai-03-ethics-compliance
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ai-03-ethics-compliance
+  cli: rsk mcg run ai-03-ethics-compliance
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -15,22 +43,58 @@ tree:
     pass:
       type: return
       value:
-        metric: "ai-03-ethics-compliance"
-        category: "AI and Digital Transformation"
+        metric: ai-03-ethics-compliance
+        category: AI and Digital Transformation
         met: true
-        action: "on_track"
-        frequency: "weekly"
+        action: on_track
+        frequency: weekly
     fail:
       type: return
       value:
-        metric: "ai-03-ethics-compliance"
-        category: "AI and Digital Transformation"
+        metric: ai-03-ethics-compliance
+        category: AI and Digital Transformation
         met: false
-        action: "remediate"
-        frequency: "weekly"
-
+        action: remediate
+        frequency: weekly
 tests:
-  - input: {ethics_compliance_pct: 100}
-    expect: {met: true, category: "AI and Digital Transformation"}
+  - input:
+      ethics_compliance_pct: 100
+    expect:
+      met: true
+      category: AI and Digital Transformation
   - input: {}
-    expect: {met: false, category: "AI and Digital Transformation"}
+    expect:
+      met: false
+      category: AI and Digital Transformation
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

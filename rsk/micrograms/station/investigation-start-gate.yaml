@@ -1,7 +1,102 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: investigation-start-gate
-description: Determines if an AI agent should initiate a formal safety investigation
-  based on signal detection and case seriousness
 version: 0.1.0
+description: Determines if an AI agent should initiate a formal safety investigation based on signal detection and case seriousness
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: signal_detected
+    type: bool
+    required: false
+    description: ""
+  - name: report_count
+    type: int
+    required: false
+    description: ""
+  - name: is_labeled
+    type: bool
+    required: false
+    description: ""
+  - name: seriousness
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: investigate
+    type: bool
+  - name: priority
+    type: string
+  - name: reason
+    type: string
+interface:
+  inputs:
+    signal_detected:
+      type: bool
+      required: false
+    report_count:
+      type: int
+      required: false
+    is_labeled:
+      type: bool
+      required: false
+    seriousness:
+      type: string
+      required: false
+  outputs:
+    investigate:
+      type: bool
+      required: false
+    priority:
+      type: string
+      required: false
+    reason:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Investigation Start Gate
+  subtitle: Determines if an AI agent should initiate a formal safety investigation based on signal detection and case seriousness
+  icon: circle
+  route: /vigilance/mg/investigation-start-gate
+  steps:
+    - field: signal_detected
+      label: signal detected
+      help: Enter signal_detected
+      widget: toggle
+      placeholder: null
+    - field: report_count
+      label: report count
+      help: Enter report_count
+      widget: text
+      placeholder: null
+    - field: is_labeled
+      label: is labeled
+      help: Enter is_labeled
+      widget: toggle
+      placeholder: null
+    - field: seriousness
+      label: seriousness
+      help: Enter seriousness
+      widget: text
+      placeholder: null
+  result:
+    template: "investigate: {{investigate}} — priority: {{priority}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/investigation-start-gate
+  cli: rsk mcg run investigation-start-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signal_detected
   nodes:
@@ -116,114 +211,124 @@ tree:
       true_next: check_fatal_labeled
       false_next: check_serious
 tests:
-- input:
-    is_labeled: false
-    report_count: 0
-    seriousness: ''
-    signal_detected: false
-  expect:
-    investigate: false
-    reason: No signal detected
-    priority: skip
-- input:
-    is_labeled: false
-    report_count: 0
-    seriousness: ''
-    signal_detected: true
-  expect:
-    reason: Mild outcome, insufficient evidence for investigation
-    investigate: false
-    priority: skip
-- input:
-    is_labeled: false
-    report_count: 0
-    seriousness: fatal
-    signal_detected: true
-  expect:
-    investigate: true
-    reason: Fatal outcome, not labeled on product information
-    priority: immediate
-- input:
-    is_labeled: false
-    report_count: 0
-    seriousness: moderate
-    signal_detected: true
-  expect:
-    investigate: false
-    priority: monitor
-    reason: Moderate outcome with insufficient report clustering
-- input:
-    is_labeled: false
-    report_count: 0
-    seriousness: serious
-    signal_detected: true
-  expect:
-    investigate: false
-    priority: monitor
-    reason: Serious outcome but insufficient report count
-- input:
-    is_labeled: false
-    report_count: 10
-    seriousness: moderate
-    signal_detected: true
-  expect:
-    priority: routine
-    reason: Moderate outcome, 5+ reports suggesting potential signal
-    investigate: true
-- input:
-    is_labeled: false
-    report_count: 10
-    seriousness: serious
-    signal_detected: true
-  expect:
-    investigate: true
-    priority: routine
-    reason: Serious outcome, unlabeled, 3+ reports
-- input:
-    is_labeled: true
-    report_count: 0
-    seriousness: fatal
-    signal_detected: true
-  expect:
-    investigate: true
-    priority: immediate
-    reason: Fatal outcome, labeled on product information
-- input:
-    is_labeled: true
-    report_count: 10
-    seriousness: serious
-    signal_detected: true
-  expect:
-    investigate: true
-    reason: Serious outcome, labeled, 3+ reports
-    priority: routine
-- input: {}
-  expect:
-    reason: Mild outcome, insufficient evidence for investigation
-    investigate: false
-    priority: skip
-interface:
-  inputs:
-    signal_detected:
-      type: bool
-      required: false
-    report_count:
-      type: int
-      required: false
-    is_labeled:
-      type: bool
-      required: false
-    seriousness:
-      type: string
-      required: false
-  outputs:
-    investigate:
-      type: bool
-      required: false
-    priority:
-      type: string
-      required: false
-    reason:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      is_labeled: false
+      report_count: 0
+      seriousness: ""
+      signal_detected: false
+    expect:
+      investigate: false
+      reason: No signal detected
+      priority: skip
+  - input:
+      is_labeled: false
+      report_count: 0
+      seriousness: ""
+      signal_detected: true
+    expect:
+      reason: Mild outcome, insufficient evidence for investigation
+      investigate: false
+      priority: skip
+  - input:
+      is_labeled: false
+      report_count: 0
+      seriousness: fatal
+      signal_detected: true
+    expect:
+      investigate: true
+      reason: Fatal outcome, not labeled on product information
+      priority: immediate
+  - input:
+      is_labeled: false
+      report_count: 0
+      seriousness: moderate
+      signal_detected: true
+    expect:
+      investigate: false
+      priority: monitor
+      reason: Moderate outcome with insufficient report clustering
+  - input:
+      is_labeled: false
+      report_count: 0
+      seriousness: serious
+      signal_detected: true
+    expect:
+      investigate: false
+      priority: monitor
+      reason: Serious outcome but insufficient report count
+  - input:
+      is_labeled: false
+      report_count: 10
+      seriousness: moderate
+      signal_detected: true
+    expect:
+      priority: routine
+      reason: Moderate outcome, 5+ reports suggesting potential signal
+      investigate: true
+  - input:
+      is_labeled: false
+      report_count: 10
+      seriousness: serious
+      signal_detected: true
+    expect:
+      investigate: true
+      priority: routine
+      reason: Serious outcome, unlabeled, 3+ reports
+  - input:
+      is_labeled: true
+      report_count: 0
+      seriousness: fatal
+      signal_detected: true
+    expect:
+      investigate: true
+      priority: immediate
+      reason: Fatal outcome, labeled on product information
+  - input:
+      is_labeled: true
+      report_count: 10
+      seriousness: serious
+      signal_detected: true
+    expect:
+      investigate: true
+      reason: Serious outcome, labeled, 3+ reports
+      priority: routine
+  - input: {}
+    expect:
+      reason: Mild outcome, insufficient evidence for investigation
+      investigate: false
+      priority: skip
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - investigate
+    - priority
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

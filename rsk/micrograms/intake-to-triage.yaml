@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: intake-to-triage
-description: 'Router: routes completed intake cases to the appropriate triage pathway based on validity, duplicate status, and data completeness'
 version: 1.0.0
+description: "Router: routes completed intake cases to the appropriate triage pathway based on validity, duplicate status, and data completeness"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: completeness_pct
+    type: int
+    required: false
+    description: ""
+  - name: duplicate_status
+    type: string
+    required: false
+    description: ""
+  - name: serious_suspected
+    type: bool
+    required: false
+    description: ""
+  - name: valid
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: next_mg
+    type: string
+  - name: priority
+    type: string
+  - name: route
+    type: string
 interface:
   inputs:
     completeness_pct:
@@ -26,6 +62,43 @@ interface:
       type: string
     route:
       type: string
+ui:
+  title: Intake To Triage
+  subtitle: "Router: routes completed intake cases to the appropriate triage pathway based on validity, duplicate status, and data completeness"
+  icon: circle
+  route: /vigilance/mg/intake-to-triage
+  steps:
+    - field: completeness_pct
+      label: completeness pct
+      help: Enter completeness_pct
+      widget: text
+      placeholder: null
+    - field: duplicate_status
+      label: duplicate status
+      help: Enter duplicate_status
+      widget: text
+      placeholder: null
+    - field: serious_suspected
+      label: serious suspected
+      help: Enter serious_suspected
+      widget: toggle
+      placeholder: null
+    - field: valid
+      label: valid
+      help: Enter valid
+      widget: toggle
+      placeholder: null
+  result:
+    template: "action: {{action}} — next_mg: {{next_mg}} — priority: {{priority}} — route: {{route}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/intake-to-triage
+  cli: rsk mcg run intake-to-triage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_valid
   nodes:
@@ -114,131 +187,167 @@ tree:
         next_mg: followup-prioritizer
         priority: LOW
 tests:
-- name: invalid case returns to intake
-  input:
-    valid: false
-    serious_suspected: true
-    completeness_pct: 90
-    duplicate_status: UNLIKELY
-  expect:
-    route: RETURN_TO_INTAKE
-    action: request_missing_fields
-    next_mg: case-validity
-    priority: HIGH
-- name: confirmed duplicate merges
-  input:
-    valid: true
-    serious_suspected: false
-    completeness_pct: 75
-    duplicate_status: CONFIRMED
-  expect:
-    route: MERGE
-    action: merge_with_primary
-    next_mg: duplicate-gate
-    priority: STANDARD
-- name: probable duplicate goes to manual dedup
-  input:
-    valid: true
-    serious_suspected: false
-    completeness_pct: 70
-    duplicate_status: PROBABLE
-  expect:
-    route: MANUAL_DEDUP
-    action: reviewer_dedup_check
-    next_mg: duplicate-gate
-    priority: STANDARD
-- name: serious suspected with high completeness gets expedited triage
-  input:
-    valid: true
-    serious_suspected: true
-    completeness_pct: 85
-    duplicate_status: UNLIKELY
-  expect:
-    route: TRIAGE_EXPEDITED
-    action: case-seriousness
-    next_mg: case-seriousness
-    priority: CRITICAL
-- name: serious suspected but low completeness falls to standard check
-  input:
-    valid: true
-    serious_suspected: true
-    completeness_pct: 65
-    duplicate_status: UNLIKELY
-  expect:
-    route: TRIAGE_STANDARD
-    action: case-seriousness
-    next_mg: case-seriousness
-    priority: STANDARD
-- name: non-serious with sufficient completeness gets standard triage
-  input:
-    valid: true
-    serious_suspected: false
-    completeness_pct: 70
-    duplicate_status: POSSIBLE
-  expect:
-    route: TRIAGE_STANDARD
-    action: case-seriousness
-    next_mg: case-seriousness
-    priority: STANDARD
-- name: non-serious with low completeness goes to followup
-  input:
-    valid: true
-    serious_suspected: false
-    completeness_pct: 40
-    duplicate_status: UNLIKELY
-  expect:
-    route: FOLLOWUP_FIRST
-    action: collect_data
-    next_mg: followup-prioritizer
-    priority: LOW
-- name: serious suspected at exactly 80 pct completeness gets expedited
-  input:
-    valid: true
-    serious_suspected: true
-    completeness_pct: 80
-    duplicate_status: UNLIKELY
-  expect:
-    route: TRIAGE_EXPEDITED
-    action: case-seriousness
-    next_mg: case-seriousness
-    priority: CRITICAL
-- name: completeness at exactly 60 pct gets standard triage
-  input:
-    valid: true
-    serious_suspected: false
-    completeness_pct: 60
-    duplicate_status: UNLIKELY
-  expect:
-    route: TRIAGE_STANDARD
-    action: case-seriousness
-    next_mg: case-seriousness
-    priority: STANDARD
-- name: completeness at 59 pct goes to followup
-  input:
-    valid: true
-    serious_suspected: false
-    completeness_pct: 59
-    duplicate_status: UNLIKELY
-  expect:
-    route: FOLLOWUP_FIRST
-    action: collect_data
-    next_mg: followup-prioritizer
-    priority: LOW
-- name: possible duplicate skips dedup and goes to triage pathway
-  input:
-    valid: true
-    serious_suspected: true
-    completeness_pct: 82
-    duplicate_status: POSSIBLE
-  expect:
-    route: TRIAGE_EXPEDITED
-    action: case-seriousness
-    next_mg: case-seriousness
-    priority: CRITICAL
-- name: empty input defaults to return to intake
-  input: {}
-  expect:
-    route: RETURN_TO_INTAKE
-    action: request_missing_fields
-    next_mg: case-validity
-    priority: HIGH
+  - name: invalid case returns to intake
+    input:
+      valid: false
+      serious_suspected: true
+      completeness_pct: 90
+      duplicate_status: UNLIKELY
+    expect:
+      route: RETURN_TO_INTAKE
+      action: request_missing_fields
+      next_mg: case-validity
+      priority: HIGH
+  - name: confirmed duplicate merges
+    input:
+      valid: true
+      serious_suspected: false
+      completeness_pct: 75
+      duplicate_status: CONFIRMED
+    expect:
+      route: MERGE
+      action: merge_with_primary
+      next_mg: duplicate-gate
+      priority: STANDARD
+  - name: probable duplicate goes to manual dedup
+    input:
+      valid: true
+      serious_suspected: false
+      completeness_pct: 70
+      duplicate_status: PROBABLE
+    expect:
+      route: MANUAL_DEDUP
+      action: reviewer_dedup_check
+      next_mg: duplicate-gate
+      priority: STANDARD
+  - name: serious suspected with high completeness gets expedited triage
+    input:
+      valid: true
+      serious_suspected: true
+      completeness_pct: 85
+      duplicate_status: UNLIKELY
+    expect:
+      route: TRIAGE_EXPEDITED
+      action: case-seriousness
+      next_mg: case-seriousness
+      priority: CRITICAL
+  - name: serious suspected but low completeness falls to standard check
+    input:
+      valid: true
+      serious_suspected: true
+      completeness_pct: 65
+      duplicate_status: UNLIKELY
+    expect:
+      route: TRIAGE_STANDARD
+      action: case-seriousness
+      next_mg: case-seriousness
+      priority: STANDARD
+  - name: non-serious with sufficient completeness gets standard triage
+    input:
+      valid: true
+      serious_suspected: false
+      completeness_pct: 70
+      duplicate_status: POSSIBLE
+    expect:
+      route: TRIAGE_STANDARD
+      action: case-seriousness
+      next_mg: case-seriousness
+      priority: STANDARD
+  - name: non-serious with low completeness goes to followup
+    input:
+      valid: true
+      serious_suspected: false
+      completeness_pct: 40
+      duplicate_status: UNLIKELY
+    expect:
+      route: FOLLOWUP_FIRST
+      action: collect_data
+      next_mg: followup-prioritizer
+      priority: LOW
+  - name: serious suspected at exactly 80 pct completeness gets expedited
+    input:
+      valid: true
+      serious_suspected: true
+      completeness_pct: 80
+      duplicate_status: UNLIKELY
+    expect:
+      route: TRIAGE_EXPEDITED
+      action: case-seriousness
+      next_mg: case-seriousness
+      priority: CRITICAL
+  - name: completeness at exactly 60 pct gets standard triage
+    input:
+      valid: true
+      serious_suspected: false
+      completeness_pct: 60
+      duplicate_status: UNLIKELY
+    expect:
+      route: TRIAGE_STANDARD
+      action: case-seriousness
+      next_mg: case-seriousness
+      priority: STANDARD
+  - name: completeness at 59 pct goes to followup
+    input:
+      valid: true
+      serious_suspected: false
+      completeness_pct: 59
+      duplicate_status: UNLIKELY
+    expect:
+      route: FOLLOWUP_FIRST
+      action: collect_data
+      next_mg: followup-prioritizer
+      priority: LOW
+  - name: possible duplicate skips dedup and goes to triage pathway
+    input:
+      valid: true
+      serious_suspected: true
+      completeness_pct: 82
+      duplicate_status: POSSIBLE
+    expect:
+      route: TRIAGE_EXPEDITED
+      action: case-seriousness
+      next_mg: case-seriousness
+      priority: CRITICAL
+  - name: empty input defaults to return to intake
+    input: {}
+    expect:
+      route: RETURN_TO_INTAKE
+      action: request_missing_fields
+      next_mg: case-validity
+      priority: HIGH
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - next_mg
+    - priority
+    - route
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

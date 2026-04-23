@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: srs-database
-description: "Domain 7: Route to spontaneous reporting system by jurisdiction — FAERS, EudraVigilance, VigiBase, JADER, Canada Vigilance. Returns structure, format, access."
 version: 0.1.0
+description: "Domain 7: Route to spontaneous reporting system by jurisdiction — FAERS, EudraVigilance, VigiBase, JADER, Canada Vigilance. Returns structure, format, access."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: system
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: ai_tools
+    type: string
+  - name: authority
+    type: string
+  - name: format
+    type: string
+  - name: full_name
+    type: string
+  - name: note
+    type: string
+  - name: public_access
+    type: bool
+  - name: public_url
+    type: string
+  - name: records
+    type: string
+  - name: signal_methods
+    type: string
+  - name: submission
+    type: string
+  - name: system
+    type: string
 interface:
   inputs:
     system:
@@ -29,6 +67,28 @@ interface:
       type: string
     system:
       type: string
+ui:
+  title: Srs Database
+  subtitle: "Domain 7: Route to spontaneous reporting system by jurisdiction — FAERS, EudraVigilance, VigiBase, JADER, Canada Vigilance. Returns structure, format, access."
+  icon: circle
+  route: /vigilance/mg/srs-database
+  steps:
+    - field: system
+      label: system
+      help: Enter system
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_tools: {{ai_tools}} — authority: {{authority}} — format: {{format}} — full_name: {{full_name}} — note: {{note}} — public_access: {{public_access}} — public_url: {{public_url}} — records: {{records}} — signal_methods: {{signal_methods}} — submission: {{submission}} — system: {{system}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/srs-database
+  cli: rsk mcg run srs-database
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fda
   nodes:
@@ -71,93 +131,136 @@ tree:
       type: return
       value:
         system: FAERS
-        full_name: "FDA Adverse Event Reporting System"
+        full_name: FDA Adverse Event Reporting System
         authority: FDA
-        format: "E2B(R3)"
-        submission: "FDA ESG (Electronic Submissions Gateway)"
+        format: E2B(R3)
+        submission: FDA ESG (Electronic Submissions Gateway)
         public_access: true
-        public_url: "openFDA API, quarterly data files"
+        public_url: openFDA API, quarterly data files
         records: ">20M reports"
-        signal_methods: "PRR, EBGM (Multi-item Gamma Poisson Shrinker)"
-        ai_tools: "openFDA NLP, FAERS mining algorithms"
+        signal_methods: PRR, EBGM (Multi-item Gamma Poisson Shrinker)
+        ai_tools: openFDA NLP, FAERS mining algorithms
     eudravigilance:
       type: return
       value:
         system: EUDRAVIGILANCE
-        full_name: "European Union Drug Regulatory Authorities Pharmacovigilance"
+        full_name: European Union Drug Regulatory Authorities Pharmacovigilance
         authority: EMA
-        format: "E2B(R3) via EVWEB or gateway"
-        submission: "EudraVigilance system (EVWEB/EVCTM)"
+        format: E2B(R3) via EVWEB or gateway
+        submission: EudraVigilance system (EVWEB/EVCTM)
         public_access: true
-        public_url: "adrreports.eu"
-        signal_methods: "PRR, ROR, IC (Information Component)"
-        ai_tools: "EV signal detection, EPITT tracking"
+        public_url: adrreports.eu
+        signal_methods: PRR, ROR, IC (Information Component)
+        ai_tools: EV signal detection, EPITT tracking
     vigibase:
       type: return
       value:
         system: VIGIBASE
-        full_name: "WHO Global Individual Case Safety Report Database"
+        full_name: WHO Global Individual Case Safety Report Database
         authority: WHO_UMC
-        format: "E2B, national format conversion"
-        submission: "through national centres to Uppsala Monitoring Centre"
+        format: E2B, national format conversion
+        submission: through national centres to Uppsala Monitoring Centre
         public_access: false
-        public_url: "VigiAccess (limited public view)"
+        public_url: VigiAccess (limited public view)
         records: ">30M reports from 170+ countries"
-        signal_methods: "IC (Bayesian), vigiRank, disproportionality"
-        ai_tools: "vigiMatch (duplicate detection), vigiGrade (quality scoring)"
+        signal_methods: IC (Bayesian), vigiRank, disproportionality
+        ai_tools: vigiMatch (duplicate detection), vigiGrade (quality scoring)
     jader:
       type: return
       value:
         system: JADER
-        full_name: "Japanese Adverse Drug Event Report"
+        full_name: Japanese Adverse Drug Event Report
         authority: PMDA
-        format: "E2B(R3) Japanese adaptation"
-        submission: "J-PRISM gateway"
+        format: E2B(R3) Japanese adaptation
+        submission: J-PRISM gateway
         public_access: true
-        signal_methods: "PRR, ROR adapted for Japanese population"
+        signal_methods: PRR, ROR adapted for Japanese population
     canada_vigilance:
       type: return
       value:
         system: CANADA_VIGILANCE
-        full_name: "Canada Vigilance Adverse Reaction Online Database"
+        full_name: Canada Vigilance Adverse Reaction Online Database
         authority: HEALTH_CANADA
-        format: "E2B(R3)"
-        submission: "MedEffect Canada"
+        format: E2B(R3)
+        submission: MedEffect Canada
         public_access: true
-        signal_methods: "PRR, ROR"
+        signal_methods: PRR, ROR
     generic:
       type: return
       value:
         system: GENERIC
-        note: "check ICH E2B(R3) for transmission standard, contact local NRA for system access"
-        format: "E2B(R3) recommended"
+        note: check ICH E2B(R3) for transmission standard, contact local NRA for system access
+        format: E2B(R3) recommended
 tests:
-- input:
-    system: faers
-  expect:
-    system: FAERS
-    authority: FDA
-    public_access: true
-- input:
-    system: eudravigilance
-  expect:
-    system: EUDRAVIGILANCE
-    authority: EMA
-- input:
-    system: vigibase
-  expect:
-    system: VIGIBASE
-    authority: WHO_UMC
-    public_access: false
-- input:
-    system: jader
-  expect:
-    system: JADER
-    authority: PMDA
-- input:
-    system: canada_vigilance
-  expect:
-    system: CANADA_VIGILANCE
-- input: {}
-  expect:
-    system: GENERIC
+  - input:
+      system: faers
+    expect:
+      system: FAERS
+      authority: FDA
+      public_access: true
+  - input:
+      system: eudravigilance
+    expect:
+      system: EUDRAVIGILANCE
+      authority: EMA
+  - input:
+      system: vigibase
+    expect:
+      system: VIGIBASE
+      authority: WHO_UMC
+      public_access: false
+  - input:
+      system: jader
+    expect:
+      system: JADER
+      authority: PMDA
+  - input:
+      system: canada_vigilance
+    expect:
+      system: CANADA_VIGILANCE
+  - input: {}
+    expect:
+      system: GENERIC
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_tools
+    - authority
+    - format
+    - full_name
+    - note
+    - public_access
+    - public_url
+    - records
+    - signal_methods
+    - submission
+    - system
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

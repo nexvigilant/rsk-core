@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: cpa-router
-description: "PDC: Route CPA (1-8) to practice function with capstone detection"
 version: 0.1.0
+description: "PDC: Route CPA (1-8) to practice function with capstone detection"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: cpa_id
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: description
+    type: string
+  - name: error
+    type: string
+  - name: function
+    type: string
+  - name: gateway_epa
+    type: int
+  - name: gateway_min_level
+    type: int
+  - name: is_capstone
+    type: bool
+  - name: requires_ai_gateway
+    type: bool
 interface:
   inputs:
     cpa_id:
@@ -21,6 +51,28 @@ interface:
       type: bool
     requires_ai_gateway:
       type: bool
+ui:
+  title: Cpa Router
+  subtitle: "PDC: Route CPA (1-8) to practice function with capstone detection"
+  icon: circle
+  route: /vigilance/mg/cpa-router
+  steps:
+    - field: cpa_id
+      label: cpa id
+      help: Enter cpa_id
+      widget: text
+      placeholder: null
+  result:
+    template: "description: {{description}} — error: {{error}} — function: {{function}} — gateway_epa: {{gateway_epa}} — gateway_min_level: {{gateway_min_level}} — is_capstone: {{is_capstone}} — requires_ai_gateway: {{requires_ai_gateway}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/cpa-router
+  cli: rsk mcg run cpa-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_valid
   nodes:
@@ -91,56 +143,56 @@ tree:
       type: return
       value:
         function: CASE_MANAGEMENT
-        description: "Foundation of pharmacovigilance practice"
+        description: Foundation of pharmacovigilance practice
         is_capstone: false
         requires_ai_gateway: false
     signal_management:
       type: return
       value:
         function: SIGNAL_MANAGEMENT
-        description: "Proactive safety surveillance and assessment"
+        description: Proactive safety surveillance and assessment
         is_capstone: false
         requires_ai_gateway: false
     risk_management:
       type: return
       value:
         function: RISK_MANAGEMENT
-        description: "Strategic approaches to minimizing medication risks"
+        description: Strategic approaches to minimizing medication risks
         is_capstone: false
         requires_ai_gateway: false
     quality_compliance:
       type: return
       value:
         function: QUALITY_COMPLIANCE
-        description: "Ensuring excellence and regulatory adherence"
+        description: Ensuring excellence and regulatory adherence
         is_capstone: false
         requires_ai_gateway: false
     data_technology:
       type: return
       value:
         function: DATA_TECHNOLOGY
-        description: "Managing information and leveraging digital tools"
+        description: Managing information and leveraging digital tools
         is_capstone: false
         requires_ai_gateway: false
     communication_stakeholder:
       type: return
       value:
         function: COMMUNICATION_STAKEHOLDER
-        description: "Engaging effectively across constituencies"
+        description: Engaging effectively across constituencies
         is_capstone: false
         requires_ai_gateway: false
     research_development:
       type: return
       value:
         function: RESEARCH_DEVELOPMENT
-        description: "Advancing safety science and methodology"
+        description: Advancing safety science and methodology
         is_capstone: false
         requires_ai_gateway: false
     capstone_cpa:
       type: return
       value:
         function: AI_ENHANCED_PV
-        description: "Integrating artificial intelligence across all functions"
+        description: Integrating artificial intelligence across all functions
         is_capstone: true
         requires_ai_gateway: true
         gateway_epa: 10
@@ -149,54 +201,93 @@ tree:
       type: return
       value:
         function: INVALID
-        error: "CPA ID must be 1-8"
+        error: CPA ID must be 1-8
 tests:
-- input:
-    cpa_id: 1
-  expect:
-    function: CASE_MANAGEMENT
-    is_capstone: false
-- input:
-    cpa_id: 2
-  expect:
-    function: SIGNAL_MANAGEMENT
-    is_capstone: false
-- input:
-    cpa_id: 3
-  expect:
-    function: RISK_MANAGEMENT
-- input:
-    cpa_id: 4
-  expect:
-    function: QUALITY_COMPLIANCE
-- input:
-    cpa_id: 5
-  expect:
-    function: DATA_TECHNOLOGY
-- input:
-    cpa_id: 6
-  expect:
-    function: COMMUNICATION_STAKEHOLDER
-- input:
-    cpa_id: 7
-  expect:
-    function: RESEARCH_DEVELOPMENT
-- input:
-    cpa_id: 8
-  expect:
-    function: AI_ENHANCED_PV
-    is_capstone: true
-    requires_ai_gateway: true
-    gateway_epa: 10
-    gateway_min_level: 4
-- input:
-    cpa_id: 0
-  expect:
-    function: INVALID
-- input:
-    cpa_id: 9
-  expect:
-    function: INVALID
-- input: {}
-  expect:
-    function: INVALID
+  - input:
+      cpa_id: 1
+    expect:
+      function: CASE_MANAGEMENT
+      is_capstone: false
+  - input:
+      cpa_id: 2
+    expect:
+      function: SIGNAL_MANAGEMENT
+      is_capstone: false
+  - input:
+      cpa_id: 3
+    expect:
+      function: RISK_MANAGEMENT
+  - input:
+      cpa_id: 4
+    expect:
+      function: QUALITY_COMPLIANCE
+  - input:
+      cpa_id: 5
+    expect:
+      function: DATA_TECHNOLOGY
+  - input:
+      cpa_id: 6
+    expect:
+      function: COMMUNICATION_STAKEHOLDER
+  - input:
+      cpa_id: 7
+    expect:
+      function: RESEARCH_DEVELOPMENT
+  - input:
+      cpa_id: 8
+    expect:
+      function: AI_ENHANCED_PV
+      is_capstone: true
+      requires_ai_gateway: true
+      gateway_epa: 10
+      gateway_min_level: 4
+  - input:
+      cpa_id: 0
+    expect:
+      function: INVALID
+  - input:
+      cpa_id: 9
+    expect:
+      function: INVALID
+  - input: {}
+    expect:
+      function: INVALID
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - description
+    - error
+    - function
+    - gateway_epa
+    - gateway_min_level
+    - is_capstone
+    - requires_ai_gateway
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: elastic-equilibrium
-description: 'Flywheel material elastic equilibrium classifier. FATIGUE_FAILURE_IMMINENT (cycles > limit, takes priority), YIELD_EXCEEDED (stress >= yield_point), NOMINAL (within elastic range). Requires pre-computed fatigue_exceeded (1=exceeded, 0=ok) and stress_exceeded (1=at-or-above-yield, 0=ok).'
 version: 0.1.0
+description: Flywheel material elastic equilibrium classifier. FATIGUE_FAILURE_IMMINENT (cycles > limit, takes priority), YIELD_EXCEEDED (stress >= yield_point), NOMINAL (within elastic range). Requires pre-computed fatigue_exceeded (1=exceeded, 0=ok) and stress_exceeded (1=at-or-above-yield, 0=ok).
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: stress
+    type: float
+    required: false
+    description: ""
+  - name: yield_point
+    type: float
+    required: false
+    description: ""
+  - name: fatigue_cycles
+    type: int
+    required: false
+    description: ""
+  - name: fatigue_limit
+    type: int
+    required: false
+    description: ""
+  - name: fatigue_exceeded
+    type: int
+    required: false
+    description: ""
+  - name: stress_exceeded
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: state
+    type: string
 interface:
   inputs:
     stress:
@@ -24,6 +62,53 @@ interface:
   outputs:
     state:
       type: string
+ui:
+  title: Elastic Equilibrium
+  subtitle: Flywheel material elastic equilibrium classifier. FATIGUE_FAILURE_IMMINENT (cycles > limit, takes priority), YIELD_EXCEEDED (stress >= yield_point), NOMINAL (within elastic range). Requires pre-computed fatigue_exceeded (1=exceeded, 0=ok) and stress_exceeded (1=at-or-above-yield, 0=ok).
+  icon: circle
+  route: /vigilance/mg/elastic-equilibrium
+  steps:
+    - field: stress
+      label: stress
+      help: Enter stress
+      widget: text
+      placeholder: null
+    - field: yield_point
+      label: yield point
+      help: Enter yield_point
+      widget: text
+      placeholder: null
+    - field: fatigue_cycles
+      label: fatigue cycles
+      help: Enter fatigue_cycles
+      widget: text
+      placeholder: null
+    - field: fatigue_limit
+      label: fatigue limit
+      help: Enter fatigue_limit
+      widget: text
+      placeholder: null
+    - field: fatigue_exceeded
+      label: fatigue exceeded
+      help: Enter fatigue_exceeded
+      widget: text
+      placeholder: null
+    - field: stress_exceeded
+      label: stress exceeded
+      help: Enter stress_exceeded
+      widget: text
+      placeholder: null
+  result:
+    template: "state: {{state}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/elastic-equilibrium
+  cli: rsk mcg run elastic-equilibrium
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fatigue
   nodes:
@@ -54,69 +139,102 @@ tree:
       value:
         state: nominal
 tests:
-- input:
-    stress: 50.0
-    yield_point: 100.0
-    fatigue_cycles: 100
-    fatigue_limit: 1000
-    fatigue_exceeded: 0
-    stress_exceeded: 0
-  expect:
-    state: nominal
-- input:
-    stress: 150.0
-    yield_point: 100.0
-    fatigue_cycles: 100
-    fatigue_limit: 1000
-    fatigue_exceeded: 0
-    stress_exceeded: 1
-  expect:
-    state: yield_exceeded
-- input:
-    stress: 50.0
-    yield_point: 100.0
-    fatigue_cycles: 1500
-    fatigue_limit: 1000
-    fatigue_exceeded: 1
-    stress_exceeded: 0
-  expect:
-    state: fatigue_failure_imminent
-- input:
-    stress: 0.0
-    yield_point: 100.0
-    fatigue_cycles: 0
-    fatigue_limit: 1000
-    fatigue_exceeded: 0
-    stress_exceeded: 0
-  expect:
-    state: nominal
-- input:
-    stress: 100.0
-    yield_point: 100.0
-    fatigue_cycles: 0
-    fatigue_limit: 1000
-    fatigue_exceeded: 0
-    stress_exceeded: 1
-  expect:
-    state: yield_exceeded
-- input:
-    stress: 200.0
-    yield_point: 100.0
-    fatigue_cycles: 2000
-    fatigue_limit: 1000
-    fatigue_exceeded: 1
-    stress_exceeded: 1
-  expect:
-    state: fatigue_failure_imminent
-- input:
-    stress: 75.0
-    yield_point: 100.0
-    fatigue_cycles: 500
-    fatigue_limit: 1000
-    fatigue_exceeded: 0
-    stress_exceeded: 0
-  expect:
-    state: nominal
-- input: {}
-  expect:
-    state: nominal
+  - input:
+      stress: 50
+      yield_point: 100
+      fatigue_cycles: 100
+      fatigue_limit: 1000
+      fatigue_exceeded: 0
+      stress_exceeded: 0
+    expect:
+      state: nominal
+  - input:
+      stress: 150
+      yield_point: 100
+      fatigue_cycles: 100
+      fatigue_limit: 1000
+      fatigue_exceeded: 0
+      stress_exceeded: 1
+    expect:
+      state: yield_exceeded
+  - input:
+      stress: 50
+      yield_point: 100
+      fatigue_cycles: 1500
+      fatigue_limit: 1000
+      fatigue_exceeded: 1
+      stress_exceeded: 0
+    expect:
+      state: fatigue_failure_imminent
+  - input:
+      stress: 0
+      yield_point: 100
+      fatigue_cycles: 0
+      fatigue_limit: 1000
+      fatigue_exceeded: 0
+      stress_exceeded: 0
+    expect:
+      state: nominal
+  - input:
+      stress: 100
+      yield_point: 100
+      fatigue_cycles: 0
+      fatigue_limit: 1000
+      fatigue_exceeded: 0
+      stress_exceeded: 1
+    expect:
+      state: yield_exceeded
+  - input:
+      stress: 200
+      yield_point: 100
+      fatigue_cycles: 2000
+      fatigue_limit: 1000
+      fatigue_exceeded: 1
+      stress_exceeded: 1
+    expect:
+      state: fatigue_failure_imminent
+  - input:
+      stress: 75
+      yield_point: 100
+      fatigue_cycles: 500
+      fatigue_limit: 1000
+      fatigue_exceeded: 0
+      stress_exceeded: 0
+    expect:
+      state: nominal
+  - input: {}
+    expect:
+      state: nominal
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - state
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

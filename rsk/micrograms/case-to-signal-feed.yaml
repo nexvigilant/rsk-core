@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: case-to-signal-feed
-description: Transforms case data into standardized signal feed record for PRR computation
 version: 0.1.0
+description: Transforms case data into standardized signal feed record for PRR computation
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: drug_name
+    type: string
+    required: true
+    description: Name of the drug
+  - name: event_term
+    type: string
+    required: true
+    description: Medical event term (MedDRA or plain text)
+  - name: patient_age
+    type: integer
+    required: false
+    description: Age in years
+  - name: outcome
+    type: string
+    required: false
+    description: Outcome classification
+outputs:
+  - name: signal_feed_record
+    type: object
 interface:
   inputs:
     drug_name:
@@ -23,6 +53,43 @@ interface:
     signal_feed_record:
       type: object
       description: Standardized record with fields for PRR input
+ui:
+  title: Case To Signal Feed
+  subtitle: Transforms case data into standardized signal feed record for PRR computation
+  icon: activity
+  route: /vigilance/mg/case-to-signal-feed
+  steps:
+    - field: drug_name
+      label: drug name
+      help: Name of the drug
+      widget: text
+      placeholder: null
+    - field: event_term
+      label: event term
+      help: Medical event term (MedDRA or plain text)
+      widget: text
+      placeholder: null
+    - field: patient_age
+      label: patient age
+      help: Age in years
+      widget: number
+      placeholder: null
+    - field: outcome
+      label: outcome
+      help: Outcome classification
+      widget: text
+      placeholder: null
+  result:
+    template: "signal_feed_record: {{signal_feed_record}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/case-to-signal-feed
+  cli: rsk mcg run case-to-signal-feed
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_drug
   nodes:
@@ -48,20 +115,20 @@ tree:
       type: return
       value:
         signal_feed_record:
-          drug: '{{ drug_name }}'
-          event: '{{ event_term }}'
+          drug: "{{ drug_name }}"
+          event: "{{ event_term }}"
           age_group: adult
-          outcome: '{{ outcome }}'
+          outcome: "{{ outcome }}"
           complete: true
           data_quality: high
     without_age:
       type: return
       value:
         signal_feed_record:
-          drug: '{{ drug_name }}'
-          event: '{{ event_term }}'
+          drug: "{{ drug_name }}"
+          event: "{{ event_term }}"
           age_group: unknown
-          outcome: '{{ outcome }}'
+          outcome: "{{ outcome }}"
           complete: false
           data_quality: medium
     missing_drug:
@@ -69,67 +136,102 @@ tree:
       value:
         signal_feed_record:
           drug: null
-          event: '{{ event_term }}'
+          event: "{{ event_term }}"
           age_group: null
-          outcome: '{{ outcome }}'
+          outcome: "{{ outcome }}"
           complete: false
           data_quality: low
     missing_event:
       type: return
       value:
         signal_feed_record:
-          drug: '{{ drug_name }}'
+          drug: "{{ drug_name }}"
           event: null
           age_group: null
-          outcome: '{{ outcome }}'
+          outcome: "{{ outcome }}"
           complete: false
           data_quality: low
 tests:
-# Path: validate_drug(T) -> validate_event(T) -> check_age(T) -> with_age
-- input:
-    drug_name: metformin
-    event_term: lactic acidosis
-    patient_age: 55
-    outcome: recovered
-  expect:
-    signal_feed_record:
-      drug: metformin
-      event: lactic acidosis
-      age_group: adult
+  - input:
+      drug_name: metformin
+      event_term: lactic acidosis
+      patient_age: 55
       outcome: recovered
-      complete: true
-      data_quality: high
-# Path: validate_drug(T) -> validate_event(T) -> check_age(F) -> without_age
-- input:
-    drug_name: metformin
-    event_term: lactic acidosis
-    outcome: fatal
-  expect:
-    signal_feed_record:
-      drug: metformin
-      event: lactic acidosis
-      age_group: unknown
+    expect:
+      signal_feed_record:
+        drug: metformin
+        event: lactic acidosis
+        age_group: adult
+        outcome: recovered
+        complete: true
+        data_quality: high
+  - input:
+      drug_name: metformin
+      event_term: lactic acidosis
       outcome: fatal
-      complete: false
-      data_quality: medium
-# Path: validate_drug(T) -> validate_event(F) -> missing_event
-- input:
-    drug_name: metformin
-  expect:
-    signal_feed_record:
-      drug: metformin
-      event: null
-      age_group: null
-      outcome: "null"
-      complete: false
-      data_quality: low
-# Path: validate_drug(F) -> missing_drug
-- input: {}
-  expect:
-    signal_feed_record:
-      drug: null
-      event: "null"
-      age_group: null
-      outcome: "null"
-      complete: false
-      data_quality: low
+    expect:
+      signal_feed_record:
+        drug: metformin
+        event: lactic acidosis
+        age_group: unknown
+        outcome: fatal
+        complete: false
+        data_quality: medium
+  - input:
+      drug_name: metformin
+    expect:
+      signal_feed_record:
+        drug: metformin
+        event: null
+        age_group: null
+        outcome: "null"
+        complete: false
+        data_quality: low
+  - input: {}
+    expect:
+      signal_feed_record:
+        drug: null
+        event: "null"
+        age_group: null
+        outcome: "null"
+        complete: false
+        data_quality: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - signal_feed_record
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

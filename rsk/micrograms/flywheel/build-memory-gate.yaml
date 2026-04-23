@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: build-memory-gate
-description: 'Pre-build memory gate: checks available RAM + free swap against crate build requirements. PASS (>= threshold), WARN (50-99% of threshold), BLOCK (< 50%). Thresholds: nexcore-mcp needs 4GB, nexcore-vigilance needs 3GB, default 1GB.'
 version: 0.1.0
+description: "Pre-build memory gate: checks available RAM + free swap against crate build requirements. PASS (>= threshold), WARN (50-99% of threshold), BLOCK (< 50%). Thresholds: nexcore-mcp needs 4GB, nexcore-vigilance needs 3GB, default 1GB."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: available_mb
+    type: int
+    required: true
+    description: ""
+  - name: free_swap_mb
+    type: int
+    required: true
+    description: ""
+  - name: crate_tier
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: decision
+    type: string
+  - name: total_available_mb
+    type: int
+  - name: threshold_mb
+    type: int
+  - name: headroom_pct
+    type: int
 interface:
   inputs:
     available_mb:
@@ -21,6 +53,38 @@ interface:
       type: int
     headroom_pct:
       type: int
+ui:
+  title: Build Memory Gate
+  subtitle: "Pre-build memory gate: checks available RAM + free swap against crate build requirements. PASS (>= threshold), WARN (50-99% of threshold), BLOCK (< 50%). Thresholds: nexcore-mcp needs 4GB, nexcore-vigilance needs 3GB, default 1GB."
+  icon: circle
+  route: /vigilance/mg/build-memory-gate
+  steps:
+    - field: available_mb
+      label: available mb
+      help: Enter available_mb
+      widget: text
+      placeholder: null
+    - field: free_swap_mb
+      label: free swap mb
+      help: Enter free_swap_mb
+      widget: text
+      placeholder: null
+    - field: crate_tier
+      label: crate tier
+      help: Enter crate_tier
+      widget: text
+      placeholder: null
+  result:
+    template: "decision: {{decision}} — total_available_mb: {{total_available_mb}} — threshold_mb: {{threshold_mb}} — headroom_pct: {{headroom_pct}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/build-memory-gate
+  cli: rsk mcg run build-memory-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: compute_total
   nodes:
@@ -96,56 +160,92 @@ tree:
         threshold_mb: 1000
         headroom_pct: 0
 tests:
-- input:
-    available_mb: 8000
-    free_swap_mb: 16000
-    crate_tier: heavy
-  expect:
-    decision: PASS
-    threshold_mb: 4000
-- input:
-    available_mb: 3000
-    free_swap_mb: 500
-    crate_tier: heavy
-  expect:
-    decision: WARN
-    threshold_mb: 4000
-- input:
-    available_mb: 1500
-    free_swap_mb: 0
-    crate_tier: heavy
-  expect:
-    decision: BLOCK
-    threshold_mb: 4000
-- input:
-    available_mb: 2000
-    free_swap_mb: 1000
-    crate_tier: normal
-  expect:
-    decision: PASS
-    threshold_mb: 1000
-- input:
-    available_mb: 700
-    free_swap_mb: 200
-    crate_tier: normal
-  expect:
-    decision: WARN
-    threshold_mb: 1000
-- input:
-    available_mb: 400
-    free_swap_mb: 0
-    crate_tier: normal
-  expect:
-    decision: BLOCK
-    threshold_mb: 1000
-- input:
-    available_mb: 5000
-    free_swap_mb: 10000
-  expect:
-    decision: PASS
-    threshold_mb: 1000
-- input: {}
-  expect:
-    decision: BLOCK
-    headroom_pct: 0
-    threshold_mb: 1000
+  - input:
+      available_mb: 8000
+      free_swap_mb: 16000
+      crate_tier: heavy
+    expect:
+      decision: PASS
+      threshold_mb: 4000
+  - input:
+      available_mb: 3000
+      free_swap_mb: 500
+      crate_tier: heavy
+    expect:
+      decision: WARN
+      threshold_mb: 4000
+  - input:
+      available_mb: 1500
+      free_swap_mb: 0
+      crate_tier: heavy
+    expect:
+      decision: BLOCK
+      threshold_mb: 4000
+  - input:
+      available_mb: 2000
+      free_swap_mb: 1000
+      crate_tier: normal
+    expect:
+      decision: PASS
+      threshold_mb: 1000
+  - input:
+      available_mb: 700
+      free_swap_mb: 200
+      crate_tier: normal
+    expect:
+      decision: WARN
+      threshold_mb: 1000
+  - input:
+      available_mb: 400
+      free_swap_mb: 0
+      crate_tier: normal
+    expect:
+      decision: BLOCK
+      threshold_mb: 1000
+  - input:
+      available_mb: 5000
+      free_swap_mb: 10000
+    expect:
+      decision: PASS
+      threshold_mb: 1000
+  - input: {}
+    expect:
+      decision: BLOCK
+      headroom_pct: 0
+      threshold_mb: 1000
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - decision
+    - total_available_mb
+    - threshold_mb
+    - headroom_pct
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

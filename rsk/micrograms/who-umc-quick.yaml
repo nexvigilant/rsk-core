@@ -1,12 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: who-umc-quick
-description: 'WHO-UMC causality assessment scale: international standard alternative to Naranjo, used in VigiBase/VigiAccess reporting'
 version: 0.2.0
-primitive_signature:
-  dominant: '→'
-  expression: '→(κ + N(ς₁ < ς₂) + ∂) — restores causality via sequential condition gates'
-  primes: ['→', 'κ', 'N', 'ς', '∂']
-  arguments: ['time_plausible', 'known_reaction', 'no_alternative_explanation', 'dechallenge_positive', 'rechallenge_positive']
-  chain_prediction: 'Restores → from κ via explicit condition checklist. time_plausible restores N(ς₁ < ς₂) — temporal ordering. dechallenge/rechallenge restore ∂ — this specific drug boundary. no_alternative_explanation sharpens ∂ — excludes competing causes. known_reaction is κ(drug, reaction_database) — prior comparison evidence. Each input restores one → condition; CERTAIN requires all three restored.'
+description: "WHO-UMC causality assessment scale: international standard alternative to Naranjo, used in VigiBase/VigiAccess reporting"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: dechallenge_positive
+    type: bool
+    required: false
+    description: ""
+  - name: known_reaction
+    type: bool
+    required: false
+    description: ""
+  - name: no_alternative_explanation
+    type: bool
+    required: false
+    description: ""
+  - name: rechallenge_positive
+    type: bool
+    required: false
+    description: ""
+  - name: time_plausible
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: causality
+    type: string
+  - name: description
+    type: string
+  - name: regulatory_use
+    type: string
+  - name: who_score
+    type: int
 interface:
   inputs:
     dechallenge_positive:
@@ -33,6 +67,48 @@ interface:
       type: string
     who_score:
       type: int
+ui:
+  title: Who Umc Quick
+  subtitle: "WHO-UMC causality assessment scale: international standard alternative to Naranjo, used in VigiBase/VigiAccess reporting"
+  icon: circle
+  route: /vigilance/mg/who-umc-quick
+  steps:
+    - field: dechallenge_positive
+      label: dechallenge positive
+      help: Enter dechallenge_positive
+      widget: toggle
+      placeholder: null
+    - field: known_reaction
+      label: known reaction
+      help: Enter known_reaction
+      widget: toggle
+      placeholder: null
+    - field: no_alternative_explanation
+      label: no alternative explanation
+      help: Enter no_alternative_explanation
+      widget: toggle
+      placeholder: null
+    - field: rechallenge_positive
+      label: rechallenge positive
+      help: Enter rechallenge_positive
+      widget: toggle
+      placeholder: null
+    - field: time_plausible
+      label: time plausible
+      help: Enter time_plausible
+      widget: toggle
+      placeholder: null
+  result:
+    template: "causality: {{causality}} — description: {{description}} — regulatory_use: {{regulatory_use}} — who_score: {{who_score}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/who-umc-quick
+  cli: rsk mcg run who-umc-quick
+  auth: none
+  rate_limit: 600/min
 tree:
   start: time_plausible_check
   nodes:
@@ -107,114 +183,150 @@ tree:
         description: Temporal relationship not established or insufficient information
         regulatory_use: Collect more information before assessment
 tests:
-- input:
-    time_plausible: true
-    known_reaction: true
-    no_alternative_explanation: true
-    dechallenge_positive: true
-    rechallenge_positive: true
-  expect:
-    causality: CERTAIN
-    who_score: 6
-    description: All criteria met including positive rechallenge
-- input:
-    time_plausible: true
-    known_reaction: true
-    no_alternative_explanation: true
-    dechallenge_positive: true
-    rechallenge_positive: false
-  expect:
-    causality: PROBABLE
-    who_score: 5
-    description: Plausible time, known reaction, no alternative, positive dechallenge
-- input:
-    time_plausible: true
-    known_reaction: true
-    no_alternative_explanation: true
-    dechallenge_positive: false
-    rechallenge_positive: false
-  expect:
-    causality: PROBABLE
-    who_score: 5
-    description: Plausible time, known reaction, no alternative, positive dechallenge
-- input:
-    time_plausible: true
-    known_reaction: true
-    no_alternative_explanation: false
-    dechallenge_positive: false
-    rechallenge_positive: false
-  expect:
-    causality: POSSIBLE
-    who_score: 3
-    description: Plausible time and known reaction but alternative explanations exist
-- input:
-    time_plausible: true
-    known_reaction: false
-    no_alternative_explanation: true
-    dechallenge_positive: true
-    rechallenge_positive: true
-  expect:
-    causality: UNLIKELY
-    who_score: 2
-    description: Plausible time but reaction not previously known to drug
-- input:
-    time_plausible: false
-    known_reaction: true
-    no_alternative_explanation: true
-    dechallenge_positive: true
-    rechallenge_positive: true
-  expect:
-    causality: UNCLASSIFIED
-    who_score: 1
-    description: Temporal relationship not established or insufficient information
-- input:
-    time_plausible: true
-    known_reaction: true
-    no_alternative_explanation: true
-    dechallenge_positive: true
-    rechallenge_positive: true
-  expect:
-    regulatory_use: Highest confidence for regulatory action
-    who_score: 6
-    causality: CERTAIN
-- input:
-    time_plausible: true
-    known_reaction: false
-    no_alternative_explanation: false
-    dechallenge_positive: false
-    rechallenge_positive: false
-  expect:
-    causality: UNLIKELY
-    who_score: 2
-- input:
-    time_plausible: false
-    known_reaction: false
-    no_alternative_explanation: false
-    dechallenge_positive: false
-    rechallenge_positive: false
-  expect:
-    causality: UNCLASSIFIED
-    who_score: 1
-- input: {}
-  expect:
-    causality: UNCLASSIFIED
-    who_score: 1
-    description: Temporal relationship not established or insufficient information
-- input:
-    time_plausible: true
-    known_reaction: true
-    no_alternative_explanation: true
-    dechallenge_positive: false
-    rechallenge_positive: true
-  expect:
-    causality: PROBABLE
-    who_score: 5
-- input:
-    time_plausible: true
-    known_reaction: true
-    no_alternative_explanation: false
-    dechallenge_positive: true
-    rechallenge_positive: true
-  expect:
-    causality: POSSIBLE
-    who_score: 3
+  - input:
+      time_plausible: true
+      known_reaction: true
+      no_alternative_explanation: true
+      dechallenge_positive: true
+      rechallenge_positive: true
+    expect:
+      causality: CERTAIN
+      who_score: 6
+      description: All criteria met including positive rechallenge
+  - input:
+      time_plausible: true
+      known_reaction: true
+      no_alternative_explanation: true
+      dechallenge_positive: true
+      rechallenge_positive: false
+    expect:
+      causality: PROBABLE
+      who_score: 5
+      description: Plausible time, known reaction, no alternative, positive dechallenge
+  - input:
+      time_plausible: true
+      known_reaction: true
+      no_alternative_explanation: true
+      dechallenge_positive: false
+      rechallenge_positive: false
+    expect:
+      causality: PROBABLE
+      who_score: 5
+      description: Plausible time, known reaction, no alternative, positive dechallenge
+  - input:
+      time_plausible: true
+      known_reaction: true
+      no_alternative_explanation: false
+      dechallenge_positive: false
+      rechallenge_positive: false
+    expect:
+      causality: POSSIBLE
+      who_score: 3
+      description: Plausible time and known reaction but alternative explanations exist
+  - input:
+      time_plausible: true
+      known_reaction: false
+      no_alternative_explanation: true
+      dechallenge_positive: true
+      rechallenge_positive: true
+    expect:
+      causality: UNLIKELY
+      who_score: 2
+      description: Plausible time but reaction not previously known to drug
+  - input:
+      time_plausible: false
+      known_reaction: true
+      no_alternative_explanation: true
+      dechallenge_positive: true
+      rechallenge_positive: true
+    expect:
+      causality: UNCLASSIFIED
+      who_score: 1
+      description: Temporal relationship not established or insufficient information
+  - input:
+      time_plausible: true
+      known_reaction: true
+      no_alternative_explanation: true
+      dechallenge_positive: true
+      rechallenge_positive: true
+    expect:
+      regulatory_use: Highest confidence for regulatory action
+      who_score: 6
+      causality: CERTAIN
+  - input:
+      time_plausible: true
+      known_reaction: false
+      no_alternative_explanation: false
+      dechallenge_positive: false
+      rechallenge_positive: false
+    expect:
+      causality: UNLIKELY
+      who_score: 2
+  - input:
+      time_plausible: false
+      known_reaction: false
+      no_alternative_explanation: false
+      dechallenge_positive: false
+      rechallenge_positive: false
+    expect:
+      causality: UNCLASSIFIED
+      who_score: 1
+  - input: {}
+    expect:
+      causality: UNCLASSIFIED
+      who_score: 1
+      description: Temporal relationship not established or insufficient information
+  - input:
+      time_plausible: true
+      known_reaction: true
+      no_alternative_explanation: true
+      dechallenge_positive: false
+      rechallenge_positive: true
+    expect:
+      causality: PROBABLE
+      who_score: 5
+  - input:
+      time_plausible: true
+      known_reaction: true
+      no_alternative_explanation: false
+      dechallenge_positive: true
+      rechallenge_positive: true
+    expect:
+      causality: POSSIBLE
+      who_score: 3
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - causality
+    - description
+    - regulatory_use
+    - who_score
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

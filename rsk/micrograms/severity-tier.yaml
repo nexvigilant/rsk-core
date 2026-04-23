@@ -1,6 +1,28 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: severity-tier
-description: 'Classify severity into tiers: CRITICAL (>=90), HIGH (>=70), MEDIUM (>=40), LOW (<40)'
 version: 0.1.0
+description: "Classify severity into tiers: CRITICAL (>=90), HIGH (>=70), MEDIUM (>=40), LOW (<40)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: severity
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: escalate
+    type: bool
+  - name: priority
+    type: int
+  - name: tier
+    type: string
 interface:
   inputs:
     severity:
@@ -13,6 +35,28 @@ interface:
       type: int
     tier:
       type: string
+ui:
+  title: Severity Tier
+  subtitle: "Classify severity into tiers: CRITICAL (>=90), HIGH (>=70), MEDIUM (>=40), LOW (<40)"
+  icon: circle
+  route: /vigilance/mg/severity-tier
+  steps:
+    - field: severity
+      label: severity
+      help: Enter severity
+      widget: text
+      placeholder: null
+  result:
+    template: "escalate: {{escalate}} — priority: {{priority}} — tier: {{tier}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/severity-tier
+  cli: rsk mcg run severity-tier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: critical_check
   nodes:
@@ -62,150 +106,185 @@ tree:
       true_next: critical
       false_next: high_check
 tests:
-- input:
-    severity: 95
-  expect:
-    tier: CRITICAL
-    escalate: true
-    priority: 1
-- input:
-    severity: 75
-  expect:
-    priority: 2
-    tier: HIGH
-    escalate: true
-- input:
-    severity: 50
-  expect:
-    priority: 3
-    tier: MEDIUM
-    escalate: false
-- input:
-    severity: 20
-  expect:
-    priority: 4
-    tier: LOW
-    escalate: false
-- input:
-    severity: 90
-  expect:
-    tier: CRITICAL
-    escalate: true
-    priority: 1
-- input:
-    severity: 70
-  expect:
-    priority: 2
-    escalate: true
-    tier: HIGH
-- input:
-    severity: 40
-  expect:
-    escalate: false
-    tier: MEDIUM
-    priority: 3
-- input:
-    severity: 39
-  expect:
-    tier: LOW
-    escalate: false
-    priority: 4
-- input:
-    severity: 0
-  expect:
-    priority: 4
-    tier: LOW
-    escalate: false
-- input:
-    severity: -1
-  expect:
-    priority: 4
-    tier: LOW
-    escalate: false
-- input:
-    severity: 69
-  expect:
-    tier: MEDIUM
-    escalate: false
-    priority: 3
-- input:
-    severity: 71
-  expect:
-    tier: HIGH
-    priority: 2
-    escalate: true
-- input:
-    severity: 7000
-  expect:
-    tier: CRITICAL
-    priority: 1
-    escalate: true
-- input: {}
-  expect:
-    escalate: false
-    priority: 4
-    tier: LOW
-- input:
-    severity: 0
-  expect:
-    tier: LOW
-    escalate: false
-    priority: 4
-- input:
-    severity: -1
-  expect:
-    tier: LOW
-    escalate: false
-    priority: 4
-- input:
-    severity: 41
-  expect:
-    priority: 3
-    tier: MEDIUM
-    escalate: false
-- input:
-    severity: 4000
-  expect:
-    tier: CRITICAL
-    priority: 1
-    escalate: true
-- input: {}
-  expect:
-    tier: LOW
-    escalate: false
-    priority: 4
-- input:
-    severity: 0
-  expect:
-    priority: 4
-    escalate: false
-    tier: LOW
-- input:
-    severity: -1
-  expect:
-    escalate: false
-    tier: LOW
-    priority: 4
-- input:
-    severity: 89
-  expect:
-    escalate: true
-    tier: HIGH
-    priority: 2
-- input:
-    severity: 91
-  expect:
-    tier: CRITICAL
-    escalate: true
-    priority: 1
-- input:
-    severity: 9000
-  expect:
-    tier: CRITICAL
-    escalate: true
-    priority: 1
-- input: {}
-  expect:
-    priority: 4
-    escalate: false
-    tier: LOW
+  - input:
+      severity: 95
+    expect:
+      tier: CRITICAL
+      escalate: true
+      priority: 1
+  - input:
+      severity: 75
+    expect:
+      priority: 2
+      tier: HIGH
+      escalate: true
+  - input:
+      severity: 50
+    expect:
+      priority: 3
+      tier: MEDIUM
+      escalate: false
+  - input:
+      severity: 20
+    expect:
+      priority: 4
+      tier: LOW
+      escalate: false
+  - input:
+      severity: 90
+    expect:
+      tier: CRITICAL
+      escalate: true
+      priority: 1
+  - input:
+      severity: 70
+    expect:
+      priority: 2
+      escalate: true
+      tier: HIGH
+  - input:
+      severity: 40
+    expect:
+      escalate: false
+      tier: MEDIUM
+      priority: 3
+  - input:
+      severity: 39
+    expect:
+      tier: LOW
+      escalate: false
+      priority: 4
+  - input:
+      severity: 0
+    expect:
+      priority: 4
+      tier: LOW
+      escalate: false
+  - input:
+      severity: -1
+    expect:
+      priority: 4
+      tier: LOW
+      escalate: false
+  - input:
+      severity: 69
+    expect:
+      tier: MEDIUM
+      escalate: false
+      priority: 3
+  - input:
+      severity: 71
+    expect:
+      tier: HIGH
+      priority: 2
+      escalate: true
+  - input:
+      severity: 7000
+    expect:
+      tier: CRITICAL
+      priority: 1
+      escalate: true
+  - input: {}
+    expect:
+      escalate: false
+      priority: 4
+      tier: LOW
+  - input:
+      severity: 0
+    expect:
+      tier: LOW
+      escalate: false
+      priority: 4
+  - input:
+      severity: -1
+    expect:
+      tier: LOW
+      escalate: false
+      priority: 4
+  - input:
+      severity: 41
+    expect:
+      priority: 3
+      tier: MEDIUM
+      escalate: false
+  - input:
+      severity: 4000
+    expect:
+      tier: CRITICAL
+      priority: 1
+      escalate: true
+  - input: {}
+    expect:
+      tier: LOW
+      escalate: false
+      priority: 4
+  - input:
+      severity: 0
+    expect:
+      priority: 4
+      escalate: false
+      tier: LOW
+  - input:
+      severity: -1
+    expect:
+      escalate: false
+      tier: LOW
+      priority: 4
+  - input:
+      severity: 89
+    expect:
+      escalate: true
+      tier: HIGH
+      priority: 2
+  - input:
+      severity: 91
+    expect:
+      tier: CRITICAL
+      escalate: true
+      priority: 1
+  - input:
+      severity: 9000
+    expect:
+      tier: CRITICAL
+      escalate: true
+      priority: 1
+  - input: {}
+    expect:
+      priority: 4
+      escalate: false
+      tier: LOW
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - escalate
+    - priority
+    - tier
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

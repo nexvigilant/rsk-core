@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: evidence-quality-classifier
-description: Grade loop evidence quality from state string — none/weak/moderate/strong
 version: 0.1.0
+description: Grade loop evidence quality from state string — none/weak/moderate/strong
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Evidence Quality Classifier
+  subtitle: Grade loop evidence quality from state string — none/weak/moderate/strong
+  icon: circle
+  route: /vigilance/mg/evidence-quality-classifier
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/evidence-quality-classifier
+  cli: rsk mcg run evidence-quality-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_default
   nodes:
@@ -36,7 +65,7 @@ tree:
       type: return
       value:
         achieved_target: false
-        score: 1.0
+        score: 1
         quality: strong
     check_failure_gimbal:
       type: condition
@@ -61,7 +90,7 @@ tree:
     strong_healthy:
       type: return
       value:
-        score: 1.0
+        score: 1
         achieved_target: true
         quality: strong
     weak:
@@ -124,191 +153,222 @@ tree:
         quality: moderate
         score: 0.66
 tests:
-- input:
-    margin_ratio: 0
-    state: default
-  expect:
-    quality: none
-    score: 0
-    achieved_target: false
-- input:
-    state: disintegrated
-    margin_ratio: 0
-  expect:
-    achieved_target: false
-    score: 1.0
-    quality: strong
-- input:
-    state: stalled
-    margin_ratio: 0
-  expect:
-    achieved_target: false
-    score: 1.0
-    quality: strong
-- input:
-    state: gimbal_lock
-    margin_ratio: 0
-  expect:
-    achieved_target: false
-    quality: strong
-    score: 1.0
-- input:
-    margin_ratio: 0
-    state: fatigue_failure_imminent
-  expect:
-    score: 1.0
-    achieved_target: false
-    quality: strong
-- input:
-    state: critical
-    margin_ratio: 0
-  expect:
-    quality: weak
-    score: 0.33
-    achieved_target: false
-- input:
-    state: low
-    margin_ratio: 0
-  expect:
-    score: 0.33
-    achieved_target: false
-    quality: weak
-- input:
-    margin_ratio: 0
-    state: no_stability
-  expect:
-    score: 0.33
-    achieved_target: false
-    quality: weak
-- input:
-    margin_ratio: 30
-    state: warning
-  expect:
-    quality: moderate
-    achieved_target: true
-    score: 0.66
-- input:
-    state: thriving
-    margin_ratio: 60
-  expect:
-    score: 1.0
-    quality: strong
-    achieved_target: true
-- input:
-    state: healthy
-    margin_ratio: 25
-  expect:
-    quality: moderate
-    score: 0.66
-    achieved_target: true
-- input:
-    margin_ratio: 5
-    state: nominal
-  expect:
-    quality: weak
-    achieved_target: true
-    score: 0.33
-- input: {}
-  expect:
-    quality: weak
-    achieved_target: true
-    score: 0.33
-- input: {}
-  expect:
-    quality: weak
-    achieved_target: true
-    score: 0.33
-- input: {}
-  expect:
-    score: 0.33
-    achieved_target: true
-    quality: weak
-- input: {}
-  expect:
-    quality: weak
-    score: 0.33
-    achieved_target: true
-- input: {}
-  expect:
-    achieved_target: true
-    score: 0.33
-    quality: weak
-- input: {}
-  expect:
-    achieved_target: true
-    score: 0.33
-    quality: weak
-- input: {}
-  expect:
-    score: 0.33
-    achieved_target: true
-    quality: weak
-- input: {}
-  expect:
-    achieved_target: true
-    score: 0.33
-    quality: weak
-- input:
-    margin_ratio: -1
-  expect:
-    score: 0.33
-    achieved_target: true
-    quality: weak
-- input:
-    margin_ratio: 49
-  expect:
-    score: 0.66
-    achieved_target: true
-    quality: moderate
-- input:
-    margin_ratio: 51
-  expect:
-    score: 1.0
-    quality: strong
-    achieved_target: true
-- input:
-    margin_ratio: 5000
-  expect:
-    score: 1.0
-    achieved_target: true
-    quality: strong
-- input: {}
-  expect:
-    quality: weak
-    achieved_target: true
-    score: 0.33
-- input:
-    margin_ratio: -1
-  expect:
-    achieved_target: true
-    quality: weak
-    score: 0.33
-- input:
-    margin_ratio: 9
-  expect:
-    quality: weak
-    achieved_target: true
-    score: 0.33
-- input:
-    margin_ratio: 11
-  expect:
-    achieved_target: true
-    score: 0.66
-    quality: moderate
-- input:
-    margin_ratio: 1000
-  expect:
-    achieved_target: true
-    quality: strong
-    score: 1.0
-- input: {}
-  expect:
-    quality: weak
-    score: 0.33
-    achieved_target: true
-- input: {}
-  expect:
-    achieved_target: true
-    score: 0.33
-    quality: weak
-interface: null
+  - input:
+      margin_ratio: 0
+      state: default
+    expect:
+      quality: none
+      score: 0
+      achieved_target: false
+  - input:
+      state: disintegrated
+      margin_ratio: 0
+    expect:
+      achieved_target: false
+      score: 1
+      quality: strong
+  - input:
+      state: stalled
+      margin_ratio: 0
+    expect:
+      achieved_target: false
+      score: 1
+      quality: strong
+  - input:
+      state: gimbal_lock
+      margin_ratio: 0
+    expect:
+      achieved_target: false
+      quality: strong
+      score: 1
+  - input:
+      margin_ratio: 0
+      state: fatigue_failure_imminent
+    expect:
+      score: 1
+      achieved_target: false
+      quality: strong
+  - input:
+      state: critical
+      margin_ratio: 0
+    expect:
+      quality: weak
+      score: 0.33
+      achieved_target: false
+  - input:
+      state: low
+      margin_ratio: 0
+    expect:
+      score: 0.33
+      achieved_target: false
+      quality: weak
+  - input:
+      margin_ratio: 0
+      state: no_stability
+    expect:
+      score: 0.33
+      achieved_target: false
+      quality: weak
+  - input:
+      margin_ratio: 30
+      state: warning
+    expect:
+      quality: moderate
+      achieved_target: true
+      score: 0.66
+  - input:
+      state: thriving
+      margin_ratio: 60
+    expect:
+      score: 1
+      quality: strong
+      achieved_target: true
+  - input:
+      state: healthy
+      margin_ratio: 25
+    expect:
+      quality: moderate
+      score: 0.66
+      achieved_target: true
+  - input:
+      margin_ratio: 5
+      state: nominal
+    expect:
+      quality: weak
+      achieved_target: true
+      score: 0.33
+  - input: {}
+    expect:
+      quality: weak
+      achieved_target: true
+      score: 0.33
+  - input: {}
+    expect:
+      quality: weak
+      achieved_target: true
+      score: 0.33
+  - input: {}
+    expect:
+      score: 0.33
+      achieved_target: true
+      quality: weak
+  - input: {}
+    expect:
+      quality: weak
+      score: 0.33
+      achieved_target: true
+  - input: {}
+    expect:
+      achieved_target: true
+      score: 0.33
+      quality: weak
+  - input: {}
+    expect:
+      achieved_target: true
+      score: 0.33
+      quality: weak
+  - input: {}
+    expect:
+      score: 0.33
+      achieved_target: true
+      quality: weak
+  - input: {}
+    expect:
+      achieved_target: true
+      score: 0.33
+      quality: weak
+  - input:
+      margin_ratio: -1
+    expect:
+      score: 0.33
+      achieved_target: true
+      quality: weak
+  - input:
+      margin_ratio: 49
+    expect:
+      score: 0.66
+      achieved_target: true
+      quality: moderate
+  - input:
+      margin_ratio: 51
+    expect:
+      score: 1
+      quality: strong
+      achieved_target: true
+  - input:
+      margin_ratio: 5000
+    expect:
+      score: 1
+      achieved_target: true
+      quality: strong
+  - input: {}
+    expect:
+      quality: weak
+      achieved_target: true
+      score: 0.33
+  - input:
+      margin_ratio: -1
+    expect:
+      achieved_target: true
+      quality: weak
+      score: 0.33
+  - input:
+      margin_ratio: 9
+    expect:
+      quality: weak
+      achieved_target: true
+      score: 0.33
+  - input:
+      margin_ratio: 11
+    expect:
+      achieved_target: true
+      score: 0.66
+      quality: moderate
+  - input:
+      margin_ratio: 1000
+    expect:
+      achieved_target: true
+      quality: strong
+      score: 1
+  - input: {}
+    expect:
+      quality: weak
+      score: 0.33
+      achieved_target: true
+  - input: {}
+    expect:
+      achieved_target: true
+      score: 0.33
+      quality: weak
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

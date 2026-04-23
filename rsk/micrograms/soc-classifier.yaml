@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: soc-classifier
-description: Classify MedDRA event terms into System Organ Classes and assess seriousness
 version: 0.1.0
+description: Classify MedDRA event terms into System Organ Classes and assess seriousness
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Soc Classifier
+  subtitle: Classify MedDRA event terms into System Organ Classes and assess seriousness
+  icon: circle
+  route: /vigilance/mg/soc-classifier
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/soc-classifier
+  cli: rsk mcg run soc-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_term
   nodes:
@@ -76,44 +105,75 @@ tree:
       true_next: classify_soc
       false_next: missing_input
 tests:
-- input:
-    event_term: ZZZZZ_NO_MATCH
-  expect:
-    likely_soc: general_disorders
-    hlgt_guess: general_physical_condition
-    is_serious_soc: false
-- input:
-    event_term: cardiac
-  expect:
-    hlgt_guess: cardiac_valve_disorders
-    is_serious_soc: true
-    likely_soc: cardiac_disorders
-- input:
-    event_term: kidney
-  expect:
-    likely_soc: renal_urinary_disorders
-    hlgt_guess: renal_failure_disorders
-    is_serious_soc: true
-- input:
-    event_term: liver
-  expect:
-    is_serious_soc: true
-    likely_soc: hepatobiliary_disorders
-    hlgt_guess: liver_injuries
-- input:
-    event_term: seizure
-  expect:
-    likely_soc: nervous_system_disorders
-    hlgt_guess: central_nervous_system_injuries
-    is_serious_soc: true
-- input: {}
-  expect:
-    is_serious_soc: false
-    likely_soc: null
-    hlgt_guess: null
-- input: {}
-  expect:
-    is_serious_soc: false
-    likely_soc: null
-    hlgt_guess: null
-interface: null
+  - input:
+      event_term: ZZZZZ_NO_MATCH
+    expect:
+      likely_soc: general_disorders
+      hlgt_guess: general_physical_condition
+      is_serious_soc: false
+  - input:
+      event_term: cardiac
+    expect:
+      hlgt_guess: cardiac_valve_disorders
+      is_serious_soc: true
+      likely_soc: cardiac_disorders
+  - input:
+      event_term: kidney
+    expect:
+      likely_soc: renal_urinary_disorders
+      hlgt_guess: renal_failure_disorders
+      is_serious_soc: true
+  - input:
+      event_term: liver
+    expect:
+      is_serious_soc: true
+      likely_soc: hepatobiliary_disorders
+      hlgt_guess: liver_injuries
+  - input:
+      event_term: seizure
+    expect:
+      likely_soc: nervous_system_disorders
+      hlgt_guess: central_nervous_system_injuries
+      is_serious_soc: true
+  - input: {}
+    expect:
+      is_serious_soc: false
+      likely_soc: null
+      hlgt_guess: null
+  - input: {}
+    expect:
+      is_serious_soc: false
+      likely_soc: null
+      hlgt_guess: null
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

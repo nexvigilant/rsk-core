@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: alias-mismatch-detector
-description: 'Ecosystem health gate: detects unresolved field name mismatches that reduce chain connectivity'
 version: 0.1.0
+description: "Ecosystem health gate: detects unresolved field name mismatches that reduce chain connectivity"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: orphan_outputs
+    type: int
+    required: true
+    description: ""
+  - name: suggested_aliases
+    type: int
+    required: true
+    description: ""
+  - name: alias_conflicts
+    type: int
+    required: true
+    description: ""
+outputs:
+  - name: health
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     orphan_outputs:
@@ -14,6 +42,38 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Alias Mismatch Detector
+  subtitle: "Ecosystem health gate: detects unresolved field name mismatches that reduce chain connectivity"
+  icon: circle
+  route: /vigilance/mg/alias-mismatch-detector
+  steps:
+    - field: orphan_outputs
+      label: orphan outputs
+      help: Enter orphan_outputs
+      widget: text
+      placeholder: null
+    - field: suggested_aliases
+      label: suggested aliases
+      help: Enter suggested_aliases
+      widget: text
+      placeholder: null
+    - field: alias_conflicts
+      label: alias conflicts
+      help: Enter alias_conflicts
+      widget: text
+      placeholder: null
+  result:
+    template: "health: {{health}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/alias-mismatch-detector
+  cli: rsk mcg run alias-mismatch-detector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_conflicts
   nodes:
@@ -47,40 +107,74 @@ tree:
         health: GREEN
         action: none
 tests:
-- name: conflicts trigger RED
-  input:
-    alias_conflicts: 2
-    suggested_aliases: 1
-    orphan_outputs: 3
-  expect:
-    health: RED
-    action: resolve_alias_conflicts
-- name: suggestions without conflicts trigger YELLOW
-  input:
-    alias_conflicts: 0
-    suggested_aliases: 5
-    orphan_outputs: 2
-  expect:
-    health: YELLOW
-    action: add_suggested_aliases
-- name: clean ecosystem is GREEN
-  input:
-    alias_conflicts: 0
-    suggested_aliases: 0
-    orphan_outputs: 0
-  expect:
-    health: GREEN
-    action: none
-- name: zero conflicts with suggestions is YELLOW
-  input:
-    alias_conflicts: 0
-    suggested_aliases: 1
-    orphan_outputs: 10
-  expect:
-    health: YELLOW
-    action: add_suggested_aliases
-- name: empty input defaults to GREEN
-  input: {}
-  expect:
-    health: GREEN
-    action: none
+  - name: conflicts trigger RED
+    input:
+      alias_conflicts: 2
+      suggested_aliases: 1
+      orphan_outputs: 3
+    expect:
+      health: RED
+      action: resolve_alias_conflicts
+  - name: suggestions without conflicts trigger YELLOW
+    input:
+      alias_conflicts: 0
+      suggested_aliases: 5
+      orphan_outputs: 2
+    expect:
+      health: YELLOW
+      action: add_suggested_aliases
+  - name: clean ecosystem is GREEN
+    input:
+      alias_conflicts: 0
+      suggested_aliases: 0
+      orphan_outputs: 0
+    expect:
+      health: GREEN
+      action: none
+  - name: zero conflicts with suggestions is YELLOW
+    input:
+      alias_conflicts: 0
+      suggested_aliases: 1
+      orphan_outputs: 10
+    expect:
+      health: YELLOW
+      action: add_suggested_aliases
+  - name: empty input defaults to GREEN
+    input: {}
+    expect:
+      health: GREEN
+      action: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - health
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

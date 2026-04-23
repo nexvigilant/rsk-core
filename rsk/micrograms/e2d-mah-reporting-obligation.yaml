@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2d-mah-reporting-obligation
-description: 'ICH E2D Section 4: MAH post-approval reporting obligation classifier — determines which regulatory authorities require expedited ICSRs and which submission pathway applies'
 version: 0.1.0
+description: "ICH E2D Section 4: MAH post-approval reporting obligation classifier — determines which regulatory authorities require expedited ICSRs and which submission pathway applies"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: source_country
+    type: string
+    required: false
+    description: ""
+  - name: received_from_authority
+    type: bool
+    required: false
+    description: ""
+  - name: is_foreign_case
+    type: bool
+    required: false
+    description: ""
+  - name: marketing_authorization_region
+    type: string
+    required: false
+    description: ""
+  - name: serious_unexpected
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: submission_pathway
+    type: string
+  - name: submit_to_authority
+    type: bool
+  - name: submission_format
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     source_country:
@@ -27,6 +67,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2d Mah Reporting Obligation
+  subtitle: "ICH E2D Section 4: MAH post-approval reporting obligation classifier — determines which regulatory authorities require expedited ICSRs and which submission pathway applies"
+  icon: circle
+  route: /vigilance/mg/e2d-mah-reporting-obligation
+  steps:
+    - field: source_country
+      label: source country
+      help: Enter source_country
+      widget: text
+      placeholder: null
+    - field: received_from_authority
+      label: received from authority
+      help: Enter received_from_authority
+      widget: toggle
+      placeholder: null
+    - field: is_foreign_case
+      label: is foreign case
+      help: Enter is_foreign_case
+      widget: toggle
+      placeholder: null
+    - field: marketing_authorization_region
+      label: marketing authorization region
+      help: Enter marketing_authorization_region
+      widget: text
+      placeholder: null
+    - field: serious_unexpected
+      label: serious unexpected
+      help: Enter serious_unexpected
+      widget: toggle
+      placeholder: null
+  result:
+    template: "submission_pathway: {{submission_pathway}} — submit_to_authority: {{submit_to_authority}} — submission_format: {{submission_format}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2d-mah-reporting-obligation
+  cli: rsk mcg run e2d-mah-reporting-obligation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_serious_unexpected
   nodes:
@@ -121,82 +203,113 @@ tree:
         submit_to_authority: false
         submission_format: PSUR_PBRER
         regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — MAH regional reporting obligation router per ICH E2D Section 4'
-  primes: ['σ', '∂', 'κ', 'μ']
-  arguments: ['source_country', 'received_from_authority', 'is_foreign_case', 'marketing_authorization_region', 'serious_unexpected']
 tests:
-- input:
-    serious_unexpected: true
-    received_from_authority: false
-    is_foreign_case: false
-    marketing_authorization_region: EU
-  expect:
-    submission_pathway: EUDRAVIGILANCE_DOMESTIC
-    submit_to_authority: true
-    submission_format: E2B_R3_ICH
-    regulatory_reference: ICH E2D Section 4 / EU 2010-84-EU Article 107
-- input:
-    serious_unexpected: true
-    received_from_authority: false
-    is_foreign_case: true
-    marketing_authorization_region: EU
-  expect:
-    submission_pathway: EUDRAVIGILANCE_FOREIGN
-    submit_to_authority: true
-    submission_format: E2B_R3_ICH
-    regulatory_reference: ICH E2D Section 4 / EU 2010-84-EU Article 107
-- input:
-    serious_unexpected: true
-    received_from_authority: false
-    is_foreign_case: false
-    marketing_authorization_region: US
-  expect:
-    submission_pathway: FDA_MEDWATCH_FAERS
-    submit_to_authority: true
-    submission_format: MedWatch_3500A
-    regulatory_reference: ICH E2D Section 4 / 21 CFR 314.80
-- input:
-    serious_unexpected: true
-    received_from_authority: true
-    is_foreign_case: false
-    marketing_authorization_region: EU
-  expect:
-    submission_pathway: AUTHORITY_FORWARD_MANDATORY
-    submit_to_authority: true
-    submission_format: E2B_R3_ICH
-    regulatory_reference: ICH E2D Section 4 - MAH Reporting Obligations
-- input:
-    serious_unexpected: true
-    received_from_authority: false
-    is_foreign_case: false
-    marketing_authorization_region: ICH
-  expect:
-    submission_pathway: ICH_E2B_NATIONAL
-    submit_to_authority: true
-    submission_format: E2B_R3_ICH
-    regulatory_reference: ICH E2D Section 4 / ICH E2B(R3)
-- input:
-    serious_unexpected: false
-    marketing_authorization_region: EU
-  expect:
-    submission_pathway: PERIODIC_REPORT_ONLY
-    submit_to_authority: false
-    submission_format: PSUR_PBRER
-    regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
-- input:
-    serious_unexpected: true
-    received_from_authority: false
-    marketing_authorization_region: LATAM
-  expect:
-    submission_pathway: NATIONAL_AUTHORITY
-    submit_to_authority: true
-    submission_format: LOCAL_FORMAT
-    regulatory_reference: ICH E2D Section 4 - MAH Reporting Obligations
-- input: {}
-  expect:
-    submission_pathway: PERIODIC_REPORT_ONLY
-    submit_to_authority: false
-    submission_format: PSUR_PBRER
-    regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
+  - input:
+      serious_unexpected: true
+      received_from_authority: false
+      is_foreign_case: false
+      marketing_authorization_region: EU
+    expect:
+      submission_pathway: EUDRAVIGILANCE_DOMESTIC
+      submit_to_authority: true
+      submission_format: E2B_R3_ICH
+      regulatory_reference: ICH E2D Section 4 / EU 2010-84-EU Article 107
+  - input:
+      serious_unexpected: true
+      received_from_authority: false
+      is_foreign_case: true
+      marketing_authorization_region: EU
+    expect:
+      submission_pathway: EUDRAVIGILANCE_FOREIGN
+      submit_to_authority: true
+      submission_format: E2B_R3_ICH
+      regulatory_reference: ICH E2D Section 4 / EU 2010-84-EU Article 107
+  - input:
+      serious_unexpected: true
+      received_from_authority: false
+      is_foreign_case: false
+      marketing_authorization_region: US
+    expect:
+      submission_pathway: FDA_MEDWATCH_FAERS
+      submit_to_authority: true
+      submission_format: MedWatch_3500A
+      regulatory_reference: ICH E2D Section 4 / 21 CFR 314.80
+  - input:
+      serious_unexpected: true
+      received_from_authority: true
+      is_foreign_case: false
+      marketing_authorization_region: EU
+    expect:
+      submission_pathway: AUTHORITY_FORWARD_MANDATORY
+      submit_to_authority: true
+      submission_format: E2B_R3_ICH
+      regulatory_reference: ICH E2D Section 4 - MAH Reporting Obligations
+  - input:
+      serious_unexpected: true
+      received_from_authority: false
+      is_foreign_case: false
+      marketing_authorization_region: ICH
+    expect:
+      submission_pathway: ICH_E2B_NATIONAL
+      submit_to_authority: true
+      submission_format: E2B_R3_ICH
+      regulatory_reference: ICH E2D Section 4 / ICH E2B(R3)
+  - input:
+      serious_unexpected: false
+      marketing_authorization_region: EU
+    expect:
+      submission_pathway: PERIODIC_REPORT_ONLY
+      submit_to_authority: false
+      submission_format: PSUR_PBRER
+      regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
+  - input:
+      serious_unexpected: true
+      received_from_authority: false
+      marketing_authorization_region: LATAM
+    expect:
+      submission_pathway: NATIONAL_AUTHORITY
+      submit_to_authority: true
+      submission_format: LOCAL_FORMAT
+      regulatory_reference: ICH E2D Section 4 - MAH Reporting Obligations
+  - input: {}
+    expect:
+      submission_pathway: PERIODIC_REPORT_ONLY
+      submit_to_authority: false
+      submission_format: PSUR_PBRER
+      regulatory_reference: ICH E2D Section 6 - Periodic Safety Update Reports
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - submission_pathway
+    - submit_to_authority
+    - submission_format
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-edit-distance-pipeline
-description: Route edit distance results for duplicate detection and fuzzy matching
 version: 0.1.0
+description: Route edit distance results for duplicate detection and fuzzy matching
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Edit Distance Pipeline
+  subtitle: Route edit distance results for duplicate detection and fuzzy matching
+  icon: circle
+  route: /vigilance/mg/station-edit-distance-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-edit-distance-pipeline
+  cli: rsk mcg run station-edit-distance-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_distance
   nodes:
@@ -40,63 +69,93 @@ tree:
         reason: Edit distance 10-30% — similar entities, potential merge candidate
         route: similarity_review
 tests:
-- input:
-    normalized_distance: 0.05
-  expect:
-    action: deduplicate
-    route: dedup_review
-    priority: high
-- input:
-    normalized_distance: 0.2
-  expect:
-    priority: moderate
-    route: similarity_review
-    action: flag
-- input:
-    normalized_distance: 0.6
-  expect:
-    route: archive
-    action: pass
-    priority: low
-- input:
-    normalized_distance: 0.099
-  expect:
-    action: deduplicate
-    priority: high
-    route: dedup_review
-    reason: Edit distance ≤10% — near-duplicate detected
-- input:
-    normalized_distance: 0.101
-  expect:
-    reason: Edit distance 10-30% — similar entities, potential merge candidate
-    action: flag
-    priority: moderate
-    route: similarity_review
-- input: {}
-  expect:
-    route: archive
-    action: pass
-    reason: Edit distance >30% — distinct entities
-    priority: low
-- input:
-    normalized_distance: 0.299
-  expect:
-    reason: Edit distance 10-30% — similar entities, potential merge candidate
-    priority: moderate
-    route: similarity_review
-    action: flag
-- input:
-    normalized_distance: 0.301
-  expect:
-    reason: Edit distance >30% — distinct entities
-    route: archive
-    priority: low
-    action: pass
-- input: {}
-  expect:
-    action: pass
-    reason: Edit distance >30% — distinct entities
-    route: archive
-    priority: low
-interface: null
-primitive_signature: null
+  - input:
+      normalized_distance: 0.05
+    expect:
+      action: deduplicate
+      route: dedup_review
+      priority: high
+  - input:
+      normalized_distance: 0.2
+    expect:
+      priority: moderate
+      route: similarity_review
+      action: flag
+  - input:
+      normalized_distance: 0.6
+    expect:
+      route: archive
+      action: pass
+      priority: low
+  - input:
+      normalized_distance: 0.099
+    expect:
+      action: deduplicate
+      priority: high
+      route: dedup_review
+      reason: Edit distance ≤10% — near-duplicate detected
+  - input:
+      normalized_distance: 0.101
+    expect:
+      reason: Edit distance 10-30% — similar entities, potential merge candidate
+      action: flag
+      priority: moderate
+      route: similarity_review
+  - input: {}
+    expect:
+      route: archive
+      action: pass
+      reason: Edit distance >30% — distinct entities
+      priority: low
+  - input:
+      normalized_distance: 0.299
+    expect:
+      reason: Edit distance 10-30% — similar entities, potential merge candidate
+      priority: moderate
+      route: similarity_review
+      action: flag
+  - input:
+      normalized_distance: 0.301
+    expect:
+      reason: Edit distance >30% — distinct entities
+      route: archive
+      priority: low
+      action: pass
+  - input: {}
+    expect:
+      action: pass
+      reason: Edit distance >30% — distinct entities
+      route: archive
+      priority: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

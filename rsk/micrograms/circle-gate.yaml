@@ -1,0 +1,224 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: circle-gate
+version: 0.1.0
+description: Community Circle entry gate — enforce 5W1H post format, classify to T1 primitive, route to SMM Phase I-III
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Circle Gate
+  subtitle: Community Circle entry gate — enforce 5W1H post format, classify to T1 primitive, route to SMM Phase I-III
+  icon: circle
+  route: /vigilance/mg/circle-gate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/circle-gate
+  cli: rsk mcg run circle-gate
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_who
+  nodes:
+    check_who:
+      type: condition
+      variable: w_word
+      operator: eq
+      value: who
+      true_next: accept_who
+      false_next: check_what
+    check_what:
+      type: condition
+      variable: w_word
+      operator: eq
+      value: what
+      true_next: accept_what
+      false_next: check_where
+    check_where:
+      type: condition
+      variable: w_word
+      operator: eq
+      value: where
+      true_next: accept_where
+      false_next: check_when
+    check_when:
+      type: condition
+      variable: w_word
+      operator: eq
+      value: when
+      true_next: accept_when
+      false_next: check_why
+    check_why:
+      type: condition
+      variable: w_word
+      operator: eq
+      value: why
+      true_next: accept_why
+      false_next: check_how
+    check_how:
+      type: condition
+      variable: w_word
+      operator: eq
+      value: how
+      true_next: accept_how
+      false_next: reject
+    accept_who:
+      type: return
+      value:
+        gate: circle-gate
+        passed: true
+        w_word: who
+        primitive: ψ
+        primitive_name: agent
+        smm_phase: I
+        phase_name: Initialize
+        next_action: identify_actor_scope
+    accept_what:
+      type: return
+      value:
+        gate: circle-gate
+        passed: true
+        w_word: what
+        primitive: ς
+        primitive_name: state
+        smm_phase: II
+        phase_name: Observe
+        next_action: define_entity_observation
+    accept_where:
+      type: return
+      value:
+        gate: circle-gate
+        passed: true
+        w_word: where
+        primitive: ∂
+        primitive_name: boundary
+        smm_phase: I
+        phase_name: Initialize
+        next_action: set_domain_locus
+    accept_when:
+      type: return
+      value:
+        gate: circle-gate
+        passed: true
+        w_word: when
+        primitive: ν
+        primitive_name: frequency
+        smm_phase: II
+        phase_name: Observe
+        next_action: anchor_temporal_position
+    accept_why:
+      type: return
+      value:
+        gate: circle-gate
+        passed: true
+        w_word: why
+        primitive: →
+        primitive_name: causality
+        smm_phase: III
+        phase_name: Question
+        next_action: draft_causal_hypothesis
+    accept_how:
+      type: return
+      value:
+        gate: circle-gate
+        passed: true
+        w_word: how
+        primitive: μ
+        primitive_name: mechanism
+        smm_phase: III
+        phase_name: Question
+        next_action: draft_mechanism_hypothesis
+    reject:
+      type: return
+      value:
+        gate: circle-gate
+        passed: false
+        reason: Circle posts must begin with Who, What, Where, When, Why, or How
+        suggestion: Rephrase your post as a question — e.g., 'Why does X correlate with Y?'
+        next_action: block_and_prompt_rewrite
+tests:
+  - input:
+      w_word: why
+    expect:
+      passed: true
+      primitive: →
+      smm_phase: III
+  - input:
+      w_word: how
+    expect:
+      passed: true
+      primitive: μ
+      smm_phase: III
+  - input:
+      w_word: who
+    expect:
+      passed: true
+      primitive: ψ
+  - input:
+      w_word: what
+    expect:
+      passed: true
+      primitive: ς
+  - input:
+      w_word: where
+    expect:
+      passed: true
+      primitive: ∂
+  - input:
+      w_word: when
+    expect:
+      passed: true
+      primitive: ν
+  - input:
+      w_word: hi
+    expect:
+      passed: false
+      next_action: block_and_prompt_rewrite
+  - input: {}
+    expect:
+      passed: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

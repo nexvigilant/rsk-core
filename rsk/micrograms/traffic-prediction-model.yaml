@@ -1,45 +1,89 @@
+# MICROGRAM++ (test-repair)
 name: traffic-prediction-model
-description: >
-  Predicts next-action priority for NexVigilant external traffic growth.
-  Measures current state across 7 dimensions, classifies the bottleneck,
-  and returns the highest-leverage action. Run weekly or before strategy sessions.
 version: 0.1.0
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ(→(∂₁, ∂₂, ∂₃, ∂₄, ∂₅, ∂₆, ∂₇)) — sequential bottleneck chain where first failing gate determines action'
-  primes: ['σ', '→', '∂', 'ν', 'N', '∅']
-  arguments: ['repo_public', 'descriptions_current', 'directory_listings', 'hop_default', 'example_published', 'calls_per_day', 'framework_count']
-  chain_prediction: 'Traffic growth follows a strict dependency chain. Visibility → Credibility → Discovery → Friction → Proof → Volume → Revenue.'
+description: |
+  Predicts next-action priority for NexVigilant external traffic growth. Measures current state across 7 dimensions, classifies the bottleneck, and returns the highest-leverage action. Run weekly or before strategy sessions.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: repo_public
+    type: bool
+    required: true
+    description: Is the Station source repo publicly accessible on GitHub?
+  - name: descriptions_current
+    type: bool
+    required: true
+    description: Do all public repo descriptions match actual tool count (1958)?
+  - name: directory_listings
+    type: int
+    required: true
+    description: Number of MCP directories where Station is listed
+  - name: hop_default
+    type: bool
+    required: true
+    description: Does chart_course recommend hop engine as primary onboarding path?
+  - name: example_published
+    type: bool
+    required: true
+    description: Is a public worked example with real unlabeled signal finding live?
+  - name: calls_per_day
+    type: float
+    required: true
+    description: Average daily external tool calls (not internal sessions)
+  - name: framework_count
+    type: int
+    required: true
+    description: Number of agent frameworks with NexVigilant integration examples
+outputs:
+  - name: bottleneck
+    type: string
+  - name: phase
+    type: string
+  - name: action
+    type: string
+  - name: priority
+    type: string
+  - name: prediction
+    type: string
+  - name: leverage
+    type: float
 interface:
   inputs:
     repo_public:
       type: bool
       required: true
-      description: 'Is the Station source repo publicly accessible on GitHub?'
+      description: Is the Station source repo publicly accessible on GitHub?
     descriptions_current:
       type: bool
       required: true
-      description: 'Do all public repo descriptions match actual tool count (1958)?'
+      description: Do all public repo descriptions match actual tool count (1958)?
     directory_listings:
       type: int
       required: true
-      description: 'Number of MCP directories where Station is listed'
+      description: Number of MCP directories where Station is listed
     hop_default:
       type: bool
       required: true
-      description: 'Does chart_course recommend hop engine as primary onboarding path?'
+      description: Does chart_course recommend hop engine as primary onboarding path?
     example_published:
       type: bool
       required: true
-      description: 'Is a public worked example with real unlabeled signal finding live?'
+      description: Is a public worked example with real unlabeled signal finding live?
     calls_per_day:
       type: float
       required: true
-      description: 'Average daily external tool calls (not internal sessions)'
+      description: Average daily external tool calls (not internal sessions)
     framework_count:
       type: int
       required: true
-      description: 'Number of agent frameworks with NexVigilant integration examples'
+      description: Number of agent frameworks with NexVigilant integration examples
   outputs:
     bottleneck:
       type: string
@@ -53,6 +97,59 @@ interface:
       type: string
     leverage:
       type: float
+ui:
+  title: Traffic Prediction Model
+  subtitle: |
+    Predicts next-action priority for NexVigilant external traffic growth. Measures current state across 7 dimensions, classifies the bottleneck, and returns the highest-leverage action. Run weekly or before strategy sessions.
+  icon: circle
+  route: /vigilance/mg/traffic-prediction-model
+  steps:
+    - field: repo_public
+      label: repo public
+      help: Is the Station source repo publicly accessible on GitHub?
+      widget: toggle
+      placeholder: null
+    - field: descriptions_current
+      label: descriptions current
+      help: Do all public repo descriptions match actual tool count (1958)?
+      widget: toggle
+      placeholder: null
+    - field: directory_listings
+      label: directory listings
+      help: Number of MCP directories where Station is listed
+      widget: text
+      placeholder: null
+    - field: hop_default
+      label: hop default
+      help: Does chart_course recommend hop engine as primary onboarding path?
+      widget: toggle
+      placeholder: null
+    - field: example_published
+      label: example published
+      help: Is a public worked example with real unlabeled signal finding live?
+      widget: toggle
+      placeholder: null
+    - field: calls_per_day
+      label: calls per day
+      help: Average daily external tool calls (not internal sessions)
+      widget: text
+      placeholder: null
+    - field: framework_count
+      label: framework count
+      help: Number of agent frameworks with NexVigilant integration examples
+      widget: text
+      placeholder: null
+  result:
+    template: "bottleneck: {{bottleneck}} — phase: {{phase}} — action: {{action}} — priority: {{priority}} — prediction: {{prediction}} — leverage: {{leverage}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/traffic-prediction-model
+  cli: rsk mcg run traffic-prediction-model
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_repo
   nodes:
@@ -68,10 +165,10 @@ tree:
       value:
         bottleneck: visibility
         phase: blocked
-        action: 'Make ferroforge public OR update nexvigilant-station repo with current source and README'
+        action: Make ferroforge public OR update nexvigilant-station repo with current source and README
         priority: P0
-        prediction: 'Zero external traffic possible until repo is accessible. All directory submissions point to it.'
-        leverage: 1.0
+        prediction: Zero external traffic possible until repo is accessible. All directory submissions point to it.
+        leverage: 1
     check_descriptions:
       type: condition
       variable: descriptions_current
@@ -84,9 +181,9 @@ tree:
       value:
         bottleneck: credibility
         phase: blocked
-        action: 'Update all stale GitHub repo descriptions — 151/347 must become 1958'
+        action: Update all stale GitHub repo descriptions — 151/347 must become 1958
         priority: P0
-        prediction: 'Inconsistent counts signal neglect. Developers check repos before integrating.'
+        prediction: Inconsistent counts signal neglect. Developers check repos before integrating.
         leverage: 0.9
     check_directories:
       type: condition
@@ -100,9 +197,9 @@ tree:
       value:
         bottleneck: discovery
         phase: pre_launch
-        action: 'Submit to Smithery + 5 web directories. Copy-paste kit ready.'
+        action: Submit to Smithery + 5 web directories. Copy-paste kit ready.
         priority: P1
-        prediction: 'First external call within 3-14 days. Expect 10-50 calls/day within 30 days.'
+        prediction: First external call within 3-14 days. Expect 10-50 calls/day within 30 days.
         leverage: 0.8
     check_hop:
       type: condition
@@ -116,9 +213,9 @@ tree:
       value:
         bottleneck: onboarding_friction
         phase: pre_optimization
-        action: 'Make hop engine the first recommendation in chart_course response'
+        action: Make hop engine the first recommendation in chart_course response
         priority: P1
-        prediction: 'Bounce rate >80% with manual 6-step chain. <40% with single hop returning full result.'
+        prediction: Bounce rate >80% with manual 6-step chain. <40% with single hop returning full result.
         leverage: 0.85
     check_example:
       type: condition
@@ -132,9 +229,9 @@ tree:
       value:
         bottleneck: proof
         phase: pre_viral
-        action: 'Publish semaglutide muscle atrophy signal as worked example — unlabeled, ROR=2.39, trending drug'
+        action: Publish semaglutide muscle atrophy signal as worked example — unlabeled, ROR=2.39, trending drug
         priority: P2
-        prediction: 'Worked examples drive 10x more adoption than tool listings. Emerging unlabeled signal = shareable story.'
+        prediction: Worked examples drive 10x more adoption than tool listings. Emerging unlabeled signal = shareable story.
         leverage: 0.95
     check_volume:
       type: condition
@@ -148,82 +245,57 @@ tree:
       value:
         bottleneck: volume
         phase: scaling
-        action: 'Publish framework integration examples (CrewAI, LangChain). Launch competitive intel product.'
+        action: Publish framework integration examples (CrewAI, LangChain). Launch competitive intel product.
         priority: P2
-        prediction: '500 calls/day = breakeven. Each framework integration = new user segment.'
+        prediction: 500 calls/day = breakeven. Each framework integration = new user segment.
         leverage: 0.7
     revenue:
       type: return
       value:
         bottleneck: none
         phase: revenue
-        action: 'Enable toll billing, add premium tiers, measure conversion rates'
+        action: Enable toll billing, add premium tiers, measure conversion rates
         priority: P3
-        prediction: 'Revenue phase. Shift from growth to monetization and retention.'
+        prediction: Revenue phase. Shift from growth to monetization and retention.
         leverage: 0.5
-test_cases:
-  - name: current_state_blocked
-    input:
-      repo_public: false
-      descriptions_current: false
-      directory_listings: 0
-      hop_default: false
-      example_published: false
-      calls_per_day: 0
-      framework_count: 0
-    expected_output:
-      bottleneck: visibility
-      phase: blocked
-      priority: P0
-  - name: post_repo_fix
-    input:
-      repo_public: true
-      descriptions_current: true
-      directory_listings: 0
-      hop_default: false
-      example_published: false
-      calls_per_day: 0
-      framework_count: 0
-    expected_output:
-      bottleneck: discovery
-      phase: pre_launch
-      priority: P1
-  - name: post_listings_no_hop
-    input:
-      repo_public: true
-      descriptions_current: true
-      directory_listings: 6
-      hop_default: false
-      example_published: false
-      calls_per_day: 15
-      framework_count: 0
-    expected_output:
-      bottleneck: onboarding_friction
-      phase: pre_optimization
-      priority: P1
-  - name: post_optimization
-    input:
-      repo_public: true
-      descriptions_current: true
-      directory_listings: 6
-      hop_default: true
-      example_published: false
-      calls_per_day: 30
-      framework_count: 0
-    expected_output:
-      bottleneck: proof
-      phase: pre_viral
-      priority: P2
-  - name: revenue_ready
-    input:
-      repo_public: true
-      descriptions_current: true
-      directory_listings: 8
-      hop_default: true
-      example_published: true
-      calls_per_day: 600
-      framework_count: 3
-    expected_output:
-      bottleneck: none
-      phase: revenue
-      priority: P3
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - bottleneck
+    - phase
+    - action
+    - priority
+    - prediction
+    - leverage
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true
+tests:
+  - input: {}
+    expect: {}

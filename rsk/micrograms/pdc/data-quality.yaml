@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: data-quality
-description: "Domain 7: Assess data quality dimension and route to appropriate validation action — completeness, accuracy, consistency, timeliness, integrity."
 version: 0.1.0
+description: "Domain 7: Assess data quality dimension and route to appropriate validation action — completeness, accuracy, consistency, timeliness, integrity."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: quality_dimension
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: action_if_low
+    type: string
+  - name: ai_assist
+    type: string
+  - name: composite_target
+    type: string
+  - name: definition
+    type: string
+  - name: dimension
+    type: string
+  - name: framework
+    type: string
+  - name: metric
+    type: string
+  - name: target
+    type: string
+  - name: validation
+    type: string
 interface:
   inputs:
     quality_dimension:
@@ -25,6 +59,28 @@ interface:
       type: string
     validation:
       type: string
+ui:
+  title: Data Quality
+  subtitle: "Domain 7: Assess data quality dimension and route to appropriate validation action — completeness, accuracy, consistency, timeliness, integrity."
+  icon: circle
+  route: /vigilance/mg/data-quality
+  steps:
+    - field: quality_dimension
+      label: quality dimension
+      help: Enter quality_dimension
+      widget: text
+      placeholder: null
+  result:
+    template: "action_if_low: {{action_if_low}} — ai_assist: {{ai_assist}} — composite_target: {{composite_target}} — definition: {{definition}} — dimension: {{dimension}} — framework: {{framework}} — metric: {{metric}} — target: {{target}} — validation: {{validation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/data-quality
+  cli: rsk mcg run data-quality
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_dimension
   nodes:
@@ -67,84 +123,125 @@ tree:
       type: return
       value:
         dimension: COMPLETENESS
-        definition: "all required and relevant data fields populated"
-        validation: "mandatory field checks, optional field optimization, follow-up triggers"
-        metric: "percent of required fields populated per case"
+        definition: all required and relevant data fields populated
+        validation: mandatory field checks, optional field optimization, follow-up triggers
+        metric: percent of required fields populated per case
         target: ">95% core fields, 100% regulatory minimum"
-        ai_assist: "auto-detection of missing fields, predictive follow-up prioritization, data enrichment"
-        action_if_low: "targeted follow-up request, source re-review, data enrichment pipeline"
+        ai_assist: auto-detection of missing fields, predictive follow-up prioritization, data enrichment
+        action_if_low: targeted follow-up request, source re-review, data enrichment pipeline
     accuracy:
       type: return
       value:
         dimension: ACCURACY
-        definition: "data correctly represents source information and clinical reality"
-        validation: "source verification, clinical review, coding verification, expert audit"
-        metric: "error rate per 100 data elements"
-        target: "<2% error rate across all data elements"
-        ai_assist: "NLP source-to-field verification, coding accuracy scoring, anomaly detection"
-        action_if_low: "source re-verification, coding review, assessor calibration"
+        definition: data correctly represents source information and clinical reality
+        validation: source verification, clinical review, coding verification, expert audit
+        metric: error rate per 100 data elements
+        target: <2% error rate across all data elements
+        ai_assist: NLP source-to-field verification, coding accuracy scoring, anomaly detection
+        action_if_low: source re-verification, coding review, assessor calibration
     consistency:
       type: return
       value:
         dimension: CONSISTENCY
-        definition: "data internally coherent and consistent across related fields and systems"
-        validation: "cross-field checks, temporal logic, coding hierarchy validation, cross-system comparison"
-        metric: "inconsistency rate per case"
-        target: "<1% cross-field inconsistency rate"
-        ai_assist: "automated consistency rules, cross-reference validation, duplicate detection"
-        action_if_low: "systematic rule review, data reconciliation, system harmonization"
+        definition: data internally coherent and consistent across related fields and systems
+        validation: cross-field checks, temporal logic, coding hierarchy validation, cross-system comparison
+        metric: inconsistency rate per case
+        target: <1% cross-field inconsistency rate
+        ai_assist: automated consistency rules, cross-reference validation, duplicate detection
+        action_if_low: systematic rule review, data reconciliation, system harmonization
     timeliness:
       type: return
       value:
         dimension: TIMELINESS
-        definition: "data processed and submitted within regulatory and organizational timelines"
-        validation: "deadline tracking, processing time monitoring, bottleneck identification"
-        metric: "percent of cases meeting regulatory deadlines"
-        target: "100% regulatory deadline compliance"
-        ai_assist: "predictive deadline alerts, workflow optimization, resource allocation"
-        action_if_low: "process bottleneck analysis, resource reallocation, workflow redesign"
+        definition: data processed and submitted within regulatory and organizational timelines
+        validation: deadline tracking, processing time monitoring, bottleneck identification
+        metric: percent of cases meeting regulatory deadlines
+        target: 100% regulatory deadline compliance
+        ai_assist: predictive deadline alerts, workflow optimization, resource allocation
+        action_if_low: process bottleneck analysis, resource reallocation, workflow redesign
     integrity:
       type: return
       value:
         dimension: INTEGRITY
-        definition: "data protected from unauthorized modification, corruption, or loss"
-        validation: "audit trails, access controls, backup verification, encryption checks"
-        metric: "zero unauthorized modifications, 100% backup success"
-        target: "zero integrity violations"
-        ai_assist: "anomalous access detection, corruption monitoring, backup verification"
-        action_if_low: "security audit, access review, backup protocol review, incident investigation"
+        definition: data protected from unauthorized modification, corruption, or loss
+        validation: audit trails, access controls, backup verification, encryption checks
+        metric: zero unauthorized modifications, 100% backup success
+        target: zero integrity violations
+        ai_assist: anomalous access detection, corruption monitoring, backup verification
+        action_if_low: security audit, access review, backup protocol review, incident investigation
     all_dimensions:
       type: return
       value:
         dimension: ALL
-        framework: "completeness, accuracy, consistency, timeliness, integrity"
-        composite_target: "quality score combining all 5 dimensions"
-        ai_assist: "comprehensive quality dashboard, predictive quality modeling, trend analysis"
+        framework: completeness, accuracy, consistency, timeliness, integrity
+        composite_target: quality score combining all 5 dimensions
+        ai_assist: comprehensive quality dashboard, predictive quality modeling, trend analysis
 tests:
-- input:
-    quality_dimension: completeness
-  expect:
-    dimension: COMPLETENESS
-    target: ">95% core fields, 100% regulatory minimum"
-- input:
-    quality_dimension: accuracy
-  expect:
-    dimension: ACCURACY
-    target: "<2% error rate across all data elements"
-- input:
-    quality_dimension: consistency
-  expect:
-    dimension: CONSISTENCY
-- input:
-    quality_dimension: timeliness
-  expect:
-    dimension: TIMELINESS
-    target: "100% regulatory deadline compliance"
-- input:
-    quality_dimension: integrity
-  expect:
-    dimension: INTEGRITY
-    target: "zero integrity violations"
-- input: {}
-  expect:
-    dimension: ALL
+  - input:
+      quality_dimension: completeness
+    expect:
+      dimension: COMPLETENESS
+      target: ">95% core fields, 100% regulatory minimum"
+  - input:
+      quality_dimension: accuracy
+    expect:
+      dimension: ACCURACY
+      target: <2% error rate across all data elements
+  - input:
+      quality_dimension: consistency
+    expect:
+      dimension: CONSISTENCY
+  - input:
+      quality_dimension: timeliness
+    expect:
+      dimension: TIMELINESS
+      target: 100% regulatory deadline compliance
+  - input:
+      quality_dimension: integrity
+    expect:
+      dimension: INTEGRITY
+      target: zero integrity violations
+  - input: {}
+    expect:
+      dimension: ALL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action_if_low
+    - ai_assist
+    - composite_target
+    - definition
+    - dimension
+    - framework
+    - metric
+    - target
+    - validation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

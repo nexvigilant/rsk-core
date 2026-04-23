@@ -1,6 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2d-blinded-study-unblinding
-description: 'ICH E2D Section 4.3: Determines whether a blinded post-approval study case requires unblinding for expedited reporting purposes'
 version: 0.1.0
+description: "ICH E2D Section 4.3: Determines whether a blinded post-approval study case requires unblinding for expedited reporting purposes"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: study_blinded
+    type: bool
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+  - name: is_fatal
+    type: bool
+    required: false
+    description: ""
+  - name: is_life_threatening
+    type: bool
+    required: false
+    description: ""
+  - name: unblinding_sop_exists
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: unblind_required
+    type: bool
+  - name: unblind_urgency
+    type: string
+  - name: report_after_unblinding
+    type: bool
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     study_blinded:
@@ -30,6 +74,53 @@ interface:
       type: bool
     regulatory_reference:
       type: string
+ui:
+  title: E2d Blinded Study Unblinding
+  subtitle: "ICH E2D Section 4.3: Determines whether a blinded post-approval study case requires unblinding for expedited reporting purposes"
+  icon: circle
+  route: /vigilance/mg/e2d-blinded-study-unblinding
+  steps:
+    - field: study_blinded
+      label: study blinded
+      help: Enter study_blinded
+      widget: toggle
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+    - field: is_fatal
+      label: is fatal
+      help: Enter is_fatal
+      widget: toggle
+      placeholder: null
+    - field: is_life_threatening
+      label: is life threatening
+      help: Enter is_life_threatening
+      widget: toggle
+      placeholder: null
+    - field: unblinding_sop_exists
+      label: unblinding sop exists
+      help: Enter unblinding_sop_exists
+      widget: toggle
+      placeholder: null
+  result:
+    template: "unblind_required: {{unblind_required}} — unblind_urgency: {{unblind_urgency}} — report_after_unblinding: {{report_after_unblinding}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2d-blinded-study-unblinding
+  cli: rsk mcg run e2d-blinded-study-unblinding
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_blinded
   nodes:
@@ -131,96 +222,127 @@ tree:
         unblind_urgency: NOT_REQUIRED_EXPECTED
         report_after_unblinding: false
         regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — blinded post-approval study unblinding trigger per ICH E2D Section 4.3'
-  primes: ['σ', '∂', 'κ']
-  arguments: ['study_blinded', 'is_serious', 'is_unexpected', 'is_fatal', 'is_life_threatening', 'unblinding_sop_exists']
 tests:
-- input:
-    study_blinded: true
-    is_serious: true
-    is_unexpected: true
-    is_fatal: true
-    is_life_threatening: false
-    unblinding_sop_exists: true
-  expect:
-    unblind_required: true
-    unblind_urgency: IMMEDIATE_7_DAY
-    report_after_unblinding: true
-    regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-- input:
-    study_blinded: true
-    is_serious: true
-    is_unexpected: true
-    is_fatal: false
-    is_life_threatening: true
-    unblinding_sop_exists: false
-  expect:
-    unblind_required: true
-    unblind_urgency: IMMEDIATE_7_DAY_ESTABLISH_SOP
-    report_after_unblinding: true
-    regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-- input:
-    study_blinded: true
-    is_serious: true
-    is_unexpected: true
-    is_fatal: false
-    is_life_threatening: false
-    unblinding_sop_exists: true
-  expect:
-    unblind_required: true
-    unblind_urgency: STANDARD_15_DAY
-    report_after_unblinding: true
-    regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-- input:
-    study_blinded: true
-    is_serious: true
-    is_unexpected: true
-    is_fatal: false
-    is_life_threatening: false
-    unblinding_sop_exists: false
-  expect:
-    unblind_required: true
-    unblind_urgency: STANDARD_15_DAY_ESTABLISH_SOP
-    report_after_unblinding: true
-    regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-- input:
-    study_blinded: false
-    is_serious: true
-    is_unexpected: true
-    is_fatal: true
-    is_life_threatening: false
-  expect:
-    unblind_required: false
-    unblind_urgency: NOT_APPLICABLE_OPEN_STUDY
-    report_after_unblinding: false
-    regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-- input:
-    study_blinded: true
-    is_serious: false
-    is_unexpected: true
-    is_fatal: false
-    is_life_threatening: false
-  expect:
-    unblind_required: false
-    unblind_urgency: NOT_REQUIRED_NON_SERIOUS
-    report_after_unblinding: false
-    regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-- input:
-    study_blinded: true
-    is_serious: true
-    is_unexpected: false
-    is_fatal: true
-    is_life_threatening: false
-  expect:
-    unblind_required: false
-    unblind_urgency: NOT_REQUIRED_EXPECTED
-    report_after_unblinding: false
-    regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
-- input: {}
-  expect:
-    unblind_required: false
-    unblind_urgency: NOT_APPLICABLE_OPEN_STUDY
-    report_after_unblinding: false
-    regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+  - input:
+      study_blinded: true
+      is_serious: true
+      is_unexpected: true
+      is_fatal: true
+      is_life_threatening: false
+      unblinding_sop_exists: true
+    expect:
+      unblind_required: true
+      unblind_urgency: IMMEDIATE_7_DAY
+      report_after_unblinding: true
+      regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+  - input:
+      study_blinded: true
+      is_serious: true
+      is_unexpected: true
+      is_fatal: false
+      is_life_threatening: true
+      unblinding_sop_exists: false
+    expect:
+      unblind_required: true
+      unblind_urgency: IMMEDIATE_7_DAY_ESTABLISH_SOP
+      report_after_unblinding: true
+      regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+  - input:
+      study_blinded: true
+      is_serious: true
+      is_unexpected: true
+      is_fatal: false
+      is_life_threatening: false
+      unblinding_sop_exists: true
+    expect:
+      unblind_required: true
+      unblind_urgency: STANDARD_15_DAY
+      report_after_unblinding: true
+      regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+  - input:
+      study_blinded: true
+      is_serious: true
+      is_unexpected: true
+      is_fatal: false
+      is_life_threatening: false
+      unblinding_sop_exists: false
+    expect:
+      unblind_required: true
+      unblind_urgency: STANDARD_15_DAY_ESTABLISH_SOP
+      report_after_unblinding: true
+      regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+  - input:
+      study_blinded: false
+      is_serious: true
+      is_unexpected: true
+      is_fatal: true
+      is_life_threatening: false
+    expect:
+      unblind_required: false
+      unblind_urgency: NOT_APPLICABLE_OPEN_STUDY
+      report_after_unblinding: false
+      regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+  - input:
+      study_blinded: true
+      is_serious: false
+      is_unexpected: true
+      is_fatal: false
+      is_life_threatening: false
+    expect:
+      unblind_required: false
+      unblind_urgency: NOT_REQUIRED_NON_SERIOUS
+      report_after_unblinding: false
+      regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+  - input:
+      study_blinded: true
+      is_serious: true
+      is_unexpected: false
+      is_fatal: true
+      is_life_threatening: false
+    expect:
+      unblind_required: false
+      unblind_urgency: NOT_REQUIRED_EXPECTED
+      report_after_unblinding: false
+      regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+  - input: {}
+    expect:
+      unblind_required: false
+      unblind_urgency: NOT_APPLICABLE_OPEN_STUDY
+      report_after_unblinding: false
+      regulatory_reference: ICH E2D Section 4.3 - Unblinding for Reporting Purposes
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - unblind_required
+    - unblind_urgency
+    - report_after_unblinding
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

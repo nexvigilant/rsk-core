@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dsmb-decision
-description: "Domain 5: DSMB recommendation routing — continue, modify, or terminate based on safety/efficacy balance and stopping rules."
 version: 0.1.0
+description: "Domain 5: DSMB recommendation routing — continue, modify, or terminate based on safety/efficacy balance and stopping rules."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: futility_threshold_met
+    type: bool
+    required: false
+    description: ""
+  - name: safety_concern_level
+    type: string
+    required: false
+    description: ""
+  - name: stopping_rule_met
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: actions
+    type: string
+  - name: communication
+    type: string
+  - name: documentation
+    type: string
+  - name: followup
+    type: string
+  - name: recommendation
+    type: string
+  - name: urgency
+    type: string
 interface:
   inputs:
     futility_threshold_met:
@@ -25,6 +61,38 @@ interface:
       type: string
     urgency:
       type: string
+ui:
+  title: Dsmb Decision
+  subtitle: "Domain 5: DSMB recommendation routing — continue, modify, or terminate based on safety/efficacy balance and stopping rules."
+  icon: circle
+  route: /vigilance/mg/dsmb-decision
+  steps:
+    - field: futility_threshold_met
+      label: futility threshold met
+      help: Enter futility_threshold_met
+      widget: toggle
+      placeholder: null
+    - field: safety_concern_level
+      label: safety concern level
+      help: Enter safety_concern_level
+      widget: text
+      placeholder: null
+    - field: stopping_rule_met
+      label: stopping rule met
+      help: Enter stopping_rule_met
+      widget: toggle
+      placeholder: null
+  result:
+    template: "actions: {{actions}} — communication: {{communication}} — documentation: {{documentation}} — followup: {{followup}} — recommendation: {{recommendation}} — urgency: {{urgency}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dsmb-decision
+  cli: rsk mcg run dsmb-decision
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_stopping_rule
   nodes:
@@ -75,86 +143,124 @@ tree:
       value:
         recommendation: TERMINATE
         urgency: IMMEDIATE
-        actions: "stop enrollment, discontinue treatment, notify investigators within 24 hours"
-        communication: "sponsor, regulatory authorities, ethics committees, all investigators"
-        documentation: "DSMB meeting minutes, rationale, safety data summary, benefit-risk assessment"
-        followup: "patient safety follow-up plan, unblinding if needed, regulatory notification"
+        actions: stop enrollment, discontinue treatment, notify investigators within 24 hours
+        communication: sponsor, regulatory authorities, ethics committees, all investigators
+        documentation: DSMB meeting minutes, rationale, safety data summary, benefit-risk assessment
+        followup: patient safety follow-up plan, unblinding if needed, regulatory notification
     recommend_suspend:
       type: return
       value:
         recommendation: SUSPEND
         urgency: HIGH
-        actions: "pause enrollment, continue treating enrolled patients if safe, enhanced monitoring"
-        communication: "sponsor notification, regulatory discussion, investigator alert"
-        documentation: "suspension rationale, enhanced monitoring plan, resumption criteria"
-        followup: "safety review within 30 days, resumption or termination decision"
+        actions: pause enrollment, continue treating enrolled patients if safe, enhanced monitoring
+        communication: sponsor notification, regulatory discussion, investigator alert
+        documentation: suspension rationale, enhanced monitoring plan, resumption criteria
+        followup: safety review within 30 days, resumption or termination decision
     recommend_modify:
       type: return
       value:
         recommendation: MODIFY
         urgency: MODERATE
-        actions: "protocol amendment, dose modification, enhanced monitoring, eligibility criteria update"
-        communication: "sponsor, regulatory authority notification, investigator update, EC/IRB amendment"
-        documentation: "modification rationale, updated safety monitoring plan, revised benefit-risk"
-        followup: "implementation verification, safety monitoring with new parameters"
+        actions: protocol amendment, dose modification, enhanced monitoring, eligibility criteria update
+        communication: sponsor, regulatory authority notification, investigator update, EC/IRB amendment
+        documentation: modification rationale, updated safety monitoring plan, revised benefit-risk
+        followup: implementation verification, safety monitoring with new parameters
     recommend_continue_enhanced:
       type: return
       value:
         recommendation: CONTINUE_ENHANCED
         urgency: LOW
-        actions: "continue per protocol with additional safety monitoring measures"
-        communication: "sponsor update, next scheduled DSMB meeting"
-        documentation: "enhanced monitoring rationale, additional safety parameters"
-        followup: "review at next DSMB meeting or earlier if triggers met"
+        actions: continue per protocol with additional safety monitoring measures
+        communication: sponsor update, next scheduled DSMB meeting
+        documentation: enhanced monitoring rationale, additional safety parameters
+        followup: review at next DSMB meeting or earlier if triggers met
     recommend_continue:
       type: return
       value:
         recommendation: CONTINUE
         urgency: NONE
-        actions: "continue per protocol, no changes needed"
-        communication: "routine DSMB report to sponsor"
-        documentation: "meeting minutes documenting review and recommendation"
-        followup: "next scheduled DSMB meeting"
+        actions: continue per protocol, no changes needed
+        communication: routine DSMB report to sponsor
+        documentation: meeting minutes documenting review and recommendation
+        followup: next scheduled DSMB meeting
 tests:
-- input:
-    stopping_rule_met: true
-    safety_concern_level: critical
-  expect:
-    recommendation: TERMINATE
-    urgency: IMMEDIATE
-- input:
-    stopping_rule_met: true
-    futility_threshold_met: true
-    safety_concern_level: moderate
-  expect:
-    recommendation: TERMINATE
-- input:
-    stopping_rule_met: true
-    safety_concern_level: moderate
-    futility_threshold_met: false
-  expect:
-    recommendation: MODIFY
-- input:
-    safety_concern_level: critical
-    stopping_rule_met: false
-  expect:
-    recommendation: SUSPEND
-    urgency: HIGH
-- input:
-    safety_concern_level: moderate
-    stopping_rule_met: false
-  expect:
-    recommendation: MODIFY
-- input:
-    safety_concern_level: minor
-    stopping_rule_met: false
-  expect:
-    recommendation: CONTINUE_ENHANCED
-- input:
-    safety_concern_level: none
-    stopping_rule_met: false
-  expect:
-    recommendation: CONTINUE
-- input: {}
-  expect:
-    recommendation: CONTINUE
+  - input:
+      stopping_rule_met: true
+      safety_concern_level: critical
+    expect:
+      recommendation: TERMINATE
+      urgency: IMMEDIATE
+  - input:
+      stopping_rule_met: true
+      futility_threshold_met: true
+      safety_concern_level: moderate
+    expect:
+      recommendation: TERMINATE
+  - input:
+      stopping_rule_met: true
+      safety_concern_level: moderate
+      futility_threshold_met: false
+    expect:
+      recommendation: MODIFY
+  - input:
+      safety_concern_level: critical
+      stopping_rule_met: false
+    expect:
+      recommendation: SUSPEND
+      urgency: HIGH
+  - input:
+      safety_concern_level: moderate
+      stopping_rule_met: false
+    expect:
+      recommendation: MODIFY
+  - input:
+      safety_concern_level: minor
+      stopping_rule_met: false
+    expect:
+      recommendation: CONTINUE_ENHANCED
+  - input:
+      safety_concern_level: none
+      stopping_rule_met: false
+    expect:
+      recommendation: CONTINUE
+  - input: {}
+    expect:
+      recommendation: CONTINUE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - actions
+    - communication
+    - documentation
+    - followup
+    - recommendation
+    - urgency
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

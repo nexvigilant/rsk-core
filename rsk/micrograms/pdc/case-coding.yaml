@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: case-coding
-description: 'PDC competency assessment: case-coding proficiency classifier'
 version: 0.1.0
+description: "PDC competency assessment: case-coding proficiency classifier"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: knowledge_score
+    type: int
+    required: false
+    description: ""
+  - name: skill_score
+    type: int
+    required: false
+    description: ""
+  - name: behavior_score
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: competency_level
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     knowledge_score:
@@ -17,6 +45,38 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Case Coding
+  subtitle: "PDC competency assessment: case-coding proficiency classifier"
+  icon: circle
+  route: /vigilance/mg/case-coding
+  steps:
+    - field: knowledge_score
+      label: knowledge score
+      help: Enter knowledge_score
+      widget: text
+      placeholder: null
+    - field: skill_score
+      label: skill score
+      help: Enter skill_score
+      widget: text
+      placeholder: null
+    - field: behavior_score
+      label: behavior score
+      help: Enter behavior_score
+      widget: text
+      placeholder: null
+  result:
+    template: "competency_level: {{competency_level}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/case-coding
+  cli: rsk mcg run case-coding
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_expert
   nodes:
@@ -76,15 +136,76 @@ tree:
         competency_level: NOVICE
         action: structured_learning
 tests:
-- input: {knowledge_score: 90, skill_score: 85, behavior_score: 80}
-  expect: {competency_level: EXPERT, action: mentor_others}
-- input: {knowledge_score: 60, skill_score: 55, behavior_score: 50}
-  expect: {competency_level: PROFICIENT, action: independent_practice}
-- input: {knowledge_score: 30, skill_score: 40, behavior_score: 30}
-  expect: {competency_level: DEVELOPING, action: supervised_practice}
-- input: {knowledge_score: 10, skill_score: 10, behavior_score: 10}
-  expect: {competency_level: NOVICE, action: structured_learning}
-- input: {knowledge_score: 85, skill_score: 40, behavior_score: 70}
-  expect: {competency_level: PROFICIENT, action: independent_practice}
-- input: {}
-  expect: {competency_level: NOVICE, action: structured_learning}
+  - input:
+      knowledge_score: 90
+      skill_score: 85
+      behavior_score: 80
+    expect:
+      competency_level: EXPERT
+      action: mentor_others
+  - input:
+      knowledge_score: 60
+      skill_score: 55
+      behavior_score: 50
+    expect:
+      competency_level: PROFICIENT
+      action: independent_practice
+  - input:
+      knowledge_score: 30
+      skill_score: 40
+      behavior_score: 30
+    expect:
+      competency_level: DEVELOPING
+      action: supervised_practice
+  - input:
+      knowledge_score: 10
+      skill_score: 10
+      behavior_score: 10
+    expect:
+      competency_level: NOVICE
+      action: structured_learning
+  - input:
+      knowledge_score: 85
+      skill_score: 40
+      behavior_score: 70
+    expect:
+      competency_level: PROFICIENT
+      action: independent_practice
+  - input: {}
+    expect:
+      competency_level: NOVICE
+      action: structured_learning
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - competency_level
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

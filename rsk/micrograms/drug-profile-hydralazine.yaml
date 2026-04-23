@@ -1,11 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-profile-hydralazine
-description: "Safety profile classifier for hydralazine. Routes by PRR signal strength and seriousness."
-version: "1.0"
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(×(N_prr, ∂_threshold)) → ς_classification'
-  primes: ['κ', 'N', '∂', 'ς', '→']
-  arguments: ['prr', 'case_count', 'serious_pct']
+version: 0.1.0
+description: Safety profile classifier for hydralazine. Routes by PRR signal strength and seriousness.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: prr
+    type: float
+    required: true
+    description: ""
+  - name: case_count
+    type: int
+    required: false
+    description: ""
+  - name: serious_pct
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: risk_level
+    type: string
+  - name: monitoring
+    type: string
 interface:
   inputs:
     prr:
@@ -22,6 +45,38 @@ interface:
       type: string
     monitoring:
       type: string
+ui:
+  title: Drug Profile Hydralazine
+  subtitle: Safety profile classifier for hydralazine. Routes by PRR signal strength and seriousness.
+  icon: circle
+  route: /vigilance/mg/drug-profile-hydralazine
+  steps:
+    - field: prr
+      label: prr
+      help: Enter prr
+      widget: text
+      placeholder: null
+    - field: case_count
+      label: case count
+      help: Enter case_count
+      widget: text
+      placeholder: null
+    - field: serious_pct
+      label: serious pct
+      help: Enter serious_pct
+      widget: text
+      placeholder: null
+  result:
+    template: "risk_level: {{risk_level}} — monitoring: {{monitoring}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-profile-hydralazine
+  cli: rsk mcg run drug-profile-hydralazine
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_prr_present
   nodes:
@@ -35,7 +90,7 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 3.0
+      value: 3
       true_next: check_serious
       false_next: check_moderate_prr
     check_serious:
@@ -50,18 +105,18 @@ tree:
       value:
         risk_level: HIGH
         monitoring: weekly
-        drug: "hydralazine"
+        drug: hydralazine
     elevated:
       type: return
       value:
         risk_level: ELEVATED
         monitoring: biweekly
-        drug: "hydralazine"
+        drug: hydralazine
     check_moderate_prr:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: moderate
       false_next: low_risk
     moderate:
@@ -69,32 +124,88 @@ tree:
       value:
         risk_level: MODERATE
         monitoring: monthly
-        drug: "hydralazine"
+        drug: hydralazine
     low_risk:
       type: return
       value:
         risk_level: LOW
         monitoring: quarterly
-        drug: "hydralazine"
+        drug: hydralazine
     unknown:
       type: return
       value:
         risk_level: UNKNOWN
         monitoring: baseline
-        drug: "hydralazine"
+        drug: hydralazine
 tests:
   - name: high risk — strong signal + serious
-    input: {prr: 4.5, case_count: 200, serious_pct: 0.7}
-    expect: {risk_level: HIGH, monitoring: weekly}
+    input:
+      prr: 4.5
+      case_count: 200
+      serious_pct: 0.7
+    expect:
+      risk_level: HIGH
+      monitoring: weekly
   - name: elevated — strong signal but low serious
-    input: {prr: 3.5, case_count: 100, serious_pct: 0.3}
-    expect: {risk_level: ELEVATED, monitoring: biweekly}
+    input:
+      prr: 3.5
+      case_count: 100
+      serious_pct: 0.3
+    expect:
+      risk_level: ELEVATED
+      monitoring: biweekly
   - name: moderate — signal threshold
-    input: {prr: 2.5, case_count: 50, serious_pct: 0.4}
-    expect: {risk_level: MODERATE, monitoring: monthly}
+    input:
+      prr: 2.5
+      case_count: 50
+      serious_pct: 0.4
+    expect:
+      risk_level: MODERATE
+      monitoring: monthly
   - name: low risk — no signal
-    input: {prr: 1.2, case_count: 500, serious_pct: 0.1}
-    expect: {risk_level: LOW, monitoring: quarterly}
+    input:
+      prr: 1.2
+      case_count: 500
+      serious_pct: 0.1
+    expect:
+      risk_level: LOW
+      monitoring: quarterly
   - name: null safety
     input: {}
-    expect: {risk_level: UNKNOWN, monitoring: baseline}
+    expect:
+      risk_level: UNKNOWN
+      monitoring: baseline
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - risk_level
+    - monitoring
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

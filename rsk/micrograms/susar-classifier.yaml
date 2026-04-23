@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: susar-classifier
-description: 'ICH E2A SUSAR classification: Suspected Unexpected Serious Adverse Reaction determination from seriousness, expectedness, and causality'
 version: 0.1.0
+description: "ICH E2A SUSAR classification: Suspected Unexpected Serious Adverse Reaction determination from seriousness, expectedness, and causality"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: causal_relationship
+    type: string
+    required: false
+    description: ""
+  - name: serious
+    type: bool
+    required: false
+    description: ""
+  - name: unexpected
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: classification
+    type: string
+  - name: regulatory_reference
+    type: string
+  - name: reporting_timeline
+    type: string
+  - name: susar
+    type: bool
 interface:
   inputs:
     causal_relationship:
@@ -21,6 +53,38 @@ interface:
       type: string
     susar:
       type: bool
+ui:
+  title: Susar Classifier
+  subtitle: "ICH E2A SUSAR classification: Suspected Unexpected Serious Adverse Reaction determination from seriousness, expectedness, and causality"
+  icon: circle
+  route: /vigilance/mg/susar-classifier
+  steps:
+    - field: causal_relationship
+      label: causal relationship
+      help: Enter causal_relationship
+      widget: text
+      placeholder: null
+    - field: serious
+      label: serious
+      help: Enter serious
+      widget: toggle
+      placeholder: null
+    - field: unexpected
+      label: unexpected
+      help: Enter unexpected
+      widget: toggle
+      placeholder: null
+  result:
+    template: "classification: {{classification}} — regulatory_reference: {{regulatory_reference}} — reporting_timeline: {{reporting_timeline}} — susar: {{susar}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/susar-classifier
+  cli: rsk mcg run susar-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: serious_check
   nodes:
@@ -102,96 +166,132 @@ tree:
         reporting_timeline: periodic
         regulatory_reference: ICH E2A Section III.B
 tests:
-- input:
-    serious: false
-    unexpected: true
-    causal_relationship: certain
-  expect:
-    classification: NON_SERIOUS_AE
-    susar: false
-    reporting_timeline: periodic
-- input:
-    serious: false
-    unexpected: false
-    causal_relationship: probable
-  expect:
-    classification: NON_SERIOUS_AE
-    susar: false
-    reporting_timeline: periodic
-- input:
-    serious: true
-    unexpected: false
-    causal_relationship: certain
-  expect:
-    classification: EXPECTED_SAR
-    susar: false
-    reporting_timeline: periodic
-- input:
-    serious: true
-    unexpected: false
-    causal_relationship: possible
-  expect:
-    classification: EXPECTED_SAR
-    susar: false
-    reporting_timeline: periodic
-- input:
-    serious: true
-    unexpected: true
-    causal_relationship: certain
-  expect:
-    classification: SUSAR
-    susar: true
-    reporting_timeline: expedited_15day
-- input:
-    serious: true
-    unexpected: true
-    causal_relationship: probable
-  expect:
-    classification: SUSAR
-    susar: true
-    reporting_timeline: expedited_15day
-- input:
-    serious: true
-    unexpected: true
-    causal_relationship: possible
-  expect:
-    classification: SUSAR
-    susar: true
-    reporting_timeline: expedited_15day
-- input:
-    serious: true
-    unexpected: true
-    causal_relationship: unlikely
-  expect:
-    classification: SUSPECTED_SUSAR
-    susar: false
-    reporting_timeline: expedited_15day
-- input:
-    serious: true
-    unexpected: true
-    causal_relationship: unrelated
-  expect:
-    classification: UNEXPECTED_SAR_NO_CAUSALITY
-    susar: false
-    reporting_timeline: periodic
-- input:
-    serious: false
-    unexpected: false
-    causal_relationship: unrelated
-  expect:
-    classification: NON_SERIOUS_AE
-    susar: false
-    reporting_timeline: periodic
-- input:
-    serious: true
-    unexpected: true
-    causal_relationship: certain
-  expect:
-    susar: true
-    regulatory_reference: ICH E2A Section III.B
-    reporting_timeline: expedited_15day
-- input: {}
-  expect:
-    classification: NON_SERIOUS_AE
-    susar: false
-    reporting_timeline: periodic
+  - input:
+      serious: false
+      unexpected: true
+      causal_relationship: certain
+    expect:
+      classification: NON_SERIOUS_AE
+      susar: false
+      reporting_timeline: periodic
+  - input:
+      serious: false
+      unexpected: false
+      causal_relationship: probable
+    expect:
+      classification: NON_SERIOUS_AE
+      susar: false
+      reporting_timeline: periodic
+  - input:
+      serious: true
+      unexpected: false
+      causal_relationship: certain
+    expect:
+      classification: EXPECTED_SAR
+      susar: false
+      reporting_timeline: periodic
+  - input:
+      serious: true
+      unexpected: false
+      causal_relationship: possible
+    expect:
+      classification: EXPECTED_SAR
+      susar: false
+      reporting_timeline: periodic
+  - input:
+      serious: true
+      unexpected: true
+      causal_relationship: certain
+    expect:
+      classification: SUSAR
+      susar: true
+      reporting_timeline: expedited_15day
+  - input:
+      serious: true
+      unexpected: true
+      causal_relationship: probable
+    expect:
+      classification: SUSAR
+      susar: true
+      reporting_timeline: expedited_15day
+  - input:
+      serious: true
+      unexpected: true
+      causal_relationship: possible
+    expect:
+      classification: SUSAR
+      susar: true
+      reporting_timeline: expedited_15day
+  - input:
+      serious: true
+      unexpected: true
+      causal_relationship: unlikely
+    expect:
+      classification: SUSPECTED_SUSAR
+      susar: false
+      reporting_timeline: expedited_15day
+  - input:
+      serious: true
+      unexpected: true
+      causal_relationship: unrelated
+    expect:
+      classification: UNEXPECTED_SAR_NO_CAUSALITY
+      susar: false
+      reporting_timeline: periodic
+  - input:
+      serious: false
+      unexpected: false
+      causal_relationship: unrelated
+    expect:
+      classification: NON_SERIOUS_AE
+      susar: false
+      reporting_timeline: periodic
+  - input:
+      serious: true
+      unexpected: true
+      causal_relationship: certain
+    expect:
+      susar: true
+      regulatory_reference: ICH E2A Section III.B
+      reporting_timeline: expedited_15day
+  - input: {}
+    expect:
+      classification: NON_SERIOUS_AE
+      susar: false
+      reporting_timeline: periodic
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - classification
+    - regulatory_reference
+    - reporting_timeline
+    - susar
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

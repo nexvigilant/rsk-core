@@ -1,7 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: adapt-interaction-severity
-description: "Adapter: convert interaction severity from RxNav/DrugBank configmigrams to signal pipeline inputs"
 version: 0.1.0
-
+description: "Adapter: convert interaction severity from RxNav/DrugBank configmigrams to signal pipeline inputs"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: severity
+    type: string
+    required: false
+    description: "From config-rxnav: contraindicated, major, moderate, minor, none"
+  - name: risk_class
+    type: string
+    required: false
+    description: "From config-drugbank: high_risk, moderate_risk, low_risk, minimal"
+outputs:
+  - name: signal_detected
+    type: bool
+  - name: is_serious
+    type: bool
+  - name: prr
+    type: float
 interface:
   inputs:
     severity:
@@ -19,7 +44,33 @@ interface:
       type: bool
     prr:
       type: float
-
+ui:
+  title: Adapt Interaction Severity
+  subtitle: "Adapter: convert interaction severity from RxNav/DrugBank configmigrams to signal pipeline inputs"
+  icon: circle
+  route: /vigilance/mg/adapt-interaction-severity
+  steps:
+    - field: severity
+      label: severity
+      help: "From config-rxnav: contraindicated, major, moderate, minor, none"
+      widget: text
+      placeholder: null
+    - field: risk_class
+      label: risk class
+      help: "From config-drugbank: high_risk, moderate_risk, low_risk, minimal"
+      widget: text
+      placeholder: null
+  result:
+    template: "signal_detected: {{signal_detected}} — is_serious: {{is_serious}} — prr: {{prr}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/adapt-interaction-severity
+  cli: rsk mcg run adapt-interaction-severity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severity
   nodes:
@@ -29,103 +80,157 @@ tree:
       operator: is_null
       true_next: check_risk_class
       false_next: check_contraindicated
-
     check_contraindicated:
       type: condition
       variable: severity
       operator: eq
-      value: "contraindicated"
+      value: contraindicated
       true_next: critical_out
       false_next: check_major
-
     check_major:
       type: condition
       variable: severity
       operator: eq
-      value: "major"
+      value: major
       true_next: serious_out
       false_next: check_moderate_sev
-
     check_moderate_sev:
       type: condition
       variable: severity
       operator: eq
-      value: "moderate"
+      value: moderate
       true_next: moderate_out
       false_next: low_out
-
     check_risk_class:
       type: condition
       variable: risk_class
       operator: is_null
       true_next: low_out
       false_next: check_high_risk
-
     check_high_risk:
       type: condition
       variable: risk_class
       operator: eq
-      value: "high_risk"
+      value: high_risk
       true_next: serious_out
       false_next: check_moderate_risk
-
     check_moderate_risk:
       type: condition
       variable: risk_class
       operator: eq
-      value: "moderate_risk"
+      value: moderate_risk
       true_next: moderate_out
       false_next: low_out
-
     critical_out:
       type: return
       value:
         signal_detected: true
         is_serious: true
-        prr: 10.0
-
+        prr: 10
     serious_out:
       type: return
       value:
         signal_detected: true
         is_serious: true
-        prr: 6.0
-
+        prr: 6
     moderate_out:
       type: return
       value:
         signal_detected: true
         is_serious: false
         prr: 2.5
-
     low_out:
       type: return
       value:
         signal_detected: false
         is_serious: false
         prr: 0.5
-
-primitive_signature:
-  dominant: 'μ'
-  expression: 'μ — domain mapping or format conversion'
-  primes: ['μ']
-  arguments: []
 tests:
-  - input: { severity: "contraindicated" }
-    expect: { signal_detected: true, is_serious: true, prr: 10.0 }
-  - input: { severity: "major" }
-    expect: { signal_detected: true, is_serious: true, prr: 6.0 }
-  - input: { severity: "moderate" }
-    expect: { signal_detected: true, is_serious: false, prr: 2.5 }
-  - input: { severity: "minor" }
-    expect: { signal_detected: false, is_serious: false, prr: 0.5 }
-  - input: { severity: "none" }
-    expect: { signal_detected: false, is_serious: false, prr: 0.5 }
-  - input: { risk_class: "high_risk" }
-    expect: { signal_detected: true, is_serious: true, prr: 6.0 }
-  - input: { risk_class: "moderate_risk" }
-    expect: { signal_detected: true, is_serious: false, prr: 2.5 }
-  - input: { risk_class: "low_risk" }
-    expect: { signal_detected: false, is_serious: false, prr: 0.5 }
+  - input:
+      severity: contraindicated
+    expect:
+      signal_detected: true
+      is_serious: true
+      prr: 10
+  - input:
+      severity: major
+    expect:
+      signal_detected: true
+      is_serious: true
+      prr: 6
+  - input:
+      severity: moderate
+    expect:
+      signal_detected: true
+      is_serious: false
+      prr: 2.5
+  - input:
+      severity: minor
+    expect:
+      signal_detected: false
+      is_serious: false
+      prr: 0.5
+  - input:
+      severity: none
+    expect:
+      signal_detected: false
+      is_serious: false
+      prr: 0.5
+  - input:
+      risk_class: high_risk
+    expect:
+      signal_detected: true
+      is_serious: true
+      prr: 6
+  - input:
+      risk_class: moderate_risk
+    expect:
+      signal_detected: true
+      is_serious: false
+      prr: 2.5
+  - input:
+      risk_class: low_risk
+    expect:
+      signal_detected: false
+      is_serious: false
+      prr: 0.5
   - input: {}
-    expect: { signal_detected: false, is_serious: false, prr: 0.5 }
+    expect:
+      signal_detected: false
+      is_serious: false
+      prr: 0.5
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - signal_detected
+    - is_serious
+    - prr
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

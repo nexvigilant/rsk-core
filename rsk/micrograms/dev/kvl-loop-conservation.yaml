@@ -1,32 +1,60 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: kvl-loop-conservation
-description: "Kirchhoff's Voltage Law analog for chain loops — verify that confidence/severity does not amplify across loop iterations without new evidence input. In circuit theory, voltage drops around a loop sum to zero. In chain loops, verdict strength must be conserved unless new data enters."
 version: 0.1.0
-primitive_signature:
-  dominant: boundary
-  expression: "delta(confidence) <= delta(evidence) — no free amplification"
-  primes: [boundary, state, causality]
-  arguments:
-    - confidence_before
-    - confidence_after
-    - new_evidence_fields
+description: Kirchhoff's Voltage Law analog for chain loops — verify that confidence/severity does not amplify across loop iterations without new evidence input. In circuit theory, voltage drops around a loop sum to zero. In chain loops, verdict strength must be conserved unless new data enters.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: confidence_before
+    type: float
+    required: true
+    description: Verdict confidence at loop iteration N-1 (0.0-1.0)
+  - name: confidence_after
+    type: float
+    required: true
+    description: Verdict confidence at loop iteration N (0.0-1.0)
+  - name: new_evidence_fields
+    type: int
+    required: false
+    description: Number of new input fields added between iterations (0 = no new data)
+  - name: iteration
+    type: int
+    required: false
+    description: Current loop iteration number
+outputs:
+  - name: kvl_valid
+    type: bool
+  - name: violation_type
+    type: string
+  - name: confidence_delta
+    type: float
+  - name: recommendation
+    type: string
 interface:
   inputs:
     confidence_before:
       type: float
       required: true
-      description: "Verdict confidence at loop iteration N-1 (0.0-1.0)"
+      description: Verdict confidence at loop iteration N-1 (0.0-1.0)
     confidence_after:
       type: float
       required: true
-      description: "Verdict confidence at loop iteration N (0.0-1.0)"
+      description: Verdict confidence at loop iteration N (0.0-1.0)
     new_evidence_fields:
       type: int
       required: false
-      description: "Number of new input fields added between iterations (0 = no new data)"
+      description: Number of new input fields added between iterations (0 = no new data)
     iteration:
       type: int
       required: false
-      description: "Current loop iteration number"
+      description: Current loop iteration number
   outputs:
     kvl_valid:
       type: bool
@@ -36,6 +64,43 @@ interface:
       type: float
     recommendation:
       type: string
+ui:
+  title: Kvl Loop Conservation
+  subtitle: Kirchhoff's Voltage Law analog for chain loops — verify that confidence/severity does not amplify across loop iterations without new evidence input. In circuit theory, voltage drops around a loop sum to zero. In chain loops, verdict strength must be conserved unless new data enters.
+  icon: circle
+  route: /vigilance/mg/kvl-loop-conservation
+  steps:
+    - field: confidence_before
+      label: confidence before
+      help: Verdict confidence at loop iteration N-1 (0.0-1.0)
+      widget: text
+      placeholder: null
+    - field: confidence_after
+      label: confidence after
+      help: Verdict confidence at loop iteration N (0.0-1.0)
+      widget: text
+      placeholder: null
+    - field: new_evidence_fields
+      label: new evidence fields
+      help: Number of new input fields added between iterations (0 = no new data)
+      widget: text
+      placeholder: null
+    - field: iteration
+      label: iteration
+      help: Current loop iteration number
+      widget: text
+      placeholder: null
+  result:
+    template: "kvl_valid: {{kvl_valid}} — violation_type: {{violation_type}} — confidence_delta: {{confidence_delta}} — recommendation: {{recommendation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/kvl-loop-conservation
+  cli: rsk mcg run kvl-loop-conservation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_evidence
   nodes:
@@ -46,14 +111,12 @@ tree:
       value: 0
       true_next: evidence_present
       false_next: check_amplification
-
     evidence_present:
       type: return
       value:
         kvl_valid: true
         violation_type: none
-        recommendation: "KVL satisfied — confidence change justified by new evidence input"
-
+        recommendation: KVL satisfied — confidence change justified by new evidence input
     check_amplification:
       type: condition
       variable: confidence_after
@@ -61,14 +124,12 @@ tree:
       value: 0
       true_next: compare_delta
       false_next: confidence_dropped
-
     confidence_dropped:
       type: return
       value:
         kvl_valid: true
         violation_type: none
-        recommendation: "KVL satisfied — confidence did not increase without evidence"
-
+        recommendation: KVL satisfied — confidence did not increase without evidence
     compare_delta:
       type: condition
       variable: confidence_before
@@ -76,14 +137,12 @@ tree:
       value: 0
       true_next: check_increase
       false_next: no_baseline
-
     no_baseline:
       type: return
       value:
         kvl_valid: true
         violation_type: none
-        recommendation: "No baseline confidence — first iteration, KVL not applicable"
-
+        recommendation: No baseline confidence — first iteration, KVL not applicable
     check_increase:
       type: condition
       variable: confidence_after
@@ -91,7 +150,6 @@ tree:
       value: 0.5
       true_next: check_before_low
       false_next: minor_change
-
     check_before_low:
       type: condition
       variable: confidence_before
@@ -99,14 +157,12 @@ tree:
       value: 0.5
       true_next: kvl_violation
       false_next: check_same_or_higher
-
     kvl_violation:
       type: return
       value:
         kvl_valid: false
         violation_type: free_amplification
-        recommendation: "KVL VIOLATION — confidence jumped from low to high without new evidence. Loop is amplifying without energy input. Add evidence gate or cap iteration confidence."
-
+        recommendation: KVL VIOLATION — confidence jumped from low to high without new evidence. Loop is amplifying without energy input. Add evidence gate or cap iteration confidence.
     check_same_or_higher:
       type: condition
       variable: confidence_before
@@ -114,65 +170,94 @@ tree:
       value: 0.5
       true_next: minor_change
       false_next: kvl_violation
-
     minor_change:
       type: return
       value:
         kvl_valid: true
         violation_type: none
-        recommendation: "KVL satisfied — confidence within expected range"
-
+        recommendation: KVL satisfied — confidence within expected range
 tests:
-- name: new evidence justifies confidence increase
-  input:
-    confidence_before: 0.3
-    confidence_after: 0.8
-    new_evidence_fields: 3
-    iteration: 2
-  expect:
-    kvl_valid: true
-    violation_type: none
-
-- name: free amplification — confidence jumps without evidence
-  input:
-    confidence_before: 0.2
-    confidence_after: 0.9
-    new_evidence_fields: 0
-    iteration: 3
-  expect:
-    kvl_valid: false
-    violation_type: free_amplification
-
-- name: confidence stable without evidence — KVL holds
-  input:
-    confidence_before: 0.7
-    confidence_after: 0.7
-    new_evidence_fields: 0
-    iteration: 4
-  expect:
-    kvl_valid: true
-    violation_type: none
-
-- name: confidence decreased — always valid
-  input:
-    confidence_before: 0.8
-    confidence_after: 0.3
-    new_evidence_fields: 0
-    iteration: 2
-  expect:
-    kvl_valid: true
-
-- name: first iteration — no baseline
-  input:
-    confidence_before: -1
-    confidence_after: 0.5
-    new_evidence_fields: 0
-    iteration: 1
-  expect:
-    kvl_valid: true
-
-- name: null safety
-  input: {}
-  expect:
-    kvl_valid: true
-    violation_type: none
+  - name: new evidence justifies confidence increase
+    input:
+      confidence_before: 0.3
+      confidence_after: 0.8
+      new_evidence_fields: 3
+      iteration: 2
+    expect:
+      kvl_valid: true
+      violation_type: none
+  - name: free amplification — confidence jumps without evidence
+    input:
+      confidence_before: 0.2
+      confidence_after: 0.9
+      new_evidence_fields: 0
+      iteration: 3
+    expect:
+      kvl_valid: false
+      violation_type: free_amplification
+  - name: confidence stable without evidence — KVL holds
+    input:
+      confidence_before: 0.7
+      confidence_after: 0.7
+      new_evidence_fields: 0
+      iteration: 4
+    expect:
+      kvl_valid: true
+      violation_type: none
+  - name: confidence decreased — always valid
+    input:
+      confidence_before: 0.8
+      confidence_after: 0.3
+      new_evidence_fields: 0
+      iteration: 2
+    expect:
+      kvl_valid: true
+  - name: first iteration — no baseline
+    input:
+      confidence_before: -1
+      confidence_after: 0.5
+      new_evidence_fields: 0
+      iteration: 1
+    expect:
+      kvl_valid: true
+  - name: null safety
+    input: {}
+    expect:
+      kvl_valid: true
+      violation_type: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - kvl_valid
+    - violation_type
+    - confidence_delta
+    - recommendation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

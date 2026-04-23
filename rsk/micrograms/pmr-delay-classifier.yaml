@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pmr-delay-classifier
-description: 'PMR/PMC compliance status classifier: maps status, due date, and days overdue to on_track/at_risk/delayed/critical classification with recommended action'
 version: 0.1.0
+description: "PMR/PMC compliance status classifier: maps status, due date, and days overdue to on_track/at_risk/delayed/critical classification with recommended action"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: status
+    type: string
+    required: true
+    description: ""
+  - name: has_due_date
+    type: bool
+    required: true
+    description: ""
+  - name: days_overdue
+    type: number
+    required: false
+    description: ""
+  - name: delay_rate
+    type: number
+    required: false
+    description: ""
+outputs:
+  - name: classification
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     status:
@@ -20,6 +52,43 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Pmr Delay Classifier
+  subtitle: "PMR/PMC compliance status classifier: maps status, due date, and days overdue to on_track/at_risk/delayed/critical classification with recommended action"
+  icon: circle
+  route: /vigilance/mg/pmr-delay-classifier
+  steps:
+    - field: status
+      label: status
+      help: Enter status
+      widget: text
+      placeholder: null
+    - field: has_due_date
+      label: has due date
+      help: Enter has_due_date
+      widget: toggle
+      placeholder: null
+    - field: days_overdue
+      label: days overdue
+      help: Enter days_overdue
+      widget: number
+      placeholder: null
+    - field: delay_rate
+      label: delay rate
+      help: Enter delay_rate
+      widget: number
+      placeholder: null
+  result:
+    template: "classification: {{classification}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pmr-delay-classifier
+  cli: rsk mcg run pmr-delay-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fulfilled
   nodes:
@@ -168,119 +237,139 @@ tree:
         classification: on_track
         action: Status noted — monitor for changes
 tests:
-# Fulfilled
-- input:
-    status: Fulfilled
-    has_due_date: true
-    days_overdue: 0
-  expect:
-    classification: on_track
-    action: No action required — commitment fulfilled
-# Released
-- input:
-    status: Released
-    has_due_date: false
-    days_overdue: 0
-  expect:
-    classification: on_track
-    action: No action required — requirement released
-# Delayed by 200 days = critical
-- input:
-    status: Delayed
-    has_due_date: true
-    days_overdue: 200
-  expect:
-    classification: critical
-    action: Immediate escalation — overdue by 180+ days
-# Delayed by 120 days = delayed
-- input:
-    status: Delayed
-    has_due_date: true
-    days_overdue: 120
-  expect:
-    classification: delayed
-    action: Submit progress report to FDA — overdue 90+ days
-# Delayed by 30 days = delayed recent
-- input:
-    status: Delayed
-    has_due_date: true
-    days_overdue: 30
-  expect:
-    classification: delayed
-    action: Review timeline and submit updated schedule
-# Pending, past due
-- input:
-    status: Pending
-    has_due_date: true
-    days_overdue: 45
-  expect:
-    classification: at_risk
-    action: Pending commitment past due date — initiate work
-# Pending, not yet due
-- input:
-    status: Pending
-    has_due_date: true
-    days_overdue: 0
-  expect:
-    classification: on_track
-    action: Commitment pending — monitor due date
-# Pending, no due date
-- input:
-    status: Pending
-    has_due_date: false
-    days_overdue: 0
-  expect:
-    classification: on_track
-    action: Pending without due date — request timeline from FDA
-# Ongoing, past due
-- input:
-    status: Ongoing
-    has_due_date: true
-    days_overdue: 15
-  expect:
-    classification: at_risk
-    action: Ongoing but past due — accelerate completion
-# Ongoing, on schedule
-- input:
-    status: Ongoing
-    has_due_date: true
-    days_overdue: 0
-  expect:
-    classification: on_track
-    action: On track — continue per schedule
-# Boundary: exactly 180 days = critical
-- input:
-    status: Delayed
-    has_due_date: true
-    days_overdue: 180
-  expect:
-    classification: critical
-    action: Immediate escalation — overdue by 180+ days
-# Boundary: exactly 90 days = delayed
-- input:
-    status: Delayed
-    has_due_date: true
-    days_overdue: 90
-  expect:
-    classification: delayed
-    action: Submit progress report to FDA — overdue 90+ days
-# on_track_terminated: commitment terminated
-- input:
-    status: Terminated
-    has_due_date: true
-    days_overdue: 0
-  expect:
-    classification: on_track
-    action: No action required — commitment terminated
-# on_track_other: unknown status falls through to catchall
-- input:
-    status: Withdrawn
-    has_due_date: false
-    days_overdue: 0
-  expect:
-    classification: on_track
-    action: Status noted — monitor for changes
-- input: {}
-  expect:
-    action: Status noted — monitor for changes
-    classification: on_track
+  - input:
+      status: Fulfilled
+      has_due_date: true
+      days_overdue: 0
+    expect:
+      classification: on_track
+      action: No action required — commitment fulfilled
+  - input:
+      status: Released
+      has_due_date: false
+      days_overdue: 0
+    expect:
+      classification: on_track
+      action: No action required — requirement released
+  - input:
+      status: Delayed
+      has_due_date: true
+      days_overdue: 200
+    expect:
+      classification: critical
+      action: Immediate escalation — overdue by 180+ days
+  - input:
+      status: Delayed
+      has_due_date: true
+      days_overdue: 120
+    expect:
+      classification: delayed
+      action: Submit progress report to FDA — overdue 90+ days
+  - input:
+      status: Delayed
+      has_due_date: true
+      days_overdue: 30
+    expect:
+      classification: delayed
+      action: Review timeline and submit updated schedule
+  - input:
+      status: Pending
+      has_due_date: true
+      days_overdue: 45
+    expect:
+      classification: at_risk
+      action: Pending commitment past due date — initiate work
+  - input:
+      status: Pending
+      has_due_date: true
+      days_overdue: 0
+    expect:
+      classification: on_track
+      action: Commitment pending — monitor due date
+  - input:
+      status: Pending
+      has_due_date: false
+      days_overdue: 0
+    expect:
+      classification: on_track
+      action: Pending without due date — request timeline from FDA
+  - input:
+      status: Ongoing
+      has_due_date: true
+      days_overdue: 15
+    expect:
+      classification: at_risk
+      action: Ongoing but past due — accelerate completion
+  - input:
+      status: Ongoing
+      has_due_date: true
+      days_overdue: 0
+    expect:
+      classification: on_track
+      action: On track — continue per schedule
+  - input:
+      status: Delayed
+      has_due_date: true
+      days_overdue: 180
+    expect:
+      classification: critical
+      action: Immediate escalation — overdue by 180+ days
+  - input:
+      status: Delayed
+      has_due_date: true
+      days_overdue: 90
+    expect:
+      classification: delayed
+      action: Submit progress report to FDA — overdue 90+ days
+  - input:
+      status: Terminated
+      has_due_date: true
+      days_overdue: 0
+    expect:
+      classification: on_track
+      action: No action required — commitment terminated
+  - input:
+      status: Withdrawn
+      has_due_date: false
+      days_overdue: 0
+    expect:
+      classification: on_track
+      action: Status noted — monitor for changes
+  - input: {}
+    expect:
+      action: Status noted — monitor for changes
+      classification: on_track
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - classification
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

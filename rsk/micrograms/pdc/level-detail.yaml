@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: level-detail
-description: "PDC: Return full level characteristics — knowledge state, skill application, behavioral indicators, AI integration, assessment method"
 version: 0.1.0
+description: "PDC: Return full level characteristics — knowledge state, skill application, behavioral indicators, AI integration, assessment method"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: level
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: ai_level
+    type: string
+  - name: assessment
+    type: string
+  - name: behavior
+    type: string
+  - name: characteristics
+    type: string
+  - name: error
+    type: string
+  - name: impact_thresholds
+    type: string
+  - name: knowledge
+    type: string
+  - name: level_name
+    type: string
+  - name: skill
+    type: string
 interface:
   inputs:
     level:
@@ -25,6 +59,28 @@ interface:
       type: string
     skill:
       type: string
+ui:
+  title: Level Detail
+  subtitle: "PDC: Return full level characteristics — knowledge state, skill application, behavioral indicators, AI integration, assessment method"
+  icon: circle
+  route: /vigilance/mg/level-detail
+  steps:
+    - field: level
+      label: level
+      help: Enter level
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_level: {{ai_level}} — assessment: {{assessment}} — behavior: {{behavior}} — characteristics: {{characteristics}} — error: {{error}} — impact_thresholds: {{impact_thresholds}} — knowledge: {{knowledge}} — level_name: {{level_name}} — skill: {{skill}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/level-detail
+  cli: rsk mcg run level-detail
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -87,116 +143,157 @@ tree:
     l1_detail:
       type: return
       value:
-        level_name: "L1 Novice"
-        knowledge: "basic terminology, fundamental concepts, standard procedures, regulatory awareness"
-        skill: "step-by-step instructions, simple routine tasks, basic system features, direct supervision"
-        behavior: "asks clarifying questions, seeks approval, documents per templates, task-focused, anxious with variations"
-        ai_level: "observes AI usage, understands basic concepts, recognizes applications, follows AI workflows"
-        assessment: "direct observation, structured checklists, skills-based testing, supervised practice"
-        characteristics: "relies on rules, limited situational perception, requires constant guidance"
+        level_name: L1 Novice
+        knowledge: basic terminology, fundamental concepts, standard procedures, regulatory awareness
+        skill: step-by-step instructions, simple routine tasks, basic system features, direct supervision
+        behavior: asks clarifying questions, seeks approval, documents per templates, task-focused, anxious with variations
+        ai_level: observes AI usage, understands basic concepts, recognizes applications, follows AI workflows
+        assessment: direct observation, structured checklists, skills-based testing, supervised practice
+        characteristics: relies on rules, limited situational perception, requires constant guidance
     l2_detail:
       type: return
       value:
-        level_name: "L2 Advanced Beginner"
-        knowledge: "domain interactions, multiple procedures, recognizes exceptions, best practices"
-        skill: "handles routine variations, integrated tasks, advanced features, judgment in simple cases, reactive supervision"
-        behavior: "identifies when to seek help, suggests improvements, adapts documentation, considers broader impact"
-        ai_level: "uses AI with supervision, validates outputs, recognizes limitations, suggests applications"
-        assessment: "portfolio development, peer feedback, self-assessment with supervisor validation"
-        characteristics: "recognizes situational aspects, develops pattern awareness, requires periodic guidance"
+        level_name: L2 Advanced Beginner
+        knowledge: domain interactions, multiple procedures, recognizes exceptions, best practices
+        skill: handles routine variations, integrated tasks, advanced features, judgment in simple cases, reactive supervision
+        behavior: identifies when to seek help, suggests improvements, adapts documentation, considers broader impact
+        ai_level: uses AI with supervision, validates outputs, recognizes limitations, suggests applications
+        assessment: portfolio development, peer feedback, self-assessment with supervisor validation
+        characteristics: recognizes situational aspects, develops pattern awareness, requires periodic guidance
     l3_detail:
       type: return
       value:
-        level_name: "L3 Competent"
-        knowledge: "integrates across domains, theoretical basis, organizational context, industry trends, all tools"
-        skill: "handles complex cases, manages priorities, troubleshoots, trains others in basics, minimal supervision"
-        behavior: "takes ownership, identifies improvements, adapts approaches, mentors newcomers, professional confidence"
-        ai_level: "independently uses AI, designs AI workflows, evaluates new AI apps, trains others, contributes to validation"
-        assessment: "performance-based evaluation, 360-degree feedback, portfolio review, competency interviews"
-        characteristics: "sees actions in context, plans effectively, works independently, manages complexity"
+        level_name: L3 Competent
+        knowledge: integrates across domains, theoretical basis, organizational context, industry trends, all tools
+        skill: handles complex cases, manages priorities, troubleshoots, trains others in basics, minimal supervision
+        behavior: takes ownership, identifies improvements, adapts approaches, mentors newcomers, professional confidence
+        ai_level: independently uses AI, designs AI workflows, evaluates new AI apps, trains others, contributes to validation
+        assessment: performance-based evaluation, 360-degree feedback, portfolio review, competency interviews
+        characteristics: sees actions in context, plans effectively, works independently, manages complexity
     l4_detail:
       type: return
       value:
-        level_name: "L4 Proficient"
-        knowledge: "masters theoretical foundations, cutting-edge developments, cross-industry, future directions"
-        skill: "handles novel situations, develops new approaches, leads complex projects, teaches advanced, autonomous"
-        behavior: "shapes team practices, innovates solutions, guides strategic decisions, develops expertise, thought leadership"
-        ai_level: "optimizes AI implementations, develops AI strategies, validates innovations, leads transformations, publishes"
-        assessment: "leadership evaluation, innovation assessment, peer recognition, industry contribution metrics"
-        characteristics: "perceives holistically, responds intuitively, anticipates challenges, drives improvements"
+        level_name: L4 Proficient
+        knowledge: masters theoretical foundations, cutting-edge developments, cross-industry, future directions
+        skill: handles novel situations, develops new approaches, leads complex projects, teaches advanced, autonomous
+        behavior: shapes team practices, innovates solutions, guides strategic decisions, develops expertise, thought leadership
+        ai_level: optimizes AI implementations, develops AI strategies, validates innovations, leads transformations, publishes
+        assessment: leadership evaluation, innovation assessment, peer recognition, industry contribution metrics
+        characteristics: perceives holistically, responds intuitively, anticipates challenges, drives improvements
     l5_detail:
       type: return
       value:
-        level_name: "L5 Expert"
-        knowledge: "advances theoretical understanding, creates frameworks, influences regulatory thinking, masters emerging tech"
-        skill: "solves unprecedented challenges, develops breakthrough methods, leads transformation, teaches thought leaders"
-        behavior: "publishes influential work, speaks at major forums, advises regulatory bodies, builds leader pipeline"
-        ai_level: "pioneers AI applications, shapes AI governance, influences AI standards, develops frameworks, leads ethics"
-        assessment: "external recognition, publication impact, industry influence metrics, regulatory advisory participation"
-        characteristics: "transcends rules, creates new knowledge, shapes field development, drives industry standards"
+        level_name: L5 Expert
+        knowledge: advances theoretical understanding, creates frameworks, influences regulatory thinking, masters emerging tech
+        skill: solves unprecedented challenges, develops breakthrough methods, leads transformation, teaches thought leaders
+        behavior: publishes influential work, speaks at major forums, advises regulatory bodies, builds leader pipeline
+        ai_level: pioneers AI applications, shapes AI governance, influences AI standards, develops frameworks, leads ethics
+        assessment: external recognition, publication impact, industry influence metrics, regulatory advisory participation
+        characteristics: transcends rules, creates new knowledge, shapes field development, drives industry standards
     l5p_detail:
       type: return
       value:
-        level_name: "L5+ Senior Expert"
-        knowledge: "strategic organizational design, cross-industry influence, regulatory policy shaping, global standard setting"
-        skill: "transforms organizations, influences industry direction, builds institutional capability, creates lasting systems"
-        behavior: "leads enterprise initiatives, builds high-performing orgs, creates industry collaborations, succession pipeline"
-        ai_level: "executive AI leadership, pioneers with industry adoption, influences regulatory guidance, governance frameworks"
-        assessment: "organizational impact, industry recognition, transformation project evaluation, succession planning"
-        characteristics: "transforms organizations, influences industry, builds capability, develops expert networks"
-        impact_thresholds: "org_improvement>20%, orgs_adopting>3, mentees>50, value>$10M, countries>3"
+        level_name: L5+ Senior Expert
+        knowledge: strategic organizational design, cross-industry influence, regulatory policy shaping, global standard setting
+        skill: transforms organizations, influences industry direction, builds institutional capability, creates lasting systems
+        behavior: leads enterprise initiatives, builds high-performing orgs, creates industry collaborations, succession pipeline
+        ai_level: executive AI leadership, pioneers with industry adoption, influences regulatory guidance, governance frameworks
+        assessment: organizational impact, industry recognition, transformation project evaluation, succession planning
+        characteristics: transforms organizations, influences industry, builds capability, develops expert networks
+        impact_thresholds: org_improvement>20%, orgs_adopting>3, mentees>50, value>$10M, countries>3
     l5pp_detail:
       type: return
       value:
-        level_name: "L5++ Executive Expert"
-        knowledge: "C-suite leadership, board-level influence, global policy development, industry transformation"
-        skill: "shapes industry future, influences global policy, builds multi-org alliances, creates new paradigms"
-        behavior: "leads industry transformation, influences regulatory evolution, creates global initiatives, visionary leadership"
-        ai_level: "shapes global AI policy, establishes multi-org AI governance, influences international AI standards"
-        assessment: "global impact, policy influence documentation, legacy project evaluation, industry transformation metrics"
-        characteristics: "shapes industry future, influences global policy, creates paradigms, leaves lasting legacy"
-        impact_thresholds: "orgs_leading>5, regulatory_roles>2, value>$100M, mentees>200, guidances>5, publications>10"
+        level_name: L5++ Executive Expert
+        knowledge: C-suite leadership, board-level influence, global policy development, industry transformation
+        skill: shapes industry future, influences global policy, builds multi-org alliances, creates new paradigms
+        behavior: leads industry transformation, influences regulatory evolution, creates global initiatives, visionary leadership
+        ai_level: shapes global AI policy, establishes multi-org AI governance, influences international AI standards
+        assessment: global impact, policy influence documentation, legacy project evaluation, industry transformation metrics
+        characteristics: shapes industry future, influences global policy, creates paradigms, leaves lasting legacy
+        impact_thresholds: orgs_leading>5, regulatory_roles>2, value>$100M, mentees>200, guidances>5, publications>10
     invalid:
       type: return
       value:
         level_name: INVALID
-        error: "Level must be 1-7"
+        error: Level must be 1-7
 tests:
-- input:
-    level: 1
-  expect:
-    level_name: "L1 Novice"
-    characteristics: "relies on rules, limited situational perception, requires constant guidance"
-- input:
-    level: 2
-  expect:
-    level_name: "L2 Advanced Beginner"
-- input:
-    level: 3
-  expect:
-    level_name: "L3 Competent"
-    characteristics: "sees actions in context, plans effectively, works independently, manages complexity"
-- input:
-    level: 4
-  expect:
-    level_name: "L4 Proficient"
-- input:
-    level: 5
-  expect:
-    level_name: "L5 Expert"
-    characteristics: "transcends rules, creates new knowledge, shapes field development, drives industry standards"
-- input:
-    level: 6
-  expect:
-    level_name: "L5+ Senior Expert"
-- input:
-    level: 7
-  expect:
-    level_name: "L5++ Executive Expert"
-- input:
-    level: 8
-  expect:
-    level_name: INVALID
-- input: {}
-  expect:
-    level_name: "L1 Novice"
+  - input:
+      level: 1
+    expect:
+      level_name: L1 Novice
+      characteristics: relies on rules, limited situational perception, requires constant guidance
+  - input:
+      level: 2
+    expect:
+      level_name: L2 Advanced Beginner
+  - input:
+      level: 3
+    expect:
+      level_name: L3 Competent
+      characteristics: sees actions in context, plans effectively, works independently, manages complexity
+  - input:
+      level: 4
+    expect:
+      level_name: L4 Proficient
+  - input:
+      level: 5
+    expect:
+      level_name: L5 Expert
+      characteristics: transcends rules, creates new knowledge, shapes field development, drives industry standards
+  - input:
+      level: 6
+    expect:
+      level_name: L5+ Senior Expert
+  - input:
+      level: 7
+    expect:
+      level_name: L5++ Executive Expert
+  - input:
+      level: 8
+    expect:
+      level_name: INVALID
+  - input: {}
+    expect:
+      level_name: L1 Novice
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_level
+    - assessment
+    - behavior
+    - characteristics
+    - error
+    - impact_thresholds
+    - knowledge
+    - level_name
+    - skill
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

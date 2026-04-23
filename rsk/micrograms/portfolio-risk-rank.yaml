@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: portfolio-risk-rank
-description: 'Portfolio risk tier classification: maps signal_count and signal_ratio to critical/high/medium/low tiers for drug portfolio monitoring'
 version: 0.1.0
+description: "Portfolio risk tier classification: maps signal_count and signal_ratio to critical/high/medium/low tiers for drug portfolio monitoring"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: signal_count
+    type: number
+    required: true
+    description: ""
+  - name: event_count
+    type: number
+    required: true
+    description: ""
+  - name: total_reports
+    type: number
+    required: true
+    description: ""
+  - name: signal_ratio
+    type: number
+    required: true
+    description: ""
+outputs:
+  - name: tier
+    type: string
+  - name: reason
+    type: string
 interface:
   inputs:
     signal_count:
@@ -20,6 +52,43 @@ interface:
       type: string
     reason:
       type: string
+ui:
+  title: Portfolio Risk Rank
+  subtitle: "Portfolio risk tier classification: maps signal_count and signal_ratio to critical/high/medium/low tiers for drug portfolio monitoring"
+  icon: circle
+  route: /vigilance/mg/portfolio-risk-rank
+  steps:
+    - field: signal_count
+      label: signal count
+      help: Enter signal_count
+      widget: number
+      placeholder: null
+    - field: event_count
+      label: event count
+      help: Enter event_count
+      widget: number
+      placeholder: null
+    - field: total_reports
+      label: total reports
+      help: Enter total_reports
+      widget: number
+      placeholder: null
+    - field: signal_ratio
+      label: signal ratio
+      help: Enter signal_ratio
+      widget: number
+      placeholder: null
+  result:
+    template: "tier: {{tier}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/portfolio-risk-rank
+  cli: rsk mcg run portfolio-risk-rank
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_critical_count
   nodes:
@@ -86,97 +155,121 @@ tree:
         tier: low
         reason: Minimal signal activity
 tests:
-# Critical by signal count
-- input:
-    signal_count: 12
-    event_count: 20
-    total_reports: 5000
-    signal_ratio: 0.6
-  expect:
-    tier: critical
-    reason: High signal count or signal ratio exceeds 60%
-# Critical by ratio (count < 10 but ratio > 0.6)
-- input:
-    signal_count: 8
-    event_count: 12
-    total_reports: 3000
-    signal_ratio: 0.67
-  expect:
-    tier: critical
-    reason: High signal count or signal ratio exceeds 60%
-# Boundary: exactly 10 signals = critical
-- input:
-    signal_count: 10
-    event_count: 25
-    total_reports: 10000
-    signal_ratio: 0.4
-  expect:
-    tier: critical
-    reason: High signal count or signal ratio exceeds 60%
-# High by signal count
-- input:
-    signal_count: 7
-    event_count: 20
-    total_reports: 8000
-    signal_ratio: 0.35
-  expect:
-    tier: high
-    reason: Elevated signal count or signal ratio exceeds 40%
-# High by ratio
-- input:
-    signal_count: 3
-    event_count: 6
-    total_reports: 2000
-    signal_ratio: 0.5
-  expect:
-    tier: high
-    reason: Elevated signal count or signal ratio exceeds 40%
-# Medium by signal count
-- input:
-    signal_count: 3
-    event_count: 20
-    total_reports: 5000
-    signal_ratio: 0.15
-  expect:
-    tier: medium
-    reason: Multiple signals detected or high report volume
-# Medium by high report volume
-- input:
-    signal_count: 1
-    event_count: 10
-    total_reports: 60000
-    signal_ratio: 0.1
-  expect:
-    tier: medium
-    reason: Multiple signals detected or high report volume
-# Low - minimal signals
-- input:
-    signal_count: 1
-    event_count: 15
-    total_reports: 3000
-    signal_ratio: 0.07
-  expect:
-    tier: low
-    reason: Minimal signal activity
-# Zero signals
-- input:
-    signal_count: 0
-    event_count: 10
-    total_reports: 1000
-    signal_ratio: 0.0
-  expect:
-    tier: low
-    reason: Minimal signal activity
-# Boundary: exactly 5 signals = high
-- input:
-    signal_count: 5
-    event_count: 20
-    total_reports: 8000
-    signal_ratio: 0.25
-  expect:
-    tier: high
-    reason: Elevated signal count or signal ratio exceeds 40%
-- input: {}
-  expect:
-    reason: Minimal signal activity
-    tier: low
+  - input:
+      signal_count: 12
+      event_count: 20
+      total_reports: 5000
+      signal_ratio: 0.6
+    expect:
+      tier: critical
+      reason: High signal count or signal ratio exceeds 60%
+  - input:
+      signal_count: 8
+      event_count: 12
+      total_reports: 3000
+      signal_ratio: 0.67
+    expect:
+      tier: critical
+      reason: High signal count or signal ratio exceeds 60%
+  - input:
+      signal_count: 10
+      event_count: 25
+      total_reports: 10000
+      signal_ratio: 0.4
+    expect:
+      tier: critical
+      reason: High signal count or signal ratio exceeds 60%
+  - input:
+      signal_count: 7
+      event_count: 20
+      total_reports: 8000
+      signal_ratio: 0.35
+    expect:
+      tier: high
+      reason: Elevated signal count or signal ratio exceeds 40%
+  - input:
+      signal_count: 3
+      event_count: 6
+      total_reports: 2000
+      signal_ratio: 0.5
+    expect:
+      tier: high
+      reason: Elevated signal count or signal ratio exceeds 40%
+  - input:
+      signal_count: 3
+      event_count: 20
+      total_reports: 5000
+      signal_ratio: 0.15
+    expect:
+      tier: medium
+      reason: Multiple signals detected or high report volume
+  - input:
+      signal_count: 1
+      event_count: 10
+      total_reports: 60000
+      signal_ratio: 0.1
+    expect:
+      tier: medium
+      reason: Multiple signals detected or high report volume
+  - input:
+      signal_count: 1
+      event_count: 15
+      total_reports: 3000
+      signal_ratio: 0.07
+    expect:
+      tier: low
+      reason: Minimal signal activity
+  - input:
+      signal_count: 0
+      event_count: 10
+      total_reports: 1000
+      signal_ratio: 0
+    expect:
+      tier: low
+      reason: Minimal signal activity
+  - input:
+      signal_count: 5
+      event_count: 20
+      total_reports: 8000
+      signal_ratio: 0.25
+    expect:
+      tier: high
+      reason: Elevated signal count or signal ratio exceeds 40%
+  - input: {}
+    expect:
+      reason: Minimal signal activity
+      tier: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tier
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

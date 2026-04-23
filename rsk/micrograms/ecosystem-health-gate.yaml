@@ -1,15 +1,55 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ecosystem-health-gate
-description: >
-  Master health gate for the NexVigilant ecosystem. Takes metrics from
-  all surfaces and produces a composite health verdict. Used by autopilot
-  and session start hooks to determine system readiness.
-version: "1.0"
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(×(ς_surfaces)) → ∃_health — comparison across all surface states yields health'
-  primes: ['κ', 'ς', '∂', '∃', 'N']
-  arguments: ['mcg_pass_rate', 'hlg_pass_rate', 'station_tools', 'wiring_pct', 'prod_unwraps', 'clippy_clean']
-
+version: 0.1.0
+description: |
+  Master health gate for the NexVigilant ecosystem. Takes metrics from all surfaces and produces a composite health verdict. Used by autopilot and session start hooks to determine system readiness.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: mcg_pass_rate
+    type: float
+    required: true
+    description: ""
+  - name: hlg_pass_rate
+    type: float
+    required: false
+    description: ""
+  - name: station_tools
+    type: int
+    required: false
+    description: ""
+  - name: wiring_pct
+    type: int
+    required: false
+    description: ""
+  - name: prod_unwraps
+    type: int
+    required: false
+    description: ""
+  - name: clippy_clean
+    type: bool
+    required: false
+    description: ""
+  - name: jest_pass_rate
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: health
+    type: string
+  - name: grade
+    type: string
+  - name: weakest_surface
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     mcg_pass_rate:
@@ -42,7 +82,59 @@ interface:
       type: string
     action:
       type: string
-
+ui:
+  title: Ecosystem Health Gate
+  subtitle: |
+    Master health gate for the NexVigilant ecosystem. Takes metrics from all surfaces and produces a composite health verdict. Used by autopilot and session start hooks to determine system readiness.
+  icon: circle
+  route: /vigilance/mg/ecosystem-health-gate
+  steps:
+    - field: mcg_pass_rate
+      label: mcg pass rate
+      help: Enter mcg_pass_rate
+      widget: text
+      placeholder: null
+    - field: hlg_pass_rate
+      label: hlg pass rate
+      help: Enter hlg_pass_rate
+      widget: text
+      placeholder: null
+    - field: station_tools
+      label: station tools
+      help: Enter station_tools
+      widget: text
+      placeholder: null
+    - field: wiring_pct
+      label: wiring pct
+      help: Enter wiring_pct
+      widget: text
+      placeholder: null
+    - field: prod_unwraps
+      label: prod unwraps
+      help: Enter prod_unwraps
+      widget: text
+      placeholder: null
+    - field: clippy_clean
+      label: clippy clean
+      help: Enter clippy_clean
+      widget: toggle
+      placeholder: null
+    - field: jest_pass_rate
+      label: jest pass rate
+      help: Enter jest_pass_rate
+      widget: text
+      placeholder: null
+  result:
+    template: "health: {{health}} — grade: {{grade}} — weakest_surface: {{weakest_surface}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ecosystem-health-gate
+  cli: rsk mcg run ecosystem-health-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_mcg_present
   nodes:
@@ -52,7 +144,6 @@ tree:
       operator: is_null
       true_next: critical
       false_next: check_mcg
-
     check_mcg:
       type: condition
       variable: mcg_pass_rate
@@ -60,7 +151,6 @@ tree:
       value: 0.99
       true_next: critical
       false_next: check_hlg
-
     check_hlg:
       type: condition
       variable: hlg_pass_rate
@@ -68,7 +158,6 @@ tree:
       value: 0.95
       true_next: degraded_hlg
       false_next: check_station
-
     check_station:
       type: condition
       variable: station_tools
@@ -76,7 +165,6 @@ tree:
       value: 1000
       true_next: degraded_station
       false_next: check_wiring
-
     check_wiring:
       type: condition
       variable: wiring_pct
@@ -84,7 +172,6 @@ tree:
       value: 90
       true_next: degraded_wiring
       false_next: check_unwraps
-
     check_unwraps:
       type: condition
       variable: prod_unwraps
@@ -92,7 +179,6 @@ tree:
       value: 10
       true_next: degraded_safety
       false_next: check_clippy
-
     check_clippy:
       type: condition
       variable: clippy_clean
@@ -100,68 +186,60 @@ tree:
       value: false
       true_next: degraded_lint
       false_next: healthy
-
     critical:
       type: return
       value:
         health: CRITICAL
         grade: F
         weakest_surface: micrograms
-        action: "Microgram pass rate below 99% — fix failing tests immediately"
-
+        action: Microgram pass rate below 99% — fix failing tests immediately
     degraded_hlg:
       type: return
       value:
         health: DEGRADED
         grade: C
         weakest_surface: heligrams
-        action: "Heligram pass rate below 95% — fix forged test expectations"
-
+        action: Heligram pass rate below 95% — fix forged test expectations
     degraded_station:
       type: return
       value:
         health: DEGRADED
         grade: C
         weakest_surface: station
-        action: "Station tool count below 1000 — check config loading"
-
+        action: Station tool count below 1000 — check config loading
     degraded_wiring:
       type: return
       value:
         health: DEGRADED
         grade: C
         weakest_surface: nucleus_wiring
-        action: "Nucleus wiring below 90% — wire remaining void components"
-
+        action: Nucleus wiring below 90% — wire remaining void components
     degraded_safety:
       type: return
       value:
         health: DEGRADED
         grade: D
         weakest_surface: production_safety
-        action: "Production unwraps exceed 10 — eliminate unwrap/expect in production code"
-
+        action: Production unwraps exceed 10 — eliminate unwrap/expect in production code
     degraded_lint:
       type: return
       value:
         health: DEGRADED
         grade: C
         weakest_surface: lint
-        action: "Clippy not clean — fix warnings"
-
+        action: Clippy not clean — fix warnings
     healthy:
       type: return
       value:
         health: HEALTHY
         grade: A
         weakest_surface: none
-        action: "All surfaces green — continue building"
-
+        action: All surfaces green — continue building
 tests:
   - name: all healthy — current state
     input:
-      mcg_pass_rate: 1.0
-      hlg_pass_rate: 1.0
+      mcg_pass_rate: 1
+      hlg_pass_rate: 1
       station_tools: 1820
       wiring_pct: 100
       prod_unwraps: 2
@@ -169,11 +247,10 @@ tests:
     expect:
       health: HEALTHY
       grade: A
-
   - name: critical — mcg failures
     input:
       mcg_pass_rate: 0.95
-      hlg_pass_rate: 1.0
+      hlg_pass_rate: 1
       station_tools: 1820
       wiring_pct: 100
       prod_unwraps: 0
@@ -182,11 +259,10 @@ tests:
       health: CRITICAL
       grade: F
       weakest_surface: micrograms
-
   - name: degraded — too many unwraps
     input:
-      mcg_pass_rate: 1.0
-      hlg_pass_rate: 1.0
+      mcg_pass_rate: 1
+      hlg_pass_rate: 1
       station_tools: 1820
       wiring_pct: 100
       prod_unwraps: 50
@@ -194,10 +270,9 @@ tests:
     expect:
       health: DEGRADED
       weakest_surface: production_safety
-
   - name: degraded — low wiring
     input:
-      mcg_pass_rate: 1.0
+      mcg_pass_rate: 1
       hlg_pass_rate: 0.99
       station_tools: 1820
       wiring_pct: 80
@@ -206,8 +281,43 @@ tests:
     expect:
       health: DEGRADED
       weakest_surface: nucleus_wiring
-
   - name: null safety
     input: {}
     expect:
       health: CRITICAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - health
+    - grade
+    - weakest_surface
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

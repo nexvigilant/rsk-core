@@ -1,25 +1,73 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: voltage-topology-tradeoff
-description: "Evaluates 200V vs 400V bus topology for wearable power systems. Routes by voltage level and computes wire gauge, insulation weight, current magnitude, and motor efficiency tradeoffs. Higher voltage = thinner wire + better motor efficiency but harder insulation in a body-worn system."
 version: 0.1.0
+description: Evaluates 200V vs 400V bus topology for wearable power systems. Routes by voltage level and computes wire gauge, insulation weight, current magnitude, and motor efficiency tradeoffs. Higher voltage = thinner wire + better motor efficiency but harder insulation in a body-worn system.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: bus_voltage_v
+    type: float
+    required: true
+    description: Nominal bus voltage in volts
+  - name: max_power_kw
+    type: float
+    required: true
+    description: Maximum continuous power demand in kilowatts
+  - name: total_wire_length_m
+    type: float
+    required: false
+    description: Total wiring run length in meters (default ~10m for exosuit)
+  - name: environment
+    type: string
+    required: false
+    description: Operating environment — affects insulation requirements
+outputs:
+  - name: max_current_a
+    type: float
+  - name: wire_gauge_awg
+    type: integer
+  - name: wire_weight_kg_per_m
+    type: float
+  - name: insulation_class
+    type: string
+  - name: motor_efficiency_pct
+    type: float
+  - name: touch_safety
+    type: string
+  - name: verdict
+    type: string
+  - name: rationale
+    type: string
 interface:
   inputs:
     bus_voltage_v:
       type: float
       required: true
-      description: "Nominal bus voltage in volts"
+      description: Nominal bus voltage in volts
     max_power_kw:
       type: float
       required: true
-      description: "Maximum continuous power demand in kilowatts"
+      description: Maximum continuous power demand in kilowatts
     total_wire_length_m:
       type: float
       required: false
-      description: "Total wiring run length in meters (default ~10m for exosuit)"
+      description: Total wiring run length in meters (default ~10m for exosuit)
     environment:
       type: string
       required: false
-      enum: [wearable, vehicle, stationary, aerospace]
-      description: "Operating environment — affects insulation requirements"
+      enum:
+        - wearable
+        - vehicle
+        - stationary
+        - aerospace
+      description: Operating environment — affects insulation requirements
   outputs:
     max_current_a:
       type: float
@@ -37,6 +85,43 @@ interface:
       type: string
     rationale:
       type: string
+ui:
+  title: Voltage Topology Tradeoff
+  subtitle: Evaluates 200V vs 400V bus topology for wearable power systems. Routes by voltage level and computes wire gauge, insulation weight, current magnitude, and motor efficiency tradeoffs. Higher voltage = thinner wire + better motor efficiency but harder insulation in a body-worn system.
+  icon: circle
+  route: /vigilance/mg/voltage-topology-tradeoff
+  steps:
+    - field: bus_voltage_v
+      label: bus voltage v
+      help: Nominal bus voltage in volts
+      widget: text
+      placeholder: null
+    - field: max_power_kw
+      label: max power kw
+      help: Maximum continuous power demand in kilowatts
+      widget: text
+      placeholder: null
+    - field: total_wire_length_m
+      label: total wire length m
+      help: Total wiring run length in meters (default ~10m for exosuit)
+      widget: text
+      placeholder: null
+    - field: environment
+      label: environment
+      help: Operating environment — affects insulation requirements
+      widget: text
+      placeholder: null
+  result:
+    template: "max_current_a: {{max_current_a}} — wire_gauge_awg: {{wire_gauge_awg}} — wire_weight_kg_per_m: {{wire_weight_kg_per_m}} — insulation_class: {{insulation_class}} — motor_efficiency_pct: {{motor_efficiency_pct}} — touch_safety: {{touch_safety}} — verdict: {{verdict}} — rationale: {{rationale}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/voltage-topology-tradeoff
+  cli: rsk mcg run voltage-topology-tradeoff
+  auth: none
+  rate_limit: 600/min
 tree:
   start: classify_voltage
   nodes:
@@ -47,7 +132,6 @@ tree:
       value: 60
       true_next: selv_regime
       false_next: check_low_voltage
-
     check_low_voltage:
       type: condition
       variable: bus_voltage_v
@@ -55,7 +139,6 @@ tree:
       value: 120
       true_next: low_voltage_regime
       false_next: check_mid_voltage
-
     check_mid_voltage:
       type: condition
       variable: bus_voltage_v
@@ -63,7 +146,6 @@ tree:
       value: 300
       true_next: mid_voltage_regime
       false_next: check_high_voltage
-
     check_high_voltage:
       type: condition
       variable: bus_voltage_v
@@ -71,102 +153,141 @@ tree:
       value: 500
       true_next: high_voltage_regime
       false_next: extreme_voltage
-
-    # <60V: SELV (Safety Extra-Low Voltage) — no insulation needed for touch
     selv_regime:
       type: return
       value:
         max_current_a: 600
         wire_gauge_awg: 2
         wire_weight_kg_per_m: 0.095
-        insulation_class: "SELV — no touch hazard, basic PVC sufficient"
+        insulation_class: SELV — no touch hazard, basic PVC sufficient
         motor_efficiency_pct: 85
-        touch_safety: "SAFE — below 60V DC, no lethal risk even with direct skin contact"
+        touch_safety: SAFE — below 60V DC, no lethal risk even with direct skin contact
         verdict: recommended_for_mark_ii
-        rationale: "50V/14S single module. Current is HIGH (600A at 30kW) requiring thick 2AWG copper — heavy but safe. Motor efficiency suffers at low voltage (higher I²R loss in windings). Best for initial prototype where safety margin matters more than weight."
-
-    # 60-120V: Low voltage — touch hazard begins
+        rationale: 50V/14S single module. Current is HIGH (600A at 30kW) requiring thick 2AWG copper — heavy but safe. Motor efficiency suffers at low voltage (higher I²R loss in windings). Best for initial prototype where safety margin matters more than weight.
     low_voltage_regime:
       type: return
       value:
         max_current_a: 300
         wire_gauge_awg: 6
-        wire_weight_kg_per_m: 0.040
-        insulation_class: "Basic insulation required. Silicone or cross-linked PE. Double insulation at flex points."
+        wire_weight_kg_per_m: 0.04
+        insulation_class: Basic insulation required. Silicone or cross-linked PE. Double insulation at flex points.
         motor_efficiency_pct: 89
-        touch_safety: "CAUTION — above 60V DC, cardiac fibrillation risk. Insulated connectors mandatory."
+        touch_safety: CAUTION — above 60V DC, cardiac fibrillation risk. Insulated connectors mandatory.
         verdict: viable_compromise
-        rationale: "96V (24S) or 100V (28S). Halves current vs SELV, wire drops to 6AWG. Motor efficiency improves. Touch hazard manageable with insulated Anderson connectors. Good middle ground."
-
-    # 120-300V: Mid voltage — serious shock hazard
+        rationale: 96V (24S) or 100V (28S). Halves current vs SELV, wire drops to 6AWG. Motor efficiency improves. Touch hazard manageable with insulated Anderson connectors. Good middle ground.
     mid_voltage_regime:
       type: return
       value:
         max_current_a: 150
         wire_gauge_awg: 10
         wire_weight_kg_per_m: 0.016
-        insulation_class: "Reinforced insulation. Silicone + braided shield. Arc-flash rated connectors. GFI mandatory."
+        insulation_class: Reinforced insulation. Silicone + braided shield. Arc-flash rated connectors. GFI mandatory.
         motor_efficiency_pct: 93
-        touch_safety: "DANGEROUS — lethal voltage. Lockout/tagout procedures. Emergency disconnect within 100ms."
+        touch_safety: DANGEROUS — lethal voltage. Lockout/tagout procedures. Emergency disconnect within 100ms.
         verdict: weight_optimal_but_dangerous
         rationale: "200V (4 modules series). Current drops to 150A at 30kW — 10AWG wire, 6× lighter than SELV. Motor efficiency excellent. BUT: lethal voltage in a sweat-soaked wearable. Every connector, every flex point, every crash scenario must maintain insulation integrity. The weight savings are real but the failure mode is death."
-
-    # 300-500V: High voltage — EV class
     high_voltage_regime:
       type: return
       value:
         max_current_a: 75
         wire_gauge_awg: 14
         wire_weight_kg_per_m: 0.008
-        insulation_class: "HV-rated. Double-wall silicone + EMI shield + interlock loop. Arc-flash PPE zone. Pyro disconnect mandatory."
+        insulation_class: HV-rated. Double-wall silicone + EMI shield + interlock loop. Arc-flash PPE zone. Pyro disconnect mandatory.
         motor_efficiency_pct: 96
-        touch_safety: "LETHAL — EV-class voltage. HV interlock loop on every connector. Orange HV wiring per SAE J1654. Crash-rated pyro disconnect."
+        touch_safety: LETHAL — EV-class voltage. HV interlock loop on every connector. Orange HV wiring per SAE J1654. Crash-rated pyro disconnect.
         verdict: maximum_efficiency_maximum_risk
         rationale: "400V (8 modules series). Lightest wire (14AWG), best motor efficiency (96%). This is Tesla/EV territory. BUT: 400V DC across a human body in rain, sweat, crash impact — insulation failure = instant death. Every gram saved in copper is spent on insulation, interlocks, and safety systems. Net weight advantage over 200V is smaller than it appears."
-
     extreme_voltage:
       type: return
       value:
         max_current_a: 50
         wire_gauge_awg: 16
         wire_weight_kg_per_m: 0.005
-        insulation_class: "EXTREME — aerospace/industrial HV. Not appropriate for body-worn systems."
+        insulation_class: EXTREME — aerospace/industrial HV. Not appropriate for body-worn systems.
         motor_efficiency_pct: 97
-        touch_safety: "IMMEDIATELY LETHAL — arc flash risk even without contact. Impossible to insulate safely in wearable."
+        touch_safety: IMMEDIATELY LETHAL — arc flash risk even without contact. Impossible to insulate safely in wearable.
         verdict: rejected
-        rationale: "Above 500V DC has no place on a human body. Arc flash distances exceed suit dimensions. Rejected unconditionally."
-
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(N(∂)) — comparing quantified boundaries across voltage regimes'
-  primes: ['κ', 'N', '∂']
-  arguments: ['ς']
-
+        rationale: Above 500V DC has no place on a human body. Arc flash distances exceed suit dimensions. Rejected unconditionally.
 tests:
-- name: "50V SELV — Mark II starting point"
-  input: { bus_voltage_v: 50.4, max_power_kw: 30 }
-  expect: { verdict: recommended_for_mark_ii, touch_safety: "SAFE — below 60V DC, no lethal risk even with direct skin contact" }
-
-- name: "96V low voltage"
-  input: { bus_voltage_v: 96, max_power_kw: 30 }
-  expect: { verdict: viable_compromise }
-
-- name: "200V mid voltage"
-  input: { bus_voltage_v: 200, max_power_kw: 30 }
-  expect: { verdict: weight_optimal_but_dangerous }
-
-- name: "400V high voltage"
-  input: { bus_voltage_v: 400, max_power_kw: 30 }
-  expect: { verdict: maximum_efficiency_maximum_risk }
-
-- name: "800V rejected"
-  input: { bus_voltage_v: 800, max_power_kw: 30 }
-  expect: { verdict: rejected }
-
-- name: "wearable environment"
-  input: { bus_voltage_v: 200, max_power_kw: 15, environment: wearable }
-  expect: { verdict: weight_optimal_but_dangerous }
-
-- name: "null safety"
-  input: {}
-  expect: { verdict: rejected }
+  - name: 50V SELV — Mark II starting point
+    input:
+      bus_voltage_v: 50.4
+      max_power_kw: 30
+    expect:
+      verdict: recommended_for_mark_ii
+      touch_safety: SAFE — below 60V DC, no lethal risk even with direct skin contact
+  - name: 96V low voltage
+    input:
+      bus_voltage_v: 96
+      max_power_kw: 30
+    expect:
+      verdict: viable_compromise
+  - name: 200V mid voltage
+    input:
+      bus_voltage_v: 200
+      max_power_kw: 30
+    expect:
+      verdict: weight_optimal_but_dangerous
+  - name: 400V high voltage
+    input:
+      bus_voltage_v: 400
+      max_power_kw: 30
+    expect:
+      verdict: maximum_efficiency_maximum_risk
+  - name: 800V rejected
+    input:
+      bus_voltage_v: 800
+      max_power_kw: 30
+    expect:
+      verdict: rejected
+  - name: wearable environment
+    input:
+      bus_voltage_v: 200
+      max_power_kw: 15
+      environment: wearable
+    expect:
+      verdict: weight_optimal_but_dangerous
+  - name: null safety
+    input: {}
+    expect:
+      verdict: rejected
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - max_current_a
+    - wire_gauge_awg
+    - wire_weight_kg_per_m
+    - insulation_class
+    - motor_efficiency_pct
+    - touch_safety
+    - verdict
+    - rationale
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

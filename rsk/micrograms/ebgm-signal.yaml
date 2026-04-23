@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ebgm-signal
-description: Empirical Bayes Geometric Mean (EBGM) signal detection gate. Uses EB05 (lower 5th percentile) as the conservative threshold; falls back to EBGM point estimate for borderline classification.
 version: 0.1.0
+description: Empirical Bayes Geometric Mean (EBGM) signal detection gate. Uses EB05 (lower 5th percentile) as the conservative threshold; falls back to EBGM point estimate for borderline classification.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: eb05
+    type: float
+    required: false
+    description: ""
+  - name: ebgm
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: signal
+    type: string
+  - name: signal_detected
+    type: bool
 interface:
   inputs:
     eb05:
@@ -16,6 +42,33 @@ interface:
       type: string
     signal_detected:
       type: bool
+ui:
+  title: Ebgm Signal
+  subtitle: Empirical Bayes Geometric Mean (EBGM) signal detection gate. Uses EB05 (lower 5th percentile) as the conservative threshold; falls back to EBGM point estimate for borderline classification.
+  icon: activity
+  route: /vigilance/mg/ebgm-signal
+  steps:
+    - field: eb05
+      label: eb05
+      help: Enter eb05
+      widget: text
+      placeholder: null
+    - field: ebgm
+      label: ebgm
+      help: Enter ebgm
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — signal: {{signal}} — signal_detected: {{signal_detected}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ebgm-signal
+  cli: rsk mcg run ebgm-signal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_strong
   nodes:
@@ -23,28 +76,28 @@ tree:
       type: condition
       variable: eb05
       operator: gte
-      value: 5.0
+      value: 5
       true_next: strong_signal
       false_next: check_moderate
     check_moderate:
       type: condition
       variable: eb05
       operator: gte
-      value: 2.0
+      value: 2
       true_next: moderate_signal
       false_next: check_weak
     check_weak:
       type: condition
       variable: eb05
       operator: gte
-      value: 1.0
+      value: 1
       true_next: weak_signal
       false_next: check_borderline
     check_borderline:
       type: condition
       variable: ebgm
       operator: gte
-      value: 2.0
+      value: 2
       true_next: borderline_signal
       false_next: no_signal
     strong_signal:
@@ -78,85 +131,126 @@ tree:
         action: no_action
         signal_detected: false
 tests:
-- input:
-    eb05: 6.0
-    ebgm: 8.0
-  expect:
-    signal: STRONG
-    action: expedited_review
-    signal_detected: true
-- input:
-    eb05: 5.0
-    ebgm: 7.0
-  expect:
-    signal: STRONG
-    action: expedited_review
-    signal_detected: true
-- input:
-    eb05: 4.9
-    ebgm: 6.0
-  expect:
-    signal: MODERATE
-    action: standard_review
-    signal_detected: true
-- input:
-    eb05: 2.0
-    ebgm: 3.0
-  expect:
-    signal: MODERATE
-    action: standard_review
-    signal_detected: true
-- input:
-    eb05: 1.9
-    ebgm: 2.5
-  expect:
-    signal: WEAK
-    action: monitor
-    signal_detected: true
-- input:
-    eb05: 1.0
-    ebgm: 1.5
-  expect:
-    signal: WEAK
-    action: monitor
-    signal_detected: true
-- input:
-    eb05: 0.8
-    ebgm: 2.5
-  expect:
-    signal: BORDERLINE
-    action: increase_sample
-    signal_detected: false
-- input:
-    eb05: 0.5
-    ebgm: 2.0
-  expect:
-    signal: BORDERLINE
-    action: increase_sample
-    signal_detected: false
-- input:
-    eb05: 0.8
-    ebgm: 1.9
-  expect:
-    signal: NONE
-    action: no_action
-    signal_detected: false
-- input:
-    eb05: 0.3
-    ebgm: 0.5
-  expect:
-    signal: NONE
-    action: no_action
-    signal_detected: false
-- input:
-    eb05: 10.0
-    ebgm: 12.0
-  expect:
-    signal: STRONG
-    action: expedited_review
-    signal_detected: true
-- input: {}
-  expect:
-    signal: NONE
-    action: no_action
-    signal_detected: false
+  - input:
+      eb05: 6
+      ebgm: 8
+    expect:
+      signal: STRONG
+      action: expedited_review
+      signal_detected: true
+  - input:
+      eb05: 5
+      ebgm: 7
+    expect:
+      signal: STRONG
+      action: expedited_review
+      signal_detected: true
+  - input:
+      eb05: 4.9
+      ebgm: 6
+    expect:
+      signal: MODERATE
+      action: standard_review
+      signal_detected: true
+  - input:
+      eb05: 2
+      ebgm: 3
+    expect:
+      signal: MODERATE
+      action: standard_review
+      signal_detected: true
+  - input:
+      eb05: 1.9
+      ebgm: 2.5
+    expect:
+      signal: WEAK
+      action: monitor
+      signal_detected: true
+  - input:
+      eb05: 1
+      ebgm: 1.5
+    expect:
+      signal: WEAK
+      action: monitor
+      signal_detected: true
+  - input:
+      eb05: 0.8
+      ebgm: 2.5
+    expect:
+      signal: BORDERLINE
+      action: increase_sample
+      signal_detected: false
+  - input:
+      eb05: 0.5
+      ebgm: 2
+    expect:
+      signal: BORDERLINE
+      action: increase_sample
+      signal_detected: false
+  - input:
+      eb05: 0.8
+      ebgm: 1.9
+    expect:
+      signal: NONE
+      action: no_action
+      signal_detected: false
+  - input:
+      eb05: 0.3
+      ebgm: 0.5
+    expect:
+      signal: NONE
+      action: no_action
+      signal_detected: false
+  - input:
+      eb05: 10
+      ebgm: 12
+    expect:
+      signal: STRONG
+      action: expedited_review
+      signal_detected: true
+  - input: {}
+    expect:
+      signal: NONE
+      action: no_action
+      signal_detected: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - signal
+    - signal_detected
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

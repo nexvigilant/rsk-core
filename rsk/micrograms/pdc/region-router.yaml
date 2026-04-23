@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: region-router
-description: "PDC: Route to regional implementation considerations — APAC, Europe, Americas, Emerging Markets"
 version: 0.1.0
+description: "PDC: Route to regional implementation considerations — APAC, Europe, Americas, Emerging Markets"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: region
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: ai_governance
+    type: string
+  - name: cultural_priority
+    type: string
+  - name: error
+    type: string
+  - name: language
+    type: string
+  - name: quality_integration
+    type: string
+  - name: region
+    type: string
+  - name: regulatory
+    type: string
 interface:
   inputs:
     region:
@@ -21,6 +51,28 @@ interface:
       type: string
     regulatory:
       type: string
+ui:
+  title: Region Router
+  subtitle: "PDC: Route to regional implementation considerations — APAC, Europe, Americas, Emerging Markets"
+  icon: circle
+  route: /vigilance/mg/region-router
+  steps:
+    - field: region
+      label: region
+      help: Enter region
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_governance: {{ai_governance}} — cultural_priority: {{cultural_priority}} — error: {{error}} — language: {{language}} — quality_integration: {{quality_integration}} — region: {{region}} — regulatory: {{regulatory}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/region-router
+  cli: rsk mcg run region-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_apac
   nodes:
@@ -56,68 +108,107 @@ tree:
       type: return
       value:
         region: ASIA_PACIFIC
-        ai_governance: "collective decision-making emphasis"
-        quality_integration: "traditional quality systems, hierarchical structures"
-        language: "language-specific AI training materials required"
-        regulatory: "regional AI guidelines, data protection alignment"
-        cultural_priority: "consensus-driven, respect for hierarchy"
+        ai_governance: collective decision-making emphasis
+        quality_integration: traditional quality systems, hierarchical structures
+        language: language-specific AI training materials required
+        regulatory: regional AI guidelines, data protection alignment
+        cultural_priority: consensus-driven, respect for hierarchy
     europe_impl:
       type: return
       value:
         region: EUROPE
-        ai_governance: "GDPR compliance mandatory for all AI applications"
-        quality_integration: "EU GVP and AI regulatory framework integration"
-        language: "multi-language support for diverse European markets"
-        regulatory: "ethical AI implementation, transparency emphasis"
-        cultural_priority: "privacy, transparency, ethical AI"
+        ai_governance: GDPR compliance mandatory for all AI applications
+        quality_integration: EU GVP and AI regulatory framework integration
+        language: multi-language support for diverse European markets
+        regulatory: ethical AI implementation, transparency emphasis
+        cultural_priority: privacy, transparency, ethical AI
     americas_impl:
       type: return
       value:
         region: AMERICAS
-        ai_governance: "FDA guidance integration for AI in pharma"
-        quality_integration: "existing quality systems and validation frameworks"
-        language: "English primary, Spanish/Portuguese secondary"
-        regulatory: "innovation focus, competitive advantage through AI"
-        cultural_priority: "measurable ROI, business impact"
+        ai_governance: FDA guidance integration for AI in pharma
+        quality_integration: existing quality systems and validation frameworks
+        language: English primary, Spanish/Portuguese secondary
+        regulatory: innovation focus, competitive advantage through AI
+        cultural_priority: measurable ROI, business impact
     emerging_impl:
       type: return
       value:
         region: EMERGING_MARKETS
-        ai_governance: "scalable implementation appropriate to infrastructure"
-        quality_integration: "capacity building, foundational skill development"
-        language: "local language priority with global terminology alignment"
-        regulatory: "partnership approaches for technology access"
-        cultural_priority: "cost-effective solutions, cloud-based, capacity building"
+        ai_governance: scalable implementation appropriate to infrastructure
+        quality_integration: capacity building, foundational skill development
+        language: local language priority with global terminology alignment
+        regulatory: partnership approaches for technology access
+        cultural_priority: cost-effective solutions, cloud-based, capacity building
     unknown_region:
       type: return
       value:
         region: UNKNOWN
         error: "Region must be: apac, europe, americas, emerging"
 tests:
-- input:
-    region: apac
-  expect:
-    region: ASIA_PACIFIC
-    cultural_priority: "consensus-driven, respect for hierarchy"
-- input:
-    region: europe
-  expect:
-    region: EUROPE
-    cultural_priority: "privacy, transparency, ethical AI"
-- input:
-    region: americas
-  expect:
-    region: AMERICAS
-    cultural_priority: "measurable ROI, business impact"
-- input:
-    region: emerging
-  expect:
-    region: EMERGING_MARKETS
-    cultural_priority: "cost-effective solutions, cloud-based, capacity building"
-- input:
-    region: other
-  expect:
-    region: UNKNOWN
-- input: {}
-  expect:
-    region: UNKNOWN
+  - input:
+      region: apac
+    expect:
+      region: ASIA_PACIFIC
+      cultural_priority: consensus-driven, respect for hierarchy
+  - input:
+      region: europe
+    expect:
+      region: EUROPE
+      cultural_priority: privacy, transparency, ethical AI
+  - input:
+      region: americas
+    expect:
+      region: AMERICAS
+      cultural_priority: measurable ROI, business impact
+  - input:
+      region: emerging
+    expect:
+      region: EMERGING_MARKETS
+      cultural_priority: cost-effective solutions, cloud-based, capacity building
+  - input:
+      region: other
+    expect:
+      region: UNKNOWN
+  - input: {}
+    expect:
+      region: UNKNOWN
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_governance
+    - cultural_priority
+    - error
+    - language
+    - quality_integration
+    - region
+    - regulatory
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

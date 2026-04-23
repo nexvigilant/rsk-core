@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pvos-detect-router
-description: 'PVOS signal detection: routes detection request to the appropriate algorithm (PRR/ROR/IC/EBGM/Chi2/Fisher) based on algorithm selection and contingency table availability'
 version: 0.1.0
+description: "PVOS signal detection: routes detection request to the appropriate algorithm (PRR/ROR/IC/EBGM/Chi2/Fisher) based on algorithm selection and contingency table availability"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: algorithm
+    type: string
+    required: false
+    description: ""
+  - name: has_contingency
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: algorithm
+    type: string
+  - name: description
+    type: string
+  - name: method
+    type: string
 interface:
   inputs:
     algorithm:
@@ -16,6 +42,33 @@ interface:
       type: string
     method:
       type: string
+ui:
+  title: Pvos Detect Router
+  subtitle: "PVOS signal detection: routes detection request to the appropriate algorithm (PRR/ROR/IC/EBGM/Chi2/Fisher) based on algorithm selection and contingency table availability"
+  icon: circle
+  route: /vigilance/mg/pvos-detect-router
+  steps:
+    - field: algorithm
+      label: algorithm
+      help: Enter algorithm
+      widget: text
+      placeholder: null
+    - field: has_contingency
+      label: has contingency
+      help: Enter has_contingency
+      widget: toggle
+      placeholder: null
+  result:
+    template: "algorithm: {{algorithm}} — description: {{description}} — method: {{method}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pvos-detect-router
+  cli: rsk mcg run pvos-detect-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_contingency
   nodes:
@@ -117,66 +170,99 @@ tree:
         method: error
         description: Unrecognized algorithm - choose PRR/ROR/IC/EBGM/Chi2/Fisher
 tests:
-- input:
-    algorithm: PRR
-    has_contingency: true
-  expect:
-    algorithm: PRR
-    method: proportional_reporting_ratio
-    description: Route to PRR computation - requires 2x2 contingency table
-- input:
-    algorithm: ROR
-    has_contingency: true
-  expect:
-    algorithm: ROR
-    method: reporting_odds_ratio
-    description: Route to ROR computation - requires 2x2 contingency table
-- input:
-    algorithm: IC
-    has_contingency: true
-  expect:
-    algorithm: IC
-    method: information_component
-    description: Route to IC computation - Bayesian information component
-- input:
-    algorithm: EBGM
-    has_contingency: true
-  expect:
-    algorithm: EBGM
-    method: empirical_bayes_geometric_mean
-    description: Route to EBGM computation - empirical Bayes geometric mean
-- input:
-    algorithm: Chi2
-    has_contingency: true
-  expect:
-    algorithm: Chi2
-    method: chi_squared_test
-    description: Route to Chi-squared test - frequentist independence test
-- input:
-    algorithm: Fisher
-    has_contingency: true
-  expect:
-    algorithm: Fisher
-    method: fishers_exact_test
-    description: Route to Fisher exact test - exact significance for small counts
-# no_data: no contingency table available
-- input:
-    algorithm: PRR
-    has_contingency: false
-  expect:
-    algorithm: NONE
-    method: error
-    description: No contingency table available - cannot run signal detection
-# unknown_algorithm: unrecognized algorithm name
-- input:
-    algorithm: BCPNN
-    has_contingency: true
-  expect:
-    algorithm: UNKNOWN
-    method: error
-    description: Unrecognized algorithm - choose PRR/ROR/IC/EBGM/Chi2/Fisher
-- input: {}
-  expect:
-    algorithm: NONE
-    description: No contingency table available - cannot run signal detection
-    method: error
+  - input:
+      algorithm: PRR
+      has_contingency: true
+    expect:
+      algorithm: PRR
+      method: proportional_reporting_ratio
+      description: Route to PRR computation - requires 2x2 contingency table
+  - input:
+      algorithm: ROR
+      has_contingency: true
+    expect:
+      algorithm: ROR
+      method: reporting_odds_ratio
+      description: Route to ROR computation - requires 2x2 contingency table
+  - input:
+      algorithm: IC
+      has_contingency: true
+    expect:
+      algorithm: IC
+      method: information_component
+      description: Route to IC computation - Bayesian information component
+  - input:
+      algorithm: EBGM
+      has_contingency: true
+    expect:
+      algorithm: EBGM
+      method: empirical_bayes_geometric_mean
+      description: Route to EBGM computation - empirical Bayes geometric mean
+  - input:
+      algorithm: Chi2
+      has_contingency: true
+    expect:
+      algorithm: Chi2
+      method: chi_squared_test
+      description: Route to Chi-squared test - frequentist independence test
+  - input:
+      algorithm: Fisher
+      has_contingency: true
+    expect:
+      algorithm: Fisher
+      method: fishers_exact_test
+      description: Route to Fisher exact test - exact significance for small counts
+  - input:
+      algorithm: PRR
+      has_contingency: false
+    expect:
+      algorithm: NONE
+      method: error
+      description: No contingency table available - cannot run signal detection
+  - input:
+      algorithm: BCPNN
+      has_contingency: true
+    expect:
+      algorithm: UNKNOWN
+      method: error
+      description: Unrecognized algorithm - choose PRR/ROR/IC/EBGM/Chi2/Fisher
+  - input: {}
+    expect:
+      algorithm: NONE
+      description: No contingency table available - cannot run signal detection
+      method: error
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - algorithm
+    - description
+    - method
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

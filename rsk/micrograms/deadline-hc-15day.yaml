@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: deadline-hc-15day
-description: "Calculate Health Canada 15-day serious adverse event reporting deadline"
 version: 0.1.0
+description: Calculate Health Canada 15-day serious adverse event reporting deadline
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Deadline Hc 15day
+  subtitle: Calculate Health Canada 15-day serious adverse event reporting deadline
+  icon: circle
+  route: /vigilance/mg/deadline-hc-15day
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/deadline-hc-15day
+  cli: rsk mcg run deadline-hc-15day
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_event
   nodes:
@@ -29,25 +58,25 @@ tree:
       type: return
       value:
         reporting_deadline_days: 15
-        event_category: "serious_unexpected_adverse_reaction"
-        regulatory_requirement: "Health_Canada_MedEffect"
-        priority_level: "high"
+        event_category: serious_unexpected_adverse_reaction
+        regulatory_requirement: Health_Canada_MedEffect
+        priority_level: high
         regulatory_compliant: true
     expected_deadline:
       type: return
       value:
         reporting_deadline_days: 30
-        event_category: "serious_expected_adverse_reaction"
-        regulatory_requirement: "Health_Canada_MedEffect"
-        priority_level: "standard"
+        event_category: serious_expected_adverse_reaction
+        regulatory_requirement: Health_Canada_MedEffect
+        priority_level: standard
         regulatory_compliant: true
     routine_deadline:
       type: return
       value:
         reporting_deadline_days: 30
-        event_category: "non_serious"
-        regulatory_requirement: "Health_Canada_MedEffect"
-        priority_level: "low"
+        event_category: non_serious
+        regulatory_requirement: Health_Canada_MedEffect
+        priority_level: low
         regulatory_compliant: true
     deadline_unknown:
       type: return
@@ -58,27 +87,59 @@ tree:
         priority_level: null
         regulatory_compliant: false
 tests:
-- input:
-    event_date: "2024-01-15"
-    is_serious: true
-    is_expected_in_labeling: false
-  expect:
-    reporting_deadline_days: 15
-    event_category: "serious_unexpected_adverse_reaction"
-- input:
-    event_date: "2024-01-15"
-    is_serious: true
-    is_expected_in_labeling: true
-  expect:
-    reporting_deadline_days: 30
-    event_category: "serious_expected_adverse_reaction"
-- input:
-    event_date: "2024-01-15"
-    is_serious: false
-  expect:
-    reporting_deadline_days: 30
-    priority_level: "low"
-- input: {}
-  expect:
-    reporting_deadline_days: null
-    regulatory_compliant: false
+  - input:
+      event_date: 2024-01-15
+      is_serious: true
+      is_expected_in_labeling: false
+    expect:
+      reporting_deadline_days: 15
+      event_category: serious_unexpected_adverse_reaction
+  - input:
+      event_date: 2024-01-15
+      is_serious: true
+      is_expected_in_labeling: true
+    expect:
+      reporting_deadline_days: 30
+      event_category: serious_expected_adverse_reaction
+  - input:
+      event_date: 2024-01-15
+      is_serious: false
+    expect:
+      reporting_deadline_days: 30
+      priority_level: low
+  - input: {}
+    expect:
+      reporting_deadline_days: null
+      regulatory_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

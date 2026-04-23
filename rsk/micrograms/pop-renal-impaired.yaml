@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pop-renal-impaired
-description: Severe renal impairment — dose adjustment
 version: 0.1.0
+description: Severe renal impairment — dose adjustment
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Pop Renal Impaired
+  subtitle: Severe renal impairment — dose adjustment
+  icon: circle
+  route: /vigilance/mg/pop-renal-impaired
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pop-renal-impaired
+  cli: rsk mcg run pop-renal-impaired
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -25,47 +54,77 @@ tree:
       true_next: at_risk
       false_next: standard
 tests:
-- input:
-    egfr: 30
-  expect:
-    population: renal-impaired
-    at_risk: true
-- input: {}
-  expect:
-    population: renal-impaired
-    at_risk: false
-- input:
-    egfr: 0
-  expect:
-    reason: Severe renal impairment — dose adjustment
-    at_risk: true
-    action: special_monitoring
-    population: renal-impaired
-- input:
-    egfr: -1
-  expect:
-    at_risk: true
-    reason: Severe renal impairment — dose adjustment
-    population: renal-impaired
-    action: special_monitoring
-- input:
-    egfr: 29
-  expect:
-    action: special_monitoring
-    population: renal-impaired
-    at_risk: true
-    reason: Severe renal impairment — dose adjustment
-- input:
-    egfr: 31
-  expect:
-    population: renal-impaired
-    at_risk: false
-    action: standard_care
-- input:
-    egfr: 3000
-  expect:
-    action: standard_care
-    population: renal-impaired
-    at_risk: false
-interface: null
-primitive_signature: null
+  - input:
+      egfr: 30
+    expect:
+      population: renal-impaired
+      at_risk: true
+  - input: {}
+    expect:
+      population: renal-impaired
+      at_risk: false
+  - input:
+      egfr: 0
+    expect:
+      reason: Severe renal impairment — dose adjustment
+      at_risk: true
+      action: special_monitoring
+      population: renal-impaired
+  - input:
+      egfr: -1
+    expect:
+      at_risk: true
+      reason: Severe renal impairment — dose adjustment
+      population: renal-impaired
+      action: special_monitoring
+  - input:
+      egfr: 29
+    expect:
+      action: special_monitoring
+      population: renal-impaired
+      at_risk: true
+      reason: Severe renal impairment — dose adjustment
+  - input:
+      egfr: 31
+    expect:
+      population: renal-impaired
+      at_risk: false
+      action: standard_care
+  - input:
+      egfr: 3000
+    expect:
+      action: standard_care
+      population: renal-impaired
+      at_risk: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

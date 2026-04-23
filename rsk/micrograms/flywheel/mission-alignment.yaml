@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: mission-alignment
-description: 'Loop 4 FlywheelVitals: Gyroscopic stability inputs. Measures mission alignment via scope creep frequency, pivot resistance (momentum/perturbation ratio), and decision consistency. Spec §3.4: stability only exists above critical momentum — emergent property.'
 version: 0.1.0
+description: "Loop 4 FlywheelVitals: Gyroscopic stability inputs. Measures mission alignment via scope creep frequency, pivot resistance (momentum/perturbation ratio), and decision consistency. Spec §3.4: stability only exists above critical momentum — emergent property."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: scope_creep_incidents
+    type: int
+    required: true
+    description: ""
+  - name: pivot_resistance
+    type: float
+    required: true
+    description: ""
+  - name: decision_consistency
+    type: float
+    required: true
+    description: ""
+  - name: momentum_above_critical
+    type: int
+    required: true
+    description: ""
+outputs:
+  - name: alignment
+    type: string
+  - name: stability_input
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     scope_creep_incidents:
@@ -22,10 +56,46 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Mission Alignment
+  subtitle: "Loop 4 FlywheelVitals: Gyroscopic stability inputs. Measures mission alignment via scope creep frequency, pivot resistance (momentum/perturbation ratio), and decision consistency. Spec §3.4: stability only exists above critical momentum — emergent property."
+  icon: circle
+  route: /vigilance/mg/mission-alignment
+  steps:
+    - field: scope_creep_incidents
+      label: scope creep incidents
+      help: Enter scope_creep_incidents
+      widget: text
+      placeholder: null
+    - field: pivot_resistance
+      label: pivot resistance
+      help: Enter pivot_resistance
+      widget: text
+      placeholder: null
+    - field: decision_consistency
+      label: decision consistency
+      help: Enter decision_consistency
+      widget: text
+      placeholder: null
+    - field: momentum_above_critical
+      label: momentum above critical
+      help: Enter momentum_above_critical
+      widget: text
+      placeholder: null
+  result:
+    template: "alignment: {{alignment}} — stability_input: {{stability_input}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/mission-alignment
+  cli: rsk mcg run mission-alignment
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_momentum
   nodes:
-    # Gate: no stability possible without momentum (spec §3.4)
     check_momentum:
       type: condition
       variable: momentum_above_critical
@@ -44,7 +114,7 @@ tree:
       type: condition
       variable: pivot_resistance
       operator: gte
-      value: 2.0
+      value: 2
       true_next: check_consistency_high
       false_next: check_consistency_low
     check_consistency_high:
@@ -105,87 +175,115 @@ tree:
         stability_input: no_stability
         action: build_momentum_first
 tests:
-# ALIGNED: strong pivot resistance, consistent decisions, few scope creeps
-- input:
-    scope_creep_incidents: 1
-    pivot_resistance: 5.0
-    decision_consistency: 0.9
-    momentum_above_critical: 1
-  expect:
-    alignment: ALIGNED
-    stability_input: stable
-    action: maintain_course
-# NO_AXIS: below critical momentum
-- input:
-    scope_creep_incidents: 0
-    pivot_resistance: 10.0
-    decision_consistency: 1.0
-    momentum_above_critical: 0
-  expect:
-    alignment: NO_AXIS
-    stability_input: no_stability
-    action: build_momentum_first
-# MISALIGNED: too many scope creeps
-- input:
-    scope_creep_incidents: 7
-    pivot_resistance: 3.0
-    decision_consistency: 0.8
-    momentum_above_critical: 1
-  expect:
-    alignment: MISALIGNED
-    stability_input: gimbal_lock
-    action: emergency_scope_freeze
-# DRIFTING: low consistency, low pivot resistance
-- input:
-    scope_creep_incidents: 2
-    pivot_resistance: 1.0
-    decision_consistency: 0.3
-    momentum_above_critical: 1
-  expect:
-    alignment: DRIFTING
-    stability_input: gimbal_lock
-    action: strategic_realignment
-# PRECESSING: moderate scope creep with moderate consistency
-- input:
-    scope_creep_incidents: 4
-    pivot_resistance: 1.5
-    decision_consistency: 0.6
-    momentum_above_critical: 1
-  expect:
-    alignment: PRECESSING
-    stability_input: precessing
-    action: scope_review_needed
-# STABLE: good resistance, few creeps, moderate consistency
-- input:
-    scope_creep_incidents: 2
-    pivot_resistance: 3.0
-    decision_consistency: 0.7
-    momentum_above_critical: 1
-  expect:
-    alignment: STABLE
-    stability_input: precessing
-    action: minor_course_correction
-# Edge: exactly at boundaries
-- input:
-    scope_creep_incidents: 5
-    pivot_resistance: 2.0
-    decision_consistency: 0.8
-    momentum_above_critical: 1
-  expect:
-    alignment: MISALIGNED
-    stability_input: gimbal_lock
-    action: emergency_scope_freeze
-- input:
-    scope_creep_incidents: 3
-    pivot_resistance: 2.0
-    decision_consistency: 0.8
-    momentum_above_critical: 1
-  expect:
-    alignment: ALIGNED
-    stability_input: stable
-    action: maintain_course
-- input: {}
-  expect:
-    action: build_momentum_first
-    alignment: NO_AXIS
-    stability_input: no_stability
+  - input:
+      scope_creep_incidents: 1
+      pivot_resistance: 5
+      decision_consistency: 0.9
+      momentum_above_critical: 1
+    expect:
+      alignment: ALIGNED
+      stability_input: stable
+      action: maintain_course
+  - input:
+      scope_creep_incidents: 0
+      pivot_resistance: 10
+      decision_consistency: 1
+      momentum_above_critical: 0
+    expect:
+      alignment: NO_AXIS
+      stability_input: no_stability
+      action: build_momentum_first
+  - input:
+      scope_creep_incidents: 7
+      pivot_resistance: 3
+      decision_consistency: 0.8
+      momentum_above_critical: 1
+    expect:
+      alignment: MISALIGNED
+      stability_input: gimbal_lock
+      action: emergency_scope_freeze
+  - input:
+      scope_creep_incidents: 2
+      pivot_resistance: 1
+      decision_consistency: 0.3
+      momentum_above_critical: 1
+    expect:
+      alignment: DRIFTING
+      stability_input: gimbal_lock
+      action: strategic_realignment
+  - input:
+      scope_creep_incidents: 4
+      pivot_resistance: 1.5
+      decision_consistency: 0.6
+      momentum_above_critical: 1
+    expect:
+      alignment: PRECESSING
+      stability_input: precessing
+      action: scope_review_needed
+  - input:
+      scope_creep_incidents: 2
+      pivot_resistance: 3
+      decision_consistency: 0.7
+      momentum_above_critical: 1
+    expect:
+      alignment: STABLE
+      stability_input: precessing
+      action: minor_course_correction
+  - input:
+      scope_creep_incidents: 5
+      pivot_resistance: 2
+      decision_consistency: 0.8
+      momentum_above_critical: 1
+    expect:
+      alignment: MISALIGNED
+      stability_input: gimbal_lock
+      action: emergency_scope_freeze
+  - input:
+      scope_creep_incidents: 3
+      pivot_resistance: 2
+      decision_consistency: 0.8
+      momentum_above_critical: 1
+    expect:
+      alignment: ALIGNED
+      stability_input: stable
+      action: maintain_course
+  - input: {}
+    expect:
+      action: build_momentum_first
+      alignment: NO_AXIS
+      stability_input: no_stability
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - alignment
+    - stability_input
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: epa10-ai-validate
-description: "EPA 10: AI tool validation — routes by validation stage, risk level, and regulatory requirement."
 version: 0.1.0
+description: "EPA 10: AI tool validation — routes by validation stage, risk level, and regulatory requirement."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: ai_risk_level
+    type: string
+    required: false
+    description: ""
+  - name: has_regulatory_submission
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: approval_required
+    type: string
+  - name: documentation
+    type: string
+  - name: hitl
+    type: string
+  - name: human_oversight
+    type: string
+  - name: review_frequency
+    type: string
+  - name: steps
+    type: string
+  - name: validation_level
+    type: string
 interface:
   inputs:
     ai_risk_level:
@@ -24,6 +58,33 @@ interface:
       type: string
     validation_level:
       type: string
+ui:
+  title: Epa10 Ai Validate
+  subtitle: "EPA 10: AI tool validation — routes by validation stage, risk level, and regulatory requirement."
+  icon: circle
+  route: /vigilance/mg/epa10-ai-validate
+  steps:
+    - field: ai_risk_level
+      label: ai risk level
+      help: Enter ai_risk_level
+      widget: text
+      placeholder: null
+    - field: has_regulatory_submission
+      label: has regulatory submission
+      help: Enter has_regulatory_submission
+      widget: toggle
+      placeholder: null
+  result:
+    template: "approval_required: {{approval_required}} — documentation: {{documentation}} — hitl: {{hitl}} — human_oversight: {{human_oversight}} — review_frequency: {{review_frequency}} — steps: {{steps}} — validation_level: {{validation_level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/epa10-ai-validate
+  cli: rsk mcg run epa10-ai-validate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_risk
   nodes:
@@ -52,67 +113,106 @@ tree:
       type: return
       value:
         validation_level: REGULATORY
-        steps: "protocol -> IQ -> OQ -> PQ -> UAT -> regulatory_submission -> ongoing_monitoring"
-        documentation: "full validation report, regulatory submission package"
+        steps: protocol -> IQ -> OQ -> PQ -> UAT -> regulatory_submission -> ongoing_monitoring
+        documentation: full validation report, regulatory submission package
         human_oversight: mandatory
-        review_frequency: "continuous monitoring, quarterly review"
-        approval_required: "QA, regulatory, medical, executive"
+        review_frequency: continuous monitoring, quarterly review
+        approval_required: QA, regulatory, medical, executive
         hitl: APPROVE
     comprehensive_validation:
       type: return
       value:
         validation_level: COMPREHENSIVE
-        steps: "protocol -> IQ -> OQ -> PQ -> UAT -> deployment -> monitoring"
-        documentation: "full validation report, change control documentation"
+        steps: protocol -> IQ -> OQ -> PQ -> UAT -> deployment -> monitoring
+        documentation: full validation report, change control documentation
         human_oversight: mandatory
-        review_frequency: "monthly performance review"
-        approval_required: "QA, medical"
+        review_frequency: monthly performance review
+        approval_required: QA, medical
         hitl: APPROVE
     medium_risk_validation:
       type: return
       value:
         validation_level: STANDARD
-        steps: "requirements -> testing -> UAT -> deployment -> monitoring"
-        documentation: "test report, user acceptance documentation"
+        steps: requirements -> testing -> UAT -> deployment -> monitoring
+        documentation: test report, user acceptance documentation
         human_oversight: required
-        review_frequency: "quarterly review"
-        approval_required: "QA"
+        review_frequency: quarterly review
+        approval_required: QA
         hitl: REVIEW
     low_risk_validation:
       type: return
       value:
         validation_level: BASIC
-        steps: "requirements -> testing -> deployment -> monitoring"
-        documentation: "test summary, deployment record"
+        steps: requirements -> testing -> deployment -> monitoring
+        documentation: test summary, deployment record
         human_oversight: recommended
-        review_frequency: "semi-annual review"
-        approval_required: "team lead"
+        review_frequency: semi-annual review
+        approval_required: team lead
         hitl: AUTO
 tests:
-- input:
-    ai_risk_level: high
-    has_regulatory_submission: true
-  expect:
-    validation_level: REGULATORY
-    hitl: APPROVE
-    human_oversight: mandatory
-- input:
-    ai_risk_level: high
-    has_regulatory_submission: false
-  expect:
-    validation_level: COMPREHENSIVE
-    hitl: APPROVE
-- input:
-    ai_risk_level: medium
-  expect:
-    validation_level: STANDARD
-    hitl: REVIEW
-- input:
-    ai_risk_level: low
-  expect:
-    validation_level: BASIC
-    hitl: AUTO
-- input: {}
-  expect:
-    validation_level: BASIC
-    hitl: AUTO
+  - input:
+      ai_risk_level: high
+      has_regulatory_submission: true
+    expect:
+      validation_level: REGULATORY
+      hitl: APPROVE
+      human_oversight: mandatory
+  - input:
+      ai_risk_level: high
+      has_regulatory_submission: false
+    expect:
+      validation_level: COMPREHENSIVE
+      hitl: APPROVE
+  - input:
+      ai_risk_level: medium
+    expect:
+      validation_level: STANDARD
+      hitl: REVIEW
+  - input:
+      ai_risk_level: low
+    expect:
+      validation_level: BASIC
+      hitl: AUTO
+  - input: {}
+    expect:
+      validation_level: BASIC
+      hitl: AUTO
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - approval_required
+    - documentation
+    - hitl
+    - human_oversight
+    - review_frequency
+    - steps
+    - validation_level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-entropy-pipeline
-description: Route entropy computations to information-theoretic assessment paths
 version: 0.1.0
+description: Route entropy computations to information-theoretic assessment paths
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Entropy Pipeline
+  subtitle: Route entropy computations to information-theoretic assessment paths
+  icon: circle
+  route: /vigilance/mg/station-entropy-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-entropy-pipeline
+  cli: rsk mcg run station-entropy-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_entropy
   nodes:
@@ -8,7 +37,7 @@ tree:
       type: condition
       variable: entropy_bits
       operator: gte
-      value: 3.0
+      value: 3
       true_next: high_entropy
       false_next: check_low
     high_entropy:
@@ -40,63 +69,93 @@ tree:
         priority: high
         reason: Very low entropy (≤0.5 bits) — near-deterministic, possible reporting bias
 tests:
-- input:
-    entropy_bits: 4.2
-  expect:
-    priority: moderate
-    route: distribution_analysis
-    action: investigate
-- input:
-    entropy_bits: 0.2
-  expect:
-    action: flag
-    priority: high
-    route: bias_check
-- input:
-    entropy_bits: 1.8
-  expect:
-    action: pass
-    route: archive
-    priority: low
-- input:
-    entropy_bits: 2.999
-  expect:
-    action: pass
-    route: archive
-    priority: low
-    reason: Normal entropy range — expected information content
-- input:
-    entropy_bits: 3.001
-  expect:
-    priority: moderate
-    reason: High entropy (≥3 bits) — significant disorder/diversity in distribution
-    action: investigate
-    route: distribution_analysis
-- input: {}
-  expect:
-    reason: Normal entropy range — expected information content
-    priority: low
-    action: pass
-    route: archive
-- input:
-    entropy_bits: 0.499
-  expect:
-    action: flag
-    priority: high
-    route: bias_check
-    reason: Very low entropy (≤0.5 bits) — near-deterministic, possible reporting bias
-- input:
-    entropy_bits: 0.501
-  expect:
-    reason: Normal entropy range — expected information content
-    action: pass
-    route: archive
-    priority: low
-- input: {}
-  expect:
-    route: archive
-    priority: low
-    reason: Normal entropy range — expected information content
-    action: pass
-interface: null
-primitive_signature: null
+  - input:
+      entropy_bits: 4.2
+    expect:
+      priority: moderate
+      route: distribution_analysis
+      action: investigate
+  - input:
+      entropy_bits: 0.2
+    expect:
+      action: flag
+      priority: high
+      route: bias_check
+  - input:
+      entropy_bits: 1.8
+    expect:
+      action: pass
+      route: archive
+      priority: low
+  - input:
+      entropy_bits: 2.999
+    expect:
+      action: pass
+      route: archive
+      priority: low
+      reason: Normal entropy range — expected information content
+  - input:
+      entropy_bits: 3.001
+    expect:
+      priority: moderate
+      reason: High entropy (≥3 bits) — significant disorder/diversity in distribution
+      action: investigate
+      route: distribution_analysis
+  - input: {}
+    expect:
+      reason: Normal entropy range — expected information content
+      priority: low
+      action: pass
+      route: archive
+  - input:
+      entropy_bits: 0.499
+    expect:
+      action: flag
+      priority: high
+      route: bias_check
+      reason: Very low entropy (≤0.5 bits) — near-deterministic, possible reporting bias
+  - input:
+      entropy_bits: 0.501
+    expect:
+      reason: Normal entropy range — expected information content
+      action: pass
+      route: archive
+      priority: low
+  - input: {}
+    expect:
+      route: archive
+      priority: low
+      reason: Normal entropy range — expected information content
+      action: pass
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

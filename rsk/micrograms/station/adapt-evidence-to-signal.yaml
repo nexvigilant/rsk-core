@@ -1,7 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: adapt-evidence-to-signal
-description: "Adapter: convert evidence_strength from pubmed/literature configmigrams to signal pipeline inputs"
 version: 0.1.0
-
+description: "Adapter: convert evidence_strength from pubmed/literature configmigrams to signal pipeline inputs"
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: evidence_strength
+    type: string
+    required: false
+    description: "From config-pubmed-signal-strength: strong, moderate, emerging, weak, absent"
+outputs:
+  - name: signal_detected
+    type: bool
+  - name: prr
+    type: float
 interface:
   inputs:
     evidence_strength:
@@ -13,7 +32,28 @@ interface:
       type: bool
     prr:
       type: float
-
+ui:
+  title: Adapt Evidence To Signal
+  subtitle: "Adapter: convert evidence_strength from pubmed/literature configmigrams to signal pipeline inputs"
+  icon: activity
+  route: /vigilance/mg/adapt-evidence-to-signal
+  steps:
+    - field: evidence_strength
+      label: evidence strength
+      help: "From config-pubmed-signal-strength: strong, moderate, emerging, weak, absent"
+      widget: text
+      placeholder: null
+  result:
+    template: "signal_detected: {{signal_detected}} — prr: {{prr}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/adapt-evidence-to-signal
+  cli: rsk mcg run adapt-evidence-to-signal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_evidence
   nodes:
@@ -23,70 +63,114 @@ tree:
       operator: is_null
       true_next: no_evidence
       false_next: check_strong
-
     check_strong:
       type: condition
       variable: evidence_strength
       operator: eq
-      value: "strong"
+      value: strong
       true_next: strong_out
       false_next: check_moderate
-
     check_moderate:
       type: condition
       variable: evidence_strength
       operator: eq
-      value: "moderate"
+      value: moderate
       true_next: moderate_out
       false_next: check_emerging
-
     check_emerging:
       type: condition
       variable: evidence_strength
       operator: eq
-      value: "emerging"
+      value: emerging
       true_next: emerging_out
       false_next: no_evidence
-
     strong_out:
       type: return
       value:
         signal_detected: true
-        prr: 5.0
-
+        prr: 5
     moderate_out:
       type: return
       value:
         signal_detected: true
-        prr: 3.0
-
+        prr: 3
     emerging_out:
       type: return
       value:
         signal_detected: true
-        prr: 2.0
-
+        prr: 2
     no_evidence:
       type: return
       value:
         signal_detected: false
         prr: 0.5
-
-primitive_signature:
-  dominant: 'μ'
-  expression: 'μ — domain mapping or format conversion'
-  primes: ['μ']
-  arguments: []
 tests:
-  - input: { evidence_strength: "strong" }
-    expect: { signal_detected: true, prr: 5.0 }
-  - input: { evidence_strength: "moderate" }
-    expect: { signal_detected: true, prr: 3.0 }
-  - input: { evidence_strength: "emerging" }
-    expect: { signal_detected: true, prr: 2.0 }
-  - input: { evidence_strength: "weak" }
-    expect: { signal_detected: false, prr: 0.5 }
-  - input: { evidence_strength: "absent" }
-    expect: { signal_detected: false, prr: 0.5 }
+  - input:
+      evidence_strength: strong
+    expect:
+      signal_detected: true
+      prr: 5
+  - input:
+      evidence_strength: moderate
+    expect:
+      signal_detected: true
+      prr: 3
+  - input:
+      evidence_strength: emerging
+    expect:
+      signal_detected: true
+      prr: 2
+  - input:
+      evidence_strength: weak
+    expect:
+      signal_detected: false
+      prr: 0.5
+  - input:
+      evidence_strength: absent
+    expect:
+      signal_detected: false
+      prr: 0.5
   - input: {}
-    expect: { signal_detected: false, prr: 0.5 }
+    expect:
+      signal_detected: false
+      prr: 0.5
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - signal_detected
+    - prr
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: integration-d6
-description: "Domain 6 cross-domain integration — enhanced coverage domain completing the triad (D3+D5+D6). Error prevention connects to quality, risk, case processing."
 version: 0.1.0
+description: Domain 6 cross-domain integration — enhanced coverage domain completing the triad (D3+D5+D6). Error prevention connects to quality, risk, case processing.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: target_domain
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: enhanced_domain
+    type: bool
+  - name: enhanced_pair
+    type: bool
+  - name: enhancement_status
+    type: string
+  - name: epas
+    type: string
+  - name: integration_type
+    type: string
+  - name: min_epa_coverage
+    type: string
+  - name: module
+    type: string
+  - name: synergy
+    type: string
 interface:
   inputs:
     target_domain:
@@ -23,6 +55,28 @@ interface:
       type: string
     synergy:
       type: string
+ui:
+  title: Integration D6
+  subtitle: Domain 6 cross-domain integration — enhanced coverage domain completing the triad (D3+D5+D6). Error prevention connects to quality, risk, case processing.
+  icon: circle
+  route: /vigilance/mg/integration-d6
+  steps:
+    - field: target_domain
+      label: target domain
+      help: Enter target_domain
+      widget: text
+      placeholder: null
+  result:
+    template: "enhanced_domain: {{enhanced_domain}} — enhanced_pair: {{enhanced_pair}} — enhancement_status: {{enhancement_status}} — epas: {{epas}} — integration_type: {{integration_type}} — min_epa_coverage: {{min_epa_coverage}} — module: {{module}} — synergy: {{synergy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/integration-d6
+  cli: rsk mcg run integration-d6
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target
   nodes:
@@ -79,99 +133,139 @@ tree:
       type: return
       value:
         integration_type: ENHANCED_COVERAGE
-        module: "Enhanced Domain Triad (D3+D5+D6)"
-        synergy: "ADR vs error differentiation — overlapping presentations, distinct causation and response"
+        module: Enhanced Domain Triad (D3+D5+D6)
+        synergy: ADR vs error differentiation — overlapping presentations, distinct causation and response
         enhanced_pair: true
-        min_epa_coverage: "50%"
-        epas: "EPA1, EPA7"
+        min_epa_coverage: 50%
+        epas: EPA1, EPA7
     d6_d5:
       type: return
       value:
         integration_type: ENHANCED_COVERAGE
-        module: "Enhanced Domain Triad (D3+D5+D6)"
-        synergy: "medication error detection in clinical trial protocol deviations and dosing errors"
+        module: Enhanced Domain Triad (D3+D5+D6)
+        synergy: medication error detection in clinical trial protocol deviations and dosing errors
         enhanced_pair: true
-        min_epa_coverage: "50%"
-        epas: "EPA1, EPA7, EPA9"
+        min_epa_coverage: 50%
+        epas: EPA1, EPA7, EPA9
     d6_d9:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Error-Quality Integration"
-        synergy: "error prevention expertise + quality systems = comprehensive safety management"
-        epas: "EPA9"
+        module: Error-Quality Integration
+        synergy: error prevention expertise + quality systems = comprehensive safety management
+        epas: EPA9
     d6_d4:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Error-Case Processing"
-        synergy: "case processing methods apply to error documentation and analysis"
-        epas: "EPA1"
+        module: Error-Case Processing
+        synergy: case processing methods apply to error documentation and analysis
+        epas: EPA1
     d6_d8:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Error-Signal Detection"
-        synergy: "error patterns feed signal detection, signal methods detect error trends"
+        module: Error-Signal Detection
+        synergy: error patterns feed signal detection, signal methods detect error trends
     d6_d11:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Error-Risk Management"
-        synergy: "error prevention is risk management — shared tools, shared goals"
-        epas: "EPA7"
+        module: Error-Risk Management
+        synergy: error prevention is risk management — shared tools, shared goals
+        epas: EPA7
     d6_d1:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Error-Ethical Foundation"
-        synergy: "just culture principles rooted in foundational ethics, patient safety primacy"
+        module: Error-Ethical Foundation
+        synergy: just culture principles rooted in foundational ethics, patient safety primacy
     general:
       type: return
       value:
         integration_type: GENERAL
-        module: "Universal Error Prevention"
-        synergy: "error prevention expertise enhances safety across all domains"
+        module: Universal Error Prevention
+        synergy: error prevention expertise enhances safety across all domains
         enhanced_domain: true
-        enhancement_status: "third of 3 enhanced coverage domains (D3, D5, D6) — triad complete"
+        enhancement_status: third of 3 enhanced coverage domains (D3, D5, D6) — triad complete
 tests:
-- input:
-    target_domain: 3
-  expect:
-    integration_type: ENHANCED_COVERAGE
-    enhanced_pair: true
-- input:
-    target_domain: 5
-  expect:
-    integration_type: ENHANCED_COVERAGE
-    module: "Enhanced Domain Triad (D3+D5+D6)"
-- input:
-    target_domain: 9
-  expect:
-    integration_type: PRIMARY
-    module: "Error-Quality Integration"
-- input:
-    target_domain: 11
-  expect:
-    integration_type: PRIMARY
-    module: "Error-Risk Management"
-- input:
-    target_domain: 4
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 8
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 1
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 15
-  expect:
-    integration_type: GENERAL
-    enhancement_status: "third of 3 enhanced coverage domains (D3, D5, D6) — triad complete"
-- input: {}
-  expect:
-    integration_type: GENERAL
+  - input:
+      target_domain: 3
+    expect:
+      integration_type: ENHANCED_COVERAGE
+      enhanced_pair: true
+  - input:
+      target_domain: 5
+    expect:
+      integration_type: ENHANCED_COVERAGE
+      module: Enhanced Domain Triad (D3+D5+D6)
+  - input:
+      target_domain: 9
+    expect:
+      integration_type: PRIMARY
+      module: Error-Quality Integration
+  - input:
+      target_domain: 11
+    expect:
+      integration_type: PRIMARY
+      module: Error-Risk Management
+  - input:
+      target_domain: 4
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 8
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 1
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 15
+    expect:
+      integration_type: GENERAL
+      enhancement_status: third of 3 enhanced coverage domains (D3, D5, D6) — triad complete
+  - input: {}
+    expect:
+      integration_type: GENERAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - enhanced_domain
+    - enhanced_pair
+    - enhancement_status
+    - epas
+    - integration_type
+    - min_epa_coverage
+    - module
+    - synergy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

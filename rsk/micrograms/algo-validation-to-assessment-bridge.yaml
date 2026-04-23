@@ -1,20 +1,54 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: algo-validation-to-assessment-bridge
-description: "Bridge microgram: maps signal-deep-validation outputs to pv-12-algorithm-assessment inputs. Implements Algorithm 3 (TRANSFER) between the two chains. confidence → evidence_sufficient, trend → tolerance_met, overall → decision_defined."
 version: 0.1.0
+description: "Bridge microgram: maps signal-deep-validation outputs to pv-12-algorithm-assessment inputs. Implements Algorithm 3 (TRANSFER) between the two chains. confidence → evidence_sufficient, trend → tolerance_met, overall → decision_defined."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: confidence
+    type: integer
+    required: true
+    description: Signal validation confidence (0-100)
+  - name: trend
+    type: string
+    required: true
+    description: Signal trend from trend-detector
+  - name: overall
+    type: string
+    required: true
+    description: Overall signal classification from multi-signal-combiner
+outputs:
+  - name: evidence_sufficient
+    type: boolean
+  - name: decision_defined
+    type: boolean
+  - name: tolerance_met
+    type: boolean
+  - name: perspectives_checked
+    type: integer
+  - name: algorithm
+    type: string
 interface:
   inputs:
     confidence:
       type: integer
       required: true
-      description: "Signal validation confidence (0-100)"
+      description: Signal validation confidence (0-100)
     trend:
       type: string
       required: true
-      description: "Signal trend from trend-detector"
+      description: Signal trend from trend-detector
     overall:
       type: string
       required: true
-      description: "Overall signal classification from multi-signal-combiner"
+      description: Overall signal classification from multi-signal-combiner
   outputs:
     evidence_sufficient:
       type: boolean
@@ -26,6 +60,38 @@ interface:
       type: integer
     algorithm:
       type: string
+ui:
+  title: Algo Validation To Assessment Bridge
+  subtitle: "Bridge microgram: maps signal-deep-validation outputs to pv-12-algorithm-assessment inputs. Implements Algorithm 3 (TRANSFER) between the two chains. confidence → evidence_sufficient, trend → tolerance_met, overall → decision_defined."
+  icon: circle
+  route: /vigilance/mg/algo-validation-to-assessment-bridge
+  steps:
+    - field: confidence
+      label: confidence
+      help: Signal validation confidence (0-100)
+      widget: number
+      placeholder: null
+    - field: trend
+      label: trend
+      help: Signal trend from trend-detector
+      widget: text
+      placeholder: null
+    - field: overall
+      label: overall
+      help: Overall signal classification from multi-signal-combiner
+      widget: text
+      placeholder: null
+  result:
+    template: "evidence_sufficient: {{evidence_sufficient}} — decision_defined: {{decision_defined}} — tolerance_met: {{tolerance_met}} — perspectives_checked: {{perspectives_checked}} — algorithm: {{algorithm}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/algo-validation-to-assessment-bridge
+  cli: rsk mcg run algo-validation-to-assessment-bridge
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_confidence
   nodes:
@@ -127,27 +193,98 @@ tree:
         tolerance_met: false
         perspectives_checked: 1
         algorithm: "BRIDGE: mid-confidence + not rising → insufficient, re-evaluate at next cycle"
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-- name: confirmed_strong_stable
-  input: { confidence: 95, trend: STABLE, overall: CONFIRMED }
-  expect: { evidence_sufficient: true, decision_defined: true, tolerance_met: true, perspectives_checked: 4 }
-- name: confirmed_strong_rising
-  input: { confidence: 95, trend: RISING, overall: CONFIRMED }
-  expect: { evidence_sufficient: true, decision_defined: true, tolerance_met: false, perspectives_checked: 3 }
-- name: probable_stable
-  input: { confidence: 75, trend: STABLE, overall: PROBABLE }
-  expect: { evidence_sufficient: true, decision_defined: true, tolerance_met: true, perspectives_checked: 3 }
-- name: weak_rising_emerging
-  input: { confidence: 45, trend: RISING, overall: SUGGESTIVE }
-  expect: { evidence_sufficient: false, decision_defined: false, tolerance_met: false, perspectives_checked: 1 }
-- name: noise_low_confidence
-  input: { confidence: 20, trend: RISING, overall: NO_SIGNAL }
-  expect: { evidence_sufficient: false, decision_defined: false, tolerance_met: false, perspectives_checked: 1 }
-- name: null_safety
-  input: {}
-  expect: { evidence_sufficient: false, decision_defined: false, tolerance_met: false, perspectives_checked: 1 }
+  - name: confirmed_strong_stable
+    input:
+      confidence: 95
+      trend: STABLE
+      overall: CONFIRMED
+    expect:
+      evidence_sufficient: true
+      decision_defined: true
+      tolerance_met: true
+      perspectives_checked: 4
+  - name: confirmed_strong_rising
+    input:
+      confidence: 95
+      trend: RISING
+      overall: CONFIRMED
+    expect:
+      evidence_sufficient: true
+      decision_defined: true
+      tolerance_met: false
+      perspectives_checked: 3
+  - name: probable_stable
+    input:
+      confidence: 75
+      trend: STABLE
+      overall: PROBABLE
+    expect:
+      evidence_sufficient: true
+      decision_defined: true
+      tolerance_met: true
+      perspectives_checked: 3
+  - name: weak_rising_emerging
+    input:
+      confidence: 45
+      trend: RISING
+      overall: SUGGESTIVE
+    expect:
+      evidence_sufficient: false
+      decision_defined: false
+      tolerance_met: false
+      perspectives_checked: 1
+  - name: noise_low_confidence
+    input:
+      confidence: 20
+      trend: RISING
+      overall: NO_SIGNAL
+    expect:
+      evidence_sufficient: false
+      decision_defined: false
+      tolerance_met: false
+      perspectives_checked: 1
+  - name: null_safety
+    input: {}
+    expect:
+      evidence_sufficient: false
+      decision_defined: false
+      tolerance_met: false
+      perspectives_checked: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - evidence_sufficient
+    - decision_defined
+    - tolerance_met
+    - perspectives_checked
+    - algorithm
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

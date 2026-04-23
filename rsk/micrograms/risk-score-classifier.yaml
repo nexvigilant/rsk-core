@@ -1,6 +1,66 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: risk-score-classifier
-description: Classify risk score 0-100 into CRITICAL/HIGH/MODERATE/LOW bands for Guardian risk routing
 version: 0.1.0
+description: Classify risk score 0-100 into CRITICAL/HIGH/MODERATE/LOW bands for Guardian risk routing
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: risk_score
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: escalate
+    type: bool
+  - name: action
+    type: string
+  - name: level
+    type: string
+interface:
+  inputs:
+    risk_score:
+      type: int
+      required: false
+  outputs:
+    escalate:
+      type: bool
+      required: false
+    action:
+      type: string
+      required: false
+    level:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Risk Score Classifier
+  subtitle: Classify risk score 0-100 into CRITICAL/HIGH/MODERATE/LOW bands for Guardian risk routing
+  icon: circle
+  route: /vigilance/mg/risk-score-classifier
+  steps:
+    - field: risk_score
+      label: risk score
+      help: Enter risk_score
+      widget: text
+      placeholder: null
+  result:
+    template: "escalate: {{escalate}} — action: {{action}} — level: {{level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/risk-score-classifier
+  cli: rsk mcg run risk-score-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_critical
   nodes:
@@ -50,151 +110,163 @@ tree:
       true_next: high
       false_next: check_moderate
 tests:
-- input:
-    risk_score: 95
-  expect:
-    action: immediate_review
-    escalate: true
-    level: CRITICAL
-- input:
-    risk_score: 80
-  expect:
-    escalate: true
-    level: CRITICAL
-    action: immediate_review
-- input:
-    risk_score: 65
-  expect:
-    escalate: true
-    level: HIGH
-    action: priority_review
-- input:
-    risk_score: 45
-  expect:
-    action: scheduled_review
-    escalate: false
-    level: MODERATE
-- input:
-    risk_score: 10
-  expect:
-    action: routine_monitoring
-    level: LOW
-    escalate: false
-- input: {}
-  expect:
-    action: routine_monitoring
-    level: LOW
-    escalate: false
-- input:
-    risk_score: 0
-  expect:
-    escalate: false
-    action: routine_monitoring
-    level: LOW
-- input:
-    risk_score: -1
-  expect:
-    escalate: false
-    level: LOW
-    action: routine_monitoring
-- input:
-    risk_score: 29
-  expect:
-    level: LOW
-    escalate: false
-    action: routine_monitoring
-- input:
-    risk_score: 31
-  expect:
-    action: scheduled_review
-    level: MODERATE
-    escalate: false
-- input:
-    risk_score: 3000
-  expect:
-    escalate: true
-    level: CRITICAL
-    action: immediate_review
-- input:
-    risk_score: 0
-  expect:
-    action: routine_monitoring
-    escalate: false
-    level: LOW
-- input:
-    risk_score: -1
-  expect:
-    level: LOW
-    escalate: false
-    action: routine_monitoring
-- input:
-    risk_score: 79
-  expect:
-    level: HIGH
-    action: priority_review
-    escalate: true
-- input:
-    risk_score: 81
-  expect:
-    escalate: true
-    level: CRITICAL
-    action: immediate_review
-- input:
-    risk_score: 8000
-  expect:
-    action: immediate_review
-    level: CRITICAL
-    escalate: true
-- input:
-    risk_score: 0
-  expect:
-    action: routine_monitoring
-    level: LOW
-    escalate: false
-- input:
-    risk_score: -1
-  expect:
-    level: LOW
-    escalate: false
-    action: routine_monitoring
-- input:
-    risk_score: 59
-  expect:
-    escalate: false
-    action: scheduled_review
-    level: MODERATE
-- input:
-    risk_score: 61
-  expect:
-    action: priority_review
-    level: HIGH
-    escalate: true
-- input:
-    risk_score: 6000
-  expect:
-    action: immediate_review
-    escalate: true
-    level: CRITICAL
-interface:
-  inputs:
-    risk_score:
-      type: int
-      required: false
-  outputs:
-    escalate:
-      type: bool
-      required: false
-    action:
-      type: string
-      required: false
-    level:
-      type: string
-      required: false
-  aliases: {}
-primitive_signature:
-  dominant: κ
-  expression: κ — measurement, comparison, or classification
-  primes:
-  - κ
-  arguments: []
-  chain_prediction: null
+  - input:
+      risk_score: 95
+    expect:
+      action: immediate_review
+      escalate: true
+      level: CRITICAL
+  - input:
+      risk_score: 80
+    expect:
+      escalate: true
+      level: CRITICAL
+      action: immediate_review
+  - input:
+      risk_score: 65
+    expect:
+      escalate: true
+      level: HIGH
+      action: priority_review
+  - input:
+      risk_score: 45
+    expect:
+      action: scheduled_review
+      escalate: false
+      level: MODERATE
+  - input:
+      risk_score: 10
+    expect:
+      action: routine_monitoring
+      level: LOW
+      escalate: false
+  - input: {}
+    expect:
+      action: routine_monitoring
+      level: LOW
+      escalate: false
+  - input:
+      risk_score: 0
+    expect:
+      escalate: false
+      action: routine_monitoring
+      level: LOW
+  - input:
+      risk_score: -1
+    expect:
+      escalate: false
+      level: LOW
+      action: routine_monitoring
+  - input:
+      risk_score: 29
+    expect:
+      level: LOW
+      escalate: false
+      action: routine_monitoring
+  - input:
+      risk_score: 31
+    expect:
+      action: scheduled_review
+      level: MODERATE
+      escalate: false
+  - input:
+      risk_score: 3000
+    expect:
+      escalate: true
+      level: CRITICAL
+      action: immediate_review
+  - input:
+      risk_score: 0
+    expect:
+      action: routine_monitoring
+      escalate: false
+      level: LOW
+  - input:
+      risk_score: -1
+    expect:
+      level: LOW
+      escalate: false
+      action: routine_monitoring
+  - input:
+      risk_score: 79
+    expect:
+      level: HIGH
+      action: priority_review
+      escalate: true
+  - input:
+      risk_score: 81
+    expect:
+      escalate: true
+      level: CRITICAL
+      action: immediate_review
+  - input:
+      risk_score: 8000
+    expect:
+      action: immediate_review
+      level: CRITICAL
+      escalate: true
+  - input:
+      risk_score: 0
+    expect:
+      action: routine_monitoring
+      level: LOW
+      escalate: false
+  - input:
+      risk_score: -1
+    expect:
+      level: LOW
+      escalate: false
+      action: routine_monitoring
+  - input:
+      risk_score: 59
+    expect:
+      escalate: false
+      action: scheduled_review
+      level: MODERATE
+  - input:
+      risk_score: 61
+    expect:
+      action: priority_review
+      level: HIGH
+      escalate: true
+  - input:
+      risk_score: 6000
+    expect:
+      action: immediate_review
+      escalate: true
+      level: CRITICAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - escalate
+    - action
+    - level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

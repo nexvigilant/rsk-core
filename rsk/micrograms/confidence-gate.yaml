@@ -1,6 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: confidence-gate
-description: 'Gate on confidence level: HIGH (>=0.8), MEDIUM (>=0.5), LOW (<0.5)'
 version: 0.1.0
+description: "Gate on confidence level: HIGH (>=0.8), MEDIUM (>=0.5), LOW (<0.5)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: confidence
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: actionable
+    type: bool
+  - name: confidence_level
+    type: string
 interface:
   inputs:
     confidence:
@@ -11,6 +31,28 @@ interface:
       type: bool
     confidence_level:
       type: string
+ui:
+  title: Confidence Gate
+  subtitle: "Gate on confidence level: HIGH (>=0.8), MEDIUM (>=0.5), LOW (<0.5)"
+  icon: circle
+  route: /vigilance/mg/confidence-gate
+  steps:
+    - field: confidence
+      label: confidence
+      help: Enter confidence
+      widget: text
+      placeholder: null
+  result:
+    template: "actionable: {{actionable}} — confidence_level: {{confidence_level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/confidence-gate
+  cli: rsk mcg run confidence-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: high_check
   nodes:
@@ -43,92 +85,121 @@ tree:
       value: 50
       true_next: medium
       false_next: low
-primitive_signature:
-  dominant: '∂'
-  expression: '∂ — boundary validation or gating'
-  primes: ['∂']
-  arguments: []
 tests:
-- input:
-    confidence: 90
-  expect:
-    confidence_level: HIGH
-    actionable: true
-- input:
-    confidence: 65
-  expect:
-    actionable: true
-    confidence_level: MEDIUM
-- input:
-    confidence: 30
-  expect:
-    actionable: false
-    confidence_level: LOW
-- input:
-    confidence: 80
-  expect:
-    actionable: true
-    confidence_level: HIGH
-- input:
-    confidence: 50
-  expect:
-    confidence_level: MEDIUM
-    actionable: true
-- input:
-    confidence: 49
-  expect:
-    confidence_level: LOW
-    actionable: false
-- input:
-    confidence: 0
-  expect:
-    actionable: false
-    confidence_level: LOW
-- input:
-    confidence: -1
-  expect:
-    confidence_level: LOW
-    actionable: false
-- input:
-    confidence: 79
-  expect:
-    actionable: true
-    confidence_level: MEDIUM
-- input:
-    confidence: 81
-  expect:
-    confidence_level: HIGH
-    actionable: true
-- input:
-    confidence: 8000
-  expect:
-    actionable: true
-    confidence_level: HIGH
-- input: {}
-  expect:
-    confidence_level: LOW
-    actionable: false
-- input:
-    confidence: 0
-  expect:
-    actionable: false
-    confidence_level: LOW
-- input:
-    confidence: -1
-  expect:
-    actionable: false
-    confidence_level: LOW
-- input:
-    confidence: 51
-  expect:
-    actionable: true
-    confidence_level: MEDIUM
-- input:
-    confidence: 5000
-  expect:
-    confidence_level: HIGH
-    actionable: true
-- input: {}
-  expect:
-    actionable: false
-    confidence_level: LOW
+  - input:
+      confidence: 90
+    expect:
+      confidence_level: HIGH
+      actionable: true
+  - input:
+      confidence: 65
+    expect:
+      actionable: true
+      confidence_level: MEDIUM
+  - input:
+      confidence: 30
+    expect:
+      actionable: false
+      confidence_level: LOW
+  - input:
+      confidence: 80
+    expect:
+      actionable: true
+      confidence_level: HIGH
+  - input:
+      confidence: 50
+    expect:
+      confidence_level: MEDIUM
+      actionable: true
+  - input:
+      confidence: 49
+    expect:
+      confidence_level: LOW
+      actionable: false
+  - input:
+      confidence: 0
+    expect:
+      actionable: false
+      confidence_level: LOW
+  - input:
+      confidence: -1
+    expect:
+      confidence_level: LOW
+      actionable: false
+  - input:
+      confidence: 79
+    expect:
+      actionable: true
+      confidence_level: MEDIUM
+  - input:
+      confidence: 81
+    expect:
+      confidence_level: HIGH
+      actionable: true
+  - input:
+      confidence: 8000
+    expect:
+      actionable: true
+      confidence_level: HIGH
+  - input: {}
+    expect:
+      confidence_level: LOW
+      actionable: false
+  - input:
+      confidence: 0
+    expect:
+      actionable: false
+      confidence_level: LOW
+  - input:
+      confidence: -1
+    expect:
+      actionable: false
+      confidence_level: LOW
+  - input:
+      confidence: 51
+    expect:
+      actionable: true
+      confidence_level: MEDIUM
+  - input:
+      confidence: 5000
+    expect:
+      confidence_level: HIGH
+      actionable: true
+  - input: {}
+    expect:
+      actionable: false
+      confidence_level: LOW
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - actionable
+    - confidence_level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: anti-vector-classify
-description: 'Classify a confirmed harm signal into its anti-vector strategy. Maps harm type (A-H) to primary anti-vector class (mechanistic/epistemic/architectural), recommended measures, and common biases.'
 version: 1.0.0
+description: Classify a confirmed harm signal into its anti-vector strategy. Maps harm type (A-H) to primary anti-vector class (mechanistic/epistemic/architectural), recommended measures, and common biases.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: harm_type
+    type: string
+    required: true
+    description: ""
+  - name: signal_magnitude
+    type: float
+    required: true
+    description: ""
+  - name: confidence
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: primary_class
+    type: string
+  - name: secondary_class
+    type: string
+  - name: description
+    type: string
+  - name: first_measure
+    type: string
+  - name: primary_bias
+    type: string
+  - name: proportionality_tier
+    type: string
 interface:
   inputs:
     harm_type:
@@ -25,6 +61,38 @@ interface:
       type: string
     proportionality_tier:
       type: string
+ui:
+  title: Anti Vector Classify
+  subtitle: Classify a confirmed harm signal into its anti-vector strategy. Maps harm type (A-H) to primary anti-vector class (mechanistic/epistemic/architectural), recommended measures, and common biases.
+  icon: circle
+  route: /vigilance/mg/anti-vector-classify
+  steps:
+    - field: harm_type
+      label: harm type
+      help: Enter harm_type
+      widget: text
+      placeholder: null
+    - field: signal_magnitude
+      label: signal magnitude
+      help: Enter signal_magnitude
+      widget: text
+      placeholder: null
+    - field: confidence
+      label: confidence
+      help: Enter confidence
+      widget: text
+      placeholder: null
+  result:
+    template: "primary_class: {{primary_class}} — secondary_class: {{secondary_class}} — description: {{description}} — first_measure: {{first_measure}} — primary_bias: {{primary_bias}} — proportionality_tier: {{proportionality_tier}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/anti-vector-classify
+  cli: rsk mcg run anti-vector-classify
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_a
   nodes:
@@ -32,7 +100,7 @@ tree:
       type: condition
       variable: harm_type
       operator: eq
-      value: "A"
+      value: A
       true_next: tier_a
       false_next: check_b
     tier_a:
@@ -60,12 +128,11 @@ tree:
         first_measure: dose_modification
         primary_bias: notoriety_bias
         proportionality_tier: standard
-
     check_b:
       type: condition
       variable: harm_type
       operator: eq
-      value: "B"
+      value: B
       true_next: return_b
       false_next: check_c
     return_b:
@@ -77,12 +144,11 @@ tree:
         first_measure: required_monitoring
         primary_bias: depletion_of_susceptibles
         proportionality_tier: standard
-
     check_c:
       type: condition
       variable: harm_type
       operator: eq
-      value: "C"
+      value: C
       true_next: return_c
       false_next: check_d
     return_c:
@@ -94,12 +160,11 @@ tree:
         first_measure: label_update
         primary_bias: indication_bias
         proportionality_tier: standard
-
     check_d:
       type: condition
       variable: harm_type
       operator: eq
-      value: "D"
+      value: D
       true_next: return_d
       false_next: check_e
     return_d:
@@ -111,12 +176,11 @@ tree:
         first_measure: rems
         primary_bias: stimulated_reporting
         proportionality_tier: standard
-
     check_e:
       type: condition
       variable: harm_type
       operator: eq
-      value: "E"
+      value: E
       true_next: return_e
       false_next: check_f
     return_e:
@@ -128,12 +192,11 @@ tree:
         first_measure: required_monitoring
         primary_bias: channeling_bias
         proportionality_tier: standard
-
     check_f:
       type: condition
       variable: harm_type
       operator: eq
-      value: "F"
+      value: F
       true_next: return_f
       false_next: check_g
     return_f:
@@ -145,12 +208,11 @@ tree:
         first_measure: dose_modification
         primary_bias: weber_effect
         proportionality_tier: standard
-
     check_g:
       type: condition
       variable: harm_type
       operator: eq
-      value: "G"
+      value: G
       true_next: return_g
       false_next: check_h
     return_g:
@@ -162,12 +224,11 @@ tree:
         first_measure: contraindication
         primary_bias: channeling_bias
         proportionality_tier: standard
-
     check_h:
       type: condition
       variable: harm_type
       operator: eq
-      value: "H"
+      value: H
       true_next: return_h
       false_next: return_default
     return_h:
@@ -179,7 +240,6 @@ tree:
         first_measure: label_update
         primary_bias: channeling_bias
         proportionality_tier: standard
-
     return_default:
       type: return
       value:
@@ -189,61 +249,91 @@ tree:
         first_measure: label_update
         primary_bias: unknown
         proportionality_tier: low
-
 tests:
-  - name: "Acute harm maps to mechanistic"
+  - name: Acute harm maps to mechanistic
     input:
-      harm_type: "A"
+      harm_type: A
       signal_magnitude: 0.7
     expect:
       primary_class: mechanistic
-
-  - name: "Cascade harm maps to architectural"
+  - name: Cascade harm maps to architectural
     input:
-      harm_type: "D"
+      harm_type: D
       signal_magnitude: 0.5
     expect:
       primary_class: architectural
-
-  - name: "Idiosyncratic harm maps to epistemic"
+  - name: Idiosyncratic harm maps to epistemic
     input:
-      harm_type: "E"
+      harm_type: E
       signal_magnitude: 0.4
     expect:
       primary_class: epistemic
-
-  - name: "Population harm maps to epistemic"
+  - name: Population harm maps to epistemic
     input:
-      harm_type: "H"
+      harm_type: H
       signal_magnitude: 0.6
     expect:
       primary_class: epistemic
-
-  - name: "Critical acute gets contraindication"
+  - name: Critical acute gets contraindication
     input:
-      harm_type: "A"
+      harm_type: A
       signal_magnitude: 0.9
     expect:
       proportionality_tier: critical
       first_measure: contraindication
-
-  - name: "Standard acute gets dose modification"
+  - name: Standard acute gets dose modification
     input:
-      harm_type: "A"
+      harm_type: A
       signal_magnitude: 0.5
     expect:
       proportionality_tier: standard
       first_measure: dose_modification
-
-  - name: "Unknown harm type defaults safely"
+  - name: Unknown harm type defaults safely
     input:
-      harm_type: "Z"
+      harm_type: Z
       signal_magnitude: 0.3
     expect:
       primary_class: architectural
       proportionality_tier: low
-
-  - name: "Null input defaults safely"
+  - name: Null input defaults safely
     input: {}
     expect:
       primary_class: architectural
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - primary_class
+    - secondary_class
+    - description
+    - first_measure
+    - primary_bias
+    - proportionality_tier
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: spanish-cognate-classifier
-description: Classifies English-to-Spanish cognate confidence based on morphological features
 version: 0.1.0
+description: Classifies English-to-Spanish cognate confidence based on morphological features
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: latin_root
+    type: bool
+    required: false
+    description: ""
+  - name: ends_in_tion
+    type: bool
+    required: false
+    description: ""
+  - name: ends_in_al
+    type: bool
+    required: false
+    description: ""
+  - name: syllable_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: cognate_confidence
+    type: string
+  - name: learning_strategy
+    type: string
 interface:
   inputs:
     latin_root:
@@ -20,6 +52,43 @@ interface:
       type: string
     learning_strategy:
       type: string
+ui:
+  title: Spanish Cognate Classifier
+  subtitle: Classifies English-to-Spanish cognate confidence based on morphological features
+  icon: circle
+  route: /vigilance/mg/spanish-cognate-classifier
+  steps:
+    - field: latin_root
+      label: latin root
+      help: Enter latin_root
+      widget: toggle
+      placeholder: null
+    - field: ends_in_tion
+      label: ends in tion
+      help: Enter ends_in_tion
+      widget: toggle
+      placeholder: null
+    - field: ends_in_al
+      label: ends in al
+      help: Enter ends_in_al
+      widget: toggle
+      placeholder: null
+    - field: syllable_count
+      label: syllable count
+      help: Enter syllable_count
+      widget: text
+      placeholder: null
+  result:
+    template: "cognate_confidence: {{cognate_confidence}} — learning_strategy: {{learning_strategy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/spanish-cognate-classifier
+  cli: rsk mcg run spanish-cognate-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_latin_root_present
   nodes:
@@ -72,55 +141,89 @@ tree:
         cognate_confidence: low
         learning_strategy: memorize
 tests:
-- input:
-    latin_root: true
-    ends_in_tion: true
-    ends_in_al: false
-    syllable_count: 3
-  expect:
-    cognate_confidence: high
-    learning_strategy: transfer
-- input:
-    latin_root: true
-    ends_in_tion: false
-    ends_in_al: true
-    syllable_count: 3
-  expect:
-    cognate_confidence: high
-    learning_strategy: transfer
-- input:
-    latin_root: true
-    ends_in_tion: false
-    ends_in_al: false
-    syllable_count: 2
-  expect:
-    cognate_confidence: moderate
-    learning_strategy: pattern_match
-- input:
-    latin_root: false
-    ends_in_tion: false
-    ends_in_al: false
-    syllable_count: 1
-  expect:
-    cognate_confidence: low
-    learning_strategy: memorize
-- input: {}
-  expect:
-    cognate_confidence: REJECTED
-    learning_strategy: "REJECTED: latin_root is required"
-- input:
-    latin_root: true
-    ends_in_tion: true
-    ends_in_al: true
-    syllable_count: 4
-  expect:
-    cognate_confidence: high
-    learning_strategy: transfer
-- input:
-    latin_root: false
-    ends_in_tion: true
-    ends_in_al: false
-    syllable_count: 3
-  expect:
-    cognate_confidence: low
-    learning_strategy: memorize
+  - input:
+      latin_root: true
+      ends_in_tion: true
+      ends_in_al: false
+      syllable_count: 3
+    expect:
+      cognate_confidence: high
+      learning_strategy: transfer
+  - input:
+      latin_root: true
+      ends_in_tion: false
+      ends_in_al: true
+      syllable_count: 3
+    expect:
+      cognate_confidence: high
+      learning_strategy: transfer
+  - input:
+      latin_root: true
+      ends_in_tion: false
+      ends_in_al: false
+      syllable_count: 2
+    expect:
+      cognate_confidence: moderate
+      learning_strategy: pattern_match
+  - input:
+      latin_root: false
+      ends_in_tion: false
+      ends_in_al: false
+      syllable_count: 1
+    expect:
+      cognate_confidence: low
+      learning_strategy: memorize
+  - input: {}
+    expect:
+      cognate_confidence: REJECTED
+      learning_strategy: "REJECTED: latin_root is required"
+  - input:
+      latin_root: true
+      ends_in_tion: true
+      ends_in_al: true
+      syllable_count: 4
+    expect:
+      cognate_confidence: high
+      learning_strategy: transfer
+  - input:
+      latin_root: false
+      ends_in_tion: true
+      ends_in_al: false
+      syllable_count: 3
+    expect:
+      cognate_confidence: low
+      learning_strategy: memorize
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - cognate_confidence
+    - learning_strategy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

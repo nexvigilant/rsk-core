@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-fda-accessdata-pipeline
-description: 'Triage FDA Accessdata results: route approvals, orange book, REMS by regulatory significance'
 version: 0.1.0
+description: "Triage FDA Accessdata results: route approvals, orange book, REMS by regulatory significance"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Fda Accessdata Pipeline
+  subtitle: "Triage FDA Accessdata results: route approvals, orange book, REMS by regulatory significance"
+  icon: circle
+  route: /vigilance/mg/station-fda-accessdata-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-fda-accessdata-pipeline
+  cli: rsk mcg run station-fda-accessdata-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_source
   nodes:
@@ -54,43 +83,73 @@ tree:
       true_next: accelerated_approval
       false_next: standard_approval
 tests:
-- input:
-    data_type: rems
-  expect:
-    route: risk_management
-    action: escalate
-    priority: high
-- input:
-    accelerated: true
-    data_type: approval
-  expect:
-    priority: high
-    action: flag
-    route: pmr_tracking
-- input:
-    data_type: approval
-    accelerated: false
-  expect:
-    action: reference
-    route: archive
-    priority: low
-- input:
-    data_type: orange_book
-  expect:
-    action: reference
-    route: archive
-    priority: low
-- input: {}
-  expect:
-    action: reference
-    priority: low
-    reason: Orange Book data — patent/exclusivity reference
-    route: archive
-- input: {}
-  expect:
-    priority: low
-    route: archive
-    reason: Orange Book data — patent/exclusivity reference
-    action: reference
-interface: null
-primitive_signature: null
+  - input:
+      data_type: rems
+    expect:
+      route: risk_management
+      action: escalate
+      priority: high
+  - input:
+      accelerated: true
+      data_type: approval
+    expect:
+      priority: high
+      action: flag
+      route: pmr_tracking
+  - input:
+      data_type: approval
+      accelerated: false
+    expect:
+      action: reference
+      route: archive
+      priority: low
+  - input:
+      data_type: orange_book
+    expect:
+      action: reference
+      route: archive
+      priority: low
+  - input: {}
+    expect:
+      action: reference
+      priority: low
+      reason: Orange Book data — patent/exclusivity reference
+      route: archive
+  - input: {}
+    expect:
+      priority: low
+      route: archive
+      reason: Orange Book data — patent/exclusivity reference
+      action: reference
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

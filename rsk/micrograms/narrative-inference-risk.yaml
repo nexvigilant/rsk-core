@@ -1,6 +1,56 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: narrative-inference-risk
-description: "Gate 3 of narrative safe-extract: assess re-identification risk from quasi-identifiers (rare disease + age + region combinations) per ICH E2B(R3) and HIPAA expert determination"
 version: 0.1.0
+description: "Gate 3 of narrative safe-extract: assess re-identification risk from quasi-identifiers (rare disease + age + region combinations) per ICH E2B(R3) and HIPAA expert determination"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_rare_disease
+    type: bool
+    required: false
+    description: ""
+  - name: has_exact_age
+    type: bool
+    required: false
+    description: ""
+  - name: has_geographic_detail
+    type: bool
+    required: false
+    description: ""
+  - name: has_temporal_detail
+    type: bool
+    required: false
+    description: ""
+  - name: has_occupation
+    type: bool
+    required: false
+    description: ""
+  - name: unique_drug_combination
+    type: bool
+    required: false
+    description: ""
+  - name: quasi_identifier_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: inference_risk
+    type: string
+  - name: reidentification_probability
+    type: string
+  - name: gate_pass
+    type: bool
+  - name: action
+    type: string
+  - name: mitigation
+    type: string
 interface:
   inputs:
     is_rare_disease:
@@ -35,6 +85,58 @@ interface:
       type: string
     mitigation:
       type: string
+ui:
+  title: Narrative Inference Risk
+  subtitle: "Gate 3 of narrative safe-extract: assess re-identification risk from quasi-identifiers (rare disease + age + region combinations) per ICH E2B(R3) and HIPAA expert determination"
+  icon: circle
+  route: /vigilance/mg/narrative-inference-risk
+  steps:
+    - field: is_rare_disease
+      label: is rare disease
+      help: Enter is_rare_disease
+      widget: toggle
+      placeholder: null
+    - field: has_exact_age
+      label: has exact age
+      help: Enter has_exact_age
+      widget: toggle
+      placeholder: null
+    - field: has_geographic_detail
+      label: has geographic detail
+      help: Enter has_geographic_detail
+      widget: toggle
+      placeholder: null
+    - field: has_temporal_detail
+      label: has temporal detail
+      help: Enter has_temporal_detail
+      widget: toggle
+      placeholder: null
+    - field: has_occupation
+      label: has occupation
+      help: Enter has_occupation
+      widget: toggle
+      placeholder: null
+    - field: unique_drug_combination
+      label: unique drug combination
+      help: Enter unique_drug_combination
+      widget: toggle
+      placeholder: null
+    - field: quasi_identifier_count
+      label: quasi identifier count
+      help: Enter quasi_identifier_count
+      widget: text
+      placeholder: null
+  result:
+    template: "inference_risk: {{inference_risk}} — reidentification_probability: {{reidentification_probability}} — gate_pass: {{gate_pass}} — action: {{action}} — mitigation: {{mitigation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/narrative-inference-risk
+  cli: rsk mcg run narrative-inference-risk
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_rare_disease
   nodes:
@@ -128,181 +230,218 @@ tree:
         inference_risk: CRITICAL
         reidentification_probability: ">50%"
         gate_pass: false
-        action: "BLOCK — rare disease + exact age + geography = likely re-identifiable"
-        mitigation: "Generalize age to decade, remove sub-national geography"
+        action: BLOCK — rare disease + exact age + geography = likely re-identifiable
+        mitigation: Generalize age to decade, remove sub-national geography
     high_inference_rare_age:
       type: return
       value:
         inference_risk: HIGH
-        reidentification_probability: "20-50%"
+        reidentification_probability: 20-50%
         gate_pass: false
-        action: "BLOCK — rare disease + exact age enables narrowing to small cohort"
-        mitigation: "Generalize age to decade range"
+        action: BLOCK — rare disease + exact age enables narrowing to small cohort
+        mitigation: Generalize age to decade range
     high_inference_rare_geo:
       type: return
       value:
         inference_risk: HIGH
-        reidentification_probability: "20-50%"
+        reidentification_probability: 20-50%
         gate_pass: false
-        action: "BLOCK — rare disease + geographic detail enables regional identification"
-        mitigation: "Generalize geography to country level"
+        action: BLOCK — rare disease + geographic detail enables regional identification
+        mitigation: Generalize geography to country level
     high_inference_common_trio:
       type: return
       value:
         inference_risk: HIGH
-        reidentification_probability: "10-30%"
+        reidentification_probability: 10-30%
         gate_pass: false
-        action: "BLOCK — age + geography + temporal detail narrows population significantly"
-        mitigation: "Remove temporal detail or generalize geography"
+        action: BLOCK — age + geography + temporal detail narrows population significantly
+        mitigation: Remove temporal detail or generalize geography
     moderate_inference_rare:
       type: return
       value:
         inference_risk: MODERATE
-        reidentification_probability: "5-20%"
+        reidentification_probability: 5-20%
         gate_pass: false
-        action: "REVIEW — rare disease alone increases base re-identification risk"
-        mitigation: "Ensure no additional quasi-identifiers present"
+        action: REVIEW — rare disease alone increases base re-identification risk
+        mitigation: Ensure no additional quasi-identifiers present
     moderate_inference_age_geo:
       type: return
       value:
         inference_risk: MODERATE
-        reidentification_probability: "5-15%"
+        reidentification_probability: 5-15%
         gate_pass: false
-        action: "REVIEW — age + geography combination warrants generalization"
-        mitigation: "Generalize age to decade or geography to country"
+        action: REVIEW — age + geography combination warrants generalization
+        mitigation: Generalize age to decade or geography to country
     moderate_inference_age_occupation:
       type: return
       value:
         inference_risk: MODERATE
-        reidentification_probability: "5-15%"
+        reidentification_probability: 5-15%
         gate_pass: false
-        action: "REVIEW — age + occupation combination may narrow population"
-        mitigation: "Remove occupation or generalize age"
+        action: REVIEW — age + occupation combination may narrow population
+        mitigation: Remove occupation or generalize age
     moderate_inference_drug_geo:
       type: return
       value:
         inference_risk: MODERATE
-        reidentification_probability: "5-10%"
+        reidentification_probability: 5-10%
         gate_pass: false
-        action: "REVIEW — unique drug combination + geography may enable inference"
-        mitigation: "Generalize geography to country level"
+        action: REVIEW — unique drug combination + geography may enable inference
+        mitigation: Generalize geography to country level
     moderate_inference_multi:
       type: return
       value:
         inference_risk: MODERATE
-        reidentification_probability: "5-15%"
+        reidentification_probability: 5-15%
         gate_pass: false
-        action: "REVIEW — 3+ quasi-identifiers present, cumulative risk"
-        mitigation: "Remove least informative quasi-identifier"
+        action: REVIEW — 3+ quasi-identifiers present, cumulative risk
+        mitigation: Remove least informative quasi-identifier
     low_inference_geo:
       type: return
       value:
         inference_risk: LOW
-        reidentification_probability: "<5%"
+        reidentification_probability: <5%
         gate_pass: true
-        action: "PASS — geographic detail alone is low risk for common conditions"
-        mitigation: "none"
+        action: PASS — geographic detail alone is low risk for common conditions
+        mitigation: none
     low_inference_age:
       type: return
       value:
         inference_risk: LOW
-        reidentification_probability: "<5%"
+        reidentification_probability: <5%
         gate_pass: true
-        action: "PASS — exact age alone is low risk for common conditions"
-        mitigation: "none"
+        action: PASS — exact age alone is low risk for common conditions
+        mitigation: none
     low_inference_pair:
       type: return
       value:
         inference_risk: LOW
-        reidentification_probability: "<5%"
+        reidentification_probability: <5%
         gate_pass: true
-        action: "PASS — 2 quasi-identifiers below cumulative threshold"
-        mitigation: "none"
+        action: PASS — 2 quasi-identifiers below cumulative threshold
+        mitigation: none
     no_inference_risk:
       type: return
       value:
         inference_risk: NONE
-        reidentification_probability: "<1%"
+        reidentification_probability: <1%
         gate_pass: true
-        action: "PASS — no significant re-identification risk"
-        mitigation: "none"
+        action: PASS — no significant re-identification risk
+        mitigation: none
 tests:
-- input:
-    is_rare_disease: true
-    has_exact_age: true
-    has_geographic_detail: true
-  expect:
-    inference_risk: CRITICAL
-    gate_pass: false
-- input:
-    is_rare_disease: true
-    has_exact_age: true
-  expect:
-    inference_risk: HIGH
-    gate_pass: false
-- input:
-    is_rare_disease: true
-    has_geographic_detail: true
-  expect:
-    inference_risk: HIGH
-    gate_pass: false
-- input:
-    is_rare_disease: true
-  expect:
-    inference_risk: MODERATE
-    gate_pass: false
-- input:
-    has_exact_age: true
-    has_geographic_detail: true
-    has_temporal_detail: true
-  expect:
-    inference_risk: HIGH
-    gate_pass: false
-- input:
-    has_exact_age: true
-    has_geographic_detail: true
-  expect:
-    inference_risk: MODERATE
-    gate_pass: false
-- input:
-    has_exact_age: true
-    has_occupation: true
-  expect:
-    inference_risk: MODERATE
-    gate_pass: false
-- input:
-    has_geographic_detail: true
-    unique_drug_combination: true
-  expect:
-    inference_risk: MODERATE
-    gate_pass: false
-- input:
-    has_geographic_detail: true
-  expect:
-    inference_risk: LOW
-    gate_pass: true
-- input:
-    has_exact_age: true
-  expect:
-    inference_risk: LOW
-    gate_pass: true
-- input:
-    quasi_identifier_count: 3
-  expect:
-    inference_risk: MODERATE
-    gate_pass: false
-- input:
-    quasi_identifier_count: 2
-  expect:
-    inference_risk: LOW
-    gate_pass: true
-- input:
-    quasi_identifier_count: 1
-  expect:
-    inference_risk: NONE
-    gate_pass: true
-- input: {}
-  expect:
-    inference_risk: NONE
-    gate_pass: true
-    reidentification_probability: "<1%"
+  - input:
+      is_rare_disease: true
+      has_exact_age: true
+      has_geographic_detail: true
+    expect:
+      inference_risk: CRITICAL
+      gate_pass: false
+  - input:
+      is_rare_disease: true
+      has_exact_age: true
+    expect:
+      inference_risk: HIGH
+      gate_pass: false
+  - input:
+      is_rare_disease: true
+      has_geographic_detail: true
+    expect:
+      inference_risk: HIGH
+      gate_pass: false
+  - input:
+      is_rare_disease: true
+    expect:
+      inference_risk: MODERATE
+      gate_pass: false
+  - input:
+      has_exact_age: true
+      has_geographic_detail: true
+      has_temporal_detail: true
+    expect:
+      inference_risk: HIGH
+      gate_pass: false
+  - input:
+      has_exact_age: true
+      has_geographic_detail: true
+    expect:
+      inference_risk: MODERATE
+      gate_pass: false
+  - input:
+      has_exact_age: true
+      has_occupation: true
+    expect:
+      inference_risk: MODERATE
+      gate_pass: false
+  - input:
+      has_geographic_detail: true
+      unique_drug_combination: true
+    expect:
+      inference_risk: MODERATE
+      gate_pass: false
+  - input:
+      has_geographic_detail: true
+    expect:
+      inference_risk: LOW
+      gate_pass: true
+  - input:
+      has_exact_age: true
+    expect:
+      inference_risk: LOW
+      gate_pass: true
+  - input:
+      quasi_identifier_count: 3
+    expect:
+      inference_risk: MODERATE
+      gate_pass: false
+  - input:
+      quasi_identifier_count: 2
+    expect:
+      inference_risk: LOW
+      gate_pass: true
+  - input:
+      quasi_identifier_count: 1
+    expect:
+      inference_risk: NONE
+      gate_pass: true
+  - input: {}
+    expect:
+      inference_risk: NONE
+      gate_pass: true
+      reidentification_probability: <1%
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - inference_risk
+    - reidentification_probability
+    - gate_pass
+    - action
+    - mitigation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

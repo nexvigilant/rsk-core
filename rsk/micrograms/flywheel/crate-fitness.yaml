@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: crate-fitness
-description: 'Crate architectural fitness classifier. Checks LOC, module count, dependency count, and estimated compile time against thresholds. FIT (all under limits), REVIEW (1 threshold crossed), SPLIT (2+ thresholds crossed). Prevents monolith accumulation.'
 version: 0.1.0
+description: Crate architectural fitness classifier. Checks LOC, module count, dependency count, and estimated compile time against thresholds. FIT (all under limits), REVIEW (1 threshold crossed), SPLIT (2+ thresholds crossed). Prevents monolith accumulation.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: loc
+    type: int
+    required: true
+    description: ""
+  - name: module_count
+    type: int
+    required: true
+    description: ""
+  - name: dep_count
+    type: int
+    required: true
+    description: ""
+  - name: compile_seconds
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: fitness
+    type: string
+  - name: violations
+    type: int
+  - name: action
+    type: string
 interface:
   inputs:
     loc:
@@ -22,6 +56,43 @@ interface:
       type: int
     action:
       type: string
+ui:
+  title: Crate Fitness
+  subtitle: Crate architectural fitness classifier. Checks LOC, module count, dependency count, and estimated compile time against thresholds. FIT (all under limits), REVIEW (1 threshold crossed), SPLIT (2+ thresholds crossed). Prevents monolith accumulation.
+  icon: circle
+  route: /vigilance/mg/crate-fitness
+  steps:
+    - field: loc
+      label: loc
+      help: Enter loc
+      widget: text
+      placeholder: null
+    - field: module_count
+      label: module count
+      help: Enter module_count
+      widget: text
+      placeholder: null
+    - field: dep_count
+      label: dep count
+      help: Enter dep_count
+      widget: text
+      placeholder: null
+    - field: compile_seconds
+      label: compile seconds
+      help: Enter compile_seconds
+      widget: text
+      placeholder: null
+  result:
+    template: "fitness: {{fitness}} — violations: {{violations}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/crate-fitness
+  cli: rsk mcg run crate-fitness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_loc
   nodes:
@@ -117,80 +188,115 @@ tree:
         violations: 0
         action: none
 tests:
-- input:
-    loc: 5000
-    module_count: 8
-    dep_count: 10
-    compile_seconds: 30
-  expect:
-    fitness: fit
-    violations: 0
-    action: none
-- input:
-    loc: 125000
-    module_count: 61
-    dep_count: 70
-    compile_seconds: 600
-  expect:
-    fitness: split
-    violations: 3
-    action: immediate_decomposition
-- input:
-    loc: 60000
-    module_count: 35
-    dep_count: 20
-    compile_seconds: 120
-  expect:
-    fitness: split
-    violations: 2
-    action: plan_decomposition
-- input:
-    loc: 60000
-    module_count: 10
-    dep_count: 20
-    compile_seconds: 120
-  expect:
-    fitness: review
-    violations: 1
-    action: architecture_review
-- input:
-    loc: 10000
-    module_count: 10
-    dep_count: 45
-    compile_seconds: 60
-  expect:
-    fitness: review
-    violations: 1
-    action: reduce_dependencies
-- input:
-    loc: 10000
-    module_count: 10
-    dep_count: 10
-    compile_seconds: 400
-  expect:
-    fitness: review
-    violations: 1
-    action: optimize_compile
-- input:
-    loc: 49000
-    module_count: 29
-    dep_count: 39
-    compile_seconds: 200
-  expect:
-    fitness: fit
-    violations: 0
-    action: none
-- input:
-    loc: 30000
-    module_count: 35
-    dep_count: 50
-    compile_seconds: 60
-  expect:
-    fitness: split
-    violations: 2
-    action: plan_decomposition
-- input: {}
-  expect:
-    action: none
-    fitness: fit
-    violations: 0
+  - input:
+      loc: 5000
+      module_count: 8
+      dep_count: 10
+      compile_seconds: 30
+    expect:
+      fitness: fit
+      violations: 0
+      action: none
+  - input:
+      loc: 125000
+      module_count: 61
+      dep_count: 70
+      compile_seconds: 600
+    expect:
+      fitness: split
+      violations: 3
+      action: immediate_decomposition
+  - input:
+      loc: 60000
+      module_count: 35
+      dep_count: 20
+      compile_seconds: 120
+    expect:
+      fitness: split
+      violations: 2
+      action: plan_decomposition
+  - input:
+      loc: 60000
+      module_count: 10
+      dep_count: 20
+      compile_seconds: 120
+    expect:
+      fitness: review
+      violations: 1
+      action: architecture_review
+  - input:
+      loc: 10000
+      module_count: 10
+      dep_count: 45
+      compile_seconds: 60
+    expect:
+      fitness: review
+      violations: 1
+      action: reduce_dependencies
+  - input:
+      loc: 10000
+      module_count: 10
+      dep_count: 10
+      compile_seconds: 400
+    expect:
+      fitness: review
+      violations: 1
+      action: optimize_compile
+  - input:
+      loc: 49000
+      module_count: 29
+      dep_count: 39
+      compile_seconds: 200
+    expect:
+      fitness: fit
+      violations: 0
+      action: none
+  - input:
+      loc: 30000
+      module_count: 35
+      dep_count: 50
+      compile_seconds: 60
+    expect:
+      fitness: split
+      violations: 2
+      action: plan_decomposition
+  - input: {}
+    expect:
+      action: none
+      fitness: fit
+      violations: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - fitness
+    - violations
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

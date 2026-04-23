@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: organ-endocrine-safety
-description: "Endocrine safety assessment. Evaluates hyperglycemia, hyponatremia (SIADH), and thyroid function risks."
 version: 0.1.0
+description: Endocrine safety assessment. Evaluates hyperglycemia, hyponatremia (SIADH), and thyroid function risks.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Organ Endocrine Safety
+  subtitle: Endocrine safety assessment. Evaluates hyperglycemia, hyponatremia (SIADH), and thyroid function risks.
+  icon: circle
+  route: /vigilance/mg/organ-endocrine-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/organ-endocrine-safety
+  cli: rsk mcg run organ-endocrine-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_baseline_glucose
   nodes:
@@ -17,7 +46,7 @@ tree:
         organ: endocrine
         risk_level: high
         glucose_monitoring: required
-        message: "Severe hyperglycemia; glucose-elevating drugs contraindicated"
+        message: Severe hyperglycemia; glucose-elevating drugs contraindicated
     check_diabetes:
       type: condition
       variable: has_type2_diabetes
@@ -31,7 +60,7 @@ tree:
         organ: endocrine
         risk_level: moderate
         glucose_monitoring: required
-        message: "Diabetic patient; monitor for hyperglycemia or hypoglycemia"
+        message: Diabetic patient; monitor for hyperglycemia or hypoglycemia
     check_thyroid:
       type: condition
       variable: abnormal_tsh
@@ -45,20 +74,75 @@ tree:
         organ: endocrine
         risk_level: moderate
         thyroid_monitoring: required
-        message: "Abnormal baseline TSH; monitor thyroid function"
+        message: Abnormal baseline TSH; monitor thyroid function
     standard_dosing:
       type: return
       value:
         organ: endocrine
         risk_level: low
 tests:
-  - input: { baseline_fasting_glucose_mg_dl: 350, has_type2_diabetes: false, abnormal_tsh: false }
-    expect: { organ: endocrine, risk_level: high, glucose_monitoring: required }
-  - input: { baseline_fasting_glucose_mg_dl: 150, has_type2_diabetes: true, abnormal_tsh: false }
-    expect: { organ: endocrine, risk_level: moderate, glucose_monitoring: required }
-  - input: { baseline_fasting_glucose_mg_dl: 100, has_type2_diabetes: false, abnormal_tsh: true }
-    expect: { organ: endocrine, risk_level: moderate, thyroid_monitoring: required }
-  - input: { baseline_fasting_glucose_mg_dl: 100, has_type2_diabetes: false, abnormal_tsh: false }
-    expect: { organ: endocrine, risk_level: low }
+  - input:
+      baseline_fasting_glucose_mg_dl: 350
+      has_type2_diabetes: false
+      abnormal_tsh: false
+    expect:
+      organ: endocrine
+      risk_level: high
+      glucose_monitoring: required
+  - input:
+      baseline_fasting_glucose_mg_dl: 150
+      has_type2_diabetes: true
+      abnormal_tsh: false
+    expect:
+      organ: endocrine
+      risk_level: moderate
+      glucose_monitoring: required
+  - input:
+      baseline_fasting_glucose_mg_dl: 100
+      has_type2_diabetes: false
+      abnormal_tsh: true
+    expect:
+      organ: endocrine
+      risk_level: moderate
+      thyroid_monitoring: required
+  - input:
+      baseline_fasting_glucose_mg_dl: 100
+      has_type2_diabetes: false
+      abnormal_tsh: false
+    expect:
+      organ: endocrine
+      risk_level: low
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

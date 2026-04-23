@@ -1,23 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: bioavailability-correction
-description: "Estimate true adverse event count by applying underreporting correction factor. ADME Bioavailability (F) analog — fraction of real events that survive intake to reach the signal detection pipeline. FDA estimates F = 1-10% for spontaneous reporting."
 version: 0.1.0
-primitive_signature:
-  dominant: frequency
-  expression: "ν(observed) / F = ν(estimated_true)"
-  primes: [frequency, quantity, boundary]
-  arguments:
-    - observed_count
-    - reporting_fraction
+description: Estimate true adverse event count by applying underreporting correction factor. ADME Bioavailability (F) analog — fraction of real events that survive intake to reach the signal detection pipeline. FDA estimates F = 1-10% for spontaneous reporting.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: observed_count
+    type: int
+    required: true
+    description: Number of adverse event reports observed in database
+  - name: reporting_fraction
+    type: float
+    required: false
+    description: Estimated reporting fraction (default 0.05 = 5%, FDA midpoint estimate)
+  - name: source_type
+    type: string
+    required: false
+    description: "Report source: spontaneous, clinical_trial, literature, registry"
+outputs:
+  - name: reporting_fraction_used
+    type: float
+  - name: correction_factor
+    type: float
+  - name: confidence
+    type: string
+  - name: source_adjustment
+    type: string
 interface:
   inputs:
     observed_count:
       type: int
       required: true
-      description: "Number of adverse event reports observed in database"
+      description: Number of adverse event reports observed in database
     reporting_fraction:
       type: float
       required: false
-      description: "Estimated reporting fraction (default 0.05 = 5%, FDA midpoint estimate)"
+      description: Estimated reporting fraction (default 0.05 = 5%, FDA midpoint estimate)
     source_type:
       type: string
       required: false
@@ -31,6 +56,38 @@ interface:
       type: string
     source_adjustment:
       type: string
+ui:
+  title: Bioavailability Correction
+  subtitle: Estimate true adverse event count by applying underreporting correction factor. ADME Bioavailability (F) analog — fraction of real events that survive intake to reach the signal detection pipeline. FDA estimates F = 1-10% for spontaneous reporting.
+  icon: circle
+  route: /vigilance/mg/bioavailability-correction
+  steps:
+    - field: observed_count
+      label: observed count
+      help: Number of adverse event reports observed in database
+      widget: text
+      placeholder: null
+    - field: reporting_fraction
+      label: reporting fraction
+      help: Estimated reporting fraction (default 0.05 = 5%, FDA midpoint estimate)
+      widget: text
+      placeholder: null
+    - field: source_type
+      label: source type
+      help: "Report source: spontaneous, clinical_trial, literature, registry"
+      widget: text
+      placeholder: null
+  result:
+    template: "reporting_fraction_used: {{reporting_fraction_used}} — correction_factor: {{correction_factor}} — confidence: {{confidence}} — source_adjustment: {{source_adjustment}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/bioavailability-correction
+  cli: rsk mcg run bioavailability-correction
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_source
   nodes:
@@ -41,15 +98,13 @@ tree:
       value: clinical_trial
       true_next: clinical_trial_source
       false_next: check_registry
-
     clinical_trial_source:
       type: return
       value:
-        reporting_fraction_used: 0.90
+        reporting_fraction_used: 0.9
         correction_factor: 1.11
         confidence: HIGH
-        source_adjustment: "Clinical trial — near-complete reporting (F=90%)"
-
+        source_adjustment: Clinical trial — near-complete reporting (F=90%)
     check_registry:
       type: condition
       variable: source_type
@@ -57,15 +112,13 @@ tree:
       value: registry
       true_next: registry_source
       false_next: check_literature
-
     registry_source:
       type: return
       value:
-        reporting_fraction_used: 0.50
-        correction_factor: 2.0
+        reporting_fraction_used: 0.5
+        correction_factor: 2
         confidence: MODERATE
-        source_adjustment: "Patient registry — moderate completeness (F=50%)"
-
+        source_adjustment: Patient registry — moderate completeness (F=50%)
     check_literature:
       type: condition
       variable: source_type
@@ -73,15 +126,13 @@ tree:
       value: literature
       true_next: literature_source
       false_next: check_custom_fraction
-
     literature_source:
       type: return
       value:
         reporting_fraction_used: 0.02
-        correction_factor: 50.0
+        correction_factor: 50
         confidence: LOW
-        source_adjustment: "Literature case reports — severe underreporting (F=2%)"
-
+        source_adjustment: Literature case reports — severe underreporting (F=2%)
     check_custom_fraction:
       type: condition
       variable: reporting_fraction
@@ -89,66 +140,94 @@ tree:
       value: null
       true_next: use_custom
       false_next: use_default
-
     use_custom:
       type: return
       value:
         confidence: MODERATE
-        source_adjustment: "Custom reporting fraction provided"
-
+        source_adjustment: Custom reporting fraction provided
     use_default:
       type: return
       value:
         reporting_fraction_used: 0.05
-        correction_factor: 20.0
+        correction_factor: 20
         confidence: LOW
-        source_adjustment: "Default spontaneous reporting (F=5%, FDA midpoint)"
-
+        source_adjustment: Default spontaneous reporting (F=5%, FDA midpoint)
 tests:
-- name: spontaneous reporting default — 150 observed at 5% F
-  input:
-    observed_count: 150
-  expect:
-    reporting_fraction_used: 0.05
-    correction_factor: 20.0
-    confidence: LOW
-
-- name: clinical trial — near-complete capture
-  input:
-    observed_count: 50
-    source_type: clinical_trial
-  expect:
-    reporting_fraction_used: 0.90
-    correction_factor: 1.11
-    confidence: HIGH
-
-- name: literature — severe underreporting
-  input:
-    observed_count: 3
-    source_type: literature
-  expect:
-    reporting_fraction_used: 0.02
-    correction_factor: 50.0
-    confidence: LOW
-
-- name: patient registry
-  input:
-    observed_count: 200
-    source_type: registry
-  expect:
-    reporting_fraction_used: 0.50
-    correction_factor: 2.0
-    confidence: MODERATE
-
-- name: custom reporting fraction
-  input:
-    observed_count: 100
-    reporting_fraction: 0.08
-  expect:
-    confidence: MODERATE
-
-- name: null safety
-  input: {}
-  expect:
-    reporting_fraction_used: 0.05
-    correction_factor: 20.0
+  - name: spontaneous reporting default — 150 observed at 5% F
+    input:
+      observed_count: 150
+    expect:
+      reporting_fraction_used: 0.05
+      correction_factor: 20
+      confidence: LOW
+  - name: clinical trial — near-complete capture
+    input:
+      observed_count: 50
+      source_type: clinical_trial
+    expect:
+      reporting_fraction_used: 0.9
+      correction_factor: 1.11
+      confidence: HIGH
+  - name: literature — severe underreporting
+    input:
+      observed_count: 3
+      source_type: literature
+    expect:
+      reporting_fraction_used: 0.02
+      correction_factor: 50
+      confidence: LOW
+  - name: patient registry
+    input:
+      observed_count: 200
+      source_type: registry
+    expect:
+      reporting_fraction_used: 0.5
+      correction_factor: 2
+      confidence: MODERATE
+  - name: custom reporting fraction
+    input:
+      observed_count: 100
+      reporting_fraction: 0.08
+    expect:
+      confidence: MODERATE
+  - name: null safety
+    input: {}
+    expect:
+      reporting_fraction_used: 0.05
+      correction_factor: 20
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - reporting_fraction_used
+    - correction_factor
+    - confidence
+    - source_adjustment
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

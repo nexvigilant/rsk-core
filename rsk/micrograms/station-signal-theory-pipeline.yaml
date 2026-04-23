@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-signal-theory-pipeline
-description: Route signal theory axiom checks and detection results
 version: 0.1.0
+description: Route signal theory axiom checks and detection results
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Station Signal Theory Pipeline
+  subtitle: Route signal theory axiom checks and detection results
+  icon: activity
+  route: /vigilance/mg/station-signal-theory-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-signal-theory-pipeline
+  cli: rsk mcg run station-signal-theory-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_detected
   nodes:
@@ -40,59 +69,95 @@ tree:
         reason: Signal detected but <4 axioms satisfied — needs strengthening
         action: validate
 tests:
-- input:
-    axioms_satisfied: 0
-    signal_detected: false
-  expect:
-    route: archive
-    priority: low
-    action: archive
-- input:
-    signal_detected: true
-    axioms_satisfied: 5
-  expect:
-    action: investigate
-    priority: high
-    route: signal_investigation
-- input:
-    axioms_satisfied: 2
-    signal_detected: true
-  expect:
-    action: validate
-    route: signal_validation
-    priority: moderate
-- input:
-    axioms_satisfied: -1
-  expect:
-    route: archive
-    priority: low
-    action: archive
-    reason: No signal detected by theory axioms — noise
-- input:
-    axioms_satisfied: 3
-  expect:
-    reason: No signal detected by theory axioms — noise
-    action: archive
-    route: archive
-    priority: low
-- input:
-    axioms_satisfied: 400
-  expect:
-    reason: No signal detected by theory axioms — noise
-    action: archive
-    route: archive
-    priority: low
-- input: {}
-  expect:
-    reason: No signal detected by theory axioms — noise
-    priority: low
-    action: archive
-    route: archive
-- input: {}
-  expect:
-    priority: low
-    route: archive
-    action: archive
-    reason: No signal detected by theory axioms — noise
-interface: null
-primitive_signature: null
+  - input:
+      axioms_satisfied: 0
+      signal_detected: false
+    expect:
+      route: archive
+      priority: low
+      action: archive
+  - input:
+      signal_detected: true
+      axioms_satisfied: 5
+    expect:
+      action: investigate
+      priority: high
+      route: signal_investigation
+  - input:
+      axioms_satisfied: 2
+      signal_detected: true
+    expect:
+      action: validate
+      route: signal_validation
+      priority: moderate
+  - input:
+      axioms_satisfied: -1
+    expect:
+      route: archive
+      priority: low
+      action: archive
+      reason: No signal detected by theory axioms — noise
+  - input:
+      axioms_satisfied: 3
+    expect:
+      reason: No signal detected by theory axioms — noise
+      action: archive
+      route: archive
+      priority: low
+  - input:
+      axioms_satisfied: 400
+    expect:
+      reason: No signal detected by theory axioms — noise
+      action: archive
+      route: archive
+      priority: low
+  - input: {}
+    expect:
+      reason: No signal detected by theory axioms — noise
+      priority: low
+      action: archive
+      route: archive
+  - input: {}
+    expect:
+      priority: low
+      route: archive
+      action: archive
+      reason: No signal detected by theory axioms — noise
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

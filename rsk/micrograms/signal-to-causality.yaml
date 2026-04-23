@@ -1,12 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-to-causality
-description: 'Bridge: routes signal detection results to causality assessment recommendation. Chains from prr-signal output.'
 version: 0.2.0
-primitive_signature:
-  dominant: 'μ'
-  expression: 'μ(κ → →) — mapping from correlation domain to causation domain'
-  primes: ['μ', '→', 'κ']
-  arguments: ['signal_detected', 'prr']
-  chain_prediction: 'Detects that → has collapsed to κ (missing temporal ordering + boundary). Routes to the tool that restores them. This IS the failure mode table read as a routing decision: if → = κ, then dispatch to Naranjo/WHO-UMC.'
+description: "Bridge: routes signal detection results to causality assessment recommendation. Chains from prr-signal output."
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: signal_detected
+    type: bool
+    required: true
+    description: ""
+  - name: prr
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: next_step
+    type: string
+  - name: priority
+    type: string
+  - name: recommended_tool
+    type: string
+  - name: reason
+    type: string
 interface:
   inputs:
     signal_detected:
@@ -24,6 +46,33 @@ interface:
       type: string
     reason:
       type: string
+ui:
+  title: Signal To Causality
+  subtitle: "Bridge: routes signal detection results to causality assessment recommendation. Chains from prr-signal output."
+  icon: activity
+  route: /vigilance/mg/signal-to-causality
+  steps:
+    - field: signal_detected
+      label: signal detected
+      help: Enter signal_detected
+      widget: toggle
+      placeholder: null
+    - field: prr
+      label: prr
+      help: Enter prr
+      widget: text
+      placeholder: null
+  result:
+    template: "next_step: {{next_step}} — priority: {{priority}} — recommended_tool: {{recommended_tool}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-to-causality
+  cli: rsk mcg run signal-to-causality
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signal
   nodes:
@@ -63,81 +112,123 @@ tree:
         recommended_tool: none
         reason: No signal detected - continue routine monitoring
 tests:
-- input:
-    signal_detected: true
-    prr: 8.5
-  expect:
-    next_step: causality_assessment
-    priority: URGENT
-    recommended_tool: naranjo_scale
-    reason: Strong signal detected (PRR >= 5.0) requires immediate causality assessment
-- input:
-    signal_detected: true
-    prr: 5.0
-  expect:
-    next_step: causality_assessment
-    priority: URGENT
-    recommended_tool: naranjo_scale
-    reason: Strong signal detected (PRR >= 5.0) requires immediate causality assessment
-- input:
-    signal_detected: true
-    prr: 3.2
-  expect:
-    next_step: causality_assessment
-    priority: STANDARD
-    recommended_tool: naranjo_scale
-    reason: Signal detected (PRR >= 2.0) warrants causality assessment
-- input:
-    signal_detected: true
-    prr: 2.0
-  expect:
-    next_step: causality_assessment
-    priority: STANDARD
-    recommended_tool: naranjo_scale
-    reason: Signal detected (PRR >= 2.0) warrants causality assessment
-- input:
-    signal_detected: false
-    prr: 1.5
-  expect:
-    next_step: continue_monitoring
-    priority: LOW
-    recommended_tool: none
-    reason: No signal detected - continue routine monitoring
-- input:
-    signal_detected: false
-    prr: 0.5
-  expect:
-    next_step: continue_monitoring
-    priority: LOW
-    recommended_tool: none
-    reason: No signal detected - continue routine monitoring
-- input: {}
-  expect:
-    next_step: continue_monitoring
-    priority: LOW
-    recommended_tool: none
-    reason: No signal detected - continue routine monitoring
-- input:
-    signal_detected: true
-    prr: 15.0
-  expect:
-    next_step: causality_assessment
-    priority: URGENT
-    recommended_tool: naranjo_scale
-    reason: Strong signal detected (PRR >= 5.0) requires immediate causality assessment
-- input:
-    signal_detected: true
-    prr: 4.9
-  expect:
-    next_step: causality_assessment
-    priority: STANDARD
-    recommended_tool: naranjo_scale
-    reason: Signal detected (PRR >= 2.0) warrants causality assessment
-- input:
-    signal_detected: false
-    prr: 10.0
-  expect:
-    next_step: continue_monitoring
-    priority: LOW
-    recommended_tool: none
-    reason: No signal detected - continue routine monitoring
+  - input:
+      signal_detected: true
+      prr: 8.5
+    expect:
+      next_step: causality_assessment
+      priority: URGENT
+      recommended_tool: naranjo_scale
+      reason: Strong signal detected (PRR >= 5.0) requires immediate causality assessment
+  - input:
+      signal_detected: true
+      prr: 5
+    expect:
+      next_step: causality_assessment
+      priority: URGENT
+      recommended_tool: naranjo_scale
+      reason: Strong signal detected (PRR >= 5.0) requires immediate causality assessment
+  - input:
+      signal_detected: true
+      prr: 3.2
+    expect:
+      next_step: causality_assessment
+      priority: STANDARD
+      recommended_tool: naranjo_scale
+      reason: Signal detected (PRR >= 2.0) warrants causality assessment
+  - input:
+      signal_detected: true
+      prr: 2
+    expect:
+      next_step: causality_assessment
+      priority: STANDARD
+      recommended_tool: naranjo_scale
+      reason: Signal detected (PRR >= 2.0) warrants causality assessment
+  - input:
+      signal_detected: false
+      prr: 1.5
+    expect:
+      next_step: continue_monitoring
+      priority: LOW
+      recommended_tool: none
+      reason: No signal detected - continue routine monitoring
+  - input:
+      signal_detected: false
+      prr: 0.5
+    expect:
+      next_step: continue_monitoring
+      priority: LOW
+      recommended_tool: none
+      reason: No signal detected - continue routine monitoring
+  - input: {}
+    expect:
+      next_step: continue_monitoring
+      priority: LOW
+      recommended_tool: none
+      reason: No signal detected - continue routine monitoring
+  - input:
+      signal_detected: true
+      prr: 15
+    expect:
+      next_step: causality_assessment
+      priority: URGENT
+      recommended_tool: naranjo_scale
+      reason: Strong signal detected (PRR >= 5.0) requires immediate causality assessment
+  - input:
+      signal_detected: true
+      prr: 4.9
+    expect:
+      next_step: causality_assessment
+      priority: STANDARD
+      recommended_tool: naranjo_scale
+      reason: Signal detected (PRR >= 2.0) warrants causality assessment
+  - input:
+      signal_detected: false
+      prr: 10
+    expect:
+      next_step: continue_monitoring
+      priority: LOW
+      recommended_tool: none
+      reason: No signal detected - continue routine monitoring
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - next_step
+    - priority
+    - recommended_tool
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

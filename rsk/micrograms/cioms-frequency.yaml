@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: cioms-frequency
-description: 'CIOMS frequency classification for adverse reactions per EU SmPC Section 4.8 labeling convention'
 version: 0.1.0
+description: CIOMS frequency classification for adverse reactions per EU SmPC Section 4.8 labeling convention
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: incidence_pct
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: cioms_category
+    type: string
+  - name: frequency
+    type: string
+  - name: label_text
+    type: string
+  - name: section_in_smpc
+    type: string
 interface:
   inputs:
     incidence_pct:
@@ -15,6 +39,28 @@ interface:
       type: string
     section_in_smpc:
       type: string
+ui:
+  title: Cioms Frequency
+  subtitle: CIOMS frequency classification for adverse reactions per EU SmPC Section 4.8 labeling convention
+  icon: circle
+  route: /vigilance/mg/cioms-frequency
+  steps:
+    - field: incidence_pct
+      label: incidence pct
+      help: Enter incidence_pct
+      widget: text
+      placeholder: null
+  result:
+    template: "cioms_category: {{cioms_category}} — frequency: {{frequency}} — label_text: {{label_text}} — section_in_smpc: {{section_in_smpc}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/cioms-frequency
+  cli: rsk mcg run cioms-frequency
+  auth: none
+  rate_limit: 600/min
 tree:
   start: very_common_check
   nodes:
@@ -22,14 +68,14 @@ tree:
       type: condition
       variable: incidence_pct
       operator: gte
-      value: 10.0
+      value: 10
       true_next: very_common
       false_next: common_check
     common_check:
       type: condition
       variable: incidence_pct
       operator: gte
-      value: 1.0
+      value: 1
       true_next: common
       false_next: uncommon_check
     uncommon_check:
@@ -50,7 +96,7 @@ tree:
       type: condition
       variable: incidence_pct
       operator: gt
-      value: 0.0
+      value: 0
       true_next: very_rare
       false_next: not_known
     very_common:
@@ -85,85 +131,121 @@ tree:
       type: return
       value:
         frequency: VERY_RARE
-        cioms_category: "<1/10,000"
+        cioms_category: <1/10,000
         label_text: Very rare
         section_in_smpc: Section 4.8
     not_known:
       type: return
       value:
         frequency: NOT_KNOWN
-        cioms_category: "not known"
+        cioms_category: not known
         label_text: Frequency not known
         section_in_smpc: Section 4.8
 tests:
-- input:
-    incidence_pct: 25.0
-  expect:
-    frequency: VERY_COMMON
-    cioms_category: ">=1/10"
-    label_text: Very common
-- input:
-    incidence_pct: 10.0
-  expect:
-    frequency: VERY_COMMON
-    cioms_category: ">=1/10"
-    label_text: Very common
-- input:
-    incidence_pct: 5.0
-  expect:
-    frequency: COMMON
-    cioms_category: ">=1/100 to <1/10"
-    label_text: Common
-- input:
-    incidence_pct: 1.0
-  expect:
-    frequency: COMMON
-    cioms_category: ">=1/100 to <1/10"
-    label_text: Common
-- input:
-    incidence_pct: 0.5
-  expect:
-    frequency: UNCOMMON
-    cioms_category: ">=1/1,000 to <1/100"
-    label_text: Uncommon
-- input:
-    incidence_pct: 0.1
-  expect:
-    frequency: UNCOMMON
-    cioms_category: ">=1/1,000 to <1/100"
-    label_text: Uncommon
-- input:
-    incidence_pct: 0.05
-  expect:
-    frequency: RARE
-    cioms_category: ">=1/10,000 to <1/1,000"
-    label_text: Rare
-- input:
-    incidence_pct: 0.01
-  expect:
-    frequency: RARE
-    cioms_category: ">=1/10,000 to <1/1,000"
-    label_text: Rare
-- input:
-    incidence_pct: 0.001
-  expect:
-    frequency: VERY_RARE
-    cioms_category: "<1/10,000"
-    label_text: Very rare
-- input:
-    incidence_pct: 0.009
-  expect:
-    frequency: VERY_RARE
-    cioms_category: "<1/10,000"
-    label_text: Very rare
-- input:
-    incidence_pct: 0.0
-  expect:
-    frequency: NOT_KNOWN
-    label_text: Frequency not known
-    section_in_smpc: Section 4.8
-- input: {}
-  expect:
-    frequency: NOT_KNOWN
-    label_text: Frequency not known
-    section_in_smpc: Section 4.8
+  - input:
+      incidence_pct: 25
+    expect:
+      frequency: VERY_COMMON
+      cioms_category: ">=1/10"
+      label_text: Very common
+  - input:
+      incidence_pct: 10
+    expect:
+      frequency: VERY_COMMON
+      cioms_category: ">=1/10"
+      label_text: Very common
+  - input:
+      incidence_pct: 5
+    expect:
+      frequency: COMMON
+      cioms_category: ">=1/100 to <1/10"
+      label_text: Common
+  - input:
+      incidence_pct: 1
+    expect:
+      frequency: COMMON
+      cioms_category: ">=1/100 to <1/10"
+      label_text: Common
+  - input:
+      incidence_pct: 0.5
+    expect:
+      frequency: UNCOMMON
+      cioms_category: ">=1/1,000 to <1/100"
+      label_text: Uncommon
+  - input:
+      incidence_pct: 0.1
+    expect:
+      frequency: UNCOMMON
+      cioms_category: ">=1/1,000 to <1/100"
+      label_text: Uncommon
+  - input:
+      incidence_pct: 0.05
+    expect:
+      frequency: RARE
+      cioms_category: ">=1/10,000 to <1/1,000"
+      label_text: Rare
+  - input:
+      incidence_pct: 0.01
+    expect:
+      frequency: RARE
+      cioms_category: ">=1/10,000 to <1/1,000"
+      label_text: Rare
+  - input:
+      incidence_pct: 0.001
+    expect:
+      frequency: VERY_RARE
+      cioms_category: <1/10,000
+      label_text: Very rare
+  - input:
+      incidence_pct: 0.009
+    expect:
+      frequency: VERY_RARE
+      cioms_category: <1/10,000
+      label_text: Very rare
+  - input:
+      incidence_pct: 0
+    expect:
+      frequency: NOT_KNOWN
+      label_text: Frequency not known
+      section_in_smpc: Section 4.8
+  - input: {}
+    expect:
+      frequency: NOT_KNOWN
+      label_text: Frequency not known
+      section_in_smpc: Section 4.8
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - cioms_category
+    - frequency
+    - label_text
+    - section_in_smpc
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

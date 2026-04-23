@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: smm-violation-severity
-description: "Classifies violation severity into bands approximating CS/MS formulas. Micrograms cannot multiply floats, so threshold-based classification maps violation counts to severity bands. Separate thresholds for empirical vs pre-empirical."
 version: 0.1.0
+description: Classifies violation severity into bands approximating CS/MS formulas. Micrograms cannot multiply floats, so threshold-based classification maps violation counts to severity bands. Separate thresholds for empirical vs pre-empirical.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: study_type
+    type: string
+    required: false
+    description: ""
+  - name: n_critical
+    type: int
+    required: false
+    description: ""
+  - name: n_major
+    type: int
+    required: false
+    description: ""
+  - name: n_minor
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: severity_band
+    type: string
+  - name: dominant_violation
+    type: string
+  - name: requires_remediation
+    type: bool
+  - name: severity_note
+    type: string
 interface:
   inputs:
     study_type:
@@ -24,10 +60,46 @@ interface:
       type: bool
     severity_note:
       type: string
+ui:
+  title: Smm Violation Severity
+  subtitle: Classifies violation severity into bands approximating CS/MS formulas. Micrograms cannot multiply floats, so threshold-based classification maps violation counts to severity bands. Separate thresholds for empirical vs pre-empirical.
+  icon: circle
+  route: /vigilance/mg/smm-violation-severity
+  steps:
+    - field: study_type
+      label: study type
+      help: Enter study_type
+      widget: text
+      placeholder: null
+    - field: n_critical
+      label: n critical
+      help: Enter n_critical
+      widget: text
+      placeholder: null
+    - field: n_major
+      label: n major
+      help: Enter n_major
+      widget: text
+      placeholder: null
+    - field: n_minor
+      label: n minor
+      help: Enter n_minor
+      widget: text
+      placeholder: null
+  result:
+    template: "severity_band: {{severity_band}} — dominant_violation: {{dominant_violation}} — requires_remediation: {{requires_remediation}} — severity_note: {{severity_note}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/smm-violation-severity
+  cli: rsk mcg run smm-violation-severity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_study_type
   nodes:
-    # Branch by study type first
     check_study_type:
       type: condition
       variable: study_type
@@ -35,11 +107,6 @@ tree:
       value: empirical
       true_next: emp_check_critical_high
       false_next: pre_check_critical_high
-    # === EMPIRICAL PATH ===
-    # CS: CriticalMultiplier = (1.0 - 0.20 * n_C), floor 0.10
-    # CS: MajorMultiplier = (1.0 - 0.07 * n_M), floor 0.50
-    # Thresholds: 3+ critical = VERY_LOW, 2 critical = LOW, 1 critical = MODERATE
-    # Then: 4+ major = LOW, 2-3 major = MODERATE, 1 major or minor-only = HIGH, clean = EXEMPLARY
     emp_check_critical_high:
       type: condition
       variable: n_critical
@@ -96,48 +163,41 @@ tree:
       value: 1
       true_next: emp_high
       false_next: emp_exemplary
-    # Empirical return nodes
     emp_very_low:
       type: return
       value:
         severity_band: VERY_LOW
         dominant_violation: critical
         requires_remediation: true
-        severity_note: "3+ critical violations — CS likely below 0.30. Structural integrity compromised."
+        severity_note: 3+ critical violations — CS likely below 0.30. Structural integrity compromised.
     emp_low:
       type: return
       value:
         severity_band: LOW
         dominant_violation: critical
         requires_remediation: true
-        severity_note: "Heavy violation load — CS likely 0.30-0.59. Significant bias risk."
+        severity_note: Heavy violation load — CS likely 0.30-0.59. Significant bias risk.
     emp_moderate:
       type: return
       value:
         severity_band: MODERATE
         dominant_violation: mixed
         requires_remediation: true
-        severity_note: "Moderate violations — CS likely 0.60-0.79. Correctable with remediation."
+        severity_note: Moderate violations — CS likely 0.60-0.79. Correctable with remediation.
     emp_high:
       type: return
       value:
         severity_band: HIGH
         dominant_violation: minor
         requires_remediation: false
-        severity_note: "Minor violations only — CS likely 0.80-0.89. Advisory flags."
+        severity_note: Minor violations only — CS likely 0.80-0.89. Advisory flags.
     emp_exemplary:
       type: return
       value:
         severity_band: EXEMPLARY
         dominant_violation: none
         requires_remediation: false
-        severity_note: "No violations detected — CS 1.00. Full credibility."
-    # === PRE-EMPIRICAL PATH ===
-    # MS: CriticalMultiplier = (1.0 - 0.15 * n_C), floor 0.20
-    # MS: MajorMultiplier = (1.0 - 0.05 * n_M), floor 0.60
-    # Pre-empirical is more lenient: thresholds shifted up
-    # 4+ critical = VERY_LOW, 3 critical = LOW, 1-2 critical = MODERATE
-    # Then: 5+ major = LOW, 3-4 major = MODERATE, 1-2 major = HIGH, clean = EXEMPLARY
+        severity_note: No violations detected — CS 1.00. Full credibility.
     pre_check_critical_high:
       type: condition
       variable: n_critical
@@ -194,295 +254,291 @@ tree:
       value: 1
       true_next: pre_high
       false_next: pre_exemplary
-    # Pre-empirical return nodes
     pre_very_low:
       type: return
       value:
         severity_band: VERY_LOW
         dominant_violation: critical
         requires_remediation: true
-        severity_note: "4+ critical violations — MS likely below 0.30. Framework structurally unsound."
+        severity_note: 4+ critical violations — MS likely below 0.30. Framework structurally unsound.
     pre_low:
       type: return
       value:
         severity_band: LOW
         dominant_violation: critical
         requires_remediation: true
-        severity_note: "Heavy violation load — MS likely 0.30-0.49. Major maturation gaps."
+        severity_note: Heavy violation load — MS likely 0.30-0.49. Major maturation gaps.
     pre_moderate:
       type: return
       value:
         severity_band: MODERATE
         dominant_violation: mixed
         requires_remediation: true
-        severity_note: "Moderate violations — MS likely 0.50-0.69. Maturation work needed."
+        severity_note: Moderate violations — MS likely 0.50-0.69. Maturation work needed.
     pre_high:
       type: return
       value:
         severity_band: HIGH
         dominant_violation: minor
         requires_remediation: false
-        severity_note: "Minor gaps — MS likely 0.70-0.89. Eligible for protocol development."
+        severity_note: Minor gaps — MS likely 0.70-0.89. Eligible for protocol development.
     pre_exemplary:
       type: return
       value:
         severity_band: EXEMPLARY
         dominant_violation: none
         requires_remediation: false
-        severity_note: "No violations — MS 1.00. Exemplary maturation."
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
+        severity_note: No violations — MS 1.00. Exemplary maturation.
 tests:
-# === EMPIRICAL TESTS ===
-# Clean empirical = EXEMPLARY
-- input:
-    study_type: empirical
-    n_critical: 0
-    n_major: 0
-    n_minor: 0
-  expect:
-    severity_band: EXEMPLARY
-    dominant_violation: none
-    requires_remediation: false
-# Minor only = HIGH
-- input:
-    study_type: empirical
-    n_critical: 0
-    n_major: 0
-    n_minor: 3
-  expect:
-    severity_band: HIGH
-    requires_remediation: false
-# 1 major = HIGH
-- input:
-    study_type: empirical
-    n_critical: 0
-    n_major: 1
-    n_minor: 0
-  expect:
-    severity_band: HIGH
-    dominant_violation: minor
-# 2 major = MODERATE
-- input:
-    study_type: empirical
-    n_critical: 0
-    n_major: 2
-    n_minor: 1
-  expect:
-    severity_band: MODERATE
-    requires_remediation: true
-# 3 major = MODERATE
-- input:
-    study_type: empirical
-    n_critical: 0
-    n_major: 3
-    n_minor: 0
-  expect:
-    severity_band: MODERATE
-# 4 major = LOW
-- input:
-    study_type: empirical
-    n_critical: 0
-    n_major: 4
-    n_minor: 0
-  expect:
-    severity_band: LOW
-    requires_remediation: true
-# 1 critical = MODERATE
-- input:
-    study_type: empirical
-    n_critical: 1
-    n_major: 0
-    n_minor: 0
-  expect:
-    severity_band: MODERATE
-    dominant_violation: mixed
-# 1 critical + 3 major = LOW
-- input:
-    study_type: empirical
-    n_critical: 1
-    n_major: 3
-    n_minor: 2
-  expect:
-    severity_band: LOW
-# 1 critical + 2 major = MODERATE
-- input:
-    study_type: empirical
-    n_critical: 1
-    n_major: 2
-    n_minor: 0
-  expect:
-    severity_band: MODERATE
-# 2 critical = LOW
-- input:
-    study_type: empirical
-    n_critical: 2
-    n_major: 0
-    n_minor: 0
-  expect:
-    severity_band: LOW
-    dominant_violation: critical
-# 3 critical = VERY_LOW
-- input:
-    study_type: empirical
-    n_critical: 3
-    n_major: 0
-    n_minor: 0
-  expect:
-    severity_band: VERY_LOW
-    dominant_violation: critical
-    requires_remediation: true
-# 5 critical = VERY_LOW
-- input:
-    study_type: empirical
-    n_critical: 5
-    n_major: 5
-    n_minor: 5
-  expect:
-    severity_band: VERY_LOW
-# === PRE-EMPIRICAL TESTS ===
-# Clean pre-empirical = EXEMPLARY
-- input:
-    study_type: pre_empirical
-    n_critical: 0
-    n_major: 0
-    n_minor: 0
-  expect:
-    severity_band: EXEMPLARY
-    dominant_violation: none
-    requires_remediation: false
-# Minor only = HIGH
-- input:
-    study_type: pre_empirical
-    n_critical: 0
-    n_major: 0
-    n_minor: 4
-  expect:
-    severity_band: HIGH
-    requires_remediation: false
-# 1 major = HIGH
-- input:
-    study_type: pre_empirical
-    n_critical: 0
-    n_major: 1
-    n_minor: 0
-  expect:
-    severity_band: HIGH
-# 2 major = HIGH (more lenient than empirical)
-- input:
-    study_type: pre_empirical
-    n_critical: 0
-    n_major: 2
-    n_minor: 0
-  expect:
-    severity_band: HIGH
-# 3 major = MODERATE
-- input:
-    study_type: pre_empirical
-    n_critical: 0
-    n_major: 3
-    n_minor: 0
-  expect:
-    severity_band: MODERATE
-    requires_remediation: true
-# 5 major = LOW
-- input:
-    study_type: pre_empirical
-    n_critical: 0
-    n_major: 5
-    n_minor: 0
-  expect:
-    severity_band: LOW
-    requires_remediation: true
-# 1 critical = MODERATE
-- input:
-    study_type: pre_empirical
-    n_critical: 1
-    n_major: 0
-    n_minor: 0
-  expect:
-    severity_band: MODERATE
-    dominant_violation: mixed
-# 2 critical = MODERATE
-- input:
-    study_type: pre_empirical
-    n_critical: 2
-    n_major: 2
-    n_minor: 0
-  expect:
-    severity_band: MODERATE
-# 2 critical + 4 major = LOW
-- input:
-    study_type: pre_empirical
-    n_critical: 2
-    n_major: 4
-    n_minor: 0
-  expect:
-    severity_band: LOW
-# 3 critical = LOW
-- input:
-    study_type: pre_empirical
-    n_critical: 3
-    n_major: 0
-    n_minor: 0
-  expect:
-    severity_band: LOW
-    dominant_violation: critical
-# 4 critical = VERY_LOW
-- input:
-    study_type: pre_empirical
-    n_critical: 4
-    n_major: 0
-    n_minor: 0
-  expect:
-    severity_band: VERY_LOW
-    dominant_violation: critical
-    requires_remediation: true
-# 6 critical = VERY_LOW
-- input:
-    study_type: pre_empirical
-    n_critical: 6
-    n_major: 6
-    n_minor: 6
-  expect:
-    severity_band: VERY_LOW
-# === DEFAULT TESTS ===
-# Empty input = pre-empirical EXEMPLARY (conservative study_type, zero violations)
-- input: {}
-  expect:
-    severity_band: EXEMPLARY
-    dominant_violation: none
-    requires_remediation: false
-# Unknown study_type = pre-empirical path
-- input:
-    study_type: unknown
-    n_critical: 1
-    n_major: 0
-  expect:
-    severity_band: MODERATE
-# === SELF-AUDIT VALIDATION (Phase 3 preview) ===
-# SMM-001 through this gate: pre_empirical, C=7, M=8, m=2
-# 7 critical in pre-empirical: 7 >= 4 → VERY_LOW
-- input:
-    study_type: pre_empirical
-    n_critical: 7
-    n_major: 8
-    n_minor: 2
-  expect:
-    severity_band: VERY_LOW
-    dominant_violation: critical
-    requires_remediation: true
-# SMM-002 through this gate: pre_empirical, C=6, M=6, m=2
-# 6 critical in pre-empirical: 6 >= 4 → VERY_LOW
-- input:
-    study_type: pre_empirical
-    n_critical: 6
-    n_major: 6
-    n_minor: 2
-  expect:
-    severity_band: VERY_LOW
-    dominant_violation: critical
-    requires_remediation: true
+  - input:
+      study_type: empirical
+      n_critical: 0
+      n_major: 0
+      n_minor: 0
+    expect:
+      severity_band: EXEMPLARY
+      dominant_violation: none
+      requires_remediation: false
+  - input:
+      study_type: empirical
+      n_critical: 0
+      n_major: 0
+      n_minor: 3
+    expect:
+      severity_band: HIGH
+      requires_remediation: false
+  - input:
+      study_type: empirical
+      n_critical: 0
+      n_major: 1
+      n_minor: 0
+    expect:
+      severity_band: HIGH
+      dominant_violation: minor
+  - input:
+      study_type: empirical
+      n_critical: 0
+      n_major: 2
+      n_minor: 1
+    expect:
+      severity_band: MODERATE
+      requires_remediation: true
+  - input:
+      study_type: empirical
+      n_critical: 0
+      n_major: 3
+      n_minor: 0
+    expect:
+      severity_band: MODERATE
+  - input:
+      study_type: empirical
+      n_critical: 0
+      n_major: 4
+      n_minor: 0
+    expect:
+      severity_band: LOW
+      requires_remediation: true
+  - input:
+      study_type: empirical
+      n_critical: 1
+      n_major: 0
+      n_minor: 0
+    expect:
+      severity_band: MODERATE
+      dominant_violation: mixed
+  - input:
+      study_type: empirical
+      n_critical: 1
+      n_major: 3
+      n_minor: 2
+    expect:
+      severity_band: LOW
+  - input:
+      study_type: empirical
+      n_critical: 1
+      n_major: 2
+      n_minor: 0
+    expect:
+      severity_band: MODERATE
+  - input:
+      study_type: empirical
+      n_critical: 2
+      n_major: 0
+      n_minor: 0
+    expect:
+      severity_band: LOW
+      dominant_violation: critical
+  - input:
+      study_type: empirical
+      n_critical: 3
+      n_major: 0
+      n_minor: 0
+    expect:
+      severity_band: VERY_LOW
+      dominant_violation: critical
+      requires_remediation: true
+  - input:
+      study_type: empirical
+      n_critical: 5
+      n_major: 5
+      n_minor: 5
+    expect:
+      severity_band: VERY_LOW
+  - input:
+      study_type: pre_empirical
+      n_critical: 0
+      n_major: 0
+      n_minor: 0
+    expect:
+      severity_band: EXEMPLARY
+      dominant_violation: none
+      requires_remediation: false
+  - input:
+      study_type: pre_empirical
+      n_critical: 0
+      n_major: 0
+      n_minor: 4
+    expect:
+      severity_band: HIGH
+      requires_remediation: false
+  - input:
+      study_type: pre_empirical
+      n_critical: 0
+      n_major: 1
+      n_minor: 0
+    expect:
+      severity_band: HIGH
+  - input:
+      study_type: pre_empirical
+      n_critical: 0
+      n_major: 2
+      n_minor: 0
+    expect:
+      severity_band: HIGH
+  - input:
+      study_type: pre_empirical
+      n_critical: 0
+      n_major: 3
+      n_minor: 0
+    expect:
+      severity_band: MODERATE
+      requires_remediation: true
+  - input:
+      study_type: pre_empirical
+      n_critical: 0
+      n_major: 5
+      n_minor: 0
+    expect:
+      severity_band: LOW
+      requires_remediation: true
+  - input:
+      study_type: pre_empirical
+      n_critical: 1
+      n_major: 0
+      n_minor: 0
+    expect:
+      severity_band: MODERATE
+      dominant_violation: mixed
+  - input:
+      study_type: pre_empirical
+      n_critical: 2
+      n_major: 2
+      n_minor: 0
+    expect:
+      severity_band: MODERATE
+  - input:
+      study_type: pre_empirical
+      n_critical: 2
+      n_major: 4
+      n_minor: 0
+    expect:
+      severity_band: LOW
+  - input:
+      study_type: pre_empirical
+      n_critical: 3
+      n_major: 0
+      n_minor: 0
+    expect:
+      severity_band: LOW
+      dominant_violation: critical
+  - input:
+      study_type: pre_empirical
+      n_critical: 4
+      n_major: 0
+      n_minor: 0
+    expect:
+      severity_band: VERY_LOW
+      dominant_violation: critical
+      requires_remediation: true
+  - input:
+      study_type: pre_empirical
+      n_critical: 6
+      n_major: 6
+      n_minor: 6
+    expect:
+      severity_band: VERY_LOW
+  - input: {}
+    expect:
+      severity_band: EXEMPLARY
+      dominant_violation: none
+      requires_remediation: false
+  - input:
+      study_type: unknown
+      n_critical: 1
+      n_major: 0
+    expect:
+      severity_band: MODERATE
+  - input:
+      study_type: pre_empirical
+      n_critical: 7
+      n_major: 8
+      n_minor: 2
+    expect:
+      severity_band: VERY_LOW
+      dominant_violation: critical
+      requires_remediation: true
+  - input:
+      study_type: pre_empirical
+      n_critical: 6
+      n_major: 6
+      n_minor: 2
+    expect:
+      severity_band: VERY_LOW
+      dominant_violation: critical
+      requires_remediation: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - severity_band
+    - dominant_violation
+    - requires_remediation
+    - severity_note
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

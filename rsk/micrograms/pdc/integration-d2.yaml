@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: integration-d2
-description: "Domain 2 cross-domain integration — clinical ADR expertise enhances which domains, EPA connections, CPA support."
 version: 0.1.0
+description: Domain 2 cross-domain integration — clinical ADR expertise enhances which domains, EPA connections, CPA support.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: target_domain
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: epas
+    type: string
+  - name: integration_type
+    type: string
+  - name: module
+    type: string
+  - name: synergy
+    type: string
 interface:
   inputs:
     target_domain:
@@ -15,6 +39,28 @@ interface:
       type: string
     synergy:
       type: string
+ui:
+  title: Integration D2
+  subtitle: Domain 2 cross-domain integration — clinical ADR expertise enhances which domains, EPA connections, CPA support.
+  icon: circle
+  route: /vigilance/mg/integration-d2
+  steps:
+    - field: target_domain
+      label: target domain
+      help: Enter target_domain
+      widget: text
+      placeholder: null
+  result:
+    template: "epas: {{epas}} — integration_type: {{integration_type}} — module: {{module}} — synergy: {{synergy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/integration-d2
+  cli: rsk mcg run integration-d2
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target
   nodes:
@@ -71,92 +117,128 @@ tree:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Clinical-Communication"
-        synergy: "clinical credibility enhances communication effectiveness"
-        epas: "EPA3, EPA8"
+        module: Clinical-Communication
+        synergy: clinical credibility enhances communication effectiveness
+        epas: EPA3, EPA8
     d2_d1:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Clinical Foundation"
-        synergy: "foundations provide context for clinical assessment decisions"
+        module: Clinical Foundation
+        synergy: foundations provide context for clinical assessment decisions
     d2_d3:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Clinical-ADR Recognition"
-        synergy: "clinical expertise essential for recognizing organ-specific ADR patterns"
-        epas: "EPA1, EPA5"
+        module: Clinical-ADR Recognition
+        synergy: clinical expertise essential for recognizing organ-specific ADR patterns
+        epas: EPA1, EPA5
     d2_d4:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Clinical-Case Processing"
-        synergy: "clinical assessment directly applied to ICSR processing and narratives"
-        epas: "EPA1"
+        module: Clinical-Case Processing
+        synergy: clinical assessment directly applied to ICSR processing and narratives
+        epas: EPA1
     d2_d5:
       type: return
       value:
         integration_type: ENHANCEMENT
-        module: "Clinical-Trial Safety"
-        synergy: "clinical expertise essential for trial safety monitoring and assessment"
+        module: Clinical-Trial Safety
+        synergy: clinical expertise essential for trial safety monitoring and assessment
     d2_d6:
       type: return
       value:
         integration_type: ENHANCEMENT
-        module: "Clinical-Error Assessment"
-        synergy: "clinical understanding supports error impact assessment and prevention"
+        module: Clinical-Error Assessment
+        synergy: clinical understanding supports error impact assessment and prevention
     d2_d10:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Clinical-Benefit-Risk"
-        synergy: "clinical understanding crucial for balanced benefit-risk assessment"
-        epas: "EPA5, EPA8"
+        module: Clinical-Benefit-Risk
+        synergy: clinical understanding crucial for balanced benefit-risk assessment
+        epas: EPA5, EPA8
     general:
       type: return
       value:
         integration_type: GENERAL
-        module: "Universal Clinical Foundation"
-        synergy: "clinical expertise enhances assessment quality across all domains"
+        module: Universal Clinical Foundation
+        synergy: clinical expertise enhances assessment quality across all domains
 tests:
-- input:
-    target_domain: 14
-  expect:
-    integration_type: PRIMARY
-    module: "Clinical-Communication"
-- input:
-    target_domain: 3
-  expect:
-    integration_type: PRIMARY
-    module: "Clinical-ADR Recognition"
-- input:
-    target_domain: 4
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 10
-  expect:
-    integration_type: PRIMARY
-    module: "Clinical-Benefit-Risk"
-- input:
-    target_domain: 5
-  expect:
-    integration_type: ENHANCEMENT
-- input:
-    target_domain: 6
-  expect:
-    integration_type: ENHANCEMENT
-- input:
-    target_domain: 7
-  expect:
-    integration_type: GENERAL
-- input: {}
-  expect:
-    integration_type: GENERAL
-- input:
-    target_domain: 1
-  expect:
-    integration_type: SUPPORTING
-    module: Clinical Foundation
-    synergy: foundations provide context for clinical assessment decisions
+  - input:
+      target_domain: 14
+    expect:
+      integration_type: PRIMARY
+      module: Clinical-Communication
+  - input:
+      target_domain: 3
+    expect:
+      integration_type: PRIMARY
+      module: Clinical-ADR Recognition
+  - input:
+      target_domain: 4
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 10
+    expect:
+      integration_type: PRIMARY
+      module: Clinical-Benefit-Risk
+  - input:
+      target_domain: 5
+    expect:
+      integration_type: ENHANCEMENT
+  - input:
+      target_domain: 6
+    expect:
+      integration_type: ENHANCEMENT
+  - input:
+      target_domain: 7
+    expect:
+      integration_type: GENERAL
+  - input: {}
+    expect:
+      integration_type: GENERAL
+  - input:
+      target_domain: 1
+    expect:
+      integration_type: SUPPORTING
+      module: Clinical Foundation
+      synergy: foundations provide context for clinical assessment decisions
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - epas
+    - integration_type
+    - module
+    - synergy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

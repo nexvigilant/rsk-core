@@ -1,7 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: adapt-safety-concern
-description: "Adapter: convert safety_concern from trial SAE triage to seriousness boolean for causality pipeline"
 version: 0.1.0
-
+description: "Adapter: convert safety_concern from trial SAE triage to seriousness boolean for causality pipeline"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: safety_concern
+    type: string
+    required: false
+    description: "From config-trial-sae-triage: critical, elevated, standard, favorable"
+  - name: signal_detected
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: is_serious
+    type: bool
+  - name: signal_detected
+    type: bool
+  - name: prr
+    type: float
 interface:
   inputs:
     safety_concern:
@@ -18,7 +43,33 @@ interface:
       type: bool
     prr:
       type: float
-
+ui:
+  title: Adapt Safety Concern
+  subtitle: "Adapter: convert safety_concern from trial SAE triage to seriousness boolean for causality pipeline"
+  icon: circle
+  route: /vigilance/mg/adapt-safety-concern
+  steps:
+    - field: safety_concern
+      label: safety concern
+      help: "From config-trial-sae-triage: critical, elevated, standard, favorable"
+      widget: text
+      placeholder: null
+    - field: signal_detected
+      label: signal detected
+      help: Enter signal_detected
+      widget: toggle
+      placeholder: null
+  result:
+    template: "is_serious: {{is_serious}} — signal_detected: {{signal_detected}} — prr: {{prr}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/adapt-safety-concern
+  cli: rsk mcg run adapt-safety-concern
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_concern
   nodes:
@@ -28,57 +79,100 @@ tree:
       operator: is_null
       true_next: not_serious
       false_next: check_critical
-
     check_critical:
       type: condition
       variable: safety_concern
       operator: eq
-      value: "critical"
+      value: critical
       true_next: serious_urgent
       false_next: check_elevated
-
     check_elevated:
       type: condition
       variable: safety_concern
       operator: eq
-      value: "elevated"
+      value: elevated
       true_next: serious_standard
       false_next: not_serious
-
     serious_urgent:
       type: return
       value:
         is_serious: true
         signal_detected: true
-        prr: 8.0
-
+        prr: 8
     serious_standard:
       type: return
       value:
         is_serious: true
         signal_detected: true
-        prr: 4.0
-
+        prr: 4
     not_serious:
       type: return
       value:
         is_serious: false
         signal_detected: false
-        prr: 1.0
-
-primitive_signature:
-  dominant: 'μ'
-  expression: 'μ — domain mapping or format conversion'
-  primes: ['μ']
-  arguments: []
+        prr: 1
 tests:
-  - input: { safety_concern: "critical" }
-    expect: { is_serious: true, signal_detected: true, prr: 8.0 }
-  - input: { safety_concern: "elevated" }
-    expect: { is_serious: true, signal_detected: true, prr: 4.0 }
-  - input: { safety_concern: "standard" }
-    expect: { is_serious: false, signal_detected: false, prr: 1.0 }
-  - input: { safety_concern: "favorable" }
-    expect: { is_serious: false, signal_detected: false, prr: 1.0 }
+  - input:
+      safety_concern: critical
+    expect:
+      is_serious: true
+      signal_detected: true
+      prr: 8
+  - input:
+      safety_concern: elevated
+    expect:
+      is_serious: true
+      signal_detected: true
+      prr: 4
+  - input:
+      safety_concern: standard
+    expect:
+      is_serious: false
+      signal_detected: false
+      prr: 1
+  - input:
+      safety_concern: favorable
+    expect:
+      is_serious: false
+      signal_detected: false
+      prr: 1
   - input: {}
-    expect: { is_serious: false, signal_detected: false, prr: 1.0 }
+    expect:
+      is_serious: false
+      signal_detected: false
+      prr: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - is_serious
+    - signal_detected
+    - prr
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

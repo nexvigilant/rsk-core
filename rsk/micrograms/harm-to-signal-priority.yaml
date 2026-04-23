@@ -1,6 +1,88 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: harm-to-signal-priority
-description: Translates harm classification and event traffic levels into signal priority dimensions. Bridges risk-harm-classifier, event-aggregate-classifier, signal-count-classifier, and drift-direction-classifier outputs into signal-priority inputs.
 version: 0.1.0
+description: Translates harm classification and event traffic levels into signal priority dimensions. Bridges risk-harm-classifier, event-aggregate-classifier, signal-count-classifier, and drift-direction-classifier outputs into signal-priority inputs.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: traffic_level
+    type: string
+    required: false
+    description: ""
+  - name: harm_level
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: affects_vulnerable_population
+    type: bool
+  - name: severity
+    type: string
+  - name: priority_rationale
+    type: string
+  - name: mortality_risk
+    type: bool
+  - name: frequency
+    type: string
+interface:
+  inputs:
+    traffic_level:
+      type: string
+      required: false
+    harm_level:
+      type: string
+      required: true
+  outputs:
+    affects_vulnerable_population:
+      type: bool
+      required: true
+    severity:
+      type: string
+      required: true
+    priority_rationale:
+      type: string
+      required: true
+    mortality_risk:
+      type: bool
+      required: true
+    frequency:
+      type: string
+      required: true
+  aliases: {}
+ui:
+  title: Harm To Signal Priority
+  subtitle: Translates harm classification and event traffic levels into signal priority dimensions. Bridges risk-harm-classifier, event-aggregate-classifier, signal-count-classifier, and drift-direction-classifier outputs into signal-priority inputs.
+  icon: activity
+  route: /vigilance/mg/harm-to-signal-priority
+  steps:
+    - field: traffic_level
+      label: traffic level
+      help: Enter traffic_level
+      widget: text
+      placeholder: null
+    - field: harm_level
+      label: harm level
+      help: Enter harm_level
+      widget: text
+      placeholder: null
+  result:
+    template: "affects_vulnerable_population: {{affects_vulnerable_population}} — severity: {{severity}} — priority_rationale: {{priority_rationale}} — mortality_risk: {{mortality_risk}} — frequency: {{frequency}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/harm-to-signal-priority
+  cli: rsk mcg run harm-to-signal-priority
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_harm_lethal
   nodes:
@@ -103,121 +185,139 @@ tree:
       true_next: moderate_high_traffic
       false_next: moderate_low_traffic
 tests:
-- input:
-    traffic_level: HIGH
-    harm_level: LETHAL
-  expect:
-    frequency: HIGH
-    severity: CRITICAL
-    mortality_risk: true
-- input:
-    harm_level: LETHAL
-    traffic_level: LOW
-  expect:
-    mortality_risk: true
-    severity: CRITICAL
-- input:
-    traffic_level: HIGH
-    harm_level: SEVERE
-  expect:
-    severity: HIGH
-    mortality_risk: false
-    frequency: HIGH
-- input:
-    harm_level: SEVERE
-    traffic_level: LOW
-  expect:
-    frequency: LOW
-    severity: HIGH
-- input:
-    traffic_level: HIGH
-    harm_level: MODERATE
-  expect:
-    severity: MODERATE
-    frequency: HIGH
-- input:
-    harm_level: MODERATE
-    traffic_level: LOW
-  expect:
-    severity: MODERATE
-    frequency: LOW
-- input:
-    harm_level: MILD
-    traffic_level: HIGH
-  expect:
-    severity: LOW
-    frequency: HIGH
-- input:
-    traffic_level: LOW
-    harm_level: MILD
-  expect:
-    severity: LOW
-    mortality_risk: false
-    frequency: LOW
-- input: {}
-  expect:
-    frequency: LOW
-    affects_vulnerable_population: false
-    severity: LOW
-    priority_rationale: Low severity and frequency — routine monitoring
-    mortality_risk: false
-- input: {}
-  expect:
-    frequency: LOW
-    priority_rationale: Low severity and frequency — routine monitoring
-    severity: LOW
-    affects_vulnerable_population: false
-    mortality_risk: false
-- input: {}
-  expect:
-    mortality_risk: false
-    severity: LOW
-    priority_rationale: Low severity and frequency — routine monitoring
-    frequency: LOW
-    affects_vulnerable_population: false
-- input: {}
-  expect:
-    affects_vulnerable_population: false
-    mortality_risk: false
-    severity: LOW
-    priority_rationale: Low severity and frequency — routine monitoring
-    frequency: LOW
-- input: {}
-  expect:
-    affects_vulnerable_population: false
-    mortality_risk: false
-    severity: LOW
-    frequency: LOW
-    priority_rationale: Low severity and frequency — routine monitoring
-- input: {}
-  expect:
-    priority_rationale: Low severity and frequency — routine monitoring
-    frequency: LOW
-    mortality_risk: false
-    affects_vulnerable_population: false
-    severity: LOW
-interface:
-  inputs:
-    traffic_level:
-      type: string
-      required: false
-    harm_level:
-      type: string
-      required: true
-  outputs:
-    affects_vulnerable_population:
-      type: bool
-      required: true
-    severity:
-      type: string
-      required: true
-    priority_rationale:
-      type: string
-      required: true
-    mortality_risk:
-      type: bool
-      required: true
-    frequency:
-      type: string
-      required: true
-  aliases: {}
+  - input:
+      traffic_level: HIGH
+      harm_level: LETHAL
+    expect:
+      frequency: HIGH
+      severity: CRITICAL
+      mortality_risk: true
+  - input:
+      harm_level: LETHAL
+      traffic_level: LOW
+    expect:
+      mortality_risk: true
+      severity: CRITICAL
+  - input:
+      traffic_level: HIGH
+      harm_level: SEVERE
+    expect:
+      severity: HIGH
+      mortality_risk: false
+      frequency: HIGH
+  - input:
+      harm_level: SEVERE
+      traffic_level: LOW
+    expect:
+      frequency: LOW
+      severity: HIGH
+  - input:
+      traffic_level: HIGH
+      harm_level: MODERATE
+    expect:
+      severity: MODERATE
+      frequency: HIGH
+  - input:
+      harm_level: MODERATE
+      traffic_level: LOW
+    expect:
+      severity: MODERATE
+      frequency: LOW
+  - input:
+      harm_level: MILD
+      traffic_level: HIGH
+    expect:
+      severity: LOW
+      frequency: HIGH
+  - input:
+      traffic_level: LOW
+      harm_level: MILD
+    expect:
+      severity: LOW
+      mortality_risk: false
+      frequency: LOW
+  - input: {}
+    expect:
+      frequency: LOW
+      affects_vulnerable_population: false
+      severity: LOW
+      priority_rationale: Low severity and frequency — routine monitoring
+      mortality_risk: false
+  - input: {}
+    expect:
+      frequency: LOW
+      priority_rationale: Low severity and frequency — routine monitoring
+      severity: LOW
+      affects_vulnerable_population: false
+      mortality_risk: false
+  - input: {}
+    expect:
+      mortality_risk: false
+      severity: LOW
+      priority_rationale: Low severity and frequency — routine monitoring
+      frequency: LOW
+      affects_vulnerable_population: false
+  - input: {}
+    expect:
+      affects_vulnerable_population: false
+      mortality_risk: false
+      severity: LOW
+      priority_rationale: Low severity and frequency — routine monitoring
+      frequency: LOW
+  - input: {}
+    expect:
+      affects_vulnerable_population: false
+      mortality_risk: false
+      severity: LOW
+      frequency: LOW
+      priority_rationale: Low severity and frequency — routine monitoring
+  - input: {}
+    expect:
+      priority_rationale: Low severity and frequency — routine monitoring
+      frequency: LOW
+      mortality_risk: false
+      affects_vulnerable_population: false
+      severity: LOW
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - affects_vulnerable_population
+    - severity
+    - priority_rationale
+    - mortality_risk
+    - frequency
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

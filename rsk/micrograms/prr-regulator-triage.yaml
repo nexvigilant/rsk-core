@@ -1,10 +1,31 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: prr-regulator-triage
-description: >
-  Quantumizing regulator: collapses continuous PRR magnitude into discrete
-  triage actions. Five-level action space with graduated thresholds.
-  Pattern: μ(PRR→action) at ∂(threshold) → N(one quantum) in σ(sequence).
-  Derived from Regulator type (nexcore-primitives transfer.rs #27).
 version: 0.1.0
+description: |
+  Quantumizing regulator: collapses continuous PRR magnitude into discrete triage actions. Five-level action space with graduated thresholds. Pattern: μ(PRR→action) at ∂(threshold) → N(one quantum) in σ(sequence). Derived from Regulator type (nexcore-primitives transfer.rs #27).
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: prr
+    type: float
+    required: true
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: urgency_level
+    type: int
+  - name: threshold_crossed
+    type: float
+  - name: rationale
+    type: string
 interface:
   inputs:
     prr:
@@ -19,10 +40,32 @@ interface:
       type: float
     rationale:
       type: string
+ui:
+  title: Prr Regulator Triage
+  subtitle: |
+    Quantumizing regulator: collapses continuous PRR magnitude into discrete triage actions. Five-level action space with graduated thresholds. Pattern: μ(PRR→action) at ∂(threshold) → N(one quantum) in σ(sequence). Derived from Regulator type (nexcore-primitives transfer.rs #27).
+  icon: activity
+  route: /vigilance/mg/prr-regulator-triage
+  steps:
+    - field: prr
+      label: prr
+      help: Enter prr
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — urgency_level: {{urgency_level}} — threshold_crossed: {{threshold_crossed}} — rationale: {{rationale}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/prr-regulator-triage
+  cli: rsk mcg run prr-regulator-triage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_valid
   nodes:
-    # Gate: reject invalid PRR (negative or null)
     check_valid:
       type: condition
       variable: prr
@@ -30,7 +73,6 @@ tree:
       value: 0
       true_next: check_emergency
       false_next: invalid_input
-
     invalid_input:
       type: return
       value:
@@ -38,59 +80,48 @@ tree:
         urgency_level: 0
         threshold_crossed: 0
         rationale: Invalid PRR value (negative or missing)
-
-    # Level 5: Emergency (PRR >= 4.0)
     check_emergency:
       type: condition
       variable: prr
       operator: gte
-      value: 4.0
+      value: 4
       true_next: emergency
       false_next: check_escalate
-
     emergency:
       type: return
       value:
         action: emergency
         urgency_level: 5
-        threshold_crossed: 4.0
+        threshold_crossed: 4
         rationale: PRR >= 4.0 indicates strong disproportionality requiring immediate regulatory action
-
-    # Level 4: Escalate (PRR >= 3.0)
     check_escalate:
       type: condition
       variable: prr
       operator: gte
-      value: 3.0
+      value: 3
       true_next: escalate
       false_next: check_investigate
-
     escalate:
       type: return
       value:
         action: escalate
         urgency_level: 4
-        threshold_crossed: 3.0
+        threshold_crossed: 3
         rationale: PRR >= 3.0 indicates significant signal requiring expedited review
-
-    # Level 3: Investigate (PRR >= 2.0)
     check_investigate:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: investigate
       false_next: check_monitor
-
     investigate:
       type: return
       value:
         action: investigate
         urgency_level: 3
-        threshold_crossed: 2.0
+        threshold_crossed: 2
         rationale: PRR >= 2.0 crosses signal detection threshold
-
-    # Level 2: Monitor (PRR >= 1.5)
     check_monitor:
       type: condition
       variable: prr
@@ -98,7 +129,6 @@ tree:
       value: 1.5
       true_next: monitor
       false_next: dismiss
-
     monitor:
       type: return
       value:
@@ -106,8 +136,6 @@ tree:
         urgency_level: 2
         threshold_crossed: 1.5
         rationale: PRR 1.5-2.0 shows emerging signal worth tracking
-
-    # Level 1: Dismiss (PRR < 1.5)
     dismiss:
       type: return
       value:
@@ -115,94 +143,116 @@ tree:
         urgency_level: 1
         threshold_crossed: 0
         rationale: PRR < 1.5 indicates no disproportionality signal
-
 tests:
-# Emergency tier
-- input:
-    prr: 5.0
-  expect:
-    action: emergency
-    urgency_level: 5
-    threshold_crossed: 4.0
-
-- input:
-    prr: 4.0
-  expect:
-    action: emergency
-    urgency_level: 5
-
-# Escalate tier
-- input:
-    prr: 3.5
-  expect:
-    action: escalate
-    urgency_level: 4
-    threshold_crossed: 3.0
-
-- input:
-    prr: 3.0
-  expect:
-    action: escalate
-    urgency_level: 4
-
-# Investigate tier (classic PRR >= 2.0 threshold)
-- input:
-    prr: 2.5
-  expect:
-    action: investigate
-    urgency_level: 3
-    threshold_crossed: 2.0
-
-- input:
-    prr: 2.0
-  expect:
-    action: investigate
-    urgency_level: 3
-
-# Monitor tier
-- input:
-    prr: 1.8
-  expect:
-    action: monitor
-    urgency_level: 2
-    threshold_crossed: 1.5
-
-- input:
-    prr: 1.5
-  expect:
-    action: monitor
-    urgency_level: 2
-
-# Dismiss tier
-- input:
-    prr: 1.0
-  expect:
-    action: dismiss
-    urgency_level: 1
-    threshold_crossed: 0
-
-- input:
-    prr: 0.5
-  expect:
-    action: dismiss
-    urgency_level: 1
-
-- input:
-    prr: 0
-  expect:
-    action: dismiss
-    urgency_level: 1
-
-# Boundary: negative input
-- input:
-    prr: -1
-  expect:
-    action: dismiss
-    urgency_level: 0
-    rationale: Invalid PRR value (negative or missing)
-
-# Boundary: null/missing input
-- input: {}
-  expect:
-    action: dismiss
-    urgency_level: 0
+  - input:
+      prr: 5
+    expect:
+      action: emergency
+      urgency_level: 5
+      threshold_crossed: 4
+  - input:
+      prr: 4
+    expect:
+      action: emergency
+      urgency_level: 5
+  - input:
+      prr: 3.5
+    expect:
+      action: escalate
+      urgency_level: 4
+      threshold_crossed: 3
+  - input:
+      prr: 3
+    expect:
+      action: escalate
+      urgency_level: 4
+  - input:
+      prr: 2.5
+    expect:
+      action: investigate
+      urgency_level: 3
+      threshold_crossed: 2
+  - input:
+      prr: 2
+    expect:
+      action: investigate
+      urgency_level: 3
+  - input:
+      prr: 1.8
+    expect:
+      action: monitor
+      urgency_level: 2
+      threshold_crossed: 1.5
+  - input:
+      prr: 1.5
+    expect:
+      action: monitor
+      urgency_level: 2
+  - input:
+      prr: 1
+    expect:
+      action: dismiss
+      urgency_level: 1
+      threshold_crossed: 0
+  - input:
+      prr: 0.5
+    expect:
+      action: dismiss
+      urgency_level: 1
+  - input:
+      prr: 0
+    expect:
+      action: dismiss
+      urgency_level: 1
+  - input:
+      prr: -1
+    expect:
+      action: dismiss
+      urgency_level: 0
+      rationale: Invalid PRR value (negative or missing)
+  - input: {}
+    expect:
+      action: dismiss
+      urgency_level: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - urgency_level
+    - threshold_crossed
+    - rationale
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

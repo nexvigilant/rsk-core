@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-class-mtor-inhibitor-safety
-description: "mTOR inhibitor safety assessment. Evaluates stomatitis, hyperlipidemia, immune suppression, and delayed wound healing."
 version: 0.1.0
+description: mTOR inhibitor safety assessment. Evaluates stomatitis, hyperlipidemia, immune suppression, and delayed wound healing.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Class Mtor Inhibitor Safety
+  subtitle: mTOR inhibitor safety assessment. Evaluates stomatitis, hyperlipidemia, immune suppression, and delayed wound healing.
+  icon: circle
+  route: /vigilance/mg/drug-class-mtor-inhibitor-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-class-mtor-inhibitor-safety
+  cli: rsk mcg run drug-class-mtor-inhibitor-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_baseline_lipids
   nodes:
@@ -16,7 +45,7 @@ tree:
       value:
         risk_level: moderate
         lipid_monitoring: required
-        message: "Elevated triglycerides; mTOR inhibitor may further elevate lipids"
+        message: Elevated triglycerides; mTOR inhibitor may further elevate lipids
     check_poor_wound_healing:
       type: condition
       variable: impaired_wound_healing_history
@@ -29,7 +58,7 @@ tree:
       value:
         risk_level: high
         surgery_planning: required
-        message: "Impaired wound healing history; mTOR inhibitor worsens healing; plan surgery carefully"
+        message: Impaired wound healing history; mTOR inhibitor worsens healing; plan surgery carefully
     check_oral_health:
       type: condition
       variable: poor_oral_hygiene
@@ -42,21 +71,73 @@ tree:
       value:
         risk_level: moderate
         dental_monitoring: required
-        message: "Poor oral hygiene; mTOR inhibitor stomatitis risk; enhance dental care"
+        message: Poor oral hygiene; mTOR inhibitor stomatitis risk; enhance dental care
     standard_dosing:
       type: return
       value:
         risk_level: low
         monitoring_required: true
-        message: "Standard mTOR inhibitor dosing appropriate"
+        message: Standard mTOR inhibitor dosing appropriate
 tests:
-  - input: { baseline_triglycerides_mg_dl: 350, impaired_wound_healing_history: false, poor_oral_hygiene: false }
-    expect: { risk_level: moderate, lipid_monitoring: required }
-  - input: { baseline_triglycerides_mg_dl: 200, impaired_wound_healing_history: true, poor_oral_hygiene: false }
-    expect: { risk_level: high, surgery_planning: required }
-  - input: { baseline_triglycerides_mg_dl: 200, impaired_wound_healing_history: false, poor_oral_hygiene: true }
-    expect: { risk_level: moderate, dental_monitoring: required }
-  - input: { baseline_triglycerides_mg_dl: 200, impaired_wound_healing_history: false, poor_oral_hygiene: false }
-    expect: { risk_level: low, monitoring_required: true }
+  - input:
+      baseline_triglycerides_mg_dl: 350
+      impaired_wound_healing_history: false
+      poor_oral_hygiene: false
+    expect:
+      risk_level: moderate
+      lipid_monitoring: required
+  - input:
+      baseline_triglycerides_mg_dl: 200
+      impaired_wound_healing_history: true
+      poor_oral_hygiene: false
+    expect:
+      risk_level: high
+      surgery_planning: required
+  - input:
+      baseline_triglycerides_mg_dl: 200
+      impaired_wound_healing_history: false
+      poor_oral_hygiene: true
+    expect:
+      risk_level: moderate
+      dental_monitoring: required
+  - input:
+      baseline_triglycerides_mg_dl: 200
+      impaired_wound_healing_history: false
+      poor_oral_hygiene: false
+    expect:
+      risk_level: low
+      monitoring_required: true
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

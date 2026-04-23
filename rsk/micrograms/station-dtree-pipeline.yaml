@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-dtree-pipeline
-description: 'Route decision tree results: classify by depth, accuracy, and overfitting risk'
 version: 0.1.0
+description: "Route decision tree results: classify by depth, accuracy, and overfitting risk"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Dtree Pipeline
+  subtitle: "Route decision tree results: classify by depth, accuracy, and overfitting risk"
+  icon: circle
+  route: /vigilance/mg/station-dtree-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-dtree-pipeline
+  cli: rsk mcg run station-dtree-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_accuracy
   nodes:
@@ -54,93 +83,123 @@ tree:
         priority: low
         reason: High accuracy, no overfit — model ready for production
 tests:
-- input:
-    accuracy: 0.98
-    train_test_gap: 0.15
-  expect:
-    priority: high
-    route: model_pruning
-    action: prune
-- input:
-    train_test_gap: 0.03
-    accuracy: 0.97
-  expect:
-    priority: low
-    action: deploy
-    route: archive
-- input:
-    accuracy: 0.45
-    train_test_gap: 0.05
-  expect:
-    priority: high
-    action: retrain
-    route: model_retrain
-- input:
-    accuracy: 0.78
-    train_test_gap: 0.05
-  expect:
-    action: tune
-    route: model_tuning
-    priority: moderate
-- input:
-    train_test_gap: 0.099
-  expect:
-    route: model_tuning
-    reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
-    priority: moderate
-    action: tune
-- input:
-    train_test_gap: 0.101
-  expect:
-    route: model_tuning
-    action: tune
-    reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
-    priority: moderate
-- input: {}
-  expect:
-    route: model_tuning
-    action: tune
-    priority: moderate
-    reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
-- input:
-    accuracy: 0.949
-  expect:
-    action: tune
-    priority: moderate
-    route: model_tuning
-    reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
-- input:
-    accuracy: 0.951
-  expect:
-    priority: low
-    route: archive
-    action: deploy
-    reason: High accuracy, no overfit — model ready for production
-- input: {}
-  expect:
-    priority: moderate
-    action: tune
-    reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
-    route: model_tuning
-- input:
-    accuracy: 0.599
-  expect:
-    priority: high
-    action: retrain
-    route: model_retrain
-    reason: Accuracy ≤60% — insufficient, needs feature engineering
-- input:
-    accuracy: 0.601
-  expect:
-    action: tune
-    priority: moderate
-    route: model_tuning
-    reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
-- input: {}
-  expect:
-    route: model_tuning
-    priority: moderate
-    reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
-    action: tune
-interface: null
-primitive_signature: null
+  - input:
+      accuracy: 0.98
+      train_test_gap: 0.15
+    expect:
+      priority: high
+      route: model_pruning
+      action: prune
+  - input:
+      train_test_gap: 0.03
+      accuracy: 0.97
+    expect:
+      priority: low
+      action: deploy
+      route: archive
+  - input:
+      accuracy: 0.45
+      train_test_gap: 0.05
+    expect:
+      priority: high
+      action: retrain
+      route: model_retrain
+  - input:
+      accuracy: 0.78
+      train_test_gap: 0.05
+    expect:
+      action: tune
+      route: model_tuning
+      priority: moderate
+  - input:
+      train_test_gap: 0.099
+    expect:
+      route: model_tuning
+      reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
+      priority: moderate
+      action: tune
+  - input:
+      train_test_gap: 0.101
+    expect:
+      route: model_tuning
+      action: tune
+      reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
+      priority: moderate
+  - input: {}
+    expect:
+      route: model_tuning
+      action: tune
+      priority: moderate
+      reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
+  - input:
+      accuracy: 0.949
+    expect:
+      action: tune
+      priority: moderate
+      route: model_tuning
+      reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
+  - input:
+      accuracy: 0.951
+    expect:
+      priority: low
+      route: archive
+      action: deploy
+      reason: High accuracy, no overfit — model ready for production
+  - input: {}
+    expect:
+      priority: moderate
+      action: tune
+      reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
+      route: model_tuning
+  - input:
+      accuracy: 0.599
+    expect:
+      priority: high
+      action: retrain
+      route: model_retrain
+      reason: Accuracy ≤60% — insufficient, needs feature engineering
+  - input:
+      accuracy: 0.601
+    expect:
+      action: tune
+      priority: moderate
+      route: model_tuning
+      reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
+  - input: {}
+    expect:
+      route: model_tuning
+      priority: moderate
+      reason: Accuracy 60-95% — acceptable, hyperparameter tuning may improve
+      action: tune
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

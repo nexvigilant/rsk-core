@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: comm-channel
-description: "Domain 14: Route to communication channel and approach by stakeholder type — regulatory, HCP, patient, internal, partner."
 version: 0.1.0
+description: "Domain 14: Route to communication channel and approach by stakeholder type — regulatory, HCP, patient, internal, partner."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: stakeholder
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: ai_assist
+    type: string
+  - name: approach
+    type: string
+  - name: channel
+    type: string
+  - name: format
+    type: string
+  - name: key_principle
+    type: string
+  - name: literacy
+    type: string
+  - name: primary
+    type: string
+  - name: tone
+    type: string
 interface:
   inputs:
     stakeholder:
@@ -23,6 +55,28 @@ interface:
       type: string
     tone:
       type: string
+ui:
+  title: Comm Channel
+  subtitle: "Domain 14: Route to communication channel and approach by stakeholder type — regulatory, HCP, patient, internal, partner."
+  icon: circle
+  route: /vigilance/mg/comm-channel
+  steps:
+    - field: stakeholder
+      label: stakeholder
+      help: Enter stakeholder
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_assist: {{ai_assist}} — approach: {{approach}} — channel: {{channel}} — format: {{format}} — key_principle: {{key_principle}} — literacy: {{literacy}} — primary: {{primary}} — tone: {{tone}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/comm-channel
+  cli: rsk mcg run comm-channel
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_stakeholder
   nodes:
@@ -65,83 +119,123 @@ tree:
       type: return
       value:
         channel: REGULATORY
-        primary: "formal submission, scientific advice meeting, regulatory correspondence"
-        tone: "scientific, precise, evidence-based, regulatory language"
-        format: "structured regulatory documents (PSUR/PBRER, DSUR, safety variations)"
+        primary: formal submission, scientific advice meeting, regulatory correspondence
+        tone: scientific, precise, evidence-based, regulatory language
+        format: structured regulatory documents (PSUR/PBRER, DSUR, safety variations)
         literacy: expert
-        ai_assist: "NLP document preparation, consistency checking, submission optimization"
-        key_principle: "accuracy and completeness above all — regulators need full picture"
+        ai_assist: NLP document preparation, consistency checking, submission optimization
+        key_principle: accuracy and completeness above all — regulators need full picture
     hcp:
       type: return
       value:
         channel: HEALTHCARE_PROVIDER
-        primary: "DHPC, medical letter, continuing education, clinical decision support"
-        tone: "clinical, actionable, evidence-based, peer-to-peer"
-        format: "clinical summaries, prescribing guidance, safety alerts"
+        primary: DHPC, medical letter, continuing education, clinical decision support
+        tone: clinical, actionable, evidence-based, peer-to-peer
+        format: clinical summaries, prescribing guidance, safety alerts
         literacy: expert
-        ai_assist: "personalized alerts, CDS integration, prescriber behavior analytics"
-        key_principle: "actionable — tell them exactly what to do differently"
+        ai_assist: personalized alerts, CDS integration, prescriber behavior analytics
+        key_principle: actionable — tell them exactly what to do differently
     patient:
       type: return
       value:
         channel: PATIENT
-        primary: "PIL, patient guide, website, patient portal, helpline"
-        tone: "empathetic, clear, reassuring without minimizing, empowering"
-        format: "plain language (6th-8th grade reading level), visual aids, FAQs"
-        literacy: "variable — assume low health literacy, test comprehension"
-        ai_assist: "NLG for plain language, readability scoring, translation, chatbot"
-        key_principle: "clarity and empathy — patients need to understand AND feel supported"
+        primary: PIL, patient guide, website, patient portal, helpline
+        tone: empathetic, clear, reassuring without minimizing, empowering
+        format: plain language (6th-8th grade reading level), visual aids, FAQs
+        literacy: variable — assume low health literacy, test comprehension
+        ai_assist: NLG for plain language, readability scoring, translation, chatbot
+        key_principle: clarity and empathy — patients need to understand AND feel supported
     internal:
       type: return
       value:
         channel: INTERNAL
-        primary: "executive briefing, cross-functional update, training, intranet"
-        tone: "business-focused, concise, action-oriented"
-        format: "executive summary, dashboard, decision brief, training materials"
-        literacy: "mixed — adapt to audience level"
-        ai_assist: "automated dashboards, sentiment analysis, training optimization"
-        key_principle: "so what? — every internal comm must answer why it matters to THEM"
+        primary: executive briefing, cross-functional update, training, intranet
+        tone: business-focused, concise, action-oriented
+        format: executive summary, dashboard, decision brief, training materials
+        literacy: mixed — adapt to audience level
+        ai_assist: automated dashboards, sentiment analysis, training optimization
+        key_principle: so what? — every internal comm must answer why it matters to THEM
     media:
       type: return
       value:
         channel: MEDIA
-        primary: "press release, media statement, spokesperson briefing"
-        tone: "transparent, measured, factual, prepared for follow-up"
-        format: "short statements, Q&A preparation, background briefing"
+        primary: press release, media statement, spokesperson briefing
+        tone: transparent, measured, factual, prepared for follow-up
+        format: short statements, Q&A preparation, background briefing
         literacy: general_public
-        ai_assist: "media monitoring, sentiment tracking, crisis detection"
-        key_principle: "never speculate — stick to facts, prepare for worst-case questions"
+        ai_assist: media monitoring, sentiment tracking, crisis detection
+        key_principle: never speculate — stick to facts, prepare for worst-case questions
     general:
       type: return
       value:
         channel: GENERAL
-        approach: "identify stakeholder type first, then select appropriate channel and tone"
-        key_principle: "know your audience before you write a single word"
+        approach: identify stakeholder type first, then select appropriate channel and tone
+        key_principle: know your audience before you write a single word
 tests:
-- input:
-    stakeholder: regulatory
-  expect:
-    channel: REGULATORY
-    tone: "scientific, precise, evidence-based, regulatory language"
-- input:
-    stakeholder: hcp
-  expect:
-    channel: HEALTHCARE_PROVIDER
-    key_principle: "actionable — tell them exactly what to do differently"
-- input:
-    stakeholder: patient
-  expect:
-    channel: PATIENT
-    key_principle: "clarity and empathy — patients need to understand AND feel supported"
-- input:
-    stakeholder: internal
-  expect:
-    channel: INTERNAL
-- input:
-    stakeholder: media
-  expect:
-    channel: MEDIA
-    key_principle: "never speculate — stick to facts, prepare for worst-case questions"
-- input: {}
-  expect:
-    channel: GENERAL
+  - input:
+      stakeholder: regulatory
+    expect:
+      channel: REGULATORY
+      tone: scientific, precise, evidence-based, regulatory language
+  - input:
+      stakeholder: hcp
+    expect:
+      channel: HEALTHCARE_PROVIDER
+      key_principle: actionable — tell them exactly what to do differently
+  - input:
+      stakeholder: patient
+    expect:
+      channel: PATIENT
+      key_principle: clarity and empathy — patients need to understand AND feel supported
+  - input:
+      stakeholder: internal
+    expect:
+      channel: INTERNAL
+  - input:
+      stakeholder: media
+    expect:
+      channel: MEDIA
+      key_principle: never speculate — stick to facts, prepare for worst-case questions
+  - input: {}
+    expect:
+      channel: GENERAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_assist
+    - approach
+    - channel
+    - format
+    - key_principle
+    - literacy
+    - primary
+    - tone
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

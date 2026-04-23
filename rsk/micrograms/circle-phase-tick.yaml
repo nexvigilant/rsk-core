@@ -1,0 +1,232 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: circle-phase-tick
+version: 0.1.0
+description: Map an incoming Circle reply to its SMM phase — bridge microgram between circle-gate (Phases I-III, post creation) and circle-closure (Phases IV-X, closure evaluation)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Circle Phase Tick
+  subtitle: Map an incoming Circle reply to its SMM phase — bridge microgram between circle-gate (Phases I-III, post creation) and circle-closure (Phases IV-X, closure evaluation)
+  icon: circle
+  route: /vigilance/mg/circle-phase-tick
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/circle-phase-tick
+  cli: rsk mcg run circle-phase-tick
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: route_post_type
+  nodes:
+    route_post_type:
+      type: condition
+      variable: post_type
+      operator: eq
+      value: hypothesis
+      true_next: tick_phase_iv
+      false_next: check_design
+    check_design:
+      type: condition
+      variable: post_type
+      operator: eq
+      value: design
+      true_next: tick_phase_v
+      false_next: check_observation
+    check_observation:
+      type: condition
+      variable: post_type
+      operator: eq
+      value: observation
+      true_next: tick_phase_vi
+      false_next: check_analysis
+    check_analysis:
+      type: condition
+      variable: post_type
+      operator: eq
+      value: analysis
+      true_next: tick_phase_vii
+      false_next: check_interpretation
+    check_interpretation:
+      type: condition
+      variable: post_type
+      operator: eq
+      value: interpretation
+      true_next: tick_phase_viii
+      false_next: check_communication
+    check_communication:
+      type: condition
+      variable: post_type
+      operator: eq
+      value: communication
+      true_next: tick_phase_ix
+      false_next: check_derived_question
+    check_derived_question:
+      type: condition
+      variable: post_type
+      operator: eq
+      value: derived_question
+      true_next: tick_phase_x
+      false_next: unroutable
+    tick_phase_iv:
+      type: return
+      value:
+        bridge: circle-phase-tick
+        advanced_phase: IV
+        phase_iv_present: true
+        violation_check: must_be_falsifiable_and_predictive
+        next_expected_contribution: design
+        credibility_delta: 0.1
+    tick_phase_v:
+      type: return
+      value:
+        bridge: circle-phase-tick
+        advanced_phase: V
+        phase_v_present: true
+        violation_check: pre_registration_with_power_calc_required
+        next_expected_contribution: observation
+        credibility_delta: 0.15
+    tick_phase_vi:
+      type: return
+      value:
+        bridge: circle-phase-tick
+        advanced_phase: VI
+        phase_vi_present: true
+        violation_check: raw_data_stored_deviations_documented
+        next_expected_contribution: analysis
+        credibility_delta: 0.15
+    tick_phase_vii:
+      type: return
+      value:
+        bridge: circle-phase-tick
+        advanced_phase: VII
+        phase_vii_present: true
+        violation_check: a_priori_stats_uncertainty_quantified
+        next_expected_contribution: interpretation
+        credibility_delta: 0.15
+    tick_phase_viii:
+      type: return
+      value:
+        bridge: circle-phase-tick
+        advanced_phase: VIII
+        phase_viii_present: true
+        violation_check: all_verdicts_reported_scope_bounded
+        next_expected_contribution: communication
+        credibility_delta: 0.15
+    tick_phase_ix:
+      type: return
+      value:
+        bridge: circle-phase-tick
+        advanced_phase: IX
+        phase_ix_present: true
+        violation_check: reproducible_coi_negative_results
+        next_expected_contribution: derived_question
+        credibility_delta: 0.1
+    tick_phase_x:
+      type: return
+      value:
+        bridge: circle-phase-tick
+        advanced_phase: X
+        phase_x_present: true
+        violation_check: increment_derived_question_count
+        next_expected_contribution: closure_evaluation
+        credibility_delta: 0.05
+    unroutable:
+      type: return
+      value:
+        bridge: circle-phase-tick
+        advanced_phase: null
+        reason: post_type must be hypothesis|design|observation|analysis|interpretation|communication|derived_question
+        next_action: prompt_author_to_classify
+tests:
+  - input:
+      post_type: hypothesis
+    expect:
+      advanced_phase: IV
+      phase_iv_present: true
+      next_expected_contribution: design
+  - input:
+      post_type: design
+    expect:
+      advanced_phase: V
+      phase_v_present: true
+  - input:
+      post_type: observation
+    expect:
+      advanced_phase: VI
+      phase_vi_present: true
+  - input:
+      post_type: analysis
+    expect:
+      advanced_phase: VII
+      phase_vii_present: true
+  - input:
+      post_type: interpretation
+    expect:
+      advanced_phase: VIII
+      phase_viii_present: true
+  - input:
+      post_type: communication
+    expect:
+      advanced_phase: IX
+      phase_ix_present: true
+  - input:
+      post_type: derived_question
+    expect:
+      advanced_phase: X
+      phase_x_present: true
+      next_expected_contribution: closure_evaluation
+  - input:
+      post_type: rant
+    expect:
+      advanced_phase: null
+      next_action: prompt_author_to_classify
+  - input: {}
+    expect:
+      advanced_phase: null
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

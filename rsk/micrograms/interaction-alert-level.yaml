@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: interaction-alert-level
-description: "Determine alert level and urgency for drug interaction warnings"
 version: 0.1.0
+description: Determine alert level and urgency for drug interaction warnings
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Interaction Alert Level
+  subtitle: Determine alert level and urgency for drug interaction warnings
+  icon: circle
+  route: /vigilance/mg/interaction-alert-level
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/interaction-alert-level
+  cli: rsk mcg run interaction-alert-level
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_severity
   nodes:
@@ -15,88 +44,120 @@ tree:
       type: condition
       variable: interaction_severity
       operator: eq
-      value: "contraindicated"
+      value: contraindicated
       true_next: critical_alert
       false_next: check_major_alert
     check_major_alert:
       type: condition
       variable: interaction_severity
       operator: eq
-      value: "major"
+      value: major
       true_next: major_alert
       false_next: check_moderate_alert
     check_moderate_alert:
       type: condition
       variable: interaction_severity
       operator: eq
-      value: "moderate"
+      value: moderate
       true_next: moderate_alert
       false_next: minor_alert
     critical_alert:
       type: return
       value:
-        alert_level: "critical"
-        alert_color: "red"
-        notification_urgency: "immediate"
+        alert_level: critical
+        alert_color: red
+        notification_urgency: immediate
         prescriber_action_required: true
         alert_compliant: true
     major_alert:
       type: return
       value:
-        alert_level: "major"
-        alert_color: "orange"
-        notification_urgency: "urgent"
+        alert_level: major
+        alert_color: orange
+        notification_urgency: urgent
         prescriber_action_required: true
         alert_compliant: true
     moderate_alert:
       type: return
       value:
-        alert_level: "moderate"
-        alert_color: "yellow"
-        notification_urgency: "routine"
+        alert_level: moderate
+        alert_color: yellow
+        notification_urgency: routine
         prescriber_action_required: false
         alert_compliant: true
     minor_alert:
       type: return
       value:
-        alert_level: "minor"
-        alert_color: "green"
-        notification_urgency: "informational"
+        alert_level: minor
+        alert_color: green
+        notification_urgency: informational
         prescriber_action_required: false
         alert_compliant: true
     alert_unknown:
       type: return
       value:
-        alert_level: "unknown"
-        alert_color: "gray"
+        alert_level: unknown
+        alert_color: gray
         notification_urgency: null
         prescriber_action_required: null
         alert_compliant: false
 tests:
-- input:
-    interaction_severity: "contraindicated"
-  expect:
-    alert_level: "critical"
-    alert_color: "red"
-    notification_urgency: "immediate"
-    prescriber_action_required: true
-- input:
-    interaction_severity: "major"
-  expect:
-    alert_level: "major"
-    alert_color: "orange"
-    notification_urgency: "urgent"
-- input:
-    interaction_severity: "moderate"
-  expect:
-    alert_level: "moderate"
-    alert_color: "yellow"
-- input:
-    interaction_severity: "minor"
-  expect:
-    alert_level: "minor"
-    alert_color: "green"
-- input: {}
-  expect:
-    alert_level: "unknown"
-    alert_compliant: false
+  - input:
+      interaction_severity: contraindicated
+    expect:
+      alert_level: critical
+      alert_color: red
+      notification_urgency: immediate
+      prescriber_action_required: true
+  - input:
+      interaction_severity: major
+    expect:
+      alert_level: major
+      alert_color: orange
+      notification_urgency: urgent
+  - input:
+      interaction_severity: moderate
+    expect:
+      alert_level: moderate
+      alert_color: yellow
+  - input:
+      interaction_severity: minor
+    expect:
+      alert_level: minor
+      alert_color: green
+  - input: {}
+    expect:
+      alert_level: unknown
+      alert_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

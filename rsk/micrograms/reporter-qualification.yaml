@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: reporter-qualification
-description: 'Classify reporter by type and derive qualification level, causality weight, and MedWatch submission eligibility. ICH E2A Section III.A.1 reporter classification.'
 version: 0.1.0
+description: Classify reporter by type and derive qualification level, causality weight, and MedWatch submission eligibility. ICH E2A Section III.A.1 reporter classification.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: reporter_type
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: qualification_level
+    type: string
+  - name: weight_in_causality
+    type: float
+  - name: can_submit_medwatch
+    type: bool
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     reporter_type:
@@ -15,6 +39,28 @@ interface:
       type: bool
     regulatory_reference:
       type: string
+ui:
+  title: Reporter Qualification
+  subtitle: Classify reporter by type and derive qualification level, causality weight, and MedWatch submission eligibility. ICH E2A Section III.A.1 reporter classification.
+  icon: circle
+  route: /vigilance/mg/reporter-qualification
+  steps:
+    - field: reporter_type
+      label: reporter type
+      help: Enter reporter_type
+      widget: text
+      placeholder: null
+  result:
+    template: "qualification_level: {{qualification_level}} — weight_in_causality: {{weight_in_causality}} — can_submit_medwatch: {{can_submit_medwatch}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/reporter-qualification
+  cli: rsk mcg run reporter-qualification
+  auth: none
+  rate_limit: 600/min
 tree:
   start: type_check
   nodes:
@@ -57,7 +103,7 @@ tree:
       type: return
       value:
         qualification_level: healthcare_professional
-        weight_in_causality: 1.0
+        weight_in_causality: 1
         can_submit_medwatch: true
         regulatory_reference: ICH E2A Section III.A.1 (Healthcare Professional)
     consumer_result:
@@ -75,31 +121,27 @@ tree:
         can_submit_medwatch: true
         regulatory_reference: ICH E2A Section III.A.1 (Other)
 tests:
-  # Healthcare professional - physician
   - input:
       reporter_type: physician
     expect:
       qualification_level: healthcare_professional
-      weight_in_causality: 1.0
+      weight_in_causality: 1
       can_submit_medwatch: true
       regulatory_reference: ICH E2A Section III.A.1 (Healthcare Professional)
-  # Healthcare professional - pharmacist
   - input:
       reporter_type: pharmacist
     expect:
       qualification_level: healthcare_professional
-      weight_in_causality: 1.0
+      weight_in_causality: 1
       can_submit_medwatch: true
       regulatory_reference: ICH E2A Section III.A.1 (Healthcare Professional)
-  # Healthcare professional - nurse
   - input:
       reporter_type: nurse
     expect:
       qualification_level: healthcare_professional
-      weight_in_causality: 1.0
+      weight_in_causality: 1
       can_submit_medwatch: true
       regulatory_reference: ICH E2A Section III.A.1 (Healthcare Professional)
-  # Consumer
   - input:
       reporter_type: consumer
     expect:
@@ -107,7 +149,6 @@ tests:
       weight_in_causality: 0.5
       can_submit_medwatch: true
       regulatory_reference: ICH E2A Section III.A.1 (Consumer)
-  # Lawyer (other)
   - input:
       reporter_type: lawyer
     expect:
@@ -115,7 +156,6 @@ tests:
       weight_in_causality: 0.3
       can_submit_medwatch: true
       regulatory_reference: ICH E2A Section III.A.1 (Other)
-  # Unknown type (other)
   - input:
       reporter_type: unknown
     expect:
@@ -123,10 +163,45 @@ tests:
       weight_in_causality: 0.3
       can_submit_medwatch: true
       regulatory_reference: ICH E2A Section III.A.1 (Other)
-  # Empty input defaults to other
   - input: {}
     expect:
       qualification_level: other
       weight_in_causality: 0.3
       can_submit_medwatch: true
       regulatory_reference: ICH E2A Section III.A.1 (Other)
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - qualification_level
+    - weight_in_causality
+    - can_submit_medwatch
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

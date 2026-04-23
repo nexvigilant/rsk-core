@@ -1,63 +1,134 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workflow-self-healing
-description: "The involution terminus — select self-repair chain based on system failure mode"
 version: 0.1.0
-
+description: The involution terminus — select self-repair chain based on system failure mode
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Workflow Self Healing
+  subtitle: The involution terminus — select self-repair chain based on system failure mode
+  icon: circle
+  route: /vigilance/mg/workflow-self-healing
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workflow-self-healing
+  cli: rsk mcg run workflow-self-healing
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_mode
   nodes:
     check_mode:
-      type: "condition"
-      variable: "failure_mode"
-      operator: "eq"
-      value: "dual_store_drift"
-      true_next: "drift_repair"
-      false_next: "check_corruption"
+      type: condition
+      variable: failure_mode
+      operator: eq
+      value: dual_store_drift
+      true_next: drift_repair
+      false_next: check_corruption
     drift_repair:
-      type: "return"
+      type: return
       value:
-        repair: "reconcile"
-        chain: "brain \u2192 primitives \u2192 crystalbook \u2192 microgram"
+        repair: reconcile
+        chain: brain → primitives → crystalbook → microgram
         involution_depth: 4
     check_corruption:
-      type: "condition"
-      variable: "failure_mode"
-      operator: "eq"
-      value: "data_corruption"
-      true_next: "corruption_repair"
-      false_next: "check_stale"
+      type: condition
+      variable: failure_mode
+      operator: eq
+      value: data_corruption
+      true_next: corruption_repair
+      false_next: check_stale
     corruption_repair:
-      type: "return"
+      type: return
       value:
-        repair: "decontaminate"
-        chain: "brain \u2192 relay \u2192 entropy"
+        repair: decontaminate
+        chain: brain → relay → entropy
         involution_depth: 3
-        antibody: "SERIAL-001"
+        antibody: SERIAL-001
     check_stale:
-      type: "condition"
-      variable: "failure_mode"
-      operator: "eq"
-      value: "stale_knowledge"
-      true_next: "staleness_repair"
-      false_next: "generic_repair"
+      type: condition
+      variable: failure_mode
+      operator: eq
+      value: stale_knowledge
+      true_next: staleness_repair
+      false_next: generic_repair
     staleness_repair:
-      type: "return"
+      type: return
       value:
-        repair: "refresh"
-        chain: "brain \u2192 crystalbook \u2192 primitives"
+        repair: refresh
+        chain: brain → crystalbook → primitives
         involution_depth: 3
     generic_repair:
-      type: "return"
+      type: return
       value:
-        repair: "restart"
-        chain: "daemon \u2192 brain"
+        repair: restart
+        chain: daemon → brain
         involution_depth: 2
-
 tests:
-  - input: {"failure_mode": "dual_store_drift"}
-    expect: {"repair": "reconcile", "involution_depth": 4}
-  - input: {"failure_mode": "data_corruption"}
-    expect: {"repair": "decontaminate", "antibody": "SERIAL-001"}
-  - input: {"failure_mode": "stale_knowledge"}
-    expect: {"repair": "refresh", "involution_depth": 3}
-  - input: {"failure_mode": "other"}
-    expect: {"repair": "restart", "involution_depth": 2}
+  - input:
+      failure_mode: dual_store_drift
+    expect:
+      repair: reconcile
+      involution_depth: 4
+  - input:
+      failure_mode: data_corruption
+    expect:
+      repair: decontaminate
+      antibody: SERIAL-001
+  - input:
+      failure_mode: stale_knowledge
+    expect:
+      repair: refresh
+      involution_depth: 3
+  - input:
+      failure_mode: other
+    expect:
+      repair: restart
+      involution_depth: 2
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

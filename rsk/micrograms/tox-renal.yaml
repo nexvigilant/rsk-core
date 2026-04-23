@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tox-renal
-description: 'Renal toxicity gate: creatinine_ratio thresholds for kidney'
 version: 0.1.0
+description: "Renal toxicity gate: creatinine_ratio thresholds for kidney"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Tox Renal
+  subtitle: "Renal toxicity gate: creatinine_ratio thresholds for kidney"
+  icon: circle
+  route: /vigilance/mg/tox-renal
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tox-renal
+  cli: rsk mcg run tox-renal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severe
   nodes:
@@ -36,56 +65,86 @@ tree:
       type: condition
       variable: creatinine_ratio
       operator: gte
-      value: 3.0
+      value: 3
       true_next: severe
       false_next: check_mild
 tests:
-- input:
-    creatinine_ratio: 4.0
-  expect:
-    organ: renal
-    severity: severe
-- input:
-    creatinine_ratio: 1.5
-  expect:
-    organ: renal
-    severity: mild
-- input:
-    creatinine_ratio: 0
-  expect:
-    severity: normal
-    organ: renal
-- input: {}
-  expect:
-    organ: renal
-    severity: normal
-- input:
-    creatinine_ratio: 1.499
-  expect:
-    action: continue
-    target: kidney
-    severity: normal
-    organ: renal
-- input:
-    creatinine_ratio: 1.501
-  expect:
-    organ: renal
-    target: kidney
-    severity: mild
-    action: monitor_closely
-- input:
-    creatinine_ratio: 2.999
-  expect:
-    severity: mild
-    action: monitor_closely
-    target: kidney
-    organ: renal
-- input:
-    creatinine_ratio: 3.001
-  expect:
-    target: kidney
-    organ: renal
-    severity: severe
-    action: discontinue
-interface: null
-primitive_signature: null
+  - input:
+      creatinine_ratio: 4
+    expect:
+      organ: renal
+      severity: severe
+  - input:
+      creatinine_ratio: 1.5
+    expect:
+      organ: renal
+      severity: mild
+  - input:
+      creatinine_ratio: 0
+    expect:
+      severity: normal
+      organ: renal
+  - input: {}
+    expect:
+      organ: renal
+      severity: normal
+  - input:
+      creatinine_ratio: 1.499
+    expect:
+      action: continue
+      target: kidney
+      severity: normal
+      organ: renal
+  - input:
+      creatinine_ratio: 1.501
+    expect:
+      organ: renal
+      target: kidney
+      severity: mild
+      action: monitor_closely
+  - input:
+      creatinine_ratio: 2.999
+    expect:
+      severity: mild
+      action: monitor_closely
+      target: kidney
+      organ: renal
+  - input:
+      creatinine_ratio: 3.001
+    expect:
+      target: kidney
+      organ: renal
+      severity: severe
+      action: discontinue
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

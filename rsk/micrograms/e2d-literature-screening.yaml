@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2d-literature-screening
-description: 'ICH E2D Section 3.3: Determines if a literature article requires safety case extraction based on article type and content'
 version: 0.1.0
+description: "ICH E2D Section 3.3: Determines if a literature article requires safety case extraction based on article type and content"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: article_type
+    type: string
+    required: false
+    description: ""
+  - name: drug_mentioned
+    type: bool
+    required: false
+    description: ""
+  - name: adverse_event_described
+    type: bool
+    required: false
+    description: ""
+  - name: new_safety_information
+    type: bool
+    required: false
+    description: ""
+  - name: safety_data_reported
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: extract_case
+    type: bool
+  - name: priority
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     article_type:
@@ -25,6 +63,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2d Literature Screening
+  subtitle: "ICH E2D Section 3.3: Determines if a literature article requires safety case extraction based on article type and content"
+  icon: circle
+  route: /vigilance/mg/e2d-literature-screening
+  steps:
+    - field: article_type
+      label: article type
+      help: Enter article_type
+      widget: text
+      placeholder: null
+    - field: drug_mentioned
+      label: drug mentioned
+      help: Enter drug_mentioned
+      widget: toggle
+      placeholder: null
+    - field: adverse_event_described
+      label: adverse event described
+      help: Enter adverse_event_described
+      widget: toggle
+      placeholder: null
+    - field: new_safety_information
+      label: new safety information
+      help: Enter new_safety_information
+      widget: toggle
+      placeholder: null
+    - field: safety_data_reported
+      label: safety data reported
+      help: Enter safety_data_reported
+      widget: toggle
+      placeholder: null
+  result:
+    template: "extract_case: {{extract_case}} — priority: {{priority}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2d-literature-screening
+  cli: rsk mcg run e2d-literature-screening
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_drug_mentioned
   nodes:
@@ -114,68 +194,98 @@ tree:
         extract_case: false
         priority: none
         regulatory_reference: ICH E2D Section 3.3 - Literature Reports
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — literature screening gate for pharmacovigilance case extraction'
-  primes: ['σ', '∂', 'κ']
-  arguments: ['article_type', 'drug_mentioned', 'adverse_event_described', 'new_safety_information', 'safety_data_reported']
 tests:
-- input:
-    article_type: case_report
-    drug_mentioned: true
-    adverse_event_described: true
-  expect:
-    extract_case: true
-    priority: high
-    regulatory_reference: ICH E2D Section 3.3 - Literature Reports
-- input:
-    article_type: review
-    drug_mentioned: true
-    new_safety_information: true
-  expect:
-    extract_case: true
-    priority: medium
-    regulatory_reference: ICH E2D Section 3.3 - Literature Reports
-- input:
-    article_type: clinical_trial
-    drug_mentioned: true
-    safety_data_reported: true
-  expect:
-    extract_case: true
-    priority: high
-    regulatory_reference: ICH E2D Section 3.3 - Literature Reports
-- input:
-    article_type: case_report
-    drug_mentioned: false
-  expect:
-    extract_case: false
-    priority: none
-    regulatory_reference: ICH E2D Section 3.3 - Literature Reports
-- input:
-    article_type: preclinical
-    drug_mentioned: true
-  expect:
-    extract_case: false
-    priority: none
-    regulatory_reference: ICH E2D Section 3.3 - Literature Reports
-- input:
-    article_type: review
-    drug_mentioned: true
-    new_safety_information: false
-  expect:
-    extract_case: false
-    priority: none
-    regulatory_reference: ICH E2D Section 3.3 - Literature Reports
-- input:
-    article_type: clinical_trial
-    drug_mentioned: true
-    safety_data_reported: false
-  expect:
-    extract_case: false
-    priority: none
-    regulatory_reference: ICH E2D Section 3.3 - Literature Reports
-- input: {}
-  expect:
-    extract_case: false
-    priority: none
-    regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+  - input:
+      article_type: case_report
+      drug_mentioned: true
+      adverse_event_described: true
+    expect:
+      extract_case: true
+      priority: high
+      regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+  - input:
+      article_type: review
+      drug_mentioned: true
+      new_safety_information: true
+    expect:
+      extract_case: true
+      priority: medium
+      regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+  - input:
+      article_type: clinical_trial
+      drug_mentioned: true
+      safety_data_reported: true
+    expect:
+      extract_case: true
+      priority: high
+      regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+  - input:
+      article_type: case_report
+      drug_mentioned: false
+    expect:
+      extract_case: false
+      priority: none
+      regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+  - input:
+      article_type: preclinical
+      drug_mentioned: true
+    expect:
+      extract_case: false
+      priority: none
+      regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+  - input:
+      article_type: review
+      drug_mentioned: true
+      new_safety_information: false
+    expect:
+      extract_case: false
+      priority: none
+      regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+  - input:
+      article_type: clinical_trial
+      drug_mentioned: true
+      safety_data_reported: false
+    expect:
+      extract_case: false
+      priority: none
+      regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+  - input: {}
+    expect:
+      extract_case: false
+      priority: none
+      regulatory_reference: ICH E2D Section 3.3 - Literature Reports
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - extract_case
+    - priority
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

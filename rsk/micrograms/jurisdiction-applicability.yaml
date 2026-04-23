@@ -1,6 +1,100 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: jurisdiction-applicability
-description: Fills the λ (Location) primitive gap. Determines which jurisdictions' PV reporting rules apply based on market authorization, event origin, and seriousness.
 version: 0.1.0
+description: Fills the λ (Location) primitive gap. Determines which jurisdictions' PV reporting rules apply based on market authorization, event origin, and seriousness.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_serious
+    type: bool
+    required: true
+    description: ""
+  - name: event_origin
+    type: string
+    required: true
+    description: ""
+  - name: market_authorization
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: location_primitive
+    type: string
+  - name: expedited_reporting_required
+    type: bool
+  - name: chemistry_analog
+    type: string
+  - name: jurisdiction_class
+    type: string
+interface:
+  inputs:
+    is_serious:
+      type: bool
+      required: true
+    event_origin:
+      type: string
+      required: true
+    market_authorization:
+      type: string
+      required: true
+  outputs:
+    action:
+      type: string
+      required: false
+    location_primitive:
+      type: string
+      required: false
+    expedited_reporting_required:
+      type: bool
+      required: false
+    chemistry_analog:
+      type: string
+      required: false
+    jurisdiction_class:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Jurisdiction Applicability
+  subtitle: Fills the λ (Location) primitive gap. Determines which jurisdictions' PV reporting rules apply based on market authorization, event origin, and seriousness.
+  icon: circle
+  route: /vigilance/mg/jurisdiction-applicability
+  steps:
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: event_origin
+      label: event origin
+      help: Enter event_origin
+      widget: text
+      placeholder: null
+    - field: market_authorization
+      label: market authorization
+      help: Enter market_authorization
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — location_primitive: {{location_primitive}} — expedited_reporting_required: {{expedited_reporting_required}} — chemistry_analog: {{chemistry_analog}} — jurisdiction_class: {{jurisdiction_class}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/jurisdiction-applicability
+  cli: rsk mcg run jurisdiction-applicability
+  auth: none
+  rate_limit: 600/min
 tree:
   start: market_check
   nodes:
@@ -260,299 +354,328 @@ tree:
       true_next: japan_domestic_serious
       false_next: japan_domestic_not_serious
 tests:
-- input:
-    is_serious: false
-    event_origin: us
-    market_authorization: global
-  expect:
-    location_primitive: λ — global market; multi-jurisdictional reference; partition across authorized markets
-    chemistry_analog: Reaction vessel boundaries; containment across multiple phase boundaries
-    jurisdiction_class: MULTI_JURISDICTION
-    expedited_reporting_required: true
-    action: Determine applicable rules for all jurisdictions where drug is marketed
-- input:
-    is_serious: true
-    market_authorization: global
-    event_origin: eu
-  expect:
-    expedited_reporting_required: true
-    action: Determine applicable rules for all jurisdictions where drug is marketed
-    location_primitive: λ — global market; multi-jurisdictional reference; partition across authorized markets
-    chemistry_analog: Reaction vessel boundaries; containment across multiple phase boundaries
-    jurisdiction_class: MULTI_JURISDICTION
-- input:
-    event_origin: other
-    is_serious: false
-    market_authorization: global
-  expect:
-    chemistry_analog: Reaction vessel boundaries; containment across multiple phase boundaries
-    expedited_reporting_required: true
-    jurisdiction_class: MULTI_JURISDICTION
-    location_primitive: λ — global market; multi-jurisdictional reference; partition across authorized markets
-    action: Determine applicable rules for all jurisdictions where drug is marketed
-- input:
-    event_origin: us
-    market_authorization: us
-    is_serious: false
-  expect:
-    jurisdiction_class: DOMESTIC_ONLY
-    chemistry_analog: Single reaction vessel; contained within domestic regulatory phase boundary
-    action: Report to domestic regulatory authority only; no cross-border notification required
-    expedited_reporting_required: false
-    location_primitive: λ — event in authorized market; domestic reporting boundaries apply
-- input:
-    event_origin: us
-    market_authorization: us
-    is_serious: true
-  expect:
-    chemistry_analog: Reaction vessel with partition coefficient gradient; diffusion across phase boundaries
-    expedited_reporting_required: true
-    location_primitive: λ — event in authorized market; cross-border notification required due to seriousness
-    jurisdiction_class: DOMESTIC_WITH_CROSS_BORDER
-    action: Report domestically with expedited cross-border notification to other authorized markets
-- input:
-    event_origin: eu
-    market_authorization: eu
-    is_serious: false
-  expect:
-    location_primitive: λ — event in authorized market; domestic reporting boundaries apply
-    action: Report to domestic regulatory authority only; no cross-border notification required
-    expedited_reporting_required: false
-    chemistry_analog: Single reaction vessel; contained within domestic regulatory phase boundary
-    jurisdiction_class: DOMESTIC_ONLY
-- input:
-    market_authorization: eu
-    is_serious: true
-    event_origin: us
-  expect:
-    jurisdiction_class: CROSS_BORDER_EXPEDITED
-    chemistry_analog: High partition coefficient; rapid diffusion across multiple phase boundaries
-    action: Serious adverse event in non-authorized market; expedited reporting to authorized market required
-    location_primitive: λ — event in unauthorized location; expedited cross-border reference; high partition coefficient
-    expedited_reporting_required: true
-- input:
-    event_origin: us
-    is_serious: false
-    market_authorization: eu
-  expect:
-    expedited_reporting_required: false
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-- input:
-    event_origin: japan
-    is_serious: true
-    market_authorization: japan
-  expect:
-    chemistry_analog: Reaction vessel with partition coefficient gradient; diffusion across phase boundaries
-    action: Report domestically with expedited cross-border notification to other authorized markets
-    jurisdiction_class: DOMESTIC_WITH_CROSS_BORDER
-    location_primitive: λ — event in authorized market; cross-border notification required due to seriousness
-    expedited_reporting_required: true
-- input:
-    market_authorization: japan
-    is_serious: true
-    event_origin: other
-  expect:
-    jurisdiction_class: CROSS_BORDER_EXPEDITED
-    chemistry_analog: High partition coefficient; rapid diffusion across multiple phase boundaries
-    action: Serious adverse event in non-authorized market; expedited reporting to authorized market required
-    expedited_reporting_required: true
-    location_primitive: λ — event in unauthorized location; expedited cross-border reference; high partition coefficient
-- input:
-    is_serious: false
-    market_authorization: canada
-    event_origin: other
-  expect:
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    expedited_reporting_required: false
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-- input:
-    market_authorization: canada
-    is_serious: false
-    event_origin: canada
-  expect:
-    jurisdiction_class: DOMESTIC_ONLY
-    location_primitive: λ — event in authorized market; domestic reporting boundaries apply
-    action: Report to domestic regulatory authority only; no cross-border notification required
-    chemistry_analog: Single reaction vessel; contained within domestic regulatory phase boundary
-    expedited_reporting_required: false
-- input: {}
-  expect:
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    expedited_reporting_required: false
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-- input: {}
-  expect:
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    expedited_reporting_required: false
-- input: {}
-  expect:
-    expedited_reporting_required: false
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-- input: {}
-  expect:
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    expedited_reporting_required: false
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-- input: {}
-  expect:
-    expedited_reporting_required: false
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-- input: {}
-  expect:
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    expedited_reporting_required: false
-- input: {}
-  expect:
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    expedited_reporting_required: false
-- input: {}
-  expect:
-    expedited_reporting_required: false
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-- input: {}
-  expect:
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    expedited_reporting_required: false
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-- input: {}
-  expect:
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    expedited_reporting_required: false
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-- input: {}
-  expect:
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    expedited_reporting_required: false
-- input: {}
-  expect:
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    expedited_reporting_required: false
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-- input: {}
-  expect:
-    expedited_reporting_required: false
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-- input: {}
-  expect:
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    expedited_reporting_required: false
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-- input: {}
-  expect:
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    expedited_reporting_required: false
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-- input: {}
-  expect:
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    expedited_reporting_required: false
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-- input: {}
-  expect:
-    chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
-    expedited_reporting_required: false
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
-    action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
-# Coverage gap tests — uncovered jurisdiction-seriousness combinations
-- input: { market_authorization: canada, event_origin: us, is_serious: true }
-  expect:
-    jurisdiction_class: CROSS_BORDER_EXPEDITED
-    expedited_reporting_required: true
-- input: { market_authorization: japan, event_origin: japan, is_serious: false }
-  expect:
-    jurisdiction_class: DOMESTIC_ONLY
-    expedited_reporting_required: false
-- input: { market_authorization: eu, event_origin: eu, is_serious: true }
-  expect:
-    jurisdiction_class: DOMESTIC_WITH_CROSS_BORDER
-    expedited_reporting_required: true
-- input: { market_authorization: us, event_origin: eu, is_serious: true }
-  expect:
-    jurisdiction_class: CROSS_BORDER_EXPEDITED
-    expedited_reporting_required: true
-- input: { market_authorization: japan, event_origin: us, is_serious: false }
-  expect:
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    expedited_reporting_required: false
-- input: { market_authorization: canada, event_origin: canada, is_serious: true }
-  expect:
-    jurisdiction_class: DOMESTIC_WITH_CROSS_BORDER
-    expedited_reporting_required: true
-- input: { market_authorization: us, event_origin: eu, is_serious: false }
-  expect:
-    jurisdiction_class: CROSS_BORDER_ROUTINE
-    expedited_reporting_required: false
-interface:
-  inputs:
-    is_serious:
-      type: bool
-      required: true
-    event_origin:
-      type: string
-      required: true
-    market_authorization:
-      type: string
-      required: true
-  outputs:
-    action:
-      type: string
-      required: false
-    location_primitive:
-      type: string
-      required: false
-    expedited_reporting_required:
-      type: bool
-      required: false
-    chemistry_analog:
-      type: string
-      required: false
-    jurisdiction_class:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      is_serious: false
+      event_origin: us
+      market_authorization: global
+    expect:
+      location_primitive: λ — global market; multi-jurisdictional reference; partition across authorized markets
+      chemistry_analog: Reaction vessel boundaries; containment across multiple phase boundaries
+      jurisdiction_class: MULTI_JURISDICTION
+      expedited_reporting_required: true
+      action: Determine applicable rules for all jurisdictions where drug is marketed
+  - input:
+      is_serious: true
+      market_authorization: global
+      event_origin: eu
+    expect:
+      expedited_reporting_required: true
+      action: Determine applicable rules for all jurisdictions where drug is marketed
+      location_primitive: λ — global market; multi-jurisdictional reference; partition across authorized markets
+      chemistry_analog: Reaction vessel boundaries; containment across multiple phase boundaries
+      jurisdiction_class: MULTI_JURISDICTION
+  - input:
+      event_origin: other
+      is_serious: false
+      market_authorization: global
+    expect:
+      chemistry_analog: Reaction vessel boundaries; containment across multiple phase boundaries
+      expedited_reporting_required: true
+      jurisdiction_class: MULTI_JURISDICTION
+      location_primitive: λ — global market; multi-jurisdictional reference; partition across authorized markets
+      action: Determine applicable rules for all jurisdictions where drug is marketed
+  - input:
+      event_origin: us
+      market_authorization: us
+      is_serious: false
+    expect:
+      jurisdiction_class: DOMESTIC_ONLY
+      chemistry_analog: Single reaction vessel; contained within domestic regulatory phase boundary
+      action: Report to domestic regulatory authority only; no cross-border notification required
+      expedited_reporting_required: false
+      location_primitive: λ — event in authorized market; domestic reporting boundaries apply
+  - input:
+      event_origin: us
+      market_authorization: us
+      is_serious: true
+    expect:
+      chemistry_analog: Reaction vessel with partition coefficient gradient; diffusion across phase boundaries
+      expedited_reporting_required: true
+      location_primitive: λ — event in authorized market; cross-border notification required due to seriousness
+      jurisdiction_class: DOMESTIC_WITH_CROSS_BORDER
+      action: Report domestically with expedited cross-border notification to other authorized markets
+  - input:
+      event_origin: eu
+      market_authorization: eu
+      is_serious: false
+    expect:
+      location_primitive: λ — event in authorized market; domestic reporting boundaries apply
+      action: Report to domestic regulatory authority only; no cross-border notification required
+      expedited_reporting_required: false
+      chemistry_analog: Single reaction vessel; contained within domestic regulatory phase boundary
+      jurisdiction_class: DOMESTIC_ONLY
+  - input:
+      market_authorization: eu
+      is_serious: true
+      event_origin: us
+    expect:
+      jurisdiction_class: CROSS_BORDER_EXPEDITED
+      chemistry_analog: High partition coefficient; rapid diffusion across multiple phase boundaries
+      action: Serious adverse event in non-authorized market; expedited reporting to authorized market required
+      location_primitive: λ — event in unauthorized location; expedited cross-border reference; high partition coefficient
+      expedited_reporting_required: true
+  - input:
+      event_origin: us
+      is_serious: false
+      market_authorization: eu
+    expect:
+      expedited_reporting_required: false
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+  - input:
+      event_origin: japan
+      is_serious: true
+      market_authorization: japan
+    expect:
+      chemistry_analog: Reaction vessel with partition coefficient gradient; diffusion across phase boundaries
+      action: Report domestically with expedited cross-border notification to other authorized markets
+      jurisdiction_class: DOMESTIC_WITH_CROSS_BORDER
+      location_primitive: λ — event in authorized market; cross-border notification required due to seriousness
+      expedited_reporting_required: true
+  - input:
+      market_authorization: japan
+      is_serious: true
+      event_origin: other
+    expect:
+      jurisdiction_class: CROSS_BORDER_EXPEDITED
+      chemistry_analog: High partition coefficient; rapid diffusion across multiple phase boundaries
+      action: Serious adverse event in non-authorized market; expedited reporting to authorized market required
+      expedited_reporting_required: true
+      location_primitive: λ — event in unauthorized location; expedited cross-border reference; high partition coefficient
+  - input:
+      is_serious: false
+      market_authorization: canada
+      event_origin: other
+    expect:
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      expedited_reporting_required: false
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+  - input:
+      market_authorization: canada
+      is_serious: false
+      event_origin: canada
+    expect:
+      jurisdiction_class: DOMESTIC_ONLY
+      location_primitive: λ — event in authorized market; domestic reporting boundaries apply
+      action: Report to domestic regulatory authority only; no cross-border notification required
+      chemistry_analog: Single reaction vessel; contained within domestic regulatory phase boundary
+      expedited_reporting_required: false
+  - input: {}
+    expect:
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      expedited_reporting_required: false
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+  - input: {}
+    expect:
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      expedited_reporting_required: false
+  - input: {}
+    expect:
+      expedited_reporting_required: false
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+  - input: {}
+    expect:
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      expedited_reporting_required: false
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+  - input: {}
+    expect:
+      expedited_reporting_required: false
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+  - input: {}
+    expect:
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      expedited_reporting_required: false
+  - input: {}
+    expect:
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      expedited_reporting_required: false
+  - input: {}
+    expect:
+      expedited_reporting_required: false
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+  - input: {}
+    expect:
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      expedited_reporting_required: false
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+  - input: {}
+    expect:
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      expedited_reporting_required: false
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+  - input: {}
+    expect:
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      expedited_reporting_required: false
+  - input: {}
+    expect:
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      expedited_reporting_required: false
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+  - input: {}
+    expect:
+      expedited_reporting_required: false
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+  - input: {}
+    expect:
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      expedited_reporting_required: false
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+  - input: {}
+    expect:
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      expedited_reporting_required: false
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+  - input: {}
+    expect:
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      expedited_reporting_required: false
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+  - input: {}
+    expect:
+      chemistry_analog: Low partition coefficient; gradual diffusion across phase boundaries
+      expedited_reporting_required: false
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      location_primitive: λ — event in unauthorized location; routine cross-border reference; low partition coefficient
+      action: Non-serious adverse event in non-authorized market; routine reporting within timeframe
+  - input:
+      market_authorization: canada
+      event_origin: us
+      is_serious: true
+    expect:
+      jurisdiction_class: CROSS_BORDER_EXPEDITED
+      expedited_reporting_required: true
+  - input:
+      market_authorization: japan
+      event_origin: japan
+      is_serious: false
+    expect:
+      jurisdiction_class: DOMESTIC_ONLY
+      expedited_reporting_required: false
+  - input:
+      market_authorization: eu
+      event_origin: eu
+      is_serious: true
+    expect:
+      jurisdiction_class: DOMESTIC_WITH_CROSS_BORDER
+      expedited_reporting_required: true
+  - input:
+      market_authorization: us
+      event_origin: eu
+      is_serious: true
+    expect:
+      jurisdiction_class: CROSS_BORDER_EXPEDITED
+      expedited_reporting_required: true
+  - input:
+      market_authorization: japan
+      event_origin: us
+      is_serious: false
+    expect:
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      expedited_reporting_required: false
+  - input:
+      market_authorization: canada
+      event_origin: canada
+      is_serious: true
+    expect:
+      jurisdiction_class: DOMESTIC_WITH_CROSS_BORDER
+      expedited_reporting_required: true
+  - input:
+      market_authorization: us
+      event_origin: eu
+      is_serious: false
+    expect:
+      jurisdiction_class: CROSS_BORDER_ROUTINE
+      expedited_reporting_required: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - location_primitive
+    - expedited_reporting_required
+    - chemistry_analog
+    - jurisdiction_class
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

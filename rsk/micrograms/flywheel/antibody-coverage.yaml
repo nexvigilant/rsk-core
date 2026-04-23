@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: antibody-coverage
-description: 'Score antibody fleet coverage: LOW (<10), MODERATE (10-20), HIGH (21-30), SATURATED (>30)'
 version: 0.1.0
+description: "Score antibody fleet coverage: LOW (<10), MODERATE (10-20), HIGH (21-30), SATURATED (>30)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: antibody_count
+    type: int
+    required: false
+    description: ""
+  - name: critical_ratio_pct
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: coverage
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     antibody_count:
@@ -14,6 +38,33 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Antibody Coverage
+  subtitle: "Score antibody fleet coverage: LOW (<10), MODERATE (10-20), HIGH (21-30), SATURATED (>30)"
+  icon: circle
+  route: /vigilance/mg/antibody-coverage
+  steps:
+    - field: antibody_count
+      label: antibody count
+      help: Enter antibody_count
+      widget: text
+      placeholder: null
+    - field: critical_ratio_pct
+      label: critical ratio pct
+      help: Enter critical_ratio_pct
+      widget: text
+      placeholder: null
+  result:
+    template: "coverage: {{coverage}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/antibody-coverage
+  cli: rsk mcg run antibody-coverage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_saturated
   nodes:
@@ -71,15 +122,71 @@ tree:
         coverage: LOW
         action: urgent_growth
 tests:
-- input: {antibody_count: 5, critical_ratio_pct: 40}
-  expect: {coverage: LOW, action: urgent_growth}
-- input: {antibody_count: 15, critical_ratio_pct: 20}
-  expect: {coverage: MODERATE, action: grow_fleet}
-- input: {antibody_count: 25, critical_ratio_pct: 10}
-  expect: {coverage: HIGH, action: fill_gaps}
-- input: {antibody_count: 35, critical_ratio_pct: 10}
-  expect: {coverage: SATURATED, action: maintain_quality}
-- input: {antibody_count: 35, critical_ratio_pct: 40}
-  expect: {coverage: SATURATED, action: reduce_critical_ratio}
-- input: {}
-  expect: {coverage: LOW, action: urgent_growth}
+  - input:
+      antibody_count: 5
+      critical_ratio_pct: 40
+    expect:
+      coverage: LOW
+      action: urgent_growth
+  - input:
+      antibody_count: 15
+      critical_ratio_pct: 20
+    expect:
+      coverage: MODERATE
+      action: grow_fleet
+  - input:
+      antibody_count: 25
+      critical_ratio_pct: 10
+    expect:
+      coverage: HIGH
+      action: fill_gaps
+  - input:
+      antibody_count: 35
+      critical_ratio_pct: 10
+    expect:
+      coverage: SATURATED
+      action: maintain_quality
+  - input:
+      antibody_count: 35
+      critical_ratio_pct: 40
+    expect:
+      coverage: SATURATED
+      action: reduce_critical_ratio
+  - input: {}
+    expect:
+      coverage: LOW
+      action: urgent_growth
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - coverage
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

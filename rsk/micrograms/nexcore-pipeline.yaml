@@ -1,6 +1,54 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: nexcore-pipeline
-description: "NexCore verification pipeline: chains boundary-threader -> denominator-confidence -> incidence-verifier to produce a verified NexCore stamp for any drug-event-boundary combination"
 version: 0.1.0
+description: "NexCore verification pipeline: chains boundary-threader -> denominator-confidence -> incidence-verifier to produce a verified NexCore stamp for any drug-event-boundary combination"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: stream_count
+    type: int
+    required: true
+    description: ""
+  - name: boundary_type
+    type: string
+    required: true
+    description: ""
+  - name: capture_pct
+    type: float
+    required: true
+    description: ""
+  - name: is_transaction_ledger
+    type: bool
+    required: false
+    description: ""
+  - name: has_reconciliation
+    type: bool
+    required: false
+    description: ""
+  - name: has_dedup
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: nexcore_stamp
+    type: string
+  - name: verification_level
+    type: string
+  - name: denominator_class
+    type: string
+  - name: publishable
+    type: bool
+  - name: regulatory_submittable
+    type: bool
+  - name: pipeline_summary
+    type: string
 interface:
   inputs:
     stream_count:
@@ -34,6 +82,53 @@ interface:
       type: bool
     pipeline_summary:
       type: string
+ui:
+  title: Nexcore Pipeline
+  subtitle: "NexCore verification pipeline: chains boundary-threader -> denominator-confidence -> incidence-verifier to produce a verified NexCore stamp for any drug-event-boundary combination"
+  icon: circle
+  route: /vigilance/mg/nexcore-pipeline
+  steps:
+    - field: stream_count
+      label: stream count
+      help: Enter stream_count
+      widget: text
+      placeholder: null
+    - field: boundary_type
+      label: boundary type
+      help: Enter boundary_type
+      widget: text
+      placeholder: null
+    - field: capture_pct
+      label: capture pct
+      help: Enter capture_pct
+      widget: text
+      placeholder: null
+    - field: is_transaction_ledger
+      label: is transaction ledger
+      help: Enter is_transaction_ledger
+      widget: toggle
+      placeholder: null
+    - field: has_reconciliation
+      label: has reconciliation
+      help: Enter has_reconciliation
+      widget: toggle
+      placeholder: null
+    - field: has_dedup
+      label: has dedup
+      help: Enter has_dedup
+      widget: toggle
+      placeholder: null
+  result:
+    template: "nexcore_stamp: {{nexcore_stamp}} — verification_level: {{verification_level}} — denominator_class: {{denominator_class}} — publishable: {{publishable}} — regulatory_submittable: {{regulatory_submittable}} — pipeline_summary: {{pipeline_summary}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/nexcore-pipeline
+  cli: rsk mcg run nexcore-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_streams
   nodes:
@@ -47,7 +142,7 @@ tree:
     pipeline_rejected:
       type: return
       value:
-        nexcore_stamp: "NV-REJECTED"
+        nexcore_stamp: NV-REJECTED
         verification_level: none
         denominator_class: absent
         publishable: false
@@ -91,7 +186,7 @@ tree:
     gold_standard:
       type: return
       value:
-        nexcore_stamp: "NV-VERIFIED"
+        nexcore_stamp: NV-VERIFIED
         verification_level: maximum
         denominator_class: counted
         publishable: true
@@ -100,7 +195,7 @@ tree:
     verified_multi:
       type: return
       value:
-        nexcore_stamp: "NV-VERIFIED"
+        nexcore_stamp: NV-VERIFIED
         verification_level: high
         denominator_class: counted
         publishable: true
@@ -109,7 +204,7 @@ tree:
     verified_single:
       type: return
       value:
-        nexcore_stamp: "NV-COUNTED"
+        nexcore_stamp: NV-COUNTED
         verification_level: high
         denominator_class: counted
         publishable: true
@@ -118,7 +213,7 @@ tree:
     counted_unreconciled:
       type: return
       value:
-        nexcore_stamp: "NV-COUNTED"
+        nexcore_stamp: NV-COUNTED
         verification_level: high
         denominator_class: counted
         publishable: true
@@ -134,7 +229,7 @@ tree:
     estimated_deduped:
       type: return
       value:
-        nexcore_stamp: "NV-ESTIMATED-HIGH"
+        nexcore_stamp: NV-ESTIMATED-HIGH
         verification_level: moderate
         denominator_class: estimated
         publishable: true
@@ -143,7 +238,7 @@ tree:
     estimated_raw:
       type: return
       value:
-        nexcore_stamp: "NV-ESTIMATED"
+        nexcore_stamp: NV-ESTIMATED
         verification_level: moderate
         denominator_class: estimated
         publishable: false
@@ -159,7 +254,7 @@ tree:
     screening_grade:
       type: return
       value:
-        nexcore_stamp: "NV-SCREENING"
+        nexcore_stamp: NV-SCREENING
         verification_level: low
         denominator_class: estimated
         publishable: false
@@ -175,7 +270,7 @@ tree:
     hypothesis_grade:
       type: return
       value:
-        nexcore_stamp: "NV-HYPOTHESIS"
+        nexcore_stamp: NV-HYPOTHESIS
         verification_level: minimal
         denominator_class: modeled
         publishable: false
@@ -184,118 +279,156 @@ tree:
     faers_grade:
       type: return
       value:
-        nexcore_stamp: "NV-REJECTED"
+        nexcore_stamp: NV-REJECTED
         verification_level: none
         denominator_class: unknown
         publishable: false
         regulatory_submittable: false
         pipeline_summary: "Rejected: <30% capture. This is FAERS-class unknown denominator. NexCore cannot verify. Acquire counted data."
 tests:
-- name: gold_standard_pharmacy
-  input:
-    stream_count: 3
-    boundary_type: pharmacy
-    capture_pct: 98
-    is_transaction_ledger: true
-    has_reconciliation: true
-  expect:
-    nexcore_stamp: "NV-VERIFIED"
-    verification_level: maximum
-    denominator_class: counted
-    publishable: true
-    regulatory_submittable: true
-- name: state_verified
-  input:
-    stream_count: 2
-    boundary_type: state
-    capture_pct: 95
-    is_transaction_ledger: true
-    has_reconciliation: true
-  expect:
-    nexcore_stamp: "NV-VERIFIED"
-    publishable: true
-    regulatory_submittable: true
-- name: state_counted_single
-  input:
-    stream_count: 1
-    boundary_type: state
-    capture_pct: 92
-    is_transaction_ledger: true
-    has_reconciliation: true
-  expect:
-    nexcore_stamp: "NV-COUNTED"
-    publishable: true
-    regulatory_submittable: false
-- name: ledger_no_reconciliation
-  input:
-    stream_count: 2
-    boundary_type: zip
-    capture_pct: 96
-    is_transaction_ledger: true
-    has_reconciliation: false
-  expect:
-    nexcore_stamp: "NV-COUNTED"
-    denominator_class: counted
-- name: high_capture_deduped
-  input:
-    stream_count: 2
-    boundary_type: national
-    capture_pct: 91
-    is_transaction_ledger: false
-    has_dedup: true
-  expect:
-    nexcore_stamp: "NV-ESTIMATED-HIGH"
-    publishable: true
-- name: high_capture_no_dedup
-  input:
-    stream_count: 1
-    boundary_type: national
-    capture_pct: 93
-    is_transaction_ledger: false
-    has_dedup: false
-  expect:
-    nexcore_stamp: "NV-ESTIMATED"
-    publishable: false
-- name: moderate_capture
-  input:
-    stream_count: 1
-    boundary_type: state
-    capture_pct: 72
-  expect:
-    nexcore_stamp: "NV-SCREENING"
-    publishable: false
-    regulatory_submittable: false
-- name: low_capture
-  input:
-    stream_count: 1
-    boundary_type: national
-    capture_pct: 40
-  expect:
-    nexcore_stamp: "NV-HYPOTHESIS"
-    publishable: false
-- name: faers_paradigm
-  input:
-    stream_count: 1
-    boundary_type: national
-    capture_pct: 5
-  expect:
-    nexcore_stamp: "NV-REJECTED"
-    verification_level: none
-    denominator_class: unknown
-- name: no_streams
-  input:
-    stream_count: 0
-    boundary_type: pharmacy
-    capture_pct: 98
-  expect:
-    nexcore_stamp: "NV-REJECTED"
-    verification_level: none
-- name: null_input_safety
-  input: {}
-  expect:
-    denominator_class: absent
-    nexcore_stamp: NV-REJECTED
-    pipeline_summary: "Pipeline blocked: no data streams. Cannot thread any boundary."
-    publishable: false
-    regulatory_submittable: false
-    verification_level: none
+  - name: gold_standard_pharmacy
+    input:
+      stream_count: 3
+      boundary_type: pharmacy
+      capture_pct: 98
+      is_transaction_ledger: true
+      has_reconciliation: true
+    expect:
+      nexcore_stamp: NV-VERIFIED
+      verification_level: maximum
+      denominator_class: counted
+      publishable: true
+      regulatory_submittable: true
+  - name: state_verified
+    input:
+      stream_count: 2
+      boundary_type: state
+      capture_pct: 95
+      is_transaction_ledger: true
+      has_reconciliation: true
+    expect:
+      nexcore_stamp: NV-VERIFIED
+      publishable: true
+      regulatory_submittable: true
+  - name: state_counted_single
+    input:
+      stream_count: 1
+      boundary_type: state
+      capture_pct: 92
+      is_transaction_ledger: true
+      has_reconciliation: true
+    expect:
+      nexcore_stamp: NV-COUNTED
+      publishable: true
+      regulatory_submittable: false
+  - name: ledger_no_reconciliation
+    input:
+      stream_count: 2
+      boundary_type: zip
+      capture_pct: 96
+      is_transaction_ledger: true
+      has_reconciliation: false
+    expect:
+      nexcore_stamp: NV-COUNTED
+      denominator_class: counted
+  - name: high_capture_deduped
+    input:
+      stream_count: 2
+      boundary_type: national
+      capture_pct: 91
+      is_transaction_ledger: false
+      has_dedup: true
+    expect:
+      nexcore_stamp: NV-ESTIMATED-HIGH
+      publishable: true
+  - name: high_capture_no_dedup
+    input:
+      stream_count: 1
+      boundary_type: national
+      capture_pct: 93
+      is_transaction_ledger: false
+      has_dedup: false
+    expect:
+      nexcore_stamp: NV-ESTIMATED
+      publishable: false
+  - name: moderate_capture
+    input:
+      stream_count: 1
+      boundary_type: state
+      capture_pct: 72
+    expect:
+      nexcore_stamp: NV-SCREENING
+      publishable: false
+      regulatory_submittable: false
+  - name: low_capture
+    input:
+      stream_count: 1
+      boundary_type: national
+      capture_pct: 40
+    expect:
+      nexcore_stamp: NV-HYPOTHESIS
+      publishable: false
+  - name: faers_paradigm
+    input:
+      stream_count: 1
+      boundary_type: national
+      capture_pct: 5
+    expect:
+      nexcore_stamp: NV-REJECTED
+      verification_level: none
+      denominator_class: unknown
+  - name: no_streams
+    input:
+      stream_count: 0
+      boundary_type: pharmacy
+      capture_pct: 98
+    expect:
+      nexcore_stamp: NV-REJECTED
+      verification_level: none
+  - name: null_input_safety
+    input: {}
+    expect:
+      denominator_class: absent
+      nexcore_stamp: NV-REJECTED
+      pipeline_summary: "Pipeline blocked: no data streams. Cannot thread any boundary."
+      publishable: false
+      regulatory_submittable: false
+      verification_level: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - nexcore_stamp
+    - verification_level
+    - denominator_class
+    - publishable
+    - regulatory_submittable
+    - pipeline_summary
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

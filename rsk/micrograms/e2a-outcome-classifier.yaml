@@ -1,6 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-outcome-classifier
-description: 'ICH E2A Section IV.B: Classifies the outcome of an adverse event into 5 standardized ICH categories: recovered, recovering, not_recovered, fatal, unknown — with follow-up implications'
 version: 1.0.0
+description: "ICH E2A Section IV.B: Classifies the outcome of an adverse event into 5 standardized ICH categories: recovered, recovering, not_recovered, fatal, unknown — with follow-up implications"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: ae_ongoing
+    type: bool
+    required: false
+    description: ""
+  - name: death_confirmed
+    type: bool
+    required: false
+    description: ""
+  - name: outcome_known
+    type: bool
+    required: false
+    description: ""
+  - name: recovered_with_sequelae
+    type: bool
+    required: false
+    description: ""
+  - name: signs_improving
+    type: bool
+    required: false
+    description: ""
+  - name: symptoms_resolved
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: followup_needed
+    type: bool
+  - name: ich_outcome_code
+    type: string
+  - name: outcome_category
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     ae_ongoing:
@@ -30,6 +74,53 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2a Outcome Classifier
+  subtitle: "ICH E2A Section IV.B: Classifies the outcome of an adverse event into 5 standardized ICH categories: recovered, recovering, not_recovered, fatal, unknown — with follow-up implications"
+  icon: circle
+  route: /vigilance/mg/e2a-outcome-classifier
+  steps:
+    - field: ae_ongoing
+      label: ae ongoing
+      help: Enter ae_ongoing
+      widget: toggle
+      placeholder: null
+    - field: death_confirmed
+      label: death confirmed
+      help: Enter death_confirmed
+      widget: toggle
+      placeholder: null
+    - field: outcome_known
+      label: outcome known
+      help: Enter outcome_known
+      widget: toggle
+      placeholder: null
+    - field: recovered_with_sequelae
+      label: recovered with sequelae
+      help: Enter recovered_with_sequelae
+      widget: toggle
+      placeholder: null
+    - field: signs_improving
+      label: signs improving
+      help: Enter signs_improving
+      widget: toggle
+      placeholder: null
+    - field: symptoms_resolved
+      label: symptoms resolved
+      help: Enter symptoms_resolved
+      widget: toggle
+      placeholder: null
+  result:
+    template: "followup_needed: {{followup_needed}} — ich_outcome_code: {{ich_outcome_code}} — outcome_category: {{outcome_category}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-outcome-classifier
+  cli: rsk mcg run e2a-outcome-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_death
   nodes:
@@ -117,108 +208,130 @@ tree:
         ich_outcome_code: "0"
         followup_needed: true
         regulatory_reference: "ICH E2A Section IV.B - Outcome code 0: unknown"
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — ICH E2A outcome classification to 5 standardized codes'
-  primes: ['κ', 'σ']
-  arguments: ['death_confirmed', 'symptoms_resolved', 'recovered_with_sequelae', 'ae_ongoing', 'signs_improving', 'outcome_known']
-  chain_prediction: 'Feeds outcome_category and followup_needed into e2a-followup-required and case-seriousness. ICH outcome codes map to E2B(R3) field C.1.7.'
 tests:
-# Death = fatal (code 5)
-- input:
-    death_confirmed: true
-    symptoms_resolved: false
-    recovered_with_sequelae: false
-    ae_ongoing: false
-    signs_improving: false
-    outcome_known: true
-  expect:
-    outcome_category: FATAL
-    ich_outcome_code: "5"
-    followup_needed: true
-    regulatory_reference: "ICH E2A Section IV.B - Outcome code 5: fatal"
-# Symptoms resolved, no sequelae = recovered (code 1)
-- input:
-    death_confirmed: false
-    symptoms_resolved: true
-    recovered_with_sequelae: false
-    ae_ongoing: false
-    signs_improving: false
-    outcome_known: true
-  expect:
-    outcome_category: RECOVERED
-    ich_outcome_code: "1"
-    followup_needed: false
-    regulatory_reference: "ICH E2A Section IV.B - Outcome code 1: recovered/resolved"
-# Symptoms resolved with sequelae = recovered with sequelae (code 2)
-- input:
-    death_confirmed: false
-    symptoms_resolved: true
-    recovered_with_sequelae: true
-    ae_ongoing: false
-    signs_improving: false
-    outcome_known: true
-  expect:
-    outcome_category: RECOVERED_WITH_SEQUELAE
-    ich_outcome_code: "2"
-    followup_needed: false
-    regulatory_reference: "ICH E2A Section IV.B - Outcome code 2: recovered/resolved with sequelae"
-# AE ongoing + improving = recovering (code 3)
-- input:
-    death_confirmed: false
-    symptoms_resolved: false
-    recovered_with_sequelae: false
-    ae_ongoing: true
-    signs_improving: true
-    outcome_known: true
-  expect:
-    outcome_category: RECOVERING
-    ich_outcome_code: "3"
-    followup_needed: true
-    regulatory_reference: "ICH E2A Section IV.B - Outcome code 3: recovering/resolving"
-# AE ongoing + not improving = not recovered (code 4)
-- input:
-    death_confirmed: false
-    symptoms_resolved: false
-    recovered_with_sequelae: false
-    ae_ongoing: true
-    signs_improving: false
-    outcome_known: true
-  expect:
-    outcome_category: NOT_RECOVERED
-    ich_outcome_code: "4"
-    followup_needed: true
-    regulatory_reference: "ICH E2A Section IV.B - Outcome code 4: not recovered/not resolved"
-# Outcome not known = unknown (code 0)
-- input:
-    death_confirmed: false
-    symptoms_resolved: false
-    recovered_with_sequelae: false
-    ae_ongoing: false
-    signs_improving: false
-    outcome_known: false
-  expect:
-    outcome_category: UNKNOWN
-    ich_outcome_code: "0"
-    followup_needed: true
-    regulatory_reference: "ICH E2A Section IV.B - Outcome code 0: unknown"
-# Empty input = unknown
-- input: {}
-  expect:
-    outcome_category: UNKNOWN
-    ich_outcome_code: "0"
-    followup_needed: true
-    regulatory_reference: "ICH E2A Section IV.B - Outcome code 0: unknown"
-# AE not ongoing but outcome known + not resolved = not recovered
-- input:
-    death_confirmed: false
-    symptoms_resolved: false
-    recovered_with_sequelae: false
-    ae_ongoing: false
-    signs_improving: false
-    outcome_known: true
-  expect:
-    outcome_category: NOT_RECOVERED
-    ich_outcome_code: "4"
-    followup_needed: true
-    regulatory_reference: "ICH E2A Section IV.B - Outcome code 4: not recovered/not resolved"
+  - input:
+      death_confirmed: true
+      symptoms_resolved: false
+      recovered_with_sequelae: false
+      ae_ongoing: false
+      signs_improving: false
+      outcome_known: true
+    expect:
+      outcome_category: FATAL
+      ich_outcome_code: "5"
+      followup_needed: true
+      regulatory_reference: "ICH E2A Section IV.B - Outcome code 5: fatal"
+  - input:
+      death_confirmed: false
+      symptoms_resolved: true
+      recovered_with_sequelae: false
+      ae_ongoing: false
+      signs_improving: false
+      outcome_known: true
+    expect:
+      outcome_category: RECOVERED
+      ich_outcome_code: "1"
+      followup_needed: false
+      regulatory_reference: "ICH E2A Section IV.B - Outcome code 1: recovered/resolved"
+  - input:
+      death_confirmed: false
+      symptoms_resolved: true
+      recovered_with_sequelae: true
+      ae_ongoing: false
+      signs_improving: false
+      outcome_known: true
+    expect:
+      outcome_category: RECOVERED_WITH_SEQUELAE
+      ich_outcome_code: "2"
+      followup_needed: false
+      regulatory_reference: "ICH E2A Section IV.B - Outcome code 2: recovered/resolved with sequelae"
+  - input:
+      death_confirmed: false
+      symptoms_resolved: false
+      recovered_with_sequelae: false
+      ae_ongoing: true
+      signs_improving: true
+      outcome_known: true
+    expect:
+      outcome_category: RECOVERING
+      ich_outcome_code: "3"
+      followup_needed: true
+      regulatory_reference: "ICH E2A Section IV.B - Outcome code 3: recovering/resolving"
+  - input:
+      death_confirmed: false
+      symptoms_resolved: false
+      recovered_with_sequelae: false
+      ae_ongoing: true
+      signs_improving: false
+      outcome_known: true
+    expect:
+      outcome_category: NOT_RECOVERED
+      ich_outcome_code: "4"
+      followup_needed: true
+      regulatory_reference: "ICH E2A Section IV.B - Outcome code 4: not recovered/not resolved"
+  - input:
+      death_confirmed: false
+      symptoms_resolved: false
+      recovered_with_sequelae: false
+      ae_ongoing: false
+      signs_improving: false
+      outcome_known: false
+    expect:
+      outcome_category: UNKNOWN
+      ich_outcome_code: "0"
+      followup_needed: true
+      regulatory_reference: "ICH E2A Section IV.B - Outcome code 0: unknown"
+  - input: {}
+    expect:
+      outcome_category: UNKNOWN
+      ich_outcome_code: "0"
+      followup_needed: true
+      regulatory_reference: "ICH E2A Section IV.B - Outcome code 0: unknown"
+  - input:
+      death_confirmed: false
+      symptoms_resolved: false
+      recovered_with_sequelae: false
+      ae_ongoing: false
+      signs_improving: false
+      outcome_known: true
+    expect:
+      outcome_category: NOT_RECOVERED
+      ich_outcome_code: "4"
+      followup_needed: true
+      regulatory_reference: "ICH E2A Section IV.B - Outcome code 4: not recovered/not resolved"
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - followup_needed
+    - ich_outcome_code
+    - outcome_category
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

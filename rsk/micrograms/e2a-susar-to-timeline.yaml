@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-susar-to-timeline
-description: 'ICH E2A bridge: maps SUSAR classification output to specific reporting deadline. Chains from e2a-reporting-obligation (report_as_susar) + case-seriousness (is_fatal, is_life_threatening) to e2a-reporting-timeline.'
 version: 1.0.0
+description: "ICH E2A bridge: maps SUSAR classification output to specific reporting deadline. Chains from e2a-reporting-obligation (report_as_susar) + case-seriousness (is_fatal, is_life_threatening) to e2a-reporting-timeline."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_fatal
+    type: bool
+    required: false
+    description: ""
+  - name: is_life_threatening
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+  - name: report_as_susar
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: deadline_days
+    type: int
+  - name: regulatory_reference
+    type: string
+  - name: report_type
+    type: string
+  - name: timeline_category
+    type: string
 interface:
   inputs:
     is_fatal:
@@ -24,6 +60,43 @@ interface:
       type: string
     timeline_category:
       type: string
+ui:
+  title: E2a Susar To Timeline
+  subtitle: "ICH E2A bridge: maps SUSAR classification output to specific reporting deadline. Chains from e2a-reporting-obligation (report_as_susar) + case-seriousness (is_fatal, is_life_threatening) to e2a-reporting-timeline."
+  icon: circle
+  route: /vigilance/mg/e2a-susar-to-timeline
+  steps:
+    - field: is_fatal
+      label: is fatal
+      help: Enter is_fatal
+      widget: toggle
+      placeholder: null
+    - field: is_life_threatening
+      label: is life threatening
+      help: Enter is_life_threatening
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+    - field: report_as_susar
+      label: report as susar
+      help: Enter report_as_susar
+      widget: toggle
+      placeholder: null
+  result:
+    template: "deadline_days: {{deadline_days}} — regulatory_reference: {{regulatory_reference}} — report_type: {{report_type}} — timeline_category: {{timeline_category}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-susar-to-timeline
+  cli: rsk mcg run e2a-susar-to-timeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_susar
   nodes:
@@ -69,72 +142,96 @@ tree:
         deadline_days: 90
         report_type: ANNUAL_SAFETY_REPORT
         regulatory_reference: ICH E2A Section III.B.3 - Non-SUSAR cases in annual safety reports/line listings
-primitive_signature:
-  dominant: '→'
-  expression: '→ — SUSAR status to reporting deadline bridge'
-  primes: ['→', 'σ']
-  arguments: ['report_as_susar', 'is_fatal', 'is_life_threatening']
-  chain_prediction: 'Bridge microgram: receives report_as_susar from e2a-reporting-obligation and seriousness flags from case-seriousness. Feeds deadline_days into workflow-router for task scheduling.'
 tests:
-# SUSAR + fatal = 7-day
-- input:
-    report_as_susar: true
-    is_fatal: true
-    is_life_threatening: false
-    is_unexpected: true
-  expect:
-    timeline_category: 7_DAY_EXPEDITED
-    deadline_days: 7
-    report_type: SUSAR_INITIAL_7DAY
-    regulatory_reference: "ICH E2A Section III.B.1 - Fatal/life-threatening SUSAR: 7-day initial report required"
-# SUSAR + life-threatening = 7-day
-- input:
-    report_as_susar: true
-    is_fatal: false
-    is_life_threatening: true
-    is_unexpected: true
-  expect:
-    timeline_category: 7_DAY_EXPEDITED
-    deadline_days: 7
-    report_type: SUSAR_INITIAL_7DAY
-    regulatory_reference: "ICH E2A Section III.B.1 - Fatal/life-threatening SUSAR: 7-day initial report required"
-# SUSAR + both fatal and LT = 7-day
-- input:
-    report_as_susar: true
-    is_fatal: true
-    is_life_threatening: true
-    is_unexpected: true
-  expect:
-    timeline_category: 7_DAY_EXPEDITED
-    deadline_days: 7
-    report_type: SUSAR_INITIAL_7DAY
-    regulatory_reference: "ICH E2A Section III.B.1 - Fatal/life-threatening SUSAR: 7-day initial report required"
-# SUSAR + serious but not fatal/LT = 15-day
-- input:
-    report_as_susar: true
-    is_fatal: false
-    is_life_threatening: false
-    is_unexpected: true
-  expect:
-    timeline_category: 15_DAY_EXPEDITED
-    deadline_days: 15
-    report_type: SUSAR_INITIAL_15DAY
-    regulatory_reference: "ICH E2A Section III.B.2 - Serious unexpected SUSAR (non-fatal/non-LT): 15-day initial report required"
-# Not a SUSAR = periodic
-- input:
-    report_as_susar: false
-    is_fatal: false
-    is_life_threatening: false
-    is_unexpected: false
-  expect:
-    timeline_category: PERIODIC_OR_ANNUAL
-    deadline_days: 90
-    report_type: ANNUAL_SAFETY_REPORT
-    regulatory_reference: ICH E2A Section III.B.3 - Non-SUSAR cases in annual safety reports/line listings
-# Empty input = periodic (no SUSAR)
-- input: {}
-  expect:
-    timeline_category: PERIODIC_OR_ANNUAL
-    deadline_days: 90
-    report_type: ANNUAL_SAFETY_REPORT
-    regulatory_reference: ICH E2A Section III.B.3 - Non-SUSAR cases in annual safety reports/line listings
+  - input:
+      report_as_susar: true
+      is_fatal: true
+      is_life_threatening: false
+      is_unexpected: true
+    expect:
+      timeline_category: 7_DAY_EXPEDITED
+      deadline_days: 7
+      report_type: SUSAR_INITIAL_7DAY
+      regulatory_reference: "ICH E2A Section III.B.1 - Fatal/life-threatening SUSAR: 7-day initial report required"
+  - input:
+      report_as_susar: true
+      is_fatal: false
+      is_life_threatening: true
+      is_unexpected: true
+    expect:
+      timeline_category: 7_DAY_EXPEDITED
+      deadline_days: 7
+      report_type: SUSAR_INITIAL_7DAY
+      regulatory_reference: "ICH E2A Section III.B.1 - Fatal/life-threatening SUSAR: 7-day initial report required"
+  - input:
+      report_as_susar: true
+      is_fatal: true
+      is_life_threatening: true
+      is_unexpected: true
+    expect:
+      timeline_category: 7_DAY_EXPEDITED
+      deadline_days: 7
+      report_type: SUSAR_INITIAL_7DAY
+      regulatory_reference: "ICH E2A Section III.B.1 - Fatal/life-threatening SUSAR: 7-day initial report required"
+  - input:
+      report_as_susar: true
+      is_fatal: false
+      is_life_threatening: false
+      is_unexpected: true
+    expect:
+      timeline_category: 15_DAY_EXPEDITED
+      deadline_days: 15
+      report_type: SUSAR_INITIAL_15DAY
+      regulatory_reference: "ICH E2A Section III.B.2 - Serious unexpected SUSAR (non-fatal/non-LT): 15-day initial report required"
+  - input:
+      report_as_susar: false
+      is_fatal: false
+      is_life_threatening: false
+      is_unexpected: false
+    expect:
+      timeline_category: PERIODIC_OR_ANNUAL
+      deadline_days: 90
+      report_type: ANNUAL_SAFETY_REPORT
+      regulatory_reference: ICH E2A Section III.B.3 - Non-SUSAR cases in annual safety reports/line listings
+  - input: {}
+    expect:
+      timeline_category: PERIODIC_OR_ANNUAL
+      deadline_days: 90
+      report_type: ANNUAL_SAFETY_REPORT
+      regulatory_reference: ICH E2A Section III.B.3 - Non-SUSAR cases in annual safety reports/line listings
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - deadline_days
+    - regulatory_reference
+    - report_type
+    - timeline_category
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

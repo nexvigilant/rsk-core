@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: regulatory-pathway
-description: "Domain 12: Route to regulatory submission pathway by product type, urgency, and therapeutic designation."
 version: 0.1.0
+description: "Domain 12: Route to regulatory submission pathway by product type, urgency, and therapeutic designation."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_breakthrough_designation
+    type: bool
+    required: false
+    description: ""
+  - name: is_orphan
+    type: bool
+    required: false
+    description: ""
+  - name: serious_condition
+    type: bool
+    required: false
+    description: ""
+  - name: unmet_medical_need
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: ai_assist
+    type: string
+  - name: business_impact
+    type: string
+  - name: ema
+    type: string
+  - name: fda
+    type: string
+  - name: features
+    type: string
+  - name: pathway
+    type: string
+  - name: review_timeline_months
+    type: int
 interface:
   inputs:
     has_breakthrough_designation:
@@ -30,6 +72,43 @@ interface:
       type: string
     review_timeline_months:
       type: int
+ui:
+  title: Regulatory Pathway
+  subtitle: "Domain 12: Route to regulatory submission pathway by product type, urgency, and therapeutic designation."
+  icon: circle
+  route: /vigilance/mg/regulatory-pathway
+  steps:
+    - field: has_breakthrough_designation
+      label: has breakthrough designation
+      help: Enter has_breakthrough_designation
+      widget: toggle
+      placeholder: null
+    - field: is_orphan
+      label: is orphan
+      help: Enter is_orphan
+      widget: toggle
+      placeholder: null
+    - field: serious_condition
+      label: serious condition
+      help: Enter serious_condition
+      widget: toggle
+      placeholder: null
+    - field: unmet_medical_need
+      label: unmet medical need
+      help: Enter unmet_medical_need
+      widget: toggle
+      placeholder: null
+  result:
+    template: "ai_assist: {{ai_assist}} — business_impact: {{business_impact}} — ema: {{ema}} — fda: {{fda}} — features: {{features}} — pathway: {{pathway}} — review_timeline_months: {{review_timeline_months}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/regulatory-pathway
+  cli: rsk mcg run regulatory-pathway
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_breakthrough
   nodes:
@@ -66,73 +145,112 @@ tree:
       value:
         pathway: BREAKTHROUGH
         review_timeline_months: 6
-        features: "intensive FDA guidance, rolling review, organizational commitment"
-        fda: "Breakthrough Therapy Designation (BTD)"
-        ema: "PRIME (Priority Medicines) scheme"
-        business_impact: "18+ months faster approval, enhanced regulatory relationship"
-        ai_assist: "regulatory intelligence, submission optimization, meeting preparation"
+        features: intensive FDA guidance, rolling review, organizational commitment
+        fda: Breakthrough Therapy Designation (BTD)
+        ema: PRIME (Priority Medicines) scheme
+        business_impact: 18+ months faster approval, enhanced regulatory relationship
+        ai_assist: regulatory intelligence, submission optimization, meeting preparation
     accelerated:
       type: return
       value:
         pathway: ACCELERATED
         review_timeline_months: 6
-        features: "surrogate endpoint acceptance, post-marketing confirmatory study required"
-        fda: "Accelerated Approval (Subpart H/I)"
-        ema: "Conditional Marketing Authorization"
-        business_impact: "earlier market access, post-marketing commitment"
+        features: surrogate endpoint acceptance, post-marketing confirmatory study required
+        fda: Accelerated Approval (Subpart H/I)
+        ema: Conditional Marketing Authorization
+        business_impact: earlier market access, post-marketing commitment
     priority_review:
       type: return
       value:
         pathway: PRIORITY
         review_timeline_months: 6
-        features: "shortened review timeline, serious condition treatment"
-        fda: "Priority Review"
-        ema: "Accelerated Assessment"
+        features: shortened review timeline, serious condition treatment
+        fda: Priority Review
+        ema: Accelerated Assessment
     orphan:
       type: return
       value:
         pathway: ORPHAN
         review_timeline_months: 10
-        features: "market exclusivity, fee waivers, protocol assistance"
-        fda: "Orphan Drug Designation (7-year exclusivity)"
-        ema: "Orphan Medicinal Product (10-year exclusivity)"
+        features: market exclusivity, fee waivers, protocol assistance
+        fda: Orphan Drug Designation (7-year exclusivity)
+        ema: Orphan Medicinal Product (10-year exclusivity)
     standard:
       type: return
       value:
         pathway: STANDARD
         review_timeline_months: 10
-        features: "standard review process, full clinical data package"
-        fda: "Standard NDA/BLA review"
-        ema: "Centralized/Decentralized/Mutual Recognition Procedure"
+        features: standard review process, full clinical data package
+        fda: Standard NDA/BLA review
+        ema: Centralized/Decentralized/Mutual Recognition Procedure
 tests:
-- input:
-    has_breakthrough_designation: true
-  expect:
-    pathway: BREAKTHROUGH
-    review_timeline_months: 6
-- input:
-    serious_condition: true
-    unmet_medical_need: true
-    has_breakthrough_designation: false
-  expect:
-    pathway: ACCELERATED
-- input:
-    serious_condition: true
-    unmet_medical_need: false
-    has_breakthrough_designation: false
-  expect:
-    pathway: PRIORITY
-- input:
-    is_orphan: true
-    serious_condition: false
-  expect:
-    pathway: ORPHAN
-- input:
-    serious_condition: false
-    is_orphan: false
-  expect:
-    pathway: STANDARD
-    review_timeline_months: 10
-- input: {}
-  expect:
-    pathway: STANDARD
+  - input:
+      has_breakthrough_designation: true
+    expect:
+      pathway: BREAKTHROUGH
+      review_timeline_months: 6
+  - input:
+      serious_condition: true
+      unmet_medical_need: true
+      has_breakthrough_designation: false
+    expect:
+      pathway: ACCELERATED
+  - input:
+      serious_condition: true
+      unmet_medical_need: false
+      has_breakthrough_designation: false
+    expect:
+      pathway: PRIORITY
+  - input:
+      is_orphan: true
+      serious_condition: false
+    expect:
+      pathway: ORPHAN
+  - input:
+      serious_condition: false
+      is_orphan: false
+    expect:
+      pathway: STANDARD
+      review_timeline_months: 10
+  - input: {}
+    expect:
+      pathway: STANDARD
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_assist
+    - business_impact
+    - ema
+    - fda
+    - features
+    - pathway
+    - review_timeline_months
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

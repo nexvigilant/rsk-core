@@ -1,11 +1,52 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: disproportionality-consensus
-description: 'Consensus signal classifier across 4 disproportionality measures (PRR, ROR, IC, EBGM). Counts how many methods detect a signal using standard thresholds: PRR>=2.0, ROR lower CI>1, IC025>0, EB05>1.0. Classifies as STRONG (4/4), MODERATE (3/4), WEAK (2/4), MARGINAL (1/4), or NONE (0/4).'
 version: 0.1.0
-primitive_signature:
-  dominant: frequency
-  expression: v(PRR) × v(ROR) × v(IC) × v(EBGM)
-  primes: [frequency, threshold, comparison]
-  arguments: [amount, boundary]
+description: "Consensus signal classifier across 4 disproportionality measures (PRR, ROR, IC, EBGM). Counts how many methods detect a signal using standard thresholds: PRR>=2.0, ROR lower CI>1, IC025>0, EB05>1.0. Classifies as STRONG (4/4), MODERATE (3/4), WEAK (2/4), MARGINAL (1/4), or NONE (0/4)."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: prr
+    type: float
+    required: false
+    description: ""
+  - name: prr_ci_lower
+    type: float
+    required: false
+    description: ""
+  - name: ror_ci_lower
+    type: float
+    required: false
+    description: ""
+  - name: ic025
+    type: float
+    required: false
+    description: ""
+  - name: eb05
+    type: float
+    required: false
+    description: ""
+  - name: n_cases
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: consensus
+    type: string
+  - name: signals_detected
+    type: int
+  - name: methods_triggered
+    type: string
+  - name: action
+    type: string
+  - name: signal_detected
+    type: bool
 interface:
   inputs:
     prr:
@@ -37,6 +78,53 @@ interface:
       type: string
     signal_detected:
       type: bool
+ui:
+  title: Disproportionality Consensus
+  subtitle: "Consensus signal classifier across 4 disproportionality measures (PRR, ROR, IC, EBGM). Counts how many methods detect a signal using standard thresholds: PRR>=2.0, ROR lower CI>1, IC025>0, EB05>1.0. Classifies as STRONG (4/4), MODERATE (3/4), WEAK (2/4), MARGINAL (1/4), or NONE (0/4)."
+  icon: circle
+  route: /vigilance/mg/disproportionality-consensus
+  steps:
+    - field: prr
+      label: prr
+      help: Enter prr
+      widget: text
+      placeholder: null
+    - field: prr_ci_lower
+      label: prr ci lower
+      help: Enter prr_ci_lower
+      widget: text
+      placeholder: null
+    - field: ror_ci_lower
+      label: ror ci lower
+      help: Enter ror_ci_lower
+      widget: text
+      placeholder: null
+    - field: ic025
+      label: ic025
+      help: Enter ic025
+      widget: text
+      placeholder: null
+    - field: eb05
+      label: eb05
+      help: Enter eb05
+      widget: text
+      placeholder: null
+    - field: n_cases
+      label: n cases
+      help: Enter n_cases
+      widget: text
+      placeholder: null
+  result:
+    template: "consensus: {{consensus}} — signals_detected: {{signals_detected}} — methods_triggered: {{methods_triggered}} — action: {{action}} — signal_detected: {{signal_detected}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/disproportionality-consensus
+  cli: rsk mcg run disproportionality-consensus
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_n
   nodes:
@@ -59,116 +147,107 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: prr_yes_check_ror
       false_next: prr_no_check_ror
     prr_yes_check_ror:
       type: condition
       variable: ror_ci_lower
       operator: gt
-      value: 1.0
+      value: 1
       true_next: prr_ror_yes_check_ic
       false_next: prr_only_check_ic
     prr_no_check_ror:
       type: condition
       variable: ror_ci_lower
       operator: gt
-      value: 1.0
+      value: 1
       true_next: ror_only_check_ic
       false_next: none_check_ic
     prr_ror_yes_check_ic:
       type: condition
       variable: ic025
       operator: gt
-      value: 0.0
+      value: 0
       true_next: prr_ror_ic_check_eb
       false_next: prr_ror_check_eb
     prr_only_check_ic:
       type: condition
       variable: ic025
       operator: gt
-      value: 0.0
+      value: 0
       true_next: prr_ic_check_eb
       false_next: prr_check_eb
     ror_only_check_ic:
       type: condition
       variable: ic025
       operator: gt
-      value: 0.0
+      value: 0
       true_next: ror_ic_check_eb
       false_next: ror_check_eb
     none_check_ic:
       type: condition
       variable: ic025
       operator: gt
-      value: 0.0
+      value: 0
       true_next: ic_check_eb
       false_next: zero_check_eb
-    # 4 methods accumulated, check EBGM
     prr_ror_ic_check_eb:
       type: condition
       variable: eb05
       operator: gt
-      value: 1.0
+      value: 1
       true_next: strong_signal
       false_next: moderate_signal_prr_ror_ic
-    # 3 methods: PRR+ROR
     prr_ror_check_eb:
       type: condition
       variable: eb05
       operator: gt
-      value: 1.0
+      value: 1
       true_next: moderate_signal_prr_ror_eb
       false_next: weak_signal_prr_ror
-    # 3 methods: PRR+IC
     prr_ic_check_eb:
       type: condition
       variable: eb05
       operator: gt
-      value: 1.0
+      value: 1
       true_next: moderate_signal_prr_ic_eb
       false_next: weak_signal_prr_ic
-    # 3 methods: ROR+IC
     ror_ic_check_eb:
       type: condition
       variable: eb05
       operator: gt
-      value: 1.0
+      value: 1
       true_next: moderate_signal_ror_ic_eb
       false_next: weak_signal_ror_ic
-    # 2 methods: PRR only
     prr_check_eb:
       type: condition
       variable: eb05
       operator: gt
-      value: 1.0
+      value: 1
       true_next: weak_signal_prr_eb
       false_next: marginal_prr
-    # 2 methods: ROR only
     ror_check_eb:
       type: condition
       variable: eb05
       operator: gt
-      value: 1.0
+      value: 1
       true_next: weak_signal_ror_eb
       false_next: marginal_ror
-    # 2 methods: IC only
     ic_check_eb:
       type: condition
       variable: eb05
       operator: gt
-      value: 1.0
+      value: 1
       true_next: weak_signal_ic_eb
       false_next: marginal_ic
-    # 0 methods so far
     zero_check_eb:
       type: condition
       variable: eb05
       operator: gt
-      value: 1.0
+      value: 1
       true_next: marginal_eb
       false_next: no_signal
-    # Terminal nodes
     strong_signal:
       type: return
       value:
@@ -298,133 +377,160 @@ tree:
         action: no_action
         signal_detected: false
 tests:
-# Strong: all 4 agree (semaglutide nausea-like)
-- input:
-    prr: 3.95
-    prr_ci_lower: 3.88
-    ror_ci_lower: 4.37
-    ic025: 1.94
-    eb05: 3.82
-    n_cases: 11511
-  expect:
-    consensus: STRONG
-    signals_detected: 4
-    methods_triggered: PRR+ROR+IC+EBGM
-    action: expedited_review
-    signal_detected: true
-# No signal: all below threshold
-- input:
-    prr: 1.2
-    prr_ci_lower: 0.9
-    ror_ci_lower: 0.8
-    ic025: -0.5
-    eb05: 0.7
-    n_cases: 50
-  expect:
-    consensus: NONE
-    signals_detected: 0
-    methods_triggered: none
-    action: no_action
-    signal_detected: false
-# Marginal: only PRR triggers
-- input:
-    prr: 2.5
-    prr_ci_lower: 2.1
-    ror_ci_lower: 0.9
-    ic025: -0.1
-    eb05: 0.8
-    n_cases: 10
-  expect:
-    consensus: MARGINAL
-    signals_detected: 1
-    methods_triggered: PRR
-    action: investigate
-    signal_detected: false
-# Weak: PRR + EBGM
-- input:
-    prr: 2.1
-    prr_ci_lower: 1.8
-    ror_ci_lower: 0.95
-    ic025: -0.2
-    eb05: 1.5
-    n_cases: 25
-  expect:
-    consensus: WEAK
-    signals_detected: 2
-    methods_triggered: PRR+EBGM
-    action: monitor
-    signal_detected: true
-# Moderate: PRR + ROR + IC (no EBGM)
-- input:
-    prr: 3.0
-    prr_ci_lower: 2.5
-    ror_ci_lower: 2.3
-    ic025: 0.8
-    eb05: 0.9
-    n_cases: 100
-  expect:
-    consensus: MODERATE
-    signals_detected: 3
-    methods_triggered: PRR+ROR+IC
-    action: standard_review
-    signal_detected: true
-# Insufficient cases
-- input:
-    prr: 5.0
-    ror_ci_lower: 4.0
-    ic025: 2.0
-    eb05: 3.0
-    n_cases: 2
-  expect:
-    consensus: INSUFFICIENT
-    signals_detected: 0
-    methods_triggered: none
-    action: need_more_cases
-    signal_detected: false
-# Empty input
-- input: {}
-  expect:
-    consensus: INSUFFICIENT
-    signals_detected: 0
-    methods_triggered: none
-    action: need_more_cases
-    signal_detected: false
-# Boundary: exactly at thresholds
-- input:
-    prr: 2.0
-    ror_ci_lower: 1.01
-    ic025: 0.01
-    eb05: 1.01
-    n_cases: 3
-  expect:
-    consensus: STRONG
-    signals_detected: 4
-    methods_triggered: PRR+ROR+IC+EBGM
-    action: expedited_review
-    signal_detected: true
-# Only EBGM signals (rare but possible with shrinkage)
-- input:
-    prr: 1.8
-    ror_ci_lower: 0.9
-    ic025: -0.1
-    eb05: 1.5
-    n_cases: 15
-  expect:
-    consensus: MARGINAL
-    signals_detected: 1
-    methods_triggered: EBGM
-    action: investigate
-    signal_detected: false
-# Moderate: ROR + IC + EBGM (PRR below threshold)
-- input:
-    prr: 1.9
-    ror_ci_lower: 1.5
-    ic025: 0.5
-    eb05: 2.0
-    n_cases: 200
-  expect:
-    consensus: MODERATE
-    signals_detected: 3
-    methods_triggered: ROR+IC+EBGM
-    action: standard_review
-    signal_detected: true
+  - input:
+      prr: 3.95
+      prr_ci_lower: 3.88
+      ror_ci_lower: 4.37
+      ic025: 1.94
+      eb05: 3.82
+      n_cases: 11511
+    expect:
+      consensus: STRONG
+      signals_detected: 4
+      methods_triggered: PRR+ROR+IC+EBGM
+      action: expedited_review
+      signal_detected: true
+  - input:
+      prr: 1.2
+      prr_ci_lower: 0.9
+      ror_ci_lower: 0.8
+      ic025: -0.5
+      eb05: 0.7
+      n_cases: 50
+    expect:
+      consensus: NONE
+      signals_detected: 0
+      methods_triggered: none
+      action: no_action
+      signal_detected: false
+  - input:
+      prr: 2.5
+      prr_ci_lower: 2.1
+      ror_ci_lower: 0.9
+      ic025: -0.1
+      eb05: 0.8
+      n_cases: 10
+    expect:
+      consensus: MARGINAL
+      signals_detected: 1
+      methods_triggered: PRR
+      action: investigate
+      signal_detected: false
+  - input:
+      prr: 2.1
+      prr_ci_lower: 1.8
+      ror_ci_lower: 0.95
+      ic025: -0.2
+      eb05: 1.5
+      n_cases: 25
+    expect:
+      consensus: WEAK
+      signals_detected: 2
+      methods_triggered: PRR+EBGM
+      action: monitor
+      signal_detected: true
+  - input:
+      prr: 3
+      prr_ci_lower: 2.5
+      ror_ci_lower: 2.3
+      ic025: 0.8
+      eb05: 0.9
+      n_cases: 100
+    expect:
+      consensus: MODERATE
+      signals_detected: 3
+      methods_triggered: PRR+ROR+IC
+      action: standard_review
+      signal_detected: true
+  - input:
+      prr: 5
+      ror_ci_lower: 4
+      ic025: 2
+      eb05: 3
+      n_cases: 2
+    expect:
+      consensus: INSUFFICIENT
+      signals_detected: 0
+      methods_triggered: none
+      action: need_more_cases
+      signal_detected: false
+  - input: {}
+    expect:
+      consensus: INSUFFICIENT
+      signals_detected: 0
+      methods_triggered: none
+      action: need_more_cases
+      signal_detected: false
+  - input:
+      prr: 2
+      ror_ci_lower: 1.01
+      ic025: 0.01
+      eb05: 1.01
+      n_cases: 3
+    expect:
+      consensus: STRONG
+      signals_detected: 4
+      methods_triggered: PRR+ROR+IC+EBGM
+      action: expedited_review
+      signal_detected: true
+  - input:
+      prr: 1.8
+      ror_ci_lower: 0.9
+      ic025: -0.1
+      eb05: 1.5
+      n_cases: 15
+    expect:
+      consensus: MARGINAL
+      signals_detected: 1
+      methods_triggered: EBGM
+      action: investigate
+      signal_detected: false
+  - input:
+      prr: 1.9
+      ror_ci_lower: 1.5
+      ic025: 0.5
+      eb05: 2
+      n_cases: 200
+    expect:
+      consensus: MODERATE
+      signals_detected: 3
+      methods_triggered: ROR+IC+EBGM
+      action: standard_review
+      signal_detected: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - consensus
+    - signals_detected
+    - methods_triggered
+    - action
+    - signal_detected
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

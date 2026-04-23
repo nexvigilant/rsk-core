@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: deadline-eu-15day
-description: "Calculate EU 15-day reporting deadline for serious adverse events in clinical trials"
 version: 0.1.0
+description: Calculate EU 15-day reporting deadline for serious adverse events in clinical trials
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Deadline Eu 15day
+  subtitle: Calculate EU 15-day reporting deadline for serious adverse events in clinical trials
+  icon: circle
+  route: /vigilance/mg/deadline-eu-15day
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/deadline-eu-15day
+  cli: rsk mcg run deadline-eu-15day
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_event_date
   nodes:
@@ -29,25 +58,25 @@ tree:
       type: return
       value:
         reporting_deadline_days: 15
-        event_category: "serious_unexpected_adverse_reaction"
-        regulatory_requirement: "EU_Clinical_Trial_Directive"
-        deadline_date: "calculated_from_event_date"
+        event_category: serious_unexpected_adverse_reaction
+        regulatory_requirement: EU_Clinical_Trial_Directive
+        deadline_date: calculated_from_event_date
         regulatory_compliant: true
     non_serious_unexpected_deadline:
       type: return
       value:
         reporting_deadline_days: 15
-        event_category: "non_serious_unexpected_adverse_reaction"
-        regulatory_requirement: "EU_Clinical_Trial_Directive"
-        deadline_date: "calculated_from_event_date"
+        event_category: non_serious_unexpected_adverse_reaction
+        regulatory_requirement: EU_Clinical_Trial_Directive
+        deadline_date: calculated_from_event_date
         regulatory_compliant: true
     expected_event:
       type: return
       value:
         reporting_deadline_days: 30
-        event_category: "expected_adverse_reaction"
-        regulatory_requirement: "EU_Clinical_Trial_Directive"
-        deadline_date: "calculated_from_event_date"
+        event_category: expected_adverse_reaction
+        regulatory_requirement: EU_Clinical_Trial_Directive
+        deadline_date: calculated_from_event_date
         regulatory_compliant: true
     deadline_unknown:
       type: return
@@ -58,27 +87,59 @@ tree:
         deadline_date: null
         regulatory_compliant: false
 tests:
-- input:
-    event_date: "2024-01-15"
-    is_unexpected: true
-    is_serious: true
-  expect:
-    reporting_deadline_days: 15
-    event_category: "serious_unexpected_adverse_reaction"
-- input:
-    event_date: "2024-01-15"
-    is_unexpected: true
-    is_serious: false
-  expect:
-    reporting_deadline_days: 15
-    event_category: "non_serious_unexpected_adverse_reaction"
-- input:
-    event_date: "2024-01-15"
-    is_unexpected: false
-  expect:
-    reporting_deadline_days: 30
-    event_category: "expected_adverse_reaction"
-- input: {}
-  expect:
-    reporting_deadline_days: null
-    regulatory_compliant: false
+  - input:
+      event_date: 2024-01-15
+      is_unexpected: true
+      is_serious: true
+    expect:
+      reporting_deadline_days: 15
+      event_category: serious_unexpected_adverse_reaction
+  - input:
+      event_date: 2024-01-15
+      is_unexpected: true
+      is_serious: false
+    expect:
+      reporting_deadline_days: 15
+      event_category: non_serious_unexpected_adverse_reaction
+  - input:
+      event_date: 2024-01-15
+      is_unexpected: false
+    expect:
+      reporting_deadline_days: 30
+      event_category: expected_adverse_reaction
+  - input: {}
+    expect:
+      reporting_deadline_days: null
+      regulatory_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ca-13-l5-leadership
-description: "L5+ leadership development ≥25% within 5 years"
 version: 0.1.0
-
+description: L5+ leadership development ≥25% within 5 years
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Ca 13 L5 Leadership
+  subtitle: L5+ leadership development ≥25% within 5 years
+  icon: circle
+  route: /vigilance/mg/ca-13-l5-leadership
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ca-13-l5-leadership
+  cli: rsk mcg run ca-13-l5-leadership
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -15,22 +43,58 @@ tree:
     pass:
       type: return
       value:
-        metric: "ca-13-l5-leadership"
-        category: "Competency Architecture"
+        metric: ca-13-l5-leadership
+        category: Competency Architecture
         met: true
-        action: "on_track"
-        frequency: "annual"
+        action: on_track
+        frequency: annual
     fail:
       type: return
       value:
-        metric: "ca-13-l5-leadership"
-        category: "Competency Architecture"
+        metric: ca-13-l5-leadership
+        category: Competency Architecture
         met: false
-        action: "remediate"
-        frequency: "annual"
-
+        action: remediate
+        frequency: annual
 tests:
-  - input: {l5_plus_pct: 25}
-    expect: {met: true, category: "Competency Architecture"}
+  - input:
+      l5_plus_pct: 25
+    expect:
+      met: true
+      category: Competency Architecture
   - input: {}
-    expect: {met: false, category: "Competency Architecture"}
+    expect:
+      met: false
+      category: Competency Architecture
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

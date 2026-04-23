@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: interaction-monitoring
-description: "Specify monitoring requirements and frequency for managed drug interactions"
 version: 0.1.0
+description: Specify monitoring requirements and frequency for managed drug interactions
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Interaction Monitoring
+  subtitle: Specify monitoring requirements and frequency for managed drug interactions
+  icon: circle
+  route: /vigilance/mg/interaction-monitoring
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/interaction-monitoring
+  cli: rsk mcg run interaction-monitoring
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_management
   nodes:
@@ -15,51 +44,51 @@ tree:
       type: condition
       variable: management_category
       operator: eq
-      value: "intensive"
+      value: intensive
       true_next: intensive_monitoring
       false_next: check_standard
     check_standard:
       type: condition
       variable: management_category
       operator: eq
-      value: "standard"
+      value: standard
       true_next: standard_monitoring
       false_next: check_minimal
     check_minimal:
       type: condition
       variable: management_category
       operator: eq
-      value: "minimal"
+      value: minimal
       true_next: minimal_monitoring
       false_next: no_monitoring
     intensive_monitoring:
       type: return
       value:
-        monitoring_frequency: "weekly"
-        monitoring_parameters: "drug_levels,renal_function,liver_function"
+        monitoring_frequency: weekly
+        monitoring_parameters: drug_levels,renal_function,liver_function
         monitoring_duration_weeks: 8
         follow_up_required: true
         monitoring_compliant: true
     standard_monitoring:
       type: return
       value:
-        monitoring_frequency: "monthly"
-        monitoring_parameters: "clinical_response,adverse_effects"
+        monitoring_frequency: monthly
+        monitoring_parameters: clinical_response,adverse_effects
         monitoring_duration_weeks: 12
         follow_up_required: true
         monitoring_compliant: true
     minimal_monitoring:
       type: return
       value:
-        monitoring_frequency: "as_needed"
-        monitoring_parameters: "symptom_assessment"
+        monitoring_frequency: as_needed
+        monitoring_parameters: symptom_assessment
         monitoring_duration_weeks: 4
         follow_up_required: false
         monitoring_compliant: true
     no_monitoring:
       type: return
       value:
-        monitoring_frequency: "none"
+        monitoring_frequency: none
         monitoring_parameters: null
         monitoring_duration_weeks: 0
         follow_up_required: false
@@ -67,29 +96,61 @@ tree:
     monitoring_unknown:
       type: return
       value:
-        monitoring_frequency: "unknown"
+        monitoring_frequency: unknown
         monitoring_parameters: null
         monitoring_duration_weeks: null
         follow_up_required: null
         monitoring_compliant: false
 tests:
-- input:
-    management_category: "intensive"
-  expect:
-    monitoring_frequency: "weekly"
-    monitoring_duration_weeks: 8
-    follow_up_required: true
-- input:
-    management_category: "standard"
-  expect:
-    monitoring_frequency: "monthly"
-    monitoring_duration_weeks: 12
-- input:
-    management_category: "minimal"
-  expect:
-    monitoring_frequency: "as_needed"
-    monitoring_duration_weeks: 4
-- input: {}
-  expect:
-    monitoring_frequency: "unknown"
-    monitoring_compliant: false
+  - input:
+      management_category: intensive
+    expect:
+      monitoring_frequency: weekly
+      monitoring_duration_weeks: 8
+      follow_up_required: true
+  - input:
+      management_category: standard
+    expect:
+      monitoring_frequency: monthly
+      monitoring_duration_weeks: 12
+  - input:
+      management_category: minimal
+    expect:
+      monitoring_frequency: as_needed
+      monitoring_duration_weeks: 4
+  - input: {}
+    expect:
+      monitoring_frequency: unknown
+      monitoring_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

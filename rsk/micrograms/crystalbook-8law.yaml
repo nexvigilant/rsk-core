@@ -1,6 +1,78 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: crystalbook-8law
-description: 'Crystalbook 8-Law Risk Matrix: assess 8 virtue scores (0-10 each) to determine which laws are SATISFIED (7+), AT_RISK (4-6), or VIOLATED (0-3). Source: Crystalbook v2.0 by Matthew A. Campion, PharmD.'
 version: 0.1.0
+description: "Crystalbook 8-Law Risk Matrix: assess 8 virtue scores (0-10 each) to determine which laws are SATISFIED (7+), AT_RISK (4-6), or VIOLATED (0-3). Source: Crystalbook v2.0 by Matthew A. Campion, PharmD."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: humility_score
+    type: integer
+    required: false
+    description: ""
+  - name: charity_score
+    type: integer
+    required: false
+    description: ""
+  - name: chastity_score
+    type: integer
+    required: false
+    description: ""
+  - name: kindness_score
+    type: integer
+    required: false
+    description: ""
+  - name: temperance_score
+    type: integer
+    required: false
+    description: ""
+  - name: patience_score
+    type: integer
+    required: false
+    description: ""
+  - name: diligence_score
+    type: integer
+    required: false
+    description: ""
+  - name: independence_score
+    type: integer
+    required: false
+    description: ""
+outputs:
+  - name: law_i_status
+    type: string
+  - name: law_ii_status
+    type: string
+  - name: law_iii_status
+    type: string
+  - name: law_iv_status
+    type: string
+  - name: law_v_status
+    type: string
+  - name: law_vi_status
+    type: string
+  - name: law_vii_status
+    type: string
+  - name: law_viii_status
+    type: string
+  - name: violated_count
+    type: integer
+  - name: at_risk_count
+    type: integer
+  - name: satisfied_count
+    type: integer
+  - name: primary_deviation
+    type: string
+  - name: overall_health
+    type: string
+  - name: source
+    type: string
 interface:
   inputs:
     humility_score:
@@ -56,10 +128,66 @@ interface:
       type: string
     source:
       type: string
+ui:
+  title: Crystalbook 8law
+  subtitle: "Crystalbook 8-Law Risk Matrix: assess 8 virtue scores (0-10 each) to determine which laws are SATISFIED (7+), AT_RISK (4-6), or VIOLATED (0-3). Source: Crystalbook v2.0 by Matthew A. Campion, PharmD."
+  icon: circle
+  route: /vigilance/mg/crystalbook-8law
+  steps:
+    - field: humility_score
+      label: humility score
+      help: Enter humility_score
+      widget: number
+      placeholder: null
+    - field: charity_score
+      label: charity score
+      help: Enter charity_score
+      widget: number
+      placeholder: null
+    - field: chastity_score
+      label: chastity score
+      help: Enter chastity_score
+      widget: number
+      placeholder: null
+    - field: kindness_score
+      label: kindness score
+      help: Enter kindness_score
+      widget: number
+      placeholder: null
+    - field: temperance_score
+      label: temperance score
+      help: Enter temperance_score
+      widget: number
+      placeholder: null
+    - field: patience_score
+      label: patience score
+      help: Enter patience_score
+      widget: number
+      placeholder: null
+    - field: diligence_score
+      label: diligence score
+      help: Enter diligence_score
+      widget: number
+      placeholder: null
+    - field: independence_score
+      label: independence score
+      help: Enter independence_score
+      widget: number
+      placeholder: null
+  result:
+    template: "law_i_status: {{law_i_status}} — law_ii_status: {{law_ii_status}} — law_iii_status: {{law_iii_status}} — law_iv_status: {{law_iv_status}} — law_v_status: {{law_v_status}} — law_vi_status: {{law_vi_status}} — law_vii_status: {{law_vii_status}} — law_viii_status: {{law_viii_status}} — violated_count: {{violated_count}} — at_risk_count: {{at_risk_count}} — satisfied_count: {{satisfied_count}} — primary_deviation: {{primary_deviation}} — overall_health: {{overall_health}} — source: {{source}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/crystalbook-8law
+  cli: rsk mcg run crystalbook-8law
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_law_i_violated
   nodes:
-    # --- Law I: Pride → Humility (True Measure) ---
     check_law_i_violated:
       type: condition
       variable: humility_score
@@ -74,7 +202,6 @@ tree:
       value: 7
       true_next: law_i_satisfied
       false_next: law_i_at_risk
-
     law_i_violated:
       type: condition
       variable: charity_score
@@ -96,9 +223,6 @@ tree:
       value: 4
       true_next: law_i_s_law_ii_v
       false_next: check_law_ii_sat_after_i_s
-
-    # --- Law II: Greed → Charity (Sufficient Portion) ---
-    # After Law I = VIOLATED
     law_i_v_law_ii_v:
       type: return
       value:
@@ -113,9 +237,9 @@ tree:
         violated_count: 2
         at_risk_count: 0
         satisfied_count: 0
-        primary_deviation: 'Law I (Pride) and Law II (Greed) — dual foundation failure'
+        primary_deviation: Law I (Pride) and Law II (Greed) — dual foundation failure
         overall_health: CRITICAL
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
     check_law_ii_sat_after_i_v:
       type: condition
       variable: charity_score
@@ -137,9 +261,9 @@ tree:
         violated_count: 1
         at_risk_count: 0
         satisfied_count: 1
-        primary_deviation: 'Law I (Pride) — unchecked confidence in internal representations'
+        primary_deviation: Law I (Pride) — unchecked confidence in internal representations
         overall_health: DEGRADED
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
     i_v_ii_r:
       type: return
       value:
@@ -154,11 +278,9 @@ tree:
         violated_count: 1
         at_risk_count: 1
         satisfied_count: 0
-        primary_deviation: 'Law I (Pride) — unchecked confidence in internal representations'
+        primary_deviation: Law I (Pride) — unchecked confidence in internal representations
         overall_health: DEGRADED
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-    # After Law I = AT_RISK
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
     law_i_r_law_ii_v:
       type: return
       value:
@@ -173,9 +295,9 @@ tree:
         violated_count: 1
         at_risk_count: 1
         satisfied_count: 0
-        primary_deviation: 'Law II (Greed) — resource hoarding starves adjacent subsystems'
+        primary_deviation: Law II (Greed) — resource hoarding starves adjacent subsystems
         overall_health: DEGRADED
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
     check_law_ii_sat_after_i_r:
       type: condition
       variable: charity_score
@@ -197,9 +319,9 @@ tree:
         violated_count: 0
         at_risk_count: 1
         satisfied_count: 1
-        primary_deviation: 'Law I (Pride) — at risk of unchecked confidence'
+        primary_deviation: Law I (Pride) — at risk of unchecked confidence
         overall_health: GUARDED
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
     i_r_ii_r:
       type: return
       value:
@@ -214,11 +336,9 @@ tree:
         violated_count: 0
         at_risk_count: 2
         satisfied_count: 0
-        primary_deviation: 'Laws I-II (Pride, Greed) — dual at-risk foundation'
+        primary_deviation: Laws I-II (Pride, Greed) — dual at-risk foundation
         overall_health: GUARDED
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-    # After Law I = SATISFIED
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
     law_i_s_law_ii_v:
       type: return
       value:
@@ -233,9 +353,9 @@ tree:
         violated_count: 1
         at_risk_count: 0
         satisfied_count: 1
-        primary_deviation: 'Law II (Greed) — resource hoarding starves adjacent subsystems'
+        primary_deviation: Law II (Greed) — resource hoarding starves adjacent subsystems
         overall_health: DEGRADED
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
     check_law_ii_sat_after_i_s:
       type: condition
       variable: charity_score
@@ -257,9 +377,9 @@ tree:
         violated_count: 0
         at_risk_count: 0
         satisfied_count: 2
-        primary_deviation: 'none'
+        primary_deviation: none
         overall_health: HEALTHY
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
     i_s_ii_r:
       type: return
       value:
@@ -274,135 +394,159 @@ tree:
         violated_count: 0
         at_risk_count: 1
         satisfied_count: 1
-        primary_deviation: 'Law II (Greed) — at risk of resource hoarding'
+        primary_deviation: Law II (Greed) — at risk of resource hoarding
         overall_health: GUARDED
-        source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement of 8-law virtue adherence'
-  primes: ['κ', '∂', 'ς']
-  arguments: []
-
+        source: Crystalbook v2.0 — Eight Laws of System Homeostasis
 tests:
-# All virtues maximized — healthy
-- input:
-    humility_score: 10
-    charity_score: 10
-    chastity_score: 10
-    kindness_score: 10
-    temperance_score: 10
-    patience_score: 10
-    diligence_score: 10
-    independence_score: 10
-  expect:
-    law_i_status: SATISFIED
-    law_ii_status: SATISFIED
-    violated_count: 0
-    at_risk_count: 0
-    satisfied_count: 2
-    primary_deviation: 'none'
-    overall_health: HEALTHY
-    source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-# All vices dominant — critical
-- input:
-    humility_score: 0
-    charity_score: 0
-    chastity_score: 0
-    kindness_score: 0
-    temperance_score: 0
-    patience_score: 0
-    diligence_score: 0
-    independence_score: 0
-  expect:
-    law_i_status: VIOLATED
-    law_ii_status: VIOLATED
-    violated_count: 2
-    at_risk_count: 0
-    satisfied_count: 0
-    primary_deviation: 'Law I (Pride) and Law II (Greed) — dual foundation failure'
-    overall_health: CRITICAL
-    source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-# Law I violated, Law II satisfied — degraded
-- input:
-    humility_score: 2
-    charity_score: 8
-  expect:
-    law_i_status: VIOLATED
-    law_ii_status: SATISFIED
-    violated_count: 1
-    at_risk_count: 0
-    satisfied_count: 1
-    primary_deviation: 'Law I (Pride) — unchecked confidence in internal representations'
-    overall_health: DEGRADED
-    source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-# Both at risk — guarded
-- input:
-    humility_score: 5
-    charity_score: 5
-  expect:
-    law_i_status: AT_RISK
-    law_ii_status: AT_RISK
-    violated_count: 0
-    at_risk_count: 2
-    satisfied_count: 0
-    primary_deviation: 'Laws I-II (Pride, Greed) — dual at-risk foundation'
-    overall_health: GUARDED
-    source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-# Law I satisfied, Law II at risk — guarded
-- input:
-    humility_score: 9
-    charity_score: 5
-  expect:
-    law_i_status: SATISFIED
-    law_ii_status: AT_RISK
-    violated_count: 0
-    at_risk_count: 1
-    satisfied_count: 1
-    primary_deviation: 'Law II (Greed) — at risk of resource hoarding'
-    overall_health: GUARDED
-    source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-# Empty input — null scores are not < 4 and not >= 7, so AT_RISK (unmeasured = at risk)
-- input: {}
-  expect:
-    law_i_status: AT_RISK
-    law_ii_status: AT_RISK
-    violated_count: 0
-    at_risk_count: 2
-    satisfied_count: 0
-    primary_deviation: 'Laws I-II (Pride, Greed) — dual at-risk foundation'
-    overall_health: GUARDED
-    source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-# Boundary case: exactly at threshold (4 = AT_RISK, 7 = SATISFIED)
-- input:
-    humility_score: 4
-    charity_score: 7
-  expect:
-    law_i_status: AT_RISK
-    law_ii_status: SATISFIED
-    violated_count: 0
-    at_risk_count: 1
-    satisfied_count: 1
-    primary_deviation: 'Law I (Pride) — at risk of unchecked confidence'
-    overall_health: GUARDED
-    source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
-
-# Boundary case: 3 = VIOLATED, 6 = AT_RISK
-- input:
-    humility_score: 3
-    charity_score: 6
-  expect:
-    law_i_status: VIOLATED
-    law_ii_status: AT_RISK
-    violated_count: 1
-    at_risk_count: 1
-    satisfied_count: 0
-    primary_deviation: 'Law I (Pride) — unchecked confidence in internal representations'
-    overall_health: DEGRADED
-    source: 'Crystalbook v2.0 — Eight Laws of System Homeostasis'
+  - input:
+      humility_score: 10
+      charity_score: 10
+      chastity_score: 10
+      kindness_score: 10
+      temperance_score: 10
+      patience_score: 10
+      diligence_score: 10
+      independence_score: 10
+    expect:
+      law_i_status: SATISFIED
+      law_ii_status: SATISFIED
+      violated_count: 0
+      at_risk_count: 0
+      satisfied_count: 2
+      primary_deviation: none
+      overall_health: HEALTHY
+      source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+  - input:
+      humility_score: 0
+      charity_score: 0
+      chastity_score: 0
+      kindness_score: 0
+      temperance_score: 0
+      patience_score: 0
+      diligence_score: 0
+      independence_score: 0
+    expect:
+      law_i_status: VIOLATED
+      law_ii_status: VIOLATED
+      violated_count: 2
+      at_risk_count: 0
+      satisfied_count: 0
+      primary_deviation: Law I (Pride) and Law II (Greed) — dual foundation failure
+      overall_health: CRITICAL
+      source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+  - input:
+      humility_score: 2
+      charity_score: 8
+    expect:
+      law_i_status: VIOLATED
+      law_ii_status: SATISFIED
+      violated_count: 1
+      at_risk_count: 0
+      satisfied_count: 1
+      primary_deviation: Law I (Pride) — unchecked confidence in internal representations
+      overall_health: DEGRADED
+      source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+  - input:
+      humility_score: 5
+      charity_score: 5
+    expect:
+      law_i_status: AT_RISK
+      law_ii_status: AT_RISK
+      violated_count: 0
+      at_risk_count: 2
+      satisfied_count: 0
+      primary_deviation: Laws I-II (Pride, Greed) — dual at-risk foundation
+      overall_health: GUARDED
+      source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+  - input:
+      humility_score: 9
+      charity_score: 5
+    expect:
+      law_i_status: SATISFIED
+      law_ii_status: AT_RISK
+      violated_count: 0
+      at_risk_count: 1
+      satisfied_count: 1
+      primary_deviation: Law II (Greed) — at risk of resource hoarding
+      overall_health: GUARDED
+      source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+  - input: {}
+    expect:
+      law_i_status: AT_RISK
+      law_ii_status: AT_RISK
+      violated_count: 0
+      at_risk_count: 2
+      satisfied_count: 0
+      primary_deviation: Laws I-II (Pride, Greed) — dual at-risk foundation
+      overall_health: GUARDED
+      source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+  - input:
+      humility_score: 4
+      charity_score: 7
+    expect:
+      law_i_status: AT_RISK
+      law_ii_status: SATISFIED
+      violated_count: 0
+      at_risk_count: 1
+      satisfied_count: 1
+      primary_deviation: Law I (Pride) — at risk of unchecked confidence
+      overall_health: GUARDED
+      source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+  - input:
+      humility_score: 3
+      charity_score: 6
+    expect:
+      law_i_status: VIOLATED
+      law_ii_status: AT_RISK
+      violated_count: 1
+      at_risk_count: 1
+      satisfied_count: 0
+      primary_deviation: Law I (Pride) — unchecked confidence in internal representations
+      overall_health: DEGRADED
+      source: Crystalbook v2.0 — Eight Laws of System Homeostasis
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - law_i_status
+    - law_ii_status
+    - law_iii_status
+    - law_iv_status
+    - law_v_status
+    - law_vi_status
+    - law_vii_status
+    - law_viii_status
+    - violated_count
+    - at_risk_count
+    - satisfied_count
+    - primary_deviation
+    - overall_health
+    - source
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

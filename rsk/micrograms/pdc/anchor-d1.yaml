@@ -1,6 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: anchor-d1
-description: "PDC: Domain 1 (Foundations of PV) behavioral anchors by level — 7 anchors per level, 49 total"
 version: 0.1.0
+description: "PDC: Domain 1 (Foundations of PV) behavioral anchors by level — 7 anchors per level, 49 total"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: level
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: a1
+    type: string
+  - name: a2
+    type: string
+  - name: a3
+    type: string
+  - name: a4
+    type: string
+  - name: a5
+    type: string
+  - name: a6
+    type: string
+  - name: a7
+    type: string
+  - name: anchor_count
+    type: int
+  - name: bloom_tier
+    type: int
+  - name: domain
+    type: int
+  - name: domain_name
+    type: string
+  - name: error
+    type: string
+  - name: has_quantitative_metrics
+    type: bool
+  - name: level
+    type: string
 interface:
   inputs:
     level:
@@ -35,6 +79,28 @@ interface:
       type: bool
     level:
       type: string
+ui:
+  title: Anchor D1
+  subtitle: "PDC: Domain 1 (Foundations of PV) behavioral anchors by level — 7 anchors per level, 49 total"
+  icon: circle
+  route: /vigilance/mg/anchor-d1
+  steps:
+    - field: level
+      label: level
+      help: Enter level
+      widget: text
+      placeholder: null
+  result:
+    template: "a1: {{a1}} — a2: {{a2}} — a3: {{a3}} — a4: {{a4}} — a5: {{a5}} — a6: {{a6}} — a7: {{a7}} — anchor_count: {{anchor_count}} — bloom_tier: {{bloom_tier}} — domain: {{domain}} — domain_name: {{domain_name}} — error: {{error}} — has_quantitative_metrics: {{has_quantitative_metrics}} — level: {{level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/anchor-d1
+  cli: rsk mcg run anchor-d1
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_l1
   nodes:
@@ -91,107 +157,107 @@ tree:
       type: return
       value:
         domain: 1
-        domain_name: "Foundations of PV in AI Era"
+        domain_name: Foundations of PV in AI Era
         level: L1
         anchor_count: 7
-        a1: "Correctly uses basic PV terminology (drug safety, adverse event, serious AE) in documentation"
-        a2: "Identifies the major regulatory authorities (FDA, EMA, PMDA, Health Canada)"
-        a3: "Describes the basic purpose of pharmacovigilance in protecting patient safety"
-        a4: "Lists common data sources for safety information (clinical trials, spontaneous reports)"
-        a5: "Recognizes when AI is being used in PV processes and workflows"
-        a6: "Explains the historical importance of thalidomide in PV development"
-        a7: "States the basic ethical principle of first do no harm in safety monitoring"
+        a1: Correctly uses basic PV terminology (drug safety, adverse event, serious AE) in documentation
+        a2: Identifies the major regulatory authorities (FDA, EMA, PMDA, Health Canada)
+        a3: Describes the basic purpose of pharmacovigilance in protecting patient safety
+        a4: Lists common data sources for safety information (clinical trials, spontaneous reports)
+        a5: Recognizes when AI is being used in PV processes and workflows
+        a6: Explains the historical importance of thalidomide in PV development
+        a7: States the basic ethical principle of first do no harm in safety monitoring
         bloom_tier: 1
     l2_anchors:
       type: return
       value:
         domain: 1
-        domain_name: "Foundations of PV in AI Era"
+        domain_name: Foundations of PV in AI Era
         level: L2
         anchor_count: 7
-        a1: "Explains the evolution of major PV regulations (GVP, FDA guidelines) to colleagues"
-        a2: "Compares different regulatory requirements accurately across regions"
-        a3: "Applies basic ethical principles to simple case processing decisions"
-        a4: "Identifies appropriate AI tools for specific routine PV tasks"
-        a5: "Documents the rationale for basic PV decisions clearly"
-        a6: "Describes the relationship between pre-market and post-market safety monitoring"
-        a7: "Recognizes the public health impact of major safety issues"
+        a1: Explains the evolution of major PV regulations (GVP, FDA guidelines) to colleagues
+        a2: Compares different regulatory requirements accurately across regions
+        a3: Applies basic ethical principles to simple case processing decisions
+        a4: Identifies appropriate AI tools for specific routine PV tasks
+        a5: Documents the rationale for basic PV decisions clearly
+        a6: Describes the relationship between pre-market and post-market safety monitoring
+        a7: Recognizes the public health impact of major safety issues
         bloom_tier: 2
     l3_anchors:
       type: return
       value:
         domain: 1
-        domain_name: "Foundations of PV in AI Era"
+        domain_name: Foundations of PV in AI Era
         level: L3
         anchor_count: 7
-        a1: "Analyzes regulatory changes for operational impact on daily activities"
-        a2: "Integrates ethical considerations naturally in all work decisions"
-        a3: "Proposes AI solutions for workflow improvements in team meetings"
-        a4: "Teaches foundational PV concepts to new team members effectively"
-        a5: "Anticipates regulatory questions and prepares comprehensive responses"
-        a6: "Applies historical safety lessons to contemporary situations"
-        a7: "Balances patient access needs with safety monitoring requirements"
+        a1: Analyzes regulatory changes for operational impact on daily activities
+        a2: Integrates ethical considerations naturally in all work decisions
+        a3: Proposes AI solutions for workflow improvements in team meetings
+        a4: Teaches foundational PV concepts to new team members effectively
+        a5: Anticipates regulatory questions and prepares comprehensive responses
+        a6: Applies historical safety lessons to contemporary situations
+        a7: Balances patient access needs with safety monitoring requirements
         bloom_tier: 3
     l4_anchors:
       type: return
       value:
         domain: 1
-        domain_name: "Foundations of PV in AI Era"
+        domain_name: Foundations of PV in AI Era
         level: L4
         anchor_count: 7
-        a1: "Influences regulatory interpretation discussions within organization"
-        a2: "Develops innovative approaches to complex ethical challenges"
-        a3: "Designs comprehensive AI integration strategies for teams/departments"
-        a4: "Mentors others in advanced PV concepts and career development"
-        a5: "Contributes substantively to regulatory guidance development processes"
-        a6: "Creates new frameworks that advance PV practice"
-        a7: "Leads cross-functional teams in addressing complex safety issues"
+        a1: Influences regulatory interpretation discussions within organization
+        a2: Develops innovative approaches to complex ethical challenges
+        a3: Designs comprehensive AI integration strategies for teams/departments
+        a4: Mentors others in advanced PV concepts and career development
+        a5: Contributes substantively to regulatory guidance development processes
+        a6: Creates new frameworks that advance PV practice
+        a7: Leads cross-functional teams in addressing complex safety issues
         bloom_tier: 4
     l5_anchors:
       type: return
       value:
         domain: 1
-        domain_name: "Foundations of PV in AI Era"
+        domain_name: Foundations of PV in AI Era
         level: L5
         anchor_count: 7
-        a1: "Shapes organizational PV philosophy and strategic approach"
-        a2: "Publishes peer-reviewed articles on PV evolution and future directions"
-        a3: "Pioneers new AI applications in pharmacovigilance with industry adoption"
-        a4: "Advises regulatory bodies on policy development and implementation"
-        a5: "Creates frameworks and standards adopted by other organizations"
-        a6: "Transforms industry understanding of safety monitoring principles"
-        a7: "Establishes thought leadership through speaking at major conferences"
+        a1: Shapes organizational PV philosophy and strategic approach
+        a2: Publishes peer-reviewed articles on PV evolution and future directions
+        a3: Pioneers new AI applications in pharmacovigilance with industry adoption
+        a4: Advises regulatory bodies on policy development and implementation
+        a5: Creates frameworks and standards adopted by other organizations
+        a6: Transforms industry understanding of safety monitoring principles
+        a7: Establishes thought leadership through speaking at major conferences
         bloom_tier: 5
     l5p_anchors:
       type: return
       value:
         domain: 1
-        domain_name: "Foundations of PV in AI Era"
+        domain_name: Foundations of PV in AI Era
         level: L5+
         anchor_count: 7
-        a1: "Influences entire organizational culture around patient safety priorities (500+ professionals impacted)"
-        a2: "Shapes industry-wide standards through leadership in professional societies"
-        a3: "Pioneers paradigm shifts in how PV integrates with broader healthcare"
-        a4: "Develops next-generation leaders who become industry experts (min 15 mentees at expert level)"
-        a5: "Creates lasting institutional capabilities that persist beyond tenure (org improvement >5 years)"
-        a6: "Influences global regulatory policy through advisory roles (formal advisor to >2 bodies)"
-        a7: "Establishes multi-organizational collaborations (leading >3 inter-org initiatives)"
+        a1: Influences entire organizational culture around patient safety priorities (500+ professionals impacted)
+        a2: Shapes industry-wide standards through leadership in professional societies
+        a3: Pioneers paradigm shifts in how PV integrates with broader healthcare
+        a4: Develops next-generation leaders who become industry experts (min 15 mentees at expert level)
+        a5: Creates lasting institutional capabilities that persist beyond tenure (org improvement >5 years)
+        a6: Influences global regulatory policy through advisory roles (formal advisor to >2 bodies)
+        a7: Establishes multi-organizational collaborations (leading >3 inter-org initiatives)
         bloom_tier: 6
         has_quantitative_metrics: true
     l5pp_anchors:
       type: return
       value:
         domain: 1
-        domain_name: "Foundations of PV in AI Era"
+        domain_name: Foundations of PV in AI Era
         level: L5++
         anchor_count: 7
-        a1: "Transforms global approach to medication safety monitoring (policy across >5 countries)"
-        a2: "Influences international policy development at WHO/ICH level (formal committee participation)"
-        a3: "Creates new academic-industry partnerships that reshape PV education (>3 university partnerships)"
-        a4: "Develops global frameworks adopted across multiple industries (>10 organizations globally)"
-        a5: "Shapes future of healthcare safety through visionary leadership (keynote >5 conferences/year)"
-        a6: "Leaves lasting legacy through institutional and policy transformations (>10 years sustained impact)"
-        a7: "Influences regulatory evolution at highest international levels (>10 international guidance docs)"
+        a1: Transforms global approach to medication safety monitoring (policy across >5 countries)
+        a2: Influences international policy development at WHO/ICH level (formal committee participation)
+        a3: Creates new academic-industry partnerships that reshape PV education (>3 university partnerships)
+        a4: Develops global frameworks adopted across multiple industries (>10 organizations globally)
+        a5: Shapes future of healthcare safety through visionary leadership (keynote >5 conferences/year)
+        a6: Leaves lasting legacy through institutional and policy transformations (>10 years sustained impact)
+        a7: Influences regulatory evolution at highest international levels (>10 international guidance docs)
         bloom_tier: 7
         has_quantitative_metrics: true
     invalid:
@@ -199,53 +265,99 @@ tree:
       value:
         domain: 1
         level: INVALID
-        error: "Level must be 1-7"
+        error: Level must be 1-7
 tests:
-- input:
-    level: 1
-  expect:
-    domain: 1
-    level: L1
-    anchor_count: 7
-    bloom_tier: 1
-- input:
-    level: 3
-  expect:
-    level: L3
-    bloom_tier: 3
-- input:
-    level: 5
-  expect:
-    level: L5
-    bloom_tier: 5
-- input:
-    level: 6
-  expect:
-    level: L5+
-    has_quantitative_metrics: true
-- input:
-    level: 7
-  expect:
-    level: L5++
-    has_quantitative_metrics: true
-- input:
-    level: 8
-  expect:
-    level: INVALID
-- input:
-    level: 2
-  expect:
-    level: L2
-    anchor_count: 7
-    bloom_tier: 2
-- input:
-    level: 4
-  expect:
-    level: L4
-    anchor_count: 7
-    bloom_tier: 4
-- input: {}
-  expect:
-    domain: 1
-    error: Level must be 1-7
-    level: INVALID
+  - input:
+      level: 1
+    expect:
+      domain: 1
+      level: L1
+      anchor_count: 7
+      bloom_tier: 1
+  - input:
+      level: 3
+    expect:
+      level: L3
+      bloom_tier: 3
+  - input:
+      level: 5
+    expect:
+      level: L5
+      bloom_tier: 5
+  - input:
+      level: 6
+    expect:
+      level: L5+
+      has_quantitative_metrics: true
+  - input:
+      level: 7
+    expect:
+      level: L5++
+      has_quantitative_metrics: true
+  - input:
+      level: 8
+    expect:
+      level: INVALID
+  - input:
+      level: 2
+    expect:
+      level: L2
+      anchor_count: 7
+      bloom_tier: 2
+  - input:
+      level: 4
+    expect:
+      level: L4
+      anchor_count: 7
+      bloom_tier: 4
+  - input: {}
+    expect:
+      domain: 1
+      error: Level must be 1-7
+      level: INVALID
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - a1
+    - a2
+    - a3
+    - a4
+    - a5
+    - a6
+    - a7
+    - anchor_count
+    - bloom_tier
+    - domain
+    - domain_name
+    - error
+    - has_quantitative_metrics
+    - level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

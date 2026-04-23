@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: case-medical-review
-description: "Determine if case requires medical review by qualified healthcare professional"
 version: 0.1.0
+description: Determine if case requires medical review by qualified healthcare professional
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Case Medical Review
+  subtitle: Determine if case requires medical review by qualified healthcare professional
+  icon: circle
+  route: /vigilance/mg/case-medical-review
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/case-medical-review
+  cli: rsk mcg run case-medical-review
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_case
   nodes:
@@ -15,23 +44,23 @@ tree:
       type: condition
       variable: case_seriousness
       operator: eq
-      value: "serious"
+      value: serious
       true_next: medical_review_required
       false_next: check_complexity
     check_complexity:
       type: condition
       variable: case_complexity
       operator: eq
-      value: "high"
+      value: high
       true_next: medical_review_required
       false_next: no_medical_review
     medical_review_required:
       type: return
       value:
         medical_review_needed: true
-        reviewer_qualification: "physician_or_pharmacist"
+        reviewer_qualification: physician_or_pharmacist
         review_timeline_days: 5
-        expertise_required: "medical_assessment"
+        expertise_required: medical_assessment
         review_compliant: true
     no_medical_review:
       type: return
@@ -50,23 +79,55 @@ tree:
         expertise_required: null
         review_compliant: false
 tests:
-- input:
-    case_seriousness: "serious"
-  expect:
-    medical_review_needed: true
-    reviewer_qualification: "physician_or_pharmacist"
-    review_timeline_days: 5
-- input:
-    case_seriousness: "non_serious"
-    case_complexity: "high"
-  expect:
-    medical_review_needed: true
-- input:
-    case_seriousness: "non_serious"
-    case_complexity: "low"
-  expect:
-    medical_review_needed: false
-- input: {}
-  expect:
-    medical_review_needed: null
-    review_compliant: false
+  - input:
+      case_seriousness: serious
+    expect:
+      medical_review_needed: true
+      reviewer_qualification: physician_or_pharmacist
+      review_timeline_days: 5
+  - input:
+      case_seriousness: non_serious
+      case_complexity: high
+    expect:
+      medical_review_needed: true
+  - input:
+      case_seriousness: non_serious
+      case_complexity: low
+    expect:
+      medical_review_needed: false
+  - input: {}
+    expect:
+      medical_review_needed: null
+      review_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: risk-classifier
-description: "PDC: Classify detected risk by category and severity, route to response team and protocol"
 version: 0.1.0
+description: "PDC: Classify detected risk by category and severity, route to response team and protocol"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: deviation_pct
+    type: int
+    required: false
+    description: ""
+  - name: risk_category
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: governance_tier
+    type: int
+  - name: oversight
+    type: string
+  - name: protocol
+    type: string
+  - name: response_team
+    type: string
+  - name: severity
+    type: string
+  - name: sla_hours
+    type: int
+  - name: thresholds
+    type: string
 interface:
   inputs:
     deviation_pct:
@@ -24,6 +58,33 @@ interface:
       type: int
     thresholds:
       type: string
+ui:
+  title: Risk Classifier
+  subtitle: "PDC: Classify detected risk by category and severity, route to response team and protocol"
+  icon: circle
+  route: /vigilance/mg/risk-classifier
+  steps:
+    - field: deviation_pct
+      label: deviation pct
+      help: Enter deviation_pct
+      widget: text
+      placeholder: null
+    - field: risk_category
+      label: risk category
+      help: Enter risk_category
+      widget: text
+      placeholder: null
+  result:
+    template: "governance_tier: {{governance_tier}} — oversight: {{oversight}} — protocol: {{protocol}} — response_team: {{response_team}} — severity: {{severity}} — sla_hours: {{sla_hours}} — thresholds: {{thresholds}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/risk-classifier
+  cli: rsk mcg run risk-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_deviation
   nodes:
@@ -85,7 +146,7 @@ tree:
         governance_tier: 1
         protocol: crisis_management
         sla_hours: 24
-        thresholds: "CPA8 completion < 80%, innovation success < 70%"
+        thresholds: CPA8 completion < 80%, innovation success < 70%
     consistency_crisis:
       type: return
       value:
@@ -95,7 +156,7 @@ tree:
         governance_tier: 2
         protocol: calibration_crisis
         sla_hours: 24
-        thresholds: "15% regional variation"
+        thresholds: 15% regional variation
     educational_crisis:
       type: return
       value:
@@ -105,7 +166,7 @@ tree:
         governance_tier: 2
         protocol: quality_recovery
         sla_hours: 24
-        thresholds: "15% baseline deviation"
+        thresholds: 15% baseline deviation
     ai_alert:
       type: return
       value:
@@ -152,62 +213,101 @@ tree:
         protocol: standard_operations
         sla_hours: 0
 tests:
-- input:
-    deviation_pct: 20
-    risk_category: ai_gateway
-  expect:
-    severity: CRITICAL
-    response_team: AI_INNOVATION_TEAM
-    oversight: EXECUTIVE_OVERSIGHT
-    sla_hours: 24
-- input:
-    deviation_pct: 18
-    risk_category: global_consistency
-  expect:
-    severity: CRITICAL
-    response_team: GLOBAL_IMPLEMENTATION_TEAM
-    sla_hours: 24
-- input:
-    deviation_pct: 16
-    risk_category: educational
-  expect:
-    severity: CRITICAL
-    response_team: COMPETENCY_DEVELOPMENT_TEAM
-- input:
-    deviation_pct: 12
-    risk_category: ai_gateway
-  expect:
-    severity: MODERATE
-    response_team: AI_INNOVATION_TEAM
-    sla_hours: 72
-- input:
-    deviation_pct: 10
-    risk_category: global_consistency
-  expect:
-    severity: MODERATE
-    response_team: GLOBAL_IMPLEMENTATION_TEAM
-- input:
-    deviation_pct: 11
-    risk_category: educational
-  expect:
-    severity: MODERATE
-    protocol: enhanced_support
-- input:
-    deviation_pct: 7
-    risk_category: ai_gateway
-  expect:
-    severity: LOW
-    protocol: monitoring
-- input:
-    deviation_pct: 3
-    risk_category: any
-  expect:
-    severity: NOMINAL
-    protocol: standard_operations
-- input:
-    deviation_pct: 0
-  expect:
-    severity: NOMINAL
-- input: {}
-  expect:
-    severity: NOMINAL
+  - input:
+      deviation_pct: 20
+      risk_category: ai_gateway
+    expect:
+      severity: CRITICAL
+      response_team: AI_INNOVATION_TEAM
+      oversight: EXECUTIVE_OVERSIGHT
+      sla_hours: 24
+  - input:
+      deviation_pct: 18
+      risk_category: global_consistency
+    expect:
+      severity: CRITICAL
+      response_team: GLOBAL_IMPLEMENTATION_TEAM
+      sla_hours: 24
+  - input:
+      deviation_pct: 16
+      risk_category: educational
+    expect:
+      severity: CRITICAL
+      response_team: COMPETENCY_DEVELOPMENT_TEAM
+  - input:
+      deviation_pct: 12
+      risk_category: ai_gateway
+    expect:
+      severity: MODERATE
+      response_team: AI_INNOVATION_TEAM
+      sla_hours: 72
+  - input:
+      deviation_pct: 10
+      risk_category: global_consistency
+    expect:
+      severity: MODERATE
+      response_team: GLOBAL_IMPLEMENTATION_TEAM
+  - input:
+      deviation_pct: 11
+      risk_category: educational
+    expect:
+      severity: MODERATE
+      protocol: enhanced_support
+  - input:
+      deviation_pct: 7
+      risk_category: ai_gateway
+    expect:
+      severity: LOW
+      protocol: monitoring
+  - input:
+      deviation_pct: 3
+      risk_category: any
+    expect:
+      severity: NOMINAL
+      protocol: standard_operations
+  - input:
+      deviation_pct: 0
+    expect:
+      severity: NOMINAL
+  - input: {}
+    expect:
+      severity: NOMINAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - governance_tier
+    - oversight
+    - protocol
+    - response_team
+    - severity
+    - sla_hours
+    - thresholds
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

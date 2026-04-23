@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-ae-vs-adr
-description: 'ICH E2A Section 2: Classify whether an event is an Adverse Event (AE) or Adverse Drug Reaction (ADR) based on causal relationship and temporal association'
 version: 0.1.0
+description: "ICH E2A Section 2: Classify whether an event is an Adverse Event (AE) or Adverse Drug Reaction (ADR) based on causal relationship and temporal association"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: reasonable_causal_relationship
+    type: string
+    required: false
+    description: ""
+  - name: occurred_during_study
+    type: bool
+    required: false
+    description: ""
+  - name: temporal_association
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: classification
+    type: string
+  - name: definition
+    type: string
+  - name: reportable
+    type: bool
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     reasonable_causal_relationship:
@@ -21,6 +53,38 @@ interface:
       type: bool
     regulatory_reference:
       type: string
+ui:
+  title: E2a Ae Vs Adr
+  subtitle: "ICH E2A Section 2: Classify whether an event is an Adverse Event (AE) or Adverse Drug Reaction (ADR) based on causal relationship and temporal association"
+  icon: circle
+  route: /vigilance/mg/e2a-ae-vs-adr
+  steps:
+    - field: reasonable_causal_relationship
+      label: reasonable causal relationship
+      help: Enter reasonable_causal_relationship
+      widget: text
+      placeholder: null
+    - field: occurred_during_study
+      label: occurred during study
+      help: Enter occurred_during_study
+      widget: toggle
+      placeholder: null
+    - field: temporal_association
+      label: temporal association
+      help: Enter temporal_association
+      widget: toggle
+      placeholder: null
+  result:
+    template: "classification: {{classification}} — definition: {{definition}} — reportable: {{reportable}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-ae-vs-adr
+  cli: rsk mcg run e2a-ae-vs-adr
+  auth: none
+  rate_limit: 600/min
 tree:
   start: causal_check
   nodes:
@@ -42,7 +106,7 @@ tree:
       type: condition
       variable: reasonable_causal_relationship
       operator: eq
-      value: "unknown"
+      value: unknown
       true_next: temporal_check
       false_next: default_ae
     study_check:
@@ -101,60 +165,85 @@ tree:
         definition: Adverse Event - default classification when causality not assessed
         reportable: true
         regulatory_reference: ICH E2A Section 2 - Definitions
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-# Reasonable causal relationship = true -> ADR
-- input:
-    reasonable_causal_relationship: "true"
-    occurred_during_study: true
-    temporal_association: true
-  expect:
-    classification: ADR
-    reportable: true
-    regulatory_reference: ICH E2A Section 2 - Definitions
-# Causal = false, occurred during study -> AE
-- input:
-    reasonable_causal_relationship: "false"
-    occurred_during_study: true
-    temporal_association: false
-  expect:
-    classification: AE
-    reportable: true
-    regulatory_reference: ICH E2A Section 2 - Definitions
-# Causal = false, not during study -> NOT_RELATED
-- input:
-    reasonable_causal_relationship: "false"
-    occurred_during_study: false
-    temporal_association: false
-  expect:
-    classification: NOT_RELATED
-    reportable: false
-    regulatory_reference: ICH E2A Section 2 - Definitions
-# Causal = unknown, temporal association present -> AE_SUSPECT
-- input:
-    reasonable_causal_relationship: "unknown"
-    occurred_during_study: true
-    temporal_association: true
-  expect:
-    classification: AE_SUSPECT
-    reportable: true
-    regulatory_reference: ICH E2A Section 2 - Definitions
-# Causal = unknown, no temporal association -> AE_UNLIKELY
-- input:
-    reasonable_causal_relationship: "unknown"
-    occurred_during_study: false
-    temporal_association: false
-  expect:
-    classification: AE_UNLIKELY
-    reportable: false
-    regulatory_reference: ICH E2A Section 2 - Definitions
-# Empty input - defaults to AE
-- input: {}
-  expect:
-    classification: AE
-    reportable: true
-    regulatory_reference: ICH E2A Section 2 - Definitions
+  - input:
+      reasonable_causal_relationship: "true"
+      occurred_during_study: true
+      temporal_association: true
+    expect:
+      classification: ADR
+      reportable: true
+      regulatory_reference: ICH E2A Section 2 - Definitions
+  - input:
+      reasonable_causal_relationship: "false"
+      occurred_during_study: true
+      temporal_association: false
+    expect:
+      classification: AE
+      reportable: true
+      regulatory_reference: ICH E2A Section 2 - Definitions
+  - input:
+      reasonable_causal_relationship: "false"
+      occurred_during_study: false
+      temporal_association: false
+    expect:
+      classification: NOT_RELATED
+      reportable: false
+      regulatory_reference: ICH E2A Section 2 - Definitions
+  - input:
+      reasonable_causal_relationship: unknown
+      occurred_during_study: true
+      temporal_association: true
+    expect:
+      classification: AE_SUSPECT
+      reportable: true
+      regulatory_reference: ICH E2A Section 2 - Definitions
+  - input:
+      reasonable_causal_relationship: unknown
+      occurred_during_study: false
+      temporal_association: false
+    expect:
+      classification: AE_UNLIKELY
+      reportable: false
+      regulatory_reference: ICH E2A Section 2 - Definitions
+  - input: {}
+    expect:
+      classification: AE
+      reportable: true
+      regulatory_reference: ICH E2A Section 2 - Definitions
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - classification
+    - definition
+    - reportable
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

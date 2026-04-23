@@ -1,6 +1,54 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: appe-epa-selector
-description: "APPE Ch7.3: Select appropriate foundational EPA and PV tool chain by week and domain levels. Chains TO icsr-triage, naranjo-quick, prr-signal."
 version: 0.1.0
+description: "APPE Ch7.3: Select appropriate foundational EPA and PV tool chain by week and domain levels. Chains TO icsr-triage, naranjo-quick, prr-signal."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: d14_level
+    type: int
+    required: false
+    description: ""
+  - name: d1_level
+    type: int
+    required: false
+    description: ""
+  - name: d2_level
+    type: int
+    required: false
+    description: ""
+  - name: week
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: activity
+    type: string
+  - name: ch7_ref
+    type: string
+  - name: epa_id
+    type: int
+  - name: epa_name
+    type: string
+  - name: epa_scope
+    type: string
+  - name: epas_active
+    type: array
+  - name: pv_tool_chain
+    type: string
+  - name: secondary_epa
+    type: int
+  - name: secondary_name
+    type: string
+  - name: supervision
+    type: string
 interface:
   inputs:
     d14_level:
@@ -36,6 +84,43 @@ interface:
       type: string
     supervision:
       type: string
+ui:
+  title: Appe Epa Selector
+  subtitle: "APPE Ch7.3: Select appropriate foundational EPA and PV tool chain by week and domain levels. Chains TO icsr-triage, naranjo-quick, prr-signal."
+  icon: circle
+  route: /vigilance/mg/appe-epa-selector
+  steps:
+    - field: d14_level
+      label: d14 level
+      help: Enter d14_level
+      widget: text
+      placeholder: null
+    - field: d1_level
+      label: d1 level
+      help: Enter d1_level
+      widget: text
+      placeholder: null
+    - field: d2_level
+      label: d2 level
+      help: Enter d2_level
+      widget: text
+      placeholder: null
+    - field: week
+      label: week
+      help: Enter week
+      widget: text
+      placeholder: null
+  result:
+    template: "activity: {{activity}} — ch7_ref: {{ch7_ref}} — epa_id: {{epa_id}} — epa_name: {{epa_name}} — epa_scope: {{epa_scope}} — epas_active: {{epas_active}} — pv_tool_chain: {{pv_tool_chain}} — secondary_epa: {{secondary_epa}} — secondary_name: {{secondary_name}} — supervision: {{supervision}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/appe-epa-selector
+  cli: rsk mcg run appe-epa-selector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -53,7 +138,6 @@ tree:
       value: 2
       true_next: early_weeks
       false_next: check_mid_range
-
     check_mid_range:
       type: condition
       variable: week
@@ -61,7 +145,6 @@ tree:
       value: 4
       true_next: mid_weeks
       false_next: check_late_range
-
     check_late_range:
       type: condition
       variable: week
@@ -69,8 +152,6 @@ tree:
       value: 6
       true_next: late_weeks
       false_next: invalid
-
-    # W1-2: EPA introduction — observation only
     early_weeks:
       type: condition
       variable: week
@@ -78,30 +159,26 @@ tree:
       value: 1
       true_next: epa_none
       false_next: epa_observation
-
     epa_none:
       type: return
       value:
         epa_id: 0
-        epa_name: "Pre-EPA Foundation"
+        epa_name: Pre-EPA Foundation
         epa_scope: VOCABULARY
-        activity: "Terminology mastery, AI awareness, stakeholder mapping"
-        pv_tool_chain: "none — building conceptual foundation"
-        supervision: "direct_observation"
-        ch7_ref: "7.2 Domain 1 L1 Behavioral Anchors"
-
+        activity: Terminology mastery, AI awareness, stakeholder mapping
+        pv_tool_chain: none — building conceptual foundation
+        supervision: direct_observation
+        ch7_ref: 7.2 Domain 1 L1 Behavioral Anchors
     epa_observation:
       type: return
       value:
         epa_id: 1
-        epa_name: "EPA-1 Observation"
+        epa_name: EPA-1 Observation
         epa_scope: OBSERVATION
-        activity: "Observe case processing, review completed cases, ADR classification exercises"
-        pv_tool_chain: "case-seriousness (demo) -> naranjo-quick (demo)"
-        supervision: "direct_observation"
-        ch7_ref: "7.3 EPA 1 Week 2-3"
-
-    # W3-4: EPA 1-2 supervised practice
+        activity: Observe case processing, review completed cases, ADR classification exercises
+        pv_tool_chain: case-seriousness (demo) -> naranjo-quick (demo)
+        supervision: direct_observation
+        ch7_ref: 7.3 EPA 1 Week 2-3
     mid_weeks:
       type: condition
       variable: d2_level
@@ -109,7 +186,6 @@ tree:
       value: 1
       true_next: check_d14_mid
       false_next: epa1_basic
-
     check_d14_mid:
       type: condition
       variable: d14_level
@@ -117,32 +193,28 @@ tree:
       value: 1
       true_next: epa_multi
       false_next: epa1_basic
-
     epa1_basic:
       type: return
       value:
         epa_id: 1
-        epa_name: "EPA-1 Basic Processing"
+        epa_name: EPA-1 Basic Processing
         epa_scope: SUPERVISED_BASIC
-        activity: "Simulated case data entry, MedDRA coding under supervision"
-        pv_tool_chain: "icsr-triage (supervised)"
-        supervision: "supervisor_present"
-        ch7_ref: "7.3 EPA 1 Week 2-3"
-
+        activity: Simulated case data entry, MedDRA coding under supervision
+        pv_tool_chain: icsr-triage (supervised)
+        supervision: supervisor_present
+        ch7_ref: 7.3 EPA 1 Week 2-3
     epa_multi:
       type: return
       value:
         epa_id: 1
-        epa_name: "EPA-1+2 Supervised Practice"
+        epa_name: EPA-1+2 Supervised Practice
         epa_scope: SUPERVISED_PRACTICE
-        activity: "Process straightforward ICSRs, construct causality assessments, literature evaluation"
-        pv_tool_chain: "icsr-triage -> naranjo-quick -> causality-to-action"
-        supervision: "supervisor_present"
+        activity: Process straightforward ICSRs, construct causality assessments, literature evaluation
+        pv_tool_chain: icsr-triage -> naranjo-quick -> causality-to-action
+        supervision: supervisor_present
         secondary_epa: 2
-        secondary_name: "EPA-2 Literature Screening"
-        ch7_ref: "7.3 EPA 1 Week 4-5"
-
-    # W5-6: EPA 1-3 + EPA 10 introduction
+        secondary_name: EPA-2 Literature Screening
+        ch7_ref: 7.3 EPA 1 Week 4-5
     late_weeks:
       type: condition
       variable: d1_level
@@ -150,7 +222,6 @@ tree:
       value: 2
       true_next: check_d2_late
       false_next: epa_extended_supervised
-
     check_d2_late:
       type: condition
       variable: d2_level
@@ -158,7 +229,6 @@ tree:
       value: 2
       true_next: check_d14_late
       false_next: epa_extended_supervised
-
     check_d14_late:
       type: condition
       variable: d14_level
@@ -166,81 +236,177 @@ tree:
       value: 2
       true_next: epa_full_independent
       false_next: epa_partial_independent
-
     epa_full_independent:
       type: return
       value:
         epa_id: 1
-        epa_name: "EPA-1+2+3 Independent + EPA-10 Intro"
+        epa_name: EPA-1+2+3 Independent + EPA-10 Intro
         epa_scope: INDEPENDENT
-        activity: "Independent case processing, journal club, safety presentation, AI ethics leadership"
-        pv_tool_chain: "icsr-triage -> naranjo-quick -> prr-signal -> signal-action -> causality-to-action"
-        supervision: "periodic_check"
-        epas_active: [1, 2, 3, 10]
-        ch7_ref: "7.3 EPA 1 Week 6 + 7.5 AI Gateway"
-
+        activity: Independent case processing, journal club, safety presentation, AI ethics leadership
+        pv_tool_chain: icsr-triage -> naranjo-quick -> prr-signal -> signal-action -> causality-to-action
+        supervision: periodic_check
+        epas_active:
+          - 1
+          - 2
+          - 3
+          - 10
+        ch7_ref: 7.3 EPA 1 Week 6 + 7.5 AI Gateway
     epa_partial_independent:
       type: return
       value:
         epa_id: 1
-        epa_name: "EPA-1+2 Independent, EPA-3 Supervised"
+        epa_name: EPA-1+2 Independent, EPA-3 Supervised
         epa_scope: MIXED
-        activity: "Independent case processing, literature synthesis, supervised safety presentation"
-        pv_tool_chain: "icsr-triage -> naranjo-quick -> prr-signal -> signal-action"
-        supervision: "mixed — periodic for EPA-1, present for EPA-3"
-        epas_active: [1, 2, 3]
-        ch7_ref: "7.3 EPA 3 Foundational Level"
-
+        activity: Independent case processing, literature synthesis, supervised safety presentation
+        pv_tool_chain: icsr-triage -> naranjo-quick -> prr-signal -> signal-action
+        supervision: mixed — periodic for EPA-1, present for EPA-3
+        epas_active:
+          - 1
+          - 2
+          - 3
+        ch7_ref: 7.3 EPA 3 Foundational Level
     epa_extended_supervised:
       type: return
       value:
         epa_id: 1
-        epa_name: "EPA-1 Extended Supervised"
+        epa_name: EPA-1 Extended Supervised
         epa_scope: EXTENDED_SUPERVISED
-        activity: "Continue supervised processing, targeted remediation"
-        pv_tool_chain: "icsr-triage -> naranjo-quick (supervised)"
-        supervision: "supervisor_present"
-        epas_active: [1]
-        ch7_ref: "7.3 EPA 1 Remediation"
-
+        activity: Continue supervised processing, targeted remediation
+        pv_tool_chain: icsr-triage -> naranjo-quick (supervised)
+        supervision: supervisor_present
+        epas_active:
+          - 1
+        ch7_ref: 7.3 EPA 1 Remediation
     invalid:
       type: return
       value:
         epa_id: 0
         epa_scope: INVALID
-        activity: "APPE rotation is weeks 1-6"
-
+        activity: APPE rotation is weeks 1-6
 tests:
-# Week 1 — no EPA yet
-- input: { week: 1, d1_level: 0, d2_level: 0, d14_level: 0 }
-  expect: { epa_id: 0, epa_scope: VOCABULARY }
-# Week 2 — observation
-- input: { week: 2, d1_level: 1, d2_level: 0.5, d14_level: 1 }
-  expect: { epa_id: 1, epa_scope: OBSERVATION }
-# Week 3, low D2 — basic supervised
-- input: { week: 3, d1_level: 1, d2_level: 0.5, d14_level: 1 }
-  expect: { epa_id: 1, epa_scope: SUPERVISED_BASIC }
-# Week 4, D2+D14 at L1 — multi EPA supervised
-- input: { week: 4, d1_level: 1.5, d2_level: 1, d14_level: 1.5 }
-  expect: { epa_id: 1, epa_scope: SUPERVISED_PRACTICE, secondary_epa: 2 }
-# Week 3, D14 low — basic
-- input: { week: 3, d1_level: 1, d2_level: 1, d14_level: 0.5 }
-  expect: { epa_id: 1, epa_scope: SUPERVISED_BASIC }
-# Week 6, all L2 — full independent with EPA 10
-- input: { week: 6, d1_level: 2, d2_level: 2, d14_level: 2 }
-  expect: { epa_id: 1, epa_scope: INDEPENDENT }
-# Week 5, D14 still L1 — partial independent
-- input: { week: 5, d1_level: 2, d2_level: 2, d14_level: 1.5 }
-  expect: { epa_id: 1, epa_scope: MIXED }
-# Week 6, D2 low — extended supervised
-- input: { week: 6, d1_level: 2, d2_level: 1.5, d14_level: 2 }
-  expect: { epa_id: 1, epa_scope: EXTENDED_SUPERVISED }
-# Week 5, D1 low — extended supervised
-- input: { week: 5, d1_level: 1.5, d2_level: 2, d14_level: 2 }
-  expect: { epa_id: 1, epa_scope: EXTENDED_SUPERVISED }
-# Invalid week
-- input: { week: 8, d1_level: 2, d2_level: 2, d14_level: 2 }
-  expect: { epa_scope: INVALID }
-# Edge: empty (week=0, lte 2, neq 1 → OBSERVATION)
-- input: {}
-  expect: { epa_id: 1, epa_scope: OBSERVATION }
+  - input:
+      week: 1
+      d1_level: 0
+      d2_level: 0
+      d14_level: 0
+    expect:
+      epa_id: 0
+      epa_scope: VOCABULARY
+  - input:
+      week: 2
+      d1_level: 1
+      d2_level: 0.5
+      d14_level: 1
+    expect:
+      epa_id: 1
+      epa_scope: OBSERVATION
+  - input:
+      week: 3
+      d1_level: 1
+      d2_level: 0.5
+      d14_level: 1
+    expect:
+      epa_id: 1
+      epa_scope: SUPERVISED_BASIC
+  - input:
+      week: 4
+      d1_level: 1.5
+      d2_level: 1
+      d14_level: 1.5
+    expect:
+      epa_id: 1
+      epa_scope: SUPERVISED_PRACTICE
+      secondary_epa: 2
+  - input:
+      week: 3
+      d1_level: 1
+      d2_level: 1
+      d14_level: 0.5
+    expect:
+      epa_id: 1
+      epa_scope: SUPERVISED_BASIC
+  - input:
+      week: 6
+      d1_level: 2
+      d2_level: 2
+      d14_level: 2
+    expect:
+      epa_id: 1
+      epa_scope: INDEPENDENT
+  - input:
+      week: 5
+      d1_level: 2
+      d2_level: 2
+      d14_level: 1.5
+    expect:
+      epa_id: 1
+      epa_scope: MIXED
+  - input:
+      week: 6
+      d1_level: 2
+      d2_level: 1.5
+      d14_level: 2
+    expect:
+      epa_id: 1
+      epa_scope: EXTENDED_SUPERVISED
+  - input:
+      week: 5
+      d1_level: 1.5
+      d2_level: 2
+      d14_level: 2
+    expect:
+      epa_id: 1
+      epa_scope: EXTENDED_SUPERVISED
+  - input:
+      week: 8
+      d1_level: 2
+      d2_level: 2
+      d14_level: 2
+    expect:
+      epa_scope: INVALID
+  - input: {}
+    expect:
+      epa_id: 1
+      epa_scope: OBSERVATION
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - activity
+    - ch7_ref
+    - epa_id
+    - epa_name
+    - epa_scope
+    - epas_active
+    - pv_tool_chain
+    - secondary_epa
+    - secondary_name
+    - supervision
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ab-ti-narrow
-description: 'Antibody: flags narrow therapeutic index drugs (TI < 2). These require therapeutic drug monitoring — single boolean sentinel.'
 version: 0.1.0
+description: "Antibody: flags narrow therapeutic index drugs (TI < 2). These require therapeutic drug monitoring — single boolean sentinel."
+family: antibody.chemistry
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - antibody
+inputs:
+  - name: therapeutic_index
+    type: number
+    required: true
+    description: ""
+outputs:
+  - name: threat
+    type: boolean
+  - name: response
+    type: string
 interface:
   inputs:
     therapeutic_index:
@@ -11,6 +31,28 @@ interface:
       type: boolean
     response:
       type: string
+ui:
+  title: Ti Narrow
+  subtitle: "Antibody: flags narrow therapeutic index drugs (TI < 2). These require therapeutic drug monitoring — single boolean sentinel."
+  icon: shield
+  route: /vigilance/mg/ab-ti-narrow
+  steps:
+    - field: therapeutic_index
+      label: therapeutic index
+      help: Enter therapeutic_index
+      widget: number
+      placeholder: null
+  result:
+    template: "threat: {{threat}} — response: {{response}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ab-ti-narrow
+  cli: rsk mcg run ab-ti-narrow
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -18,27 +60,69 @@ tree:
       type: condition
       variable: therapeutic_index
       operator: lt
-      value: 2.0
+      value: 2
       true_next: narrow
       false_next: clean
     narrow:
       type: return
       value:
         threat: true
-        response: 'WARN: narrow therapeutic index — requires therapeutic drug monitoring'
+        response: "WARN: narrow therapeutic index — requires therapeutic drug monitoring"
     clean:
       type: return
       value:
         threat: false
-        response: 'PASS'
+        response: PASS
 tests:
-- input: { therapeutic_index: 1.3 }
-  expect: { threat: true }
-- input: { therapeutic_index: 2.0 }
-  expect: { threat: false }
-- input: { therapeutic_index: 10.0 }
-  expect: { threat: false }
-- input: {}
-  expect:
-    response: PASS
-    threat: false
+  - input:
+      therapeutic_index: 1.3
+    expect:
+      threat: true
+  - input:
+      therapeutic_index: 2
+    expect:
+      threat: false
+  - input:
+      therapeutic_index: 10
+    expect:
+      threat: false
+  - input: {}
+    expect:
+      response: PASS
+      threat: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - threat
+    - response
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: antibody.chemistry
+  log_level: info
+governance:
+  sop_ref: SOP-CHEM-001
+  regulatory_ref: []
+  harm_types:
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - conservation
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

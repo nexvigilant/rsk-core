@@ -1,20 +1,60 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pun-proof-detector
-description: 'Perspective divergence detector: flags terms where author and reader hold different boundaries for the same word. Routes to BLOCK (risk >= 2.5), ESCALATE (>= 1.5), or FLAG (< 1.5). Chains upstream of signal-detect.'
 version: 0.1.0
+description: "Perspective divergence detector: flags terms where author and reader hold different boundaries for the same word. Routes to BLOCK (risk >= 2.5), ESCALATE (>= 1.5), or FLAG (< 1.5). Chains upstream of signal-detect."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: term
+    type: string
+    required: true
+    description: The term to check for perspective divergence (e.g., expected, safe, related)
+  - name: author_domain
+    type: string
+    required: true
+    description: Domain perspective of the author (e.g., Clinical, Regulatory, Patient, Statistics)
+  - name: reader_domain
+    type: string
+    required: true
+    description: Domain perspective of the reader (e.g., PV, Regulatory, Post-market, Signal)
+outputs:
+  - name: mismatch
+    type: bool
+  - name: route
+    type: string
+  - name: risk_score
+    type: float
+  - name: author_meaning
+    type: string
+  - name: reader_meaning
+    type: string
+  - name: author_action
+    type: string
+  - name: reader_action
+    type: string
+  - name: reason
+    type: string
 interface:
   inputs:
     term:
       type: string
       required: true
-      description: 'The term to check for perspective divergence (e.g., expected, safe, related)'
+      description: The term to check for perspective divergence (e.g., expected, safe, related)
     author_domain:
       type: string
       required: true
-      description: 'Domain perspective of the author (e.g., Clinical, Regulatory, Patient, Statistics)'
+      description: Domain perspective of the author (e.g., Clinical, Regulatory, Patient, Statistics)
     reader_domain:
       type: string
       required: true
-      description: 'Domain perspective of the reader (e.g., PV, Regulatory, Post-market, Signal)'
+      description: Domain perspective of the reader (e.g., PV, Regulatory, Post-market, Signal)
   outputs:
     mismatch:
       type: bool
@@ -32,15 +72,41 @@ interface:
       type: string
     reason:
       type: string
+ui:
+  title: Pun Proof Detector
+  subtitle: "Perspective divergence detector: flags terms where author and reader hold different boundaries for the same word. Routes to BLOCK (risk >= 2.5), ESCALATE (>= 1.5), or FLAG (< 1.5). Chains upstream of signal-detect."
+  icon: circle
+  route: /vigilance/mg/pun-proof-detector
+  steps:
+    - field: term
+      label: term
+      help: The term to check for perspective divergence (e.g., expected, safe, related)
+      widget: text
+      placeholder: null
+    - field: author_domain
+      label: author domain
+      help: Domain perspective of the author (e.g., Clinical, Regulatory, Patient, Statistics)
+      widget: text
+      placeholder: null
+    - field: reader_domain
+      label: reader domain
+      help: Domain perspective of the reader (e.g., PV, Regulatory, Post-market, Signal)
+      widget: text
+      placeholder: null
+  result:
+    template: "mismatch: {{mismatch}} — route: {{route}} — risk_score: {{risk_score}} — author_meaning: {{author_meaning}} — reader_meaning: {{reader_meaning}} — author_action: {{author_action}} — reader_action: {{reader_action}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pun-proof-detector
+  cli: rsk mcg run pun-proof-detector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_term_expected
   nodes:
-    # ═══════════════════════════════════════════════════════════
-    # TERM: expected (risk 2.85, ∂=3)
-    # Clinical: anticipated pharmacological effect
-    # Regulatory: listed in Reference Safety Information
-    # Patient: I thought this might happen
-    # ═══════════════════════════════════════════════════════════
     check_term_expected:
       type: condition
       variable: term
@@ -48,7 +114,6 @@ tree:
       value: expected
       true_next: expected_check_clinical_to_regulatory
       false_next: check_term_safe
-
     expected_check_clinical_to_regulatory:
       type: condition
       variable: author_domain
@@ -56,7 +121,6 @@ tree:
       value: Clinical
       true_next: expected_clinical_check_reader
       false_next: expected_check_regulatory_to_clinical
-
     expected_clinical_check_reader:
       type: condition
       variable: reader_domain
@@ -64,7 +128,6 @@ tree:
       value: Regulatory
       true_next: expected_block_clinical_regulatory
       false_next: expected_clinical_check_reader_pv
-
     expected_clinical_check_reader_pv:
       type: condition
       variable: reader_domain
@@ -72,7 +135,6 @@ tree:
       value: PV
       true_next: expected_block_clinical_regulatory
       false_next: expected_aligned
-
     expected_check_regulatory_to_clinical:
       type: condition
       variable: author_domain
@@ -80,7 +142,6 @@ tree:
       value: Regulatory
       true_next: expected_regulatory_check_reader
       false_next: expected_check_patient
-
     expected_regulatory_check_reader:
       type: condition
       variable: reader_domain
@@ -88,7 +149,6 @@ tree:
       value: Clinical
       true_next: expected_block_regulatory_clinical
       false_next: expected_aligned
-
     expected_check_patient:
       type: condition
       variable: author_domain
@@ -96,7 +156,6 @@ tree:
       value: Patient
       true_next: expected_patient_check_reader
       false_next: expected_aligned
-
     expected_patient_check_reader:
       type: condition
       variable: reader_domain
@@ -104,7 +163,6 @@ tree:
       value: Regulatory
       true_next: expected_block_patient_regulatory
       false_next: expected_aligned
-
     expected_block_clinical_regulatory:
       type: return
       value:
@@ -116,7 +174,6 @@ tree:
         author_action: document as known
         reader_action: classify as expected AE
         reason: Perspective collapse - clinician says expected (anticipated) but regulatory expected means listed in RSI. May suppress reportable signal.
-
     expected_block_regulatory_clinical:
       type: return
       value:
@@ -128,7 +185,6 @@ tree:
         author_action: classify as expected AE
         reader_action: document as known
         reason: Perspective collapse - regulatory expected (listed in RSI) misread as clinical expected (anticipated). Classification error.
-
     expected_block_patient_regulatory:
       type: return
       value:
@@ -140,22 +196,17 @@ tree:
         author_action: accept and continue
         reader_action: classify as expected AE
         reason: Perspective collapse - patient expected (anticipated) misread as regulatory expected (listed in RSI). Patient language does not equal regulatory classification.
-
     expected_aligned:
       type: return
       value:
         mismatch: false
         route: PASS
-        risk_score: 0.0
+        risk_score: 0
         author_meaning: same perspective
         reader_meaning: same perspective
         author_action: aligned
         reader_action: aligned
         reason: Author and reader share the same perspective on expected
-
-    # ═══════════════════════════════════════════════════════════
-    # TERM: safe (risk 2.85, ∂=3)
-    # ═══════════════════════════════════════════════════════════
     check_term_safe:
       type: condition
       variable: term
@@ -163,7 +214,6 @@ tree:
       value: safe
       true_next: safe_check_trial_to_postmarket
       false_next: check_term_related
-
     safe_check_trial_to_postmarket:
       type: condition
       variable: author_domain
@@ -171,7 +221,6 @@ tree:
       value: Clinical trial
       true_next: safe_trial_check_reader
       false_next: safe_check_postmarket
-
     safe_trial_check_reader:
       type: condition
       variable: reader_domain
@@ -179,7 +228,6 @@ tree:
       value: Post-market
       true_next: safe_block_trial_postmarket
       false_next: safe_aligned
-
     safe_check_postmarket:
       type: condition
       variable: author_domain
@@ -187,7 +235,6 @@ tree:
       value: Post-market
       true_next: safe_postmarket_check_reader
       false_next: safe_check_consumer
-
     safe_postmarket_check_reader:
       type: condition
       variable: reader_domain
@@ -195,7 +242,6 @@ tree:
       value: Clinical trial
       true_next: safe_block_postmarket_trial
       false_next: safe_aligned
-
     safe_check_consumer:
       type: condition
       variable: author_domain
@@ -203,7 +249,6 @@ tree:
       value: Consumer
       true_next: safe_consumer_check_reader
       false_next: safe_aligned
-
     safe_consumer_check_reader:
       type: condition
       variable: reader_domain
@@ -211,7 +256,6 @@ tree:
       value: Post-market
       true_next: safe_block_consumer_postmarket
       false_next: safe_aligned
-
     safe_block_trial_postmarket:
       type: return
       value:
@@ -223,7 +267,6 @@ tree:
         author_action: continue trial
         reader_action: no regulatory action
         reason: Perspective collapse - trial safe (controlled B/R) does not equal post-market safe (no emerging signal). Trial safety cannot be assumed post-market.
-
     safe_block_postmarket_trial:
       type: return
       value:
@@ -235,7 +278,6 @@ tree:
         author_action: no regulatory action
         reader_action: continue trial
         reason: Perspective collapse - post-market safe misread as trial safe. Different populations, different boundaries.
-
     safe_block_consumer_postmarket:
       type: return
       value:
@@ -247,22 +289,17 @@ tree:
         author_action: use without concern
         reader_action: no regulatory action
         reason: Perspective collapse - consumer safe (subjective) misread as regulatory safe (evidence-based). Consumer perception is not a safety assessment.
-
     safe_aligned:
       type: return
       value:
         mismatch: false
         route: PASS
-        risk_score: 0.0
+        risk_score: 0
         author_meaning: same perspective
         reader_meaning: same perspective
         author_action: aligned
         reader_action: aligned
         reason: Author and reader share the same perspective on safe
-
-    # ═══════════════════════════════════════════════════════════
-    # TERM: related (risk 2.70, ∂=3)
-    # ═══════════════════════════════════════════════════════════
     check_term_related:
       type: condition
       variable: term
@@ -270,7 +307,6 @@ tree:
       value: related
       true_next: related_check_temporal_to_causality
       false_next: check_term_reaction
-
     related_check_temporal_to_causality:
       type: condition
       variable: author_domain
@@ -278,7 +314,6 @@ tree:
       value: Temporal
       true_next: related_temporal_check_reader
       false_next: related_check_causality
-
     related_temporal_check_reader:
       type: condition
       variable: reader_domain
@@ -286,7 +321,6 @@ tree:
       value: Causality
       true_next: related_block_temporal_causality
       false_next: related_aligned
-
     related_check_causality:
       type: condition
       variable: author_domain
@@ -294,7 +328,6 @@ tree:
       value: Causality
       true_next: related_causality_check_reader
       false_next: related_aligned
-
     related_causality_check_reader:
       type: condition
       variable: reader_domain
@@ -302,46 +335,39 @@ tree:
       value: Temporal
       true_next: related_block_causality_temporal
       false_next: related_aligned
-
     related_block_temporal_causality:
       type: return
       value:
         mismatch: true
         route: BLOCK
-        risk_score: 2.70
+        risk_score: 2.7
         author_meaning: happened after drug administration
         reader_meaning: established causal link between drug and event
         author_action: note temporal sequence
         reader_action: report as related AE
         reason: Perspective collapse - temporal related (happened after) misread as causal related (drug caused event). Temporal sequence alone does not establish causality.
-
     related_block_causality_temporal:
       type: return
       value:
         mismatch: true
         route: BLOCK
-        risk_score: 2.70
+        risk_score: 2.7
         author_meaning: established causal link between drug and event
         reader_meaning: happened after drug administration
         author_action: report as related AE
         reader_action: note temporal sequence
         reason: Perspective collapse - causal related (drug caused event) misread as temporal related (happened after). Under-reporting risk.
-
     related_aligned:
       type: return
       value:
         mismatch: false
         route: PASS
-        risk_score: 0.0
+        risk_score: 0
         author_meaning: same perspective
         reader_meaning: same perspective
         author_action: aligned
         reader_action: aligned
         reason: Author and reader share the same perspective on related
-
-    # ═══════════════════════════════════════════════════════════
-    # TERM: reaction (risk 2.55, ∂=3)
-    # ═══════════════════════════════════════════════════════════
     check_term_reaction:
       type: condition
       variable: term
@@ -349,7 +375,6 @@ tree:
       value: reaction
       true_next: reaction_check_clinical_to_pv
       false_next: check_term_significant
-
     reaction_check_clinical_to_pv:
       type: condition
       variable: author_domain
@@ -357,7 +382,6 @@ tree:
       value: Clinical
       true_next: reaction_clinical_check_reader
       false_next: reaction_aligned
-
     reaction_clinical_check_reader:
       type: condition
       variable: reader_domain
@@ -365,7 +389,6 @@ tree:
       value: PV
       true_next: reaction_block_clinical_pv
       false_next: reaction_aligned
-
     reaction_block_clinical_pv:
       type: return
       value:
@@ -377,22 +400,17 @@ tree:
         author_action: document as expected
         reader_action: submit ICSR
         reason: Perspective collapse - clinical reaction (pharmacological response) misread by PV as adverse drug reaction. The same word triggers different regulatory obligations.
-
     reaction_aligned:
       type: return
       value:
         mismatch: false
         route: PASS
-        risk_score: 0.0
+        risk_score: 0
         author_meaning: same perspective
         reader_meaning: same perspective
         author_action: aligned
         reader_action: aligned
         reason: Author and reader share the same perspective on reaction
-
-    # ═══════════════════════════════════════════════════════════
-    # TERM: significant (risk 2.55, ∂=3)
-    # ═══════════════════════════════════════════════════════════
     check_term_significant:
       type: condition
       variable: term
@@ -400,7 +418,6 @@ tree:
       value: significant
       true_next: significant_check_stats_to_regulatory
       false_next: check_term_mild
-
     significant_check_stats_to_regulatory:
       type: condition
       variable: author_domain
@@ -408,7 +425,6 @@ tree:
       value: Statistics
       true_next: significant_stats_check_reader
       false_next: significant_check_clinical
-
     significant_stats_check_reader:
       type: condition
       variable: reader_domain
@@ -416,7 +432,6 @@ tree:
       value: Regulatory
       true_next: significant_block_stats_regulatory
       false_next: significant_aligned
-
     significant_check_clinical:
       type: condition
       variable: author_domain
@@ -424,7 +439,6 @@ tree:
       value: Clinical
       true_next: significant_clinical_check_reader
       false_next: significant_aligned
-
     significant_clinical_check_reader:
       type: condition
       variable: reader_domain
@@ -432,7 +446,6 @@ tree:
       value: Regulatory
       true_next: significant_block_clinical_regulatory
       false_next: significant_aligned
-
     significant_block_stats_regulatory:
       type: return
       value:
@@ -444,7 +457,6 @@ tree:
         author_action: reject null hypothesis
         reader_action: submit variation/update
         reason: Perspective collapse - statistical significance (p-value threshold) misread as regulatory significance (action required). Statistical significance does not automatically equal regulatory significance.
-
     significant_block_clinical_regulatory:
       type: return
       value:
@@ -456,22 +468,17 @@ tree:
         author_action: modify treatment
         reader_action: submit variation/update
         reason: Perspective collapse - clinical significance (meaningful to patient) misread as regulatory significance (action required). Clinical judgment and regulatory obligation are different boundaries.
-
     significant_aligned:
       type: return
       value:
         mismatch: false
         route: PASS
-        risk_score: 0.0
+        risk_score: 0
         author_meaning: same perspective
         reader_meaning: same perspective
         author_action: aligned
         reader_action: aligned
         reason: Author and reader share the same perspective on significant
-
-    # ═══════════════════════════════════════════════════════════
-    # TERM: mild (risk 2.25, ∂=3)
-    # ═══════════════════════════════════════════════════════════
     check_term_mild:
       type: condition
       variable: term
@@ -479,7 +486,6 @@ tree:
       value: mild
       true_next: mild_check_patient_to_signal
       false_next: check_term_event
-
     mild_check_patient_to_signal:
       type: condition
       variable: author_domain
@@ -487,7 +493,6 @@ tree:
       value: Patient
       true_next: mild_patient_check_reader
       false_next: mild_check_seriousness
-
     mild_patient_check_reader:
       type: condition
       variable: reader_domain
@@ -495,7 +500,6 @@ tree:
       value: Signal
       true_next: mild_escalate_patient_signal
       false_next: mild_aligned
-
     mild_check_seriousness:
       type: condition
       variable: author_domain
@@ -503,7 +507,6 @@ tree:
       value: Seriousness
       true_next: mild_seriousness_check_reader
       false_next: mild_aligned
-
     mild_seriousness_check_reader:
       type: condition
       variable: reader_domain
@@ -511,7 +514,6 @@ tree:
       value: Signal
       true_next: mild_escalate_seriousness_signal
       false_next: mild_aligned
-
     mild_escalate_patient_signal:
       type: return
       value:
@@ -523,7 +525,6 @@ tree:
         author_action: continue treatment
         reader_action: include in signal review
         reason: Perspective mismatch - patient mild (tolerable) does not preclude signal detection. Mild events can aggregate into valid signals.
-
     mild_escalate_seriousness_signal:
       type: return
       value:
@@ -535,22 +536,17 @@ tree:
         author_action: routine reporting
         reader_action: include in signal review
         reason: Perspective mismatch - non-serious (ICH E2A) does not mean non-signal. Seriousness and signal strength are independent dimensions.
-
     mild_aligned:
       type: return
       value:
         mismatch: false
         route: PASS
-        risk_score: 0.0
+        risk_score: 0
         author_meaning: same perspective
         reader_meaning: same perspective
         author_action: aligned
         reader_action: aligned
         reason: Author and reader share the same perspective on mild
-
-    # ═══════════════════════════════════════════════════════════
-    # TERM: event (risk 1.70, ∂=2)
-    # ═══════════════════════════════════════════════════════════
     check_term_event:
       type: condition
       variable: term
@@ -558,7 +554,6 @@ tree:
       value: event
       true_next: event_check_general_to_pv
       false_next: term_not_found
-
     event_check_general_to_pv:
       type: condition
       variable: author_domain
@@ -566,7 +561,6 @@ tree:
       value: General
       true_next: event_general_check_reader
       false_next: event_aligned
-
     event_general_check_reader:
       type: condition
       variable: reader_domain
@@ -574,224 +568,210 @@ tree:
       value: PV
       true_next: event_escalate_general_pv
       false_next: event_aligned
-
     event_escalate_general_pv:
       type: return
       value:
         mismatch: true
         route: ESCALATE
-        risk_score: 1.70
+        risk_score: 1.7
         author_meaning: something that happened
         reader_meaning: adverse event per ICH E2A definition
         author_action: note occurrence
         reader_action: assess and possibly report
         reason: Perspective mismatch - general event (occurrence) misread as PV adverse event (ICH E2A defined, reportable). Not every event is an adverse event.
-
     event_aligned:
       type: return
       value:
         mismatch: false
         route: PASS
-        risk_score: 0.0
+        risk_score: 0
         author_meaning: same perspective
         reader_meaning: same perspective
         author_action: aligned
         reader_action: aligned
         reason: Author and reader share the same perspective on event
-
-    # ═══════════════════════════════════════════════════════════
-    # TERM NOT IN LEXICON
-    # ═══════════════════════════════════════════════════════════
     term_not_found:
       type: return
       value:
         mismatch: false
         route: PASS
-        risk_score: 0.0
+        risk_score: 0
         author_meaning: term not in pun-proof lexicon
         reader_meaning: term not in pun-proof lexicon
         author_action: no action
         reader_action: no action
         reason: Term not found in the pun-proof lexicon - no perspective divergence data available
-
 tests:
-# ═══════════════════════════════════════════════════════════
-# BLOCK cases — highest risk perspective collapses
-# ═══════════════════════════════════════════════════════════
-
-# expected: Clinical → Regulatory = BLOCK
-- input:
-    term: expected
-    author_domain: Clinical
-    reader_domain: Regulatory
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.85
-
-# expected: Patient → Regulatory = BLOCK
-- input:
-    term: expected
-    author_domain: Patient
-    reader_domain: Regulatory
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.85
-
-# safe: Clinical trial → Post-market = BLOCK
-- input:
-    term: safe
-    author_domain: Clinical trial
-    reader_domain: Post-market
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.85
-
-# safe: Consumer → Post-market = BLOCK
-- input:
-    term: safe
-    author_domain: Consumer
-    reader_domain: Post-market
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.85
-
-# related: Temporal → Causality = BLOCK
-- input:
-    term: related
-    author_domain: Temporal
-    reader_domain: Causality
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.70
-
-# related: Causality → Temporal = BLOCK (reverse direction)
-- input:
-    term: related
-    author_domain: Causality
-    reader_domain: Temporal
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.70
-
-# reaction: Clinical → PV = BLOCK
-- input:
-    term: reaction
-    author_domain: Clinical
-    reader_domain: PV
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.55
-
-# significant: Statistics → Regulatory = BLOCK
-- input:
-    term: significant
-    author_domain: Statistics
-    reader_domain: Regulatory
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.55
-
-# significant: Clinical → Regulatory = BLOCK
-- input:
-    term: significant
-    author_domain: Clinical
-    reader_domain: Regulatory
-  expect:
-    mismatch: true
-    route: BLOCK
-    risk_score: 2.55
-
-# ═══════════════════════════════════════════════════════════
-# ESCALATE cases — medium risk
-# ═══════════════════════════════════════════════════════════
-
-# mild: Patient → Signal = ESCALATE
-- input:
-    term: mild
-    author_domain: Patient
-    reader_domain: Signal
-  expect:
-    mismatch: true
-    route: ESCALATE
-    risk_score: 2.25
-
-# mild: Seriousness → Signal = ESCALATE
-- input:
-    term: mild
-    author_domain: Seriousness
-    reader_domain: Signal
-  expect:
-    mismatch: true
-    route: ESCALATE
-    risk_score: 2.25
-
-# event: General → PV = ESCALATE
-- input:
-    term: event
-    author_domain: General
-    reader_domain: PV
-  expect:
-    mismatch: true
-    route: ESCALATE
-    risk_score: 1.70
-
-# ═══════════════════════════════════════════════════════════
-# PASS cases — aligned perspectives
-# ═══════════════════════════════════════════════════════════
-
-# Same domain = no mismatch
-- input:
-    term: expected
-    author_domain: Clinical
-    reader_domain: Clinical
-  expect:
-    mismatch: false
-    route: PASS
-    risk_score: 0.0
-
-- input:
-    term: safe
-    author_domain: Post-market
-    reader_domain: Post-market
-  expect:
-    mismatch: false
-    route: PASS
-    risk_score: 0.0
-
-- input:
-    term: related
-    author_domain: Causality
-    reader_domain: Causality
-  expect:
-    mismatch: false
-    route: PASS
-    risk_score: 0.0
-
-# ═══════════════════════════════════════════════════════════
-# EDGE CASES
-# ═══════════════════════════════════════════════════════════
-
-# Unknown term = PASS (not in lexicon)
-- input:
-    term: dosage
-    author_domain: Clinical
-    reader_domain: PV
-  expect:
-    mismatch: false
-    route: PASS
-    risk_score: 0.0
-
-# Null input = safe default
-- input: {}
-  expect:
-    mismatch: false
-    route: PASS
-    risk_score: 0.0
+  - input:
+      term: expected
+      author_domain: Clinical
+      reader_domain: Regulatory
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.85
+  - input:
+      term: expected
+      author_domain: Patient
+      reader_domain: Regulatory
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.85
+  - input:
+      term: safe
+      author_domain: Clinical trial
+      reader_domain: Post-market
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.85
+  - input:
+      term: safe
+      author_domain: Consumer
+      reader_domain: Post-market
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.85
+  - input:
+      term: related
+      author_domain: Temporal
+      reader_domain: Causality
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.7
+  - input:
+      term: related
+      author_domain: Causality
+      reader_domain: Temporal
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.7
+  - input:
+      term: reaction
+      author_domain: Clinical
+      reader_domain: PV
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.55
+  - input:
+      term: significant
+      author_domain: Statistics
+      reader_domain: Regulatory
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.55
+  - input:
+      term: significant
+      author_domain: Clinical
+      reader_domain: Regulatory
+    expect:
+      mismatch: true
+      route: BLOCK
+      risk_score: 2.55
+  - input:
+      term: mild
+      author_domain: Patient
+      reader_domain: Signal
+    expect:
+      mismatch: true
+      route: ESCALATE
+      risk_score: 2.25
+  - input:
+      term: mild
+      author_domain: Seriousness
+      reader_domain: Signal
+    expect:
+      mismatch: true
+      route: ESCALATE
+      risk_score: 2.25
+  - input:
+      term: event
+      author_domain: General
+      reader_domain: PV
+    expect:
+      mismatch: true
+      route: ESCALATE
+      risk_score: 1.7
+  - input:
+      term: expected
+      author_domain: Clinical
+      reader_domain: Clinical
+    expect:
+      mismatch: false
+      route: PASS
+      risk_score: 0
+  - input:
+      term: safe
+      author_domain: Post-market
+      reader_domain: Post-market
+    expect:
+      mismatch: false
+      route: PASS
+      risk_score: 0
+  - input:
+      term: related
+      author_domain: Causality
+      reader_domain: Causality
+    expect:
+      mismatch: false
+      route: PASS
+      risk_score: 0
+  - input:
+      term: dosage
+      author_domain: Clinical
+      reader_domain: PV
+    expect:
+      mismatch: false
+      route: PASS
+      risk_score: 0
+  - input: {}
+    expect:
+      mismatch: false
+      route: PASS
+      risk_score: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - mismatch
+    - route
+    - risk_score
+    - author_meaning
+    - reader_meaning
+    - author_action
+    - reader_action
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

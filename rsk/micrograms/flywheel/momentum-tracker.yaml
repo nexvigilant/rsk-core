@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: momentum-tracker
-description: 'Detect flywheel momentum from current vs previous velocity (ms). ACCELERATING (current < previous * 0.9), MAINTAINING (within 10%), DECELERATING (current > previous * 1.1). Velocity is inverse: lower ms = faster.'
 version: 0.1.0
+description: "Detect flywheel momentum from current vs previous velocity (ms). ACCELERATING (current < previous * 0.9), MAINTAINING (within 10%), DECELERATING (current > previous * 1.1). Velocity is inverse: lower ms = faster."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: previous_velocity_ms
+    type: int
+    required: false
+    description: ""
+  - name: velocity_ratio_pct
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: momentum
+    type: string
+  - name: trend
+    type: string
 interface:
   inputs:
     previous_velocity_ms:
@@ -16,6 +42,33 @@ interface:
       type: string
     trend:
       type: string
+ui:
+  title: Momentum Tracker
+  subtitle: "Detect flywheel momentum from current vs previous velocity (ms). ACCELERATING (current < previous * 0.9), MAINTAINING (within 10%), DECELERATING (current > previous * 1.1). Velocity is inverse: lower ms = faster."
+  icon: circle
+  route: /vigilance/mg/momentum-tracker
+  steps:
+    - field: previous_velocity_ms
+      label: previous velocity ms
+      help: Enter previous_velocity_ms
+      widget: text
+      placeholder: null
+    - field: velocity_ratio_pct
+      label: velocity ratio pct
+      help: Enter velocity_ratio_pct
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — momentum: {{momentum}} — trend: {{trend}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/momentum-tracker
+  cli: rsk mcg run momentum-tracker
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_first_reading
   nodes:
@@ -64,70 +117,100 @@ tree:
         momentum: DECELERATING
         trend: degrading
         action: diagnose
-primitive_signature:
-  dominant: 'ς'
-  expression: 'ς — state monitoring or drift detection'
-  primes: ['ς']
-  arguments: []
 tests:
-- input:
-    previous_velocity_ms: 0
-    velocity_ratio_pct: 100
-  expect:
-    momentum: BASELINE
-    trend: establishing
-    action: collect_data
-- input:
-    previous_velocity_ms: 86400000
-    velocity_ratio_pct: 50
-  expect:
-    momentum: ACCELERATING
-    trend: improving
-    action: sustain
-- input:
-    previous_velocity_ms: 86400000
-    velocity_ratio_pct: 89
-  expect:
-    momentum: ACCELERATING
-    trend: improving
-    action: sustain
-- input:
-    previous_velocity_ms: 86400000
-    velocity_ratio_pct: 90
-  expect:
-    momentum: MAINTAINING
-    trend: stable
-    action: none
-- input:
-    previous_velocity_ms: 86400000
-    velocity_ratio_pct: 100
-  expect:
-    momentum: MAINTAINING
-    trend: stable
-    action: none
-- input:
-    previous_velocity_ms: 86400000
-    velocity_ratio_pct: 110
-  expect:
-    momentum: MAINTAINING
-    trend: stable
-    action: none
-- input:
-    previous_velocity_ms: 86400000
-    velocity_ratio_pct: 111
-  expect:
-    momentum: DECELERATING
-    trend: degrading
-    action: diagnose
-- input:
-    previous_velocity_ms: 86400000
-    velocity_ratio_pct: 200
-  expect:
-    momentum: DECELERATING
-    trend: degrading
-    action: diagnose
-- input: {}
-  expect:
-    action: diagnose
-    momentum: DECELERATING
-    trend: degrading
+  - input:
+      previous_velocity_ms: 0
+      velocity_ratio_pct: 100
+    expect:
+      momentum: BASELINE
+      trend: establishing
+      action: collect_data
+  - input:
+      previous_velocity_ms: 86400000
+      velocity_ratio_pct: 50
+    expect:
+      momentum: ACCELERATING
+      trend: improving
+      action: sustain
+  - input:
+      previous_velocity_ms: 86400000
+      velocity_ratio_pct: 89
+    expect:
+      momentum: ACCELERATING
+      trend: improving
+      action: sustain
+  - input:
+      previous_velocity_ms: 86400000
+      velocity_ratio_pct: 90
+    expect:
+      momentum: MAINTAINING
+      trend: stable
+      action: none
+  - input:
+      previous_velocity_ms: 86400000
+      velocity_ratio_pct: 100
+    expect:
+      momentum: MAINTAINING
+      trend: stable
+      action: none
+  - input:
+      previous_velocity_ms: 86400000
+      velocity_ratio_pct: 110
+    expect:
+      momentum: MAINTAINING
+      trend: stable
+      action: none
+  - input:
+      previous_velocity_ms: 86400000
+      velocity_ratio_pct: 111
+    expect:
+      momentum: DECELERATING
+      trend: degrading
+      action: diagnose
+  - input:
+      previous_velocity_ms: 86400000
+      velocity_ratio_pct: 200
+    expect:
+      momentum: DECELERATING
+      trend: degrading
+      action: diagnose
+  - input: {}
+    expect:
+      action: diagnose
+      momentum: DECELERATING
+      trend: degrading
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - momentum
+    - trend
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

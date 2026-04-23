@@ -1,6 +1,78 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: aggregate-to-psur
-description: Routes aggregate data assessment to PSUR section assignment and prioritization
 version: 0.1.0
+description: Routes aggregate data assessment to PSUR section assignment and prioritization
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: data_type
+    type: string
+    required: true
+    description: ""
+  - name: has_new_signal
+    type: boolean
+    required: true
+    description: ""
+outputs:
+  - name: rationale
+    type: string
+  - name: psur_section
+    type: string
+  - name: priority_flag
+    type: boolean
+interface:
+  inputs:
+    data_type:
+      type: string
+      required: true
+    has_new_signal:
+      type: boolean
+      required: true
+  outputs:
+    rationale:
+      type: string
+      required: false
+    psur_section:
+      type: string
+      required: false
+    priority_flag:
+      type: boolean
+      required: false
+  aliases: {}
+ui:
+  title: Aggregate To Psur
+  subtitle: Routes aggregate data assessment to PSUR section assignment and prioritization
+  icon: circle
+  route: /vigilance/mg/aggregate-to-psur
+  steps:
+    - field: data_type
+      label: data type
+      help: Enter data_type
+      widget: text
+      placeholder: null
+    - field: has_new_signal
+      label: has new signal
+      help: Enter has_new_signal
+      widget: toggle
+      placeholder: null
+  result:
+    template: "rationale: {{rationale}} — psur_section: {{psur_section}} — priority_flag: {{priority_flag}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/aggregate-to-psur
+  cli: rsk mcg run aggregate-to-psur
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_data_type
   nodes:
@@ -16,8 +88,7 @@ tree:
       value:
         psur_section: periodic_update
         priority_flag: false
-        rationale: Interval data without new signals assigned to routine periodic
-          update section
+        rationale: Interval data without new signals assigned to routine periodic update section
     check_data_type:
       type: condition
       variable: data_type
@@ -30,13 +101,11 @@ tree:
       value:
         priority_flag: true
         psur_section: comprehensive_safety_review
-        rationale: Both cumulative and interval data with new signals require comprehensive
-          priority review
+        rationale: Both cumulative and interval data with new signals require comprehensive priority review
     cumulative_no_new_signal:
       type: return
       value:
-        rationale: Cumulative data without new signals follows routine periodic update
-          section
+        rationale: Cumulative data without new signals follows routine periodic update section
         priority_flag: false
         psur_section: periodic_safety_update
     both_data_type:
@@ -57,8 +126,7 @@ tree:
       value:
         priority_flag: true
         psur_section: safety_specification
-        rationale: Interval data with new signals requires priority discussion in
-          safety specification section
+        rationale: Interval data with new signals requires priority discussion in safety specification section
     check_new_signal_cumulative:
       type: condition
       variable: has_new_signal
@@ -78,77 +146,87 @@ tree:
       value:
         psur_section: safety_update
         priority_flag: true
-        rationale: Cumulative data with new signals requires priority review in safety
-          update section
+        rationale: Cumulative data with new signals requires priority review in safety update section
 tests:
-- input:
-    data_type: ''
-    has_new_signal: false
-  expect:
-    rationale: Both data types without new signals follow routine update procedures
-    priority_flag: false
-    psur_section: routine_update
-- input:
-    data_type: ''
-    has_new_signal: true
-  expect:
-    priority_flag: true
-    psur_section: comprehensive_safety_review
-    rationale: Both cumulative and interval data with new signals require comprehensive
-      priority review
-- input:
-    data_type: cumulative
-    has_new_signal: false
-  expect:
-    rationale: Cumulative data without new signals follows routine periodic update
-      section
-    priority_flag: false
-    psur_section: periodic_safety_update
-- input:
-    data_type: cumulative
-    has_new_signal: true
-  expect:
-    psur_section: safety_update
-    priority_flag: true
-    rationale: Cumulative data with new signals requires priority review in safety
-      update section
-- input:
-    data_type: interval
-    has_new_signal: false
-  expect:
-    psur_section: periodic_update
-    priority_flag: false
-    rationale: Interval data without new signals assigned to routine periodic update
-      section
-- input:
-    data_type: interval
-    has_new_signal: true
-  expect:
-    priority_flag: true
-    psur_section: safety_specification
-    rationale: Interval data with new signals requires priority discussion in safety
-      specification section
-- input: {}
-  expect:
-    rationale: Both data types without new signals follow routine update procedures
-    priority_flag: false
-    psur_section: routine_update
-interface:
-  inputs:
-    data_type:
-      type: string
-      required: true
-    has_new_signal:
-      type: boolean
-      required: true
-  outputs:
-    rationale:
-      type: string
-      required: false
-    psur_section:
-      type: string
-      required: false
-    priority_flag:
-      type: boolean
-      required: false
-  aliases: {}
+  - input:
+      data_type: ""
+      has_new_signal: false
+    expect:
+      rationale: Both data types without new signals follow routine update procedures
+      priority_flag: false
+      psur_section: routine_update
+  - input:
+      data_type: ""
+      has_new_signal: true
+    expect:
+      priority_flag: true
+      psur_section: comprehensive_safety_review
+      rationale: Both cumulative and interval data with new signals require comprehensive priority review
+  - input:
+      data_type: cumulative
+      has_new_signal: false
+    expect:
+      rationale: Cumulative data without new signals follows routine periodic update section
+      priority_flag: false
+      psur_section: periodic_safety_update
+  - input:
+      data_type: cumulative
+      has_new_signal: true
+    expect:
+      psur_section: safety_update
+      priority_flag: true
+      rationale: Cumulative data with new signals requires priority review in safety update section
+  - input:
+      data_type: interval
+      has_new_signal: false
+    expect:
+      psur_section: periodic_update
+      priority_flag: false
+      rationale: Interval data without new signals assigned to routine periodic update section
+  - input:
+      data_type: interval
+      has_new_signal: true
+    expect:
+      priority_flag: true
+      psur_section: safety_specification
+      rationale: Interval data with new signals requires priority discussion in safety specification section
+  - input: {}
+    expect:
+      rationale: Both data types without new signals follow routine update procedures
+      priority_flag: false
+      psur_section: routine_update
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - rationale
+    - psur_section
+    - priority_flag
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: rsk-organ-signal
-description: "Map RSK engine primitive health signals to anatomy_record_organ_signal format. Bus adapter translating engine instrument readings (Seal, Convert, Time, Lubricate, Transfer primitives) into anatomy organ signal inputs. Input: ratio (value/fleet_size as float, pre-computed)."
 version: 0.1.0
+description: "Map RSK engine primitive health signals to anatomy_record_organ_signal format. Bus adapter translating engine instrument readings (Seal, Convert, Time, Lubricate, Transfer primitives) into anatomy organ signal inputs. Input: ratio (value/fleet_size as float, pre-computed)."
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Rsk Organ Signal
+  subtitle: "Map RSK engine primitive health signals to anatomy_record_organ_signal format. Bus adapter translating engine instrument readings (Seal, Convert, Time, Lubricate, Transfer primitives) into anatomy organ signal inputs. Input: ratio (value/fleet_size as float, pre-computed)."
+  icon: activity
+  route: /vigilance/mg/rsk-organ-signal
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/rsk-organ-signal
+  cli: rsk mcg run rsk-organ-signal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check-null-ratio
   nodes:
@@ -10,7 +39,6 @@ tree:
       operator: is_null
       true_next: unmeasured
       false_next: check-zero-ratio
-
     check-zero-ratio:
       type: condition
       variable: ratio
@@ -18,8 +46,6 @@ tree:
       value: 0
       true_next: healthy
       false_next: check-critical-threshold
-
-    # Critical: ratio >= 0.15
     check-critical-threshold:
       type: condition
       variable: ratio
@@ -27,8 +53,6 @@ tree:
       value: 0.15
       true_next: critical
       false_next: check-impaired-threshold
-
-    # Impaired: 0.05 <= ratio < 0.15
     check-impaired-threshold:
       type: condition
       variable: ratio
@@ -36,173 +60,186 @@ tree:
       value: 0.05
       true_next: impaired
       false_next: minor-stress
-
     healthy:
       type: return
       value:
-        organ: "rsk-engine"
-        organ_status: "healthy"
-        signal_strength: 1.0
+        organ: rsk-engine
+        organ_status: healthy
+        signal_strength: 1
         primitive: "{{ primitive }}"
         measurement_type: "{{ measurement_type }}"
-        ratio: 0.0
-
+        ratio: 0
     minor-stress:
       type: return
       value:
-        organ: "rsk-engine"
-        organ_status: "minor_stress"
+        organ: rsk-engine
+        organ_status: minor_stress
         signal_strength: 0.8
         primitive: "{{ primitive }}"
         measurement_type: "{{ measurement_type }}"
-
     impaired:
       type: return
       value:
-        organ: "rsk-engine"
-        organ_status: "impaired"
+        organ: rsk-engine
+        organ_status: impaired
         signal_strength: 0.5
         primitive: "{{ primitive }}"
         measurement_type: "{{ measurement_type }}"
-
     critical:
       type: return
       value:
-        organ: "rsk-engine"
-        organ_status: "critical"
+        organ: rsk-engine
+        organ_status: critical
         signal_strength: 0.2
         primitive: "{{ primitive }}"
         measurement_type: "{{ measurement_type }}"
-
     unmeasured:
       type: return
       value:
-        organ: "rsk-engine"
-        organ_status: "unmeasured"
-        signal_strength: 0.0
+        organ: rsk-engine
+        organ_status: unmeasured
+        signal_strength: 0
         primitive: "{{ primitive }}"
         measurement_type: "{{ measurement_type }}"
         ratio: null
-
 tests:
-  # Test 1: Zero ratio (healthy)
   - input:
-      primitive: "Seal"
-      measurement_type: "egress_violations"
+      primitive: Seal
+      measurement_type: egress_violations
       ratio: 0
     expect:
-      organ: "rsk-engine"
-      organ_status: "healthy"
-      signal_strength: 1.0
-      primitive: "Seal"
-      measurement_type: "egress_violations"
-      ratio: 0.0
-
-  # Test 2: 0.33% ratio (minor stress)
+      organ: rsk-engine
+      organ_status: healthy
+      signal_strength: 1
+      primitive: Seal
+      measurement_type: egress_violations
+      ratio: 0
   - input:
-      primitive: "Convert"
-      measurement_type: "boundary_errors"
+      primitive: Convert
+      measurement_type: boundary_errors
       ratio: 0.003333333333
     expect:
-      organ: "rsk-engine"
-      organ_status: "minor_stress"
+      organ: rsk-engine
+      organ_status: minor_stress
       signal_strength: 0.8
-      primitive: "Convert"
-      measurement_type: "boundary_errors"
-
-  # Test 3: 45.6% ratio (critical)
+      primitive: Convert
+      measurement_type: boundary_errors
   - input:
-      primitive: "Lubricate"
-      measurement_type: "field_collisions"
-      ratio: 0.4560439560
+      primitive: Lubricate
+      measurement_type: field_collisions
+      ratio: 0.456043956
     expect:
-      organ: "rsk-engine"
-      organ_status: "critical"
+      organ: rsk-engine
+      organ_status: critical
       signal_strength: 0.2
-      primitive: "Lubricate"
-      measurement_type: "field_collisions"
-
-  # Test 4: 60% ratio (critical)
+      primitive: Lubricate
+      measurement_type: field_collisions
   - input:
-      primitive: "Time"
-      measurement_type: "kvl_violations"
+      primitive: Time
+      measurement_type: kvl_violations
       ratio: 0.6
     expect:
-      organ: "rsk-engine"
-      organ_status: "critical"
+      organ: rsk-engine
+      organ_status: critical
       signal_strength: 0.2
-      primitive: "Time"
-      measurement_type: "kvl_violations"
-
-  # Test 5: Null ratio safety
+      primitive: Time
+      measurement_type: kvl_violations
   - input:
-      primitive: "Transfer"
-      measurement_type: "egress_violations"
+      primitive: Transfer
+      measurement_type: egress_violations
       ratio: null
     expect:
-      organ: "rsk-engine"
-      organ_status: "unmeasured"
-      signal_strength: 0.0
-      primitive: "Transfer"
-      measurement_type: "egress_violations"
+      organ: rsk-engine
+      organ_status: unmeasured
+      signal_strength: 0
+      primitive: Transfer
+      measurement_type: egress_violations
       ratio: null
-
-  # Test 6: Missing ratio safety
   - input:
-      primitive: "Seal"
-      measurement_type: "field_collisions"
+      primitive: Seal
+      measurement_type: field_collisions
     expect:
-      organ: "rsk-engine"
-      organ_status: "unmeasured"
-      signal_strength: 0.0
-      primitive: "Seal"
-      measurement_type: "field_collisions"
+      organ: rsk-engine
+      organ_status: unmeasured
+      signal_strength: 0
+      primitive: Seal
+      measurement_type: field_collisions
       ratio: null
-
-  # Test 7: Ratio at impaired threshold (5%)
   - input:
-      primitive: "Seal"
-      measurement_type: "egress_violations"
+      primitive: Seal
+      measurement_type: egress_violations
       ratio: 0.05
     expect:
-      organ: "rsk-engine"
-      organ_status: "impaired"
+      organ: rsk-engine
+      organ_status: impaired
       signal_strength: 0.5
-      primitive: "Seal"
-      measurement_type: "egress_violations"
-
-  # Test 8: Ratio at critical threshold (15%)
+      primitive: Seal
+      measurement_type: egress_violations
   - input:
-      primitive: "Convert"
-      measurement_type: "boundary_errors"
+      primitive: Convert
+      measurement_type: boundary_errors
       ratio: 0.15
     expect:
-      organ: "rsk-engine"
-      organ_status: "critical"
+      organ: rsk-engine
+      organ_status: critical
       signal_strength: 0.2
-      primitive: "Convert"
-      measurement_type: "boundary_errors"
-
-  # Test 9: Just below impaired (4.9%)
+      primitive: Convert
+      measurement_type: boundary_errors
   - input:
-      primitive: "Time"
-      measurement_type: "kvl_violations"
+      primitive: Time
+      measurement_type: kvl_violations
       ratio: 0.049
     expect:
-      organ: "rsk-engine"
-      organ_status: "minor_stress"
+      organ: rsk-engine
+      organ_status: minor_stress
       signal_strength: 0.8
-      primitive: "Time"
-      measurement_type: "kvl_violations"
-
-  # Test 10: Just below critical (14.9%)
+      primitive: Time
+      measurement_type: kvl_violations
   - input:
-      primitive: "Lubricate"
-      measurement_type: "field_collisions"
+      primitive: Lubricate
+      measurement_type: field_collisions
       ratio: 0.149
     expect:
-      organ: "rsk-engine"
-      organ_status: "impaired"
+      organ: rsk-engine
+      organ_status: impaired
       signal_strength: 0.5
-      primitive: "Lubricate"
-      measurement_type: "field_collisions"
+      primitive: Lubricate
+      measurement_type: field_collisions
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

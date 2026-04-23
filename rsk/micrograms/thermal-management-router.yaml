@@ -1,28 +1,75 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: thermal-management-router
-description: "Routes thermal management actions based on zone temperature, heat flux, and cooling capacity. 5 zones (battery, motor, electronics, pilot, ambient). Escalates from passive cooling through active cooling to emergency shutdown."
 version: 0.1.0
+description: Routes thermal management actions based on zone temperature, heat flux, and cooling capacity. 5 zones (battery, motor, electronics, pilot, ambient). Escalates from passive cooling through active cooling to emergency shutdown.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: zone
+    type: string
+    required: true
+    description: ""
+  - name: temperature_c
+    type: float
+    required: true
+    description: Current zone temperature in Celsius
+  - name: heat_flux_w
+    type: float
+    required: false
+    description: Current heat generation rate in watts
+  - name: coolant_flow_available
+    type: boolean
+    required: false
+    description: Whether active liquid cooling loop is operational
+  - name: ambient_temp_c
+    type: float
+    required: false
+    description: External ambient temperature in Celsius
+outputs:
+  - name: action
+    type: string
+  - name: cooling_method
+    type: string
+  - name: power_derate_pct
+    type: float
+  - name: alert_level
+    type: string
+  - name: rationale
+    type: string
 interface:
   inputs:
     zone:
       type: string
       required: true
-      enum: [battery_pack, motor_controller, power_electronics, pilot_interface, ambient]
+      enum:
+        - battery_pack
+        - motor_controller
+        - power_electronics
+        - pilot_interface
+        - ambient
     temperature_c:
       type: float
       required: true
-      description: "Current zone temperature in Celsius"
+      description: Current zone temperature in Celsius
     heat_flux_w:
       type: float
       required: false
-      description: "Current heat generation rate in watts"
+      description: Current heat generation rate in watts
     coolant_flow_available:
       type: boolean
       required: false
-      description: "Whether active liquid cooling loop is operational"
+      description: Whether active liquid cooling loop is operational
     ambient_temp_c:
       type: float
       required: false
-      description: "External ambient temperature in Celsius"
+      description: External ambient temperature in Celsius
   outputs:
     action:
       type: string
@@ -34,6 +81,48 @@ interface:
       type: string
     rationale:
       type: string
+ui:
+  title: Thermal Management Router
+  subtitle: Routes thermal management actions based on zone temperature, heat flux, and cooling capacity. 5 zones (battery, motor, electronics, pilot, ambient). Escalates from passive cooling through active cooling to emergency shutdown.
+  icon: circle
+  route: /vigilance/mg/thermal-management-router
+  steps:
+    - field: zone
+      label: zone
+      help: Enter zone
+      widget: text
+      placeholder: null
+    - field: temperature_c
+      label: temperature c
+      help: Current zone temperature in Celsius
+      widget: text
+      placeholder: null
+    - field: heat_flux_w
+      label: heat flux w
+      help: Current heat generation rate in watts
+      widget: text
+      placeholder: null
+    - field: coolant_flow_available
+      label: coolant flow available
+      help: Whether active liquid cooling loop is operational
+      widget: toggle
+      placeholder: null
+    - field: ambient_temp_c
+      label: ambient temp c
+      help: External ambient temperature in Celsius
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — cooling_method: {{cooling_method}} — power_derate_pct: {{power_derate_pct}} — alert_level: {{alert_level}} — rationale: {{rationale}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/thermal-management-router
+  cli: rsk mcg run thermal-management-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_emergency
   nodes:
@@ -44,7 +133,6 @@ tree:
       value: 80
       true_next: emergency_shutdown
       false_next: check_critical
-
     check_critical:
       type: condition
       variable: temperature_c
@@ -52,7 +140,6 @@ tree:
       value: 60
       true_next: check_zone_battery_crit
       false_next: check_warm
-
     check_zone_battery_crit:
       type: condition
       variable: zone
@@ -60,7 +147,6 @@ tree:
       value: battery_pack
       true_next: battery_critical
       false_next: check_zone_pilot_crit
-
     check_zone_pilot_crit:
       type: condition
       variable: zone
@@ -68,7 +154,6 @@ tree:
       value: pilot_interface
       true_next: pilot_critical
       false_next: general_critical
-
     check_warm:
       type: condition
       variable: temperature_c
@@ -76,7 +161,6 @@ tree:
       value: 40
       true_next: check_coolant_available
       false_next: check_cold
-
     check_coolant_available:
       type: condition
       variable: coolant_flow_available
@@ -84,7 +168,6 @@ tree:
       value: true
       true_next: active_cooling
       false_next: passive_derate
-
     check_cold:
       type: condition
       variable: temperature_c
@@ -92,118 +175,168 @@ tree:
       value: 0
       true_next: cold_preheat
       false_next: nominal
-
     emergency_shutdown:
       type: return
       value:
         action: emergency_shutdown
-        cooling_method: "ALL — dump coolant, open vents, shed all non-critical loads"
+        cooling_method: ALL — dump coolant, open vents, shed all non-critical loads
         power_derate_pct: 100
         alert_level: emergency
-        rationale: "Zone >80°C — thermal runaway imminent for batteries, component failure for electronics. Immediate full shutdown. Vent battery enclosure. Pyro disconnect if battery zone."
-
+        rationale: Zone >80°C — thermal runaway imminent for batteries, component failure for electronics. Immediate full shutdown. Vent battery enclosure. Pyro disconnect if battery zone.
     battery_critical:
       type: return
       value:
         action: battery_isolation
-        cooling_method: "Burst coolant to battery zone + open pressure relief valve + shed actuator loads"
+        cooling_method: Burst coolant to battery zone + open pressure relief valve + shed actuator loads
         power_derate_pct: 80
         alert_level: critical
-        rationale: "Battery pack >60°C — NMC thermal runaway onset 80-130°C. Aggressive cooling NOW. Derate to 20% power. Prepare pyro disconnect. Monitor for thermal propagation between cells."
-
+        rationale: Battery pack >60°C — NMC thermal runaway onset 80-130°C. Aggressive cooling NOW. Derate to 20% power. Prepare pyro disconnect. Monitor for thermal propagation between cells.
     pilot_critical:
       type: return
       value:
         action: pilot_protection
-        cooling_method: "Maximize suit ventilation + redirect coolant to pilot interface + reduce motor heat output"
+        cooling_method: Maximize suit ventilation + redirect coolant to pilot interface + reduce motor heat output
         power_derate_pct: 50
         alert_level: critical
-        rationale: "Pilot interface >60°C — skin burn risk. Reduce power output to halve heat generation. Increase ventilation flow. Alert pilot via HUD."
-
+        rationale: Pilot interface >60°C — skin burn risk. Reduce power output to halve heat generation. Increase ventilation flow. Alert pilot via HUD.
     general_critical:
       type: return
       value:
         action: aggressive_cooling
-        cooling_method: "Maximum coolant flow + forced air + load shedding"
+        cooling_method: Maximum coolant flow + forced air + load shedding
         power_derate_pct: 60
         alert_level: critical
-        rationale: "Electronics/motor >60°C — component derating zone. Power electronics derate at 60°C, MOSFETs fail at 150°C. Aggressive cooling before junction temps cascade."
-
+        rationale: Electronics/motor >60°C — component derating zone. Power electronics derate at 60°C, MOSFETs fail at 150°C. Aggressive cooling before junction temps cascade.
     active_cooling:
       type: return
       value:
         action: active_cooling
-        cooling_method: "Liquid cooling loop at elevated flow rate + heat sink fan boost"
+        cooling_method: Liquid cooling loop at elevated flow rate + heat sink fan boost
         power_derate_pct: 0
         alert_level: warning
-        rationale: "Zone 40-60°C with coolant available. Active cooling maintains thermal equilibrium. No power deration needed. Monitor for rising trend."
-
+        rationale: Zone 40-60°C with coolant available. Active cooling maintains thermal equilibrium. No power deration needed. Monitor for rising trend.
     passive_derate:
       type: return
       value:
         action: passive_derate
-        cooling_method: "Conductive heat sinking only — no active cooling available"
+        cooling_method: Conductive heat sinking only — no active cooling available
         power_derate_pct: 30
         alert_level: warning
-        rationale: "Zone 40-60°C but coolant offline. Reduce power 30% to lower heat generation. Passive conduction through aluminum frame + airflow. Repair coolant loop when safe."
-
+        rationale: Zone 40-60°C but coolant offline. Reduce power 30% to lower heat generation. Passive conduction through aluminum frame + airflow. Repair coolant loop when safe.
     cold_preheat:
       type: return
       value:
         action: preheat
-        cooling_method: "Resistive preheater on battery zone + reduce charging to C/10"
+        cooling_method: Resistive preheater on battery zone + reduce charging to C/10
         power_derate_pct: 20
         alert_level: info
-        rationale: "Zone <0°C — lithium plating risk on charge, reduced capacity on discharge. Preheat battery pack before high-current operations. Derate 20% until >5°C."
-
+        rationale: Zone <0°C — lithium plating risk on charge, reduced capacity on discharge. Preheat battery pack before high-current operations. Derate 20% until >5°C.
     nominal:
       type: return
       value:
         action: nominal
-        cooling_method: "Passive — ambient convection + structural heat sinking sufficient"
+        cooling_method: Passive — ambient convection + structural heat sinking sufficient
         power_derate_pct: 0
         alert_level: nominal
-        rationale: "Zone 0-40°C — normal operating range. No intervention needed. Passive cooling handles heat dissipation."
-
-primitive_signature:
-  dominant: '→'
-  expression: '→(∂(ς_thermal, N_power)) — causal routing across thermal boundary by temperature state and power quantity'
-  primes: ['→', '∂', 'ς', 'N']
-  arguments: ['l']
-
+        rationale: Zone 0-40°C — normal operating range. No intervention needed. Passive cooling handles heat dissipation.
 tests:
-- name: "emergency — above 80°C"
-  input: { zone: motor_controller, temperature_c: 85 }
-  expect: { action: emergency_shutdown, alert_level: emergency, power_derate_pct: 100 }
-
-- name: "battery critical — 65°C"
-  input: { zone: battery_pack, temperature_c: 65 }
-  expect: { action: battery_isolation, alert_level: critical }
-
-- name: "pilot critical — 62°C"
-  input: { zone: pilot_interface, temperature_c: 62 }
-  expect: { action: pilot_protection, power_derate_pct: 50 }
-
-- name: "electronics critical — 61°C"
-  input: { zone: power_electronics, temperature_c: 61 }
-  expect: { action: aggressive_cooling, alert_level: critical }
-
-- name: "warm with coolant — active cooling"
-  input: { zone: motor_controller, temperature_c: 50, coolant_flow_available: true }
-  expect: { action: active_cooling, power_derate_pct: 0 }
-
-- name: "warm without coolant — passive derate"
-  input: { zone: motor_controller, temperature_c: 50, coolant_flow_available: false }
-  expect: { action: passive_derate, power_derate_pct: 30 }
-
-- name: "cold — preheat"
-  input: { zone: battery_pack, temperature_c: -10 }
-  expect: { action: preheat, alert_level: info }
-
-- name: "nominal"
-  input: { zone: ambient, temperature_c: 25 }
-  expect: { action: nominal, power_derate_pct: 0 }
-
-- name: "null safety"
-  input: {}
-  expect: { action: nominal }
+  - name: emergency — above 80°C
+    input:
+      zone: motor_controller
+      temperature_c: 85
+    expect:
+      action: emergency_shutdown
+      alert_level: emergency
+      power_derate_pct: 100
+  - name: battery critical — 65°C
+    input:
+      zone: battery_pack
+      temperature_c: 65
+    expect:
+      action: battery_isolation
+      alert_level: critical
+  - name: pilot critical — 62°C
+    input:
+      zone: pilot_interface
+      temperature_c: 62
+    expect:
+      action: pilot_protection
+      power_derate_pct: 50
+  - name: electronics critical — 61°C
+    input:
+      zone: power_electronics
+      temperature_c: 61
+    expect:
+      action: aggressive_cooling
+      alert_level: critical
+  - name: warm with coolant — active cooling
+    input:
+      zone: motor_controller
+      temperature_c: 50
+      coolant_flow_available: true
+    expect:
+      action: active_cooling
+      power_derate_pct: 0
+  - name: warm without coolant — passive derate
+    input:
+      zone: motor_controller
+      temperature_c: 50
+      coolant_flow_available: false
+    expect:
+      action: passive_derate
+      power_derate_pct: 30
+  - name: cold — preheat
+    input:
+      zone: battery_pack
+      temperature_c: -10
+    expect:
+      action: preheat
+      alert_level: info
+  - name: nominal
+    input:
+      zone: ambient
+      temperature_c: 25
+    expect:
+      action: nominal
+      power_derate_pct: 0
+  - name: null safety
+    input: {}
+    expect:
+      action: nominal
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - cooling_method
+    - power_derate_pct
+    - alert_level
+    - rationale
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ps-03-signal-accuracy
-description: "Signal detection accuracy ≥80% with ≤10% FPR"
 version: 0.1.0
-
+description: Signal detection accuracy ≥80% with ≤10% FPR
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Ps 03 Signal Accuracy
+  subtitle: Signal detection accuracy ≥80% with ≤10% FPR
+  icon: activity
+  route: /vigilance/mg/ps-03-signal-accuracy
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ps-03-signal-accuracy
+  cli: rsk mcg run ps-03-signal-accuracy
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -15,22 +43,64 @@ tree:
     pass:
       type: return
       value:
-        metric: "ps-03-signal-accuracy"
-        category: "Patient Safety"
+        metric: ps-03-signal-accuracy
+        category: Patient Safety
         met: true
-        action: "on_track"
-        frequency: "weekly"
+        action: on_track
+        frequency: weekly
     fail:
       type: return
       value:
-        metric: "ps-03-signal-accuracy"
-        category: "Patient Safety"
+        metric: ps-03-signal-accuracy
+        category: Patient Safety
         met: false
-        action: "remediate"
-        frequency: "weekly"
-
+        action: remediate
+        frequency: weekly
 tests:
-  - input: {signal_accuracy_pct: 80}
-    expect: {met: true, category: "Patient Safety"}
+  - input:
+      signal_accuracy_pct: 80
+    expect:
+      met: true
+      category: Patient Safety
   - input: {}
-    expect: {met: false, category: "Patient Safety"}
+    expect:
+      met: false
+      category: Patient Safety
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

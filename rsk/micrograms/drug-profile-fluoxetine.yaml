@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-profile-fluoxetine
-description: 'Safety triage for fluoxetine: PRR-based signal routing (Type C)'
 version: 0.1.0
+description: "Safety triage for fluoxetine: PRR-based signal routing (Type C)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Profile Fluoxetine
+  subtitle: "Safety triage for fluoxetine: PRR-based signal routing (Type C)"
+  icon: circle
+  route: /vigilance/mg/drug-profile-fluoxetine
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-profile-fluoxetine
+  cli: rsk mcg run drug-profile-fluoxetine
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_prr
   nodes:
@@ -8,14 +37,14 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: signal
       false_next: no_signal
     no_signal:
       type: return
       value:
         action: monitor
-        expected_prr: 3.0
+        expected_prr: 3
         drug: fluoxetine
         harm_type: C
         signal: false
@@ -25,38 +54,68 @@ tree:
         drug: fluoxetine
         harm_type: C
         signal: true
-        expected_prr: 3.0
+        expected_prr: 3
         action: investigate
 tests:
-- input:
-    prr: 3.0
-  expect:
-    signal: true
-    drug: fluoxetine
-- input:
-    prr: 0.5
-  expect:
-    drug: fluoxetine
-    signal: false
-- input: {}
-  expect:
-    drug: fluoxetine
-    signal: false
-- input:
-    prr: 1.999
-  expect:
-    action: monitor
-    signal: false
-    drug: fluoxetine
-    harm_type: C
-    expected_prr: 3.0
-- input:
-    prr: 2.001
-  expect:
-    expected_prr: 3.0
-    signal: true
-    drug: fluoxetine
-    harm_type: C
-    action: investigate
-interface: null
-primitive_signature: null
+  - input:
+      prr: 3
+    expect:
+      signal: true
+      drug: fluoxetine
+  - input:
+      prr: 0.5
+    expect:
+      drug: fluoxetine
+      signal: false
+  - input: {}
+    expect:
+      drug: fluoxetine
+      signal: false
+  - input:
+      prr: 1.999
+    expect:
+      action: monitor
+      signal: false
+      drug: fluoxetine
+      harm_type: C
+      expected_prr: 3
+  - input:
+      prr: 2.001
+    expect:
+      expected_prr: 3
+      signal: true
+      drug: fluoxetine
+      harm_type: C
+      action: investigate
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

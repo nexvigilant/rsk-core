@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-class-calcineurin-inhibitor-safety
-description: "Calcineurin inhibitor safety assessment. Evaluates nephrotoxicity, neurotoxicity, hypertension, and infection risk."
 version: 0.1.0
+description: Calcineurin inhibitor safety assessment. Evaluates nephrotoxicity, neurotoxicity, hypertension, and infection risk.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Class Calcineurin Inhibitor Safety
+  subtitle: Calcineurin inhibitor safety assessment. Evaluates nephrotoxicity, neurotoxicity, hypertension, and infection risk.
+  icon: circle
+  route: /vigilance/mg/drug-class-calcineurin-inhibitor-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-class-calcineurin-inhibitor-safety
+  cli: rsk mcg run drug-class-calcineurin-inhibitor-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_baseline_renal
   nodes:
@@ -16,7 +45,7 @@ tree:
       value:
         risk_level: high
         relative_contraindication: true
-        message: "Elevated baseline creatinine; high nephrotoxicity risk with calcineurin inhibitor"
+        message: Elevated baseline creatinine; high nephrotoxicity risk with calcineurin inhibitor
     check_hypertension:
       type: condition
       variable: has_uncontrolled_hypertension
@@ -29,7 +58,7 @@ tree:
       value:
         risk_level: moderate
         blood_pressure_monitoring: required
-        message: "Uncontrolled hypertension; calcineurin inhibitor may worsen BP control"
+        message: Uncontrolled hypertension; calcineurin inhibitor may worsen BP control
     check_infections:
       type: condition
       variable: recent_infection
@@ -42,21 +71,73 @@ tree:
       value:
         risk_level: moderate
         infection_monitoring: required
-        message: "Recent infection; defer calcineurin inhibitor until resolved"
+        message: Recent infection; defer calcineurin inhibitor until resolved
     standard_dosing:
       type: return
       value:
         risk_level: low
         monitoring_required: true
-        message: "Standard calcineurin inhibitor dosing; monitor renal function and levels"
+        message: Standard calcineurin inhibitor dosing; monitor renal function and levels
 tests:
-  - input: { baseline_creatinine_mg_dl: 2.8, has_uncontrolled_hypertension: false, recent_infection: false }
-    expect: { risk_level: high, relative_contraindication: true }
-  - input: { baseline_creatinine_mg_dl: 1.5, has_uncontrolled_hypertension: true, recent_infection: false }
-    expect: { risk_level: moderate, blood_pressure_monitoring: required }
-  - input: { baseline_creatinine_mg_dl: 1.5, has_uncontrolled_hypertension: false, recent_infection: true }
-    expect: { risk_level: moderate, infection_monitoring: required }
-  - input: { baseline_creatinine_mg_dl: 1.5, has_uncontrolled_hypertension: false, recent_infection: false }
-    expect: { risk_level: low, monitoring_required: true }
+  - input:
+      baseline_creatinine_mg_dl: 2.8
+      has_uncontrolled_hypertension: false
+      recent_infection: false
+    expect:
+      risk_level: high
+      relative_contraindication: true
+  - input:
+      baseline_creatinine_mg_dl: 1.5
+      has_uncontrolled_hypertension: true
+      recent_infection: false
+    expect:
+      risk_level: moderate
+      blood_pressure_monitoring: required
+  - input:
+      baseline_creatinine_mg_dl: 1.5
+      has_uncontrolled_hypertension: false
+      recent_infection: true
+    expect:
+      risk_level: moderate
+      infection_monitoring: required
+  - input:
+      baseline_creatinine_mg_dl: 1.5
+      has_uncontrolled_hypertension: false
+      recent_infection: false
+    expect:
+      risk_level: low
+      monitoring_required: true
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

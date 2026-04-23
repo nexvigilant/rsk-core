@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: meddra-level-classifier
-description: 'Regulatory decision: meddra-level-classifier'
 version: 0.1.0
+description: "Regulatory decision: meddra-level-classifier"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: input_type
+    type: string
+    required: false
+    description: ""
+  - name: severity
+    type: string
+    required: false
+    description: ""
+  - name: timeline_days
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: decision
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     input_type:
@@ -17,6 +45,38 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Meddra Level Classifier
+  subtitle: "Regulatory decision: meddra-level-classifier"
+  icon: circle
+  route: /vigilance/mg/meddra-level-classifier
+  steps:
+    - field: input_type
+      label: input type
+      help: Enter input_type
+      widget: text
+      placeholder: null
+    - field: severity
+      label: severity
+      help: Enter severity
+      widget: text
+      placeholder: null
+    - field: timeline_days
+      label: timeline days
+      help: Enter timeline_days
+      widget: text
+      placeholder: null
+  result:
+    template: "decision: {{decision}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/meddra-level-classifier
+  cli: rsk mcg run meddra-level-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_critical
   nodes:
@@ -69,15 +129,71 @@ tree:
         decision: ROUTINE
         action: aggregate_for_review
 tests:
-- input: {severity: critical, timeline_days: 5}
-  expect: {decision: URGENT, action: immediate_submission}
-- input: {severity: serious, timeline_days: 10}
-  expect: {decision: EXPEDITED, action: submit_within_15_days}
-- input: {severity: serious, timeline_days: 30}
-  expect: {decision: STANDARD, action: include_in_periodic}
-- input: {severity: moderate, timeline_days: 60}
-  expect: {decision: STANDARD, action: include_in_periodic}
-- input: {severity: mild, timeline_days: 90}
-  expect: {decision: ROUTINE, action: aggregate_for_review}
-- input: {}
-  expect: {decision: ROUTINE, action: aggregate_for_review}
+  - input:
+      severity: critical
+      timeline_days: 5
+    expect:
+      decision: URGENT
+      action: immediate_submission
+  - input:
+      severity: serious
+      timeline_days: 10
+    expect:
+      decision: EXPEDITED
+      action: submit_within_15_days
+  - input:
+      severity: serious
+      timeline_days: 30
+    expect:
+      decision: STANDARD
+      action: include_in_periodic
+  - input:
+      severity: moderate
+      timeline_days: 60
+    expect:
+      decision: STANDARD
+      action: include_in_periodic
+  - input:
+      severity: mild
+      timeline_days: 90
+    expect:
+      decision: ROUTINE
+      action: aggregate_for_review
+  - input: {}
+    expect:
+      decision: ROUTINE
+      action: aggregate_for_review
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - decision
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

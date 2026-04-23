@@ -1,38 +1,116 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: config-pubmed-signal-strength
-description: "Score evidence strength from PubMed search-signal-literature results. Evaluates publication volume, recency, and study type mix."
 version: 0.1.0
-
+description: Score evidence strength from PubMed search-signal-literature results. Evaluates publication volume, recency, and study type mix.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: total_articles
+    type: int
+    required: false
+    description: Total signal-related articles found
+  - name: case_report_count
+    type: int
+    required: false
+    description: Number of case reports
+  - name: systematic_review_count
+    type: int
+    required: false
+    description: Number of systematic reviews or meta-analyses
+  - name: recent_count
+    type: int
+    required: false
+    description: Articles published in last 2 years
+  - name: has_regulatory_citation
+    type: bool
+    required: false
+    description: At least one article references regulatory action
+outputs:
+  - name: evidence_strength
+    type: string
+  - name: literature_signal
+    type: bool
+  - name: recommended_depth
+    type: string
 interface:
   inputs:
     total_articles:
       type: int
       required: false
-      description: "Total signal-related articles found"
+      description: Total signal-related articles found
     case_report_count:
       type: int
       required: false
-      description: "Number of case reports"
+      description: Number of case reports
     systematic_review_count:
       type: int
       required: false
-      description: "Number of systematic reviews or meta-analyses"
+      description: Number of systematic reviews or meta-analyses
     recent_count:
       type: int
       required: false
-      description: "Articles published in last 2 years"
+      description: Articles published in last 2 years
     has_regulatory_citation:
       type: bool
       required: false
-      description: "At least one article references regulatory action"
+      description: At least one article references regulatory action
   outputs:
     evidence_strength:
       type: string
-      description: "strong, moderate, emerging, weak, absent"
+      description: strong, moderate, emerging, weak, absent
     literature_signal:
       type: bool
     recommended_depth:
       type: string
-
+ui:
+  title: Config Pubmed Signal Strength
+  subtitle: Score evidence strength from PubMed search-signal-literature results. Evaluates publication volume, recency, and study type mix.
+  icon: activity
+  route: /vigilance/mg/config-pubmed-signal-strength
+  steps:
+    - field: total_articles
+      label: total articles
+      help: Total signal-related articles found
+      widget: text
+      placeholder: null
+    - field: case_report_count
+      label: case report count
+      help: Number of case reports
+      widget: text
+      placeholder: null
+    - field: systematic_review_count
+      label: systematic review count
+      help: Number of systematic reviews or meta-analyses
+      widget: text
+      placeholder: null
+    - field: recent_count
+      label: recent count
+      help: Articles published in last 2 years
+      widget: text
+      placeholder: null
+    - field: has_regulatory_citation
+      label: has regulatory citation
+      help: At least one article references regulatory action
+      widget: toggle
+      placeholder: null
+  result:
+    template: "evidence_strength: {{evidence_strength}} — literature_signal: {{literature_signal}} — recommended_depth: {{recommended_depth}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/config-pubmed-signal-strength
+  cli: rsk mcg run config-pubmed-signal-strength
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_articles
   nodes:
@@ -42,7 +120,6 @@ tree:
       operator: is_null
       true_next: absent
       false_next: check_any
-
     check_any:
       type: condition
       variable: total_articles
@@ -50,14 +127,12 @@ tree:
       value: 0
       true_next: absent
       false_next: check_systematic
-
     check_systematic:
       type: condition
       variable: systematic_review_count
       operator: is_null
       true_next: check_volume
       false_next: check_has_systematic
-
     check_has_systematic:
       type: condition
       variable: systematic_review_count
@@ -65,7 +140,6 @@ tree:
       value: 1
       true_next: strong_evidence
       false_next: check_volume
-
     check_volume:
       type: condition
       variable: total_articles
@@ -73,7 +147,6 @@ tree:
       value: 20
       true_next: check_regulatory
       false_next: check_moderate_volume
-
     check_regulatory:
       type: condition
       variable: has_regulatory_citation
@@ -81,7 +154,6 @@ tree:
       value: true
       true_next: strong_evidence
       false_next: moderate_evidence
-
     check_moderate_volume:
       type: condition
       variable: total_articles
@@ -89,14 +161,12 @@ tree:
       value: 5
       true_next: check_recency
       false_next: check_case_reports
-
     check_recency:
       type: condition
       variable: recent_count
       operator: is_null
       true_next: moderate_evidence
       false_next: check_recent_ratio
-
     check_recent_ratio:
       type: condition
       variable: recent_count
@@ -104,14 +174,12 @@ tree:
       value: 3
       true_next: moderate_evidence
       false_next: emerging_evidence
-
     check_case_reports:
       type: condition
       variable: case_report_count
       operator: is_null
       true_next: weak_evidence
       false_next: check_case_count
-
     check_case_count:
       type: condition
       variable: case_report_count
@@ -119,47 +187,36 @@ tree:
       value: 2
       true_next: emerging_evidence
       false_next: weak_evidence
-
     strong_evidence:
       type: return
       value:
         evidence_strength: strong
         literature_signal: true
         recommended_depth: full_review
-
     moderate_evidence:
       type: return
       value:
         evidence_strength: moderate
         literature_signal: true
         recommended_depth: targeted_review
-
     emerging_evidence:
       type: return
       value:
         evidence_strength: emerging
         literature_signal: true
         recommended_depth: monitor_literature
-
     weak_evidence:
       type: return
       value:
         evidence_strength: weak
         literature_signal: false
         recommended_depth: periodic_search
-
     absent:
       type: return
       value:
         evidence_strength: absent
         literature_signal: false
         recommended_depth: none
-
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
   - input:
       total_articles: 30
@@ -171,7 +228,6 @@ tests:
       evidence_strength: strong
       literature_signal: true
       recommended_depth: full_review
-
   - input:
       total_articles: 25
       case_report_count: 5
@@ -182,7 +238,6 @@ tests:
       evidence_strength: strong
       literature_signal: true
       recommended_depth: full_review
-
   - input:
       total_articles: 12
       case_report_count: 4
@@ -193,7 +248,6 @@ tests:
       evidence_strength: moderate
       literature_signal: true
       recommended_depth: targeted_review
-
   - input:
       total_articles: 8
       case_report_count: 3
@@ -203,7 +257,6 @@ tests:
       evidence_strength: emerging
       literature_signal: true
       recommended_depth: monitor_literature
-
   - input:
       total_articles: 3
       case_report_count: 2
@@ -211,7 +264,6 @@ tests:
       evidence_strength: emerging
       literature_signal: true
       recommended_depth: monitor_literature
-
   - input:
       total_articles: 2
       case_report_count: 1
@@ -219,16 +271,55 @@ tests:
       evidence_strength: weak
       literature_signal: false
       recommended_depth: periodic_search
-
   - input:
       total_articles: 0
     expect:
       evidence_strength: absent
       literature_signal: false
       recommended_depth: none
-
   - input: {}
     expect:
       evidence_strength: absent
       literature_signal: false
       recommended_depth: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - evidence_strength
+    - literature_signal
+    - recommended_depth
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

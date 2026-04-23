@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2d-followup-obligation
-description: 'ICH E2D Section 5: MAH follow-up obligation for incomplete serious adverse drug reaction reports — determines if active follow-up is required and the deadline'
 version: 0.1.0
+description: "ICH E2D Section 5: MAH follow-up obligation for incomplete serious adverse drug reaction reports — determines if active follow-up is required and the deadline"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: report_complete
+    type: bool
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+  - name: followup_attempted
+    type: bool
+    required: false
+    description: ""
+  - name: days_since_initial
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: followup_required
+    type: bool
+  - name: followup_action
+    type: string
+  - name: followup_deadline_days
+    type: int
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     report_complete:
@@ -27,6 +67,48 @@ interface:
       type: int
     regulatory_reference:
       type: string
+ui:
+  title: E2d Followup Obligation
+  subtitle: "ICH E2D Section 5: MAH follow-up obligation for incomplete serious adverse drug reaction reports — determines if active follow-up is required and the deadline"
+  icon: circle
+  route: /vigilance/mg/e2d-followup-obligation
+  steps:
+    - field: report_complete
+      label: report complete
+      help: Enter report_complete
+      widget: toggle
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+    - field: followup_attempted
+      label: followup attempted
+      help: Enter followup_attempted
+      widget: toggle
+      placeholder: null
+    - field: days_since_initial
+      label: days since initial
+      help: Enter days_since_initial
+      widget: text
+      placeholder: null
+  result:
+    template: "followup_required: {{followup_required}} — followup_action: {{followup_action}} — followup_deadline_days: {{followup_deadline_days}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2d-followup-obligation
+  cli: rsk mcg run e2d-followup-obligation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_serious
   nodes:
@@ -107,74 +189,105 @@ tree:
         followup_action: NONE_EXPECTED_REACTION
         followup_deadline_days: 0
         regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — MAH follow-up obligation gate for incomplete SUSAR reports per ICH E2D Section 5'
-  primes: ['σ', '∂', 'κ']
-  arguments: ['report_complete', 'is_serious', 'is_unexpected', 'followup_attempted', 'days_since_initial']
 tests:
-- input:
-    is_serious: true
-    is_unexpected: true
-    report_complete: false
-    followup_attempted: false
-  expect:
-    followup_required: true
-    followup_action: INITIATE_FOLLOWUP
-    followup_deadline_days: 30
-    regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
-- input:
-    is_serious: true
-    is_unexpected: true
-    report_complete: false
-    followup_attempted: true
-    days_since_initial: 45
-  expect:
-    followup_required: true
-    followup_action: CONTINUE_FOLLOWUP
-    followup_deadline_days: 30
-    regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
-- input:
-    is_serious: true
-    is_unexpected: true
-    report_complete: false
-    followup_attempted: true
-    days_since_initial: 95
-  expect:
-    followup_required: false
-    followup_action: CLOSE_AS_INCOMPLETE
-    followup_deadline_days: 0
-    regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
-- input:
-    is_serious: true
-    is_unexpected: true
-    report_complete: true
-  expect:
-    followup_required: false
-    followup_action: NONE_REPORT_COMPLETE
-    followup_deadline_days: 0
-    regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
-- input:
-    is_serious: false
-    is_unexpected: true
-    report_complete: false
-  expect:
-    followup_required: false
-    followup_action: NONE_NON_SERIOUS
-    followup_deadline_days: 0
-    regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
-- input:
-    is_serious: true
-    is_unexpected: false
-    report_complete: false
-  expect:
-    followup_required: false
-    followup_action: NONE_EXPECTED_REACTION
-    followup_deadline_days: 0
-    regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
-- input: {}
-  expect:
-    followup_required: false
-    followup_action: NONE_NON_SERIOUS
-    followup_deadline_days: 0
-    regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
+  - input:
+      is_serious: true
+      is_unexpected: true
+      report_complete: false
+      followup_attempted: false
+    expect:
+      followup_required: true
+      followup_action: INITIATE_FOLLOWUP
+      followup_deadline_days: 30
+      regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
+  - input:
+      is_serious: true
+      is_unexpected: true
+      report_complete: false
+      followup_attempted: true
+      days_since_initial: 45
+    expect:
+      followup_required: true
+      followup_action: CONTINUE_FOLLOWUP
+      followup_deadline_days: 30
+      regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
+  - input:
+      is_serious: true
+      is_unexpected: true
+      report_complete: false
+      followup_attempted: true
+      days_since_initial: 95
+    expect:
+      followup_required: false
+      followup_action: CLOSE_AS_INCOMPLETE
+      followup_deadline_days: 0
+      regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
+  - input:
+      is_serious: true
+      is_unexpected: true
+      report_complete: true
+    expect:
+      followup_required: false
+      followup_action: NONE_REPORT_COMPLETE
+      followup_deadline_days: 0
+      regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
+  - input:
+      is_serious: false
+      is_unexpected: true
+      report_complete: false
+    expect:
+      followup_required: false
+      followup_action: NONE_NON_SERIOUS
+      followup_deadline_days: 0
+      regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
+  - input:
+      is_serious: true
+      is_unexpected: false
+      report_complete: false
+    expect:
+      followup_required: false
+      followup_action: NONE_EXPECTED_REACTION
+      followup_deadline_days: 0
+      regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
+  - input: {}
+    expect:
+      followup_required: false
+      followup_action: NONE_NON_SERIOUS
+      followup_deadline_days: 0
+      regulatory_reference: ICH E2D Section 5 - Follow-Up of Reports
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - followup_required
+    - followup_action
+    - followup_deadline_days
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

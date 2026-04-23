@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ai-gateway
-description: "PDC: EPA 10 AI Gateway typestate — route phase by current level to next phase and CPA 8 unlock"
 version: 0.1.0
+description: "PDC: EPA 10 AI Gateway typestate — route phase by current level to next phase and CPA 8 unlock"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: epa10_level
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: activities
+    type: string
+  - name: cpa8_unlocked
+    type: bool
+  - name: description
+    type: string
+  - name: next_phase
+    type: string
+  - name: phase
+    type: string
+  - name: supervision
+    type: string
 interface:
   inputs:
     epa10_level:
@@ -19,6 +47,28 @@ interface:
       type: string
     supervision:
       type: string
+ui:
+  title: Ai Gateway
+  subtitle: "PDC: EPA 10 AI Gateway typestate — route phase by current level to next phase and CPA 8 unlock"
+  icon: circle
+  route: /vigilance/mg/ai-gateway
+  steps:
+    - field: epa10_level
+      label: epa10 level
+      help: Enter epa10_level
+      widget: text
+      placeholder: null
+  result:
+    template: "activities: {{activities}} — cpa8_unlocked: {{cpa8_unlocked}} — description: {{description}} — next_phase: {{next_phase}} — phase: {{phase}} — supervision: {{supervision}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ai-gateway
+  cli: rsk mcg run ai-gateway
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -61,83 +111,121 @@ tree:
       type: return
       value:
         phase: FOUNDATION
-        description: "AI tool exposure and basic competency development"
+        description: AI tool exposure and basic competency development
         supervision: direct
         cpa8_unlocked: false
         next_phase: APPLICATION
-        activities: "observe AI tools, understand capabilities, basic terminology"
+        activities: observe AI tools, understand capabilities, basic terminology
     application_phase:
       type: return
       value:
         phase: APPLICATION
-        description: "Supervised AI implementation with validation training"
+        description: Supervised AI implementation with validation training
         supervision: supervised
         cpa8_unlocked: false
         next_phase: INTEGRATION
-        activities: "apply AI under guidance, validate outputs, learn limitations"
+        activities: apply AI under guidance, validate outputs, learn limitations
     integration_phase:
       type: return
       value:
         phase: INTEGRATION
-        description: "Independent AI workflow design and optimization"
+        description: Independent AI workflow design and optimization
         supervision: consultative
         cpa8_unlocked: false
         next_phase: INNOVATION
-        activities: "design AI workflows, optimize processes, cross-functional integration"
+        activities: design AI workflows, optimize processes, cross-functional integration
     innovation_phase:
       type: return
       value:
         phase: INNOVATION
-        description: "AI solution development and transformation leadership"
+        description: AI solution development and transformation leadership
         supervision: autonomous
         cpa8_unlocked: true
         next_phase: MASTERY
-        activities: "develop AI solutions, lead transformation, industry contribution"
+        activities: develop AI solutions, lead transformation, industry contribution
     mastery_achieved:
       type: return
       value:
         phase: MASTERY
-        description: "Full CPA 8 capability — AI-Enhanced Pharmacovigilance leadership"
+        description: Full CPA 8 capability — AI-Enhanced Pharmacovigilance leadership
         supervision: none
         cpa8_unlocked: true
         next_phase: null
-        activities: "cross-functional AI integration, thought leadership, paradigm creation"
+        activities: cross-functional AI integration, thought leadership, paradigm creation
 tests:
-- input:
-    epa10_level: 1
-  expect:
-    phase: FOUNDATION
-    cpa8_unlocked: false
-    next_phase: APPLICATION
-- input:
-    epa10_level: 2
-  expect:
-    phase: APPLICATION
-    cpa8_unlocked: false
-    next_phase: INTEGRATION
-- input:
-    epa10_level: 3
-  expect:
-    phase: INTEGRATION
-    cpa8_unlocked: false
-    next_phase: INNOVATION
-- input:
-    epa10_level: 4
-  expect:
-    phase: INNOVATION
-    cpa8_unlocked: true
-    next_phase: MASTERY
-- input:
-    epa10_level: 5
-  expect:
-    phase: MASTERY
-    cpa8_unlocked: true
-- input:
-    epa10_level: 0
-  expect:
-    phase: FOUNDATION
-    cpa8_unlocked: false
-- input: {}
-  expect:
-    phase: FOUNDATION
-    cpa8_unlocked: false
+  - input:
+      epa10_level: 1
+    expect:
+      phase: FOUNDATION
+      cpa8_unlocked: false
+      next_phase: APPLICATION
+  - input:
+      epa10_level: 2
+    expect:
+      phase: APPLICATION
+      cpa8_unlocked: false
+      next_phase: INTEGRATION
+  - input:
+      epa10_level: 3
+    expect:
+      phase: INTEGRATION
+      cpa8_unlocked: false
+      next_phase: INNOVATION
+  - input:
+      epa10_level: 4
+    expect:
+      phase: INNOVATION
+      cpa8_unlocked: true
+      next_phase: MASTERY
+  - input:
+      epa10_level: 5
+    expect:
+      phase: MASTERY
+      cpa8_unlocked: true
+  - input:
+      epa10_level: 0
+    expect:
+      phase: FOUNDATION
+      cpa8_unlocked: false
+  - input: {}
+    expect:
+      phase: FOUNDATION
+      cpa8_unlocked: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - activities
+    - cpa8_unlocked
+    - description
+    - next_phase
+    - phase
+    - supervision
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

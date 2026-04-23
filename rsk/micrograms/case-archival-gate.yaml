@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: case-archival-gate
-description: "Determine case archival status and retention requirements"
 version: 0.1.0
+description: Determine case archival status and retention requirements
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Case Archival Gate
+  subtitle: Determine case archival status and retention requirements
+  icon: circle
+  route: /vigilance/mg/case-archival-gate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/case-archival-gate
+  cli: rsk mcg run case-archival-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_case_closure
   nodes:
@@ -28,46 +57,78 @@ tree:
     ready_for_archival:
       type: return
       value:
-        archival_status: "approved_for_archival"
+        archival_status: approved_for_archival
         retention_years: 10
-        accessibility_level: "retrievable_upon_request"
+        accessibility_level: retrievable_upon_request
         archival_compliant: true
     not_ready_for_archival:
       type: return
       value:
-        archival_status: "pending"
+        archival_status: pending
         retention_years: null
-        accessibility_level: "active_file"
+        accessibility_level: active_file
         archival_compliant: true
     incomplete_documentation:
       type: return
       value:
-        archival_status: "deferred"
+        archival_status: deferred
         retention_years: null
-        accessibility_level: "active_file"
+        accessibility_level: active_file
         archival_compliant: false
 tests:
-- input:
-    case_processing_complete: true
-    years_since_report: 3
-    complete_case_file: true
-  expect:
-    archival_status: "approved_for_archival"
-    retention_years: 10
-    accessibility_level: "retrievable_upon_request"
-- input:
-    case_processing_complete: false
-  expect:
-    archival_status: "pending"
-    accessibility_level: "active_file"
-- input:
-    case_processing_complete: true
-    years_since_report: 3
-    complete_case_file: false
-  expect:
-    archival_status: "deferred"
-    archival_compliant: false
-- input: {}
-  expect:
-    archival_status: "pending"
-    archival_compliant: true
+  - input:
+      case_processing_complete: true
+      years_since_report: 3
+      complete_case_file: true
+    expect:
+      archival_status: approved_for_archival
+      retention_years: 10
+      accessibility_level: retrievable_upon_request
+  - input:
+      case_processing_complete: false
+    expect:
+      archival_status: pending
+      accessibility_level: active_file
+  - input:
+      case_processing_complete: true
+      years_since_report: 3
+      complete_case_file: false
+    expect:
+      archival_status: deferred
+      archival_compliant: false
+  - input: {}
+    expect:
+      archival_status: pending
+      archival_compliant: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,17 +1,62 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: crypto-signature-coverage
-description: 'Microgram signature coverage for immunity flywheel: GREEN (100%), YELLOW (partial), RED (none)'
 version: 1.0.0
-primitive_signature:
-  dominant: frequency
-  expression: "v(signed / total)"
-  primes: [frequency, quantity, boundary]
+description: "Microgram signature coverage for immunity flywheel: GREEN (100%), YELLOW (partial), RED (none)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: coverage_pct
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: coverage
+    type: string
+  - name: level
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
-    coverage_pct: { type: int, required: false }
+    coverage_pct:
+      type: int
+      required: false
   outputs:
-    coverage: { type: string }
-    level: { type: string }
-    action: { type: string }
+    coverage:
+      type: string
+    level:
+      type: string
+    action:
+      type: string
+ui:
+  title: Crypto Signature Coverage
+  subtitle: "Microgram signature coverage for immunity flywheel: GREEN (100%), YELLOW (partial), RED (none)"
+  icon: circle
+  route: /vigilance/mg/crypto-signature-coverage
+  steps:
+    - field: coverage_pct
+      label: coverage pct
+      help: Enter coverage_pct
+      widget: text
+      placeholder: null
+  result:
+    template: "coverage: {{coverage}} — level: {{level}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/crypto-signature-coverage
+  cli: rsk mcg run crypto-signature-coverage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_full
   nodes:
@@ -31,19 +76,78 @@ tree:
       false_next: none_signed
     full:
       type: return
-      value: { coverage: full, level: green, action: none }
+      value:
+        coverage: full
+        level: green
+        action: none
     partial:
       type: return
-      value: { coverage: partial, level: yellow, action: run_nv_sign_chain }
+      value:
+        coverage: partial
+        level: yellow
+        action: run_nv_sign_chain
     none_signed:
       type: return
-      value: { coverage: none, level: red, action: run_nv_sign_chain }
+      value:
+        coverage: none
+        level: red
+        action: run_nv_sign_chain
 tests:
-- input: { coverage_pct: 100 }
-  expect: { coverage: full, level: green, action: none }
-- input: { coverage_pct: 50 }
-  expect: { coverage: partial, level: yellow, action: run_nv_sign_chain }
-- input: { coverage_pct: 0 }
-  expect: { coverage: none, level: red, action: run_nv_sign_chain }
-- input: {}
-  expect: { coverage: none, level: red, action: run_nv_sign_chain }
+  - input:
+      coverage_pct: 100
+    expect:
+      coverage: full
+      level: green
+      action: none
+  - input:
+      coverage_pct: 50
+    expect:
+      coverage: partial
+      level: yellow
+      action: run_nv_sign_chain
+  - input:
+      coverage_pct: 0
+    expect:
+      coverage: none
+      level: red
+      action: run_nv_sign_chain
+  - input: {}
+    expect:
+      coverage: none
+      level: red
+      action: run_nv_sign_chain
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - coverage
+    - level
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

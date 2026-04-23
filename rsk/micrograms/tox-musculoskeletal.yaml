@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tox-musculoskeletal
-description: 'Musculoskeletal toxicity gate: cpk_ratio thresholds for bone'
 version: 0.1.0
+description: "Musculoskeletal toxicity gate: cpk_ratio thresholds for bone"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Tox Musculoskeletal
+  subtitle: "Musculoskeletal toxicity gate: cpk_ratio thresholds for bone"
+  icon: circle
+  route: /vigilance/mg/tox-musculoskeletal
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tox-musculoskeletal
+  cli: rsk mcg run tox-musculoskeletal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severe
   nodes:
@@ -40,73 +69,103 @@ tree:
       true_next: mild
       false_next: normal
 tests:
-- input:
-    cpk_ratio: 11
-  expect:
-    severity: severe
-    organ: musculoskeletal
-- input:
-    cpk_ratio: 5
-  expect:
-    organ: musculoskeletal
-    severity: mild
-- input:
-    cpk_ratio: 0
-  expect:
-    severity: normal
-    organ: musculoskeletal
-- input: {}
-  expect:
-    severity: normal
-    organ: musculoskeletal
-- input:
-    cpk_ratio: -1
-  expect:
-    target: bone
-    action: continue
-    organ: musculoskeletal
-    severity: normal
-- input:
-    cpk_ratio: 9
-  expect:
-    severity: mild
-    action: monitor_closely
-    target: bone
-    organ: musculoskeletal
-- input:
-    cpk_ratio: 1000
-  expect:
-    action: discontinue
-    severity: severe
-    target: bone
-    organ: musculoskeletal
-- input:
-    cpk_ratio: -1
-  expect:
-    action: continue
-    organ: musculoskeletal
-    severity: normal
-    target: bone
-- input:
-    cpk_ratio: 4
-  expect:
-    severity: normal
-    target: bone
-    organ: musculoskeletal
-    action: continue
-- input:
-    cpk_ratio: 6
-  expect:
-    severity: mild
-    action: monitor_closely
-    target: bone
-    organ: musculoskeletal
-- input:
-    cpk_ratio: 500
-  expect:
-    action: discontinue
-    severity: severe
-    organ: musculoskeletal
-    target: bone
-interface: null
-primitive_signature: null
+  - input:
+      cpk_ratio: 11
+    expect:
+      severity: severe
+      organ: musculoskeletal
+  - input:
+      cpk_ratio: 5
+    expect:
+      organ: musculoskeletal
+      severity: mild
+  - input:
+      cpk_ratio: 0
+    expect:
+      severity: normal
+      organ: musculoskeletal
+  - input: {}
+    expect:
+      severity: normal
+      organ: musculoskeletal
+  - input:
+      cpk_ratio: -1
+    expect:
+      target: bone
+      action: continue
+      organ: musculoskeletal
+      severity: normal
+  - input:
+      cpk_ratio: 9
+    expect:
+      severity: mild
+      action: monitor_closely
+      target: bone
+      organ: musculoskeletal
+  - input:
+      cpk_ratio: 1000
+    expect:
+      action: discontinue
+      severity: severe
+      target: bone
+      organ: musculoskeletal
+  - input:
+      cpk_ratio: -1
+    expect:
+      action: continue
+      organ: musculoskeletal
+      severity: normal
+      target: bone
+  - input:
+      cpk_ratio: 4
+    expect:
+      severity: normal
+      target: bone
+      organ: musculoskeletal
+      action: continue
+  - input:
+      cpk_ratio: 6
+    expect:
+      severity: mild
+      action: monitor_closely
+      target: bone
+      organ: musculoskeletal
+  - input:
+      cpk_ratio: 500
+    expect:
+      action: discontinue
+      severity: severe
+      organ: musculoskeletal
+      target: bone
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

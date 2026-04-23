@@ -1,6 +1,54 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-compliance-bridge
-description: 'Merges signal detection output (signal_detected, prr, classification) with case assessment output (serious, unexpected, report_type) into a unified compliance action. Bridges the signal path and case path into one verdict.'
 version: 0.1.0
+description: Merges signal detection output (signal_detected, prr, classification) with case assessment output (serious, unexpected, report_type) into a unified compliance action. Bridges the signal path and case path into one verdict.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: classification
+    type: string
+    required: false
+    description: ""
+  - name: days_from_awareness
+    type: int
+    required: false
+    description: ""
+  - name: report_type
+    type: string
+    required: false
+    description: ""
+  - name: serious
+    type: bool
+    required: false
+    description: ""
+  - name: signal_detected
+    type: bool
+    required: false
+    description: ""
+  - name: timeline
+    type: string
+    required: false
+    description: ""
+  - name: unexpected
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: compliance_action
+    type: string
+  - name: compliance_priority
+    type: string
+  - name: compliance_verdict
+    type: string
+  - name: requires_signal_review
+    type: bool
 interface:
   inputs:
     classification:
@@ -33,6 +81,58 @@ interface:
       type: string
     requires_signal_review:
       type: bool
+ui:
+  title: Signal Compliance Bridge
+  subtitle: Merges signal detection output (signal_detected, prr, classification) with case assessment output (serious, unexpected, report_type) into a unified compliance action. Bridges the signal path and case path into one verdict.
+  icon: activity
+  route: /vigilance/mg/signal-compliance-bridge
+  steps:
+    - field: classification
+      label: classification
+      help: Enter classification
+      widget: text
+      placeholder: null
+    - field: days_from_awareness
+      label: days from awareness
+      help: Enter days_from_awareness
+      widget: text
+      placeholder: null
+    - field: report_type
+      label: report type
+      help: Enter report_type
+      widget: text
+      placeholder: null
+    - field: serious
+      label: serious
+      help: Enter serious
+      widget: toggle
+      placeholder: null
+    - field: signal_detected
+      label: signal detected
+      help: Enter signal_detected
+      widget: toggle
+      placeholder: null
+    - field: timeline
+      label: timeline
+      help: Enter timeline
+      widget: text
+      placeholder: null
+    - field: unexpected
+      label: unexpected
+      help: Enter unexpected
+      widget: toggle
+      placeholder: null
+  result:
+    template: "compliance_action: {{compliance_action}} — compliance_priority: {{compliance_priority}} — compliance_verdict: {{compliance_verdict}} — requires_signal_review: {{requires_signal_review}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-compliance-bridge
+  cli: rsk mcg run signal-compliance-bridge
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signal_and_serious
   nodes:
@@ -76,113 +176,150 @@ tree:
       value:
         compliance_verdict: CRITICAL
         compliance_priority: P1
-        compliance_action: "Expedited report + signal review committee + benefit-risk re-evaluation"
+        compliance_action: Expedited report + signal review committee + benefit-risk re-evaluation
         requires_signal_review: true
     elevated_compliance:
       type: return
       value:
         compliance_verdict: ELEVATED
         compliance_priority: P2
-        compliance_action: "Expedited report + signal monitoring intensification"
+        compliance_action: Expedited report + signal monitoring intensification
         requires_signal_review: true
     signal_only:
       type: return
       value:
         compliance_verdict: SIGNAL_WATCH
         compliance_priority: P3
-        compliance_action: "Signal confirmed but case non-serious - add to signal tracking log"
+        compliance_action: Signal confirmed but case non-serious - add to signal tracking log
         requires_signal_review: true
     elevated_no_signal:
       type: return
       value:
         compliance_verdict: ELEVATED
         compliance_priority: P2
-        compliance_action: "Serious unexpected case without signal confirmation - expedited report + investigate signal gap"
+        compliance_action: Serious unexpected case without signal confirmation - expedited report + investigate signal gap
         requires_signal_review: false
     standard_compliance:
       type: return
       value:
         compliance_verdict: STANDARD
         compliance_priority: P3
-        compliance_action: "Serious expected case - periodic PSUR/DSUR reporting"
+        compliance_action: Serious expected case - periodic PSUR/DSUR reporting
         requires_signal_review: false
     routine_compliance:
       type: return
       value:
         compliance_verdict: ROUTINE
         compliance_priority: P4
-        compliance_action: "Non-serious case without signal - line listing only"
+        compliance_action: Non-serious case without signal - line listing only
         requires_signal_review: false
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-- name: signal + serious + unexpected = CRITICAL P1
-  input:
-    signal_detected: true
-    serious: true
-    unexpected: true
-    timeline: 7_CALENDAR_DAYS
-    report_type: IND_SAFETY
-    days_from_awareness: 7
-  expect:
-    compliance_verdict: CRITICAL
-    compliance_priority: P1
-    requires_signal_review: true
-- name: signal + serious + expected = ELEVATED P2
-  input:
-    signal_detected: true
-    serious: true
-    unexpected: false
-    timeline: PERIODIC
-    report_type: PSUR_DSUR
-    days_from_awareness: 90
-  expect:
-    compliance_verdict: ELEVATED
-    compliance_priority: P2
-    requires_signal_review: true
-- name: signal + non-serious = SIGNAL_WATCH P3
-  input:
-    signal_detected: true
-    serious: false
-    unexpected: true
-  expect:
-    compliance_verdict: SIGNAL_WATCH
-    compliance_priority: P3
-    requires_signal_review: true
-- name: no signal + serious + unexpected = ELEVATED P2
-  input:
-    signal_detected: false
-    serious: true
-    unexpected: true
-    timeline: 15_CALENDAR_DAYS
-    report_type: FIELD_ALERT
-  expect:
-    compliance_verdict: ELEVATED
-    compliance_priority: P2
-    requires_signal_review: false
-- name: no signal + serious + expected = STANDARD P3
-  input:
-    signal_detected: false
-    serious: true
-    unexpected: false
-  expect:
-    compliance_verdict: STANDARD
-    compliance_priority: P3
-    requires_signal_review: false
-- name: no signal + non-serious = ROUTINE P4
-  input:
-    signal_detected: false
-    serious: false
-  expect:
-    compliance_verdict: ROUTINE
-    compliance_priority: P4
-    requires_signal_review: false
-- name: null input defaults to routine
-  input: {}
-  expect:
-    compliance_verdict: ROUTINE
-    compliance_priority: P4
-    requires_signal_review: false
+  - name: signal + serious + unexpected = CRITICAL P1
+    input:
+      signal_detected: true
+      serious: true
+      unexpected: true
+      timeline: 7_CALENDAR_DAYS
+      report_type: IND_SAFETY
+      days_from_awareness: 7
+    expect:
+      compliance_verdict: CRITICAL
+      compliance_priority: P1
+      requires_signal_review: true
+  - name: signal + serious + expected = ELEVATED P2
+    input:
+      signal_detected: true
+      serious: true
+      unexpected: false
+      timeline: PERIODIC
+      report_type: PSUR_DSUR
+      days_from_awareness: 90
+    expect:
+      compliance_verdict: ELEVATED
+      compliance_priority: P2
+      requires_signal_review: true
+  - name: signal + non-serious = SIGNAL_WATCH P3
+    input:
+      signal_detected: true
+      serious: false
+      unexpected: true
+    expect:
+      compliance_verdict: SIGNAL_WATCH
+      compliance_priority: P3
+      requires_signal_review: true
+  - name: no signal + serious + unexpected = ELEVATED P2
+    input:
+      signal_detected: false
+      serious: true
+      unexpected: true
+      timeline: 15_CALENDAR_DAYS
+      report_type: FIELD_ALERT
+    expect:
+      compliance_verdict: ELEVATED
+      compliance_priority: P2
+      requires_signal_review: false
+  - name: no signal + serious + expected = STANDARD P3
+    input:
+      signal_detected: false
+      serious: true
+      unexpected: false
+    expect:
+      compliance_verdict: STANDARD
+      compliance_priority: P3
+      requires_signal_review: false
+  - name: no signal + non-serious = ROUTINE P4
+    input:
+      signal_detected: false
+      serious: false
+    expect:
+      compliance_verdict: ROUTINE
+      compliance_priority: P4
+      requires_signal_review: false
+  - name: null input defaults to routine
+    input: {}
+    expect:
+      compliance_verdict: ROUTINE
+      compliance_priority: P4
+      requires_signal_review: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - compliance_action
+    - compliance_priority
+    - compliance_verdict
+    - requires_signal_review
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

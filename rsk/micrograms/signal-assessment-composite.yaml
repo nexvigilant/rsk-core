@@ -1,6 +1,107 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-assessment-composite
-description: Combines PRR signal detection, Evans criteria, and trend analysis into composite signal confidence. Bridges prr-signal + evans-signal + signal-trend-detector outputs.
 version: 0.1.0
+description: Combines PRR signal detection, Evans criteria, and trend analysis into composite signal confidence. Bridges prr-signal + evans-signal + signal-trend-detector outputs.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: velocity
+    type: string
+    required: false
+    description: ""
+  - name: signal_detected
+    type: bool
+    required: false
+    description: ""
+  - name: trend
+    type: string
+    required: false
+    description: ""
+  - name: evans_signal
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: assessment
+    type: string
+  - name: signal_confidence
+    type: string
+  - name: urgency
+    type: string
+  - name: overall_signal
+    type: string
+interface:
+  inputs:
+    velocity:
+      type: string
+      required: false
+    signal_detected:
+      type: bool
+      required: false
+    trend:
+      type: string
+      required: false
+    evans_signal:
+      type: bool
+      required: false
+  outputs:
+    assessment:
+      type: string
+      required: false
+    signal_confidence:
+      type: string
+      required: false
+    urgency:
+      type: string
+      required: false
+    overall_signal:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Signal Assessment Composite
+  subtitle: Combines PRR signal detection, Evans criteria, and trend analysis into composite signal confidence. Bridges prr-signal + evans-signal + signal-trend-detector outputs.
+  icon: activity
+  route: /vigilance/mg/signal-assessment-composite
+  steps:
+    - field: velocity
+      label: velocity
+      help: Enter velocity
+      widget: text
+      placeholder: null
+    - field: signal_detected
+      label: signal detected
+      help: Enter signal_detected
+      widget: toggle
+      placeholder: null
+    - field: trend
+      label: trend
+      help: Enter trend
+      widget: text
+      placeholder: null
+    - field: evans_signal
+      label: evans signal
+      help: Enter evans_signal
+      widget: toggle
+      placeholder: null
+  result:
+    template: "assessment: {{assessment}} — signal_confidence: {{signal_confidence}} — urgency: {{urgency}} — overall_signal: {{overall_signal}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-assessment-composite
+  cli: rsk mcg run signal-assessment-composite
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_evans
   nodes:
@@ -96,135 +197,149 @@ tree:
       true_next: high_confidence_accelerating
       false_next: high_confidence_rising
 tests:
-- input:
-    velocity: RAPID
-    signal_detected: true
-    evans_signal: true
-    trend: RISING
-  expect:
-    urgency: CRITICAL
-    overall_signal: CONFIRMED
-    signal_confidence: VERY_HIGH
-- input:
-    signal_detected: true
-    trend: RISING
-    velocity: GRADUAL
-    evans_signal: true
-  expect:
-    urgency: HIGH
-    signal_confidence: HIGH
-    overall_signal: CONFIRMED
-- input:
-    signal_detected: true
-    trend: STABLE
-    evans_signal: true
-  expect:
-    urgency: MODERATE
-    signal_confidence: HIGH
-    overall_signal: CONFIRMED
-- input:
-    evans_signal: true
-    signal_detected: true
-    trend: DECLINING
-  expect:
-    signal_confidence: HIGH
-    overall_signal: CONFIRMED
-    urgency: MODERATE
-- input:
-    signal_detected: true
-    evans_signal: false
-    trend: RISING
-  expect:
-    overall_signal: PROBABLE
-    signal_confidence: MODERATE
-    urgency: MODERATE
-- input:
-    evans_signal: false
-    signal_detected: true
-    trend: STABLE
-  expect:
-    overall_signal: PROBABLE
-    urgency: LOW
-    signal_confidence: MODERATE
-- input:
-    evans_signal: false
-    signal_detected: false
-    trend: RISING
-  expect:
-    urgency: LOW
-    signal_confidence: LOW
-    overall_signal: POSSIBLE
-- input:
-    evans_signal: false
-    signal_detected: false
-    trend: STABLE
-  expect:
-    signal_confidence: NONE
-    overall_signal: NO_SIGNAL
-    urgency: NONE
-- input:
-    trend: DECLINING
-    evans_signal: false
-    signal_detected: false
-  expect:
-    signal_confidence: NONE
-    overall_signal: NO_SIGNAL
-    urgency: NONE
-- input: {}
-  expect:
-    overall_signal: NO_SIGNAL
-    urgency: NONE
-    assessment: No signal detected, no concerning trend
-    signal_confidence: NONE
-- input: {}
-  expect:
-    signal_confidence: NONE
-    overall_signal: NO_SIGNAL
-    assessment: No signal detected, no concerning trend
-    urgency: NONE
-- input: {}
-  expect:
-    overall_signal: NO_SIGNAL
-    urgency: NONE
-    assessment: No signal detected, no concerning trend
-    signal_confidence: NONE
-- input: {}
-  expect:
-    urgency: NONE
-    signal_confidence: NONE
-    overall_signal: NO_SIGNAL
-    assessment: No signal detected, no concerning trend
-- input: {}
-  expect:
-    overall_signal: NO_SIGNAL
-    signal_confidence: NONE
-    urgency: NONE
-    assessment: No signal detected, no concerning trend
-interface:
-  inputs:
-    velocity:
-      type: string
-      required: false
-    signal_detected:
-      type: bool
-      required: false
-    trend:
-      type: string
-      required: false
-    evans_signal:
-      type: bool
-      required: false
-  outputs:
-    assessment:
-      type: string
-      required: false
-    signal_confidence:
-      type: string
-      required: false
-    urgency:
-      type: string
-      required: false
-    overall_signal:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      velocity: RAPID
+      signal_detected: true
+      evans_signal: true
+      trend: RISING
+    expect:
+      urgency: CRITICAL
+      overall_signal: CONFIRMED
+      signal_confidence: VERY_HIGH
+  - input:
+      signal_detected: true
+      trend: RISING
+      velocity: GRADUAL
+      evans_signal: true
+    expect:
+      urgency: HIGH
+      signal_confidence: HIGH
+      overall_signal: CONFIRMED
+  - input:
+      signal_detected: true
+      trend: STABLE
+      evans_signal: true
+    expect:
+      urgency: MODERATE
+      signal_confidence: HIGH
+      overall_signal: CONFIRMED
+  - input:
+      evans_signal: true
+      signal_detected: true
+      trend: DECLINING
+    expect:
+      signal_confidence: HIGH
+      overall_signal: CONFIRMED
+      urgency: MODERATE
+  - input:
+      signal_detected: true
+      evans_signal: false
+      trend: RISING
+    expect:
+      overall_signal: PROBABLE
+      signal_confidence: MODERATE
+      urgency: MODERATE
+  - input:
+      evans_signal: false
+      signal_detected: true
+      trend: STABLE
+    expect:
+      overall_signal: PROBABLE
+      urgency: LOW
+      signal_confidence: MODERATE
+  - input:
+      evans_signal: false
+      signal_detected: false
+      trend: RISING
+    expect:
+      urgency: LOW
+      signal_confidence: LOW
+      overall_signal: POSSIBLE
+  - input:
+      evans_signal: false
+      signal_detected: false
+      trend: STABLE
+    expect:
+      signal_confidence: NONE
+      overall_signal: NO_SIGNAL
+      urgency: NONE
+  - input:
+      trend: DECLINING
+      evans_signal: false
+      signal_detected: false
+    expect:
+      signal_confidence: NONE
+      overall_signal: NO_SIGNAL
+      urgency: NONE
+  - input: {}
+    expect:
+      overall_signal: NO_SIGNAL
+      urgency: NONE
+      assessment: No signal detected, no concerning trend
+      signal_confidence: NONE
+  - input: {}
+    expect:
+      signal_confidence: NONE
+      overall_signal: NO_SIGNAL
+      assessment: No signal detected, no concerning trend
+      urgency: NONE
+  - input: {}
+    expect:
+      overall_signal: NO_SIGNAL
+      urgency: NONE
+      assessment: No signal detected, no concerning trend
+      signal_confidence: NONE
+  - input: {}
+    expect:
+      urgency: NONE
+      signal_confidence: NONE
+      overall_signal: NO_SIGNAL
+      assessment: No signal detected, no concerning trend
+  - input: {}
+    expect:
+      overall_signal: NO_SIGNAL
+      signal_confidence: NONE
+      urgency: NONE
+      assessment: No signal detected, no concerning trend
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - assessment
+    - signal_confidence
+    - urgency
+    - overall_signal
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

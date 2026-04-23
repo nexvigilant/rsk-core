@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-class-checkpoint-inhibitor-safety
-description: "Checkpoint inhibitor safety assessment. Evaluates immune-related adverse events (irAE), organ toxicity, and autoimmune activation."
 version: 0.1.0
+description: Checkpoint inhibitor safety assessment. Evaluates immune-related adverse events (irAE), organ toxicity, and autoimmune activation.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Class Checkpoint Inhibitor Safety
+  subtitle: Checkpoint inhibitor safety assessment. Evaluates immune-related adverse events (irAE), organ toxicity, and autoimmune activation.
+  icon: circle
+  route: /vigilance/mg/drug-class-checkpoint-inhibitor-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-class-checkpoint-inhibitor-safety
+  cli: rsk mcg run drug-class-checkpoint-inhibitor-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_autoimmune_disease
   nodes:
@@ -16,7 +45,7 @@ tree:
       value:
         risk_level: high
         relative_contraindication: true
-        message: "Active autoimmune disease; checkpoint inhibitor risk-benefit must be carefully assessed"
+        message: Active autoimmune disease; checkpoint inhibitor risk-benefit must be carefully assessed
     check_prior_iriae:
       type: condition
       variable: prior_grade3_iriae
@@ -29,7 +58,7 @@ tree:
       value:
         risk_level: high
         enhanced_monitoring: required
-        message: "Prior Grade 3+ irAE; enhanced immunological monitoring required"
+        message: Prior Grade 3+ irAE; enhanced immunological monitoring required
     check_organ_function:
       type: condition
       variable: baseline_alt_iu_l
@@ -42,7 +71,7 @@ tree:
       value:
         risk_level: moderate
         hepatic_monitoring: required
-        message: "Baseline ALT elevated; monitor closely for hepatotoxicity"
+        message: Baseline ALT elevated; monitor closely for hepatotoxicity
     check_cardiac:
       type: condition
       variable: ejection_fraction_percent
@@ -55,20 +84,76 @@ tree:
       value:
         risk_level: moderate
         cardiac_monitoring: required
-        message: "Reduced ejection fraction; monitor for myocarditis risk"
+        message: Reduced ejection fraction; monitor for myocarditis risk
     standard_dosing:
       type: return
       value:
         risk_level: low
-        message: "Standard checkpoint inhibitor dosing appropriate"
+        message: Standard checkpoint inhibitor dosing appropriate
 tests:
-  - input: { has_active_autoimmune_disease: true, prior_grade3_iriae: false, baseline_alt_iu_l: 100, ejection_fraction_percent: 50 }
-    expect: { risk_level: high, relative_contraindication: true }
-  - input: { has_active_autoimmune_disease: false, prior_grade3_iriae: true, baseline_alt_iu_l: 100, ejection_fraction_percent: 50 }
-    expect: { risk_level: high, enhanced_monitoring: required }
-  - input: { has_active_autoimmune_disease: false, prior_grade3_iriae: false, baseline_alt_iu_l: 350, ejection_fraction_percent: 50 }
-    expect: { risk_level: moderate, hepatic_monitoring: required }
-  - input: { has_active_autoimmune_disease: false, prior_grade3_iriae: false, baseline_alt_iu_l: 100, ejection_fraction_percent: 35 }
-    expect: { risk_level: moderate, cardiac_monitoring: required }
+  - input:
+      has_active_autoimmune_disease: true
+      prior_grade3_iriae: false
+      baseline_alt_iu_l: 100
+      ejection_fraction_percent: 50
+    expect:
+      risk_level: high
+      relative_contraindication: true
+  - input:
+      has_active_autoimmune_disease: false
+      prior_grade3_iriae: true
+      baseline_alt_iu_l: 100
+      ejection_fraction_percent: 50
+    expect:
+      risk_level: high
+      enhanced_monitoring: required
+  - input:
+      has_active_autoimmune_disease: false
+      prior_grade3_iriae: false
+      baseline_alt_iu_l: 350
+      ejection_fraction_percent: 50
+    expect:
+      risk_level: moderate
+      hepatic_monitoring: required
+  - input:
+      has_active_autoimmune_disease: false
+      prior_grade3_iriae: false
+      baseline_alt_iu_l: 100
+      ejection_fraction_percent: 35
+    expect:
+      risk_level: moderate
+      cardiac_monitoring: required
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

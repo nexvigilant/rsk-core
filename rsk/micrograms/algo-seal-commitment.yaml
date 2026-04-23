@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: algo-seal-commitment
-description: "Algorithm 11 (SEAL): Irreversible commitment gate. Checks prerequisites before applying ∝(DEFINE). Guards against premature SEAL and ensures PERSPECTIVE was applied first."
 version: 0.1.0
+description: "Algorithm 11 (SEAL): Irreversible commitment gate. Checks prerequisites before applying ∝(DEFINE). Guards against premature SEAL and ensures PERSPECTIVE was applied first."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: decision_defined
+    type: boolean
+    required: true
+    description: ""
+  - name: perspectives_checked
+    type: integer
+    required: true
+    description: ""
+  - name: evidence_sufficient
+    type: boolean
+    required: true
+    description: ""
+  - name: reversibility_cost
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: seal_verdict
+    type: string
+  - name: algorithm
+    type: string
 interface:
   inputs:
     decision_defined:
@@ -15,12 +47,53 @@ interface:
     reversibility_cost:
       type: string
       required: true
-      enum: [trivial, moderate, expensive, impossible]
+      enum:
+        - trivial
+        - moderate
+        - expensive
+        - impossible
   outputs:
     seal_verdict:
       type: string
     algorithm:
       type: string
+ui:
+  title: Algo Seal Commitment
+  subtitle: "Algorithm 11 (SEAL): Irreversible commitment gate. Checks prerequisites before applying ∝(DEFINE). Guards against premature SEAL and ensures PERSPECTIVE was applied first."
+  icon: circle
+  route: /vigilance/mg/algo-seal-commitment
+  steps:
+    - field: decision_defined
+      label: decision defined
+      help: Enter decision_defined
+      widget: toggle
+      placeholder: null
+    - field: perspectives_checked
+      label: perspectives checked
+      help: Enter perspectives_checked
+      widget: number
+      placeholder: null
+    - field: evidence_sufficient
+      label: evidence sufficient
+      help: Enter evidence_sufficient
+      widget: toggle
+      placeholder: null
+    - field: reversibility_cost
+      label: reversibility cost
+      help: Enter reversibility_cost
+      widget: text
+      placeholder: null
+  result:
+    template: "seal_verdict: {{seal_verdict}} — algorithm: {{algorithm}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/algo-seal-commitment
+  cli: rsk mcg run algo-seal-commitment
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_defined
   nodes:
@@ -108,27 +181,97 @@ tree:
       value:
         seal_verdict: SEAL
         algorithm: "SEAL: ∝(μ(ς → π(ς))) — commitment executed. Reversal possible but costly."
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-- input: { decision_defined: true, perspectives_checked: 3, evidence_sufficient: true, reversibility_cost: impossible }
-  expect: { seal_verdict: SEAL }
-- input: { decision_defined: true, perspectives_checked: 2, evidence_sufficient: true, reversibility_cost: moderate }
-  expect: { seal_verdict: SEAL }
-- input: { decision_defined: false, perspectives_checked: 3, evidence_sufficient: true, reversibility_cost: trivial }
-  expect: { seal_verdict: BLOCK }
-- input: { decision_defined: true, perspectives_checked: 0, evidence_sufficient: true, reversibility_cost: expensive }
-  expect: { seal_verdict: BLOCK }
-- input: { decision_defined: true, perspectives_checked: 1, evidence_sufficient: true, reversibility_cost: impossible }
-  expect: { seal_verdict: BLOCK }
-- input: { decision_defined: true, perspectives_checked: 1, evidence_sufficient: true, reversibility_cost: trivial }
-  expect: { seal_verdict: WARN_PROCEED }
-- input: { decision_defined: true, perspectives_checked: 3, evidence_sufficient: false, reversibility_cost: expensive }
-  expect: { seal_verdict: BLOCK }
-- input: { decision_defined: true, perspectives_checked: 1, evidence_sufficient: true, reversibility_cost: moderate }
-  expect: { seal_verdict: WARN_PROCEED }
-- input: {}
-  expect: { seal_verdict: BLOCK }
+  - input:
+      decision_defined: true
+      perspectives_checked: 3
+      evidence_sufficient: true
+      reversibility_cost: impossible
+    expect:
+      seal_verdict: SEAL
+  - input:
+      decision_defined: true
+      perspectives_checked: 2
+      evidence_sufficient: true
+      reversibility_cost: moderate
+    expect:
+      seal_verdict: SEAL
+  - input:
+      decision_defined: false
+      perspectives_checked: 3
+      evidence_sufficient: true
+      reversibility_cost: trivial
+    expect:
+      seal_verdict: BLOCK
+  - input:
+      decision_defined: true
+      perspectives_checked: 0
+      evidence_sufficient: true
+      reversibility_cost: expensive
+    expect:
+      seal_verdict: BLOCK
+  - input:
+      decision_defined: true
+      perspectives_checked: 1
+      evidence_sufficient: true
+      reversibility_cost: impossible
+    expect:
+      seal_verdict: BLOCK
+  - input:
+      decision_defined: true
+      perspectives_checked: 1
+      evidence_sufficient: true
+      reversibility_cost: trivial
+    expect:
+      seal_verdict: WARN_PROCEED
+  - input:
+      decision_defined: true
+      perspectives_checked: 3
+      evidence_sufficient: false
+      reversibility_cost: expensive
+    expect:
+      seal_verdict: BLOCK
+  - input:
+      decision_defined: true
+      perspectives_checked: 1
+      evidence_sufficient: true
+      reversibility_cost: moderate
+    expect:
+      seal_verdict: WARN_PROCEED
+  - input: {}
+    expect:
+      seal_verdict: BLOCK
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - seal_verdict
+    - algorithm
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

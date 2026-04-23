@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-recommend
-description: "Generate regulatory recommendations based on signal evaluation"
 version: 0.1.0
+description: Generate regulatory recommendations based on signal evaluation
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Signal Recommend
+  subtitle: Generate regulatory recommendations based on signal evaluation
+  icon: activity
+  route: /vigilance/mg/signal-recommend
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-recommend
+  cli: rsk mcg run signal-recommend
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_evaluation
   nodes:
@@ -15,37 +44,37 @@ tree:
       type: condition
       variable: causality_category
       operator: eq
-      value: "probable"
+      value: probable
       true_next: probable_recommendation
       false_next: check_possible
     check_possible:
       type: condition
       variable: causality_category
       operator: eq
-      value: "possible"
+      value: possible
       true_next: possible_recommendation
       false_next: unrelated_recommendation
     probable_recommendation:
       type: return
       value:
-        recommendation: "label_update_required"
-        action_type: "urgent"
+        recommendation: label_update_required
+        action_type: urgent
         risk_minimization_needed: true
-        communication_plan: "healthcare_provider_letter"
+        communication_plan: healthcare_provider_letter
         recommendation_compliant: true
     possible_recommendation:
       type: return
       value:
-        recommendation: "consider_label_update"
-        action_type: "routine"
+        recommendation: consider_label_update
+        action_type: routine
         risk_minimization_needed: true
-        communication_plan: "product_information_update"
+        communication_plan: product_information_update
         recommendation_compliant: true
     unrelated_recommendation:
       type: return
       value:
-        recommendation: "no_regulatory_action"
-        action_type: "none"
+        recommendation: no_regulatory_action
+        action_type: none
         risk_minimization_needed: false
         communication_plan: null
         recommendation_compliant: true
@@ -58,23 +87,61 @@ tree:
         communication_plan: null
         recommendation_compliant: false
 tests:
-- input:
-    causality_category: "probable"
-  expect:
-    recommendation: "label_update_required"
-    action_type: "urgent"
-    risk_minimization_needed: true
-- input:
-    causality_category: "possible"
-  expect:
-    recommendation: "consider_label_update"
-    action_type: "routine"
-- input:
-    causality_category: "unrelated"
-  expect:
-    recommendation: "no_regulatory_action"
-    action_type: "none"
-- input: {}
-  expect:
-    recommendation: null
-    recommendation_compliant: false
+  - input:
+      causality_category: probable
+    expect:
+      recommendation: label_update_required
+      action_type: urgent
+      risk_minimization_needed: true
+  - input:
+      causality_category: possible
+    expect:
+      recommendation: consider_label_update
+      action_type: routine
+  - input:
+      causality_category: unrelated
+    expect:
+      recommendation: no_regulatory_action
+      action_type: none
+  - input: {}
+    expect:
+      recommendation: null
+      recommendation_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

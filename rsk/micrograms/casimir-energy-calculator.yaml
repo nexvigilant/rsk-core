@@ -1,21 +1,64 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: casimir-energy-calculator
-description: "Computes Casimir extractable energy for parallel plate geometry. E/A = -π²ℏc / (720·d³). Routes by gap size to determine practical feasibility class. One-shot extraction only — reset cost ≥ yield."
 version: 0.1.0
+description: Computes Casimir extractable energy for parallel plate geometry. E/A = -π²ℏc / (720·d³). Routes by gap size to determine practical feasibility class. One-shot extraction only — reset cost ≥ yield.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: gap_nm
+    type: float
+    required: true
+    description: Plate separation in nanometers
+  - name: area_cm2
+    type: float
+    required: true
+    description: Plate area in square centimeters
+  - name: material
+    type: string
+    required: false
+    description: Plate material — affects reflectivity correction factor
+outputs:
+  - name: casimir_pressure_pa
+    type: float
+  - name: energy_per_area_j_m2
+    type: float
+  - name: total_energy_j
+    type: float
+  - name: feasibility_class
+    type: string
+  - name: reset_cost_note
+    type: string
+  - name: landauer_bits_equivalent
+    type: string
+  - name: material_correction
+    type: string
 interface:
   inputs:
     gap_nm:
       type: float
       required: true
-      description: "Plate separation in nanometers"
+      description: Plate separation in nanometers
     area_cm2:
       type: float
       required: true
-      description: "Plate area in square centimeters"
+      description: Plate area in square centimeters
     material:
       type: string
       required: false
-      enum: [ideal_conductor, gold, silicon, graphene, metamaterial]
-      description: "Plate material — affects reflectivity correction factor"
+      enum:
+        - ideal_conductor
+        - gold
+        - silicon
+        - graphene
+        - metamaterial
+      description: Plate material — affects reflectivity correction factor
   outputs:
     casimir_pressure_pa:
       type: float
@@ -31,10 +74,41 @@ interface:
       type: string
     material_correction:
       type: string
+ui:
+  title: Casimir Energy Calculator
+  subtitle: Computes Casimir extractable energy for parallel plate geometry. E/A = -π²ℏc / (720·d³). Routes by gap size to determine practical feasibility class. One-shot extraction only — reset cost ≥ yield.
+  icon: circle
+  route: /vigilance/mg/casimir-energy-calculator
+  steps:
+    - field: gap_nm
+      label: gap nm
+      help: Plate separation in nanometers
+      widget: text
+      placeholder: null
+    - field: area_cm2
+      label: area cm2
+      help: Plate area in square centimeters
+      widget: text
+      placeholder: null
+    - field: material
+      label: material
+      help: Plate material — affects reflectivity correction factor
+      widget: text
+      placeholder: null
+  result:
+    template: "casimir_pressure_pa: {{casimir_pressure_pa}} — energy_per_area_j_m2: {{energy_per_area_j_m2}} — total_energy_j: {{total_energy_j}} — feasibility_class: {{feasibility_class}} — reset_cost_note: {{reset_cost_note}} — landauer_bits_equivalent: {{landauer_bits_equivalent}} — material_correction: {{material_correction}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/casimir-energy-calculator
+  cli: rsk mcg run casimir-energy-calculator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_gap_sub_nm
   nodes:
-    # Gate: reject unphysical gaps
     check_gap_sub_nm:
       type: condition
       variable: gap_nm
@@ -42,8 +116,6 @@ tree:
       value: 0.1
       true_next: unphysical
       false_next: check_gap_nano
-
-    # Sub-10nm: gigapascal regime
     check_gap_nano:
       type: condition
       variable: gap_nm
@@ -51,8 +123,6 @@ tree:
       value: 10
       true_next: nano_regime
       false_next: check_gap_micro
-
-    # 10-100nm: measurable regime
     check_gap_micro:
       type: condition
       variable: gap_nm
@@ -60,8 +130,6 @@ tree:
       value: 100
       true_next: micro_regime
       false_next: check_gap_submicron
-
-    # 100-1000nm: weak but detectable
     check_gap_submicron:
       type: condition
       variable: gap_nm
@@ -69,7 +137,6 @@ tree:
       value: 1000
       true_next: submicron_regime
       false_next: macro_regime
-
     unphysical:
       type: return
       value:
@@ -77,43 +144,39 @@ tree:
         energy_per_area_j_m2: 0
         total_energy_j: 0
         feasibility_class: unphysical
-        reset_cost_note: "Gap below atomic spacing — plates are in contact, no vacuum between them"
-        landauer_bits_equivalent: "N/A"
-        material_correction: "N/A — sub-atomic gap"
-
+        reset_cost_note: Gap below atomic spacing — plates are in contact, no vacuum between them
+        landauer_bits_equivalent: N/A
+        material_correction: N/A — sub-atomic gap
     nano_regime:
       type: return
       value:
-        casimir_pressure_pa: 1.3e9
-        energy_per_area_j_m2: 1.3e0
-        total_energy_j: 1.3e-4
+        casimir_pressure_pa: 1300000000
+        energy_per_area_j_m2: 1.3
+        total_energy_j: 0.00013
         feasibility_class: enormous_but_one_shot
         reset_cost_note: "Plates snap together with GPa force. Separation requires external energy ≥ Casimir yield. Net extractable: ≤ 0"
-        landauer_bits_equivalent: "~4.5e16 bits per cm² — but consumed in single collapse"
+        landauer_bits_equivalent: ~4.5e16 bits per cm² — but consumed in single collapse
         material_correction: "Ideal conductor assumed. Real metals: 0.7-0.95x correction via Lifshitz theory"
-
     micro_regime:
       type: return
       value:
-        casimir_pressure_pa: 1.3e3
-        energy_per_area_j_m2: 1.3e-4
+        casimir_pressure_pa: 1300
+        energy_per_area_j_m2: 0.00013
         total_energy_j: 1.3e-8
         feasibility_class: measurable_not_useful
-        reset_cost_note: "Detectable with AFM. One-shot yield ~13 nJ/cm². Thermal noise at 300K overwhelms signal"
-        landauer_bits_equivalent: "~4.5e12 bits per cm² — less than 1 megabyte equivalent"
-        material_correction: "Material reflectivity matters. Gold ~0.95x, silicon ~0.7x, graphene ~0.5x"
-
+        reset_cost_note: Detectable with AFM. One-shot yield ~13 nJ/cm². Thermal noise at 300K overwhelms signal
+        landauer_bits_equivalent: ~4.5e12 bits per cm² — less than 1 megabyte equivalent
+        material_correction: Material reflectivity matters. Gold ~0.95x, silicon ~0.7x, graphene ~0.5x
     submicron_regime:
       type: return
       value:
-        casimir_pressure_pa: 1.3e-3
+        casimir_pressure_pa: 0.0013
         energy_per_area_j_m2: 1.3e-10
         total_energy_j: 1.3e-14
         feasibility_class: negligible
-        reset_cost_note: "Femtojoule regime. Thermal fluctuations at 300K (~4e-21 J/mode) are 7 orders of magnitude larger per degree of freedom"
-        landauer_bits_equivalent: "~4.5e6 bits per cm² — about 500 kilobytes, once"
-        material_correction: "Surface roughness dominates over material choice at this scale"
-
+        reset_cost_note: Femtojoule regime. Thermal fluctuations at 300K (~4e-21 J/mode) are 7 orders of magnitude larger per degree of freedom
+        landauer_bits_equivalent: ~4.5e6 bits per cm² — about 500 kilobytes, once
+        material_correction: Surface roughness dominates over material choice at this scale
     macro_regime:
       type: return
       value:
@@ -121,45 +184,93 @@ tree:
         energy_per_area_j_m2: 1.3e-22
         total_energy_j: 1.3e-26
         feasibility_class: effectively_zero
-        reset_cost_note: "Below measurement threshold. Gravitational attraction between plates exceeds Casimir at ~mm gaps"
-        landauer_bits_equivalent: "< 1 bit per cm² — cannot erase a single bit"
-        material_correction: "Irrelevant — signal lost in thermal noise floor"
-
-primitive_signature:
-  dominant: 'N'
-  expression: 'N(∂(×(ς_vacuum, ς_mechanical))) — quantifying energy across vacuum-plate boundary'
-  primes: ['N', '∂', '×', 'ς']
-  arguments: []
-
+        reset_cost_note: Below measurement threshold. Gravitational attraction between plates exceeds Casimir at ~mm gaps
+        landauer_bits_equivalent: < 1 bit per cm² — cannot erase a single bit
+        material_correction: Irrelevant — signal lost in thermal noise floor
 tests:
-- name: "sub-atomic gap — unphysical"
-  input: { gap_nm: 0.05, area_cm2: 1.0 }
-  expect: { feasibility_class: unphysical }
-
-- name: "1nm gap — nano regime"
-  input: { gap_nm: 1.0, area_cm2: 1.0 }
-  expect: { feasibility_class: enormous_but_one_shot }
-
-- name: "5nm gap — still nano"
-  input: { gap_nm: 5.0, area_cm2: 1.0 }
-  expect: { feasibility_class: enormous_but_one_shot }
-
-- name: "50nm gap — measurable"
-  input: { gap_nm: 50.0, area_cm2: 1.0 }
-  expect: { feasibility_class: measurable_not_useful }
-
-- name: "500nm gap — negligible"
-  input: { gap_nm: 500.0, area_cm2: 1.0 }
-  expect: { feasibility_class: negligible }
-
-- name: "5000nm gap — effectively zero"
-  input: { gap_nm: 5000.0, area_cm2: 1.0 }
-  expect: { feasibility_class: effectively_zero }
-
-- name: "with gold material"
-  input: { gap_nm: 50.0, area_cm2: 2.0, material: gold }
-  expect: { feasibility_class: measurable_not_useful }
-
-- name: "null safety"
-  input: {}
-  expect: { feasibility_class: effectively_zero }
+  - name: sub-atomic gap — unphysical
+    input:
+      gap_nm: 0.05
+      area_cm2: 1
+    expect:
+      feasibility_class: unphysical
+  - name: 1nm gap — nano regime
+    input:
+      gap_nm: 1
+      area_cm2: 1
+    expect:
+      feasibility_class: enormous_but_one_shot
+  - name: 5nm gap — still nano
+    input:
+      gap_nm: 5
+      area_cm2: 1
+    expect:
+      feasibility_class: enormous_but_one_shot
+  - name: 50nm gap — measurable
+    input:
+      gap_nm: 50
+      area_cm2: 1
+    expect:
+      feasibility_class: measurable_not_useful
+  - name: 500nm gap — negligible
+    input:
+      gap_nm: 500
+      area_cm2: 1
+    expect:
+      feasibility_class: negligible
+  - name: 5000nm gap — effectively zero
+    input:
+      gap_nm: 5000
+      area_cm2: 1
+    expect:
+      feasibility_class: effectively_zero
+  - name: with gold material
+    input:
+      gap_nm: 50
+      area_cm2: 2
+      material: gold
+    expect:
+      feasibility_class: measurable_not_useful
+  - name: null safety
+    input: {}
+    expect:
+      feasibility_class: effectively_zero
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - casimir_pressure_pa
+    - energy_per_area_j_m2
+    - total_energy_j
+    - feasibility_class
+    - reset_cost_note
+    - landauer_bits_equivalent
+    - material_correction
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ep-02-signal-cycle-time
-description: "Signal management cycle time ≤7 days"
 version: 0.1.0
-
+description: Signal management cycle time ≤7 days
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Ep 02 Signal Cycle Time
+  subtitle: Signal management cycle time ≤7 days
+  icon: activity
+  route: /vigilance/mg/ep-02-signal-cycle-time
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ep-02-signal-cycle-time
+  cli: rsk mcg run ep-02-signal-cycle-time
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -15,22 +43,64 @@ tree:
     pass:
       type: return
       value:
-        metric: "ep-02-signal-cycle-time"
-        category: "Efficiency and Productivity"
+        metric: ep-02-signal-cycle-time
+        category: Efficiency and Productivity
         met: true
-        action: "on_track"
-        frequency: "daily"
+        action: on_track
+        frequency: daily
     fail:
       type: return
       value:
-        metric: "ep-02-signal-cycle-time"
-        category: "Efficiency and Productivity"
+        metric: ep-02-signal-cycle-time
+        category: Efficiency and Productivity
         met: false
-        action: "remediate"
-        frequency: "daily"
-
+        action: remediate
+        frequency: daily
 tests:
-  - input: {signal_cycle_days: 7}
-    expect: {met: true, category: "Efficiency and Productivity"}
+  - input:
+      signal_cycle_days: 7
+    expect:
+      met: true
+      category: Efficiency and Productivity
   - input: {}
-    expect: {met: false, category: "Efficiency and Productivity"}
+    expect:
+      met: false
+      category: Efficiency and Productivity
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

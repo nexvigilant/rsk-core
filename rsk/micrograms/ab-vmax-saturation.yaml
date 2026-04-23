@@ -1,6 +1,95 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ab-vmax-saturation
-description: 'Antibody: detects enzyme/receptor saturation using Michaelis-Menten model. When substrate concentration >> Km, response plateaus at Vmax. Additional dose yields no additional effect — wasted drug and increased toxicity risk.'
 version: 0.1.0
+description: "Antibody: detects enzyme/receptor saturation using Michaelis-Menten model. When substrate concentration >> Km, response plateaus at Vmax. Additional dose yields no additional effect — wasted drug and increased toxicity risk."
+family: antibody.chemistry
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - antibody
+inputs:
+  - name: substrate_concentration
+    type: number
+    required: true
+    description: ""
+  - name: saturation_threshold
+    type: number
+    required: true
+    description: ""
+  - name: km
+    type: number
+    required: true
+    description: ""
+outputs:
+  - name: threat
+    type: boolean
+  - name: saturation_ratio
+    type: string
+  - name: response
+    type: string
+  - name: predicted_effect_pct
+    type: string
+interface:
+  inputs:
+    substrate_concentration:
+      type: number
+      required: true
+    saturation_threshold:
+      type: number
+      required: true
+    km:
+      type: number
+      required: true
+  outputs:
+    threat:
+      type: boolean
+      required: false
+    saturation_ratio:
+      type: string
+      required: false
+    response:
+      type: string
+      required: false
+    predicted_effect_pct:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Vmax Saturation
+  subtitle: "Antibody: detects enzyme/receptor saturation using Michaelis-Menten model. When substrate concentration >> Km, response plateaus at Vmax. Additional dose yields no additional effect — wasted drug and increased toxicity risk."
+  icon: shield
+  route: /vigilance/mg/ab-vmax-saturation
+  steps:
+    - field: substrate_concentration
+      label: substrate concentration
+      help: Enter substrate_concentration
+      widget: number
+      placeholder: null
+    - field: saturation_threshold
+      label: saturation threshold
+      help: Enter saturation_threshold
+      widget: number
+      placeholder: null
+    - field: km
+      label: km
+      help: Enter km
+      widget: number
+      placeholder: null
+  result:
+    template: "threat: {{threat}} — saturation_ratio: {{saturation_ratio}} — response: {{response}} — predicted_effect_pct: {{predicted_effect_pct}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ab-vmax-saturation
+  cli: rsk mcg run ab-vmax-saturation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_km_valid
   nodes:
@@ -42,15 +131,15 @@ tree:
     saturated:
       type: return
       value:
-        predicted_effect_pct: '>90'
-        response: 'BLOCK: substrate >> Km — system saturated at Vmax. Additional dose yields no additional effect, only toxicity risk.'
+        predicted_effect_pct: ">90"
+        response: "BLOCK: substrate >> Km — system saturated at Vmax. Additional dose yields no additional effect, only toxicity risk."
         threat: true
         saturation_ratio: high
     approaching:
       type: return
       value:
         saturation_ratio: moderate
-        response: 'WARN: substrate elevated relative to Km — approaching saturation. Monitor dose-response linearity.'
+        response: "WARN: substrate elevated relative to Km — approaching saturation. Monitor dose-response linearity."
         predicted_effect_pct: 50-90
         threat: false
     check_sat_10x:
@@ -65,21 +154,21 @@ tree:
       value:
         saturation_ratio: undefined
         predicted_effect_pct: undefined
-        response: 'BLOCK: Km <= 0 — Michaelis constant must be positive'
+        response: "BLOCK: Km <= 0 — Michaelis constant must be positive"
         threat: true
     no_substrate:
       type: return
       value:
-        predicted_effect_pct: '0'
+        predicted_effect_pct: "0"
         threat: false
-        response: 'PASS: no substrate present — zero effect expected'
-        saturation_ratio: '0'
+        response: "PASS: no substrate present — zero effect expected"
+        saturation_ratio: "0"
     clean:
       type: return
       value:
         threat: false
         predicted_effect_pct: <50
-        response: 'PASS: substrate within linear range relative to Km'
+        response: "PASS: substrate within linear range relative to Km"
         saturation_ratio: low
     check_moderate_substrate:
       type: condition
@@ -131,398 +220,411 @@ tree:
       true_next: check_sat_5x
       false_next: check_sat_10x
 tests:
-- input:
-    km: 0
-    saturation_threshold: 10
-    substrate_concentration: 10
-  expect:
-    saturation_ratio: undefined
-    threat: true
-- input:
-    saturation_threshold: 10
-    substrate_concentration: 10
-    km: -1
-  expect:
-    threat: true
-- input:
-    saturation_threshold: 10
-    substrate_concentration: 0
-    km: 5
-  expect:
-    saturation_ratio: '0'
-    threat: false
-- input:
-    saturation_threshold: 10
-    substrate_concentration: 100
-    km: 1
-  expect:
-    threat: true
-    response: 'BLOCK: substrate >> Km — system saturated at Vmax. Additional dose yields no additional effect, only toxicity risk.'
-- input:
-    km: 100
-    saturation_threshold: 10
-    substrate_concentration: 1
-  expect:
-    threat: false
-    saturation_ratio: low
-- input:
-    substrate_concentration: 50
-    km: 0.5
-    saturation_threshold: 10
-  expect:
-    threat: true
-- input:
-    saturation_threshold: 10
-    substrate_concentration: 5
-    km: 0.5
-  expect:
-    saturation_ratio: moderate
-    threat: false
-- input:
-    substrate_concentration: 10
-    km: 10
-    saturation_threshold: 10
-  expect:
-    saturation_ratio: low
-    threat: false
-- input:
-    km: 50
-    substrate_concentration: 5
-    saturation_threshold: 10
-  expect:
-    threat: false
-    saturation_ratio: low
-- input:
-    km: 2
-  expect:
-    saturation_ratio: '0'
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-- input: {}
-  expect:
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    saturation_ratio: '0'
-- input: {}
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-    predicted_effect_pct: '0'
-    threat: false
-- input:
-    substrate_concentration: -1
-  expect:
-    threat: false
-    predicted_effect_pct: '0'
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    substrate_concentration: -1
-  expect:
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    predicted_effect_pct: '0'
-    threat: false
-- input: {}
-  expect:
-    saturation_ratio: '0'
-    threat: false
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    km: 9
-  expect:
-    predicted_effect_pct: '0'
-    threat: false
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-- input:
-    km: 11
-  expect:
-    predicted_effect_pct: '0'
-    threat: false
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    km: 1000
-  expect:
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    predicted_effect_pct: '0'
-    threat: false
-- input: {}
-  expect:
-    threat: false
-    saturation_ratio: '0'
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    km: 99
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    predicted_effect_pct: '0'
-    threat: false
-    saturation_ratio: '0'
-- input:
-    km: 101
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    predicted_effect_pct: '0'
-    saturation_ratio: '0'
-- input:
-    km: 10000
-  expect:
-    saturation_ratio: '0'
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-- input: {}
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-    threat: false
-    predicted_effect_pct: '0'
-- input:
-    substrate_concentration: -1
-  expect:
-    threat: false
-    saturation_ratio: '0'
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    substrate_concentration: -1
-  expect:
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    predicted_effect_pct: '0'
-- input: {}
-  expect:
-    saturation_ratio: '0'
-    threat: false
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    substrate_concentration: -1
-  expect:
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    saturation_ratio: '0'
-- input:
-    substrate_concentration: 9
-  expect:
-    predicted_effect_pct: <50
-    threat: false
-    response: 'PASS: substrate within linear range relative to Km'
-    saturation_ratio: low
-- input:
-    substrate_concentration: 11
-  expect:
-    predicted_effect_pct: <50
-    threat: false
-    response: 'PASS: substrate within linear range relative to Km'
-    saturation_ratio: low
-- input:
-    substrate_concentration: 1000
-  expect:
-    threat: false
-    predicted_effect_pct: <50
-    saturation_ratio: low
-    response: 'PASS: substrate within linear range relative to Km'
-- input: {}
-  expect:
-    threat: false
-    predicted_effect_pct: '0'
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    substrate_concentration: -1
-  expect:
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-    threat: false
-- input:
-    substrate_concentration: 99
-  expect:
-    threat: false
-    response: 'PASS: substrate within linear range relative to Km'
-    saturation_ratio: low
-    predicted_effect_pct: <50
-- input:
-    substrate_concentration: 101
-  expect:
-    response: 'PASS: substrate within linear range relative to Km'
-    threat: false
-    predicted_effect_pct: <50
-    saturation_ratio: low
-- input:
-    substrate_concentration: 10000
-  expect:
-    predicted_effect_pct: <50
-    saturation_ratio: low
-    threat: false
-    response: 'PASS: substrate within linear range relative to Km'
-- input: {}
-  expect:
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    saturation_ratio: '0'
-- input:
-    substrate_concentration: -1
-  expect:
-    predicted_effect_pct: '0'
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-- input:
-    substrate_concentration: -1
-  expect:
-    saturation_ratio: '0'
-    threat: false
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input: {}
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    saturation_ratio: '0'
-    predicted_effect_pct: '0'
-- input:
-    substrate_concentration: -1
-  expect:
-    threat: false
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-- input:
-    substrate_concentration: 2
-  expect:
-    threat: false
-    predicted_effect_pct: <50
-    response: 'PASS: substrate within linear range relative to Km'
-    saturation_ratio: low
-- input: {}
-  expect:
-    threat: false
-    predicted_effect_pct: '0'
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    substrate_concentration: -1
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    predicted_effect_pct: '0'
-    saturation_ratio: '0'
-- input:
-    substrate_concentration: 9
-  expect:
-    threat: false
-    predicted_effect_pct: <50
-    response: 'PASS: substrate within linear range relative to Km'
-    saturation_ratio: low
-- input:
-    substrate_concentration: 11
-  expect:
-    threat: false
-    response: 'PASS: substrate within linear range relative to Km'
-    saturation_ratio: low
-    predicted_effect_pct: <50
-- input:
-    substrate_concentration: 1000
-  expect:
-    saturation_ratio: low
-    predicted_effect_pct: <50
-    threat: false
-    response: 'PASS: substrate within linear range relative to Km'
-- input: {}
-  expect:
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    saturation_ratio: '0'
-- input:
-    km: 2
-  expect:
-    threat: false
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-    predicted_effect_pct: '0'
-- input: {}
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-    threat: false
-    predicted_effect_pct: '0'
-- input:
-    saturation_threshold: 0
-  expect:
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    threat: false
-    predicted_effect_pct: '0'
-- input:
-    saturation_threshold: -1
-  expect:
-    predicted_effect_pct: '0'
-    threat: false
-    saturation_ratio: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    saturation_threshold: 4
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-    threat: false
-    predicted_effect_pct: '0'
-- input:
-    saturation_threshold: 6
-  expect:
-    saturation_ratio: '0'
-    predicted_effect_pct: '0'
-    threat: false
-    response: 'PASS: no substrate present — zero effect expected'
-- input:
-    saturation_threshold: 500
-  expect:
-    predicted_effect_pct: '0'
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-    threat: false
-- input: {}
-  expect:
-    response: 'PASS: no substrate present — zero effect expected'
-    saturation_ratio: '0'
-    threat: false
-    predicted_effect_pct: '0'
-interface:
-  inputs:
-    substrate_concentration:
-      type: number
-      required: true
-    saturation_threshold:
-      type: number
-      required: true
-    km:
-      type: number
-      required: true
-  outputs:
-    threat:
-      type: boolean
-      required: false
-    saturation_ratio:
-      type: string
-      required: false
-    response:
-      type: string
-      required: false
-    predicted_effect_pct:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      km: 0
+      saturation_threshold: 10
+      substrate_concentration: 10
+    expect:
+      saturation_ratio: undefined
+      threat: true
+  - input:
+      saturation_threshold: 10
+      substrate_concentration: 10
+      km: -1
+    expect:
+      threat: true
+  - input:
+      saturation_threshold: 10
+      substrate_concentration: 0
+      km: 5
+    expect:
+      saturation_ratio: "0"
+      threat: false
+  - input:
+      saturation_threshold: 10
+      substrate_concentration: 100
+      km: 1
+    expect:
+      threat: true
+      response: "BLOCK: substrate >> Km — system saturated at Vmax. Additional dose yields no additional effect, only toxicity risk."
+  - input:
+      km: 100
+      saturation_threshold: 10
+      substrate_concentration: 1
+    expect:
+      threat: false
+      saturation_ratio: low
+  - input:
+      substrate_concentration: 50
+      km: 0.5
+      saturation_threshold: 10
+    expect:
+      threat: true
+  - input:
+      saturation_threshold: 10
+      substrate_concentration: 5
+      km: 0.5
+    expect:
+      saturation_ratio: moderate
+      threat: false
+  - input:
+      substrate_concentration: 10
+      km: 10
+      saturation_threshold: 10
+    expect:
+      saturation_ratio: low
+      threat: false
+  - input:
+      km: 50
+      substrate_concentration: 5
+      saturation_threshold: 10
+    expect:
+      threat: false
+      saturation_ratio: low
+  - input:
+      km: 2
+    expect:
+      saturation_ratio: "0"
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+  - input: {}
+    expect:
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      saturation_ratio: "0"
+  - input: {}
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+      predicted_effect_pct: "0"
+      threat: false
+  - input:
+      substrate_concentration: -1
+    expect:
+      threat: false
+      predicted_effect_pct: "0"
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      substrate_concentration: -1
+    expect:
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      predicted_effect_pct: "0"
+      threat: false
+  - input: {}
+    expect:
+      saturation_ratio: "0"
+      threat: false
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      km: 9
+    expect:
+      predicted_effect_pct: "0"
+      threat: false
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+  - input:
+      km: 11
+    expect:
+      predicted_effect_pct: "0"
+      threat: false
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      km: 1000
+    expect:
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      predicted_effect_pct: "0"
+      threat: false
+  - input: {}
+    expect:
+      threat: false
+      saturation_ratio: "0"
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      km: 99
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      predicted_effect_pct: "0"
+      threat: false
+      saturation_ratio: "0"
+  - input:
+      km: 101
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      predicted_effect_pct: "0"
+      saturation_ratio: "0"
+  - input:
+      km: 10000
+    expect:
+      saturation_ratio: "0"
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+  - input: {}
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+      threat: false
+      predicted_effect_pct: "0"
+  - input:
+      substrate_concentration: -1
+    expect:
+      threat: false
+      saturation_ratio: "0"
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      substrate_concentration: -1
+    expect:
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      predicted_effect_pct: "0"
+  - input: {}
+    expect:
+      saturation_ratio: "0"
+      threat: false
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      substrate_concentration: -1
+    expect:
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      saturation_ratio: "0"
+  - input:
+      substrate_concentration: 9
+    expect:
+      predicted_effect_pct: <50
+      threat: false
+      response: "PASS: substrate within linear range relative to Km"
+      saturation_ratio: low
+  - input:
+      substrate_concentration: 11
+    expect:
+      predicted_effect_pct: <50
+      threat: false
+      response: "PASS: substrate within linear range relative to Km"
+      saturation_ratio: low
+  - input:
+      substrate_concentration: 1000
+    expect:
+      threat: false
+      predicted_effect_pct: <50
+      saturation_ratio: low
+      response: "PASS: substrate within linear range relative to Km"
+  - input: {}
+    expect:
+      threat: false
+      predicted_effect_pct: "0"
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      substrate_concentration: -1
+    expect:
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+      threat: false
+  - input:
+      substrate_concentration: 99
+    expect:
+      threat: false
+      response: "PASS: substrate within linear range relative to Km"
+      saturation_ratio: low
+      predicted_effect_pct: <50
+  - input:
+      substrate_concentration: 101
+    expect:
+      response: "PASS: substrate within linear range relative to Km"
+      threat: false
+      predicted_effect_pct: <50
+      saturation_ratio: low
+  - input:
+      substrate_concentration: 10000
+    expect:
+      predicted_effect_pct: <50
+      saturation_ratio: low
+      threat: false
+      response: "PASS: substrate within linear range relative to Km"
+  - input: {}
+    expect:
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      saturation_ratio: "0"
+  - input:
+      substrate_concentration: -1
+    expect:
+      predicted_effect_pct: "0"
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+  - input:
+      substrate_concentration: -1
+    expect:
+      saturation_ratio: "0"
+      threat: false
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input: {}
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      saturation_ratio: "0"
+      predicted_effect_pct: "0"
+  - input:
+      substrate_concentration: -1
+    expect:
+      threat: false
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+  - input:
+      substrate_concentration: 2
+    expect:
+      threat: false
+      predicted_effect_pct: <50
+      response: "PASS: substrate within linear range relative to Km"
+      saturation_ratio: low
+  - input: {}
+    expect:
+      threat: false
+      predicted_effect_pct: "0"
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      substrate_concentration: -1
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      predicted_effect_pct: "0"
+      saturation_ratio: "0"
+  - input:
+      substrate_concentration: 9
+    expect:
+      threat: false
+      predicted_effect_pct: <50
+      response: "PASS: substrate within linear range relative to Km"
+      saturation_ratio: low
+  - input:
+      substrate_concentration: 11
+    expect:
+      threat: false
+      response: "PASS: substrate within linear range relative to Km"
+      saturation_ratio: low
+      predicted_effect_pct: <50
+  - input:
+      substrate_concentration: 1000
+    expect:
+      saturation_ratio: low
+      predicted_effect_pct: <50
+      threat: false
+      response: "PASS: substrate within linear range relative to Km"
+  - input: {}
+    expect:
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      saturation_ratio: "0"
+  - input:
+      km: 2
+    expect:
+      threat: false
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+      predicted_effect_pct: "0"
+  - input: {}
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+      threat: false
+      predicted_effect_pct: "0"
+  - input:
+      saturation_threshold: 0
+    expect:
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      threat: false
+      predicted_effect_pct: "0"
+  - input:
+      saturation_threshold: -1
+    expect:
+      predicted_effect_pct: "0"
+      threat: false
+      saturation_ratio: "0"
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      saturation_threshold: 4
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+      threat: false
+      predicted_effect_pct: "0"
+  - input:
+      saturation_threshold: 6
+    expect:
+      saturation_ratio: "0"
+      predicted_effect_pct: "0"
+      threat: false
+      response: "PASS: no substrate present — zero effect expected"
+  - input:
+      saturation_threshold: 500
+    expect:
+      predicted_effect_pct: "0"
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+      threat: false
+  - input: {}
+    expect:
+      response: "PASS: no substrate present — zero effect expected"
+      saturation_ratio: "0"
+      threat: false
+      predicted_effect_pct: "0"
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - threat
+    - saturation_ratio
+    - response
+    - predicted_effect_pct
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: antibody.chemistry
+  log_level: info
+governance:
+  sop_ref: SOP-CHEM-001
+  regulatory_ref: []
+  harm_types:
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - conservation
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: global-health-system
-description: "Domain 13: Route to healthcare system model and PV integration approach by region — developed, emerging, resource-constrained."
 version: 0.1.0
+description: "Domain 13: Route to healthcare system model and PV integration approach by region — developed, emerging, resource-constrained."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: market_type
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: ai_opportunity
+    type: string
+  - name: approach
+    type: string
+  - name: challenges
+    type: string
+  - name: cultural
+    type: string
+  - name: examples
+    type: string
+  - name: market
+    type: string
+  - name: pv_integration
+    type: string
+  - name: regulatory
+    type: string
 interface:
   inputs:
     market_type:
@@ -23,6 +55,28 @@ interface:
       type: string
     regulatory:
       type: string
+ui:
+  title: Global Health System
+  subtitle: "Domain 13: Route to healthcare system model and PV integration approach by region — developed, emerging, resource-constrained."
+  icon: circle
+  route: /vigilance/mg/global-health-system
+  steps:
+    - field: market_type
+      label: market type
+      help: Enter market_type
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_opportunity: {{ai_opportunity}} — approach: {{approach}} — challenges: {{challenges}} — cultural: {{cultural}} — examples: {{examples}} — market: {{market}} — pv_integration: {{pv_integration}} — regulatory: {{regulatory}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/global-health-system
+  cli: rsk mcg run global-health-system
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_developed
   nodes:
@@ -51,52 +105,92 @@ tree:
       type: return
       value:
         market: DEVELOPED
-        examples: "US, EU, Japan, Canada, Australia"
-        pv_integration: "comprehensive post-marketing surveillance, EHR integration, advanced analytics"
-        regulatory: "FDA, EMA, PMDA, TGA — mature frameworks with AI guidance"
-        challenges: "system complexity, interoperability, alert fatigue, cost pressure"
-        ai_opportunity: "real-time EHR monitoring, claims data mining, predictive risk models"
-        cultural: "evidence-driven, patient autonomy, informed consent emphasis"
+        examples: US, EU, Japan, Canada, Australia
+        pv_integration: comprehensive post-marketing surveillance, EHR integration, advanced analytics
+        regulatory: FDA, EMA, PMDA, TGA — mature frameworks with AI guidance
+        challenges: system complexity, interoperability, alert fatigue, cost pressure
+        ai_opportunity: real-time EHR monitoring, claims data mining, predictive risk models
+        cultural: evidence-driven, patient autonomy, informed consent emphasis
     emerging:
       type: return
       value:
         market: EMERGING
-        examples: "China, India, Brazil, Russia, Mexico, South Africa"
-        pv_integration: "growing surveillance infrastructure, regulatory capacity building, partnership models"
-        regulatory: "NMPA, CDSCO, ANVISA — evolving frameworks, harmonization with ICH"
-        challenges: "infrastructure gaps, reporting culture, workforce development, data quality"
-        ai_opportunity: "leapfrog technology adoption, mobile health, scalable cloud solutions"
-        cultural: "collective decision-making common, traditional medicine integration, family involvement"
+        examples: China, India, Brazil, Russia, Mexico, South Africa
+        pv_integration: growing surveillance infrastructure, regulatory capacity building, partnership models
+        regulatory: NMPA, CDSCO, ANVISA — evolving frameworks, harmonization with ICH
+        challenges: infrastructure gaps, reporting culture, workforce development, data quality
+        ai_opportunity: leapfrog technology adoption, mobile health, scalable cloud solutions
+        cultural: collective decision-making common, traditional medicine integration, family involvement
     resource_constrained:
       type: return
       value:
         market: RESOURCE_CONSTRAINED
-        examples: "sub-Saharan Africa, parts of SE Asia, Pacific Islands"
-        pv_integration: "basic surveillance, WHO support, NGO partnerships, capacity building focus"
-        regulatory: "national PV centers developing, WHO Programme member, limited resources"
-        challenges: "infrastructure limitations, workforce shortage, competing health priorities, access barriers"
-        ai_opportunity: "mobile-first solutions, offline-capable tools, simplified reporting, automated triage"
-        cultural: "community health models, traditional healers, oral culture, trust building essential"
+        examples: sub-Saharan Africa, parts of SE Asia, Pacific Islands
+        pv_integration: basic surveillance, WHO support, NGO partnerships, capacity building focus
+        regulatory: national PV centers developing, WHO Programme member, limited resources
+        challenges: infrastructure limitations, workforce shortage, competing health priorities, access barriers
+        ai_opportunity: mobile-first solutions, offline-capable tools, simplified reporting, automated triage
+        cultural: community health models, traditional healers, oral culture, trust building essential
     general_approach:
       type: return
       value:
         market: GENERAL
-        approach: "assess local infrastructure, identify partnership opportunities, adapt to regulatory maturity"
-        ai_opportunity: "scalable solutions appropriate to local capability and infrastructure"
+        approach: assess local infrastructure, identify partnership opportunities, adapt to regulatory maturity
+        ai_opportunity: scalable solutions appropriate to local capability and infrastructure
 tests:
-- input:
-    market_type: developed
-  expect:
-    market: DEVELOPED
-    cultural: "evidence-driven, patient autonomy, informed consent emphasis"
-- input:
-    market_type: emerging
-  expect:
-    market: EMERGING
-- input:
-    market_type: resource_constrained
-  expect:
-    market: RESOURCE_CONSTRAINED
-- input: {}
-  expect:
-    market: GENERAL
+  - input:
+      market_type: developed
+    expect:
+      market: DEVELOPED
+      cultural: evidence-driven, patient autonomy, informed consent emphasis
+  - input:
+      market_type: emerging
+    expect:
+      market: EMERGING
+  - input:
+      market_type: resource_constrained
+    expect:
+      market: RESOURCE_CONSTRAINED
+  - input: {}
+    expect:
+      market: GENERAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_opportunity
+    - approach
+    - challenges
+    - cultural
+    - examples
+    - market
+    - pv_integration
+    - regulatory
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

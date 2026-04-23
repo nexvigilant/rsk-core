@@ -1,36 +1,84 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: motor-fault-detector
-description: "Detects motor/actuator faults: overcurrent, overtemp, stall, encoder loss, phase imbalance. Routes to protection action. Safety-critical — false negatives kill motors, false positives lose a limb."
 version: 0.1.0
+description: "Detects motor/actuator faults: overcurrent, overtemp, stall, encoder loss, phase imbalance. Routes to protection action. Safety-critical — false negatives kill motors, false positives lose a limb."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: phase_current_a
+    type: float
+    required: true
+    description: RMS phase current in amps
+  - name: rated_current_a
+    type: float
+    required: false
+    description: Motor rated continuous current (default 20A)
+  - name: winding_temp_c
+    type: float
+    required: false
+    description: Motor winding temperature in Celsius
+  - name: rpm
+    type: float
+    required: false
+    description: Current motor speed in RPM
+  - name: commanded_rpm
+    type: float
+    required: false
+    description: Commanded target RPM
+  - name: encoder_valid
+    type: boolean
+    required: false
+    description: Whether encoder feedback is present and valid
+  - name: phase_balance_pct
+    type: float
+    required: false
+    description: Phase current balance (100% = perfect, <85% = imbalance)
+outputs:
+  - name: fault
+    type: string
+  - name: severity
+    type: string
+  - name: action
+    type: string
+  - name: rationale
+    type: string
 interface:
   inputs:
     phase_current_a:
       type: float
       required: true
-      description: "RMS phase current in amps"
+      description: RMS phase current in amps
     rated_current_a:
       type: float
       required: false
-      description: "Motor rated continuous current (default 20A)"
+      description: Motor rated continuous current (default 20A)
     winding_temp_c:
       type: float
       required: false
-      description: "Motor winding temperature in Celsius"
+      description: Motor winding temperature in Celsius
     rpm:
       type: float
       required: false
-      description: "Current motor speed in RPM"
+      description: Current motor speed in RPM
     commanded_rpm:
       type: float
       required: false
-      description: "Commanded target RPM"
+      description: Commanded target RPM
     encoder_valid:
       type: boolean
       required: false
-      description: "Whether encoder feedback is present and valid"
+      description: Whether encoder feedback is present and valid
     phase_balance_pct:
       type: float
       required: false
-      description: "Phase current balance (100% = perfect, <85% = imbalance)"
+      description: Phase current balance (100% = perfect, <85% = imbalance)
   outputs:
     fault:
       type: string
@@ -40,10 +88,61 @@ interface:
       type: string
     rationale:
       type: string
+ui:
+  title: Motor Fault Detector
+  subtitle: "Detects motor/actuator faults: overcurrent, overtemp, stall, encoder loss, phase imbalance. Routes to protection action. Safety-critical — false negatives kill motors, false positives lose a limb."
+  icon: circle
+  route: /vigilance/mg/motor-fault-detector
+  steps:
+    - field: phase_current_a
+      label: phase current a
+      help: RMS phase current in amps
+      widget: text
+      placeholder: null
+    - field: rated_current_a
+      label: rated current a
+      help: Motor rated continuous current (default 20A)
+      widget: text
+      placeholder: null
+    - field: winding_temp_c
+      label: winding temp c
+      help: Motor winding temperature in Celsius
+      widget: text
+      placeholder: null
+    - field: rpm
+      label: rpm
+      help: Current motor speed in RPM
+      widget: text
+      placeholder: null
+    - field: commanded_rpm
+      label: commanded rpm
+      help: Commanded target RPM
+      widget: text
+      placeholder: null
+    - field: encoder_valid
+      label: encoder valid
+      help: Whether encoder feedback is present and valid
+      widget: toggle
+      placeholder: null
+    - field: phase_balance_pct
+      label: phase balance pct
+      help: Phase current balance (100% = perfect, <85% = imbalance)
+      widget: text
+      placeholder: null
+  result:
+    template: "fault: {{fault}} — severity: {{severity}} — action: {{action}} — rationale: {{rationale}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/motor-fault-detector
+  cli: rsk mcg run motor-fault-detector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_winding_temp
   nodes:
-    # Gate 1: Winding overtemp (most urgent — permanent damage)
     check_winding_temp:
       type: condition
       variable: winding_temp_c
@@ -51,7 +150,6 @@ tree:
       value: 150
       true_next: winding_critical
       false_next: check_winding_warn
-
     check_winding_warn:
       type: condition
       variable: winding_temp_c
@@ -59,8 +157,6 @@ tree:
       value: 120
       true_next: winding_warning
       false_next: check_overcurrent
-
-    # Gate 2: Overcurrent
     check_overcurrent:
       type: condition
       variable: phase_current_a
@@ -68,7 +164,6 @@ tree:
       value: 40
       true_next: overcurrent_critical
       false_next: check_overcurrent_warn
-
     check_overcurrent_warn:
       type: condition
       variable: rated_current_a
@@ -76,7 +171,6 @@ tree:
       value: null
       true_next: check_overcurrent_ratio
       false_next: check_encoder
-
     check_overcurrent_ratio:
       type: condition
       variable: phase_current_a
@@ -84,8 +178,6 @@ tree:
       value: 30
       true_next: overcurrent_warning
       false_next: check_encoder
-
-    # Gate 3: Encoder loss
     check_encoder:
       type: condition
       variable: encoder_valid
@@ -93,8 +185,6 @@ tree:
       value: false
       true_next: encoder_fault
       false_next: check_stall
-
-    # Gate 4: Stall detection (high current + zero RPM)
     check_stall:
       type: condition
       variable: rpm
@@ -102,7 +192,6 @@ tree:
       value: 10
       true_next: check_stall_current
       false_next: check_phase_balance
-
     check_stall_current:
       type: condition
       variable: phase_current_a
@@ -110,8 +199,6 @@ tree:
       value: 15
       true_next: stall_detected
       false_next: check_phase_balance
-
-    # Gate 5: Phase imbalance
     check_phase_balance:
       type: condition
       variable: phase_balance_pct
@@ -119,111 +206,167 @@ tree:
       value: 85
       true_next: phase_imbalance
       false_next: nominal
-
-    # Terminal nodes
     winding_critical:
       type: return
       value:
-        fault: "winding_overtemp_critical"
-        severity: "emergency"
-        action: "IMMEDIATE motor shutdown. Winding insulation degrades above 155°C (Class F). Permanent demagnetization of NdFeB above 150°C. Do NOT restart until below 80°C."
+        fault: winding_overtemp_critical
+        severity: emergency
+        action: IMMEDIATE motor shutdown. Winding insulation degrades above 155°C (Class F). Permanent demagnetization of NdFeB above 150°C. Do NOT restart until below 80°C.
         rationale: "Winding >150°C: insulation breakdown, irreversible magnet damage, fire risk from varnish ignition."
-
     winding_warning:
       type: return
       value:
-        fault: "winding_overtemp_warning"
-        severity: "warning"
-        action: "Derate motor to 50% rated torque. Increase cooling. Monitor trend — if still rising at 1°C/min, shut down at 140°C."
+        fault: winding_overtemp_warning
+        severity: warning
+        action: Derate motor to 50% rated torque. Increase cooling. Monitor trend — if still rising at 1°C/min, shut down at 140°C.
         rationale: "Winding 120-150°C: approaching insulation class limit. Derate reduces I²R heating. Reversible if caught here."
-
     overcurrent_critical:
       type: return
       value:
-        fault: "overcurrent_critical"
-        severity: "critical"
-        action: "Immediate current limit to rated value. Check for mechanical jam, short circuit, or controller fault. If persists >2s, disconnect motor."
+        fault: overcurrent_critical
+        severity: critical
+        action: Immediate current limit to rated value. Check for mechanical jam, short circuit, or controller fault. If persists >2s, disconnect motor.
         rationale: "Phase current >40A (2× typical rated): MOSFET thermal stress, winding damage, possible mechanical lock."
-
     overcurrent_warning:
       type: return
       value:
-        fault: "overcurrent_warning"
-        severity: "warning"
-        action: "Log event. Check load — may be legitimate peak demand. If sustained >10s, derate. Verify ultracap SoC for burst capacity."
-        rationale: "Current above rated but below critical. May be normal peak (stair climb, recovery). Duration matters."
-
+        fault: overcurrent_warning
+        severity: warning
+        action: Log event. Check load — may be legitimate peak demand. If sustained >10s, derate. Verify ultracap SoC for burst capacity.
+        rationale: Current above rated but below critical. May be normal peak (stair climb, recovery). Duration matters.
     encoder_fault:
       type: return
       value:
-        fault: "encoder_loss"
-        severity: "critical"
-        action: "Switch to sensorless FOC (back-EMF estimation). Derate to 70% — sensorless has worse low-speed control. Flag for maintenance."
+        fault: encoder_loss
+        severity: critical
+        action: Switch to sensorless FOC (back-EMF estimation). Derate to 70% — sensorless has worse low-speed control. Flag for maintenance.
         rationale: "Encoder failure: lose position feedback. Sensorless fallback works above ~10% rated speed but zero-speed torque is unreliable."
-
     stall_detected:
       type: return
       value:
-        fault: "stall"
-        severity: "critical"
-        action: "Reduce current to holding torque (25% rated). Check for mechanical obstruction. If commanded RPM >0 and actual RPM <10 for >1s, the motor is stalled. I²R heating will destroy windings in seconds at full current."
-        rationale: "Zero RPM + high current = all electrical power becomes heat in the windings. No back-EMF cooling. Thermal runaway in 5-15 seconds at rated current."
-
+        fault: stall
+        severity: critical
+        action: Reduce current to holding torque (25% rated). Check for mechanical obstruction. If commanded RPM >0 and actual RPM <10 for >1s, the motor is stalled. I²R heating will destroy windings in seconds at full current.
+        rationale: Zero RPM + high current = all electrical power becomes heat in the windings. No back-EMF cooling. Thermal runaway in 5-15 seconds at rated current.
     phase_imbalance:
       type: return
       value:
-        fault: "phase_imbalance"
-        severity: "warning"
+        fault: phase_imbalance
+        severity: warning
         action: "Check phase wiring. Imbalance >15% indicates: open phase (broken wire), partial short (turn-to-turn), or controller MOSFET failure. Derate to 50%."
-        rationale: "Phase imbalance causes torque ripple, vibration, and uneven heating. One phase carrying excess current will fail first."
-
+        rationale: Phase imbalance causes torque ripple, vibration, and uneven heating. One phase carrying excess current will fail first.
     nominal:
       type: return
       value:
-        fault: "none"
-        severity: "nominal"
-        action: "All motor parameters within specification. Continue normal operation."
-        rationale: "Current, temperature, speed, encoder, and phase balance all nominal."
-
-primitive_signature:
-  dominant: '∂'
-  expression: '∂(ς_motor, N_threshold) — boundary detection on motor state against safety thresholds'
-  primes: ['∂', 'ς', 'N']
-  arguments: ['→', 'v']
-
+        fault: none
+        severity: nominal
+        action: All motor parameters within specification. Continue normal operation.
+        rationale: Current, temperature, speed, encoder, and phase balance all nominal.
 tests:
-- name: "winding critical — immediate shutdown"
-  input: { phase_current_a: 20, winding_temp_c: 160 }
-  expect: { fault: "winding_overtemp_critical", severity: "emergency" }
-
-- name: "winding warning — derate"
-  input: { phase_current_a: 20, winding_temp_c: 130 }
-  expect: { fault: "winding_overtemp_warning", severity: "warning" }
-
-- name: "overcurrent critical"
-  input: { phase_current_a: 45, winding_temp_c: 80 }
-  expect: { fault: "overcurrent_critical", severity: "critical" }
-
-- name: "overcurrent warning"
-  input: { phase_current_a: 35, winding_temp_c: 80, rated_current_a: 20 }
-  expect: { fault: "overcurrent_warning", severity: "warning" }
-
-- name: "encoder loss"
-  input: { phase_current_a: 15, winding_temp_c: 60, encoder_valid: false }
-  expect: { fault: "encoder_loss", severity: "critical" }
-
-- name: "stall detected"
-  input: { phase_current_a: 25, winding_temp_c: 80, encoder_valid: true, rpm: 2, commanded_rpm: 1000 }
-  expect: { fault: "stall", severity: "critical" }
-
-- name: "phase imbalance"
-  input: { phase_current_a: 15, winding_temp_c: 60, encoder_valid: true, rpm: 500, phase_balance_pct: 75 }
-  expect: { fault: "phase_imbalance", severity: "warning" }
-
-- name: "nominal"
-  input: { phase_current_a: 15, winding_temp_c: 60, encoder_valid: true, rpm: 500, phase_balance_pct: 95 }
-  expect: { fault: "none", severity: "nominal" }
-
-- name: "null safety"
-  input: {}
-  expect: { fault: "none" }
+  - name: winding critical — immediate shutdown
+    input:
+      phase_current_a: 20
+      winding_temp_c: 160
+    expect:
+      fault: winding_overtemp_critical
+      severity: emergency
+  - name: winding warning — derate
+    input:
+      phase_current_a: 20
+      winding_temp_c: 130
+    expect:
+      fault: winding_overtemp_warning
+      severity: warning
+  - name: overcurrent critical
+    input:
+      phase_current_a: 45
+      winding_temp_c: 80
+    expect:
+      fault: overcurrent_critical
+      severity: critical
+  - name: overcurrent warning
+    input:
+      phase_current_a: 35
+      winding_temp_c: 80
+      rated_current_a: 20
+    expect:
+      fault: overcurrent_warning
+      severity: warning
+  - name: encoder loss
+    input:
+      phase_current_a: 15
+      winding_temp_c: 60
+      encoder_valid: false
+    expect:
+      fault: encoder_loss
+      severity: critical
+  - name: stall detected
+    input:
+      phase_current_a: 25
+      winding_temp_c: 80
+      encoder_valid: true
+      rpm: 2
+      commanded_rpm: 1000
+    expect:
+      fault: stall
+      severity: critical
+  - name: phase imbalance
+    input:
+      phase_current_a: 15
+      winding_temp_c: 60
+      encoder_valid: true
+      rpm: 500
+      phase_balance_pct: 75
+    expect:
+      fault: phase_imbalance
+      severity: warning
+  - name: nominal
+    input:
+      phase_current_a: 15
+      winding_temp_c: 60
+      encoder_valid: true
+      rpm: 500
+      phase_balance_pct: 95
+    expect:
+      fault: none
+      severity: nominal
+  - name: null safety
+    input: {}
+    expect:
+      fault: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - fault
+    - severity
+    - action
+    - rationale
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

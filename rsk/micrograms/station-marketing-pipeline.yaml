@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-marketing-pipeline
-description: 'Route marketing funnel stages: discover to onboard conversion'
 version: 0.1.0
+description: "Route marketing funnel stages: discover to onboard conversion"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Marketing Pipeline
+  subtitle: "Route marketing funnel stages: discover to onboard conversion"
+  icon: circle
+  route: /vigilance/mg/station-marketing-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-marketing-pipeline
+  cli: rsk mcg run station-marketing-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_stage
   nodes:
@@ -40,35 +69,65 @@ tree:
       true_next: demo
       false_next: discover
 tests:
-- input:
-    funnel_stage: onboard
-  expect:
-    route: user_activation
-    action: activate
-    priority: high
-- input:
-    funnel_stage: demo
-  expect:
-    priority: moderate
-    route: demo_pipeline
-    action: engage
-- input:
-    funnel_stage: discover
-  expect:
-    priority: low
-    route: capability_display
-    action: attract
-- input: {}
-  expect:
-    priority: low
-    reason: User at discover stage — surface capabilities and courses
-    action: attract
-    route: capability_display
-- input: {}
-  expect:
-    priority: low
-    route: capability_display
-    reason: User at discover stage — surface capabilities and courses
-    action: attract
-interface: null
-primitive_signature: null
+  - input:
+      funnel_stage: onboard
+    expect:
+      route: user_activation
+      action: activate
+      priority: high
+  - input:
+      funnel_stage: demo
+    expect:
+      priority: moderate
+      route: demo_pipeline
+      action: engage
+  - input:
+      funnel_stage: discover
+    expect:
+      priority: low
+      route: capability_display
+      action: attract
+  - input: {}
+    expect:
+      priority: low
+      reason: User at discover stage — surface capabilities and courses
+      action: attract
+      route: capability_display
+  - input: {}
+    expect:
+      priority: low
+      route: capability_display
+      reason: User at discover stage — surface capabilities and courses
+      action: attract
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

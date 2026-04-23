@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-case-completeness
-description: 'ICH E2A Section IV: Case completeness scorer — assesses data quality for an expedited safety report across 5 data domains: patient, drug, event, outcome, reporter. Scores 0-5 and assigns completeness tier.'
 version: 1.0.0
+description: "ICH E2A Section IV: Case completeness scorer — assesses data quality for an expedited safety report across 5 data domains: patient, drug, event, outcome, reporter. Scores 0-5 and assigns completeness tier."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: drug_data_complete
+    type: bool
+    required: false
+    description: ""
+  - name: event_data_complete
+    type: bool
+    required: false
+    description: ""
+  - name: outcome_data_complete
+    type: bool
+    required: false
+    description: ""
+  - name: patient_data_complete
+    type: bool
+    required: false
+    description: ""
+  - name: reporter_data_complete
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: completeness_score
+    type: int
+  - name: completeness_tier
+    type: string
+  - name: narrative_ready
+    type: bool
+  - name: rationale
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     drug_data_complete:
@@ -29,6 +71,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2a Case Completeness
+  subtitle: "ICH E2A Section IV: Case completeness scorer — assesses data quality for an expedited safety report across 5 data domains: patient, drug, event, outcome, reporter. Scores 0-5 and assigns completeness tier."
+  icon: circle
+  route: /vigilance/mg/e2a-case-completeness
+  steps:
+    - field: drug_data_complete
+      label: drug data complete
+      help: Enter drug_data_complete
+      widget: toggle
+      placeholder: null
+    - field: event_data_complete
+      label: event data complete
+      help: Enter event_data_complete
+      widget: toggle
+      placeholder: null
+    - field: outcome_data_complete
+      label: outcome data complete
+      help: Enter outcome_data_complete
+      widget: toggle
+      placeholder: null
+    - field: patient_data_complete
+      label: patient data complete
+      help: Enter patient_data_complete
+      widget: toggle
+      placeholder: null
+    - field: reporter_data_complete
+      label: reporter data complete
+      help: Enter reporter_data_complete
+      widget: toggle
+      placeholder: null
+  result:
+    template: "completeness_score: {{completeness_score}} — completeness_tier: {{completeness_tier}} — narrative_ready: {{narrative_ready}} — rationale: {{rationale}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-case-completeness
+  cli: rsk mcg run e2a-case-completeness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_patient
   nodes:
@@ -190,125 +274,146 @@ tree:
         narrative_ready: false
         rationale: No data domains complete — cannot process this case
         regulatory_reference: ICH E2A Section III.A - Minimum criteria required for valid ICSR
-primitive_signature:
-  dominant: 'N'
-  expression: 'N — completeness score quantification (0-5 domains complete)'
-  primes: ['N', 'κ', 'σ']
-  arguments: ['patient_data_complete', 'drug_data_complete', 'event_data_complete', 'outcome_data_complete', 'reporter_data_complete']
-  chain_prediction: 'Feeds completeness_score and narrative_ready into case-quality-gate and workflow-router for processing priority assignment.'
 tests:
-# All 5 complete = score 5, COMPLETE
-- input:
-    patient_data_complete: true
-    drug_data_complete: true
-    event_data_complete: true
-    outcome_data_complete: true
-    reporter_data_complete: true
-  expect:
-    completeness_score: 5
-    completeness_tier: COMPLETE
-    narrative_ready: true
-    regulatory_reference: ICH E2A Section IV - Complete case data for expedited report
-# Missing reporter only = score 4, NEAR_COMPLETE
-- input:
-    patient_data_complete: true
-    drug_data_complete: true
-    event_data_complete: true
-    outcome_data_complete: true
-    reporter_data_complete: false
-  expect:
-    completeness_score: 4
-    completeness_tier: NEAR_COMPLETE
-    narrative_ready: true
-    regulatory_reference: ICH E2A Section IV - Near-complete case data
-# Missing outcome only = score 4, NEAR_COMPLETE
-- input:
-    patient_data_complete: true
-    drug_data_complete: true
-    event_data_complete: true
-    outcome_data_complete: false
-    reporter_data_complete: true
-  expect:
-    completeness_score: 4
-    completeness_tier: NEAR_COMPLETE
-    narrative_ready: true
-    regulatory_reference: ICH E2A Section IV - Near-complete case data
-# Missing event data = score 3, PARTIAL
-- input:
-    patient_data_complete: true
-    drug_data_complete: true
-    event_data_complete: false
-    outcome_data_complete: true
-    reporter_data_complete: true
-  expect:
-    completeness_score: 3
-    completeness_tier: PARTIAL
-    narrative_ready: false
-    regulatory_reference: ICH E2A Section IV - Partial case data, follow-up required
-# Missing drug data = score 3, PARTIAL
-- input:
-    patient_data_complete: true
-    drug_data_complete: false
-    event_data_complete: true
-    outcome_data_complete: true
-    reporter_data_complete: true
-  expect:
-    completeness_score: 3
-    completeness_tier: PARTIAL
-    narrative_ready: false
-    regulatory_reference: ICH E2A Section IV - Partial case data, follow-up required
-# Only patient + drug = score 2, MINIMAL
-- input:
-    patient_data_complete: true
-    drug_data_complete: true
-    event_data_complete: false
-    outcome_data_complete: false
-    reporter_data_complete: false
-  expect:
-    completeness_score: 2
-    completeness_tier: MINIMAL
-    narrative_ready: false
-    regulatory_reference: ICH E2A Section IV - Minimal case data, urgent follow-up needed
-# No patient but has drug = score 2, MINIMAL
-- input:
-    patient_data_complete: false
-    drug_data_complete: true
-    event_data_complete: false
-    outcome_data_complete: false
-    reporter_data_complete: false
-  expect:
-    completeness_score: 2
-    completeness_tier: MINIMAL
-    narrative_ready: false
-    regulatory_reference: ICH E2A Section IV - Minimal case data, urgent follow-up needed
-# Only event data = score 1, INSUFFICIENT
-- input:
-    patient_data_complete: false
-    drug_data_complete: false
-    event_data_complete: true
-    outcome_data_complete: false
-    reporter_data_complete: false
-  expect:
-    completeness_score: 1
-    completeness_tier: INSUFFICIENT
-    narrative_ready: false
-    regulatory_reference: ICH E2A Section III.A - Minimum criteria required for valid ICSR
-# Nothing complete = score 0, EMPTY
-- input:
-    patient_data_complete: false
-    drug_data_complete: false
-    event_data_complete: false
-    outcome_data_complete: false
-    reporter_data_complete: false
-  expect:
-    completeness_score: 0
-    completeness_tier: EMPTY
-    narrative_ready: false
-    regulatory_reference: ICH E2A Section III.A - Minimum criteria required for valid ICSR
-# Empty input = score 0
-- input: {}
-  expect:
-    completeness_score: 0
-    completeness_tier: EMPTY
-    narrative_ready: false
-    regulatory_reference: ICH E2A Section III.A - Minimum criteria required for valid ICSR
+  - input:
+      patient_data_complete: true
+      drug_data_complete: true
+      event_data_complete: true
+      outcome_data_complete: true
+      reporter_data_complete: true
+    expect:
+      completeness_score: 5
+      completeness_tier: COMPLETE
+      narrative_ready: true
+      regulatory_reference: ICH E2A Section IV - Complete case data for expedited report
+  - input:
+      patient_data_complete: true
+      drug_data_complete: true
+      event_data_complete: true
+      outcome_data_complete: true
+      reporter_data_complete: false
+    expect:
+      completeness_score: 4
+      completeness_tier: NEAR_COMPLETE
+      narrative_ready: true
+      regulatory_reference: ICH E2A Section IV - Near-complete case data
+  - input:
+      patient_data_complete: true
+      drug_data_complete: true
+      event_data_complete: true
+      outcome_data_complete: false
+      reporter_data_complete: true
+    expect:
+      completeness_score: 4
+      completeness_tier: NEAR_COMPLETE
+      narrative_ready: true
+      regulatory_reference: ICH E2A Section IV - Near-complete case data
+  - input:
+      patient_data_complete: true
+      drug_data_complete: true
+      event_data_complete: false
+      outcome_data_complete: true
+      reporter_data_complete: true
+    expect:
+      completeness_score: 3
+      completeness_tier: PARTIAL
+      narrative_ready: false
+      regulatory_reference: ICH E2A Section IV - Partial case data, follow-up required
+  - input:
+      patient_data_complete: true
+      drug_data_complete: false
+      event_data_complete: true
+      outcome_data_complete: true
+      reporter_data_complete: true
+    expect:
+      completeness_score: 3
+      completeness_tier: PARTIAL
+      narrative_ready: false
+      regulatory_reference: ICH E2A Section IV - Partial case data, follow-up required
+  - input:
+      patient_data_complete: true
+      drug_data_complete: true
+      event_data_complete: false
+      outcome_data_complete: false
+      reporter_data_complete: false
+    expect:
+      completeness_score: 2
+      completeness_tier: MINIMAL
+      narrative_ready: false
+      regulatory_reference: ICH E2A Section IV - Minimal case data, urgent follow-up needed
+  - input:
+      patient_data_complete: false
+      drug_data_complete: true
+      event_data_complete: false
+      outcome_data_complete: false
+      reporter_data_complete: false
+    expect:
+      completeness_score: 2
+      completeness_tier: MINIMAL
+      narrative_ready: false
+      regulatory_reference: ICH E2A Section IV - Minimal case data, urgent follow-up needed
+  - input:
+      patient_data_complete: false
+      drug_data_complete: false
+      event_data_complete: true
+      outcome_data_complete: false
+      reporter_data_complete: false
+    expect:
+      completeness_score: 1
+      completeness_tier: INSUFFICIENT
+      narrative_ready: false
+      regulatory_reference: ICH E2A Section III.A - Minimum criteria required for valid ICSR
+  - input:
+      patient_data_complete: false
+      drug_data_complete: false
+      event_data_complete: false
+      outcome_data_complete: false
+      reporter_data_complete: false
+    expect:
+      completeness_score: 0
+      completeness_tier: EMPTY
+      narrative_ready: false
+      regulatory_reference: ICH E2A Section III.A - Minimum criteria required for valid ICSR
+  - input: {}
+    expect:
+      completeness_score: 0
+      completeness_tier: EMPTY
+      narrative_ready: false
+      regulatory_reference: ICH E2A Section III.A - Minimum criteria required for valid ICSR
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - completeness_score
+    - completeness_tier
+    - narrative_ready
+    - rationale
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

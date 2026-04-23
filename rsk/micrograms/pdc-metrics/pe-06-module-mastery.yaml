@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pe-06-module-mastery
-description: "Fellowship module mastery ≥85%"
 version: 0.1.0
-
+description: Fellowship module mastery ≥85%
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Pe 06 Module Mastery
+  subtitle: Fellowship module mastery ≥85%
+  icon: circle
+  route: /vigilance/mg/pe-06-module-mastery
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pe-06-module-mastery
+  cli: rsk mcg run pe-06-module-mastery
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -15,22 +43,58 @@ tree:
     pass:
       type: return
       value:
-        metric: "pe-06-module-mastery"
-        category: "Program Excellence"
+        metric: pe-06-module-mastery
+        category: Program Excellence
         met: true
-        action: "on_track"
-        frequency: "monthly"
+        action: on_track
+        frequency: monthly
     fail:
       type: return
       value:
-        metric: "pe-06-module-mastery"
-        category: "Program Excellence"
+        metric: pe-06-module-mastery
+        category: Program Excellence
         met: false
-        action: "remediate"
-        frequency: "monthly"
-
+        action: remediate
+        frequency: monthly
 tests:
-  - input: {module_mastery_pct: 85}
-    expect: {met: true, category: "Program Excellence"}
+  - input:
+      module_mastery_pct: 85
+    expect:
+      met: true
+      category: Program Excellence
   - input: {}
-    expect: {met: false, category: "Program Excellence"}
+    expect:
+      met: false
+      category: Program Excellence
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

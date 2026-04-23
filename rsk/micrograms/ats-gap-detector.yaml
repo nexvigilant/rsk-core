@@ -1,12 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ats-gap-detector
-description: 'Detect critical gaps between resume content and job requirements — missing skills, experience, credentials'
 version: 0.1.0
-primitive_signature:
-  dominant: ∅
-  expression: ∅(job_req \ resume) → N(gap_count) at ∂(severity)
-  primes: [∅, N, ∂, κ]
-  arguments: [nothing, quantity, boundary, comparison]
-  chain_prediction: feeds ats-recommendation
+description: Detect critical gaps between resume content and job requirements — missing skills, experience, credentials
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: missing_hard_skills
+    type: integer
+    required: false
+    description: ""
+  - name: missing_soft_skills
+    type: integer
+    required: false
+    description: ""
+  - name: missing_credentials
+    type: integer
+    required: false
+    description: ""
+  - name: years_experience_gap
+    type: integer
+    required: false
+    description: ""
+outputs:
+  - name: gap_severity
+    type: string
+  - name: total_gaps
+    type: integer
+  - name: fixable
+    type: bool
+  - name: priority_action
+    type: string
 interface:
   inputs:
     missing_hard_skills:
@@ -30,6 +60,43 @@ interface:
       type: bool
     priority_action:
       type: string
+ui:
+  title: Ats Gap Detector
+  subtitle: Detect critical gaps between resume content and job requirements — missing skills, experience, credentials
+  icon: circle
+  route: /vigilance/mg/ats-gap-detector
+  steps:
+    - field: missing_hard_skills
+      label: missing hard skills
+      help: Enter missing_hard_skills
+      widget: number
+      placeholder: null
+    - field: missing_soft_skills
+      label: missing soft skills
+      help: Enter missing_soft_skills
+      widget: number
+      placeholder: null
+    - field: missing_credentials
+      label: missing credentials
+      help: Enter missing_credentials
+      widget: number
+      placeholder: null
+    - field: years_experience_gap
+      label: years experience gap
+      help: Enter years_experience_gap
+      widget: number
+      placeholder: null
+  result:
+    template: "gap_severity: {{gap_severity}} — total_gaps: {{total_gaps}} — fixable: {{fixable}} — priority_action: {{priority_action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ats-gap-detector
+  cli: rsk mcg run ats-gap-detector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: credential_check
   nodes:
@@ -67,74 +134,110 @@ tree:
         gap_severity: CRITICAL
         total_gaps: 5
         fixable: false
-        priority_action: "Missing required credentials (degree, certification, license). Cannot be addressed by resume wording alone — acquire the credential or target roles that don't require it"
+        priority_action: Missing required credentials (degree, certification, license). Cannot be addressed by resume wording alone — acquire the credential or target roles that don't require it
     experience_gap:
       type: return
       value:
         gap_severity: HIGH
         total_gaps: 4
         fixable: false
-        priority_action: "Significant experience gap (3+ years below requirement). Reframe transferable experience from adjacent roles, or target positions at a lower seniority band"
+        priority_action: Significant experience gap (3+ years below requirement). Reframe transferable experience from adjacent roles, or target positions at a lower seniority band
     skills_gap:
       type: return
       value:
         gap_severity: MODERATE
         total_gaps: 3
         fixable: true
-        priority_action: "Multiple hard skills missing. Add relevant skills with concrete examples — even project-based or self-taught experience counts for ATS keyword matching"
+        priority_action: Multiple hard skills missing. Add relevant skills with concrete examples — even project-based or self-taught experience counts for ATS keyword matching
     minor_gap:
       type: return
       value:
         gap_severity: LOW
         total_gaps: 1
         fixable: true
-        priority_action: "Minor skills gap. Add missing keywords using exact terms from the job description — ATS matches literal strings"
+        priority_action: Minor skills gap. Add missing keywords using exact terms from the job description — ATS matches literal strings
     no_gap:
       type: return
       value:
         gap_severity: NONE
         total_gaps: 0
         fixable: true
-        priority_action: "No significant gaps detected. Focus on keyword density and action verb strength"
+        priority_action: No significant gaps detected. Focus on keyword density and action verb strength
 tests:
-- input:
-    missing_credentials: 1
-    missing_hard_skills: 0
-    missing_soft_skills: 0
-    years_experience_gap: 0
-  expect:
-    gap_severity: CRITICAL
-    fixable: false
-- input:
-    missing_credentials: 0
-    missing_hard_skills: 0
-    years_experience_gap: 5
-  expect:
-    gap_severity: HIGH
-    fixable: false
-- input:
-    missing_credentials: 0
-    missing_hard_skills: 4
-    years_experience_gap: 1
-  expect:
-    gap_severity: MODERATE
-    fixable: true
-- input:
-    missing_credentials: 0
-    missing_hard_skills: 1
-    years_experience_gap: 0
-  expect:
-    gap_severity: LOW
-    fixable: true
-- input:
-    missing_credentials: 0
-    missing_hard_skills: 0
-    years_experience_gap: 0
-  expect:
-    gap_severity: NONE
-    fixable: true
-    total_gaps: 0
-- input: {}
-  expect:
-    gap_severity: NONE
-    fixable: true
+  - input:
+      missing_credentials: 1
+      missing_hard_skills: 0
+      missing_soft_skills: 0
+      years_experience_gap: 0
+    expect:
+      gap_severity: CRITICAL
+      fixable: false
+  - input:
+      missing_credentials: 0
+      missing_hard_skills: 0
+      years_experience_gap: 5
+    expect:
+      gap_severity: HIGH
+      fixable: false
+  - input:
+      missing_credentials: 0
+      missing_hard_skills: 4
+      years_experience_gap: 1
+    expect:
+      gap_severity: MODERATE
+      fixable: true
+  - input:
+      missing_credentials: 0
+      missing_hard_skills: 1
+      years_experience_gap: 0
+    expect:
+      gap_severity: LOW
+      fixable: true
+  - input:
+      missing_credentials: 0
+      missing_hard_skills: 0
+      years_experience_gap: 0
+    expect:
+      gap_severity: NONE
+      fixable: true
+      total_gaps: 0
+  - input: {}
+    expect:
+      gap_severity: NONE
+      fixable: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - gap_severity
+    - total_gaps
+    - fixable
+    - priority_action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

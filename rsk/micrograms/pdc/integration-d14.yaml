@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: integration-d14
-description: "Domain 14 cross-domain integration — communication amplifies every other domain. Three integrated learning modules."
 version: 0.1.0
+description: Domain 14 cross-domain integration — communication amplifies every other domain. Three integrated learning modules.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: target_domain
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: assessment
+    type: string
+  - name: epas
+    type: string
+  - name: integration_type
+    type: string
+  - name: learning_module
+    type: bool
+  - name: module
+    type: string
+  - name: synergy
+    type: string
+  - name: three_modules
+    type: string
 interface:
   inputs:
     target_domain:
@@ -21,6 +51,28 @@ interface:
       type: string
     three_modules:
       type: string
+ui:
+  title: Integration D14
+  subtitle: Domain 14 cross-domain integration — communication amplifies every other domain. Three integrated learning modules.
+  icon: circle
+  route: /vigilance/mg/integration-d14
+  steps:
+    - field: target_domain
+      label: target domain
+      help: Enter target_domain
+      widget: text
+      placeholder: null
+  result:
+    template: "assessment: {{assessment}} — epas: {{epas}} — integration_type: {{integration_type}} — learning_module: {{learning_module}} — module: {{module}} — synergy: {{synergy}} — three_modules: {{three_modules}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/integration-d14
+  cli: rsk mcg run integration-d14
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target
   nodes:
@@ -70,93 +122,132 @@ tree:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Foundation-Communication Integration Module"
+        module: Foundation-Communication Integration Module
         learning_module: true
-        epas: "EPA3, EPA8, EPA10"
-        synergy: "technical accuracy + clear communication = effective stakeholder engagement"
-        assessment: "presentations requiring both technical accuracy and communication effectiveness"
+        epas: EPA3, EPA8, EPA10
+        synergy: technical accuracy + clear communication = effective stakeholder engagement
+        assessment: presentations requiring both technical accuracy and communication effectiveness
     d14_d10:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Benefit-Risk-Communication Integration Module"
+        module: Benefit-Risk-Communication Integration Module
         learning_module: true
-        epas: "EPA3, EPA5, EPA8"
-        synergy: "complex B/R analysis + stakeholder-appropriate communication = informed decisions"
-        assessment: "live presentations of complex assessments with stakeholder comprehension testing"
+        epas: EPA3, EPA5, EPA8
+        synergy: complex B/R analysis + stakeholder-appropriate communication = informed decisions
+        assessment: live presentations of complex assessments with stakeholder comprehension testing
     d14_d8:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Signal-Communication Integration Module"
+        module: Signal-Communication Integration Module
         learning_module: true
-        epas: "EPA2, EPA5, EPA8"
-        synergy: "technical signal analysis + accessible presentation = actionable safety intelligence"
-        assessment: "signal detection accuracy combined with communication effectiveness measurement"
+        epas: EPA2, EPA5, EPA8
+        synergy: technical signal analysis + accessible presentation = actionable safety intelligence
+        assessment: signal detection accuracy combined with communication effectiveness measurement
     d14_d13:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Communication-Global Integration"
-        synergy: "cross-cultural communication enables global PV coordination"
-        epas: "EPA18, EPA19"
+        module: Communication-Global Integration
+        synergy: cross-cultural communication enables global PV coordination
+        epas: EPA18, EPA19
     d14_d11:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Communication-Risk Management"
-        synergy: "effective communication is essential for risk intervention success"
-        epas: "EPA7"
+        module: Communication-Risk Management
+        synergy: effective communication is essential for risk intervention success
+        epas: EPA7
     d14_d12:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Communication-Regulatory"
-        synergy: "communication skills critical for regulatory authority engagement"
-        epas: "EPA6, EPA14"
+        module: Communication-Regulatory
+        synergy: communication skills critical for regulatory authority engagement
+        epas: EPA6, EPA14
     general:
       type: return
       value:
         integration_type: UNIVERSAL
-        module: "Communication Amplifier"
-        synergy: "communication is the universal multiplier — it amplifies impact of every other domain"
-        three_modules: "Foundation-Comm (D1+D14), B/R-Comm (D10+D14), Signal-Comm (D8+D14)"
+        module: Communication Amplifier
+        synergy: communication is the universal multiplier — it amplifies impact of every other domain
+        three_modules: Foundation-Comm (D1+D14), B/R-Comm (D10+D14), Signal-Comm (D8+D14)
 tests:
-- input:
-    target_domain: 1
-  expect:
-    integration_type: PRIMARY
-    module: "Foundation-Communication Integration Module"
-    learning_module: true
-- input:
-    target_domain: 10
-  expect:
-    integration_type: PRIMARY
-    module: "Benefit-Risk-Communication Integration Module"
-    learning_module: true
-- input:
-    target_domain: 8
-  expect:
-    integration_type: PRIMARY
-    module: "Signal-Communication Integration Module"
-    learning_module: true
-- input:
-    target_domain: 13
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 11
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 12
-  expect:
-    integration_type: PRIMARY
-- input:
-    target_domain: 2
-  expect:
-    integration_type: UNIVERSAL
-    module: "Communication Amplifier"
-- input: {}
-  expect:
-    integration_type: UNIVERSAL
+  - input:
+      target_domain: 1
+    expect:
+      integration_type: PRIMARY
+      module: Foundation-Communication Integration Module
+      learning_module: true
+  - input:
+      target_domain: 10
+    expect:
+      integration_type: PRIMARY
+      module: Benefit-Risk-Communication Integration Module
+      learning_module: true
+  - input:
+      target_domain: 8
+    expect:
+      integration_type: PRIMARY
+      module: Signal-Communication Integration Module
+      learning_module: true
+  - input:
+      target_domain: 13
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 11
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 12
+    expect:
+      integration_type: PRIMARY
+  - input:
+      target_domain: 2
+    expect:
+      integration_type: UNIVERSAL
+      module: Communication Amplifier
+  - input: {}
+    expect:
+      integration_type: UNIVERSAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - assessment
+    - epas
+    - integration_type
+    - learning_module
+    - module
+    - synergy
+    - three_modules
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

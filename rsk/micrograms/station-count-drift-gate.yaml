@@ -1,0 +1,277 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: station-count-drift-gate
+version: 0.1.0
+description: |
+  Station-specific count drift gate. Wraps staleness-count-drift with ferroforge config surface semantics: fires DRIFTED when the ratio of (|measured - claimed| / claimed) exceeds the configured threshold. Intended for SessionStart hook enforcement.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: measured
+    type: int
+    required: true
+    description: Current measured count (e.g., ls ferroforge/configs/*.json | wc -l)
+  - name: claimed
+    type: int
+    required: true
+    description: Count claimed in CLAUDE.md or MEMORY.md
+  - name: threshold_pct
+    type: float
+    required: false
+    description: Fractional drift threshold (default 0.05 = 5%)
+  - name: surface_name
+    type: string
+    required: false
+    description: Surface label for downstream reporting
+  - name: drift_ratio
+    type: float
+    required: true
+    description: Caller pre-computes abs(measured-claimed)/max(claimed,1). Passed to gate for comparison.
+  - name: threshold_exceeded
+    type: bool
+    required: true
+    description: Caller pre-computes (drift_ratio > threshold_pct). Microgram classifies.
+outputs:
+  - name: status
+    type: string
+  - name: action
+    type: string
+  - name: surface
+    type: string
+interface:
+  inputs:
+    measured:
+      type: int
+      required: true
+      description: Current measured count (e.g., ls ferroforge/configs/*.json | wc -l)
+    claimed:
+      type: int
+      required: true
+      description: Count claimed in CLAUDE.md or MEMORY.md
+    threshold_pct:
+      type: float
+      required: false
+      description: Fractional drift threshold (default 0.05 = 5%)
+      default: 0.05
+    surface_name:
+      type: string
+      required: false
+      description: Surface label for downstream reporting
+      default: station_configs
+    drift_ratio:
+      type: float
+      required: true
+      description: Caller pre-computes abs(measured-claimed)/max(claimed,1). Passed to gate for comparison.
+    threshold_exceeded:
+      type: bool
+      required: true
+      description: Caller pre-computes (drift_ratio > threshold_pct). Microgram classifies.
+  outputs:
+    status:
+      type: string
+      description: OK | DRIFTED | INVALID
+    action:
+      type: string
+    surface:
+      type: string
+ui:
+  title: Station Count Drift Gate
+  subtitle: |
+    Station-specific count drift gate. Wraps staleness-count-drift with ferroforge config surface semantics: fires DRIFTED when the ratio of (|measured - claimed| / claimed) exceeds the configured threshold. Intended for SessionStart hook enforcement.
+  icon: circle
+  route: /vigilance/mg/station-count-drift-gate
+  steps:
+    - field: measured
+      label: measured
+      help: Current measured count (e.g., ls ferroforge/configs/*.json | wc -l)
+      widget: text
+      placeholder: null
+    - field: claimed
+      label: claimed
+      help: Count claimed in CLAUDE.md or MEMORY.md
+      widget: text
+      placeholder: null
+    - field: threshold_pct
+      label: threshold pct
+      help: Fractional drift threshold (default 0.05 = 5%)
+      widget: text
+      placeholder: null
+    - field: surface_name
+      label: surface name
+      help: Surface label for downstream reporting
+      widget: text
+      placeholder: null
+    - field: drift_ratio
+      label: drift ratio
+      help: Caller pre-computes abs(measured-claimed)/max(claimed,1). Passed to gate for comparison.
+      widget: text
+      placeholder: null
+    - field: threshold_exceeded
+      label: threshold exceeded
+      help: Caller pre-computes (drift_ratio > threshold_pct). Microgram classifies.
+      widget: toggle
+      placeholder: null
+  result:
+    template: "status: {{status}} — action: {{action}} — surface: {{surface}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-count-drift-gate
+  cli: rsk mcg run station-count-drift-gate
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_claimed_nonzero
+  nodes:
+    check_claimed_nonzero:
+      type: condition
+      variable: claimed
+      operator: lte
+      value: 0
+      true_next: invalid_claim
+      false_next: check_measured_nonneg
+    invalid_claim:
+      type: return
+      value:
+        status: INVALID
+        action: "INVALID: claimed count must be > 0 (got 0 or negative)"
+    check_measured_nonneg:
+      type: condition
+      variable: measured
+      operator: lt
+      value: 0
+      true_next: invalid_measure
+      false_next: check_drift_present
+    invalid_measure:
+      type: return
+      value:
+        status: INVALID
+        action: "INVALID: measured count must be >= 0"
+    check_drift_present:
+      type: condition
+      variable: threshold_exceeded
+      operator: is_null
+      value: null
+      true_next: invalid_drift
+      false_next: evaluate_drift
+    invalid_drift:
+      type: return
+      value:
+        status: INVALID
+        action: "INVALID: threshold_exceeded bool is required (caller pre-computes)"
+    evaluate_drift:
+      type: condition
+      variable: threshold_exceeded
+      operator: eq
+      value: true
+      true_next: drifted
+      false_next: ok
+    ok:
+      type: return
+      value:
+        status: OK
+        action: Count within threshold — CLAUDE.md is consistent with disk
+    drifted:
+      type: return
+      value:
+        status: DRIFTED
+        action: Count drift exceeds threshold — update CLAUDE.md or investigate config churn
+tests:
+  - input:
+      measured: 274
+      claimed: 274
+      threshold_pct: 0.05
+      drift_ratio: 0
+      threshold_exceeded: false
+      surface_name: station_configs
+    expect:
+      status: OK
+  - input:
+      measured: 274
+      claimed: 243
+      threshold_pct: 0.05
+      drift_ratio: 0.128
+      threshold_exceeded: true
+      surface_name: station_configs
+    expect:
+      status: DRIFTED
+  - input:
+      measured: 280
+      claimed: 274
+      threshold_pct: 0.05
+      drift_ratio: 0.022
+      threshold_exceeded: false
+      surface_name: station_configs
+    expect:
+      status: OK
+  - input:
+      measured: 0
+      claimed: 0
+      threshold_pct: 0.05
+      drift_ratio: 0
+      threshold_exceeded: false
+    expect:
+      status: INVALID
+  - input:
+      measured: -1
+      claimed: 274
+      threshold_pct: 0.05
+      drift_ratio: 0
+      threshold_exceeded: false
+    expect:
+      status: INVALID
+  - input:
+      measured: 1585
+      claimed: 464
+      threshold_pct: 0.05
+      drift_ratio: 2.416
+      threshold_exceeded: true
+      surface_name: micrograms
+    expect:
+      status: DRIFTED
+  - input: {}
+    expect:
+      status: INVALID
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - action
+    - surface
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,107 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-rxnav-pipeline
-description: 'Routes RxNav drug interaction data through risk classification: evaluates interaction count and severity distribution to determine interaction risk level and recommended actions'
 version: 0.1.0
+description: "Routes RxNav drug interaction data through risk classification: evaluates interaction count and severity distribution to determine interaction risk level and recommended actions"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: severity_high_count
+    type: int
+    required: false
+    description: ""
+  - name: drug_class
+    type: string
+    required: false
+    description: ""
+  - name: interaction_count
+    type: int
+    required: false
+    description: ""
+  - name: severity_moderate_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: recommended_action
+    type: string
+  - name: interaction_risk
+    type: string
+  - name: next_step
+    type: string
+  - name: risk_factors
+    type: string
+interface:
+  inputs:
+    severity_high_count:
+      type: int
+      required: false
+    drug_class:
+      type: string
+      required: false
+    interaction_count:
+      type: int
+      required: false
+    severity_moderate_count:
+      type: int
+      required: false
+  outputs:
+    recommended_action:
+      type: string
+      required: false
+    interaction_risk:
+      type: string
+      required: false
+    next_step:
+      type: string
+      required: false
+    risk_factors:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Station Rxnav Pipeline
+  subtitle: "Routes RxNav drug interaction data through risk classification: evaluates interaction count and severity distribution to determine interaction risk level and recommended actions"
+  icon: circle
+  route: /vigilance/mg/station-rxnav-pipeline
+  steps:
+    - field: severity_high_count
+      label: severity high count
+      help: Enter severity_high_count
+      widget: text
+      placeholder: null
+    - field: drug_class
+      label: drug class
+      help: Enter drug_class
+      widget: text
+      placeholder: null
+    - field: interaction_count
+      label: interaction count
+      help: Enter interaction_count
+      widget: text
+      placeholder: null
+    - field: severity_moderate_count
+      label: severity moderate count
+      help: Enter severity_moderate_count
+      widget: text
+      placeholder: null
+  result:
+    template: "recommended_action: {{recommended_action}} — interaction_risk: {{interaction_risk}} — next_step: {{next_step}} — risk_factors: {{risk_factors}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-rxnav-pipeline
+  cli: rsk mcg run station-rxnav-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_high_severity_critical
   nodes:
@@ -68,153 +169,160 @@ tree:
       true_next: critical_risk
       false_next: check_high_severity_any
 tests:
-- input:
-    interaction_count: 8
-    drug_class: opioid
-    severity_moderate_count: 3
-    severity_high_count: 4
-  expect:
-    interaction_risk: critical
-    next_step: interaction_review
-- input:
-    interaction_count: 5
-    severity_moderate_count: 3
-    severity_high_count: 1
-  expect:
-    interaction_risk: significant
-    next_step: clinical_assessment
-- input:
-    severity_high_count: 0
-    severity_moderate_count: 6
-    interaction_count: 7
-  expect:
-    next_step: polypharmacy_review
-    interaction_risk: significant
-- input:
-    severity_high_count: 0
-    severity_moderate_count: 2
-    interaction_count: 4
-  expect:
-    interaction_risk: notable
-    next_step: routine_monitoring
-- input:
-    severity_moderate_count: 1
-    interaction_count: 1
-    severity_high_count: 0
-  expect:
-    interaction_risk: minimal
-    next_step: no_action
-- input:
-    severity_high_count: 2
-    severity_moderate_count: 0
-  expect:
-    interaction_risk: significant
-    next_step: clinical_assessment
-- input:
-    interaction_count: 0
-  expect:
-    next_step: no_action
-    interaction_risk: minimal
-- input: {}
-  expect:
-    interaction_risk: minimal
-    next_step: no_action
-- input:
-    severity_moderate_count: -1
-  expect:
-    risk_factors: Few or no significant drug interactions
-    next_step: no_action
-    recommended_action: Standard prescribing precautions
-    interaction_risk: minimal
-- input:
-    severity_moderate_count: 4
-  expect:
-    risk_factors: Few or no significant drug interactions
-    next_step: no_action
-    interaction_risk: minimal
-    recommended_action: Standard prescribing precautions
-- input:
-    severity_moderate_count: 500
-  expect:
-    recommended_action: Review moderate interactions for cumulative effect and polypharmacy risk
-    next_step: polypharmacy_review
-    interaction_risk: significant
-    risk_factors: 5+ moderate-severity interactions — cumulative risk concern
-- input:
-    interaction_count: -1
-  expect:
-    next_step: no_action
-    recommended_action: Standard prescribing precautions
-    interaction_risk: minimal
-    risk_factors: Few or no significant drug interactions
-- input:
-    interaction_count: 2
-  expect:
-    next_step: no_action
-    recommended_action: Standard prescribing precautions
-    interaction_risk: minimal
-    risk_factors: Few or no significant drug interactions
-- input:
-    interaction_count: 300
-  expect:
-    next_step: routine_monitoring
-    recommended_action: Document interactions and monitor for clinical impact
-    risk_factors: Multiple drug interactions without high severity
-    interaction_risk: notable
-- input:
-    severity_high_count: -1
-  expect:
-    recommended_action: Standard prescribing precautions
-    next_step: no_action
-    interaction_risk: minimal
-    risk_factors: Few or no significant drug interactions
-- input:
-    severity_high_count: 100
-  expect:
-    recommended_action: Immediate review of concomitant medications and contraindication check
-    risk_factors: 3+ high-severity drug interactions identified
-    interaction_risk: critical
-    next_step: interaction_review
-- input:
-    severity_high_count: -1
-  expect:
-    recommended_action: Standard prescribing precautions
-    next_step: no_action
-    risk_factors: Few or no significant drug interactions
-    interaction_risk: minimal
-- input:
-    severity_high_count: 300
-  expect:
-    risk_factors: 3+ high-severity drug interactions identified
-    interaction_risk: critical
-    next_step: interaction_review
-    recommended_action: Immediate review of concomitant medications and contraindication check
-interface:
-  inputs:
-    severity_high_count:
-      type: int
-      required: false
-    drug_class:
-      type: string
-      required: false
-    interaction_count:
-      type: int
-      required: false
-    severity_moderate_count:
-      type: int
-      required: false
-  outputs:
-    recommended_action:
-      type: string
-      required: false
-    interaction_risk:
-      type: string
-      required: false
-    next_step:
-      type: string
-      required: false
-    risk_factors:
-      type: string
-      required: false
-  aliases: {}
-primitive_signature: null
+  - input:
+      interaction_count: 8
+      drug_class: opioid
+      severity_moderate_count: 3
+      severity_high_count: 4
+    expect:
+      interaction_risk: critical
+      next_step: interaction_review
+  - input:
+      interaction_count: 5
+      severity_moderate_count: 3
+      severity_high_count: 1
+    expect:
+      interaction_risk: significant
+      next_step: clinical_assessment
+  - input:
+      severity_high_count: 0
+      severity_moderate_count: 6
+      interaction_count: 7
+    expect:
+      next_step: polypharmacy_review
+      interaction_risk: significant
+  - input:
+      severity_high_count: 0
+      severity_moderate_count: 2
+      interaction_count: 4
+    expect:
+      interaction_risk: notable
+      next_step: routine_monitoring
+  - input:
+      severity_moderate_count: 1
+      interaction_count: 1
+      severity_high_count: 0
+    expect:
+      interaction_risk: minimal
+      next_step: no_action
+  - input:
+      severity_high_count: 2
+      severity_moderate_count: 0
+    expect:
+      interaction_risk: significant
+      next_step: clinical_assessment
+  - input:
+      interaction_count: 0
+    expect:
+      next_step: no_action
+      interaction_risk: minimal
+  - input: {}
+    expect:
+      interaction_risk: minimal
+      next_step: no_action
+  - input:
+      severity_moderate_count: -1
+    expect:
+      risk_factors: Few or no significant drug interactions
+      next_step: no_action
+      recommended_action: Standard prescribing precautions
+      interaction_risk: minimal
+  - input:
+      severity_moderate_count: 4
+    expect:
+      risk_factors: Few or no significant drug interactions
+      next_step: no_action
+      interaction_risk: minimal
+      recommended_action: Standard prescribing precautions
+  - input:
+      severity_moderate_count: 500
+    expect:
+      recommended_action: Review moderate interactions for cumulative effect and polypharmacy risk
+      next_step: polypharmacy_review
+      interaction_risk: significant
+      risk_factors: 5+ moderate-severity interactions — cumulative risk concern
+  - input:
+      interaction_count: -1
+    expect:
+      next_step: no_action
+      recommended_action: Standard prescribing precautions
+      interaction_risk: minimal
+      risk_factors: Few or no significant drug interactions
+  - input:
+      interaction_count: 2
+    expect:
+      next_step: no_action
+      recommended_action: Standard prescribing precautions
+      interaction_risk: minimal
+      risk_factors: Few or no significant drug interactions
+  - input:
+      interaction_count: 300
+    expect:
+      next_step: routine_monitoring
+      recommended_action: Document interactions and monitor for clinical impact
+      risk_factors: Multiple drug interactions without high severity
+      interaction_risk: notable
+  - input:
+      severity_high_count: -1
+    expect:
+      recommended_action: Standard prescribing precautions
+      next_step: no_action
+      interaction_risk: minimal
+      risk_factors: Few or no significant drug interactions
+  - input:
+      severity_high_count: 100
+    expect:
+      recommended_action: Immediate review of concomitant medications and contraindication check
+      risk_factors: 3+ high-severity drug interactions identified
+      interaction_risk: critical
+      next_step: interaction_review
+  - input:
+      severity_high_count: -1
+    expect:
+      recommended_action: Standard prescribing precautions
+      next_step: no_action
+      risk_factors: Few or no significant drug interactions
+      interaction_risk: minimal
+  - input:
+      severity_high_count: 300
+    expect:
+      risk_factors: 3+ high-severity drug interactions identified
+      interaction_risk: critical
+      next_step: interaction_review
+      recommended_action: Immediate review of concomitant medications and contraindication check
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - recommended_action
+    - interaction_risk
+    - next_step
+    - risk_factors
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

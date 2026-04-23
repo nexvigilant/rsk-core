@@ -1,6 +1,78 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: label-to-expectedness
-description: Routes adverse event from label status to expectedness classification
 version: 0.1.0
+description: Routes adverse event from label status to expectedness classification
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: label_section
+    type: string
+    required: false
+    description: ""
+  - name: event_in_label
+    type: boolean
+    required: true
+    description: ""
+outputs:
+  - name: expected
+    type: boolean
+  - name: expectedness_source
+    type: string
+  - name: implications
+    type: string
+interface:
+  inputs:
+    label_section:
+      type: string
+      required: false
+    event_in_label:
+      type: boolean
+      required: true
+  outputs:
+    expected:
+      type: boolean
+      required: false
+    expectedness_source:
+      type: string
+      required: false
+    implications:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Label To Expectedness
+  subtitle: Routes adverse event from label status to expectedness classification
+  icon: circle
+  route: /vigilance/mg/label-to-expectedness
+  steps:
+    - field: label_section
+      label: label section
+      help: Enter label_section
+      widget: text
+      placeholder: null
+    - field: event_in_label
+      label: event in label
+      help: Enter event_in_label
+      widget: toggle
+      placeholder: null
+  result:
+    template: "expected: {{expected}} — expectedness_source: {{expectedness_source}} — implications: {{implications}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/label-to-expectedness
+  cli: rsk mcg run label-to-expectedness
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_in_label
   nodes:
@@ -28,8 +100,7 @@ tree:
       type: return
       value:
         expected: true
-        implications: Expected serious event per label warnings - consider severity
-          context
+        implications: Expected serious event per label warnings - consider severity context
         expectedness_source: labeled_warning
     check_warnings:
       type: condition
@@ -64,62 +135,78 @@ tree:
         expected: false
         expectedness_source: unlabeled
 tests:
-- input:
-    event_in_label: false
-    label_section: ''
-  expect:
-    implications: Unexpected event - higher potential signal value for detection
-    expected: false
-    expectedness_source: unlabeled
-- input:
-    event_in_label: true
-    label_section: ''
-  expect:
-    implications: Event identified postmarketing - may represent emerging signal
-    expected: false
-    expectedness_source: postmarketing_experience
-- input:
-    event_in_label: true
-    label_section: adverse_reactions
-  expect:
-    implications: Expected adverse event - weight in signal detection accordingly
-    expected: true
-    expectedness_source: labeled_adverse_reaction
-- input:
-    event_in_label: true
-    label_section: precautions
-  expect:
-    implications: Expected event under specific conditions - evaluate risk factors
-    expected: true
-    expectedness_source: labeled_precaution
-- input:
-    event_in_label: true
-    label_section: warnings
-  expect:
-    expected: true
-    implications: Expected serious event per label warnings - consider severity context
-    expectedness_source: labeled_warning
-- input: {}
-  expect:
-    implications: Unexpected event - higher potential signal value for detection
-    expected: false
-    expectedness_source: unlabeled
-interface:
-  inputs:
-    label_section:
-      type: string
-      required: false
-    event_in_label:
-      type: boolean
-      required: true
-  outputs:
-    expected:
-      type: boolean
-      required: false
-    expectedness_source:
-      type: string
-      required: false
-    implications:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      event_in_label: false
+      label_section: ""
+    expect:
+      implications: Unexpected event - higher potential signal value for detection
+      expected: false
+      expectedness_source: unlabeled
+  - input:
+      event_in_label: true
+      label_section: ""
+    expect:
+      implications: Event identified postmarketing - may represent emerging signal
+      expected: false
+      expectedness_source: postmarketing_experience
+  - input:
+      event_in_label: true
+      label_section: adverse_reactions
+    expect:
+      implications: Expected adverse event - weight in signal detection accordingly
+      expected: true
+      expectedness_source: labeled_adverse_reaction
+  - input:
+      event_in_label: true
+      label_section: precautions
+    expect:
+      implications: Expected event under specific conditions - evaluate risk factors
+      expected: true
+      expectedness_source: labeled_precaution
+  - input:
+      event_in_label: true
+      label_section: warnings
+    expect:
+      expected: true
+      implications: Expected serious event per label warnings - consider severity context
+      expectedness_source: labeled_warning
+  - input: {}
+    expect:
+      implications: Unexpected event - higher potential signal value for detection
+      expected: false
+      expectedness_source: unlabeled
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - expected
+    - expectedness_source
+    - implications
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

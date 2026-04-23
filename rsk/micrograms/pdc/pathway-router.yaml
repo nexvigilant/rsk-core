@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pathway-router
-description: "PDC: Route professional to development pathway based on experience and career goal"
 version: 0.1.0
+description: "PDC: Route professional to development pathway based on experience and career goal"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: career_goal
+    type: string
+    required: false
+    description: ""
+  - name: is_student
+    type: bool
+    required: false
+    description: ""
+  - name: years_experience
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: assessment_first
+    type: bool
+  - name: entry_program
+    type: string
+  - name: pathway
+    type: string
+  - name: sequence
+    type: string
+  - name: specialization
+    type: string
 interface:
   inputs:
     career_goal:
@@ -23,6 +57,38 @@ interface:
       type: string
     specialization:
       type: string
+ui:
+  title: Pathway Router
+  subtitle: "PDC: Route professional to development pathway based on experience and career goal"
+  icon: circle
+  route: /vigilance/mg/pathway-router
+  steps:
+    - field: career_goal
+      label: career goal
+      help: Enter career_goal
+      widget: text
+      placeholder: null
+    - field: is_student
+      label: is student
+      help: Enter is_student
+      widget: toggle
+      placeholder: null
+    - field: years_experience
+      label: years experience
+      help: Enter years_experience
+      widget: text
+      placeholder: null
+  result:
+    template: "assessment_first: {{assessment_first}} — entry_program: {{entry_program}} — pathway: {{pathway}} — sequence: {{sequence}} — specialization: {{specialization}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pathway-router
+  cli: rsk mcg run pathway-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_experience
   nodes:
@@ -72,98 +138,135 @@ tree:
       type: return
       value:
         pathway: TRADITIONAL_ACADEMIC
-        sequence: "APPE -> Fellowship -> Practice -> SMP -> Executive"
+        sequence: APPE -> Fellowship -> Practice -> SMP -> Executive
         entry_program: APPE_ROTATION
         assessment_first: false
     early_career_pathway:
       type: return
       value:
         pathway: EARLY_CAREER
-        sequence: "Fellowship_12 -> Practice -> Fellowship_18/24 -> SMP"
+        sequence: Fellowship_12 -> Practice -> Fellowship_18/24 -> SMP
         entry_program: FELLOWSHIP_12
         assessment_first: false
     experienced_pathway:
       type: return
       value:
         pathway: EXPERIENCED_PROFESSIONAL
-        sequence: "Assessment -> Gap Analysis -> Targeted Dev -> Advanced EPA -> Exec"
+        sequence: Assessment -> Gap Analysis -> Targeted Dev -> Advanced EPA -> Exec
         entry_program: COMPETENCY_ASSESSMENT
         assessment_first: true
     technology_track:
       type: return
       value:
         pathway: TECHNOLOGY_LEADERSHIP
-        sequence: "Assessment -> EPA 10 Accelerated -> CPA 8 Focus -> AI Transformation"
+        sequence: Assessment -> EPA 10 Accelerated -> CPA 8 Focus -> AI Transformation
         entry_program: COMPETENCY_ASSESSMENT
         assessment_first: true
-        specialization: "EPA 10, CPA 8"
+        specialization: EPA 10, CPA 8
     global_track:
       type: return
       value:
         pathway: GLOBAL_LEADERSHIP
-        sequence: "Assessment -> International Experience -> Cultural Competency -> Global Exec"
+        sequence: Assessment -> International Experience -> Cultural Competency -> Global Exec
         entry_program: COMPETENCY_ASSESSMENT
         assessment_first: true
-        specialization: "Domain 13, Cross-cultural"
+        specialization: Domain 13, Cross-cultural
     regulatory_track:
       type: return
       value:
         pathway: REGULATORY_AFFAIRS
-        sequence: "Assessment -> Domain 12 Deep -> Policy Development -> Regulatory Exec"
+        sequence: Assessment -> Domain 12 Deep -> Policy Development -> Regulatory Exec
         entry_program: COMPETENCY_ASSESSMENT
         assessment_first: true
-        specialization: "Domain 12, Policy"
+        specialization: Domain 12, Policy
     research_track:
       type: return
       value:
         pathway: RESEARCH_DEVELOPMENT
-        sequence: "Assessment -> Research Competency -> Innovation Leadership -> R&D Exec"
+        sequence: Assessment -> Research Competency -> Innovation Leadership -> R&D Exec
         entry_program: COMPETENCY_ASSESSMENT
         assessment_first: true
-        specialization: "CPA 7, Innovation"
+        specialization: CPA 7, Innovation
 tests:
-- input:
-    is_student: true
-    years_experience: 0
-  expect:
-    pathway: TRADITIONAL_ACADEMIC
-    entry_program: APPE_ROTATION
-    assessment_first: false
-- input:
-    is_student: false
-    years_experience: 1
-  expect:
-    pathway: EARLY_CAREER
-    entry_program: FELLOWSHIP_12
-- input:
-    years_experience: 5
-    career_goal: technology
-  expect:
-    pathway: TECHNOLOGY_LEADERSHIP
-    assessment_first: true
-- input:
-    years_experience: 10
-    career_goal: global
-  expect:
-    pathway: GLOBAL_LEADERSHIP
-- input:
-    years_experience: 7
-    career_goal: regulatory
-  expect:
-    pathway: REGULATORY_AFFAIRS
-    specialization: "Domain 12, Policy"
-- input:
-    years_experience: 4
-    career_goal: research
-  expect:
-    pathway: RESEARCH_DEVELOPMENT
-- input:
-    years_experience: 8
-    career_goal: general
-  expect:
-    pathway: EXPERIENCED_PROFESSIONAL
-    assessment_first: true
-- input: {}
-  expect:
-    pathway: EARLY_CAREER
-    entry_program: FELLOWSHIP_12
+  - input:
+      is_student: true
+      years_experience: 0
+    expect:
+      pathway: TRADITIONAL_ACADEMIC
+      entry_program: APPE_ROTATION
+      assessment_first: false
+  - input:
+      is_student: false
+      years_experience: 1
+    expect:
+      pathway: EARLY_CAREER
+      entry_program: FELLOWSHIP_12
+  - input:
+      years_experience: 5
+      career_goal: technology
+    expect:
+      pathway: TECHNOLOGY_LEADERSHIP
+      assessment_first: true
+  - input:
+      years_experience: 10
+      career_goal: global
+    expect:
+      pathway: GLOBAL_LEADERSHIP
+  - input:
+      years_experience: 7
+      career_goal: regulatory
+    expect:
+      pathway: REGULATORY_AFFAIRS
+      specialization: Domain 12, Policy
+  - input:
+      years_experience: 4
+      career_goal: research
+    expect:
+      pathway: RESEARCH_DEVELOPMENT
+  - input:
+      years_experience: 8
+      career_goal: general
+    expect:
+      pathway: EXPERIENCED_PROFESSIONAL
+      assessment_first: true
+  - input: {}
+    expect:
+      pathway: EARLY_CAREER
+      entry_program: FELLOWSHIP_12
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - assessment_first
+    - entry_program
+    - pathway
+    - sequence
+    - specialization
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

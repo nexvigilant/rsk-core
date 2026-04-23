@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-class-nsaid-safety
-description: "Non-steroidal anti-inflammatory drug safety gate. Monitors GI ulceration risk, renal dysfunction, and cardiovascular risk in elderly."
 version: 0.1.0
+description: Non-steroidal anti-inflammatory drug safety gate. Monitors GI ulceration risk, renal dysfunction, and cardiovascular risk in elderly.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Class Nsaid Safety
+  subtitle: Non-steroidal anti-inflammatory drug safety gate. Monitors GI ulceration risk, renal dysfunction, and cardiovascular risk in elderly.
+  icon: circle
+  route: /vigilance/mg/drug-class-nsaid-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-class-nsaid-safety
+  cli: rsk mcg run drug-class-nsaid-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_gi_ulcer_history
   nodes:
@@ -16,7 +45,7 @@ tree:
       value:
         risk_level: high
         gi_protection: required
-        message: "History of GI ulcer; gastroprotection (PPI) strongly recommended"
+        message: History of GI ulcer; gastroprotection (PPI) strongly recommended
     check_age_group:
       type: condition
       variable: age_years
@@ -30,7 +59,7 @@ tree:
         risk_level: moderate
         special_population: elderly
         monitoring_required: true
-        message: "Increased GI and cardiovascular risk in elderly; frequent monitoring"
+        message: Increased GI and cardiovascular risk in elderly; frequent monitoring
     check_renal:
       type: condition
       variable: renal_clearance_ml_min
@@ -43,20 +72,71 @@ tree:
       value:
         risk_level: moderate
         renal_adjustment: true
-        message: "Impaired renal function; NSAID may worsen renal clearance"
+        message: Impaired renal function; NSAID may worsen renal clearance
     standard_dosing:
       type: return
       value:
         risk_level: low
-        message: "Standard NSAID dosing appropriate"
+        message: Standard NSAID dosing appropriate
 tests:
-  - input: { prior_gi_ulcer: true, age_years: 50, renal_clearance_ml_min: 80 }
-    expect: { risk_level: high, gi_protection: required }
-  - input: { prior_gi_ulcer: false, age_years: 70, renal_clearance_ml_min: 75 }
-    expect: { risk_level: moderate, special_population: elderly }
-  - input: { prior_gi_ulcer: false, age_years: 50, renal_clearance_ml_min: 45 }
-    expect: { risk_level: moderate, renal_adjustment: true }
-  - input: { prior_gi_ulcer: false, age_years: 45, renal_clearance_ml_min: 90 }
-    expect: { risk_level: low }
+  - input:
+      prior_gi_ulcer: true
+      age_years: 50
+      renal_clearance_ml_min: 80
+    expect:
+      risk_level: high
+      gi_protection: required
+  - input:
+      prior_gi_ulcer: false
+      age_years: 70
+      renal_clearance_ml_min: 75
+    expect:
+      risk_level: moderate
+      special_population: elderly
+  - input:
+      prior_gi_ulcer: false
+      age_years: 50
+      renal_clearance_ml_min: 45
+    expect:
+      risk_level: moderate
+      renal_adjustment: true
+  - input:
+      prior_gi_ulcer: false
+      age_years: 45
+      renal_clearance_ml_min: 90
+    expect:
+      risk_level: low
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

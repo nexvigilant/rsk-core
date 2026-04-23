@@ -1,12 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ats-experience-relevance
-description: 'Score how relevant listed experience is to the target role — direct, transferable, or unrelated'
 version: 0.1.0
-primitive_signature:
-  dominant: μ
-  expression: μ(experience_domain, target_domain) → κ(relevance_score)
-  primes: [μ, κ, N, ∂]
-  arguments: [mapping, comparison, quantity, boundary]
-  chain_prediction: feeds ats-gap-detector
+description: Score how relevant listed experience is to the target role — direct, transferable, or unrelated
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: direct_experience_years
+    type: integer
+    required: false
+    description: ""
+  - name: transferable_experience_years
+    type: integer
+    required: false
+    description: ""
+  - name: unrelated_experience_years
+    type: integer
+    required: false
+    description: ""
+  - name: required_years
+    type: integer
+    required: false
+    description: ""
+outputs:
+  - name: relevance_tier
+    type: string
+  - name: effective_years
+    type: integer
+  - name: years_experience_gap
+    type: integer
+  - name: reframing_advice
+    type: string
 interface:
   inputs:
     direct_experience_years:
@@ -30,6 +60,43 @@ interface:
       type: integer
     reframing_advice:
       type: string
+ui:
+  title: Ats Experience Relevance
+  subtitle: Score how relevant listed experience is to the target role — direct, transferable, or unrelated
+  icon: circle
+  route: /vigilance/mg/ats-experience-relevance
+  steps:
+    - field: direct_experience_years
+      label: direct experience years
+      help: Enter direct_experience_years
+      widget: number
+      placeholder: null
+    - field: transferable_experience_years
+      label: transferable experience years
+      help: Enter transferable_experience_years
+      widget: number
+      placeholder: null
+    - field: unrelated_experience_years
+      label: unrelated experience years
+      help: Enter unrelated_experience_years
+      widget: number
+      placeholder: null
+    - field: required_years
+      label: required years
+      help: Enter required_years
+      widget: number
+      placeholder: null
+  result:
+    template: "relevance_tier: {{relevance_tier}} — effective_years: {{effective_years}} — years_experience_gap: {{years_experience_gap}} — reframing_advice: {{reframing_advice}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ats-experience-relevance
+  cli: rsk mcg run ats-experience-relevance
+  auth: none
+  rate_limit: 600/min
 tree:
   start: required_null
   nodes:
@@ -66,71 +133,107 @@ tree:
         relevance_tier: UNKNOWN
         effective_years: 0
         years_experience_gap: 0
-        reframing_advice: "No experience requirement specified — focus on skills match instead"
+        reframing_advice: No experience requirement specified — focus on skills match instead
     highly_relevant:
       type: return
       value:
         relevance_tier: HIGH
         effective_years: 5
         years_experience_gap: 0
-        reframing_advice: "Direct experience is strong — lead with role-specific achievements and metrics"
+        reframing_advice: Direct experience is strong — lead with role-specific achievements and metrics
     relevant:
       type: return
       value:
         relevance_tier: MODERATE
         effective_years: 3
         years_experience_gap: 1
-        reframing_advice: "Solid relevant experience — emphasize progression and scope expansion in the target domain"
+        reframing_advice: Solid relevant experience — emphasize progression and scope expansion in the target domain
     transferable:
       type: return
       value:
         relevance_tier: TRANSFERABLE
         effective_years: 2
         years_experience_gap: 2
-        reframing_advice: "Reframe transferable experience using target role vocabulary. Map prior responsibilities to job description language"
+        reframing_advice: Reframe transferable experience using target role vocabulary. Map prior responsibilities to job description language
     low_relevance:
       type: return
       value:
         relevance_tier: LOW
         effective_years: 0
         years_experience_gap: 5
-        reframing_advice: "Limited relevant experience. Highlight projects, education, or certifications that demonstrate capability. Consider entry-level positions in target field"
+        reframing_advice: Limited relevant experience. Highlight projects, education, or certifications that demonstrate capability. Consider entry-level positions in target field
 tests:
-- input:
-    direct_experience_years: 7
-    transferable_experience_years: 2
-    unrelated_experience_years: 1
-    required_years: 5
-  expect:
-    relevance_tier: HIGH
-    years_experience_gap: 0
-- input:
-    direct_experience_years: 3
-    transferable_experience_years: 4
-    required_years: 5
-  expect:
-    relevance_tier: MODERATE
-    effective_years: 3
-- input:
-    direct_experience_years: 0
-    transferable_experience_years: 5
-    required_years: 3
-  expect:
-    relevance_tier: TRANSFERABLE
-    years_experience_gap: 2
-- input:
-    direct_experience_years: 0
-    transferable_experience_years: 1
-    required_years: 5
-  expect:
-    relevance_tier: LOW
-    years_experience_gap: 5
-- input: {}
-  expect:
-    relevance_tier: UNKNOWN
-    years_experience_gap: 0
-- input:
-    direct_experience_years: 2
-    required_years: 3
-  expect:
-    relevance_tier: MODERATE
+  - input:
+      direct_experience_years: 7
+      transferable_experience_years: 2
+      unrelated_experience_years: 1
+      required_years: 5
+    expect:
+      relevance_tier: HIGH
+      years_experience_gap: 0
+  - input:
+      direct_experience_years: 3
+      transferable_experience_years: 4
+      required_years: 5
+    expect:
+      relevance_tier: MODERATE
+      effective_years: 3
+  - input:
+      direct_experience_years: 0
+      transferable_experience_years: 5
+      required_years: 3
+    expect:
+      relevance_tier: TRANSFERABLE
+      years_experience_gap: 2
+  - input:
+      direct_experience_years: 0
+      transferable_experience_years: 1
+      required_years: 5
+    expect:
+      relevance_tier: LOW
+      years_experience_gap: 5
+  - input: {}
+    expect:
+      relevance_tier: UNKNOWN
+      years_experience_gap: 0
+  - input:
+      direct_experience_years: 2
+      required_years: 3
+    expect:
+      relevance_tier: MODERATE
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - relevance_tier
+    - effective_years
+    - years_experience_gap
+    - reframing_advice
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

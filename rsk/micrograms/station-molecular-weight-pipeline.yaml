@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-molecular-weight-pipeline
-description: Route molecular weight computations for drug classification thresholds
 version: 0.1.0
+description: Route molecular weight computations for drug classification thresholds
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Molecular Weight Pipeline
+  subtitle: Route molecular weight computations for drug classification thresholds
+  icon: circle
+  route: /vigilance/mg/station-molecular-weight-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-molecular-weight-pipeline
+  cli: rsk mcg run station-molecular-weight-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_mw
   nodes:
@@ -40,105 +69,135 @@ tree:
         reason: MW≤100 Da — molecular fragment, not drug-like
         route: archive
 tests:
-- input:
-    molecular_weight: 750
-  expect:
-    priority: moderate
-    route: admet_review
-    action: flag
-- input:
-    molecular_weight: 50
-  expect:
-    priority: low
-    route: archive
-    action: classify
-- input:
-    molecular_weight: 350
-  expect:
-    priority: low
-    route: archive
-    action: pass
-- input:
-    molecular_weight: 0
-  expect:
-    priority: low
-    reason: MW≤100 Da — molecular fragment, not drug-like
-    route: archive
-    action: classify
-- input:
-    molecular_weight: -1
-  expect:
-    reason: MW≤100 Da — molecular fragment, not drug-like
-    action: classify
-    priority: low
-    route: archive
-- input:
-    molecular_weight: 99
-  expect:
-    reason: MW≤100 Da — molecular fragment, not drug-like
-    priority: low
-    route: archive
-    action: classify
-- input:
-    molecular_weight: 101
-  expect:
-    priority: low
-    reason: MW 100-500 Da — within drug-like range
-    action: pass
-    route: archive
-- input:
-    molecular_weight: 10000
-  expect:
-    reason: MW≥500 Da — Lipinski Rule of 5 violation, oral bioavailability concern
-    action: flag
-    route: admet_review
-    priority: moderate
-- input: {}
-  expect:
-    action: pass
-    reason: MW 100-500 Da — within drug-like range
-    route: archive
-    priority: low
-- input:
-    molecular_weight: 0
-  expect:
-    priority: low
-    reason: MW≤100 Da — molecular fragment, not drug-like
-    route: archive
-    action: classify
-- input:
-    molecular_weight: -1
-  expect:
-    route: archive
-    priority: low
-    action: classify
-    reason: MW≤100 Da — molecular fragment, not drug-like
-- input:
-    molecular_weight: 499
-  expect:
-    priority: low
-    reason: MW 100-500 Da — within drug-like range
-    route: archive
-    action: pass
-- input:
-    molecular_weight: 501
-  expect:
-    reason: MW≥500 Da — Lipinski Rule of 5 violation, oral bioavailability concern
-    priority: moderate
-    action: flag
-    route: admet_review
-- input:
-    molecular_weight: 50000
-  expect:
-    route: admet_review
-    action: flag
-    reason: MW≥500 Da — Lipinski Rule of 5 violation, oral bioavailability concern
-    priority: moderate
-- input: {}
-  expect:
-    reason: MW 100-500 Da — within drug-like range
-    priority: low
-    route: archive
-    action: pass
-interface: null
-primitive_signature: null
+  - input:
+      molecular_weight: 750
+    expect:
+      priority: moderate
+      route: admet_review
+      action: flag
+  - input:
+      molecular_weight: 50
+    expect:
+      priority: low
+      route: archive
+      action: classify
+  - input:
+      molecular_weight: 350
+    expect:
+      priority: low
+      route: archive
+      action: pass
+  - input:
+      molecular_weight: 0
+    expect:
+      priority: low
+      reason: MW≤100 Da — molecular fragment, not drug-like
+      route: archive
+      action: classify
+  - input:
+      molecular_weight: -1
+    expect:
+      reason: MW≤100 Da — molecular fragment, not drug-like
+      action: classify
+      priority: low
+      route: archive
+  - input:
+      molecular_weight: 99
+    expect:
+      reason: MW≤100 Da — molecular fragment, not drug-like
+      priority: low
+      route: archive
+      action: classify
+  - input:
+      molecular_weight: 101
+    expect:
+      priority: low
+      reason: MW 100-500 Da — within drug-like range
+      action: pass
+      route: archive
+  - input:
+      molecular_weight: 10000
+    expect:
+      reason: MW≥500 Da — Lipinski Rule of 5 violation, oral bioavailability concern
+      action: flag
+      route: admet_review
+      priority: moderate
+  - input: {}
+    expect:
+      action: pass
+      reason: MW 100-500 Da — within drug-like range
+      route: archive
+      priority: low
+  - input:
+      molecular_weight: 0
+    expect:
+      priority: low
+      reason: MW≤100 Da — molecular fragment, not drug-like
+      route: archive
+      action: classify
+  - input:
+      molecular_weight: -1
+    expect:
+      route: archive
+      priority: low
+      action: classify
+      reason: MW≤100 Da — molecular fragment, not drug-like
+  - input:
+      molecular_weight: 499
+    expect:
+      priority: low
+      reason: MW 100-500 Da — within drug-like range
+      route: archive
+      action: pass
+  - input:
+      molecular_weight: 501
+    expect:
+      reason: MW≥500 Da — Lipinski Rule of 5 violation, oral bioavailability concern
+      priority: moderate
+      action: flag
+      route: admet_review
+  - input:
+      molecular_weight: 50000
+    expect:
+      route: admet_review
+      action: flag
+      reason: MW≥500 Da — Lipinski Rule of 5 violation, oral bioavailability concern
+      priority: moderate
+  - input: {}
+    expect:
+      reason: MW 100-500 Da — within drug-like range
+      priority: low
+      route: archive
+      action: pass
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

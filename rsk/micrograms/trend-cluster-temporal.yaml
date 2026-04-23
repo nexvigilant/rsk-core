@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: trend-cluster-temporal
-description: Temporal case cluster
 version: 0.1.0
+description: Temporal case cluster
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Trend Cluster Temporal
+  subtitle: Temporal case cluster
+  icon: circle
+  route: /vigilance/mg/trend-cluster-temporal
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/trend-cluster-temporal
+  cli: rsk mcg run trend-cluster-temporal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -24,44 +53,74 @@ tree:
       true_next: detected
       false_next: not_detected
 tests:
-- input:
-    cluster_cases: 5
-  expect:
-    pattern: cluster
-    detected: true
-- input: {}
-  expect:
-    pattern: cluster
-    detected: false
-- input:
-    cluster_cases: 0
-  expect:
-    detected: false
-    pattern: cluster
-    action: continue_monitoring
-- input:
-    cluster_cases: -1
-  expect:
-    action: continue_monitoring
-    detected: false
-    pattern: cluster
-- input:
-    cluster_cases: 4
-  expect:
-    action: continue_monitoring
-    detected: false
-    pattern: cluster
-- input:
-    cluster_cases: 6
-  expect:
-    detected: true
-    pattern: cluster
-    action: investigate
-- input:
-    cluster_cases: 500
-  expect:
-    action: investigate
-    pattern: cluster
-    detected: true
-interface: null
-primitive_signature: null
+  - input:
+      cluster_cases: 5
+    expect:
+      pattern: cluster
+      detected: true
+  - input: {}
+    expect:
+      pattern: cluster
+      detected: false
+  - input:
+      cluster_cases: 0
+    expect:
+      detected: false
+      pattern: cluster
+      action: continue_monitoring
+  - input:
+      cluster_cases: -1
+    expect:
+      action: continue_monitoring
+      detected: false
+      pattern: cluster
+  - input:
+      cluster_cases: 4
+    expect:
+      action: continue_monitoring
+      detected: false
+      pattern: cluster
+  - input:
+      cluster_cases: 6
+    expect:
+      detected: true
+      pattern: cluster
+      action: investigate
+  - input:
+      cluster_cases: 500
+    expect:
+      action: investigate
+      pattern: cluster
+      detected: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

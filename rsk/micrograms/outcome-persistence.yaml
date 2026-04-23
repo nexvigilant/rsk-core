@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: outcome-persistence
-description: ICH E2A outcome duration classification — does the adverse outcome endure? Fills the π (Persistence) primitive gap.
 version: 0.1.0
+description: ICH E2A outcome duration classification — does the adverse outcome endure? Fills the π (Persistence) primitive gap.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Outcome Persistence
+  subtitle: ICH E2A outcome duration classification — does the adverse outcome endure? Fills the π (Persistence) primitive gap.
+  icon: circle
+  route: /vigilance/mg/outcome-persistence
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/outcome-persistence
+  cli: rsk mcg run outcome-persistence
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_permanent
   nodes:
@@ -88,161 +117,192 @@ tree:
         persistence_primitive: π — does the outcome endure
         chemistry_analog: Covalent bond (permanent modification of tissue/organ function)
 tests:
-- input:
-    is_permanent: true
-    days_to_resolution: -1
-    outcome_resolved: false
-  expect:
-    persistence_class: IRREVERSIBLE
-- input:
-    is_permanent: true
-    outcome_resolved: true
-    days_to_resolution: 5
-  expect:
-    persistence_class: IRREVERSIBLE
-- input:
-    outcome_resolved: false
-    is_permanent: false
-    days_to_resolution: -1
-  expect:
-    persistence_class: ONGOING
-- input:
-    outcome_resolved: true
-    days_to_resolution: 1
-    is_permanent: false
-  expect:
-    persistence_class: TRANSIENT
-- input:
-    outcome_resolved: true
-    days_to_resolution: 7
-    is_permanent: false
-  expect:
-    persistence_class: TRANSIENT
-- input:
-    days_to_resolution: 8
-    is_permanent: false
-    outcome_resolved: true
-  expect:
-    persistence_class: SHORT_TERM
-- input:
-    days_to_resolution: 30
-    is_permanent: false
-    outcome_resolved: true
-  expect:
-    persistence_class: SHORT_TERM
-- input:
-    is_permanent: false
-    days_to_resolution: 31
-    outcome_resolved: true
-  expect:
-    persistence_class: MEDIUM_TERM
-- input:
-    days_to_resolution: 90
-    outcome_resolved: true
-    is_permanent: false
-  expect:
-    persistence_class: MEDIUM_TERM
-- input:
-    outcome_resolved: true
-    days_to_resolution: 91
-    is_permanent: false
-  expect:
-    persistence_class: CHRONIC
-- input:
-    days_to_resolution: 365
-    outcome_resolved: true
-    is_permanent: false
-  expect:
-    persistence_class: CHRONIC
-- input: {}
-  expect:
-    persistence_class: ONGOING
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    persistence_primitive: π — does the outcome endure
-- input:
-    days_to_resolution: 0
-  expect:
-    persistence_primitive: π — does the outcome endure
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    persistence_class: ONGOING
-- input:
-    days_to_resolution: 29
-  expect:
-    persistence_class: ONGOING
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    persistence_primitive: π — does the outcome endure
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    chemistry_analog: Intermediate reaction (substrate still converting)
-- input: {}
-  expect:
-    persistence_class: ONGOING
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    persistence_primitive: π — does the outcome endure
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    chemistry_analog: Intermediate reaction (substrate still converting)
-- input:
-    days_to_resolution: 0
-  expect:
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    persistence_class: ONGOING
-    persistence_primitive: π — does the outcome endure
-- input:
-    days_to_resolution: 6
-  expect:
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    persistence_class: ONGOING
-    persistence_primitive: π — does the outcome endure
-- input: {}
-  expect:
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    persistence_primitive: π — does the outcome endure
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    persistence_class: ONGOING
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-- input: {}
-  expect:
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    persistence_primitive: π — does the outcome endure
-    persistence_class: ONGOING
-    chemistry_analog: Intermediate reaction (substrate still converting)
-- input:
-    days_to_resolution: 0
-  expect:
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    persistence_primitive: π — does the outcome endure
-    persistence_class: ONGOING
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-- input:
-    days_to_resolution: 89
-  expect:
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    persistence_primitive: π — does the outcome endure
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    persistence_class: ONGOING
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-- input:
-    days_to_resolution: 9000
-  expect:
-    persistence_primitive: π — does the outcome endure
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    persistence_class: ONGOING
-- input: {}
-  expect:
-    persistence_primitive: π — does the outcome endure
-    action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
-    persistence_class: ONGOING
-    chemistry_analog: Intermediate reaction (substrate still converting)
-    ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
-interface: null
+  - input:
+      is_permanent: true
+      days_to_resolution: -1
+      outcome_resolved: false
+    expect:
+      persistence_class: IRREVERSIBLE
+  - input:
+      is_permanent: true
+      outcome_resolved: true
+      days_to_resolution: 5
+    expect:
+      persistence_class: IRREVERSIBLE
+  - input:
+      outcome_resolved: false
+      is_permanent: false
+      days_to_resolution: -1
+    expect:
+      persistence_class: ONGOING
+  - input:
+      outcome_resolved: true
+      days_to_resolution: 1
+      is_permanent: false
+    expect:
+      persistence_class: TRANSIENT
+  - input:
+      outcome_resolved: true
+      days_to_resolution: 7
+      is_permanent: false
+    expect:
+      persistence_class: TRANSIENT
+  - input:
+      days_to_resolution: 8
+      is_permanent: false
+      outcome_resolved: true
+    expect:
+      persistence_class: SHORT_TERM
+  - input:
+      days_to_resolution: 30
+      is_permanent: false
+      outcome_resolved: true
+    expect:
+      persistence_class: SHORT_TERM
+  - input:
+      is_permanent: false
+      days_to_resolution: 31
+      outcome_resolved: true
+    expect:
+      persistence_class: MEDIUM_TERM
+  - input:
+      days_to_resolution: 90
+      outcome_resolved: true
+      is_permanent: false
+    expect:
+      persistence_class: MEDIUM_TERM
+  - input:
+      outcome_resolved: true
+      days_to_resolution: 91
+      is_permanent: false
+    expect:
+      persistence_class: CHRONIC
+  - input:
+      days_to_resolution: 365
+      outcome_resolved: true
+      is_permanent: false
+    expect:
+      persistence_class: CHRONIC
+  - input: {}
+    expect:
+      persistence_class: ONGOING
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      persistence_primitive: π — does the outcome endure
+  - input:
+      days_to_resolution: 0
+    expect:
+      persistence_primitive: π — does the outcome endure
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      persistence_class: ONGOING
+  - input:
+      days_to_resolution: 29
+    expect:
+      persistence_class: ONGOING
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      persistence_primitive: π — does the outcome endure
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      chemistry_analog: Intermediate reaction (substrate still converting)
+  - input: {}
+    expect:
+      persistence_class: ONGOING
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      persistence_primitive: π — does the outcome endure
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      chemistry_analog: Intermediate reaction (substrate still converting)
+  - input:
+      days_to_resolution: 0
+    expect:
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      persistence_class: ONGOING
+      persistence_primitive: π — does the outcome endure
+  - input:
+      days_to_resolution: 6
+    expect:
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      persistence_class: ONGOING
+      persistence_primitive: π — does the outcome endure
+  - input: {}
+    expect:
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      persistence_primitive: π — does the outcome endure
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      persistence_class: ONGOING
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+  - input: {}
+    expect:
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      persistence_primitive: π — does the outcome endure
+      persistence_class: ONGOING
+      chemistry_analog: Intermediate reaction (substrate still converting)
+  - input:
+      days_to_resolution: 0
+    expect:
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      persistence_primitive: π — does the outcome endure
+      persistence_class: ONGOING
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+  - input:
+      days_to_resolution: 89
+    expect:
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      persistence_primitive: π — does the outcome endure
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      persistence_class: ONGOING
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+  - input:
+      days_to_resolution: 9000
+    expect:
+      persistence_primitive: π — does the outcome endure
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      persistence_class: ONGOING
+  - input: {}
+    expect:
+      persistence_primitive: π — does the outcome endure
+      action: Outcome still unresolved. Continue monitoring. Persistence timeline unknown.
+      persistence_class: ONGOING
+      chemistry_analog: Intermediate reaction (substrate still converting)
+      ich_reference: ICH E2A Section 3.2 — life-threatening events require ongoing assessment
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

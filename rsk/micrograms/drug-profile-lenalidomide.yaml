@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-profile-lenalidomide
-description: 'Safety triage for lenalidomide: PRR-based signal routing (Type B)'
 version: 0.1.0
+description: "Safety triage for lenalidomide: PRR-based signal routing (Type B)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Profile Lenalidomide
+  subtitle: "Safety triage for lenalidomide: PRR-based signal routing (Type B)"
+  icon: circle
+  route: /vigilance/mg/drug-profile-lenalidomide
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-profile-lenalidomide
+  cli: rsk mcg run drug-profile-lenalidomide
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_prr
   nodes:
@@ -16,7 +45,7 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 5.0
+      value: 5
       true_next: signal
       false_next: no_signal
     signal:
@@ -28,35 +57,65 @@ tree:
         signal: true
         harm_type: B
 tests:
-- input:
-    prr: 7.8
-  expect:
-    drug: lenalidomide
-    signal: true
-- input:
-    prr: 0.5
-  expect:
-    signal: false
-    drug: lenalidomide
-- input: {}
-  expect:
-    signal: false
-    drug: lenalidomide
-- input:
-    prr: 4.999
-  expect:
-    expected_prr: 7.8
-    action: monitor
-    drug: lenalidomide
-    signal: false
-    harm_type: B
-- input:
-    prr: 5.001
-  expect:
-    harm_type: B
-    expected_prr: 7.8
-    signal: true
-    action: investigate
-    drug: lenalidomide
-interface: null
-primitive_signature: null
+  - input:
+      prr: 7.8
+    expect:
+      drug: lenalidomide
+      signal: true
+  - input:
+      prr: 0.5
+    expect:
+      signal: false
+      drug: lenalidomide
+  - input: {}
+    expect:
+      signal: false
+      drug: lenalidomide
+  - input:
+      prr: 4.999
+    expect:
+      expected_prr: 7.8
+      action: monitor
+      drug: lenalidomide
+      signal: false
+      harm_type: B
+  - input:
+      prr: 5.001
+    expect:
+      harm_type: B
+      expected_prr: 7.8
+      signal: true
+      action: investigate
+      drug: lenalidomide
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

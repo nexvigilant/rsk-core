@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: founder-health
-description: 'Loop 5 FlywheelVitals: Founder elastic equilibrium health classifier. Combines current stress ratio (stress/yield_point), fatigue accumulation (cycles/limit), and recovery trajectory. GREEN (sustainable), YELLOW (approaching limits), ORANGE (recovery stalling), RED (burnout imminent). Spec §3.5: fatigue is INVISIBLE until catastrophic — this MCG makes it visible.'
 version: 0.1.0
+description: "Loop 5 FlywheelVitals: Founder elastic equilibrium health classifier. Combines current stress ratio (stress/yield_point), fatigue accumulation (cycles/limit), and recovery trajectory. GREEN (sustainable), YELLOW (approaching limits), ORANGE (recovery stalling), RED (burnout imminent). Spec §3.5: fatigue is INVISIBLE until catastrophic — this MCG makes it visible."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: stress_ratio
+    type: float
+    required: true
+    description: ""
+  - name: fatigue_ratio
+    type: float
+    required: true
+    description: ""
+  - name: recovery_days
+    type: float
+    required: true
+    description: ""
+  - name: recovery_trend
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: health
+    type: string
+  - name: risk_factor
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     stress_ratio:
@@ -22,10 +56,46 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Founder Health
+  subtitle: "Loop 5 FlywheelVitals: Founder elastic equilibrium health classifier. Combines current stress ratio (stress/yield_point), fatigue accumulation (cycles/limit), and recovery trajectory. GREEN (sustainable), YELLOW (approaching limits), ORANGE (recovery stalling), RED (burnout imminent). Spec §3.5: fatigue is INVISIBLE until catastrophic — this MCG makes it visible."
+  icon: circle
+  route: /vigilance/mg/founder-health
+  steps:
+    - field: stress_ratio
+      label: stress ratio
+      help: Enter stress_ratio
+      widget: text
+      placeholder: null
+    - field: fatigue_ratio
+      label: fatigue ratio
+      help: Enter fatigue_ratio
+      widget: text
+      placeholder: null
+    - field: recovery_days
+      label: recovery days
+      help: Enter recovery_days
+      widget: text
+      placeholder: null
+    - field: recovery_trend
+      label: recovery trend
+      help: Enter recovery_trend
+      widget: text
+      placeholder: null
+  result:
+    template: "health: {{health}} — risk_factor: {{risk_factor}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/founder-health
+  cli: rsk mcg run founder-health
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fatigue_critical
   nodes:
-    # Fatigue is checked FIRST — invisible degradation takes priority (spec §3.5)
     check_fatigue_critical:
       type: condition
       variable: fatigue_ratio
@@ -51,7 +121,7 @@ tree:
       type: condition
       variable: recovery_days
       operator: gte
-      value: 7.0
+      value: 7
       true_next: orange_recovery
       false_next: check_fatigue_warning
     check_fatigue_warning:
@@ -105,108 +175,133 @@ tree:
         risk_factor: none
         action: maintain_pace
 tests:
-# GREEN: low stress, low fatigue, fast recovery
-- input:
-    stress_ratio: 0.3
-    fatigue_ratio: 0.2
-    recovery_days: 2.0
-    recovery_trend: stable
-  expect:
-    health: GREEN
-    risk_factor: none
-    action: maintain_pace
-# RED: fatigue critical (invisible degradation — the dangerous one)
-- input:
-    stress_ratio: 0.5
-    fatigue_ratio: 0.85
-    recovery_days: 3.0
-    recovery_trend: stable
-  expect:
-    health: RED
-    risk_factor: fatigue_accumulation
-    action: immediate_load_reduction
-# RED: acute stress overload
-- input:
-    stress_ratio: 0.95
-    fatigue_ratio: 0.3
-    recovery_days: 2.0
-    recovery_trend: stable
-  expect:
-    health: RED
-    risk_factor: acute_overload
-    action: emergency_scope_cut
-# ORANGE: recovery time increasing (early warning)
-- input:
-    stress_ratio: 0.5
-    fatigue_ratio: 0.4
-    recovery_days: 10.0
-    recovery_trend: increasing
-  expect:
-    health: ORANGE
-    risk_factor: recovery_stalling
-    action: enforce_recovery_period
-# YELLOW: fatigue building
-- input:
-    stress_ratio: 0.4
-    fatigue_ratio: 0.6
-    recovery_days: 3.0
-    recovery_trend: stable
-  expect:
-    health: YELLOW
-    risk_factor: fatigue_building
-    action: reduce_cycle_frequency
-# YELLOW: stress elevated but not critical
-- input:
-    stress_ratio: 0.7
-    fatigue_ratio: 0.3
-    recovery_days: 2.0
-    recovery_trend: stable
-  expect:
-    health: YELLOW
-    risk_factor: elevated_stress
-    action: delegate_or_defer
-# Edge: both fatigue and stress high — fatigue wins (invisible > visible)
-- input:
-    stress_ratio: 0.95
-    fatigue_ratio: 0.9
-    recovery_days: 14.0
-    recovery_trend: increasing
-  expect:
-    health: RED
-    risk_factor: fatigue_accumulation
-    action: immediate_load_reduction
-# Edge: recovery increasing but short days and low ratios — green
-- input:
-    stress_ratio: 0.4
-    fatigue_ratio: 0.4
-    recovery_days: 3.0
-    recovery_trend: increasing
-  expect:
-    health: GREEN
-    risk_factor: none
-    action: maintain_pace
-# Edge: zero everything
-- input:
-    stress_ratio: 0.0
-    fatigue_ratio: 0.0
-    recovery_days: 0.0
-    recovery_trend: stable
-  expect:
-    health: GREEN
-    risk_factor: none
-    action: maintain_pace
-# Edge: at fatigue boundary (0.5 exactly)
-- input:
-    stress_ratio: 0.3
-    fatigue_ratio: 0.5
-    recovery_days: 2.0
-    recovery_trend: stable
-  expect:
-    health: YELLOW
-    risk_factor: fatigue_building
-    action: reduce_cycle_frequency
-- input: {}
-  expect:
-    action: maintain_pace
-    health: GREEN
-    risk_factor: none
+  - input:
+      stress_ratio: 0.3
+      fatigue_ratio: 0.2
+      recovery_days: 2
+      recovery_trend: stable
+    expect:
+      health: GREEN
+      risk_factor: none
+      action: maintain_pace
+  - input:
+      stress_ratio: 0.5
+      fatigue_ratio: 0.85
+      recovery_days: 3
+      recovery_trend: stable
+    expect:
+      health: RED
+      risk_factor: fatigue_accumulation
+      action: immediate_load_reduction
+  - input:
+      stress_ratio: 0.95
+      fatigue_ratio: 0.3
+      recovery_days: 2
+      recovery_trend: stable
+    expect:
+      health: RED
+      risk_factor: acute_overload
+      action: emergency_scope_cut
+  - input:
+      stress_ratio: 0.5
+      fatigue_ratio: 0.4
+      recovery_days: 10
+      recovery_trend: increasing
+    expect:
+      health: ORANGE
+      risk_factor: recovery_stalling
+      action: enforce_recovery_period
+  - input:
+      stress_ratio: 0.4
+      fatigue_ratio: 0.6
+      recovery_days: 3
+      recovery_trend: stable
+    expect:
+      health: YELLOW
+      risk_factor: fatigue_building
+      action: reduce_cycle_frequency
+  - input:
+      stress_ratio: 0.7
+      fatigue_ratio: 0.3
+      recovery_days: 2
+      recovery_trend: stable
+    expect:
+      health: YELLOW
+      risk_factor: elevated_stress
+      action: delegate_or_defer
+  - input:
+      stress_ratio: 0.95
+      fatigue_ratio: 0.9
+      recovery_days: 14
+      recovery_trend: increasing
+    expect:
+      health: RED
+      risk_factor: fatigue_accumulation
+      action: immediate_load_reduction
+  - input:
+      stress_ratio: 0.4
+      fatigue_ratio: 0.4
+      recovery_days: 3
+      recovery_trend: increasing
+    expect:
+      health: GREEN
+      risk_factor: none
+      action: maintain_pace
+  - input:
+      stress_ratio: 0
+      fatigue_ratio: 0
+      recovery_days: 0
+      recovery_trend: stable
+    expect:
+      health: GREEN
+      risk_factor: none
+      action: maintain_pace
+  - input:
+      stress_ratio: 0.3
+      fatigue_ratio: 0.5
+      recovery_days: 2
+      recovery_trend: stable
+    expect:
+      health: YELLOW
+      risk_factor: fatigue_building
+      action: reduce_cycle_frequency
+  - input: {}
+    expect:
+      action: maintain_pace
+      health: GREEN
+      risk_factor: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - health
+    - risk_factor
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

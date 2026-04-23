@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: class-thiazolidinedione
-description: 'TZDs class safety: Heart failure monitoring'
 version: 0.1.0
+description: "TZDs class safety: Heart failure monitoring"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Class Thiazolidinedione
+  subtitle: "TZDs class safety: Heart failure monitoring"
+  icon: circle
+  route: /vigilance/mg/class-thiazolidinedione
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/class-thiazolidinedione
+  cli: rsk mcg run class-thiazolidinedione
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -26,49 +55,79 @@ tree:
         action: class_effect_investigation
         drug_class: TZDs
 tests:
-- input:
-    heart_failure_risk: 2
-  expect:
-    drug_class: TZDs
-    alert: true
-- input: {}
-  expect:
-    drug_class: TZDs
-    alert: false
-- input:
-    heart_failure_risk: 0
-  expect:
-    alert: false
-    drug_class: TZDs
-    concern: Heart failure
-    action: continue
-- input:
-    heart_failure_risk: -1
-  expect:
-    drug_class: TZDs
-    alert: false
-    concern: Heart failure
-    action: continue
-- input:
-    heart_failure_risk: 1
-  expect:
-    concern: Heart failure
-    alert: false
-    drug_class: TZDs
-    action: continue
-- input:
-    heart_failure_risk: 3
-  expect:
-    action: class_effect_investigation
-    drug_class: TZDs
-    concern: Heart failure
-    alert: true
-- input:
-    heart_failure_risk: 200
-  expect:
-    alert: true
-    concern: Heart failure
-    action: class_effect_investigation
-    drug_class: TZDs
-interface: null
-primitive_signature: null
+  - input:
+      heart_failure_risk: 2
+    expect:
+      drug_class: TZDs
+      alert: true
+  - input: {}
+    expect:
+      drug_class: TZDs
+      alert: false
+  - input:
+      heart_failure_risk: 0
+    expect:
+      alert: false
+      drug_class: TZDs
+      concern: Heart failure
+      action: continue
+  - input:
+      heart_failure_risk: -1
+    expect:
+      drug_class: TZDs
+      alert: false
+      concern: Heart failure
+      action: continue
+  - input:
+      heart_failure_risk: 1
+    expect:
+      concern: Heart failure
+      alert: false
+      drug_class: TZDs
+      action: continue
+  - input:
+      heart_failure_risk: 3
+    expect:
+      action: class_effect_investigation
+      drug_class: TZDs
+      concern: Heart failure
+      alert: true
+  - input:
+      heart_failure_risk: 200
+    expect:
+      alert: true
+      concern: Heart failure
+      action: class_effect_investigation
+      drug_class: TZDs
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

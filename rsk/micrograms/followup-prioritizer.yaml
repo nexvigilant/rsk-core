@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: followup-prioritizer
-description: 'Follow-up urgency router: determines priority, deadline hours, and contact method for incomplete ICSR cases based on outcome, seriousness, and regulatory deadline proximity'
 version: 1.0.0
+description: "Follow-up urgency router: determines priority, deadline hours, and contact method for incomplete ICSR cases based on outcome, seriousness, and regulatory deadline proximity"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: days_since_receipt
+    type: int
+    required: false
+    description: ""
+  - name: fatal_outcome
+    type: bool
+    required: false
+    description: ""
+  - name: missing_critical_fields
+    type: int
+    required: false
+    description: ""
+  - name: regulatory_deadline_days
+    type: int
+    required: false
+    description: ""
+  - name: serious
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: deadline_hours
+    type: int
+  - name: escalation_note
+    type: string
+  - name: method
+    type: string
+  - name: priority
+    type: string
 interface:
   inputs:
     days_since_receipt:
@@ -27,10 +67,51 @@ interface:
       type: string
     priority:
       type: string
+ui:
+  title: Followup Prioritizer
+  subtitle: "Follow-up urgency router: determines priority, deadline hours, and contact method for incomplete ICSR cases based on outcome, seriousness, and regulatory deadline proximity"
+  icon: circle
+  route: /vigilance/mg/followup-prioritizer
+  steps:
+    - field: days_since_receipt
+      label: days since receipt
+      help: Enter days_since_receipt
+      widget: text
+      placeholder: null
+    - field: fatal_outcome
+      label: fatal outcome
+      help: Enter fatal_outcome
+      widget: toggle
+      placeholder: null
+    - field: missing_critical_fields
+      label: missing critical fields
+      help: Enter missing_critical_fields
+      widget: text
+      placeholder: null
+    - field: regulatory_deadline_days
+      label: regulatory deadline days
+      help: Enter regulatory_deadline_days
+      widget: text
+      placeholder: null
+    - field: serious
+      label: serious
+      help: Enter serious
+      widget: toggle
+      placeholder: null
+  result:
+    template: "deadline_hours: {{deadline_hours}} — escalation_note: {{escalation_note}} — method: {{method}} — priority: {{priority}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/followup-prioritizer
+  cli: rsk mcg run followup-prioritizer
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fatal
   nodes:
-    # --- Highest priority: fatal outcome overrides all else ---
     check_fatal:
       type: condition
       variable: fatal_outcome
@@ -38,8 +119,6 @@ tree:
       value: true
       true_next: return_critical
       false_next: check_serious
-
-    # --- Serious cases: check deadline proximity ---
     check_serious:
       type: condition
       variable: serious
@@ -47,7 +126,6 @@ tree:
       value: true
       true_next: check_days_remaining
       false_next: check_non_serious_fields
-
     check_days_remaining:
       type: condition
       variable: days_since_receipt
@@ -55,19 +133,6 @@ tree:
       value: 0
       true_next: compute_days_check
       false_next: check_missing_fields_serious
-
-    # Compute whether we are within 5 days of regulatory deadline
-    # days_since_receipt > (regulatory_deadline_days - 5)
-    # Equivalent: check if regulatory_deadline_days - days_since_receipt <= 5
-    # We use: days_since_receipt >= regulatory_deadline_days - 4
-    # Since engine can't do arithmetic, we proxy via: serious + missing_critical_fields >= 3
-    # Instead: check if remaining buffer is tight by testing days_since_receipt
-    # Strategy: use separate thresholds per deadline (7-day rule: >2 days used, 15-day rule: >10 days used)
-    # Simplified: days_since_receipt >= regulatory_deadline_days is overdue; >-5 is urgent
-    # Engine limitation: can't subtract variables. Proxy: if days_since_receipt gte regulatory_deadline_days - 5
-    # Workaround: compare days_since_receipt against a threshold derived from regulatory_deadline_days
-    # Best proxy given single-variable ops: check days_since_receipt against deadline-specific breakpoints
-    # Use regulatory_deadline_days lte 15 (covers both 7-day and 15-day deadlines) combined with days_since_receipt gte 10
     compute_days_check:
       type: condition
       variable: regulatory_deadline_days
@@ -75,7 +140,6 @@ tree:
       value: 7
       true_next: check_urgent_7day
       false_next: check_urgent_15day
-
     check_urgent_7day:
       type: condition
       variable: days_since_receipt
@@ -83,7 +147,6 @@ tree:
       value: 2
       true_next: return_urgent
       false_next: check_missing_fields_serious
-
     check_urgent_15day:
       type: condition
       variable: regulatory_deadline_days
@@ -91,7 +154,6 @@ tree:
       value: 15
       true_next: check_urgent_15day_threshold
       false_next: check_missing_fields_serious
-
     check_urgent_15day_threshold:
       type: condition
       variable: days_since_receipt
@@ -99,8 +161,6 @@ tree:
       value: 10
       true_next: return_urgent
       false_next: check_missing_fields_serious
-
-    # --- Serious with missing critical fields ---
     check_missing_fields_serious:
       type: condition
       variable: missing_critical_fields
@@ -108,8 +168,6 @@ tree:
       value: 3
       true_next: return_high
       false_next: return_standard
-
-    # --- Non-serious: check missing fields count ---
     check_non_serious_fields:
       type: condition
       variable: missing_critical_fields
@@ -117,8 +175,6 @@ tree:
       value: 5
       true_next: return_moderate
       false_next: return_low
-
-    # --- Return nodes ---
     return_critical:
       type: return
       value:
@@ -126,7 +182,6 @@ tree:
         deadline_hours: 24
         method: direct_contact
         escalation_note: Fatal outcome requires immediate follow-up within 24 hours — 7-day expedited report at risk
-
     return_urgent:
       type: return
       value:
@@ -134,7 +189,6 @@ tree:
         deadline_hours: 48
         method: phone_then_fax
         escalation_note: Regulatory deadline approaching — expedited phone contact required within 48 hours
-
     return_high:
       type: return
       value:
@@ -142,7 +196,6 @@ tree:
         deadline_hours: 72
         method: phone
         escalation_note: Serious case with 3 or more missing critical fields — phone follow-up within 72 hours
-
     return_standard:
       type: return
       value:
@@ -150,7 +203,6 @@ tree:
         deadline_hours: 120
         method: email_then_phone
         escalation_note: Serious case — standard follow-up within 5 days, escalate to phone if no response
-
     return_moderate:
       type: return
       value:
@@ -158,7 +210,6 @@ tree:
         deadline_hours: 168
         method: email
         escalation_note: Non-serious case with significant data gaps — email follow-up within 7 days
-
     return_low:
       type: return
       value:
@@ -166,131 +217,155 @@ tree:
         deadline_hours: 336
         method: batch_email
         escalation_note: Non-serious case with minor gaps — include in next batch follow-up cycle
-
 tests:
-- input:
-    serious: true
-    fatal_outcome: true
-    missing_critical_fields: 0
-    days_since_receipt: 1
-    regulatory_deadline_days: 7
-  expect:
-    priority: CRITICAL
-    deadline_hours: 24
-    method: direct_contact
-
-- input:
-    serious: true
-    fatal_outcome: true
-    missing_critical_fields: 5
-    days_since_receipt: 6
-    regulatory_deadline_days: 7
-  expect:
-    priority: CRITICAL
-    deadline_hours: 24
-    method: direct_contact
-
-- input:
-    serious: true
-    fatal_outcome: false
-    missing_critical_fields: 2
-    days_since_receipt: 3
-    regulatory_deadline_days: 7
-  expect:
-    priority: URGENT
-    deadline_hours: 48
-    method: phone_then_fax
-
-- input:
-    serious: true
-    fatal_outcome: false
-    missing_critical_fields: 2
-    days_since_receipt: 11
-    regulatory_deadline_days: 15
-  expect:
-    priority: URGENT
-    deadline_hours: 48
-    method: phone_then_fax
-
-- input:
-    serious: true
-    fatal_outcome: false
-    missing_critical_fields: 4
-    days_since_receipt: 2
-    regulatory_deadline_days: 15
-  expect:
-    priority: HIGH
-    deadline_hours: 72
-    method: phone
-
-- input:
-    serious: true
-    fatal_outcome: false
-    missing_critical_fields: 3
-    days_since_receipt: 1
-    regulatory_deadline_days: 15
-  expect:
-    priority: HIGH
-    deadline_hours: 72
-    method: phone
-
-- input:
-    serious: true
-    fatal_outcome: false
-    missing_critical_fields: 2
-    days_since_receipt: 5
-    regulatory_deadline_days: 15
-  expect:
-    priority: STANDARD
-    deadline_hours: 120
-    method: email_then_phone
-
-- input:
-    serious: true
-    fatal_outcome: false
-    missing_critical_fields: 0
-    days_since_receipt: 3
-    regulatory_deadline_days: 15
-  expect:
-    priority: STANDARD
-    deadline_hours: 120
-    method: email_then_phone
-
-- input:
-    serious: false
-    fatal_outcome: false
-    missing_critical_fields: 6
-    days_since_receipt: 10
-    regulatory_deadline_days: 90
-  expect:
-    priority: MODERATE
-    deadline_hours: 168
-    method: email
-
-- input:
-    serious: false
-    fatal_outcome: false
-    missing_critical_fields: 5
-    days_since_receipt: 5
-    regulatory_deadline_days: 90
-  expect:
-    priority: MODERATE
-    deadline_hours: 168
-    method: email
-
-- input:
-    serious: false
-    fatal_outcome: false
-    missing_critical_fields: 2
-    days_since_receipt: 10
-    regulatory_deadline_days: 90
-  expect:
-    priority: LOW
-    deadline_hours: 336
-    method: batch_email
-
-- input: {}
-  expect:
-    priority: LOW
-    deadline_hours: 336
-    method: batch_email
+  - input:
+      serious: true
+      fatal_outcome: true
+      missing_critical_fields: 0
+      days_since_receipt: 1
+      regulatory_deadline_days: 7
+    expect:
+      priority: CRITICAL
+      deadline_hours: 24
+      method: direct_contact
+  - input:
+      serious: true
+      fatal_outcome: true
+      missing_critical_fields: 5
+      days_since_receipt: 6
+      regulatory_deadline_days: 7
+    expect:
+      priority: CRITICAL
+      deadline_hours: 24
+      method: direct_contact
+  - input:
+      serious: true
+      fatal_outcome: false
+      missing_critical_fields: 2
+      days_since_receipt: 3
+      regulatory_deadline_days: 7
+    expect:
+      priority: URGENT
+      deadline_hours: 48
+      method: phone_then_fax
+  - input:
+      serious: true
+      fatal_outcome: false
+      missing_critical_fields: 2
+      days_since_receipt: 11
+      regulatory_deadline_days: 15
+    expect:
+      priority: URGENT
+      deadline_hours: 48
+      method: phone_then_fax
+  - input:
+      serious: true
+      fatal_outcome: false
+      missing_critical_fields: 4
+      days_since_receipt: 2
+      regulatory_deadline_days: 15
+    expect:
+      priority: HIGH
+      deadline_hours: 72
+      method: phone
+  - input:
+      serious: true
+      fatal_outcome: false
+      missing_critical_fields: 3
+      days_since_receipt: 1
+      regulatory_deadline_days: 15
+    expect:
+      priority: HIGH
+      deadline_hours: 72
+      method: phone
+  - input:
+      serious: true
+      fatal_outcome: false
+      missing_critical_fields: 2
+      days_since_receipt: 5
+      regulatory_deadline_days: 15
+    expect:
+      priority: STANDARD
+      deadline_hours: 120
+      method: email_then_phone
+  - input:
+      serious: true
+      fatal_outcome: false
+      missing_critical_fields: 0
+      days_since_receipt: 3
+      regulatory_deadline_days: 15
+    expect:
+      priority: STANDARD
+      deadline_hours: 120
+      method: email_then_phone
+  - input:
+      serious: false
+      fatal_outcome: false
+      missing_critical_fields: 6
+      days_since_receipt: 10
+      regulatory_deadline_days: 90
+    expect:
+      priority: MODERATE
+      deadline_hours: 168
+      method: email
+  - input:
+      serious: false
+      fatal_outcome: false
+      missing_critical_fields: 5
+      days_since_receipt: 5
+      regulatory_deadline_days: 90
+    expect:
+      priority: MODERATE
+      deadline_hours: 168
+      method: email
+  - input:
+      serious: false
+      fatal_outcome: false
+      missing_critical_fields: 2
+      days_since_receipt: 10
+      regulatory_deadline_days: 90
+    expect:
+      priority: LOW
+      deadline_hours: 336
+      method: batch_email
+  - input: {}
+    expect:
+      priority: LOW
+      deadline_hours: 336
+      method: batch_email
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - deadline_hours
+    - escalation_note
+    - method
+    - priority
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

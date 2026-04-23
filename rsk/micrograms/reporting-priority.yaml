@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: reporting-priority
-description: 'Master priority calculator combining seriousness + expectedness + causality per ICH E2A. P0 through P3 priority tiers.'
 version: 0.1.0
+description: Master priority calculator combining seriousness + expectedness + causality per ICH E2A. P0 through P3 priority tiers.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: causality_category
+    type: string
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: deadline_days
+    type: int
+  - name: priority
+    type: string
+  - name: rationale
+    type: string
+  - name: report_type
+    type: string
 interface:
   inputs:
     causality_category:
@@ -21,6 +53,38 @@ interface:
       type: string
     report_type:
       type: string
+ui:
+  title: Reporting Priority
+  subtitle: Master priority calculator combining seriousness + expectedness + causality per ICH E2A. P0 through P3 priority tiers.
+  icon: circle
+  route: /vigilance/mg/reporting-priority
+  steps:
+    - field: causality_category
+      label: causality category
+      help: Enter causality_category
+      widget: text
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+  result:
+    template: "deadline_days: {{deadline_days}} — priority: {{priority}} — rationale: {{rationale}} — report_type: {{report_type}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/reporting-priority
+  cli: rsk mcg run reporting-priority
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_serious
   nodes:
@@ -81,81 +145,117 @@ tree:
         report_type: PSUR_PBRER
         rationale: Non-serious ADR included in routine periodic safety reporting
 tests:
-- input:
-    is_serious: true
-    is_unexpected: true
-    causality_category: DEFINITE
-  expect:
-    priority: P0_IMMEDIATE
-    deadline_days: 7
-    report_type: 7-day_expedited
-    rationale: Serious unexpected ADR with definite or probable causality requires 7-day expedited reporting per ICH E2A
-- input:
-    is_serious: true
-    is_unexpected: true
-    causality_category: PROBABLE
-  expect:
-    priority: P0_IMMEDIATE
-    deadline_days: 7
-    report_type: 7-day_expedited
-    rationale: Serious unexpected ADR with definite or probable causality requires 7-day expedited reporting per ICH E2A
-- input:
-    is_serious: true
-    is_unexpected: true
-    causality_category: POSSIBLE
-  expect:
-    priority: P1_EXPEDITED
-    deadline_days: 15
-    report_type: 15-day_expedited
-    rationale: Serious unexpected ADR with possible or doubtful causality requires 15-day expedited reporting per ICH E2A
-- input:
-    is_serious: true
-    is_unexpected: true
-    causality_category: DOUBTFUL
-  expect:
-    priority: P1_EXPEDITED
-    deadline_days: 15
-    report_type: 15-day_expedited
-    rationale: Serious unexpected ADR with possible or doubtful causality requires 15-day expedited reporting per ICH E2A
-- input:
-    is_serious: true
-    is_unexpected: false
-    causality_category: DEFINITE
-  expect:
-    priority: P2_PERIODIC
-    deadline_days: 90
-    report_type: PSUR_PBRER
-    rationale: Serious expected ADR included in periodic safety update report
-- input:
-    is_serious: true
-    is_unexpected: false
-    causality_category: PROBABLE
-  expect:
-    priority: P2_PERIODIC
-    deadline_days: 90
-    report_type: PSUR_PBRER
-    rationale: Serious expected ADR included in periodic safety update report
-- input:
-    is_serious: false
-    is_unexpected: true
-    causality_category: DEFINITE
-  expect:
-    priority: P3_ROUTINE
-    deadline_days: 90
-    report_type: PSUR_PBRER
-    rationale: Non-serious ADR included in routine periodic safety reporting
-- input:
-    is_serious: false
-    is_unexpected: false
-    causality_category: DOUBTFUL
-  expect:
-    priority: P3_ROUTINE
-    deadline_days: 90
-    report_type: PSUR_PBRER
-    rationale: Non-serious ADR included in routine periodic safety reporting
-- input: {}
-  expect:
-    deadline_days: 90
-    priority: P3_ROUTINE
-    rationale: Non-serious ADR included in routine periodic safety reporting
-    report_type: PSUR_PBRER
+  - input:
+      is_serious: true
+      is_unexpected: true
+      causality_category: DEFINITE
+    expect:
+      priority: P0_IMMEDIATE
+      deadline_days: 7
+      report_type: 7-day_expedited
+      rationale: Serious unexpected ADR with definite or probable causality requires 7-day expedited reporting per ICH E2A
+  - input:
+      is_serious: true
+      is_unexpected: true
+      causality_category: PROBABLE
+    expect:
+      priority: P0_IMMEDIATE
+      deadline_days: 7
+      report_type: 7-day_expedited
+      rationale: Serious unexpected ADR with definite or probable causality requires 7-day expedited reporting per ICH E2A
+  - input:
+      is_serious: true
+      is_unexpected: true
+      causality_category: POSSIBLE
+    expect:
+      priority: P1_EXPEDITED
+      deadline_days: 15
+      report_type: 15-day_expedited
+      rationale: Serious unexpected ADR with possible or doubtful causality requires 15-day expedited reporting per ICH E2A
+  - input:
+      is_serious: true
+      is_unexpected: true
+      causality_category: DOUBTFUL
+    expect:
+      priority: P1_EXPEDITED
+      deadline_days: 15
+      report_type: 15-day_expedited
+      rationale: Serious unexpected ADR with possible or doubtful causality requires 15-day expedited reporting per ICH E2A
+  - input:
+      is_serious: true
+      is_unexpected: false
+      causality_category: DEFINITE
+    expect:
+      priority: P2_PERIODIC
+      deadline_days: 90
+      report_type: PSUR_PBRER
+      rationale: Serious expected ADR included in periodic safety update report
+  - input:
+      is_serious: true
+      is_unexpected: false
+      causality_category: PROBABLE
+    expect:
+      priority: P2_PERIODIC
+      deadline_days: 90
+      report_type: PSUR_PBRER
+      rationale: Serious expected ADR included in periodic safety update report
+  - input:
+      is_serious: false
+      is_unexpected: true
+      causality_category: DEFINITE
+    expect:
+      priority: P3_ROUTINE
+      deadline_days: 90
+      report_type: PSUR_PBRER
+      rationale: Non-serious ADR included in routine periodic safety reporting
+  - input:
+      is_serious: false
+      is_unexpected: false
+      causality_category: DOUBTFUL
+    expect:
+      priority: P3_ROUTINE
+      deadline_days: 90
+      report_type: PSUR_PBRER
+      rationale: Non-serious ADR included in routine periodic safety reporting
+  - input: {}
+    expect:
+      deadline_days: 90
+      priority: P3_ROUTINE
+      rationale: Non-serious ADR included in routine periodic safety reporting
+      report_type: PSUR_PBRER
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - deadline_days
+    - priority
+    - rationale
+    - report_type
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

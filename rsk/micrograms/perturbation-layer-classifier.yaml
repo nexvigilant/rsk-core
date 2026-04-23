@@ -1,6 +1,62 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: perturbation-layer-classifier
-description: "Classifies pharmacovigilance observations into the 6-layer perturbation pattern model. Given evidence characteristics, identifies which mechanistic layer(s) the observation represents — from molecular binding (L1) through systemic feedback (L6). Exercises μ (Mapping) — each observation maps to its mechanistic origin."
 version: 0.1.0
+description: Classifies pharmacovigilance observations into the 6-layer perturbation pattern model. Given evidence characteristics, identifies which mechanistic layer(s) the observation represents — from molecular binding (L1) through systemic feedback (L6). Exercises μ (Mapping) — each observation maps to its mechanistic origin.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_binding_data
+    type: bool
+    required: false
+    description: ""
+  - name: is_functional_assay
+    type: bool
+    required: false
+    description: ""
+  - name: is_pathway_level
+    type: bool
+    required: false
+    description: ""
+  - name: is_cellular_response
+    type: bool
+    required: false
+    description: ""
+  - name: is_organ_manifestation
+    type: bool
+    required: false
+    description: ""
+  - name: is_systemic_feedback
+    type: bool
+    required: false
+    description: ""
+  - name: evidence_source
+    type: string
+    required: true
+    description: ""
+  - name: has_mechanistic_detail
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: layer
+    type: string
+  - name: layer_number
+    type: string
+  - name: primitive
+    type: string
+  - name: information_content
+    type: string
+  - name: reconstruction_difficulty
+    type: string
+  - name: recommendation
+    type: string
 interface:
   inputs:
     is_binding_data:
@@ -40,6 +96,63 @@ interface:
       type: string
     recommendation:
       type: string
+ui:
+  title: Perturbation Layer Classifier
+  subtitle: Classifies pharmacovigilance observations into the 6-layer perturbation pattern model. Given evidence characteristics, identifies which mechanistic layer(s) the observation represents — from molecular binding (L1) through systemic feedback (L6). Exercises μ (Mapping) — each observation maps to its mechanistic origin.
+  icon: circle
+  route: /vigilance/mg/perturbation-layer-classifier
+  steps:
+    - field: is_binding_data
+      label: is binding data
+      help: Enter is_binding_data
+      widget: toggle
+      placeholder: null
+    - field: is_functional_assay
+      label: is functional assay
+      help: Enter is_functional_assay
+      widget: toggle
+      placeholder: null
+    - field: is_pathway_level
+      label: is pathway level
+      help: Enter is_pathway_level
+      widget: toggle
+      placeholder: null
+    - field: is_cellular_response
+      label: is cellular response
+      help: Enter is_cellular_response
+      widget: toggle
+      placeholder: null
+    - field: is_organ_manifestation
+      label: is organ manifestation
+      help: Enter is_organ_manifestation
+      widget: toggle
+      placeholder: null
+    - field: is_systemic_feedback
+      label: is systemic feedback
+      help: Enter is_systemic_feedback
+      widget: toggle
+      placeholder: null
+    - field: evidence_source
+      label: evidence source
+      help: Enter evidence_source
+      widget: text
+      placeholder: null
+    - field: has_mechanistic_detail
+      label: has mechanistic detail
+      help: Enter has_mechanistic_detail
+      widget: toggle
+      placeholder: null
+  result:
+    template: "layer: {{layer}} — layer_number: {{layer_number}} — primitive: {{primitive}} — information_content: {{information_content}} — reconstruction_difficulty: {{reconstruction_difficulty}} — recommendation: {{recommendation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/perturbation-layer-classifier
+  cli: rsk mcg run perturbation-layer-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: route_evidence
   nodes:
@@ -53,12 +166,12 @@ tree:
     classify_binding:
       type: return
       value:
-        layer: "L1 — Binding Profile"
+        layer: L1 — Binding Profile
         layer_number: "1"
-        primitive: "μ (Mapping)"
-        information_content: "HIGH — direct measurement of molecule-target selectivity landscape"
-        reconstruction_difficulty: "LOW — binding is a property of the molecule, largely context-independent"
-        recommendation: "Highest-value perturbation data. Predict downstream layers via network propagation from this binding profile."
+        primitive: μ (Mapping)
+        information_content: HIGH — direct measurement of molecule-target selectivity landscape
+        reconstruction_difficulty: LOW — binding is a property of the molecule, largely context-independent
+        recommendation: Highest-value perturbation data. Predict downstream layers via network propagation from this binding profile.
     check_functional:
       type: condition
       variable: evidence_source
@@ -69,12 +182,12 @@ tree:
     classify_functional:
       type: return
       value:
-        layer: "L2 — Functional Perturbation"
+        layer: L2 — Functional Perturbation
         layer_number: "2"
-        primitive: "ς (State)"
-        information_content: "HIGH — captures what each binding event functionally does to local biochemistry"
-        reconstruction_difficulty: "MODERATE — same binding can produce different functional consequences depending on system context"
-        recommendation: "Context-dependent layer. Record system state (saturation, desensitization, stress) alongside functional measurement."
+        primitive: ς (State)
+        information_content: HIGH — captures what each binding event functionally does to local biochemistry
+        reconstruction_difficulty: MODERATE — same binding can produce different functional consequences depending on system context
+        recommendation: Context-dependent layer. Record system state (saturation, desensitization, stress) alongside functional measurement.
     check_pathway:
       type: condition
       variable: evidence_source
@@ -85,12 +198,12 @@ tree:
     classify_pathway:
       type: return
       value:
-        layer: "L3 — Network Propagation"
+        layer: L3 — Network Propagation
         layer_number: "3"
-        primitive: "→ (Causality)"
-        information_content: "MODERATE — captures cascade but may miss parallel paths"
-        reconstruction_difficulty: "HIGH — biological networks are deeply interconnected; complexity explodes here"
-        recommendation: "This is where perturbation fans out. Suppress one enzyme → inflammation + gastric protection + renal flow + platelets + uterine contractility. Map ALL downstream paths, not just the expected one."
+        primitive: → (Causality)
+        information_content: MODERATE — captures cascade but may miss parallel paths
+        reconstruction_difficulty: HIGH — biological networks are deeply interconnected; complexity explodes here
+        recommendation: This is where perturbation fans out. Suppress one enzyme → inflammation + gastric protection + renal flow + platelets + uterine contractility. Map ALL downstream paths, not just the expected one.
     check_cellular:
       type: condition
       variable: evidence_source
@@ -101,12 +214,12 @@ tree:
     classify_cellular:
       type: return
       value:
-        layer: "L4 — Cellular Response"
+        layer: L4 — Cellular Response
         layer_number: "4"
-        primitive: "Σ (Sum)"
-        information_content: "MODERATE — cell-type-dependent; same upstream perturbation produces different responses per cell type"
-        reconstruction_difficulty: "HIGH — hepatocytes vs cardiomyocytes vs neurons vs immune cells respond differently to identical biochemical perturbation"
-        recommendation: "Record cell type explicitly. A cellular response without cell-type context is ambiguous — the same perturbation pattern diverges at this layer."
+        primitive: Σ (Sum)
+        information_content: MODERATE — cell-type-dependent; same upstream perturbation produces different responses per cell type
+        reconstruction_difficulty: HIGH — hepatocytes vs cardiomyocytes vs neurons vs immune cells respond differently to identical biochemical perturbation
+        recommendation: Record cell type explicitly. A cellular response without cell-type context is ambiguous — the same perturbation pattern diverges at this layer.
     check_organ:
       type: condition
       variable: evidence_source
@@ -124,21 +237,21 @@ tree:
     classify_organ_with_mechanism:
       type: return
       value:
-        layer: "L5 — Organ Manifestation (mechanistically informed)"
+        layer: L5 — Organ Manifestation (mechanistically informed)
         layer_number: "5"
-        primitive: "∂ (Boundary)"
-        information_content: "MODERATE — boundary reading with causal chain to lower layers"
-        reconstruction_difficulty: "MODERATE — mechanistic detail constrains which perturbation patterns could produce this observation"
-        recommendation: "Use mechanistic detail to disambiguate. Mitochondrial toxicity vs reactive metabolite vs BSEP inhibition vs immune-mediated injury all present as hepatotoxicity but are completely different perturbation patterns."
+        primitive: ∂ (Boundary)
+        information_content: MODERATE — boundary reading with causal chain to lower layers
+        reconstruction_difficulty: MODERATE — mechanistic detail constrains which perturbation patterns could produce this observation
+        recommendation: Use mechanistic detail to disambiguate. Mitochondrial toxicity vs reactive metabolite vs BSEP inhibition vs immune-mediated injury all present as hepatotoxicity but are completely different perturbation patterns.
     classify_organ_without_mechanism:
       type: return
       value:
-        layer: "L5 — Organ Manifestation (boundary reading only)"
+        layer: L5 — Organ Manifestation (boundary reading only)
         layer_number: "5"
-        primitive: "∂ (Boundary)"
-        information_content: "LOW — this is where most AE reports live; one shadow of a 3D object"
-        reconstruction_difficulty: "VERY HIGH — multiple distinct perturbation patterns produce identical organ-level readings"
-        recommendation: "This is the pharmacovigilance data poverty zone. 'Patient developed hepatotoxicity' tells you almost nothing about WHICH perturbation pattern caused it. Seek lower-layer evidence to disambiguate."
+        primitive: ∂ (Boundary)
+        information_content: LOW — this is where most AE reports live; one shadow of a 3D object
+        reconstruction_difficulty: VERY HIGH — multiple distinct perturbation patterns produce identical organ-level readings
+        recommendation: This is the pharmacovigilance data poverty zone. 'Patient developed hepatotoxicity' tells you almost nothing about WHICH perturbation pattern caused it. Seek lower-layer evidence to disambiguate.
     check_systemic:
       type: condition
       variable: evidence_source
@@ -149,11 +262,11 @@ tree:
     classify_systemic:
       type: return
       value:
-        layer: "L6 — Systemic Feedback"
+        layer: L6 — Systemic Feedback
         layer_number: "6"
-        primitive: "ρ (Recursion)"
-        information_content: "LOW — highest abstraction, most confounded by feedback loops"
-        reconstruction_difficulty: "VERY HIGH — liver dysfunction changes metabolism changes exposure changes the perturbation pattern itself"
+        primitive: ρ (Recursion)
+        information_content: LOW — highest abstraction, most confounded by feedback loops
+        reconstruction_difficulty: VERY HIGH — liver dysfunction changes metabolism changes exposure changes the perturbation pattern itself
         recommendation: "Systemic observations are self-referential — the perturbation modifies the system that modifies the perturbation. Model as recursive: P(t+1) = f(P(t), S(t)) where S itself depends on P."
     classify_unknown:
       type: condition
@@ -200,87 +313,125 @@ tree:
     default_organ:
       type: return
       value:
-        layer: "L5 — Organ Manifestation (assumed)"
+        layer: L5 — Organ Manifestation (assumed)
         layer_number: "5"
-        primitive: "∂ (Boundary)"
-        information_content: "LOW — no evidence source specified; defaulting to organ-level (most PV data lives here)"
-        reconstruction_difficulty: "VERY HIGH — insufficient information to determine perturbation layer"
-        recommendation: "Classify the evidence source. Without knowing which layer this observation represents, you cannot determine how much mechanistic information it carries."
+        primitive: ∂ (Boundary)
+        information_content: LOW — no evidence source specified; defaulting to organ-level (most PV data lives here)
+        reconstruction_difficulty: VERY HIGH — insufficient information to determine perturbation layer
+        recommendation: Classify the evidence source. Without knowing which layer this observation represents, you cannot determine how much mechanistic information it carries.
 tests:
-- name: binding_assay_data
-  input:
-    evidence_source: binding_assay
-  expect:
-    layer_number: "1"
-    primitive: "μ (Mapping)"
-- name: functional_assay_data
-  input:
-    evidence_source: functional_assay
-  expect:
-    layer_number: "2"
-    primitive: "ς (State)"
-- name: pathway_analysis_data
-  input:
-    evidence_source: pathway_analysis
-  expect:
-    layer_number: "3"
-    primitive: "→ (Causality)"
-- name: cell_assay_data
-  input:
-    evidence_source: cell_assay
-  expect:
-    layer_number: "4"
-    primitive: "Σ (Sum)"
-- name: clinical_observation_with_mechanism
-  input:
-    evidence_source: clinical_observation
-    has_mechanistic_detail: true
-  expect:
-    layer_number: "5"
-    information_content: "MODERATE — boundary reading with causal chain to lower layers"
-- name: clinical_observation_without_mechanism
-  input:
-    evidence_source: clinical_observation
-    has_mechanistic_detail: false
-  expect:
-    layer_number: "5"
-    information_content: "LOW — this is where most AE reports live; one shadow of a 3D object"
-- name: systemic_observation
-  input:
-    evidence_source: systemic_observation
-  expect:
-    layer_number: "6"
-    primitive: "ρ (Recursion)"
-- name: fallback_via_boolean_binding
-  input:
-    evidence_source: unknown
-    is_binding_data: true
-  expect:
-    layer_number: "1"
-- name: fallback_via_boolean_organ
-  input:
-    evidence_source: unknown
-    is_organ_manifestation: true
-  expect:
-    layer_number: "5"
-- name: no_evidence_defaults_to_organ
-  input:
-    evidence_source: unknown
-  expect:
-    layer_number: "5"
-    recommendation: "Classify the evidence source. Without knowing which layer this observation represents, you cannot determine how much mechanistic information it carries."
-- name: clinical_observation_mechanism_missing_defaults_false
-  input:
-    evidence_source: clinical_observation
-  expect:
-    layer_number: "5"
-    information_content: "LOW — this is where most AE reports live; one shadow of a 3D object"
-- name: null_input_safety
-  input: {}
-  expect:
-    information_content: LOW — no evidence source specified; defaulting to organ-level (most PV data lives here)
-    layer: L5 — Organ Manifestation (assumed)
-    layer_number: "5"
-    primitive: ∂ (Boundary)
-    recommendation: "Classify the evidence source. Without knowing which layer this observation represents, you cannot determine how much mechanistic information it carries."
-    reconstruction_difficulty: VERY HIGH — insufficient information to determine perturbation layer
+  - name: binding_assay_data
+    input:
+      evidence_source: binding_assay
+    expect:
+      layer_number: "1"
+      primitive: μ (Mapping)
+  - name: functional_assay_data
+    input:
+      evidence_source: functional_assay
+    expect:
+      layer_number: "2"
+      primitive: ς (State)
+  - name: pathway_analysis_data
+    input:
+      evidence_source: pathway_analysis
+    expect:
+      layer_number: "3"
+      primitive: → (Causality)
+  - name: cell_assay_data
+    input:
+      evidence_source: cell_assay
+    expect:
+      layer_number: "4"
+      primitive: Σ (Sum)
+  - name: clinical_observation_with_mechanism
+    input:
+      evidence_source: clinical_observation
+      has_mechanistic_detail: true
+    expect:
+      layer_number: "5"
+      information_content: MODERATE — boundary reading with causal chain to lower layers
+  - name: clinical_observation_without_mechanism
+    input:
+      evidence_source: clinical_observation
+      has_mechanistic_detail: false
+    expect:
+      layer_number: "5"
+      information_content: LOW — this is where most AE reports live; one shadow of a 3D object
+  - name: systemic_observation
+    input:
+      evidence_source: systemic_observation
+    expect:
+      layer_number: "6"
+      primitive: ρ (Recursion)
+  - name: fallback_via_boolean_binding
+    input:
+      evidence_source: unknown
+      is_binding_data: true
+    expect:
+      layer_number: "1"
+  - name: fallback_via_boolean_organ
+    input:
+      evidence_source: unknown
+      is_organ_manifestation: true
+    expect:
+      layer_number: "5"
+  - name: no_evidence_defaults_to_organ
+    input:
+      evidence_source: unknown
+    expect:
+      layer_number: "5"
+      recommendation: Classify the evidence source. Without knowing which layer this observation represents, you cannot determine how much mechanistic information it carries.
+  - name: clinical_observation_mechanism_missing_defaults_false
+    input:
+      evidence_source: clinical_observation
+    expect:
+      layer_number: "5"
+      information_content: LOW — this is where most AE reports live; one shadow of a 3D object
+  - name: null_input_safety
+    input: {}
+    expect:
+      information_content: LOW — no evidence source specified; defaulting to organ-level (most PV data lives here)
+      layer: L5 — Organ Manifestation (assumed)
+      layer_number: "5"
+      primitive: ∂ (Boundary)
+      recommendation: Classify the evidence source. Without knowing which layer this observation represents, you cannot determine how much mechanistic information it carries.
+      reconstruction_difficulty: VERY HIGH — insufficient information to determine perturbation layer
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - layer
+    - layer_number
+    - primitive
+    - information_content
+    - reconstruction_difficulty
+    - recommendation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

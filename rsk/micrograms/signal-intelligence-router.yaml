@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-intelligence-router
-description: "Routes accumulated signal intelligence to appropriate next action based on signal count, cross-drug overlap, and insight maturity. Exercises the ρ (Recursion) primitive — each accumulation cycle feeds back into the routing decision."
 version: 0.1.0
+description: Routes accumulated signal intelligence to appropriate next action based on signal count, cross-drug overlap, and insight maturity. Exercises the ρ (Recursion) primitive — each accumulation cycle feeds back into the routing decision.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: active_signal_count
+    type: int
+    required: true
+    description: ""
+  - name: cross_drug_signals
+    type: int
+    required: false
+    description: ""
+  - name: unassessed_count
+    type: int
+    required: false
+    description: ""
+  - name: has_class_effect
+    type: bool
+    required: false
+    description: ""
+  - name: insight_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: priority
+    type: string
+  - name: recommended_tool
+    type: string
+  - name: reason
+    type: string
+  - name: recursion_depth
+    type: string
 interface:
   inputs:
     active_signal_count:
@@ -29,6 +71,48 @@ interface:
       type: string
     recursion_depth:
       type: string
+ui:
+  title: Signal Intelligence Router
+  subtitle: Routes accumulated signal intelligence to appropriate next action based on signal count, cross-drug overlap, and insight maturity. Exercises the ρ (Recursion) primitive — each accumulation cycle feeds back into the routing decision.
+  icon: activity
+  route: /vigilance/mg/signal-intelligence-router
+  steps:
+    - field: active_signal_count
+      label: active signal count
+      help: Enter active_signal_count
+      widget: text
+      placeholder: null
+    - field: cross_drug_signals
+      label: cross drug signals
+      help: Enter cross_drug_signals
+      widget: text
+      placeholder: null
+    - field: unassessed_count
+      label: unassessed count
+      help: Enter unassessed_count
+      widget: text
+      placeholder: null
+    - field: has_class_effect
+      label: has class effect
+      help: Enter has_class_effect
+      widget: toggle
+      placeholder: null
+    - field: insight_count
+      label: insight count
+      help: Enter insight_count
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — priority: {{priority}} — recommended_tool: {{recommended_tool}} — reason: {{reason}} — recursion_depth: {{recursion_depth}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-intelligence-router
+  cli: rsk mcg run signal-intelligence-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signals
   nodes:
@@ -116,93 +200,136 @@ tree:
         reason: Active signals present but no escalation triggers met. Continue accumulation cycle.
         recursion_depth: accumulating
 tests:
-- name: no_signals_base_case
-  input:
-    active_signal_count: 0
-  expect:
-    action: continue_monitoring
-    priority: LOW
-    recursion_depth: base_case
-- name: unassessed_backlog
-  input:
-    active_signal_count: 8
-    unassessed_count: 7
-  expect:
-    action: triage_unassessed
-    priority: URGENT
-    recursion_depth: accumulation_overflow
-- name: class_effect_detected
-  input:
-    active_signal_count: 4
-    unassessed_count: 1
-    has_class_effect: true
-  expect:
-    action: class_effect_review
-    priority: URGENT
-    recommended_tool: drug_comparator
-    recursion_depth: pattern_detected
-- name: cross_drug_threshold
-  input:
-    active_signal_count: 5
-    unassessed_count: 2
-    has_class_effect: false
-    cross_drug_signals: 3
-  expect:
-    action: cross_drug_analysis
-    priority: HIGH
-    recursion_depth: cross_reference
-- name: insight_synthesis_ready
-  input:
-    active_signal_count: 3
-    unassessed_count: 0
-    has_class_effect: false
-    cross_drug_signals: 1
-    insight_count: 4
-  expect:
-    action: synthesize_insights
-    priority: STANDARD
-    recursion_depth: synthesis
-- name: standard_accumulation
-  input:
-    active_signal_count: 2
-    unassessed_count: 1
-    has_class_effect: false
-    cross_drug_signals: 0
-    insight_count: 1
-  expect:
-    action: continue_accumulation
-    priority: STANDARD
-    recursion_depth: accumulating
-- name: exact_unassessed_threshold
-  input:
-    active_signal_count: 5
-    unassessed_count: 5
-  expect:
-    action: triage_unassessed
-    priority: URGENT
-- name: below_unassessed_threshold
-  input:
-    active_signal_count: 5
-    unassessed_count: 4
-    has_class_effect: false
-    cross_drug_signals: 0
-    insight_count: 0
-  expect:
-    action: continue_accumulation
-    priority: STANDARD
-- name: cross_drug_below_threshold
-  input:
-    active_signal_count: 3
-    unassessed_count: 0
-    has_class_effect: false
-    cross_drug_signals: 2
-    insight_count: 0
-  expect:
-    action: continue_accumulation
-    priority: STANDARD
-- name: empty_input_defaults
-  input: {}
-  expect:
-    action: continue_monitoring
-    priority: LOW
-    recursion_depth: base_case
+  - name: no_signals_base_case
+    input:
+      active_signal_count: 0
+    expect:
+      action: continue_monitoring
+      priority: LOW
+      recursion_depth: base_case
+  - name: unassessed_backlog
+    input:
+      active_signal_count: 8
+      unassessed_count: 7
+    expect:
+      action: triage_unassessed
+      priority: URGENT
+      recursion_depth: accumulation_overflow
+  - name: class_effect_detected
+    input:
+      active_signal_count: 4
+      unassessed_count: 1
+      has_class_effect: true
+    expect:
+      action: class_effect_review
+      priority: URGENT
+      recommended_tool: drug_comparator
+      recursion_depth: pattern_detected
+  - name: cross_drug_threshold
+    input:
+      active_signal_count: 5
+      unassessed_count: 2
+      has_class_effect: false
+      cross_drug_signals: 3
+    expect:
+      action: cross_drug_analysis
+      priority: HIGH
+      recursion_depth: cross_reference
+  - name: insight_synthesis_ready
+    input:
+      active_signal_count: 3
+      unassessed_count: 0
+      has_class_effect: false
+      cross_drug_signals: 1
+      insight_count: 4
+    expect:
+      action: synthesize_insights
+      priority: STANDARD
+      recursion_depth: synthesis
+  - name: standard_accumulation
+    input:
+      active_signal_count: 2
+      unassessed_count: 1
+      has_class_effect: false
+      cross_drug_signals: 0
+      insight_count: 1
+    expect:
+      action: continue_accumulation
+      priority: STANDARD
+      recursion_depth: accumulating
+  - name: exact_unassessed_threshold
+    input:
+      active_signal_count: 5
+      unassessed_count: 5
+    expect:
+      action: triage_unassessed
+      priority: URGENT
+  - name: below_unassessed_threshold
+    input:
+      active_signal_count: 5
+      unassessed_count: 4
+      has_class_effect: false
+      cross_drug_signals: 0
+      insight_count: 0
+    expect:
+      action: continue_accumulation
+      priority: STANDARD
+  - name: cross_drug_below_threshold
+    input:
+      active_signal_count: 3
+      unassessed_count: 0
+      has_class_effect: false
+      cross_drug_signals: 2
+      insight_count: 0
+    expect:
+      action: continue_accumulation
+      priority: STANDARD
+  - name: empty_input_defaults
+    input: {}
+    expect:
+      action: continue_monitoring
+      priority: LOW
+      recursion_depth: base_case
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - priority
+    - recommended_tool
+    - reason
+    - recursion_depth
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

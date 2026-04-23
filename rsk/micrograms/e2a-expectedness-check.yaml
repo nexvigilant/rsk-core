@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-expectedness-check
-description: 'ICH E2A Section II.C: Determines expectedness of an adverse reaction — listed (expected) vs unlisted (unexpected) in the Reference Safety Information (RSI/IB/SmPC)'
 version: 1.0.0
+description: "ICH E2A Section II.C: Determines expectedness of an adverse reaction — listed (expected) vs unlisted (unexpected) in the Reference Safety Information (RSI/IB/SmPC)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: listed_in_ib
+    type: bool
+    required: false
+    description: ""
+  - name: listed_in_smpc
+    type: bool
+    required: false
+    description: ""
+  - name: nature_matches
+    type: bool
+    required: false
+    description: ""
+  - name: rsi_available
+    type: bool
+    required: false
+    description: ""
+  - name: severity_exceeds_listed
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: expectedness
+    type: string
+  - name: is_unexpected
+    type: bool
+  - name: rationale
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     listed_in_ib:
@@ -27,6 +67,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2a Expectedness Check
+  subtitle: "ICH E2A Section II.C: Determines expectedness of an adverse reaction — listed (expected) vs unlisted (unexpected) in the Reference Safety Information (RSI/IB/SmPC)"
+  icon: circle
+  route: /vigilance/mg/e2a-expectedness-check
+  steps:
+    - field: listed_in_ib
+      label: listed in ib
+      help: Enter listed_in_ib
+      widget: toggle
+      placeholder: null
+    - field: listed_in_smpc
+      label: listed in smpc
+      help: Enter listed_in_smpc
+      widget: toggle
+      placeholder: null
+    - field: nature_matches
+      label: nature matches
+      help: Enter nature_matches
+      widget: toggle
+      placeholder: null
+    - field: rsi_available
+      label: rsi available
+      help: Enter rsi_available
+      widget: toggle
+      placeholder: null
+    - field: severity_exceeds_listed
+      label: severity exceeds listed
+      help: Enter severity_exceeds_listed
+      widget: toggle
+      placeholder: null
+  result:
+    template: "expectedness: {{expectedness}} — is_unexpected: {{is_unexpected}} — rationale: {{rationale}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-expectedness-check
+  cli: rsk mcg run e2a-expectedness-check
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_rsi_available
   nodes:
@@ -100,93 +182,115 @@ tree:
         is_unexpected: true
         rationale: No RSI available — reaction classified as unexpected by default
         regulatory_reference: ICH E2A Section II.C - No RSI = unexpected by default
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — expectedness classification via RSI listing check'
-  primes: ['κ', '∂']
-  arguments: ['listed_in_ib', 'listed_in_smpc', 'rsi_available', 'nature_matches', 'severity_exceeds_listed']
-  chain_prediction: 'Outputs is_unexpected feeds directly to e2a-reporting-timeline and seriousness-to-deadline. Core expectedness gate in the E2A pipeline.'
 tests:
-# Listed in IB, nature matches, severity normal = expected
-- input:
-    rsi_available: true
-    listed_in_ib: true
-    listed_in_smpc: false
-    nature_matches: true
-    severity_exceeds_listed: false
-  expect:
-    expectedness: EXPECTED
-    is_unexpected: false
-    regulatory_reference: ICH E2A Section II.C - Listed in RSI = expected
-# Listed in SmPC (not IB), nature matches = expected
-- input:
-    rsi_available: true
-    listed_in_ib: false
-    listed_in_smpc: true
-    nature_matches: true
-    severity_exceeds_listed: false
-  expect:
-    expectedness: EXPECTED
-    is_unexpected: false
-    regulatory_reference: ICH E2A Section II.C - Listed in RSI = expected
-# Listed but severity exceeds = unexpected
-- input:
-    rsi_available: true
-    listed_in_ib: true
-    listed_in_smpc: false
-    nature_matches: true
-    severity_exceeds_listed: true
-  expect:
-    expectedness: UNEXPECTED
-    is_unexpected: true
-    regulatory_reference: ICH E2A Section II.C - Severity exceeding RSI description = unexpected
-# Listed but nature mismatch = unexpected
-- input:
-    rsi_available: true
-    listed_in_ib: true
-    listed_in_smpc: false
-    nature_matches: false
-    severity_exceeds_listed: false
-  expect:
-    expectedness: UNEXPECTED
-    is_unexpected: true
-    regulatory_reference: ICH E2A Section II.C - Nature inconsistent with RSI = unexpected
-# Not listed in either IB or SmPC = unexpected
-- input:
-    rsi_available: true
-    listed_in_ib: false
-    listed_in_smpc: false
-    nature_matches: false
-    severity_exceeds_listed: false
-  expect:
-    expectedness: UNEXPECTED
-    is_unexpected: true
-    regulatory_reference: ICH E2A Section II.C - Not listed in RSI = unexpected
-# No RSI available = unexpected by default
-- input:
-    rsi_available: false
-    listed_in_ib: false
-    listed_in_smpc: false
-    nature_matches: false
-    severity_exceeds_listed: false
-  expect:
-    expectedness: UNEXPECTED
-    is_unexpected: true
-    regulatory_reference: ICH E2A Section II.C - No RSI = unexpected by default
-# Empty input = unexpected (no RSI)
-- input: {}
-  expect:
-    expectedness: UNEXPECTED
-    is_unexpected: true
-    regulatory_reference: ICH E2A Section II.C - No RSI = unexpected by default
-# Listed in both IB and SmPC, matches, no severity upgrade = expected
-- input:
-    rsi_available: true
-    listed_in_ib: true
-    listed_in_smpc: true
-    nature_matches: true
-    severity_exceeds_listed: false
-  expect:
-    expectedness: EXPECTED
-    is_unexpected: false
-    regulatory_reference: ICH E2A Section II.C - Listed in RSI = expected
+  - input:
+      rsi_available: true
+      listed_in_ib: true
+      listed_in_smpc: false
+      nature_matches: true
+      severity_exceeds_listed: false
+    expect:
+      expectedness: EXPECTED
+      is_unexpected: false
+      regulatory_reference: ICH E2A Section II.C - Listed in RSI = expected
+  - input:
+      rsi_available: true
+      listed_in_ib: false
+      listed_in_smpc: true
+      nature_matches: true
+      severity_exceeds_listed: false
+    expect:
+      expectedness: EXPECTED
+      is_unexpected: false
+      regulatory_reference: ICH E2A Section II.C - Listed in RSI = expected
+  - input:
+      rsi_available: true
+      listed_in_ib: true
+      listed_in_smpc: false
+      nature_matches: true
+      severity_exceeds_listed: true
+    expect:
+      expectedness: UNEXPECTED
+      is_unexpected: true
+      regulatory_reference: ICH E2A Section II.C - Severity exceeding RSI description = unexpected
+  - input:
+      rsi_available: true
+      listed_in_ib: true
+      listed_in_smpc: false
+      nature_matches: false
+      severity_exceeds_listed: false
+    expect:
+      expectedness: UNEXPECTED
+      is_unexpected: true
+      regulatory_reference: ICH E2A Section II.C - Nature inconsistent with RSI = unexpected
+  - input:
+      rsi_available: true
+      listed_in_ib: false
+      listed_in_smpc: false
+      nature_matches: false
+      severity_exceeds_listed: false
+    expect:
+      expectedness: UNEXPECTED
+      is_unexpected: true
+      regulatory_reference: ICH E2A Section II.C - Not listed in RSI = unexpected
+  - input:
+      rsi_available: false
+      listed_in_ib: false
+      listed_in_smpc: false
+      nature_matches: false
+      severity_exceeds_listed: false
+    expect:
+      expectedness: UNEXPECTED
+      is_unexpected: true
+      regulatory_reference: ICH E2A Section II.C - No RSI = unexpected by default
+  - input: {}
+    expect:
+      expectedness: UNEXPECTED
+      is_unexpected: true
+      regulatory_reference: ICH E2A Section II.C - No RSI = unexpected by default
+  - input:
+      rsi_available: true
+      listed_in_ib: true
+      listed_in_smpc: true
+      nature_matches: true
+      severity_exceeds_listed: false
+    expect:
+      expectedness: EXPECTED
+      is_unexpected: false
+      regulatory_reference: ICH E2A Section II.C - Listed in RSI = expected
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - expectedness
+    - is_unexpected
+    - rationale
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

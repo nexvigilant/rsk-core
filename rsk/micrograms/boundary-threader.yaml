@@ -1,6 +1,54 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: boundary-threader
-description: "NexCore boundary threading classifier: routes data stream intersections through boundary hierarchy to determine verification level and analytical precision"
 version: 0.1.0
+description: "NexCore boundary threading classifier: routes data stream intersections through boundary hierarchy to determine verification level and analytical precision"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: stream_count
+    type: int
+    required: true
+    description: ""
+  - name: boundary_type
+    type: string
+    required: true
+    description: ""
+  - name: denominator_source
+    type: string
+    required: false
+    description: ""
+  - name: has_npi_resolution
+    type: bool
+    required: false
+    description: ""
+  - name: has_temporal_window
+    type: bool
+    required: false
+    description: ""
+  - name: geographic_level
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: verification_level
+    type: string
+  - name: precision_tier
+    type: string
+  - name: threading_status
+    type: string
+  - name: denominator_type
+    type: string
+  - name: analytical_capability
+    type: string
+  - name: warning
+    type: string
 interface:
   inputs:
     stream_count:
@@ -34,6 +82,53 @@ interface:
       type: string
     warning:
       type: string
+ui:
+  title: Boundary Threader
+  subtitle: "NexCore boundary threading classifier: routes data stream intersections through boundary hierarchy to determine verification level and analytical precision"
+  icon: circle
+  route: /vigilance/mg/boundary-threader
+  steps:
+    - field: stream_count
+      label: stream count
+      help: Enter stream_count
+      widget: text
+      placeholder: null
+    - field: boundary_type
+      label: boundary type
+      help: Enter boundary_type
+      widget: text
+      placeholder: null
+    - field: denominator_source
+      label: denominator source
+      help: Enter denominator_source
+      widget: text
+      placeholder: null
+    - field: has_npi_resolution
+      label: has npi resolution
+      help: Enter has_npi_resolution
+      widget: toggle
+      placeholder: null
+    - field: has_temporal_window
+      label: has temporal window
+      help: Enter has_temporal_window
+      widget: toggle
+      placeholder: null
+    - field: geographic_level
+      label: geographic level
+      help: Enter geographic_level
+      widget: text
+      placeholder: null
+  result:
+    template: "verification_level: {{verification_level}} — precision_tier: {{precision_tier}} — threading_status: {{threading_status}} — denominator_type: {{denominator_type}} — analytical_capability: {{analytical_capability}} — warning: {{warning}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/boundary-threader
+  cli: rsk mcg run boundary-threader
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_streams
   nodes:
@@ -52,7 +147,7 @@ tree:
         threading_status: no_streams
         denominator_type: absent
         analytical_capability: none
-        warning: "No data streams available. NexCore requires at least 1 stream to thread."
+        warning: No data streams available. NexCore requires at least 1 stream to thread.
     check_boundary:
       type: condition
       variable: boundary_type
@@ -102,7 +197,7 @@ tree:
         precision_tier: population
         threading_status: multi_stream_threaded
         denominator_type: counted
-        analytical_capability: "National incidence rates, cross-stream reconciliation, population-level signal detection"
+        analytical_capability: National incidence rates, cross-stream reconciliation, population-level signal detection
         warning: none
     national_single:
       type: return
@@ -111,8 +206,8 @@ tree:
         precision_tier: population
         threading_status: single_stream
         denominator_type: estimated
-        analytical_capability: "National aggregate rates, limited reconciliation"
-        warning: "Single stream at national level lacks cross-verification. Add streams to confirm denominator."
+        analytical_capability: National aggregate rates, limited reconciliation
+        warning: Single stream at national level lacks cross-verification. Add streams to confirm denominator.
     state_boundary:
       type: condition
       variable: stream_count
@@ -127,7 +222,7 @@ tree:
         precision_tier: jurisdiction
         threading_status: multi_stream_threaded
         denominator_type: counted
-        analytical_capability: "State-level incidence rates, regulatory jurisdiction alignment, upward reconciliation to national"
+        analytical_capability: State-level incidence rates, regulatory jurisdiction alignment, upward reconciliation to national
         warning: none
     state_single:
       type: return
@@ -136,8 +231,8 @@ tree:
         precision_tier: jurisdiction
         threading_status: single_stream
         denominator_type: estimated
-        analytical_capability: "State aggregate rates, no cross-stream verification"
-        warning: "Single stream cannot self-verify. Reconciliation with national boundary not possible."
+        analytical_capability: State aggregate rates, no cross-stream verification
+        warning: Single stream cannot self-verify. Reconciliation with national boundary not possible.
     chain_boundary:
       type: return
       value:
@@ -145,7 +240,7 @@ tree:
         precision_tier: distribution
         threading_status: chain_threaded
         denominator_type: counted
-        analytical_capability: "Chain-specific utilization, distribution channel analysis, chain-to-chain comparison"
+        analytical_capability: Chain-specific utilization, distribution channel analysis, chain-to-chain comparison
         warning: none
     zip_boundary:
       type: condition
@@ -161,7 +256,7 @@ tree:
         precision_tier: catchment
         threading_status: npi_resolved
         denominator_type: counted
-        analytical_capability: "Catchment-level incidence, Voronoi tessellation, spatial signal clustering, pharmacy-resolved denominators"
+        analytical_capability: Catchment-level incidence, Voronoi tessellation, spatial signal clustering, pharmacy-resolved denominators
         warning: none
     zip_aggregate:
       type: return
@@ -170,8 +265,8 @@ tree:
         precision_tier: catchment
         threading_status: aggregate_only
         denominator_type: estimated
-        analytical_capability: "ZIP-level aggregate rates, spatial clustering without pharmacy resolution"
-        warning: "Without NPI resolution, pharmacy-level reconciliation is not possible within this ZIP."
+        analytical_capability: ZIP-level aggregate rates, spatial clustering without pharmacy resolution
+        warning: Without NPI resolution, pharmacy-level reconciliation is not possible within this ZIP.
     pharmacy_boundary:
       type: return
       value:
@@ -179,7 +274,7 @@ tree:
         precision_tier: ground_node
         threading_status: atomic_resolved
         denominator_type: counted
-        analytical_capability: "Individual pharmacy incidence, ground-truth denominator, maximum resolution, upward reconciliation through all levels"
+        analytical_capability: Individual pharmacy incidence, ground-truth denominator, maximum resolution, upward reconciliation through all levels
         warning: none
     custom_boundary:
       type: condition
@@ -195,8 +290,8 @@ tree:
         precision_tier: custom
         threading_status: custom_threaded
         denominator_type: estimated
-        analytical_capability: "Custom boundary with temporal windowing, Weber effect detection, drift analysis"
-        warning: "Custom boundaries require manual reconciliation with standard hierarchy levels."
+        analytical_capability: Custom boundary with temporal windowing, Weber effect detection, drift analysis
+        warning: Custom boundaries require manual reconciliation with standard hierarchy levels.
     custom_static:
       type: return
       value:
@@ -204,117 +299,155 @@ tree:
         precision_tier: custom
         threading_status: custom_unwindowed
         denominator_type: estimated
-        analytical_capability: "Custom boundary without temporal context, limited to point-in-time analysis"
-        warning: "No temporal window. Add time boundary for drift detection and trend analysis."
+        analytical_capability: Custom boundary without temporal context, limited to point-in-time analysis
+        warning: No temporal window. Add time boundary for drift detection and trend analysis.
 tests:
-- name: pharmacy_ground_node
-  input:
-    stream_count: 1
-    boundary_type: pharmacy
-  expect:
-    verification_level: maximum
-    precision_tier: ground_node
-    threading_status: atomic_resolved
-    denominator_type: counted
-- name: zip_with_npi
-  input:
-    stream_count: 2
-    boundary_type: zip
-    has_npi_resolution: true
-  expect:
-    verification_level: high
-    precision_tier: catchment
-    threading_status: npi_resolved
-    denominator_type: counted
-- name: zip_without_npi
-  input:
-    stream_count: 2
-    boundary_type: zip
-    has_npi_resolution: false
-  expect:
-    verification_level: moderate
-    precision_tier: catchment
-    denominator_type: estimated
-- name: national_multi_stream
-  input:
-    stream_count: 4
-    boundary_type: national
-  expect:
-    verification_level: high
-    precision_tier: population
-    threading_status: multi_stream_threaded
-    denominator_type: counted
-- name: national_single_stream
-  input:
-    stream_count: 1
-    boundary_type: national
-  expect:
-    verification_level: moderate
-    precision_tier: population
-    denominator_type: estimated
-- name: state_two_streams
-  input:
-    stream_count: 2
-    boundary_type: state
-  expect:
-    verification_level: high
-    precision_tier: jurisdiction
-    denominator_type: counted
-- name: state_single_stream
-  input:
-    stream_count: 1
-    boundary_type: state
-  expect:
-    verification_level: moderate
-    precision_tier: jurisdiction
-    denominator_type: estimated
-- name: chain_boundary
-  input:
-    stream_count: 1
-    boundary_type: chain
-  expect:
-    verification_level: high
-    precision_tier: distribution
-    denominator_type: counted
-- name: no_streams
-  input:
-    stream_count: 0
-    boundary_type: national
-  expect:
-    verification_level: none
-    precision_tier: unusable
-    threading_status: no_streams
-- name: custom_with_time
-  input:
-    stream_count: 2
-    boundary_type: payer
-    has_temporal_window: true
-  expect:
-    verification_level: moderate
-    precision_tier: custom
-    threading_status: custom_threaded
-- name: custom_no_time
-  input:
-    stream_count: 1
-    boundary_type: prescriber
-    has_temporal_window: false
-  expect:
-    verification_level: low
-    precision_tier: custom
-    threading_status: custom_unwindowed
-- name: three_streams_national
-  input:
-    stream_count: 3
-    boundary_type: national
-  expect:
-    verification_level: high
-    denominator_type: counted
-- name: null_input_safety
-  input: {}
-  expect:
-    analytical_capability: none
-    denominator_type: absent
-    precision_tier: unusable
-    threading_status: no_streams
-    verification_level: none
-    warning: No data streams available. NexCore requires at least 1 stream to thread.
+  - name: pharmacy_ground_node
+    input:
+      stream_count: 1
+      boundary_type: pharmacy
+    expect:
+      verification_level: maximum
+      precision_tier: ground_node
+      threading_status: atomic_resolved
+      denominator_type: counted
+  - name: zip_with_npi
+    input:
+      stream_count: 2
+      boundary_type: zip
+      has_npi_resolution: true
+    expect:
+      verification_level: high
+      precision_tier: catchment
+      threading_status: npi_resolved
+      denominator_type: counted
+  - name: zip_without_npi
+    input:
+      stream_count: 2
+      boundary_type: zip
+      has_npi_resolution: false
+    expect:
+      verification_level: moderate
+      precision_tier: catchment
+      denominator_type: estimated
+  - name: national_multi_stream
+    input:
+      stream_count: 4
+      boundary_type: national
+    expect:
+      verification_level: high
+      precision_tier: population
+      threading_status: multi_stream_threaded
+      denominator_type: counted
+  - name: national_single_stream
+    input:
+      stream_count: 1
+      boundary_type: national
+    expect:
+      verification_level: moderate
+      precision_tier: population
+      denominator_type: estimated
+  - name: state_two_streams
+    input:
+      stream_count: 2
+      boundary_type: state
+    expect:
+      verification_level: high
+      precision_tier: jurisdiction
+      denominator_type: counted
+  - name: state_single_stream
+    input:
+      stream_count: 1
+      boundary_type: state
+    expect:
+      verification_level: moderate
+      precision_tier: jurisdiction
+      denominator_type: estimated
+  - name: chain_boundary
+    input:
+      stream_count: 1
+      boundary_type: chain
+    expect:
+      verification_level: high
+      precision_tier: distribution
+      denominator_type: counted
+  - name: no_streams
+    input:
+      stream_count: 0
+      boundary_type: national
+    expect:
+      verification_level: none
+      precision_tier: unusable
+      threading_status: no_streams
+  - name: custom_with_time
+    input:
+      stream_count: 2
+      boundary_type: payer
+      has_temporal_window: true
+    expect:
+      verification_level: moderate
+      precision_tier: custom
+      threading_status: custom_threaded
+  - name: custom_no_time
+    input:
+      stream_count: 1
+      boundary_type: prescriber
+      has_temporal_window: false
+    expect:
+      verification_level: low
+      precision_tier: custom
+      threading_status: custom_unwindowed
+  - name: three_streams_national
+    input:
+      stream_count: 3
+      boundary_type: national
+    expect:
+      verification_level: high
+      denominator_type: counted
+  - name: null_input_safety
+    input: {}
+    expect:
+      analytical_capability: none
+      denominator_type: absent
+      precision_tier: unusable
+      threading_status: no_streams
+      verification_level: none
+      warning: No data streams available. NexCore requires at least 1 stream to thread.
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - verification_level
+    - precision_tier
+    - threading_status
+    - denominator_type
+    - analytical_capability
+    - warning
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: spanish-conjugation-tier
-description: Classifies Spanish verb conjugation difficulty into tiers based on ending, regularity, and reflexivity
 version: 0.1.0
+description: Classifies Spanish verb conjugation difficulty into tiers based on ending, regularity, and reflexivity
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: verb_ending
+    type: string
+    required: true
+    description: ""
+  - name: is_regular
+    type: bool
+    required: true
+    description: ""
+  - name: is_reflexive
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: tier
+    type: int
+  - name: practice_reps
+    type: int
+  - name: example_verb
+    type: string
 interface:
   inputs:
     verb_ending:
@@ -19,6 +49,38 @@ interface:
       type: int
     example_verb:
       type: string
+ui:
+  title: Spanish Conjugation Tier
+  subtitle: Classifies Spanish verb conjugation difficulty into tiers based on ending, regularity, and reflexivity
+  icon: circle
+  route: /vigilance/mg/spanish-conjugation-tier
+  steps:
+    - field: verb_ending
+      label: verb ending
+      help: Enter verb_ending
+      widget: text
+      placeholder: null
+    - field: is_regular
+      label: is regular
+      help: Enter is_regular
+      widget: toggle
+      placeholder: null
+    - field: is_reflexive
+      label: is reflexive
+      help: Enter is_reflexive
+      widget: toggle
+      placeholder: null
+  result:
+    template: "tier: {{tier}} — practice_reps: {{practice_reps}} — example_verb: {{example_verb}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/spanish-conjugation-tier
+  cli: rsk mcg run spanish-conjugation-tier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_verb_ending_present
   nodes:
@@ -88,64 +150,99 @@ tree:
         practice_reps: 60
         example_verb: irse
 tests:
-- input:
-    verb_ending: ar
-    is_regular: true
-    is_reflexive: false
-  expect:
-    tier: 1
-    practice_reps: 10
-    example_verb: hablar
-- input:
-    verb_ending: er
-    is_regular: true
-    is_reflexive: false
-  expect:
-    tier: 2
-    practice_reps: 20
-    example_verb: comer
-- input:
-    verb_ending: ir
-    is_regular: true
-    is_reflexive: false
-  expect:
-    tier: 2
-    practice_reps: 20
-    example_verb: comer
-- input:
-    verb_ending: er
-    is_regular: false
-    is_reflexive: false
-  expect:
-    tier: 3
-    practice_reps: 40
-    example_verb: tener
-- input:
-    verb_ending: ir
-    is_regular: false
-    is_reflexive: true
-  expect:
-    tier: 4
-    practice_reps: 60
-    example_verb: irse
-- input: {}
-  expect:
-    tier: 0
-    practice_reps: 0
-    example_verb: "REJECTED: verb_ending and is_regular are required"
-- input:
-    verb_ending: ar
-    is_regular: false
-    is_reflexive: true
-  expect:
-    tier: 4
-    practice_reps: 60
-    example_verb: irse
-- input:
-    verb_ending: ar
-    is_regular: false
-    is_reflexive: false
-  expect:
-    tier: 3
-    practice_reps: 40
-    example_verb: tener
+  - input:
+      verb_ending: ar
+      is_regular: true
+      is_reflexive: false
+    expect:
+      tier: 1
+      practice_reps: 10
+      example_verb: hablar
+  - input:
+      verb_ending: er
+      is_regular: true
+      is_reflexive: false
+    expect:
+      tier: 2
+      practice_reps: 20
+      example_verb: comer
+  - input:
+      verb_ending: ir
+      is_regular: true
+      is_reflexive: false
+    expect:
+      tier: 2
+      practice_reps: 20
+      example_verb: comer
+  - input:
+      verb_ending: er
+      is_regular: false
+      is_reflexive: false
+    expect:
+      tier: 3
+      practice_reps: 40
+      example_verb: tener
+  - input:
+      verb_ending: ir
+      is_regular: false
+      is_reflexive: true
+    expect:
+      tier: 4
+      practice_reps: 60
+      example_verb: irse
+  - input: {}
+    expect:
+      tier: 0
+      practice_reps: 0
+      example_verb: "REJECTED: verb_ending and is_regular are required"
+  - input:
+      verb_ending: ar
+      is_regular: false
+      is_reflexive: true
+    expect:
+      tier: 4
+      practice_reps: 60
+      example_verb: irse
+  - input:
+      verb_ending: ar
+      is_regular: false
+      is_reflexive: false
+    expect:
+      tier: 3
+      practice_reps: 40
+      example_verb: tener
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tier
+    - practice_reps
+    - example_verb
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

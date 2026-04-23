@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ci-05-cpa8-recognition
-description: "CPA8 industry recognition ≥50% within 2 years"
 version: 0.1.0
-
+description: CPA8 industry recognition ≥50% within 2 years
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Ci 05 Cpa8 Recognition
+  subtitle: CPA8 industry recognition ≥50% within 2 years
+  icon: circle
+  route: /vigilance/mg/ci-05-cpa8-recognition
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ci-05-cpa8-recognition
+  cli: rsk mcg run ci-05-cpa8-recognition
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -15,22 +43,58 @@ tree:
     pass:
       type: return
       value:
-        metric: "ci-05-cpa8-recognition"
-        category: "CPA Integration"
+        metric: ci-05-cpa8-recognition
+        category: CPA Integration
         met: true
-        action: "on_track"
-        frequency: "annual"
+        action: on_track
+        frequency: annual
     fail:
       type: return
       value:
-        metric: "ci-05-cpa8-recognition"
-        category: "CPA Integration"
+        metric: ci-05-cpa8-recognition
+        category: CPA Integration
         met: false
-        action: "remediate"
-        frequency: "annual"
-
+        action: remediate
+        frequency: annual
 tests:
-  - input: {cpa8_recognition_pct: 50}
-    expect: {met: true, category: "CPA Integration"}
+  - input:
+      cpa8_recognition_pct: 50
+    expect:
+      met: true
+      category: CPA Integration
   - input: {}
-    expect: {met: false, category: "CPA Integration"}
+    expect:
+      met: false
+      category: CPA Integration
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

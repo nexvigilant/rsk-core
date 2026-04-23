@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-hospitalization-classifier
-description: 'ICH E2A Section II.B: Hospitalization sub-classification — initial (new), prolonged (extension of existing), or elective/planned (not a seriousness criterion). Determines if hospitalization criterion is met for SUSAR purposes.'
 version: 1.0.0
+description: "ICH E2A Section II.B: Hospitalization sub-classification — initial (new), prolonged (extension of existing), or elective/planned (not a seriousness criterion). Determines if hospitalization criterion is met for SUSAR purposes."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: admission_type
+    type: string
+    required: false
+    description: ""
+  - name: caused_by_ae
+    type: bool
+    required: false
+    description: ""
+  - name: hospitalized
+    type: bool
+    required: false
+    description: ""
+  - name: pre_planned
+    type: bool
+    required: false
+    description: ""
+  - name: prolongation_due_to_ae
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: hospitalization_criterion_met
+    type: bool
+  - name: hospitalization_type
+    type: string
+  - name: rationale
+    type: string
+  - name: regulatory_reference
+    type: string
+  - name: seriousness_basis
+    type: string
 interface:
   inputs:
     admission_type:
@@ -29,6 +71,48 @@ interface:
       type: string
     seriousness_basis:
       type: string
+ui:
+  title: E2a Hospitalization Classifier
+  subtitle: "ICH E2A Section II.B: Hospitalization sub-classification — initial (new), prolonged (extension of existing), or elective/planned (not a seriousness criterion). Determines if hospitalization criterion is met for SUSAR purposes."
+  icon: circle
+  route: /vigilance/mg/e2a-hospitalization-classifier
+  steps:
+    - field: admission_type
+      label: admission type
+      help: Enter admission_type
+      widget: text
+      placeholder: null
+    - field: caused_by_ae
+      label: caused by ae
+      help: Enter caused_by_ae
+      widget: toggle
+      placeholder: null
+    - field: hospitalized
+      label: hospitalized
+      help: Enter hospitalized
+      widget: toggle
+      placeholder: null
+    - field: pre_planned
+      label: pre planned
+      help: Enter pre_planned
+      widget: toggle
+      placeholder: null
+    - field: prolongation_due_to_ae
+      label: prolongation due to ae
+      help: Enter prolongation_due_to_ae
+      widget: toggle
+      placeholder: null
+  result:
+    template: "hospitalization_criterion_met: {{hospitalization_criterion_met}} — hospitalization_type: {{hospitalization_type}} — rationale: {{rationale}} — regulatory_reference: {{regulatory_reference}} — seriousness_basis: {{seriousness_basis}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-hospitalization-classifier
+  cli: rsk mcg run e2a-hospitalization-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_hospitalized
   nodes:
@@ -107,88 +191,112 @@ tree:
         seriousness_basis: NONE
         rationale: No hospitalization and no prolongation due to adverse event — criterion not met
         regulatory_reference: ICH E2A Section II.B - Hospitalization criterion not applicable
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — sub-classification of hospitalization criterion per ICH E2A'
-  primes: ['κ', '∂']
-  arguments: ['hospitalized', 'pre_planned', 'caused_by_ae', 'prolongation_due_to_ae']
-  chain_prediction: 'Feeds hospitalization_criterion_met into case-seriousness or e2a-reporting-obligation as seriousness sub-gate.'
 tests:
-# Unplanned hospitalization caused by AE = criterion met (initial)
-- input:
-    hospitalized: true
-    pre_planned: false
-    caused_by_ae: true
-    prolongation_due_to_ae: false
-    admission_type: emergency
-  expect:
-    hospitalization_criterion_met: true
-    hospitalization_type: INITIAL
-    seriousness_basis: HOSPITALIZATION
-    regulatory_reference: ICH E2A Section II.B - Inpatient hospitalization or prolongation of existing hospitalization
-# Emergency admission (admission_type=emergency) = criterion met
-- input:
-    hospitalized: true
-    pre_planned: false
-    caused_by_ae: false
-    prolongation_due_to_ae: false
-    admission_type: emergency
-  expect:
-    hospitalization_criterion_met: true
-    hospitalization_type: INITIAL
-    seriousness_basis: HOSPITALIZATION
-    regulatory_reference: ICH E2A Section II.B - Inpatient hospitalization or prolongation of existing hospitalization
-# Planned/elective admission = criterion NOT met
-- input:
-    hospitalized: true
-    pre_planned: true
-    caused_by_ae: false
-    prolongation_due_to_ae: false
-    admission_type: elective
-  expect:
-    hospitalization_criterion_met: false
-    hospitalization_type: ELECTIVE_PLANNED
-    seriousness_basis: NONE
-    regulatory_reference: "ICH E2A Section II.B - Note: elective/pre-planned admissions do not fulfill hospitalization criterion"
-# Prolongation of existing stay due to AE = criterion met
-- input:
-    hospitalized: false
-    pre_planned: false
-    caused_by_ae: false
-    prolongation_due_to_ae: true
-    admission_type: existing
-  expect:
-    hospitalization_criterion_met: true
-    hospitalization_type: PROLONGED
-    seriousness_basis: HOSPITALIZATION
-    regulatory_reference: ICH E2A Section II.B - Inpatient hospitalization or prolongation of existing hospitalization
-# Not hospitalized, no prolongation = criterion not met
-- input:
-    hospitalized: false
-    pre_planned: false
-    caused_by_ae: false
-    prolongation_due_to_ae: false
-  expect:
-    hospitalization_criterion_met: false
-    hospitalization_type: NONE
-    seriousness_basis: NONE
-    regulatory_reference: ICH E2A Section II.B - Hospitalization criterion not applicable
-# Hospitalized but cause unclear = needs review
-- input:
-    hospitalized: true
-    pre_planned: false
-    caused_by_ae: false
-    prolongation_due_to_ae: false
-    admission_type: unplanned
-  expect:
-    hospitalization_criterion_met: false
-    hospitalization_type: UNCLEAR
-    seriousness_basis: NEEDS_REVIEW
-    regulatory_reference: ICH E2A Section II.B - Clinical judgment required for causal attribution
-# Empty input = not hospitalized
-- input: {}
-  expect:
-    hospitalization_criterion_met: false
-    hospitalization_type: NONE
-    seriousness_basis: NONE
-    regulatory_reference: ICH E2A Section II.B - Hospitalization criterion not applicable
+  - input:
+      hospitalized: true
+      pre_planned: false
+      caused_by_ae: true
+      prolongation_due_to_ae: false
+      admission_type: emergency
+    expect:
+      hospitalization_criterion_met: true
+      hospitalization_type: INITIAL
+      seriousness_basis: HOSPITALIZATION
+      regulatory_reference: ICH E2A Section II.B - Inpatient hospitalization or prolongation of existing hospitalization
+  - input:
+      hospitalized: true
+      pre_planned: false
+      caused_by_ae: false
+      prolongation_due_to_ae: false
+      admission_type: emergency
+    expect:
+      hospitalization_criterion_met: true
+      hospitalization_type: INITIAL
+      seriousness_basis: HOSPITALIZATION
+      regulatory_reference: ICH E2A Section II.B - Inpatient hospitalization or prolongation of existing hospitalization
+  - input:
+      hospitalized: true
+      pre_planned: true
+      caused_by_ae: false
+      prolongation_due_to_ae: false
+      admission_type: elective
+    expect:
+      hospitalization_criterion_met: false
+      hospitalization_type: ELECTIVE_PLANNED
+      seriousness_basis: NONE
+      regulatory_reference: "ICH E2A Section II.B - Note: elective/pre-planned admissions do not fulfill hospitalization criterion"
+  - input:
+      hospitalized: false
+      pre_planned: false
+      caused_by_ae: false
+      prolongation_due_to_ae: true
+      admission_type: existing
+    expect:
+      hospitalization_criterion_met: true
+      hospitalization_type: PROLONGED
+      seriousness_basis: HOSPITALIZATION
+      regulatory_reference: ICH E2A Section II.B - Inpatient hospitalization or prolongation of existing hospitalization
+  - input:
+      hospitalized: false
+      pre_planned: false
+      caused_by_ae: false
+      prolongation_due_to_ae: false
+    expect:
+      hospitalization_criterion_met: false
+      hospitalization_type: NONE
+      seriousness_basis: NONE
+      regulatory_reference: ICH E2A Section II.B - Hospitalization criterion not applicable
+  - input:
+      hospitalized: true
+      pre_planned: false
+      caused_by_ae: false
+      prolongation_due_to_ae: false
+      admission_type: unplanned
+    expect:
+      hospitalization_criterion_met: false
+      hospitalization_type: UNCLEAR
+      seriousness_basis: NEEDS_REVIEW
+      regulatory_reference: ICH E2A Section II.B - Clinical judgment required for causal attribution
+  - input: {}
+    expect:
+      hospitalization_criterion_met: false
+      hospitalization_type: NONE
+      seriousness_basis: NONE
+      regulatory_reference: ICH E2A Section II.B - Hospitalization criterion not applicable
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - hospitalization_criterion_met
+    - hospitalization_type
+    - rationale
+    - regulatory_reference
+    - seriousness_basis
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,28 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: file-size-gate
-description: 'Code hygiene gate: classifies source files by line count for single-pass readability. Files over 500 lines need splitting.'
 version: 0.1.0
+description: "Code hygiene gate: classifies source files by line count for single-pass readability. Files over 500 lines need splitting."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: line_count
+    type: int
+    required: true
+    description: ""
+outputs:
+  - name: size_class
+    type: string
+  - name: needs_split
+    type: bool
+  - name: reason
+    type: string
 interface:
   inputs:
     line_count:
@@ -13,6 +35,28 @@ interface:
       type: bool
     reason:
       type: string
+ui:
+  title: File Size Gate
+  subtitle: "Code hygiene gate: classifies source files by line count for single-pass readability. Files over 500 lines need splitting."
+  icon: circle
+  route: /vigilance/mg/file-size-gate
+  steps:
+    - field: line_count
+      label: line count
+      help: Enter line_count
+      widget: text
+      placeholder: null
+  result:
+    template: "size_class: {{size_class}} — needs_split: {{needs_split}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/file-size-gate
+  cli: rsk mcg run file-size-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_critical
   nodes:
@@ -61,62 +105,92 @@ tree:
         size_class: SMALL
         needs_split: false
         reason: File is under 200 lines — optimal size
-primitive_signature:
-  dominant: '∂'
-  expression: '∂ — boundary validation or gating'
-  primes: ['∂']
-  arguments: []
 tests:
-- input:
-    line_count: 2855
-  expect:
-    size_class: CRITICAL
-    needs_split: true
-    reason: File exceeds 1500 lines — exceeds LLM single-pass token limit, split immediately
-- input:
-    line_count: 1500
-  expect:
-    size_class: CRITICAL
-    needs_split: true
-    reason: File exceeds 1500 lines — exceeds LLM single-pass token limit, split immediately
-- input:
-    line_count: 800
-  expect:
-    size_class: LARGE
-    needs_split: true
-    reason: File exceeds 500 lines — split into submodules for maintainability
-- input:
-    line_count: 500
-  expect:
-    size_class: LARGE
-    needs_split: true
-    reason: File exceeds 500 lines — split into submodules for maintainability
-- input:
-    line_count: 350
-  expect:
-    size_class: MEDIUM
-    needs_split: false
-    reason: File is 200-499 lines — acceptable, monitor for growth
-- input:
-    line_count: 200
-  expect:
-    size_class: MEDIUM
-    needs_split: false
-    reason: File is 200-499 lines — acceptable, monitor for growth
-- input:
-    line_count: 150
-  expect:
-    size_class: SMALL
-    needs_split: false
-    reason: File is under 200 lines — optimal size
-- input:
-    line_count: 0
-  expect:
-    size_class: SMALL
-    needs_split: false
-    reason: File is under 200 lines — optimal size
-- input: {}
-  expect:
-    size_class: SMALL
-    needs_split: false
-    reason: File is under 200 lines — optimal size
+  - input:
+      line_count: 2855
+    expect:
+      size_class: CRITICAL
+      needs_split: true
+      reason: File exceeds 1500 lines — exceeds LLM single-pass token limit, split immediately
+  - input:
+      line_count: 1500
+    expect:
+      size_class: CRITICAL
+      needs_split: true
+      reason: File exceeds 1500 lines — exceeds LLM single-pass token limit, split immediately
+  - input:
+      line_count: 800
+    expect:
+      size_class: LARGE
+      needs_split: true
+      reason: File exceeds 500 lines — split into submodules for maintainability
+  - input:
+      line_count: 500
+    expect:
+      size_class: LARGE
+      needs_split: true
+      reason: File exceeds 500 lines — split into submodules for maintainability
+  - input:
+      line_count: 350
+    expect:
+      size_class: MEDIUM
+      needs_split: false
+      reason: File is 200-499 lines — acceptable, monitor for growth
+  - input:
+      line_count: 200
+    expect:
+      size_class: MEDIUM
+      needs_split: false
+      reason: File is 200-499 lines — acceptable, monitor for growth
+  - input:
+      line_count: 150
+    expect:
+      size_class: SMALL
+      needs_split: false
+      reason: File is under 200 lines — optimal size
+  - input:
+      line_count: 0
+    expect:
+      size_class: SMALL
+      needs_split: false
+      reason: File is under 200 lines — optimal size
+  - input: {}
+    expect:
+      size_class: SMALL
+      needs_split: false
+      reason: File is under 200 lines — optimal size
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - size_class
+    - needs_split
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: gap-detector
-description: "Management: detect competency gaps — given current level and target EPA, identify what domains need development."
 version: 0.1.0
+description: "Management: detect competency gaps — given current level and target EPA, identify what domains need development."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: current_min_primary
+    type: int
+    required: false
+    description: ""
+  - name: current_min_supporting
+    type: int
+    required: false
+    description: ""
+  - name: target_epa_max_level
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: development_months
+    type: int
+  - name: gap_type
+    type: string
+  - name: has_gap
+    type: bool
+  - name: message
+    type: string
+  - name: recommendation
+    type: string
+  - name: severity
+    type: string
 interface:
   inputs:
     current_min_primary:
@@ -25,6 +61,38 @@ interface:
       type: string
     severity:
       type: string
+ui:
+  title: Gap Detector
+  subtitle: "Management: detect competency gaps — given current level and target EPA, identify what domains need development."
+  icon: circle
+  route: /vigilance/mg/gap-detector
+  steps:
+    - field: current_min_primary
+      label: current min primary
+      help: Enter current_min_primary
+      widget: text
+      placeholder: null
+    - field: current_min_supporting
+      label: current min supporting
+      help: Enter current_min_supporting
+      widget: text
+      placeholder: null
+    - field: target_epa_max_level
+      label: target epa max level
+      help: Enter target_epa_max_level
+      widget: text
+      placeholder: null
+  result:
+    template: "development_months: {{development_months}} — gap_type: {{gap_type}} — has_gap: {{has_gap}} — message: {{message}} — recommendation: {{recommendation}} — severity: {{severity}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/gap-detector
+  cli: rsk mcg run gap-detector
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target_tier
   nodes:
@@ -69,8 +137,8 @@ tree:
         has_gap: true
         gap_type: PRIMARY
         severity: HIGH
-        message: "Primary domains below L4 — need advancement before attempting advanced EPAs (5-10)"
-        recommendation: "focused development in primary domains, mentored practice, innovation projects"
+        message: Primary domains below L4 — need advancement before attempting advanced EPAs (5-10)
+        recommendation: focused development in primary domains, mentored practice, innovation projects
         development_months: 12
     primary_gap_basic:
       type: return
@@ -78,8 +146,8 @@ tree:
         has_gap: true
         gap_type: PRIMARY
         severity: MEDIUM
-        message: "Primary domains below L3 — need advancement before attempting core EPAs (1-4)"
-        recommendation: "structured learning, supervised practice, portfolio development"
+        message: Primary domains below L3 — need advancement before attempting core EPAs (1-4)
+        recommendation: structured learning, supervised practice, portfolio development
         development_months: 6
     supporting_gap:
       type: return
@@ -87,8 +155,8 @@ tree:
         has_gap: true
         gap_type: SUPPORTING
         severity: LOW
-        message: "Supporting domains below minimum — targeted development needed"
-        recommendation: "cross-domain exposure, integrated projects, peer learning"
+        message: Supporting domains below minimum — targeted development needed
+        recommendation: cross-domain exposure, integrated projects, peer learning
         development_months: 3
     no_gap:
       type: return
@@ -96,45 +164,83 @@ tree:
         has_gap: false
         gap_type: NONE
         severity: NONE
-        message: "Ready for target EPA — all domain requirements met"
-        recommendation: "proceed with EPA development"
+        message: Ready for target EPA — all domain requirements met
+        recommendation: proceed with EPA development
 tests:
-- input:
-    target_epa_max_level: 4
-    current_min_primary: 4
-    current_min_supporting: 3
-  expect:
-    has_gap: false
-    gap_type: NONE
-- input:
-    target_epa_max_level: 4
-    current_min_primary: 3
-    current_min_supporting: 3
-  expect:
-    has_gap: true
-    gap_type: PRIMARY
-    severity: HIGH
-- input:
-    target_epa_max_level: 4
-    current_min_primary: 4
-    current_min_supporting: 2
-  expect:
-    has_gap: true
-    gap_type: SUPPORTING
-- input:
-    target_epa_max_level: 3
-    current_min_primary: 3
-    current_min_supporting: 2
-  expect:
-    has_gap: false
-- input:
-    target_epa_max_level: 3
-    current_min_primary: 2
-    current_min_supporting: 2
-  expect:
-    has_gap: true
-    gap_type: PRIMARY
-    severity: MEDIUM
-- input: {}
-  expect:
-    has_gap: true
+  - input:
+      target_epa_max_level: 4
+      current_min_primary: 4
+      current_min_supporting: 3
+    expect:
+      has_gap: false
+      gap_type: NONE
+  - input:
+      target_epa_max_level: 4
+      current_min_primary: 3
+      current_min_supporting: 3
+    expect:
+      has_gap: true
+      gap_type: PRIMARY
+      severity: HIGH
+  - input:
+      target_epa_max_level: 4
+      current_min_primary: 4
+      current_min_supporting: 2
+    expect:
+      has_gap: true
+      gap_type: SUPPORTING
+  - input:
+      target_epa_max_level: 3
+      current_min_primary: 3
+      current_min_supporting: 2
+    expect:
+      has_gap: false
+  - input:
+      target_epa_max_level: 3
+      current_min_primary: 2
+      current_min_supporting: 2
+    expect:
+      has_gap: true
+      gap_type: PRIMARY
+      severity: MEDIUM
+  - input: {}
+    expect:
+      has_gap: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - development_months
+    - gap_type
+    - has_gap
+    - message
+    - recommendation
+    - severity
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

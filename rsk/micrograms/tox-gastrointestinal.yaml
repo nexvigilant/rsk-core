@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tox-gastrointestinal
-description: 'Gastrointestinal toxicity gate: ctcae_grade thresholds for gi'
 version: 0.1.0
+description: "Gastrointestinal toxicity gate: ctcae_grade thresholds for gi"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Tox Gastrointestinal
+  subtitle: "Gastrointestinal toxicity gate: ctcae_grade thresholds for gi"
+  icon: circle
+  route: /vigilance/mg/tox-gastrointestinal
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tox-gastrointestinal
+  cli: rsk mcg run tox-gastrointestinal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severe
   nodes:
@@ -40,66 +69,96 @@ tree:
         organ: gastrointestinal
         target: gi
 tests:
-- input:
-    ctcae_grade: 4
-  expect:
-    organ: gastrointestinal
-    severity: severe
-- input:
-    ctcae_grade: 2
-  expect:
-    severity: mild
-    organ: gastrointestinal
-- input:
-    ctcae_grade: 0
-  expect:
-    severity: normal
-    organ: gastrointestinal
-- input: {}
-  expect:
-    organ: gastrointestinal
-    severity: normal
-- input:
-    ctcae_grade: -1
-  expect:
-    action: continue
-    severity: normal
-    organ: gastrointestinal
-    target: gi
-- input:
-    ctcae_grade: 300
-  expect:
-    organ: gastrointestinal
-    action: discontinue
-    target: gi
-    severity: severe
-- input:
-    ctcae_grade: -1
-  expect:
-    organ: gastrointestinal
-    severity: normal
-    action: continue
-    target: gi
-- input:
-    ctcae_grade: 1
-  expect:
-    organ: gastrointestinal
-    action: continue
-    severity: normal
-    target: gi
-- input:
-    ctcae_grade: 3
-  expect:
-    action: discontinue
-    organ: gastrointestinal
-    severity: severe
-    target: gi
-- input:
-    ctcae_grade: 200
-  expect:
-    action: discontinue
-    target: gi
-    severity: severe
-    organ: gastrointestinal
-interface: null
-primitive_signature: null
+  - input:
+      ctcae_grade: 4
+    expect:
+      organ: gastrointestinal
+      severity: severe
+  - input:
+      ctcae_grade: 2
+    expect:
+      severity: mild
+      organ: gastrointestinal
+  - input:
+      ctcae_grade: 0
+    expect:
+      severity: normal
+      organ: gastrointestinal
+  - input: {}
+    expect:
+      organ: gastrointestinal
+      severity: normal
+  - input:
+      ctcae_grade: -1
+    expect:
+      action: continue
+      severity: normal
+      organ: gastrointestinal
+      target: gi
+  - input:
+      ctcae_grade: 300
+    expect:
+      organ: gastrointestinal
+      action: discontinue
+      target: gi
+      severity: severe
+  - input:
+      ctcae_grade: -1
+    expect:
+      organ: gastrointestinal
+      severity: normal
+      action: continue
+      target: gi
+  - input:
+      ctcae_grade: 1
+    expect:
+      organ: gastrointestinal
+      action: continue
+      severity: normal
+      target: gi
+  - input:
+      ctcae_grade: 3
+    expect:
+      action: discontinue
+      organ: gastrointestinal
+      severity: severe
+      target: gi
+  - input:
+      ctcae_grade: 200
+    expect:
+      action: discontinue
+      target: gi
+      severity: severe
+      organ: gastrointestinal
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

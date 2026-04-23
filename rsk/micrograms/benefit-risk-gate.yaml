@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: benefit-risk-gate
-description: 'Benefit-risk decision gate for initial pharmacovigilance assessment: routes to monitoring, management, or mitigation based on benefit/risk scores and unmet need'
 version: 0.1.0
+description: "Benefit-risk decision gate for initial pharmacovigilance assessment: routes to monitoring, management, or mitigation based on benefit/risk scores and unmet need"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: alternative_available
+    type: bool
+    required: false
+    description: ""
+  - name: benefit_score
+    type: int
+    required: false
+    description: ""
+  - name: risk_score
+    type: int
+    required: false
+    description: ""
+  - name: unmet_need
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: benefit_risk_ratio
+    type: string
+  - name: decision
+    type: string
+  - name: recommendation
+    type: string
 interface:
   inputs:
     alternative_available:
@@ -24,6 +60,43 @@ interface:
       type: string
     recommendation:
       type: string
+ui:
+  title: Benefit Risk Gate
+  subtitle: "Benefit-risk decision gate for initial pharmacovigilance assessment: routes to monitoring, management, or mitigation based on benefit/risk scores and unmet need"
+  icon: circle
+  route: /vigilance/mg/benefit-risk-gate
+  steps:
+    - field: alternative_available
+      label: alternative available
+      help: Enter alternative_available
+      widget: toggle
+      placeholder: null
+    - field: benefit_score
+      label: benefit score
+      help: Enter benefit_score
+      widget: text
+      placeholder: null
+    - field: risk_score
+      label: risk score
+      help: Enter risk_score
+      widget: text
+      placeholder: null
+    - field: unmet_need
+      label: unmet need
+      help: Enter unmet_need
+      widget: toggle
+      placeholder: null
+  result:
+    template: "action: {{action}} — benefit_risk_ratio: {{benefit_risk_ratio}} — decision: {{decision}} — recommendation: {{recommendation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/benefit-risk-gate
+  cli: rsk mcg run benefit-risk-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: negative_check
   nodes:
@@ -133,99 +206,135 @@ tree:
         benefit_risk_ratio: conditional
         recommendation: Benefit marginal; enhanced monitoring and RMP required
 tests:
-- input:
-    benefit_score: 85
-    risk_score: 15
-    unmet_need: false
-    alternative_available: false
-  expect:
-    decision: FAVORABLE
-    action: continue_monitoring
-    benefit_risk_ratio: favorable
-- input:
-    benefit_score: 90
-    risk_score: 20
-    unmet_need: false
-    alternative_available: false
-  expect:
-    decision: FAVORABLE
-    action: continue_monitoring
-- input:
-    benefit_score: 65
-    risk_score: 35
-    unmet_need: false
-    alternative_available: false
-  expect:
-    decision: ACCEPTABLE
-    action: standard_risk_management
-    benefit_risk_ratio: acceptable
-- input:
-    benefit_score: 60
-    risk_score: 40
-    unmet_need: false
-    alternative_available: false
-  expect:
-    decision: ACCEPTABLE
-    action: standard_risk_management
-- input:
-    benefit_score: 45
-    risk_score: 55
-    unmet_need: true
-    alternative_available: false
-  expect:
-    decision: CONDITIONAL
-    action: enhanced_monitoring_with_rmp
-    benefit_risk_ratio: conditional
-- input:
-    benefit_score: 45
-    risk_score: 55
-    unmet_need: false
-    alternative_available: false
-  expect:
-    decision: CONDITIONAL
-    action: enhanced_monitoring_with_rmp
-- input:
-    benefit_score: 45
-    risk_score: 55
-    unmet_need: false
-    alternative_available: true
-  expect:
-    decision: UNFAVORABLE
-    action: risk_mitigation_required
-- input:
-    benefit_score: 30
-    risk_score: 50
-    unmet_need: true
-    alternative_available: false
-  expect:
-    decision: UNFAVORABLE
-    action: risk_mitigation_required
-- input:
-    benefit_score: 50
-    risk_score: 70
-    unmet_need: true
-    alternative_available: false
-  expect:
-    decision: UNFAVORABLE
-    action: risk_mitigation_required
-- input:
-    benefit_score: 20
-    risk_score: 85
-    unmet_need: false
-    alternative_available: false
-  expect:
-    decision: NEGATIVE
-    action: consider_withdrawal
-    benefit_risk_ratio: negative
-- input:
-    benefit_score: 60
-    risk_score: 81
-    unmet_need: true
-    alternative_available: false
-  expect:
-    decision: NEGATIVE
-    action: consider_withdrawal
-- input: {}
-  expect:
-    decision: UNFAVORABLE
-    action: risk_mitigation_required
+  - input:
+      benefit_score: 85
+      risk_score: 15
+      unmet_need: false
+      alternative_available: false
+    expect:
+      decision: FAVORABLE
+      action: continue_monitoring
+      benefit_risk_ratio: favorable
+  - input:
+      benefit_score: 90
+      risk_score: 20
+      unmet_need: false
+      alternative_available: false
+    expect:
+      decision: FAVORABLE
+      action: continue_monitoring
+  - input:
+      benefit_score: 65
+      risk_score: 35
+      unmet_need: false
+      alternative_available: false
+    expect:
+      decision: ACCEPTABLE
+      action: standard_risk_management
+      benefit_risk_ratio: acceptable
+  - input:
+      benefit_score: 60
+      risk_score: 40
+      unmet_need: false
+      alternative_available: false
+    expect:
+      decision: ACCEPTABLE
+      action: standard_risk_management
+  - input:
+      benefit_score: 45
+      risk_score: 55
+      unmet_need: true
+      alternative_available: false
+    expect:
+      decision: CONDITIONAL
+      action: enhanced_monitoring_with_rmp
+      benefit_risk_ratio: conditional
+  - input:
+      benefit_score: 45
+      risk_score: 55
+      unmet_need: false
+      alternative_available: false
+    expect:
+      decision: CONDITIONAL
+      action: enhanced_monitoring_with_rmp
+  - input:
+      benefit_score: 45
+      risk_score: 55
+      unmet_need: false
+      alternative_available: true
+    expect:
+      decision: UNFAVORABLE
+      action: risk_mitigation_required
+  - input:
+      benefit_score: 30
+      risk_score: 50
+      unmet_need: true
+      alternative_available: false
+    expect:
+      decision: UNFAVORABLE
+      action: risk_mitigation_required
+  - input:
+      benefit_score: 50
+      risk_score: 70
+      unmet_need: true
+      alternative_available: false
+    expect:
+      decision: UNFAVORABLE
+      action: risk_mitigation_required
+  - input:
+      benefit_score: 20
+      risk_score: 85
+      unmet_need: false
+      alternative_available: false
+    expect:
+      decision: NEGATIVE
+      action: consider_withdrawal
+      benefit_risk_ratio: negative
+  - input:
+      benefit_score: 60
+      risk_score: 81
+      unmet_need: true
+      alternative_available: false
+    expect:
+      decision: NEGATIVE
+      action: consider_withdrawal
+  - input: {}
+    expect:
+      decision: UNFAVORABLE
+      action: risk_mitigation_required
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - benefit_risk_ratio
+    - decision
+    - recommendation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

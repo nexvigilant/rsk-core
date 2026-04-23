@@ -1,0 +1,301 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: circle-closure
+version: 0.1.0
+description: Community Circle closure evaluator — gate through SMM-001 fatal phases, credibility score, and Phase X divergence (2+ derived questions)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Circle Closure
+  subtitle: Community Circle closure evaluator — gate through SMM-001 fatal phases, credibility score, and Phase X divergence (2+ derived questions)
+  icon: circle
+  route: /vigilance/mg/circle-closure
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/circle-closure
+  cli: rsk mcg run circle-closure
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_phase_iv_hypothesize
+  nodes:
+    check_phase_iv_hypothesize:
+      type: condition
+      variable: phase_iv_present
+      operator: eq
+      value: true
+      true_next: check_phase_v_design
+      false_next: suspended_fatal_iv
+    check_phase_v_design:
+      type: condition
+      variable: phase_v_present
+      operator: eq
+      value: true
+      true_next: check_phase_vi_execute
+      false_next: suspended_fatal_v
+    check_phase_vi_execute:
+      type: condition
+      variable: phase_vi_present
+      operator: eq
+      value: true
+      true_next: check_phase_vii_analyze
+      false_next: suspended_fatal_vi
+    check_phase_vii_analyze:
+      type: condition
+      variable: phase_vii_present
+      operator: eq
+      value: true
+      true_next: check_phase_viii_interpret
+      false_next: suspended_fatal_vii
+    check_phase_viii_interpret:
+      type: condition
+      variable: phase_viii_present
+      operator: eq
+      value: true
+      true_next: check_credibility
+      false_next: suspended_fatal_viii
+    check_credibility:
+      type: condition
+      variable: credibility_score
+      operator: gte
+      value: 0.8
+      true_next: check_divergence
+      false_next: open_low_cs
+    check_divergence:
+      type: condition
+      variable: derived_question_count
+      operator: gte
+      value: 2
+      true_next: closable
+      false_next: open_needs_divergence
+    closable:
+      type: return
+      value:
+        check: circle-closure
+        status: CLOSABLE
+        can_close: true
+        reason: All fatal phases present, CS ≥ 0.80, Phase X divergence satisfied
+        next_action: emit_close_event_and_spawn_derived_circles
+    open_low_cs:
+      type: return
+      value:
+        check: circle-closure
+        status: OPEN
+        can_close: false
+        reason: Credibility score below 0.80 — accumulate more evidence
+        next_action: continue_phases_and_recompute_cs
+    open_needs_divergence:
+      type: return
+      value:
+        check: circle-closure
+        status: OPEN
+        can_close: false
+        reason: Phase X requires 2+ derived questions for flywheel divergence
+        next_action: identify_two_derived_questions_before_close
+    suspended_fatal_iv:
+      type: return
+      value:
+        check: circle-closure
+        status: SUSPENDED
+        can_close: false
+        fatal_phase: IV
+        violation_class: F
+        reason: Phase IV Hypothesize absent — undisclosed or unfalsifiable hypotheses
+        next_action: add_falsifiable_hypothesis
+    suspended_fatal_v:
+      type: return
+      value:
+        check: circle-closure
+        status: SUSPENDED
+        can_close: false
+        fatal_phase: V
+        violation_class: F
+        reason: Phase V Design absent — no pre-registered success/failure criteria
+        next_action: pre_register_design_and_power
+    suspended_fatal_vi:
+      type: return
+      value:
+        check: circle-closure
+        status: SUSPENDED
+        can_close: false
+        fatal_phase: VI
+        violation_class: F
+        reason: Phase VI Execute absent — raw data not stored or deviations undocumented
+        next_action: store_raw_data_and_document_deviations
+    suspended_fatal_vii:
+      type: return
+      value:
+        check: circle-closure
+        status: SUSPENDED
+        can_close: false
+        fatal_phase: VII
+        violation_class: F
+        reason: Phase VII Analyze absent — post-hoc criteria used
+        next_action: redo_analysis_with_pre_registered_criteria
+    suspended_fatal_viii:
+      type: return
+      value:
+        check: circle-closure
+        status: SUSPENDED
+        can_close: false
+        fatal_phase: VIII
+        violation_class: F
+        reason: Phase VIII Interpret absent — verdicts suppressed
+        next_action: report_all_verdicts_supported_falsified_inconclusive
+tests:
+  - input:
+      phase_iv_present: true
+      phase_v_present: true
+      phase_vi_present: true
+      phase_vii_present: true
+      phase_viii_present: true
+      credibility_score: 0.85
+      derived_question_count: 3
+    expect:
+      status: CLOSABLE
+      can_close: true
+  - input:
+      phase_iv_present: true
+      phase_v_present: true
+      phase_vi_present: true
+      phase_vii_present: true
+      phase_viii_present: true
+      credibility_score: 0.85
+      derived_question_count: 1
+    expect:
+      status: OPEN
+      can_close: false
+  - input:
+      phase_iv_present: true
+      phase_v_present: true
+      phase_vi_present: true
+      phase_vii_present: true
+      phase_viii_present: true
+      credibility_score: 0.85
+      derived_question_count: 0
+    expect:
+      status: OPEN
+      can_close: false
+  - input:
+      phase_iv_present: true
+      phase_v_present: true
+      phase_vi_present: true
+      phase_vii_present: true
+      phase_viii_present: true
+      credibility_score: 0.75
+      derived_question_count: 5
+    expect:
+      status: OPEN
+      can_close: false
+  - input:
+      phase_iv_present: false
+      phase_v_present: true
+      phase_vi_present: true
+      phase_vii_present: true
+      phase_viii_present: true
+      credibility_score: 0.95
+      derived_question_count: 3
+    expect:
+      status: SUSPENDED
+      fatal_phase: IV
+  - input:
+      phase_iv_present: true
+      phase_v_present: false
+      phase_vi_present: true
+      phase_vii_present: true
+      phase_viii_present: true
+      credibility_score: 0.95
+      derived_question_count: 3
+    expect:
+      status: SUSPENDED
+      fatal_phase: V
+  - input:
+      phase_iv_present: true
+      phase_v_present: true
+      phase_vi_present: false
+      phase_vii_present: true
+      phase_viii_present: true
+      credibility_score: 0.95
+      derived_question_count: 3
+    expect:
+      status: SUSPENDED
+      fatal_phase: VI
+  - input:
+      phase_iv_present: true
+      phase_v_present: true
+      phase_vi_present: true
+      phase_vii_present: false
+      phase_viii_present: true
+      credibility_score: 0.95
+      derived_question_count: 3
+    expect:
+      status: SUSPENDED
+      fatal_phase: VII
+  - input:
+      phase_iv_present: true
+      phase_v_present: true
+      phase_vi_present: true
+      phase_vii_present: true
+      phase_viii_present: false
+      credibility_score: 0.95
+      derived_question_count: 3
+    expect:
+      status: SUSPENDED
+      fatal_phase: VIII
+  - input:
+      phase_iv_present: true
+      phase_v_present: true
+      phase_vi_present: true
+      phase_vii_present: true
+      phase_viii_present: true
+      credibility_score: 0.8
+      derived_question_count: 2
+    expect:
+      status: CLOSABLE
+      can_close: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

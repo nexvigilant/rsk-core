@@ -1,6 +1,73 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: trend-to-communication
-description: Routes trend analysis to communication action level determination
 version: 0.1.0
+description: Routes trend analysis to communication action level determination
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: magnitude
+    type: string
+    required: true
+    description: ""
+  - name: trend_direction
+    type: string
+    required: true
+    description: ""
+outputs:
+  - name: communication_level
+    type: string
+  - name: urgency
+    type: string
+interface:
+  inputs:
+    magnitude:
+      type: string
+      required: true
+    trend_direction:
+      type: string
+      required: true
+  outputs:
+    communication_level:
+      type: string
+      required: false
+    urgency:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Trend To Communication
+  subtitle: Routes trend analysis to communication action level determination
+  icon: circle
+  route: /vigilance/mg/trend-to-communication
+  steps:
+    - field: magnitude
+      label: magnitude
+      help: Enter magnitude
+      widget: text
+      placeholder: null
+    - field: trend_direction
+      label: trend direction
+      help: Enter trend_direction
+      widget: text
+      placeholder: null
+  result:
+    template: "communication_level: {{communication_level}} — urgency: {{urgency}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/trend-to-communication
+  cli: rsk mcg run trend-to-communication
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_direction
   nodes:
@@ -82,65 +149,83 @@ tree:
         communication_level: label_update
         urgency: 30_days
 tests:
-- input:
-    magnitude: ''
-    trend_direction: ''
-  expect:
-    urgency: deferred
-    communication_level: none
-- input:
-    magnitude: ''
-    trend_direction: increasing
-  expect:
-    urgency: 90_days
-    communication_level: routine
-- input:
-    magnitude: ''
-    trend_direction: stable
-  expect:
-    urgency: deferred
-    communication_level: routine
-- input:
-    magnitude: large
-    trend_direction: ''
-  expect:
-    communication_level: none
-    urgency: deferred
-- input:
-    magnitude: large
-    trend_direction: increasing
-  expect:
-    communication_level: dhpc
-    urgency: immediate
-- input:
-    magnitude: large
-    trend_direction: stable
-  expect:
-    communication_level: routine
-    urgency: 90_days
-- input:
-    magnitude: moderate
-    trend_direction: increasing
-  expect:
-    communication_level: label_update
-    urgency: 30_days
-- input: {}
-  expect:
-    urgency: deferred
-    communication_level: none
-interface:
-  inputs:
-    magnitude:
-      type: string
-      required: true
-    trend_direction:
-      type: string
-      required: true
-  outputs:
-    communication_level:
-      type: string
-      required: false
-    urgency:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      magnitude: ""
+      trend_direction: ""
+    expect:
+      urgency: deferred
+      communication_level: none
+  - input:
+      magnitude: ""
+      trend_direction: increasing
+    expect:
+      urgency: 90_days
+      communication_level: routine
+  - input:
+      magnitude: ""
+      trend_direction: stable
+    expect:
+      urgency: deferred
+      communication_level: routine
+  - input:
+      magnitude: large
+      trend_direction: ""
+    expect:
+      communication_level: none
+      urgency: deferred
+  - input:
+      magnitude: large
+      trend_direction: increasing
+    expect:
+      communication_level: dhpc
+      urgency: immediate
+  - input:
+      magnitude: large
+      trend_direction: stable
+    expect:
+      communication_level: routine
+      urgency: 90_days
+  - input:
+      magnitude: moderate
+      trend_direction: increasing
+    expect:
+      communication_level: label_update
+      urgency: 30_days
+  - input: {}
+    expect:
+      urgency: deferred
+      communication_level: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - communication_level
+    - urgency
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

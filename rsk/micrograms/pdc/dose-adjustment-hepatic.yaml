@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dose-adjustment-hepatic
-description: 'Clinical safety: dose-adjustment-hepatic'
 version: 0.1.0
+description: "Clinical safety: dose-adjustment-hepatic"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: risk_score
+    type: int
+    required: false
+    description: ""
+  - name: evidence_level
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: classification
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     risk_score:
@@ -14,6 +38,33 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Dose Adjustment Hepatic
+  subtitle: "Clinical safety: dose-adjustment-hepatic"
+  icon: circle
+  route: /vigilance/mg/dose-adjustment-hepatic
+  steps:
+    - field: risk_score
+      label: risk score
+      help: Enter risk_score
+      widget: text
+      placeholder: null
+    - field: evidence_level
+      label: evidence level
+      help: Enter evidence_level
+      widget: text
+      placeholder: null
+  result:
+    template: "classification: {{classification}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dose-adjustment-hepatic
+  cli: rsk mcg run dose-adjustment-hepatic
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_high_risk
   nodes:
@@ -47,11 +98,59 @@ tree:
         classification: LOW_RISK
         action: standard_care
 tests:
-- input: {risk_score: 90, evidence_level: strong}
-  expect: {classification: HIGH_RISK, action: contraindicate_or_monitor}
-- input: {risk_score: 50, evidence_level: moderate}
-  expect: {classification: MODERATE_RISK, action: monitor_closely}
-- input: {risk_score: 20, evidence_level: weak}
-  expect: {classification: LOW_RISK, action: standard_care}
-- input: {}
-  expect: {classification: LOW_RISK, action: standard_care}
+  - input:
+      risk_score: 90
+      evidence_level: strong
+    expect:
+      classification: HIGH_RISK
+      action: contraindicate_or_monitor
+  - input:
+      risk_score: 50
+      evidence_level: moderate
+    expect:
+      classification: MODERATE_RISK
+      action: monitor_closely
+  - input:
+      risk_score: 20
+      evidence_level: weak
+    expect:
+      classification: LOW_RISK
+      action: standard_care
+  - input: {}
+    expect:
+      classification: LOW_RISK
+      action: standard_care
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - classification
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

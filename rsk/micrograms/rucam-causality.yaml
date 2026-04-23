@@ -1,6 +1,28 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: rucam-causality
-description: RUCAM hepatotoxicity causality classification from total score
 version: 0.1.0
+description: RUCAM hepatotoxicity causality classification from total score
+family: pv.causality
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: rucam_score
+    type: int
+    required: true
+    description: ""
+outputs:
+  - name: classification
+    type: string
+  - name: confidence
+    type: int
+  - name: next_action
+    type: string
 interface:
   inputs:
     rucam_score:
@@ -13,6 +35,28 @@ interface:
       type: int
     next_action:
       type: string
+ui:
+  title: Rucam Causality
+  subtitle: RUCAM hepatotoxicity causality classification from total score
+  icon: git-branch
+  route: /vigilance/mg/rucam-causality
+  steps:
+    - field: rucam_score
+      label: rucam score
+      help: Enter rucam_score
+      widget: text
+      placeholder: null
+  result:
+    template: "classification: {{classification}} — confidence: {{confidence}} — next_action: {{next_action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/rucam-causality
+  cli: rsk mcg run rucam-causality
+  auth: none
+  rate_limit: 600/min
 tree:
   start: highly_probable_check
   nodes:
@@ -75,35 +119,75 @@ tree:
         confidence: 95
         next_action: rule_out_drug
 tests:
-- input:
-    rucam_score: 10
-  expect:
-    classification: HIGHLY_PROBABLE
-    confidence: 95
-- input:
-    rucam_score: 7
-  expect:
-    classification: PROBABLE
-    confidence: 75
-- input:
-    rucam_score: 4
-  expect:
-    classification: POSSIBLE
-    confidence: 50
-- input:
-    rucam_score: 2
-  expect:
-    classification: UNLIKELY
-    confidence: 25
-- input:
-    rucam_score: 0
-  expect:
-    classification: EXCLUDED
-    confidence: 95
-- input:
-    rucam_score: -3
-  expect:
-    classification: EXCLUDED
-- input: {}
-  expect:
-    classification: EXCLUDED
+  - input:
+      rucam_score: 10
+    expect:
+      classification: HIGHLY_PROBABLE
+      confidence: 95
+  - input:
+      rucam_score: 7
+    expect:
+      classification: PROBABLE
+      confidence: 75
+  - input:
+      rucam_score: 4
+    expect:
+      classification: POSSIBLE
+      confidence: 50
+  - input:
+      rucam_score: 2
+    expect:
+      classification: UNLIKELY
+      confidence: 25
+  - input:
+      rucam_score: 0
+    expect:
+      classification: EXCLUDED
+      confidence: 95
+  - input:
+      rucam_score: -3
+    expect:
+      classification: EXCLUDED
+  - input: {}
+    expect:
+      classification: EXCLUDED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - classification
+    - confidence
+    - next_action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.causality
+  log_level: info
+governance:
+  sop_ref: SOP-PV-002
+  regulatory_ref:
+    - ICH-E2A
+    - WHO-UMC
+  harm_types:
+    - A
+    - B
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - hierarchy
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

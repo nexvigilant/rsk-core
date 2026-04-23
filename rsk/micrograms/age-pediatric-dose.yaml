@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: age-pediatric-dose
-description: "Pediatric dosing calculator. Adjusts adult dose for children based on age-appropriate dosing rules."
 version: 0.1.0
+description: Pediatric dosing calculator. Adjusts adult dose for children based on age-appropriate dosing rules.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Age Pediatric Dose
+  subtitle: Pediatric dosing calculator. Adjusts adult dose for children based on age-appropriate dosing rules.
+  icon: circle
+  route: /vigilance/mg/age-pediatric-dose
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/age-pediatric-dose
+  cli: rsk mcg run age-pediatric-dose
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_age_years
   nodes:
@@ -22,28 +51,74 @@ tree:
       type: return
       value:
         dosing_method: weight_based
-        adjustment_factor: "mg/kg dosing recommended"
+        adjustment_factor: mg/kg dosing recommended
         message: "Pediatric dosing: use weight-based dosing"
     age_based_calculation:
       type: return
       value:
         dosing_method: age_based
-        adjustment_factor: "Young's rule or Clark's rule"
-        message: "Use age-based adjustment if weight unavailable"
+        adjustment_factor: Young's rule or Clark's rule
+        message: Use age-based adjustment if weight unavailable
     adult_dosing:
       type: return
       value:
         dosing_method: adult
-        adjustment_factor: 1.0
+        adjustment_factor: 1
         message: "Age 18+: use standard adult dosing"
 tests:
-  - input: { age_years: 8, weight_kg: 25 }
-    expect: { dosing_method: weight_based, adjustment_factor: "mg/kg dosing recommended" }
-  - input: { age_years: 8, weight_kg: 0 }
-    expect: { dosing_method: age_based }
-  - input: { age_years: 20, weight_kg: 70 }
-    expect: { dosing_method: adult, adjustment_factor: 1.0 }
-  - input: { age_years: 5, weight_kg: 18 }
-    expect: { dosing_method: weight_based }
+  - input:
+      age_years: 8
+      weight_kg: 25
+    expect:
+      dosing_method: weight_based
+      adjustment_factor: mg/kg dosing recommended
+  - input:
+      age_years: 8
+      weight_kg: 0
+    expect:
+      dosing_method: age_based
+  - input:
+      age_years: 20
+      weight_kg: 70
+    expect:
+      dosing_method: adult
+      adjustment_factor: 1
+  - input:
+      age_years: 5
+      weight_kg: 18
+    expect:
+      dosing_method: weight_based
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

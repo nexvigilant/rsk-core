@@ -1,34 +1,89 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: power-load-router
-description: "Routes power demand to the correct energy tier in a federated battery architecture. 4 tiers: main NMC (bulk), ultracap (burst), per-limb LFP (local), aux LFP (life-critical). Routes by demand magnitude, duration, and locality."
 version: 0.1.0
+description: "Routes power demand to the correct energy tier in a federated battery architecture. 4 tiers: main NMC (bulk), ultracap (burst), per-limb LFP (local), aux LFP (life-critical). Routes by demand magnitude, duration, and locality."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: demand_kw
+    type: float
+    required: true
+    description: Instantaneous power demand in kilowatts
+  - name: duration_s
+    type: float
+    required: true
+    description: Expected demand duration in seconds
+  - name: locality
+    type: string
+    required: false
+    description: Which limb/zone needs power
+  - name: main_bus_status
+    type: string
+    required: false
+    description: Main battery bus health
+  - name: ultracap_soc
+    type: float
+    required: false
+    description: Ultracapacitor state of charge (0.0-1.0)
+  - name: limb_buffer_soc
+    type: float
+    required: false
+    description: Target limb buffer SoC (0.0-1.0)
+outputs:
+  - name: source_tier
+    type: string
+  - name: rationale
+    type: string
+  - name: max_available_kw
+    type: float
+  - name: thermal_note
+    type: string
+  - name: fallback_tier
+    type: string
 interface:
   inputs:
     demand_kw:
       type: float
       required: true
-      description: "Instantaneous power demand in kilowatts"
+      description: Instantaneous power demand in kilowatts
     duration_s:
       type: float
       required: true
-      description: "Expected demand duration in seconds"
+      description: Expected demand duration in seconds
     locality:
       type: string
       required: false
-      enum: [left_arm, right_arm, left_leg, right_leg, torso, distributed]
-      description: "Which limb/zone needs power"
+      enum:
+        - left_arm
+        - right_arm
+        - left_leg
+        - right_leg
+        - torso
+        - distributed
+      description: Which limb/zone needs power
     main_bus_status:
       type: string
       required: false
-      enum: [nominal, degraded, failed]
-      description: "Main battery bus health"
+      enum:
+        - nominal
+        - degraded
+        - failed
+      description: Main battery bus health
     ultracap_soc:
       type: float
       required: false
-      description: "Ultracapacitor state of charge (0.0-1.0)"
+      description: Ultracapacitor state of charge (0.0-1.0)
     limb_buffer_soc:
       type: float
       required: false
-      description: "Target limb buffer SoC (0.0-1.0)"
+      description: Target limb buffer SoC (0.0-1.0)
   outputs:
     source_tier:
       type: string
@@ -40,10 +95,56 @@ interface:
       type: string
     fallback_tier:
       type: string
+ui:
+  title: Power Load Router
+  subtitle: "Routes power demand to the correct energy tier in a federated battery architecture. 4 tiers: main NMC (bulk), ultracap (burst), per-limb LFP (local), aux LFP (life-critical). Routes by demand magnitude, duration, and locality."
+  icon: circle
+  route: /vigilance/mg/power-load-router
+  steps:
+    - field: demand_kw
+      label: demand kw
+      help: Instantaneous power demand in kilowatts
+      widget: text
+      placeholder: null
+    - field: duration_s
+      label: duration s
+      help: Expected demand duration in seconds
+      widget: text
+      placeholder: null
+    - field: locality
+      label: locality
+      help: Which limb/zone needs power
+      widget: text
+      placeholder: null
+    - field: main_bus_status
+      label: main bus status
+      help: Main battery bus health
+      widget: text
+      placeholder: null
+    - field: ultracap_soc
+      label: ultracap soc
+      help: Ultracapacitor state of charge (0.0-1.0)
+      widget: text
+      placeholder: null
+    - field: limb_buffer_soc
+      label: limb buffer soc
+      help: Target limb buffer SoC (0.0-1.0)
+      widget: text
+      placeholder: null
+  result:
+    template: "source_tier: {{source_tier}} — rationale: {{rationale}} — max_available_kw: {{max_available_kw}} — thermal_note: {{thermal_note}} — fallback_tier: {{fallback_tier}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/power-load-router
+  cli: rsk mcg run power-load-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_main_bus
   nodes:
-    # Gate 1: Is main bus alive?
     check_main_bus:
       type: condition
       variable: main_bus_status
@@ -51,7 +152,6 @@ tree:
       value: failed
       true_next: emergency_aux
       false_next: check_main_degraded
-
     check_main_degraded:
       type: condition
       variable: main_bus_status
@@ -59,8 +159,6 @@ tree:
       value: degraded
       true_next: degraded_routing
       false_next: check_burst
-
-    # Gate 2: Is this a burst demand?
     check_burst:
       type: condition
       variable: duration_s
@@ -68,7 +166,6 @@ tree:
       value: 5
       true_next: check_burst_magnitude
       false_next: check_local_demand
-
     check_burst_magnitude:
       type: condition
       variable: demand_kw
@@ -76,7 +173,6 @@ tree:
       value: 5
       true_next: check_ucap_soc
       false_next: check_local_demand
-
     check_ucap_soc:
       type: condition
       variable: ultracap_soc
@@ -84,8 +180,6 @@ tree:
       value: 0.2
       true_next: ultracap_burst
       false_next: main_bus_burst_fallback
-
-    # Gate 3: Is this a local limb demand?
     check_local_demand:
       type: condition
       variable: locality
@@ -93,7 +187,6 @@ tree:
       value: distributed
       true_next: main_bus_steady
       false_next: check_limb_demand_size
-
     check_limb_demand_size:
       type: condition
       variable: demand_kw
@@ -101,7 +194,6 @@ tree:
       value: 2
       true_next: check_limb_soc
       false_next: main_bus_steady
-
     check_limb_soc:
       type: condition
       variable: limb_buffer_soc
@@ -109,101 +201,152 @@ tree:
       value: 0.15
       true_next: limb_buffer
       false_next: main_bus_steady
-
-    # Terminal nodes
     emergency_aux:
       type: return
       value:
         source_tier: aux_lfp
         rationale: "Main bus FAILED. Aux LFP takes life-critical loads ONLY: HUD, comms, BMS, safety MCUs, BRS deployer. All actuators shed."
         max_available_kw: 0.5
-        thermal_note: "LFP has wide thermal margin. Focus on safe landing, not performance."
+        thermal_note: LFP has wide thermal margin. Focus on safe landing, not performance.
         fallback_tier: none_land_immediately
-
     degraded_routing:
       type: return
       value:
         source_tier: main_bus_derated
-        rationale: "Main bus degraded — module offline or cell fault. Derate to 50% max power. Shed non-essential loads. Per-limb buffers supplement."
+        rationale: Main bus degraded — module offline or cell fault. Derate to 50% max power. Shed non-essential loads. Per-limb buffers supplement.
         max_available_kw: 15
-        thermal_note: "Monitor remaining module temps closely. One module failure increases load on survivors."
+        thermal_note: Monitor remaining module temps closely. One module failure increases load on survivors.
         fallback_tier: aux_lfp
-
     ultracap_burst:
       type: return
       value:
         source_tier: ultracap_bank
-        rationale: "Short burst (≤5s) at high power (>5kW). Ultracaps handle transient without stressing main pack C-rate."
+        rationale: Short burst (≤5s) at high power (>5kW). Ultracaps handle transient without stressing main pack C-rate.
         max_available_kw: 10
-        thermal_note: "Ultracaps self-heat at high discharge. 6S balancing board active. Recharge from main bus immediately after burst."
+        thermal_note: Ultracaps self-heat at high discharge. 6S balancing board active. Recharge from main bus immediately after burst.
         fallback_tier: main_bus
-
     main_bus_burst_fallback:
       type: return
       value:
         source_tier: main_bus
-        rationale: "Burst demand but ultracaps depleted (SoC ≤ 20%). Main pack handles burst directly — higher C-rate stress."
+        rationale: Burst demand but ultracaps depleted (SoC ≤ 20%). Main pack handles burst directly — higher C-rate stress.
         max_available_kw: 30
-        thermal_note: "High C-rate discharge on NMC. Monitor cell temps. Molicel P45B handles 45A continuous but thermal headroom shrinks."
+        thermal_note: High C-rate discharge on NMC. Monitor cell temps. Molicel P45B handles 45A continuous but thermal headroom shrinks.
         fallback_tier: aux_lfp
-
     limb_buffer:
       type: return
       value:
         source_tier: per_limb_lfp
-        rationale: "Local demand ≤2kW at specific limb. Per-limb LFP handles without bus current. Eliminates wiring loss and bus voltage sag."
+        rationale: Local demand ≤2kW at specific limb. Per-limb LFP handles without bus current. Eliminates wiring loss and bus voltage sag.
         max_available_kw: 2
-        thermal_note: "LFP pouch in limb fairing. Ambient cooling from airflow. Recharge from main bus during low-demand windows."
+        thermal_note: LFP pouch in limb fairing. Ambient cooling from airflow. Recharge from main bus during low-demand windows.
         fallback_tier: main_bus
-
     main_bus_steady:
       type: return
       value:
         source_tier: main_bus
-        rationale: "Steady-state distributed demand. Main NMC pack provides bulk power at optimal C-rate."
+        rationale: Steady-state distributed demand. Main NMC pack provides bulk power at optimal C-rate.
         max_available_kw: 30
-        thermal_note: "14S32P provides ample parallel paths. Per-cell current stays below 15A continuous at 30kW/400V."
+        thermal_note: 14S32P provides ample parallel paths. Per-cell current stays below 15A continuous at 30kW/400V.
         fallback_tier: ultracap_bank
-
-primitive_signature:
-  dominant: '→'
-  expression: '→(l(ς), v(N)) — causally routing located state by frequency-matched quantity'
-  primes: ['→', 'l', 'ς', 'v', 'N']
-  arguments: ['∂']
-
 tests:
-- name: "main bus failure — emergency aux"
-  input: { demand_kw: 1.0, duration_s: 10.0, main_bus_status: failed }
-  expect: { source_tier: aux_lfp }
-
-- name: "burst demand — ultracap"
-  input: { demand_kw: 8.0, duration_s: 2.0, ultracap_soc: 0.8 }
-  expect: { source_tier: ultracap_bank }
-
-- name: "burst but ultracap empty — main bus fallback"
-  input: { demand_kw: 8.0, duration_s: 2.0, ultracap_soc: 0.1 }
-  expect: { source_tier: main_bus }
-
-- name: "local limb demand — per-limb buffer"
-  input: { demand_kw: 1.5, duration_s: 10.0, locality: left_arm, limb_buffer_soc: 0.6 }
-  expect: { source_tier: per_limb_lfp }
-
-- name: "local limb but buffer depleted — main bus"
-  input: { demand_kw: 1.5, duration_s: 10.0, locality: left_arm, limb_buffer_soc: 0.1 }
-  expect: { source_tier: main_bus }
-
-- name: "steady distributed — main bus"
-  input: { demand_kw: 5.0, duration_s: 60.0, locality: distributed }
-  expect: { source_tier: main_bus }
-
-- name: "degraded bus"
-  input: { demand_kw: 5.0, duration_s: 10.0, main_bus_status: degraded }
-  expect: { source_tier: main_bus_derated }
-
-- name: "high local demand exceeds limb buffer — main bus"
-  input: { demand_kw: 3.0, duration_s: 10.0, locality: right_leg, limb_buffer_soc: 0.9 }
-  expect: { source_tier: main_bus }
-
-- name: "null safety"
-  input: {}
-  expect: { source_tier: main_bus }
+  - name: main bus failure — emergency aux
+    input:
+      demand_kw: 1
+      duration_s: 10
+      main_bus_status: failed
+    expect:
+      source_tier: aux_lfp
+  - name: burst demand — ultracap
+    input:
+      demand_kw: 8
+      duration_s: 2
+      ultracap_soc: 0.8
+    expect:
+      source_tier: ultracap_bank
+  - name: burst but ultracap empty — main bus fallback
+    input:
+      demand_kw: 8
+      duration_s: 2
+      ultracap_soc: 0.1
+    expect:
+      source_tier: main_bus
+  - name: local limb demand — per-limb buffer
+    input:
+      demand_kw: 1.5
+      duration_s: 10
+      locality: left_arm
+      limb_buffer_soc: 0.6
+    expect:
+      source_tier: per_limb_lfp
+  - name: local limb but buffer depleted — main bus
+    input:
+      demand_kw: 1.5
+      duration_s: 10
+      locality: left_arm
+      limb_buffer_soc: 0.1
+    expect:
+      source_tier: main_bus
+  - name: steady distributed — main bus
+    input:
+      demand_kw: 5
+      duration_s: 60
+      locality: distributed
+    expect:
+      source_tier: main_bus
+  - name: degraded bus
+    input:
+      demand_kw: 5
+      duration_s: 10
+      main_bus_status: degraded
+    expect:
+      source_tier: main_bus_derated
+  - name: high local demand exceeds limb buffer — main bus
+    input:
+      demand_kw: 3
+      duration_s: 10
+      locality: right_leg
+      limb_buffer_soc: 0.9
+    expect:
+      source_tier: main_bus
+  - name: null safety
+    input: {}
+    expect:
+      source_tier: main_bus
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - source_tier
+    - rationale
+    - max_available_kw
+    - thermal_note
+    - fallback_tier
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

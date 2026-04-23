@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-prioritize
-description: "Prioritize detected signals based on severity and clinical relevance"
 version: 0.1.0
+description: Prioritize detected signals based on severity and clinical relevance
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Signal Prioritize
+  subtitle: Prioritize detected signals based on severity and clinical relevance
+  icon: activity
+  route: /vigilance/mg/signal-prioritize
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-prioritize
+  cli: rsk mcg run signal-prioritize
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_signal
   nodes:
@@ -15,21 +44,21 @@ tree:
       type: condition
       variable: outcome_severity
       operator: eq
-      value: "fatal"
+      value: fatal
       true_next: critical_priority
       false_next: check_serious
     check_serious:
       type: condition
       variable: outcome_severity
       operator: eq
-      value: "serious"
+      value: serious
       true_next: high_priority
       false_next: moderate_priority
     critical_priority:
       type: return
       value:
         priority_level: 1
-        priority_category: "critical"
+        priority_category: critical
         immediate_action_required: true
         escalation_needed: true
         signal_management_compliant: true
@@ -37,7 +66,7 @@ tree:
       type: return
       value:
         priority_level: 2
-        priority_category: "high"
+        priority_category: high
         immediate_action_required: true
         escalation_needed: true
         signal_management_compliant: true
@@ -45,7 +74,7 @@ tree:
       type: return
       value:
         priority_level: 3
-        priority_category: "moderate"
+        priority_category: moderate
         immediate_action_required: false
         escalation_needed: false
         signal_management_compliant: true
@@ -53,31 +82,69 @@ tree:
       type: return
       value:
         priority_level: null
-        priority_category: "unknown"
+        priority_category: unknown
         immediate_action_required: null
         escalation_needed: null
         signal_management_compliant: false
 tests:
-- input:
-    signal_validated: true
-    outcome_severity: "fatal"
-  expect:
-    priority_level: 1
-    priority_category: "critical"
-    immediate_action_required: true
-- input:
-    signal_validated: true
-    outcome_severity: "serious"
-  expect:
-    priority_level: 2
-    priority_category: "high"
-- input:
-    signal_validated: true
-    outcome_severity: "mild"
-  expect:
-    priority_level: 3
-    priority_category: "moderate"
-- input: {}
-  expect:
-    priority_level: null
-    signal_management_compliant: false
+  - input:
+      signal_validated: true
+      outcome_severity: fatal
+    expect:
+      priority_level: 1
+      priority_category: critical
+      immediate_action_required: true
+  - input:
+      signal_validated: true
+      outcome_severity: serious
+    expect:
+      priority_level: 2
+      priority_category: high
+  - input:
+      signal_validated: true
+      outcome_severity: mild
+    expect:
+      priority_level: 3
+      priority_category: moderate
+  - input: {}
+    expect:
+      priority_level: null
+      signal_management_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

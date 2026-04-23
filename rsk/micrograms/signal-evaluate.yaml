@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-evaluate
-description: "Evaluate signal causality and evidence quality for pharmacovigilance decision"
 version: 0.1.0
+description: Evaluate signal causality and evidence quality for pharmacovigilance decision
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Signal Evaluate
+  subtitle: Evaluate signal causality and evidence quality for pharmacovigilance decision
+  icon: activity
+  route: /vigilance/mg/signal-evaluate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-evaluate
+  cli: rsk mcg run signal-evaluate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_signal
   nodes:
@@ -28,24 +57,24 @@ tree:
     probable_probable:
       type: return
       value:
-        causality_category: "probable"
-        evidence_quality: "strong"
+        causality_category: probable
+        evidence_quality: strong
         regulatory_action_warranted: true
         further_evaluation_needed: false
         evaluation_compliant: true
     probable_causality:
       type: return
       value:
-        causality_category: "probable"
-        evidence_quality: "moderate"
+        causality_category: probable
+        evidence_quality: moderate
         regulatory_action_warranted: true
         further_evaluation_needed: true
         evaluation_compliant: true
     possible_causality:
       type: return
       value:
-        causality_category: "possible"
-        evidence_quality: "weak"
+        causality_category: possible
+        evidence_quality: weak
         regulatory_action_warranted: false
         further_evaluation_needed: true
         evaluation_compliant: true
@@ -58,23 +87,61 @@ tree:
         further_evaluation_needed: null
         evaluation_compliant: false
 tests:
-- input:
-    naranjo_score: 9
-  expect:
-    causality_category: "probable"
-    evidence_quality: "strong"
-    regulatory_action_warranted: true
-- input:
-    naranjo_score: 6
-  expect:
-    causality_category: "probable"
-    evidence_quality: "moderate"
-- input:
-    naranjo_score: 3
-  expect:
-    causality_category: "possible"
-    evidence_quality: "weak"
-- input: {}
-  expect:
-    causality_category: null
-    evaluation_compliant: false
+  - input:
+      naranjo_score: 9
+    expect:
+      causality_category: probable
+      evidence_quality: strong
+      regulatory_action_warranted: true
+  - input:
+      naranjo_score: 6
+    expect:
+      causality_category: probable
+      evidence_quality: moderate
+  - input:
+      naranjo_score: 3
+    expect:
+      causality_category: possible
+      evidence_quality: weak
+  - input: {}
+    expect:
+      causality_category: null
+      evaluation_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

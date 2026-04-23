@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-close
-description: "Determine closure criteria and finalize signal investigation"
 version: 0.1.0
+description: Determine closure criteria and finalize signal investigation
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Signal Close
+  subtitle: Determine closure criteria and finalize signal investigation
+  icon: activity
+  route: /vigilance/mg/signal-close
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-close
+  cli: rsk mcg run signal-close
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_closure_readiness
   nodes:
@@ -28,52 +57,90 @@ tree:
     closure_approved:
       type: return
       value:
-        closure_status: "approved"
-        signal_status: "resolved"
+        closure_status: approved
+        signal_status: resolved
         requires_further_monitoring: false
         closure_compliant: true
     not_ready_for_closure:
       type: return
       value:
-        closure_status: "not_ready"
-        signal_status: "investigation_ongoing"
+        closure_status: not_ready
+        signal_status: investigation_ongoing
         requires_further_monitoring: true
         closure_compliant: true
     documentation_incomplete:
       type: return
       value:
-        closure_status: "deferred"
-        signal_status: "pending_documentation"
+        closure_status: deferred
+        signal_status: pending_documentation
         requires_further_monitoring: true
         closure_compliant: false
     resolution_pending:
       type: return
       value:
-        closure_status: "pending"
-        signal_status: "awaiting_resolution"
+        closure_status: pending
+        signal_status: awaiting_resolution
         requires_further_monitoring: true
         closure_compliant: true
 tests:
-- input:
-    investigation_complete: true
-    documentation_complete: true
-    resolution_status: "resolved"
-  expect:
-    closure_status: "approved"
-    signal_status: "resolved"
-    requires_further_monitoring: false
-- input:
-    investigation_complete: false
-  expect:
-    closure_status: "not_ready"
-    signal_status: "investigation_ongoing"
-- input:
-    investigation_complete: true
-    documentation_complete: false
-  expect:
-    closure_status: "deferred"
-    closure_compliant: false
-- input: {}
-  expect:
-    closure_status: "not_ready"
-    requires_further_monitoring: true
+  - input:
+      investigation_complete: true
+      documentation_complete: true
+      resolution_status: resolved
+    expect:
+      closure_status: approved
+      signal_status: resolved
+      requires_further_monitoring: false
+  - input:
+      investigation_complete: false
+    expect:
+      closure_status: not_ready
+      signal_status: investigation_ongoing
+  - input:
+      investigation_complete: true
+      documentation_complete: false
+    expect:
+      closure_status: deferred
+      closure_compliant: false
+  - input: {}
+    expect:
+      closure_status: not_ready
+      requires_further_monitoring: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

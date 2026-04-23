@@ -1,0 +1,95 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: d02-k003-organ-system-classification
+version: 0.1.0
+description: Classify an ADR by affected organ system using MedDRA SOC categories
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: D02 K003 Organ System Classification
+  subtitle: Classify an ADR by affected organ system using MedDRA SOC categories
+  icon: circle
+  route: /vigilance/mg/d02-k003-organ-system-classification
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/d02-k003-organ-system-classification
+  cli: rsk mcg run d02-k003-organ-system-classification
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check
+  nodes:
+    no:
+      type: return
+      value:
+        soc_unclassified: false
+    yes:
+      type: return
+      value:
+        soc_classified: true
+    check:
+      type: condition
+      variable: organ_system_identified
+      operator: eq
+      value: 1
+      true_next: yes
+      false_next: no
+tests:
+  - input:
+      organ_system_identified: 1
+    expect:
+      soc_classified: true
+  - input:
+      organ_system_identified: 1
+    expect:
+      soc_classified: true
+  - input:
+      organ_system_identified: 0
+    expect:
+      soc_unclassified: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

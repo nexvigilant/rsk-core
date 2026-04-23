@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-science-hexim1-pipeline
-description: Route HEXIM1 hypothesis analysis through evidence strength gates
 version: 0.1.0
+description: Route HEXIM1 hypothesis analysis through evidence strength gates
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Science Hexim1 Pipeline
+  subtitle: Route HEXIM1 hypothesis analysis through evidence strength gates
+  icon: circle
+  route: /vigilance/mg/station-science-hexim1-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-science-hexim1-pipeline
+  cli: rsk mcg run station-science-hexim1-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_evidence
   nodes:
@@ -40,91 +69,121 @@ tree:
         reason: Evidence 4-7 — design confirmatory experiment
         route: experiment_design
 tests:
-- input:
-    evidence_score: 8
-  expect:
-    priority: high
-    action: publish
-    route: publication_pipeline
-- input:
-    evidence_score: 5
-  expect:
-    action: experiment
-    route: experiment_design
-    priority: moderate
-- input:
-    evidence_score: 2
-  expect:
-    priority: low
-    action: revise
-    route: hypothesis_revision
-- input:
-    evidence_score: 0
-  expect:
-    reason: Evidence <4 — hypothesis needs reformulation
-    action: revise
-    priority: low
-    route: hypothesis_revision
-- input:
-    evidence_score: -1
-  expect:
-    route: hypothesis_revision
-    action: revise
-    priority: low
-    reason: Evidence <4 — hypothesis needs reformulation
-- input:
-    evidence_score: 3
-  expect:
-    action: revise
-    route: hypothesis_revision
-    priority: low
-    reason: Evidence <4 — hypothesis needs reformulation
-- input:
-    evidence_score: 400
-  expect:
-    priority: high
-    route: publication_pipeline
-    action: publish
-    reason: HEXIM1 hypothesis evidence score ≥7 — manuscript-ready
-- input: {}
-  expect:
-    route: hypothesis_revision
-    reason: Evidence <4 — hypothesis needs reformulation
-    priority: low
-    action: revise
-- input:
-    evidence_score: 0
-  expect:
-    reason: Evidence <4 — hypothesis needs reformulation
-    action: revise
-    route: hypothesis_revision
-    priority: low
-- input:
-    evidence_score: -1
-  expect:
-    reason: Evidence <4 — hypothesis needs reformulation
-    priority: low
-    action: revise
-    route: hypothesis_revision
-- input:
-    evidence_score: 6
-  expect:
-    reason: Evidence 4-7 — design confirmatory experiment
-    action: experiment
-    priority: moderate
-    route: experiment_design
-- input:
-    evidence_score: 700
-  expect:
-    route: publication_pipeline
-    priority: high
-    action: publish
-    reason: HEXIM1 hypothesis evidence score ≥7 — manuscript-ready
-- input: {}
-  expect:
-    route: hypothesis_revision
-    action: revise
-    reason: Evidence <4 — hypothesis needs reformulation
-    priority: low
-interface: null
-primitive_signature: null
+  - input:
+      evidence_score: 8
+    expect:
+      priority: high
+      action: publish
+      route: publication_pipeline
+  - input:
+      evidence_score: 5
+    expect:
+      action: experiment
+      route: experiment_design
+      priority: moderate
+  - input:
+      evidence_score: 2
+    expect:
+      priority: low
+      action: revise
+      route: hypothesis_revision
+  - input:
+      evidence_score: 0
+    expect:
+      reason: Evidence <4 — hypothesis needs reformulation
+      action: revise
+      priority: low
+      route: hypothesis_revision
+  - input:
+      evidence_score: -1
+    expect:
+      route: hypothesis_revision
+      action: revise
+      priority: low
+      reason: Evidence <4 — hypothesis needs reformulation
+  - input:
+      evidence_score: 3
+    expect:
+      action: revise
+      route: hypothesis_revision
+      priority: low
+      reason: Evidence <4 — hypothesis needs reformulation
+  - input:
+      evidence_score: 400
+    expect:
+      priority: high
+      route: publication_pipeline
+      action: publish
+      reason: HEXIM1 hypothesis evidence score ≥7 — manuscript-ready
+  - input: {}
+    expect:
+      route: hypothesis_revision
+      reason: Evidence <4 — hypothesis needs reformulation
+      priority: low
+      action: revise
+  - input:
+      evidence_score: 0
+    expect:
+      reason: Evidence <4 — hypothesis needs reformulation
+      action: revise
+      route: hypothesis_revision
+      priority: low
+  - input:
+      evidence_score: -1
+    expect:
+      reason: Evidence <4 — hypothesis needs reformulation
+      priority: low
+      action: revise
+      route: hypothesis_revision
+  - input:
+      evidence_score: 6
+    expect:
+      reason: Evidence 4-7 — design confirmatory experiment
+      action: experiment
+      priority: moderate
+      route: experiment_design
+  - input:
+      evidence_score: 700
+    expect:
+      route: publication_pipeline
+      priority: high
+      action: publish
+      reason: HEXIM1 hypothesis evidence score ≥7 — manuscript-ready
+  - input: {}
+    expect:
+      route: hypothesis_revision
+      action: revise
+      reason: Evidence <4 — hypothesis needs reformulation
+      priority: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

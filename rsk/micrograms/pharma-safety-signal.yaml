@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pharma-safety-signal
-description: "Classifies a pharmaceutical company's FAERS signal volume tier. High-volume companies require continuous monitoring; low-volume companies can use monthly cycles."
-version: "1.0"
+version: 0.1.0
+description: Classifies a pharmaceutical company's FAERS signal volume tier. High-volume companies require continuous monitoring; low-volume companies can use monthly cycles.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: total_faers_reports
+    type: int
+    required: false
+    description: ""
+  - name: top_reaction_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: signal_tier
+    type: string
+  - name: monitoring_frequency
+    type: string
 interface:
   inputs:
     total_faers_reports:
@@ -14,6 +38,33 @@ interface:
       type: string
     monitoring_frequency:
       type: string
+ui:
+  title: Pharma Safety Signal
+  subtitle: Classifies a pharmaceutical company's FAERS signal volume tier. High-volume companies require continuous monitoring; low-volume companies can use monthly cycles.
+  icon: activity
+  route: /vigilance/mg/pharma-safety-signal
+  steps:
+    - field: total_faers_reports
+      label: total faers reports
+      help: Enter total_faers_reports
+      widget: text
+      placeholder: null
+    - field: top_reaction_count
+      label: top reaction count
+      help: Enter top_reaction_count
+      widget: text
+      placeholder: null
+  result:
+    template: "signal_tier: {{signal_tier}} — monitoring_frequency: {{monitoring_frequency}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pharma-safety-signal
+  cli: rsk mcg run pharma-safety-signal
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_high_reports
   nodes:
@@ -41,70 +92,110 @@ tree:
     return_high:
       type: return
       value:
-        signal_tier: "high_signal_volume"
-        monitoring_frequency: "continuous"
+        signal_tier: high_signal_volume
+        monitoring_frequency: continuous
     return_moderate:
       type: return
       value:
-        signal_tier: "moderate_signal_volume"
-        monitoring_frequency: "weekly"
+        signal_tier: moderate_signal_volume
+        monitoring_frequency: weekly
     return_low:
       type: return
       value:
-        signal_tier: "low_signal_volume"
-        monitoring_frequency: "monthly"
+        signal_tier: low_signal_volume
+        monitoring_frequency: monthly
 tests:
-  - name: "High signal — large reports and large top reactions"
+  - name: High signal — large reports and large top reactions
     input:
       total_faers_reports: 2500000
       top_reaction_count: 150000
     expect:
-      signal_tier: "high_signal_volume"
-      monitoring_frequency: "continuous"
-  - name: "High signal — exactly at both thresholds"
+      signal_tier: high_signal_volume
+      monitoring_frequency: continuous
+  - name: High signal — exactly at both thresholds
     input:
       total_faers_reports: 1000000
       top_reaction_count: 100000
     expect:
-      signal_tier: "high_signal_volume"
-      monitoring_frequency: "continuous"
-  - name: "Moderate signal — high reports but top reactions below threshold"
+      signal_tier: high_signal_volume
+      monitoring_frequency: continuous
+  - name: Moderate signal — high reports but top reactions below threshold
     input:
       total_faers_reports: 1500000
       top_reaction_count: 50000
     expect:
-      signal_tier: "moderate_signal_volume"
-      monitoring_frequency: "weekly"
-  - name: "Moderate signal — reports between 100k and 1M"
+      signal_tier: moderate_signal_volume
+      monitoring_frequency: weekly
+  - name: Moderate signal — reports between 100k and 1M
     input:
       total_faers_reports: 500000
       top_reaction_count: 20000
     expect:
-      signal_tier: "moderate_signal_volume"
-      monitoring_frequency: "weekly"
-  - name: "Moderate signal — exactly 100k reports"
+      signal_tier: moderate_signal_volume
+      monitoring_frequency: weekly
+  - name: Moderate signal — exactly 100k reports
     input:
       total_faers_reports: 100000
       top_reaction_count: 5000
     expect:
-      signal_tier: "moderate_signal_volume"
-      monitoring_frequency: "weekly"
-  - name: "Low signal — below 100k reports"
+      signal_tier: moderate_signal_volume
+      monitoring_frequency: weekly
+  - name: Low signal — below 100k reports
     input:
       total_faers_reports: 12000
       top_reaction_count: 500
     expect:
-      signal_tier: "low_signal_volume"
-      monitoring_frequency: "monthly"
-  - name: "Low signal — minimal reports"
+      signal_tier: low_signal_volume
+      monitoring_frequency: monthly
+  - name: Low signal — minimal reports
     input:
       total_faers_reports: 100
       top_reaction_count: 10
     expect:
-      signal_tier: "low_signal_volume"
-      monitoring_frequency: "monthly"
-  - name: "Null input safety"
+      signal_tier: low_signal_volume
+      monitoring_frequency: monthly
+  - name: Null input safety
     input: {}
     expect:
-      signal_tier: "low_signal_volume"
-      monitoring_frequency: "monthly"
+      signal_tier: low_signal_volume
+      monitoring_frequency: monthly
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - signal_tier
+    - monitoring_frequency
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

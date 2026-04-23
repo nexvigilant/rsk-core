@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: refinery-selectivity
-description: "Compute selectivity (desired_product/all_products). Measures whether the flywheel produces the RIGHT product, not just any product."
 version: 0.1.0
+description: Compute selectivity (desired_product/all_products). Measures whether the flywheel produces the RIGHT product, not just any product.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Refinery Selectivity
+  subtitle: Compute selectivity (desired_product/all_products). Measures whether the flywheel produces the RIGHT product, not just any product.
+  icon: circle
+  route: /vigilance/mg/refinery-selectivity
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/refinery-selectivity
+  cli: rsk mcg run refinery-selectivity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_products
   nodes:
@@ -29,37 +58,81 @@ tree:
       type: return
       value:
         selectivity_class: HIGH
-        action: "Flywheel producing mostly targeted outputs"
-        refinery_analog: "High-selectivity catalyst; desired product dominates"
+        action: Flywheel producing mostly targeted outputs
+        refinery_analog: High-selectivity catalyst; desired product dominates
     return_medium_selectivity:
       type: return
       value:
         selectivity_class: MEDIUM
-        action: "Mixed output; blending stage producing off-spec products"
-        refinery_analog: "Moderate selectivity; side reactions consuming feedstock"
+        action: Mixed output; blending stage producing off-spec products
+        refinery_analog: Moderate selectivity; side reactions consuming feedstock
     return_low_selectivity:
       type: return
       value:
         selectivity_class: LOW
-        action: "Most output is wrong type; reconfigure unit processes"
-        refinery_analog: "Poor catalyst selectivity; unwanted isomers dominating"
+        action: Most output is wrong type; reconfigure unit processes
+        refinery_analog: Poor catalyst selectivity; unwanted isomers dominating
     return_no_products:
       type: return
       value:
         selectivity_class: NO_PRODUCTS
-        action: "No products to evaluate"
-        refinery_analog: "No reaction products; check reactor conditions"
+        action: No products to evaluate
+        refinery_analog: No reaction products; check reactor conditions
 tests:
-  - input: { products_out: 80, selectivity_pct: 85 }
-    expect: { selectivity_class: HIGH }
-  - input: { products_out: 80, selectivity_pct: 55 }
-    expect: { selectivity_class: MEDIUM }
-  - input: { products_out: 80, selectivity_pct: 20 }
-    expect: { selectivity_class: LOW }
-  - input: { products_out: 0, selectivity_pct: 0 }
-    expect: { selectivity_class: NO_PRODUCTS }
+  - input:
+      products_out: 80
+      selectivity_pct: 85
+    expect:
+      selectivity_class: HIGH
+  - input:
+      products_out: 80
+      selectivity_pct: 55
+    expect:
+      selectivity_class: MEDIUM
+  - input:
+      products_out: 80
+      selectivity_pct: 20
+    expect:
+      selectivity_class: LOW
+  - input:
+      products_out: 0
+      selectivity_pct: 0
+    expect:
+      selectivity_class: NO_PRODUCTS
   - input: {}
     expect:
       action: No products to evaluate
       refinery_analog: No reaction products; check reactor conditions
       selectivity_class: NO_PRODUCTS
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

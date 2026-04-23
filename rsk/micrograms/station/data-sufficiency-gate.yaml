@@ -1,35 +1,113 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: data-sufficiency-gate
-description: "Assesses whether sufficient data exists to proceed to the next analysis step in a PV investigation"
 version: 0.1.0
-
+description: Assesses whether sufficient data exists to proceed to the next analysis step in a PV investigation
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: drug_identified
+    type: bool
+    required: true
+    description: Whether the suspect drug has been identified
+  - name: event_identified
+    type: bool
+    required: true
+    description: Whether the adverse event has been clearly identified
+  - name: has_temporal_relationship
+    type: bool
+    required: true
+    description: Whether temporal relationship between drug and event is established
+  - name: has_dechallenge
+    type: bool
+    required: true
+    description: Whether dechallenge information is available
+  - name: report_count
+    type: int
+    required: true
+    description: Number of reports supporting the signal
+outputs:
+  - name: sufficient
+    type: bool
+  - name: missing
+    type: string
+  - name: recommendation
+    type: string
 interface:
   inputs:
     drug_identified:
       type: bool
-      description: "Whether the suspect drug has been identified"
+      description: Whether the suspect drug has been identified
     event_identified:
       type: bool
-      description: "Whether the adverse event has been clearly identified"
+      description: Whether the adverse event has been clearly identified
     has_temporal_relationship:
       type: bool
-      description: "Whether temporal relationship between drug and event is established"
+      description: Whether temporal relationship between drug and event is established
     has_dechallenge:
       type: bool
-      description: "Whether dechallenge information is available"
+      description: Whether dechallenge information is available
     report_count:
       type: int
-      description: "Number of reports supporting the signal"
+      description: Number of reports supporting the signal
   outputs:
     sufficient:
       type: bool
-      description: "Whether data is sufficient to proceed"
+      description: Whether data is sufficient to proceed
     missing:
       type: string
-      description: "Description of missing data if insufficient"
+      description: Description of missing data if insufficient
     recommendation:
       type: string
       description: "Action recommendation: proceed, gather_more, insufficient"
-
+ui:
+  title: Data Sufficiency Gate
+  subtitle: Assesses whether sufficient data exists to proceed to the next analysis step in a PV investigation
+  icon: circle
+  route: /vigilance/mg/data-sufficiency-gate
+  steps:
+    - field: drug_identified
+      label: drug identified
+      help: Whether the suspect drug has been identified
+      widget: toggle
+      placeholder: null
+    - field: event_identified
+      label: event identified
+      help: Whether the adverse event has been clearly identified
+      widget: toggle
+      placeholder: null
+    - field: has_temporal_relationship
+      label: has temporal relationship
+      help: Whether temporal relationship between drug and event is established
+      widget: toggle
+      placeholder: null
+    - field: has_dechallenge
+      label: has dechallenge
+      help: Whether dechallenge information is available
+      widget: toggle
+      placeholder: null
+    - field: report_count
+      label: report count
+      help: Number of reports supporting the signal
+      widget: text
+      placeholder: null
+  result:
+    template: "sufficient: {{sufficient}} — missing: {{missing}} — recommendation: {{recommendation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/data-sufficiency-gate
+  cli: rsk mcg run data-sufficiency-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_drug_identified
   nodes:
@@ -40,14 +118,12 @@ tree:
       value: false
       true_next: return_insufficient_drug
       false_next: check_event_identified
-
     return_insufficient_drug:
       type: return
       value:
         sufficient: false
-        missing: "Drug identification incomplete"
-        recommendation: "insufficient"
-
+        missing: Drug identification incomplete
+        recommendation: insufficient
     check_event_identified:
       type: condition
       variable: event_identified
@@ -55,14 +131,12 @@ tree:
       value: false
       true_next: return_insufficient_event
       false_next: check_temporal_relationship
-
     return_insufficient_event:
       type: return
       value:
         sufficient: false
-        missing: "Adverse event identification incomplete"
-        recommendation: "insufficient"
-
+        missing: Adverse event identification incomplete
+        recommendation: insufficient
     check_temporal_relationship:
       type: condition
       variable: has_temporal_relationship
@@ -70,14 +144,12 @@ tree:
       value: false
       true_next: return_temporal_missing
       false_next: check_dechallenge_and_count
-
     return_temporal_missing:
       type: return
       value:
         sufficient: false
-        missing: "Temporal relationship between drug and event not established"
-        recommendation: "gather_more"
-
+        missing: Temporal relationship between drug and event not established
+        recommendation: gather_more
     check_dechallenge_and_count:
       type: condition
       variable: has_dechallenge
@@ -85,14 +157,12 @@ tree:
       value: true
       true_next: return_sufficient_with_dechallenge
       false_next: check_report_count_threshold
-
     return_sufficient_with_dechallenge:
       type: return
       value:
         sufficient: true
-        missing: "none"
-        recommendation: "proceed"
-
+        missing: none
+        recommendation: proceed
     check_report_count_threshold:
       type: condition
       variable: report_count
@@ -100,50 +170,142 @@ tree:
       value: 3
       true_next: return_sufficient_multiple_reports
       false_next: return_gather_more_data
-
     return_sufficient_multiple_reports:
       type: return
       value:
         sufficient: true
-        missing: "none"
-        recommendation: "proceed"
-
+        missing: none
+        recommendation: proceed
     return_gather_more_data:
       type: return
       value:
         sufficient: false
-        missing: "Insufficient reports and no dechallenge information"
-        recommendation: "gather_more"
-
+        missing: Insufficient reports and no dechallenge information
+        recommendation: gather_more
 tests:
-  - input: { drug_identified: false, event_identified: true, has_temporal_relationship: true, has_dechallenge: false, report_count: 5 }
-    expect: { sufficient: false, missing: "Drug identification incomplete", recommendation: "insufficient" }
-
-  - input: { drug_identified: true, event_identified: false, has_temporal_relationship: true, has_dechallenge: false, report_count: 5 }
-    expect: { sufficient: false, missing: "Adverse event identification incomplete", recommendation: "insufficient" }
-
-  - input: { drug_identified: true, event_identified: true, has_temporal_relationship: false, has_dechallenge: false, report_count: 5 }
-    expect: { sufficient: false, missing: "Temporal relationship between drug and event not established", recommendation: "gather_more" }
-
-  - input: { drug_identified: true, event_identified: true, has_temporal_relationship: true, has_dechallenge: true, report_count: 1 }
-    expect: { sufficient: true, missing: "none", recommendation: "proceed" }
-
-  - input: { drug_identified: true, event_identified: true, has_temporal_relationship: true, has_dechallenge: false, report_count: 5 }
-    expect: { sufficient: true, missing: "none", recommendation: "proceed" }
-
-  - input: { drug_identified: true, event_identified: true, has_temporal_relationship: true, has_dechallenge: false, report_count: 2 }
-    expect: { sufficient: false, missing: "Insufficient reports and no dechallenge information", recommendation: "gather_more" }
-
-  - input: { drug_identified: true, event_identified: true, has_temporal_relationship: true, has_dechallenge: false, report_count: 3 }
-    expect: { sufficient: true, missing: "none", recommendation: "proceed" }
-
-  - input: { drug_identified: true, event_identified: true, has_temporal_relationship: true, has_dechallenge: false, report_count: 0 }
-    expect: { sufficient: false, missing: "Insufficient reports and no dechallenge information", recommendation: "gather_more" }
-
-  - input: { drug_identified: false }
-    expect: { sufficient: false, missing: "Drug identification incomplete", recommendation: "insufficient" }
+  - input:
+      drug_identified: false
+      event_identified: true
+      has_temporal_relationship: true
+      has_dechallenge: false
+      report_count: 5
+    expect:
+      sufficient: false
+      missing: Drug identification incomplete
+      recommendation: insufficient
+  - input:
+      drug_identified: true
+      event_identified: false
+      has_temporal_relationship: true
+      has_dechallenge: false
+      report_count: 5
+    expect:
+      sufficient: false
+      missing: Adverse event identification incomplete
+      recommendation: insufficient
+  - input:
+      drug_identified: true
+      event_identified: true
+      has_temporal_relationship: false
+      has_dechallenge: false
+      report_count: 5
+    expect:
+      sufficient: false
+      missing: Temporal relationship between drug and event not established
+      recommendation: gather_more
+  - input:
+      drug_identified: true
+      event_identified: true
+      has_temporal_relationship: true
+      has_dechallenge: true
+      report_count: 1
+    expect:
+      sufficient: true
+      missing: none
+      recommendation: proceed
+  - input:
+      drug_identified: true
+      event_identified: true
+      has_temporal_relationship: true
+      has_dechallenge: false
+      report_count: 5
+    expect:
+      sufficient: true
+      missing: none
+      recommendation: proceed
+  - input:
+      drug_identified: true
+      event_identified: true
+      has_temporal_relationship: true
+      has_dechallenge: false
+      report_count: 2
+    expect:
+      sufficient: false
+      missing: Insufficient reports and no dechallenge information
+      recommendation: gather_more
+  - input:
+      drug_identified: true
+      event_identified: true
+      has_temporal_relationship: true
+      has_dechallenge: false
+      report_count: 3
+    expect:
+      sufficient: true
+      missing: none
+      recommendation: proceed
+  - input:
+      drug_identified: true
+      event_identified: true
+      has_temporal_relationship: true
+      has_dechallenge: false
+      report_count: 0
+    expect:
+      sufficient: false
+      missing: Insufficient reports and no dechallenge information
+      recommendation: gather_more
+  - input:
+      drug_identified: false
+    expect:
+      sufficient: false
+      missing: Drug identification incomplete
+      recommendation: insufficient
   - input: {}
     expect:
       missing: Insufficient reports and no dechallenge information
       recommendation: gather_more
       sufficient: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - sufficient
+    - missing
+    - recommendation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

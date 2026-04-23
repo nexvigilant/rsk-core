@@ -1,12 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: sota-pubmed-triage
-description: 'SOTA Tracker: triages a PubMed finding for frontier relevance based on article type, recency, and citation signals'
 version: 0.1.0
-primitive_signature:
-  dominant: comparison
-  expression: "κ(article_type, recency) → {evidence_level, authority_weight, novelty_score}"
-  primes: [comparison, time, boundary, threshold]
-  arguments: [article_type, pub_year, citation_count, is_guideline_cited]
-
+description: "SOTA Tracker: triages a PubMed finding for frontier relevance based on article type, recency, and citation signals"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: article_type
+    type: string
+    required: true
+    description: "PubMed article type: meta_analysis, systematic_review, rct, observational, case_series, case_report, editorial, letter"
+  - name: pub_year
+    type: int
+    required: true
+    description: Publication year (e.g., 2026)
+  - name: citation_count
+    type: int
+    required: false
+    description: Number of citations (0 if new)
+  - name: is_guideline_cited
+    type: int
+    required: false
+    description: 1 if cited in a guideline/regulatory document, 0 otherwise
+outputs:
+  - name: evidence_level
+    type: int
+  - name: authority_weight
+    type: int
+  - name: novelty_estimate
+    type: string
+  - name: triage_action
+    type: string
 interface:
   inputs:
     article_type:
@@ -16,15 +46,15 @@ interface:
     pub_year:
       type: int
       required: true
-      description: "Publication year (e.g., 2026)"
+      description: Publication year (e.g., 2026)
     citation_count:
       type: int
       required: false
-      description: "Number of citations (0 if new)"
+      description: Number of citations (0 if new)
     is_guideline_cited:
       type: int
       required: false
-      description: "1 if cited in a guideline/regulatory document, 0 otherwise"
+      description: 1 if cited in a guideline/regulatory document, 0 otherwise
   outputs:
     evidence_level:
       type: int
@@ -34,11 +64,46 @@ interface:
       type: string
     triage_action:
       type: string
-
+ui:
+  title: Sota Pubmed Triage
+  subtitle: "SOTA Tracker: triages a PubMed finding for frontier relevance based on article type, recency, and citation signals"
+  icon: circle
+  route: /vigilance/mg/sota-pubmed-triage
+  steps:
+    - field: article_type
+      label: article type
+      help: "PubMed article type: meta_analysis, systematic_review, rct, observational, case_series, case_report, editorial, letter"
+      widget: text
+      placeholder: null
+    - field: pub_year
+      label: pub year
+      help: Publication year (e.g., 2026)
+      widget: text
+      placeholder: null
+    - field: citation_count
+      label: citation count
+      help: Number of citations (0 if new)
+      widget: text
+      placeholder: null
+    - field: is_guideline_cited
+      label: is guideline cited
+      help: 1 if cited in a guideline/regulatory document, 0 otherwise
+      widget: text
+      placeholder: null
+  result:
+    template: "evidence_level: {{evidence_level}} — authority_weight: {{authority_weight}} — novelty_estimate: {{novelty_estimate}} — triage_action: {{triage_action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/sota-pubmed-triage
+  cli: rsk mcg run sota-pubmed-triage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_article_type
   nodes:
-    # Map article type to evidence level
     check_article_type:
       type: condition
       variable: article_type
@@ -46,7 +111,6 @@ tree:
       value: meta_analysis
       true_next: evidence_5
       false_next: check_sr
-
     check_sr:
       type: condition
       variable: article_type
@@ -54,7 +118,6 @@ tree:
       value: systematic_review
       true_next: evidence_5
       false_next: check_rct
-
     check_rct:
       type: condition
       variable: article_type
@@ -62,7 +125,6 @@ tree:
       value: rct
       true_next: evidence_4
       false_next: check_observational
-
     check_observational:
       type: condition
       variable: article_type
@@ -70,7 +132,6 @@ tree:
       value: observational
       true_next: evidence_3
       false_next: check_case_series
-
     check_case_series:
       type: condition
       variable: article_type
@@ -78,8 +139,6 @@ tree:
       value: case_series
       true_next: evidence_2
       false_next: evidence_1
-
-    # Evidence level → authority check
     evidence_5:
       type: condition
       variable: is_guideline_cited
@@ -87,7 +146,6 @@ tree:
       value: 1
       true_next: high_evidence_guideline
       false_next: high_evidence_peer
-
     evidence_4:
       type: condition
       variable: is_guideline_cited
@@ -95,7 +153,6 @@ tree:
       value: 1
       true_next: rct_guideline
       false_next: rct_peer
-
     evidence_3:
       type: condition
       variable: pub_year
@@ -103,7 +160,6 @@ tree:
       value: 2024
       true_next: observational_recent
       false_next: observational_old
-
     evidence_2:
       type: condition
       variable: pub_year
@@ -111,7 +167,6 @@ tree:
       value: 2024
       true_next: case_series_recent
       false_next: skip_old
-
     evidence_1:
       type: condition
       variable: pub_year
@@ -119,80 +174,69 @@ tree:
       value: 2024
       true_next: low_evidence_recent
       false_next: skip_old
-
-    # Return nodes — pre-scored for SOTA chain input
     high_evidence_guideline:
       type: return
       value:
         evidence_level: 5
         authority_weight: 4
         novelty_estimate: HIGH
-        triage_action: "EVALUATE — systematic review/meta-analysis cited in guidelines. Run SOTA drift detection."
-
+        triage_action: EVALUATE — systematic review/meta-analysis cited in guidelines. Run SOTA drift detection.
     high_evidence_peer:
       type: return
       value:
         evidence_level: 5
         authority_weight: 2
         novelty_estimate: MODERATE
-        triage_action: "EVALUATE — systematic review/meta-analysis, peer-reviewed. Run SOTA drift detection."
-
+        triage_action: EVALUATE — systematic review/meta-analysis, peer-reviewed. Run SOTA drift detection.
     rct_guideline:
       type: return
       value:
         evidence_level: 4
         authority_weight: 4
         novelty_estimate: HIGH
-        triage_action: "EVALUATE — RCT cited in guidelines. Run SOTA drift detection."
-
+        triage_action: EVALUATE — RCT cited in guidelines. Run SOTA drift detection.
     rct_peer:
       type: return
       value:
         evidence_level: 4
         authority_weight: 2
         novelty_estimate: MODERATE
-        triage_action: "EVALUATE — RCT, peer-reviewed. Run SOTA drift detection if methodology is novel."
-
+        triage_action: EVALUATE — RCT, peer-reviewed. Run SOTA drift detection if methodology is novel.
     observational_recent:
       type: return
       value:
         evidence_level: 3
         authority_weight: 2
         novelty_estimate: LOW
-        triage_action: "MONITOR — recent observational study. Log for periodic SOTA review."
-
+        triage_action: MONITOR — recent observational study. Log for periodic SOTA review.
     observational_old:
       type: return
       value:
         evidence_level: 3
         authority_weight: 2
         novelty_estimate: NONE
-        triage_action: "SKIP — older observational study. Below frontier relevance threshold."
-
+        triage_action: SKIP — older observational study. Below frontier relevance threshold.
     case_series_recent:
       type: return
       value:
         evidence_level: 2
         authority_weight: 1
         novelty_estimate: NONE
-        triage_action: "SKIP — case series insufficient for frontier assessment."
-
+        triage_action: SKIP — case series insufficient for frontier assessment.
     low_evidence_recent:
       type: return
       value:
         evidence_level: 1
         authority_weight: 1
         novelty_estimate: NONE
-        triage_action: "SKIP — editorial/letter/case report. Not frontier-relevant."
-
+        triage_action: SKIP — editorial/letter/case report. Not frontier-relevant.
     skip_old:
       type: return
       value:
         evidence_level: 1
         authority_weight: 1
         novelty_estimate: NONE
-        triage_action: "SKIP — older low-evidence publication. Not frontier-relevant."
-
+        triage_action: SKIP — older low-evidence publication. Not frontier-relevant.
 tests:
   - input:
       article_type: meta_analysis
@@ -202,8 +246,7 @@ tests:
     expect:
       evidence_level: 5
       authority_weight: 4
-      triage_action: "EVALUATE — systematic review/meta-analysis cited in guidelines. Run SOTA drift detection."
-
+      triage_action: EVALUATE — systematic review/meta-analysis cited in guidelines. Run SOTA drift detection.
   - input:
       article_type: systematic_review
       pub_year: 2026
@@ -212,8 +255,7 @@ tests:
     expect:
       evidence_level: 5
       authority_weight: 2
-      triage_action: "EVALUATE — systematic review/meta-analysis, peer-reviewed. Run SOTA drift detection."
-
+      triage_action: EVALUATE — systematic review/meta-analysis, peer-reviewed. Run SOTA drift detection.
   - input:
       article_type: rct
       pub_year: 2025
@@ -222,7 +264,6 @@ tests:
     expect:
       evidence_level: 4
       authority_weight: 2
-
   - input:
       article_type: observational
       pub_year: 2025
@@ -230,8 +271,7 @@ tests:
       is_guideline_cited: 0
     expect:
       evidence_level: 3
-      triage_action: "MONITOR — recent observational study. Log for periodic SOTA review."
-
+      triage_action: MONITOR — recent observational study. Log for periodic SOTA review.
   - input:
       article_type: editorial
       pub_year: 2026
@@ -239,8 +279,7 @@ tests:
       is_guideline_cited: 0
     expect:
       evidence_level: 1
-      triage_action: "SKIP — editorial/letter/case report. Not frontier-relevant."
-
+      triage_action: SKIP — editorial/letter/case report. Not frontier-relevant.
   - input:
       article_type: case_report
       pub_year: 2020
@@ -248,9 +287,44 @@ tests:
       is_guideline_cited: 0
     expect:
       evidence_level: 1
-      triage_action: "SKIP — older low-evidence publication. Not frontier-relevant."
-
+      triage_action: SKIP — older low-evidence publication. Not frontier-relevant.
   - input: {}
     expect:
       evidence_level: 1
       authority_weight: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - evidence_level
+    - authority_weight
+    - novelty_estimate
+    - triage_action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

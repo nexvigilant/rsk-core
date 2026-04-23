@@ -1,0 +1,95 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: d02-k005-reversibility-assessment
+version: 0.1.0
+description: "Assess ADR reversibility on drug withdrawal: reversible, partially reversible, or irreversible"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: D02 K005 Reversibility Assessment
+  subtitle: "Assess ADR reversibility on drug withdrawal: reversible, partially reversible, or irreversible"
+  icon: circle
+  route: /vigilance/mg/d02-k005-reversibility-assessment
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/d02-k005-reversibility-assessment
+  cli: rsk mcg run d02-k005-reversibility-assessment
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check
+  nodes:
+    yes:
+      type: return
+      value:
+        reversible: true
+    no:
+      type: return
+      value:
+        potentially_irreversible: false
+    check:
+      type: condition
+      variable: resolved_on_withdrawal
+      operator: eq
+      value: 1
+      true_next: yes
+      false_next: no
+tests:
+  - input:
+      resolved_on_withdrawal: 1
+    expect:
+      reversible: true
+  - input:
+      resolved_on_withdrawal: 1
+    expect:
+      reversible: true
+  - input:
+      resolved_on_withdrawal: 0
+    expect:
+      potentially_irreversible: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

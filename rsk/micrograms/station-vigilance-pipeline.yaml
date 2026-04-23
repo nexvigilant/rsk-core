@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-vigilance-pipeline
-description: Triage Guardian-AV risk scores (0-10) into monitoring tiers
 version: 0.1.0
+description: Triage Guardian-AV risk scores (0-10) into monitoring tiers
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Vigilance Pipeline
+  subtitle: Triage Guardian-AV risk scores (0-10) into monitoring tiers
+  icon: circle
+  route: /vigilance/mg/station-vigilance-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-vigilance-pipeline
+  cli: rsk mcg run station-vigilance-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_score
   nodes:
@@ -15,7 +44,7 @@ tree:
       type: condition
       variable: risk_score
       operator: gte
-      value: 4.0
+      value: 4
       true_next: moderate
       false_next: low
     high:
@@ -43,100 +72,130 @@ tree:
       type: condition
       variable: risk_score
       operator: gte
-      value: 8.0
+      value: 8
       true_next: critical
       false_next: check_high
     check_high:
       type: condition
       variable: risk_score
       operator: gte
-      value: 6.0
+      value: 6
       true_next: high
       false_next: check_moderate
 tests:
-- input:
-    risk_score: 9.2
-  expect:
-    action: escalate
-    priority: critical
-    route: causality_assessment
-- input:
-    risk_score: 7.0
-  expect:
-    route: signal_investigation
-    priority: high
-    action: investigate
-- input:
-    risk_score: 5.0
-  expect:
-    action: monitor
-    priority: moderate
-    route: periodic_review
-- input:
-    risk_score: 2.0
-  expect:
-    action: archive
-    route: archive
-    priority: low
-- input:
-    risk_score: 3.999
-  expect:
-    reason: Guardian risk score <4 (low/minimal) — routine monitoring
-    route: archive
-    priority: low
-    action: archive
-- input:
-    risk_score: 4.001
-  expect:
-    route: periodic_review
-    action: monitor
-    reason: Guardian risk score 4-6 (moderate) — enhanced monitoring
-    priority: moderate
-- input: {}
-  expect:
-    route: archive
-    reason: Guardian risk score <4 (low/minimal) — routine monitoring
-    action: archive
-    priority: low
-- input:
-    risk_score: 7.999
-  expect:
-    route: signal_investigation
-    action: investigate
-    priority: high
-    reason: Guardian risk score 6-8 (high) — prioritized signal investigation
-- input:
-    risk_score: 8.001
-  expect:
-    priority: critical
-    route: causality_assessment
-    action: escalate
-    reason: Guardian risk score ≥8 (critical) — immediate safety review
-- input: {}
-  expect:
-    priority: low
-    reason: Guardian risk score <4 (low/minimal) — routine monitoring
-    route: archive
-    action: archive
-- input:
-    risk_score: 5.999
-  expect:
-    route: periodic_review
-    priority: moderate
-    reason: Guardian risk score 4-6 (moderate) — enhanced monitoring
-    action: monitor
-- input:
-    risk_score: 6.001
-  expect:
-    action: investigate
-    route: signal_investigation
-    priority: high
-    reason: Guardian risk score 6-8 (high) — prioritized signal investigation
-- input: {}
-  expect:
-    route: archive
-    action: archive
-    reason: Guardian risk score <4 (low/minimal) — routine monitoring
-    priority: low
-interface: null
-primitive_signature: null
+  - input:
+      risk_score: 9.2
+    expect:
+      action: escalate
+      priority: critical
+      route: causality_assessment
+  - input:
+      risk_score: 7
+    expect:
+      route: signal_investigation
+      priority: high
+      action: investigate
+  - input:
+      risk_score: 5
+    expect:
+      action: monitor
+      priority: moderate
+      route: periodic_review
+  - input:
+      risk_score: 2
+    expect:
+      action: archive
+      route: archive
+      priority: low
+  - input:
+      risk_score: 3.999
+    expect:
+      reason: Guardian risk score <4 (low/minimal) — routine monitoring
+      route: archive
+      priority: low
+      action: archive
+  - input:
+      risk_score: 4.001
+    expect:
+      route: periodic_review
+      action: monitor
+      reason: Guardian risk score 4-6 (moderate) — enhanced monitoring
+      priority: moderate
+  - input: {}
+    expect:
+      route: archive
+      reason: Guardian risk score <4 (low/minimal) — routine monitoring
+      action: archive
+      priority: low
+  - input:
+      risk_score: 7.999
+    expect:
+      route: signal_investigation
+      action: investigate
+      priority: high
+      reason: Guardian risk score 6-8 (high) — prioritized signal investigation
+  - input:
+      risk_score: 8.001
+    expect:
+      priority: critical
+      route: causality_assessment
+      action: escalate
+      reason: Guardian risk score ≥8 (critical) — immediate safety review
+  - input: {}
+    expect:
+      priority: low
+      reason: Guardian risk score <4 (low/minimal) — routine monitoring
+      route: archive
+      action: archive
+  - input:
+      risk_score: 5.999
+    expect:
+      route: periodic_review
+      priority: moderate
+      reason: Guardian risk score 4-6 (moderate) — enhanced monitoring
+      action: monitor
+  - input:
+      risk_score: 6.001
+    expect:
+      action: investigate
+      route: signal_investigation
+      priority: high
+      reason: Guardian risk score 6-8 (high) — prioritized signal investigation
+  - input: {}
+    expect:
+      route: archive
+      action: archive
+      reason: Guardian risk score <4 (low/minimal) — routine monitoring
+      priority: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: icsr-workflow
-description: "Domain 4: Full ICSR processing workflow — intake through submission. Routes by case type, seriousness, and completeness."
 version: 0.1.0
+description: "Domain 4: Full ICSR processing workflow — intake through submission. Routes by case type, seriousness, and completeness."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_minimum_data
+    type: bool
+    required: false
+    description: ""
+  - name: is_fatal_or_life_threatening
+    type: bool
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: ai_assist
+    type: string
+  - name: deadline_days
+    type: int
+  - name: followup
+    type: string
+  - name: human_oversight
+    type: string
+  - name: minimum_data
+    type: string
+  - name: priority
+    type: string
+  - name: steps
+    type: string
+  - name: workflow
+    type: string
 interface:
   inputs:
     has_minimum_data:
@@ -32,6 +76,43 @@ interface:
       type: string
     workflow:
       type: string
+ui:
+  title: Icsr Workflow
+  subtitle: "Domain 4: Full ICSR processing workflow — intake through submission. Routes by case type, seriousness, and completeness."
+  icon: circle
+  route: /vigilance/mg/icsr-workflow
+  steps:
+    - field: has_minimum_data
+      label: has minimum data
+      help: Enter has_minimum_data
+      widget: toggle
+      placeholder: null
+    - field: is_fatal_or_life_threatening
+      label: is fatal or life threatening
+      help: Enter is_fatal_or_life_threatening
+      widget: toggle
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+  result:
+    template: "ai_assist: {{ai_assist}} — deadline_days: {{deadline_days}} — followup: {{followup}} — human_oversight: {{human_oversight}} — minimum_data: {{minimum_data}} — priority: {{priority}} — steps: {{steps}} — workflow: {{workflow}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/icsr-workflow
+  cli: rsk mcg run icsr-workflow
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_valid
   nodes:
@@ -68,85 +149,125 @@ tree:
       value:
         workflow: EXPEDITED_URGENT
         deadline_days: 7
-        steps: "intake -> triage -> medical_review -> meddra_code -> causality_assess -> narrative -> qc -> regulatory_submit"
+        steps: intake -> triage -> medical_review -> meddra_code -> causality_assess -> narrative -> qc -> regulatory_submit
         priority: CRITICAL
-        ai_assist: "auto-triage, coding suggestions, narrative draft, duplicate check, timeline alert"
-        human_oversight: "mandatory medical review, causality sign-off, narrative approval"
-        followup: "required within 30 days, active pursuit"
+        ai_assist: auto-triage, coding suggestions, narrative draft, duplicate check, timeline alert
+        human_oversight: mandatory medical review, causality sign-off, narrative approval
+        followup: required within 30 days, active pursuit
     expedited_15day:
       type: return
       value:
         workflow: EXPEDITED_STANDARD
         deadline_days: 15
-        steps: "intake -> triage -> medical_review -> meddra_code -> causality_assess -> narrative -> qc -> regulatory_submit"
+        steps: intake -> triage -> medical_review -> meddra_code -> causality_assess -> narrative -> qc -> regulatory_submit
         priority: HIGH
-        ai_assist: "auto-triage, coding suggestions, narrative draft, compliance check"
-        human_oversight: "medical review required, causality assessment"
-        followup: "required within 90 days"
+        ai_assist: auto-triage, coding suggestions, narrative draft, compliance check
+        human_oversight: medical review required, causality assessment
+        followup: required within 90 days
     serious_expected:
       type: return
       value:
         workflow: PERIODIC_SERIOUS
         deadline_days: 90
-        steps: "intake -> triage -> medical_review -> meddra_code -> causality_assess -> narrative -> qc -> periodic_submit"
+        steps: intake -> triage -> medical_review -> meddra_code -> causality_assess -> narrative -> qc -> periodic_submit
         priority: MEDIUM
-        ai_assist: "coding suggestions, quality check, listedness verification"
-        human_oversight: "medical review, quality check"
-        followup: "as needed based on clinical significance"
+        ai_assist: coding suggestions, quality check, listedness verification
+        human_oversight: medical review, quality check
+        followup: as needed based on clinical significance
     standard_workflow:
       type: return
       value:
         workflow: STANDARD
         deadline_days: 90
-        steps: "intake -> triage -> code -> assess -> narrative -> qc -> periodic_submit"
+        steps: intake -> triage -> code -> assess -> narrative -> qc -> periodic_submit
         priority: NORMAL
-        ai_assist: "auto-code, quality check, narrative assist"
-        human_oversight: "quality spot-check"
-        followup: "only if clinically significant"
+        ai_assist: auto-code, quality check, narrative assist
+        human_oversight: quality spot-check
+        followup: only if clinically significant
     incomplete_case:
       type: return
       value:
         workflow: FOLLOWUP_REQUIRED
         deadline_days: 0
-        steps: "document_receipt -> request_followup -> await_minimum_data"
+        steps: document_receipt -> request_followup -> await_minimum_data
         priority: PENDING
-        minimum_data: "identifiable patient, identifiable reporter, suspect product, adverse event"
-        ai_assist: "source identification, auto-followup generation"
+        minimum_data: identifiable patient, identifiable reporter, suspect product, adverse event
+        ai_assist: source identification, auto-followup generation
 tests:
-- input:
-    has_minimum_data: true
-    is_serious: true
-    is_unexpected: true
-    is_fatal_or_life_threatening: true
-  expect:
-    workflow: EXPEDITED_URGENT
-    deadline_days: 7
-    priority: CRITICAL
-- input:
-    has_minimum_data: true
-    is_serious: true
-    is_unexpected: true
-    is_fatal_or_life_threatening: false
-  expect:
-    workflow: EXPEDITED_STANDARD
-    deadline_days: 15
-- input:
-    has_minimum_data: true
-    is_serious: true
-    is_unexpected: false
-  expect:
-    workflow: PERIODIC_SERIOUS
-    deadline_days: 90
-- input:
-    has_minimum_data: true
-    is_serious: false
-  expect:
-    workflow: STANDARD
-    priority: NORMAL
-- input:
-    has_minimum_data: false
-  expect:
-    workflow: FOLLOWUP_REQUIRED
-- input: {}
-  expect:
-    workflow: FOLLOWUP_REQUIRED
+  - input:
+      has_minimum_data: true
+      is_serious: true
+      is_unexpected: true
+      is_fatal_or_life_threatening: true
+    expect:
+      workflow: EXPEDITED_URGENT
+      deadline_days: 7
+      priority: CRITICAL
+  - input:
+      has_minimum_data: true
+      is_serious: true
+      is_unexpected: true
+      is_fatal_or_life_threatening: false
+    expect:
+      workflow: EXPEDITED_STANDARD
+      deadline_days: 15
+  - input:
+      has_minimum_data: true
+      is_serious: true
+      is_unexpected: false
+    expect:
+      workflow: PERIODIC_SERIOUS
+      deadline_days: 90
+  - input:
+      has_minimum_data: true
+      is_serious: false
+    expect:
+      workflow: STANDARD
+      priority: NORMAL
+  - input:
+      has_minimum_data: false
+    expect:
+      workflow: FOLLOWUP_REQUIRED
+  - input: {}
+    expect:
+      workflow: FOLLOWUP_REQUIRED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_assist
+    - deadline_days
+    - followup
+    - human_oversight
+    - minimum_data
+    - priority
+    - steps
+    - workflow
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

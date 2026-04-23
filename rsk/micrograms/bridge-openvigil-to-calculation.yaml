@@ -1,17 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: bridge-openvigil-to-calculation
-description: 'Bridge: converts OpenVigil disproportionality output into calculation pipeline input'
 version: 0.1.0
+description: "Bridge: converts OpenVigil disproportionality output into calculation pipeline input"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Bridge Openvigil To Calculation
+  subtitle: "Bridge: converts OpenVigil disproportionality output into calculation pipeline input"
+  icon: circle
+  route: /vigilance/mg/bridge-openvigil-to-calculation
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/bridge-openvigil-to-calculation
+  cli: rsk mcg run bridge-openvigil-to-calculation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: extract
   nodes:
     route:
       type: return
       value:
-        prr: '{{prr}}'
-        eb05: '{{eb05}}'
+        prr: "{{prr}}"
+        eb05: "{{eb05}}"
         bridge: openvigil-to-calculation
-        ror_lower_ci: '{{ror_lower_ci}}'
-        ic025: '{{ic025}}'
+        ror_lower_ci: "{{ror_lower_ci}}"
+        ic025: "{{ic025}}"
     extract:
       type: condition
       variable: prr
@@ -20,59 +49,89 @@ tree:
       true_next: route
       false_next: route
 tests:
-- input:
-    ror_lower_ci: 72.86
-    ic025: 4.8
-    prr: 71.42
-    eb05: 3.0
-  expect:
-    bridge: openvigil-to-calculation
-- input:
-    prr: 0
-  expect:
-    ror_lower_ci: 'null'
-    eb05: 'null'
-    bridge: openvigil-to-calculation
-    ic025: 'null'
-    prr: '0'
-- input:
-    prr: -1
-  expect:
-    ror_lower_ci: 'null'
-    eb05: 'null'
-    prr: '-1'
-    ic025: 'null'
-    bridge: openvigil-to-calculation
-- input:
-    prr: -1
-  expect:
-    bridge: openvigil-to-calculation
-    ror_lower_ci: 'null'
-    prr: '-1'
-    ic025: 'null'
-    eb05: 'null'
-- input:
-    prr: 1
-  expect:
-    eb05: 'null'
-    prr: '1'
-    bridge: openvigil-to-calculation
-    ic025: 'null'
-    ror_lower_ci: 'null'
-- input:
-    prr: 0
-  expect:
-    prr: '0'
-    ror_lower_ci: 'null'
-    ic025: 'null'
-    eb05: 'null'
-    bridge: openvigil-to-calculation
-- input: {}
-  expect:
-    prr: 'null'
-    ror_lower_ci: 'null'
-    bridge: openvigil-to-calculation
-    ic025: 'null'
-    eb05: 'null'
-interface: null
-primitive_signature: null
+  - input:
+      ror_lower_ci: 72.86
+      ic025: 4.8
+      prr: 71.42
+      eb05: 3
+    expect:
+      bridge: openvigil-to-calculation
+  - input:
+      prr: 0
+    expect:
+      ror_lower_ci: "null"
+      eb05: "null"
+      bridge: openvigil-to-calculation
+      ic025: "null"
+      prr: "0"
+  - input:
+      prr: -1
+    expect:
+      ror_lower_ci: "null"
+      eb05: "null"
+      prr: "-1"
+      ic025: "null"
+      bridge: openvigil-to-calculation
+  - input:
+      prr: -1
+    expect:
+      bridge: openvigil-to-calculation
+      ror_lower_ci: "null"
+      prr: "-1"
+      ic025: "null"
+      eb05: "null"
+  - input:
+      prr: 1
+    expect:
+      eb05: "null"
+      prr: "1"
+      bridge: openvigil-to-calculation
+      ic025: "null"
+      ror_lower_ci: "null"
+  - input:
+      prr: 0
+    expect:
+      prr: "0"
+      ror_lower_ci: "null"
+      ic025: "null"
+      eb05: "null"
+      bridge: openvigil-to-calculation
+  - input: {}
+    expect:
+      prr: "null"
+      ror_lower_ci: "null"
+      bridge: openvigil-to-calculation
+      ic025: "null"
+      eb05: "null"
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: reality-gate
-description: 'VDAG Reality Gradient gate: APPROVED (>=50), WARN (>=20), BLOCKED (<20 = testing theater)'
 version: 0.1.0
+description: "VDAG Reality Gradient gate: APPROVED (>=50), WARN (>=20), BLOCKED (<20 = testing theater)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: reality_score
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: executable
+    type: bool
+  - name: verdict
+    type: string
 interface:
   inputs:
     reality_score:
@@ -11,6 +31,28 @@ interface:
       type: bool
     verdict:
       type: string
+ui:
+  title: Reality Gate
+  subtitle: "VDAG Reality Gradient gate: APPROVED (>=50), WARN (>=20), BLOCKED (<20 = testing theater)"
+  icon: circle
+  route: /vigilance/mg/reality-gate
+  steps:
+    - field: reality_score
+      label: reality score
+      help: Enter reality_score
+      widget: text
+      placeholder: null
+  result:
+    template: "executable: {{executable}} — verdict: {{verdict}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/reality-gate
+  cli: rsk mcg run reality-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_approved
   nodes:
@@ -44,57 +86,91 @@ tree:
         verdict: BLOCKED
         executable: false
 tests:
-- input:
-    reality_score: 66
-  expect:
-    verdict: APPROVED
-    executable: true
-- input:
-    reality_score: 59
-  expect:
-    verdict: APPROVED
-    executable: true
-- input:
-    reality_score: 44
-  expect:
-    verdict: WARN
-    executable: true
-- input:
-    reality_score: 35
-  expect:
-    verdict: WARN
-    executable: true
-- input:
-    reality_score: 20
-  expect:
-    verdict: WARN
-    executable: true
-- input:
-    reality_score: 19
-  expect:
-    verdict: BLOCKED
-    executable: false
-- input:
-    reality_score: 2
-  expect:
-    verdict: BLOCKED
-    executable: false
-- input:
-    reality_score: 0
-  expect:
-    verdict: BLOCKED
-    executable: false
-- input:
-    reality_score: 50
-  expect:
-    verdict: APPROVED
-    executable: true
-- input:
-    reality_score: 100
-  expect:
-    verdict: APPROVED
-    executable: true
-- input: {}
-  expect:
-    executable: false
-    verdict: BLOCKED
+  - input:
+      reality_score: 66
+    expect:
+      verdict: APPROVED
+      executable: true
+  - input:
+      reality_score: 59
+    expect:
+      verdict: APPROVED
+      executable: true
+  - input:
+      reality_score: 44
+    expect:
+      verdict: WARN
+      executable: true
+  - input:
+      reality_score: 35
+    expect:
+      verdict: WARN
+      executable: true
+  - input:
+      reality_score: 20
+    expect:
+      verdict: WARN
+      executable: true
+  - input:
+      reality_score: 19
+    expect:
+      verdict: BLOCKED
+      executable: false
+  - input:
+      reality_score: 2
+    expect:
+      verdict: BLOCKED
+      executable: false
+  - input:
+      reality_score: 0
+    expect:
+      verdict: BLOCKED
+      executable: false
+  - input:
+      reality_score: 50
+    expect:
+      verdict: APPROVED
+      executable: true
+  - input:
+      reality_score: 100
+    expect:
+      verdict: APPROVED
+      executable: true
+  - input: {}
+    expect:
+      executable: false
+      verdict: BLOCKED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - executable
+    - verdict
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

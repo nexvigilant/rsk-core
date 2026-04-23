@@ -1,0 +1,269 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: bond-health-scorer
+version: 0.1.0
+description: "Score an agent bond health from paired-skill presence, hook references, and 7-day activity. Inputs: paired_skill_exists, hook_refs_count, other_agent_refs, invocations_7d. Returns score tier (STRONG/STEADY/WEAK/INERT) + dominant bond type."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: paired_skill_exists
+    type: bool
+    required: true
+    description: ""
+  - name: hook_refs_count
+    type: integer
+    required: true
+    description: ""
+  - name: other_agent_refs
+    type: integer
+    required: true
+    description: ""
+  - name: invocations_7d
+    type: integer
+    required: true
+    description: ""
+outputs:
+  - name: bond_tier
+    type: string
+  - name: dominant_bond
+    type: string
+interface:
+  inputs:
+    paired_skill_exists:
+      type: bool
+      required: true
+    hook_refs_count:
+      type: integer
+      required: true
+    other_agent_refs:
+      type: integer
+      required: true
+    invocations_7d:
+      type: integer
+      required: true
+  outputs:
+    bond_tier:
+      type: string
+    dominant_bond:
+      type: string
+ui:
+  title: Bond Health Scorer
+  subtitle: "Score an agent bond health from paired-skill presence, hook references, and 7-day activity. Inputs: paired_skill_exists, hook_refs_count, other_agent_refs, invocations_7d. Returns score tier (STRONG/STEADY/WEAK/INERT) + dominant bond type."
+  icon: circle
+  route: /vigilance/mg/bond-health-scorer
+  steps:
+    - field: paired_skill_exists
+      label: paired skill exists
+      help: Enter paired_skill_exists
+      widget: toggle
+      placeholder: null
+    - field: hook_refs_count
+      label: hook refs count
+      help: Enter hook_refs_count
+      widget: number
+      placeholder: null
+    - field: other_agent_refs
+      label: other agent refs
+      help: Enter other_agent_refs
+      widget: number
+      placeholder: null
+    - field: invocations_7d
+      label: invocations 7d
+      help: Enter invocations_7d
+      widget: number
+      placeholder: null
+  result:
+    template: "bond_tier: {{bond_tier}} — dominant_bond: {{dominant_bond}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/bond-health-scorer
+  cli: rsk mcg run bond-health-scorer
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: check_strong
+  nodes:
+    check_strong:
+      type: condition
+      variable: invocations_7d
+      operator: gte
+      value: 5
+      true_next: check_strong_bonds
+      false_next: check_steady
+    check_strong_bonds:
+      type: condition
+      variable: hook_refs_count
+      operator: gte
+      value: 1
+      true_next: strong_hook
+      false_next: check_strong_agent
+    check_strong_agent:
+      type: condition
+      variable: other_agent_refs
+      operator: gte
+      value: 1
+      true_next: strong_agent
+      false_next: strong_user
+    check_steady:
+      type: condition
+      variable: paired_skill_exists
+      operator: eq
+      value: true
+      true_next: check_steady_activity
+      false_next: check_weak
+    check_steady_activity:
+      type: condition
+      variable: invocations_7d
+      operator: gte
+      value: 1
+      true_next: steady
+      false_next: weak_dormant
+    check_weak:
+      type: condition
+      variable: hook_refs_count
+      operator: gte
+      value: 1
+      true_next: weak_hook_only
+      false_next: inert
+    strong_hook:
+      type: return
+      value:
+        bond_tier: STRONG
+        dominant_bond: hook
+    strong_agent:
+      type: return
+      value:
+        bond_tier: STRONG
+        dominant_bond: agent_chain
+    strong_user:
+      type: return
+      value:
+        bond_tier: STRONG
+        dominant_bond: user_invoked
+    steady:
+      type: return
+      value:
+        bond_tier: STEADY
+        dominant_bond: paired_skill
+    weak_hook_only:
+      type: return
+      value:
+        bond_tier: WEAK
+        dominant_bond: hook_reference_only
+    weak_dormant:
+      type: return
+      value:
+        bond_tier: WEAK
+        dominant_bond: dormant_pair
+    inert:
+      type: return
+      value:
+        bond_tier: INERT
+        dominant_bond: none
+tests:
+  - name: strong_hook_driven
+    input:
+      paired_skill_exists: true
+      hook_refs_count: 2
+      other_agent_refs: 0
+      invocations_7d: 10
+    expect:
+      bond_tier: STRONG
+      dominant_bond: hook
+  - name: strong_agent_chain
+    input:
+      paired_skill_exists: true
+      hook_refs_count: 0
+      other_agent_refs: 3
+      invocations_7d: 8
+    expect:
+      bond_tier: STRONG
+      dominant_bond: agent_chain
+  - name: strong_user_invoked
+    input:
+      paired_skill_exists: true
+      hook_refs_count: 0
+      other_agent_refs: 0
+      invocations_7d: 7
+    expect:
+      bond_tier: STRONG
+      dominant_bond: user_invoked
+  - name: steady_paired_low_activity
+    input:
+      paired_skill_exists: true
+      hook_refs_count: 0
+      other_agent_refs: 0
+      invocations_7d: 2
+    expect:
+      bond_tier: STEADY
+      dominant_bond: paired_skill
+  - name: weak_dormant_paired
+    input:
+      paired_skill_exists: true
+      hook_refs_count: 0
+      other_agent_refs: 0
+      invocations_7d: 0
+    expect:
+      bond_tier: WEAK
+      dominant_bond: dormant_pair
+  - name: weak_hook_orphan
+    input:
+      paired_skill_exists: false
+      hook_refs_count: 1
+      other_agent_refs: 0
+      invocations_7d: 0
+    expect:
+      bond_tier: WEAK
+      dominant_bond: hook_reference_only
+  - name: inert_no_bonds
+    input:
+      paired_skill_exists: false
+      hook_refs_count: 0
+      other_agent_refs: 0
+      invocations_7d: 0
+    expect:
+      bond_tier: INERT
+      dominant_bond: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - bond_tier
+    - dominant_bond
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

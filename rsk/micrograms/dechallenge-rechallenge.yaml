@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dechallenge-rechallenge
-description: "Assess dechallenge/rechallenge evidence for drug-event causality. Positive dechallenge + positive rechallenge = STRONG evidence. ICH E2A/Naranjo criteria alignment."
 version: 0.1.0
+description: Assess dechallenge/rechallenge evidence for drug-event causality. Positive dechallenge + positive rechallenge = STRONG evidence. ICH E2A/Naranjo criteria alignment.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: dechallenge_performed
+    type: bool
+    required: false
+    description: ""
+  - name: dechallenge_positive
+    type: bool
+    required: false
+    description: ""
+  - name: rechallenge_performed
+    type: bool
+    required: false
+    description: ""
+  - name: rechallenge_positive
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: evidence_strength
+    type: string
+  - name: naranjo_points
+    type: int
+  - name: causality_support
+    type: string
+  - name: recommendation
+    type: string
 interface:
   inputs:
     dechallenge_performed:
@@ -24,6 +60,43 @@ interface:
       type: string
     recommendation:
       type: string
+ui:
+  title: Dechallenge Rechallenge
+  subtitle: Assess dechallenge/rechallenge evidence for drug-event causality. Positive dechallenge + positive rechallenge = STRONG evidence. ICH E2A/Naranjo criteria alignment.
+  icon: circle
+  route: /vigilance/mg/dechallenge-rechallenge
+  steps:
+    - field: dechallenge_performed
+      label: dechallenge performed
+      help: Enter dechallenge_performed
+      widget: toggle
+      placeholder: null
+    - field: dechallenge_positive
+      label: dechallenge positive
+      help: Enter dechallenge_positive
+      widget: toggle
+      placeholder: null
+    - field: rechallenge_performed
+      label: rechallenge performed
+      help: Enter rechallenge_performed
+      widget: toggle
+      placeholder: null
+    - field: rechallenge_positive
+      label: rechallenge positive
+      help: Enter rechallenge_positive
+      widget: toggle
+      placeholder: null
+  result:
+    template: "evidence_strength: {{evidence_strength}} — naranjo_points: {{naranjo_points}} — causality_support: {{causality_support}} — recommendation: {{recommendation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dechallenge-rechallenge
+  cli: rsk mcg run dechallenge-rechallenge
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_dechallenge_done
   nodes:
@@ -60,80 +133,116 @@ tree:
       value:
         evidence_strength: STRONG
         naranjo_points: 5
-        causality_support: "Strongly supports causal relationship"
-        recommendation: "Classify as probable or definite causality"
+        causality_support: Strongly supports causal relationship
+        recommendation: Classify as probable or definite causality
     positive_dechallenge_only:
       type: return
       value:
         evidence_strength: MODERATE
         naranjo_points: 2
-        causality_support: "Supports causal relationship — rechallenge data would strengthen"
-        recommendation: "Classify as possible or probable causality"
+        causality_support: Supports causal relationship — rechallenge data would strengthen
+        recommendation: Classify as possible or probable causality
     negative_dechallenge:
       type: return
       value:
         evidence_strength: WEAK
         naranjo_points: 0
-        causality_support: "Does not support causal relationship via dechallenge"
-        recommendation: "Evaluate alternative causes and temporal relationship"
+        causality_support: Does not support causal relationship via dechallenge
+        recommendation: Evaluate alternative causes and temporal relationship
     mixed_evidence:
       type: return
       value:
         evidence_strength: CONFLICTING
         naranjo_points: 1
-        causality_support: "Positive dechallenge but negative rechallenge — conflicting evidence"
-        recommendation: "Expert review needed — consider confounding factors"
+        causality_support: Positive dechallenge but negative rechallenge — conflicting evidence
+        recommendation: Expert review needed — consider confounding factors
     no_dechallenge:
       type: return
       value:
         evidence_strength: INSUFFICIENT
         naranjo_points: 0
-        causality_support: "No dechallenge data available"
-        recommendation: "Rely on temporal relationship and alternative cause assessment"
+        causality_support: No dechallenge data available
+        recommendation: Rely on temporal relationship and alternative cause assessment
 tests:
-- input:
-    dechallenge_performed: true
-    dechallenge_positive: true
-    rechallenge_performed: true
-    rechallenge_positive: true
-  expect:
-    evidence_strength: STRONG
-    naranjo_points: 5
-- input:
-    dechallenge_performed: true
-    dechallenge_positive: true
-    rechallenge_performed: false
-  expect:
-    evidence_strength: MODERATE
-    naranjo_points: 2
-- input:
-    dechallenge_performed: true
-    dechallenge_positive: false
-  expect:
-    evidence_strength: WEAK
-    naranjo_points: 0
-- input:
-    dechallenge_performed: true
-    dechallenge_positive: true
-    rechallenge_performed: true
-    rechallenge_positive: false
-  expect:
-    evidence_strength: CONFLICTING
-    naranjo_points: 1
-- input:
-    dechallenge_performed: false
-  expect:
-    evidence_strength: INSUFFICIENT
-    naranjo_points: 0
-- input: {}
-  expect:
-    evidence_strength: INSUFFICIENT
-    recommendation: "Rely on temporal relationship and alternative cause assessment"
-- input:
-    dechallenge_performed: true
-    dechallenge_positive: true
-    rechallenge_performed: true
-    rechallenge_positive: true
-  expect:
-    causality_support: "Strongly supports causal relationship"
-    recommendation: "Classify as probable or definite causality"
+  - input:
+      dechallenge_performed: true
+      dechallenge_positive: true
+      rechallenge_performed: true
+      rechallenge_positive: true
+    expect:
+      evidence_strength: STRONG
+      naranjo_points: 5
+  - input:
+      dechallenge_performed: true
+      dechallenge_positive: true
+      rechallenge_performed: false
+    expect:
+      evidence_strength: MODERATE
+      naranjo_points: 2
+  - input:
+      dechallenge_performed: true
+      dechallenge_positive: false
+    expect:
+      evidence_strength: WEAK
+      naranjo_points: 0
+  - input:
+      dechallenge_performed: true
+      dechallenge_positive: true
+      rechallenge_performed: true
+      rechallenge_positive: false
+    expect:
+      evidence_strength: CONFLICTING
+      naranjo_points: 1
+  - input:
+      dechallenge_performed: false
+    expect:
+      evidence_strength: INSUFFICIENT
+      naranjo_points: 0
+  - input: {}
+    expect:
+      evidence_strength: INSUFFICIENT
+      recommendation: Rely on temporal relationship and alternative cause assessment
+  - input:
+      dechallenge_performed: true
+      dechallenge_positive: true
+      rechallenge_performed: true
+      rechallenge_positive: true
+    expect:
+      causality_support: Strongly supports causal relationship
+      recommendation: Classify as probable or definite causality
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - evidence_strength
+    - naranjo_points
+    - causality_support
+    - recommendation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

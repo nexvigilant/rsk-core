@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-name-resolver
-description: 'Resolves drug name type and routes to appropriate nomenclature source (RxNorm, WHO-DD, DailyMed)'
 version: 0.1.0
+description: Resolves drug name type and routes to appropriate nomenclature source (RxNorm, WHO-DD, DailyMed)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: drug_name
+    type: string
+    required: false
+    description: ""
+  - name: name_type
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: normalized_name
+    type: string
+  - name: resolution_source
+    type: string
+  - name: needs_resolution
+    type: bool
+  - name: confidence
+    type: string
 interface:
   inputs:
     drug_name:
@@ -18,6 +46,33 @@ interface:
       type: bool
     confidence:
       type: string
+ui:
+  title: Drug Name Resolver
+  subtitle: Resolves drug name type and routes to appropriate nomenclature source (RxNorm, WHO-DD, DailyMed)
+  icon: circle
+  route: /vigilance/mg/drug-name-resolver
+  steps:
+    - field: drug_name
+      label: drug name
+      help: Enter drug_name
+      widget: text
+      placeholder: null
+    - field: name_type
+      label: name type
+      help: Enter name_type
+      widget: text
+      placeholder: null
+  result:
+    template: "normalized_name: {{normalized_name}} — resolution_source: {{resolution_source}} — needs_resolution: {{needs_resolution}} — confidence: {{confidence}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-name-resolver
+  cli: rsk mcg run drug-name-resolver
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_generic
   nodes:
@@ -71,40 +126,76 @@ tree:
         needs_resolution: true
         confidence: low
 tests:
-- input:
-    drug_name: metformin
-    name_type: generic
-  expect:
-    resolution_source: rxnorm
-    needs_resolution: false
-    confidence: high
-- input:
-    drug_name: Lipitor
-    name_type: brand
-  expect:
-    resolution_source: dailymed
-    needs_resolution: false
-    confidence: high
-- input:
-    drug_name: atorvastatin
-    name_type: inn
-  expect:
-    resolution_source: who_dd
-    needs_resolution: false
-    confidence: high
-- input:
-    drug_name: mystery_drug
-    name_type: unknown
-  expect:
-    needs_resolution: true
-    resolution_source: multi_source
-    confidence: low
-- input:
-    drug_name: something
-  expect:
-    needs_resolution: true
-    confidence: low
-- input: {}
-  expect:
-    needs_resolution: true
-    confidence: low
+  - input:
+      drug_name: metformin
+      name_type: generic
+    expect:
+      resolution_source: rxnorm
+      needs_resolution: false
+      confidence: high
+  - input:
+      drug_name: Lipitor
+      name_type: brand
+    expect:
+      resolution_source: dailymed
+      needs_resolution: false
+      confidence: high
+  - input:
+      drug_name: atorvastatin
+      name_type: inn
+    expect:
+      resolution_source: who_dd
+      needs_resolution: false
+      confidence: high
+  - input:
+      drug_name: mystery_drug
+      name_type: unknown
+    expect:
+      needs_resolution: true
+      resolution_source: multi_source
+      confidence: low
+  - input:
+      drug_name: something
+    expect:
+      needs_resolution: true
+      confidence: low
+  - input: {}
+    expect:
+      needs_resolution: true
+      confidence: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - normalized_name
+    - resolution_source
+    - needs_resolution
+    - confidence
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,30 +1,90 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: config-ema-signal-action
-description: "Classify EMA PRAC safety signal output into action priority. Routes based on signal status and recommended action type."
 version: 0.1.0
-
+description: Classify EMA PRAC safety signal output into action priority. Routes based on signal status and recommended action type.
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: signal_status
+    type: string
+    required: false
+    description: confirmed, under_review, closed_no_action, new
+  - name: recommended_action
+    type: string
+    required: false
+    description: label_change, referral, suspension, dhpc, routine, none
+  - name: substances_affected
+    type: int
+    required: false
+    description: Number of substances/products affected by the signal
+outputs:
+  - name: priority
+    type: string
+  - name: nex_action
+    type: string
+  - name: track_in_rmp
+    type: bool
 interface:
   inputs:
     signal_status:
       type: string
       required: false
-      description: "confirmed, under_review, closed_no_action, new"
+      description: confirmed, under_review, closed_no_action, new
     recommended_action:
       type: string
       required: false
-      description: "label_change, referral, suspension, dhpc, routine, none"
+      description: label_change, referral, suspension, dhpc, routine, none
     substances_affected:
       type: int
       required: false
-      description: "Number of substances/products affected by the signal"
+      description: Number of substances/products affected by the signal
   outputs:
     priority:
       type: string
-      description: "urgent, high, medium, low"
+      description: urgent, high, medium, low
     nex_action:
       type: string
     track_in_rmp:
       type: bool
-
+ui:
+  title: Config Ema Signal Action
+  subtitle: Classify EMA PRAC safety signal output into action priority. Routes based on signal status and recommended action type.
+  icon: activity
+  route: /vigilance/mg/config-ema-signal-action
+  steps:
+    - field: signal_status
+      label: signal status
+      help: confirmed, under_review, closed_no_action, new
+      widget: text
+      placeholder: null
+    - field: recommended_action
+      label: recommended action
+      help: label_change, referral, suspension, dhpc, routine, none
+      widget: text
+      placeholder: null
+    - field: substances_affected
+      label: substances affected
+      help: Number of substances/products affected by the signal
+      widget: text
+      placeholder: null
+  result:
+    template: "priority: {{priority}} — nex_action: {{nex_action}} — track_in_rmp: {{track_in_rmp}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/config-ema-signal-action
+  cli: rsk mcg run config-ema-signal-action
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_status
   nodes:
@@ -34,62 +94,54 @@ tree:
       operator: is_null
       true_next: no_data
       false_next: check_confirmed
-
     check_confirmed:
       type: condition
       variable: signal_status
       operator: eq
-      value: "confirmed"
+      value: confirmed
       true_next: check_action_type
       false_next: check_under_review
-
     check_action_type:
       type: condition
       variable: recommended_action
       operator: eq
-      value: "suspension"
+      value: suspension
       true_next: urgent_priority
       false_next: check_referral
-
     check_referral:
       type: condition
       variable: recommended_action
       operator: eq
-      value: "referral"
+      value: referral
       true_next: urgent_priority
       false_next: check_dhpc
-
     check_dhpc:
       type: condition
       variable: recommended_action
       operator: eq
-      value: "dhpc"
+      value: dhpc
       true_next: high_priority
       false_next: check_label_change
-
     check_label_change:
       type: condition
       variable: recommended_action
       operator: eq
-      value: "label_change"
+      value: label_change
       true_next: high_priority
       false_next: medium_confirmed
-
     check_under_review:
       type: condition
       variable: signal_status
       operator: eq
-      value: "under_review"
+      value: under_review
       true_next: check_multi_substance
       false_next: check_new
-
     check_multi_substance:
       type: condition
       variable: substances_affected
       operator: is_null
       true_next: medium_review
       false_next: check_substance_count
-
     check_substance_count:
       type: condition
       variable: substances_affected
@@ -97,142 +149,165 @@ tree:
       value: 3
       true_next: high_priority
       false_next: medium_review
-
     check_new:
       type: condition
       variable: signal_status
       operator: eq
-      value: "new"
+      value: new
       true_next: medium_new
       false_next: low_priority
-
     urgent_priority:
       type: return
       value:
         priority: urgent
         nex_action: immediate_impact_assessment
         track_in_rmp: true
-
     high_priority:
       type: return
       value:
         priority: high
         nex_action: update_safety_profile
         track_in_rmp: true
-
     medium_confirmed:
       type: return
       value:
         priority: medium
         nex_action: routine_update
         track_in_rmp: true
-
     medium_review:
       type: return
       value:
         priority: medium
         nex_action: monitor_prac_outcome
         track_in_rmp: false
-
     medium_new:
       type: return
       value:
         priority: medium
         nex_action: evaluate_signal_validity
         track_in_rmp: false
-
     low_priority:
       type: return
       value:
         priority: low
         nex_action: archive
         track_in_rmp: false
-
     no_data:
       type: return
       value:
         priority: low
         nex_action: no_signal_data
         track_in_rmp: false
-
 tests:
   - input:
-      signal_status: "confirmed"
-      recommended_action: "suspension"
+      signal_status: confirmed
+      recommended_action: suspension
       substances_affected: 1
     expect:
       priority: urgent
       nex_action: immediate_impact_assessment
       track_in_rmp: true
-
   - input:
-      signal_status: "confirmed"
-      recommended_action: "referral"
+      signal_status: confirmed
+      recommended_action: referral
       substances_affected: 2
     expect:
       priority: urgent
       nex_action: immediate_impact_assessment
       track_in_rmp: true
-
   - input:
-      signal_status: "confirmed"
-      recommended_action: "label_change"
+      signal_status: confirmed
+      recommended_action: label_change
       substances_affected: 1
     expect:
       priority: high
       nex_action: update_safety_profile
       track_in_rmp: true
-
   - input:
-      signal_status: "confirmed"
-      recommended_action: "dhpc"
+      signal_status: confirmed
+      recommended_action: dhpc
       substances_affected: 1
     expect:
       priority: high
       nex_action: update_safety_profile
       track_in_rmp: true
-
   - input:
-      signal_status: "confirmed"
-      recommended_action: "routine"
+      signal_status: confirmed
+      recommended_action: routine
       substances_affected: 1
     expect:
       priority: medium
       nex_action: routine_update
       track_in_rmp: true
-
   - input:
-      signal_status: "under_review"
+      signal_status: under_review
       substances_affected: 5
     expect:
       priority: high
       nex_action: update_safety_profile
       track_in_rmp: true
-
   - input:
-      signal_status: "under_review"
+      signal_status: under_review
       substances_affected: 1
     expect:
       priority: medium
       nex_action: monitor_prac_outcome
       track_in_rmp: false
-
   - input:
-      signal_status: "new"
+      signal_status: new
     expect:
       priority: medium
       nex_action: evaluate_signal_validity
       track_in_rmp: false
-
   - input:
-      signal_status: "closed_no_action"
+      signal_status: closed_no_action
     expect:
       priority: low
       nex_action: archive
       track_in_rmp: false
-
   - input: {}
     expect:
       priority: low
       nex_action: no_signal_data
       track_in_rmp: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - priority
+    - nex_action
+    - track_in_rmp
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

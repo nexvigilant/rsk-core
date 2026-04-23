@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ich-e2c-periodic
-description: 'ICH E2C: Determine PSUR (Periodic Safety Update Report) submission interval'
 version: 0.1.0
+description: "ICH E2C: Determine PSUR (Periodic Safety Update Report) submission interval"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Ich E2c Periodic
+  subtitle: "ICH E2C: Determine PSUR (Periodic Safety Update Report) submission interval"
+  icon: circle
+  route: /vigilance/mg/ich-e2c-periodic
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ich-e2c-periodic
+  cli: rsk mcg run ich-e2c-periodic
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_approval_date
   nodes:
@@ -54,93 +83,123 @@ tree:
       true_next: annual_interval
       false_next: check_three_years
 tests:
-- input:
-    years_on_market: 0.5
-    market_authorization_date: 2023-06-15
-    is_established_safety_profile: false
-  expect:
-    psur_interval_months: 12
-    submission_frequency: annual
-- input:
-    is_established_safety_profile: true
-    market_authorization_date: 2020-01-10
-    years_on_market: 4
-  expect:
-    submission_frequency: triennial
-    psur_interval_months: 36
-- input:
-    years_on_market: 4
-    is_established_safety_profile: false
-    market_authorization_date: 2020-01-10
-  expect:
-    psur_interval_months: 12
-    submission_frequency: annual
-- input: {}
-  expect:
-    psur_interval_months: null
-    ich_e2c_compliant: false
-- input:
-    years_on_market: 0
-  expect:
-    submission_frequency: unknown
-    next_submission_deadline: null
-    ich_e2c_compliant: false
-    psur_interval_months: null
-- input:
-    years_on_market: -1
-  expect:
-    ich_e2c_compliant: false
-    psur_interval_months: null
-    submission_frequency: unknown
-    next_submission_deadline: null
-- input:
-    years_on_market: 2
-  expect:
-    next_submission_deadline: null
-    submission_frequency: unknown
-    ich_e2c_compliant: false
-    psur_interval_months: null
-- input:
-    years_on_market: 300
-  expect:
-    ich_e2c_compliant: false
-    psur_interval_months: null
-    submission_frequency: unknown
-    next_submission_deadline: null
-- input:
-    years_on_market: 0
-  expect:
-    ich_e2c_compliant: false
-    psur_interval_months: null
-    submission_frequency: unknown
-    next_submission_deadline: null
-- input:
-    years_on_market: -1
-  expect:
-    submission_frequency: unknown
-    psur_interval_months: null
-    ich_e2c_compliant: false
-    next_submission_deadline: null
-- input:
-    years_on_market: 1
-  expect:
-    submission_frequency: unknown
-    ich_e2c_compliant: false
-    psur_interval_months: null
-    next_submission_deadline: null
-- input:
-    years_on_market: 3
-  expect:
-    ich_e2c_compliant: false
-    submission_frequency: unknown
-    psur_interval_months: null
-    next_submission_deadline: null
-- input:
-    years_on_market: 200
-  expect:
-    next_submission_deadline: null
-    submission_frequency: unknown
-    psur_interval_months: null
-    ich_e2c_compliant: false
-interface: null
-primitive_signature: null
+  - input:
+      years_on_market: 0.5
+      market_authorization_date: 2023-06-15
+      is_established_safety_profile: false
+    expect:
+      psur_interval_months: 12
+      submission_frequency: annual
+  - input:
+      is_established_safety_profile: true
+      market_authorization_date: 2020-01-10
+      years_on_market: 4
+    expect:
+      submission_frequency: triennial
+      psur_interval_months: 36
+  - input:
+      years_on_market: 4
+      is_established_safety_profile: false
+      market_authorization_date: 2020-01-10
+    expect:
+      psur_interval_months: 12
+      submission_frequency: annual
+  - input: {}
+    expect:
+      psur_interval_months: null
+      ich_e2c_compliant: false
+  - input:
+      years_on_market: 0
+    expect:
+      submission_frequency: unknown
+      next_submission_deadline: null
+      ich_e2c_compliant: false
+      psur_interval_months: null
+  - input:
+      years_on_market: -1
+    expect:
+      ich_e2c_compliant: false
+      psur_interval_months: null
+      submission_frequency: unknown
+      next_submission_deadline: null
+  - input:
+      years_on_market: 2
+    expect:
+      next_submission_deadline: null
+      submission_frequency: unknown
+      ich_e2c_compliant: false
+      psur_interval_months: null
+  - input:
+      years_on_market: 300
+    expect:
+      ich_e2c_compliant: false
+      psur_interval_months: null
+      submission_frequency: unknown
+      next_submission_deadline: null
+  - input:
+      years_on_market: 0
+    expect:
+      ich_e2c_compliant: false
+      psur_interval_months: null
+      submission_frequency: unknown
+      next_submission_deadline: null
+  - input:
+      years_on_market: -1
+    expect:
+      submission_frequency: unknown
+      psur_interval_months: null
+      ich_e2c_compliant: false
+      next_submission_deadline: null
+  - input:
+      years_on_market: 1
+    expect:
+      submission_frequency: unknown
+      ich_e2c_compliant: false
+      psur_interval_months: null
+      next_submission_deadline: null
+  - input:
+      years_on_market: 3
+    expect:
+      ich_e2c_compliant: false
+      submission_frequency: unknown
+      psur_interval_months: null
+      next_submission_deadline: null
+  - input:
+      years_on_market: 200
+    expect:
+      next_submission_deadline: null
+      submission_frequency: unknown
+      psur_interval_months: null
+      ich_e2c_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,35 +1,79 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: forge-quality-floor-classify
-description: >
-  Classifies the Ferro Forge quality_floor parameter from session success rate.
-  quality_floor = fully_demonstrated / total_recent_sessions.
-  Below 0.20 = degraded. 0.20-0.50 = cautious. Above 0.50 = confident.
 version: 0.1.0
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(N(ς_success) / N(ς_total)) — compare success rate against Forge thresholds'
-  primes: ['κ', 'N', 'ς']
-  arguments: ['demonstrated', 'total']
-  chain_prediction: >
-    Computes quality_floor from real session data. Forge evolved value is 0.313.
-    If computed value diverges significantly from evolved baseline, flag for review.
+description: |
+  Classifies the Ferro Forge quality_floor parameter from session success rate. quality_floor = fully_demonstrated / total_recent_sessions. Below 0.20 = degraded. 0.20-0.50 = cautious. Above 0.50 = confident.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: demonstrated
+    type: int
+    required: true
+    description: Count of fully_demonstrated sessions in recent window
+  - name: total
+    type: int
+    required: true
+    description: Total sessions in recent window
+outputs:
+  - name: quality_floor
+    type: float
+  - name: regime
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     demonstrated:
       type: int
       required: true
-      description: "Count of fully_demonstrated sessions in recent window"
+      description: Count of fully_demonstrated sessions in recent window
     total:
       type: int
       required: true
-      description: "Total sessions in recent window"
+      description: Total sessions in recent window
   outputs:
     quality_floor:
       type: float
     regime:
       type: string
-      description: "DEGRADED | CAUTIOUS | CONFIDENT | REJECTED"
+      description: DEGRADED | CAUTIOUS | CONFIDENT | REJECTED
     action:
       type: string
+ui:
+  title: Forge Quality Floor Classify
+  subtitle: |
+    Classifies the Ferro Forge quality_floor parameter from session success rate. quality_floor = fully_demonstrated / total_recent_sessions. Below 0.20 = degraded. 0.20-0.50 = cautious. Above 0.50 = confident.
+  icon: circle
+  route: /vigilance/mg/forge-quality-floor-classify
+  steps:
+    - field: demonstrated
+      label: demonstrated
+      help: Count of fully_demonstrated sessions in recent window
+      widget: text
+      placeholder: null
+    - field: total
+      label: total
+      help: Total sessions in recent window
+      widget: text
+      placeholder: null
+  result:
+    template: "quality_floor: {{quality_floor}} — regime: {{regime}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/forge-quality-floor-classify
+  cli: rsk mcg run forge-quality-floor-classify
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_total_present
   nodes:
@@ -40,7 +84,6 @@ tree:
       value: null
       true_next: reject
       false_next: check_total_nonzero
-
     check_total_nonzero:
       type: condition
       variable: total
@@ -48,7 +91,6 @@ tree:
       value: 0
       true_next: check_demonstrated_present
       false_next: use_default
-
     check_demonstrated_present:
       type: condition
       variable: demonstrated
@@ -56,21 +98,18 @@ tree:
       value: null
       true_next: reject
       false_next: check_high
-
     reject:
       type: return
       value:
         quality_floor: 0.313
         regime: REJECTED
-        action: "Missing inputs — using evolved default 0.313"
-
+        action: Missing inputs — using evolved default 0.313
     use_default:
       type: return
       value:
         quality_floor: 0.313
         regime: CAUTIOUS
-        action: "No session data — using evolved default 0.313"
-
+        action: No session data — using evolved default 0.313
     check_high:
       type: condition
       variable: demonstrated
@@ -78,7 +117,6 @@ tree:
       value: 5
       true_next: confident
       false_next: check_moderate
-
     check_moderate:
       type: condition
       variable: demonstrated
@@ -86,7 +124,6 @@ tree:
       value: 2
       true_next: cautious
       false_next: check_any
-
     check_any:
       type: condition
       variable: demonstrated
@@ -94,72 +131,97 @@ tree:
       value: 1
       true_next: cautious_low
       false_next: degraded
-
     confident:
       type: return
       value:
         quality_floor: 0.5
         regime: CONFIDENT
-        action: "High success rate — ship with confidence"
-
+        action: High success rate — ship with confidence
     cautious:
       type: return
       value:
         quality_floor: 0.313
         regime: CAUTIOUS
-        action: "Moderate success rate — standard Forge thresholds"
-
+        action: Moderate success rate — standard Forge thresholds
     cautious_low:
       type: return
       value:
         quality_floor: 0.25
         regime: CAUTIOUS
-        action: "Low success rate — lower quality bar to encourage shipping"
-
+        action: Low success rate — lower quality bar to encourage shipping
     degraded:
       type: return
       value:
         quality_floor: 0.15
         regime: DEGRADED
-        action: "Zero successes — learning mode, accept any working output"
-
+        action: Zero successes — learning mode, accept any working output
 tests:
-- input:
-    demonstrated: 7
-    total: 10
-  expect:
-    regime: CONFIDENT
-    quality_floor: 0.5
-
-- input:
-    demonstrated: 3
-    total: 10
-  expect:
-    regime: CAUTIOUS
-    quality_floor: 0.313
-
-- input:
-    demonstrated: 1
-    total: 10
-  expect:
-    regime: CAUTIOUS
-    quality_floor: 0.25
-
-- input:
-    demonstrated: 0
-    total: 10
-  expect:
-    regime: DEGRADED
-    quality_floor: 0.15
-
-- input:
-    demonstrated: 0
-    total: 0
-  expect:
-    regime: CAUTIOUS
-    quality_floor: 0.313
-
-- input: {}
-  expect:
-    regime: REJECTED
-    quality_floor: 0.313
+  - input:
+      demonstrated: 7
+      total: 10
+    expect:
+      regime: CONFIDENT
+      quality_floor: 0.5
+  - input:
+      demonstrated: 3
+      total: 10
+    expect:
+      regime: CAUTIOUS
+      quality_floor: 0.313
+  - input:
+      demonstrated: 1
+      total: 10
+    expect:
+      regime: CAUTIOUS
+      quality_floor: 0.25
+  - input:
+      demonstrated: 0
+      total: 10
+    expect:
+      regime: DEGRADED
+      quality_floor: 0.15
+  - input:
+      demonstrated: 0
+      total: 0
+    expect:
+      regime: CAUTIOUS
+      quality_floor: 0.313
+  - input: {}
+    expect:
+      regime: REJECTED
+      quality_floor: 0.313
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - quality_floor
+    - regime
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

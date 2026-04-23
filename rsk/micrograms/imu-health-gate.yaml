@@ -1,16 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: imu-health-gate
-description: 'Classify IMU sensor health from temperature drift and gyro bias magnitude. Gates readings before fusion.'
 version: 0.1.0
+description: Classify IMU sensor health from temperature drift and gyro bias magnitude. Gates readings before fusion.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: temp_drift_abs_c
+    type: number
+    required: true
+    description: "Absolute temperature drift from calibration in °C (pre-computed: abs(current - cal))"
+  - name: gyro_bias_magnitude
+    type: number
+    required: true
+    description: Gyroscope bias magnitude in rad/s (norm of 3-axis bias)
+outputs:
+  - name: status
+    type: string
+  - name: trust
+    type: number
+  - name: action
+    type: string
 interface:
   inputs:
     temp_drift_abs_c:
       type: number
       required: true
-      description: 'Absolute temperature drift from calibration in °C (pre-computed: abs(current - cal))'
+      description: "Absolute temperature drift from calibration in °C (pre-computed: abs(current - cal))"
     gyro_bias_magnitude:
       type: number
       required: true
-      description: 'Gyroscope bias magnitude in rad/s (norm of 3-axis bias)'
+      description: Gyroscope bias magnitude in rad/s (norm of 3-axis bias)
   outputs:
     status:
       type: string
@@ -18,6 +44,33 @@ interface:
       type: number
     action:
       type: string
+ui:
+  title: Imu Health Gate
+  subtitle: Classify IMU sensor health from temperature drift and gyro bias magnitude. Gates readings before fusion.
+  icon: circle
+  route: /vigilance/mg/imu-health-gate
+  steps:
+    - field: temp_drift_abs_c
+      label: temp drift abs c
+      help: "Absolute temperature drift from calibration in °C (pre-computed: abs(current - cal))"
+      widget: number
+      placeholder: null
+    - field: gyro_bias_magnitude
+      label: gyro bias magnitude
+      help: Gyroscope bias magnitude in rad/s (norm of 3-axis bias)
+      widget: number
+      placeholder: null
+  result:
+    template: "status: {{status}} — trust: {{trust}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/imu-health-gate
+  cli: rsk mcg run imu-health-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_temp_drift
   nodes:
@@ -45,35 +98,88 @@ tree:
     recalibrate:
       type: return
       value:
-        status: 'FAIL'
+        status: FAIL
         trust: 0.2
-        action: 'Recalibrate IMU — temperature drift exceeds 20°C from calibration'
+        action: Recalibrate IMU — temperature drift exceeds 20°C from calibration
     degraded:
       type: return
       value:
-        status: 'DEGRADED'
+        status: DEGRADED
         trust: 0.5
-        action: 'Gyro bias elevated — increase filter gain or recalibrate'
+        action: Gyro bias elevated — increase filter gain or recalibrate
     warning:
       type: return
       value:
-        status: 'WARNING'
+        status: WARNING
         trust: 0.8
-        action: 'Temperature drifted 10-20°C — monitor for further drift'
+        action: Temperature drifted 10-20°C — monitor for further drift
     healthy:
       type: return
       value:
-        status: 'PASS'
-        trust: 1.0
-        action: 'IMU healthy — proceed with fusion'
+        status: PASS
+        trust: 1
+        action: IMU healthy — proceed with fusion
 tests:
-- input: { temp_drift_abs_c: 0, gyro_bias_magnitude: 0.01 }
-  expect: { status: 'PASS', trust: 1.0 }
-- input: { temp_drift_abs_c: 25, gyro_bias_magnitude: 0.01 }
-  expect: { status: 'FAIL', trust: 0.2 }
-- input: { temp_drift_abs_c: 0, gyro_bias_magnitude: 0.1 }
-  expect: { status: 'DEGRADED', trust: 0.5 }
-- input: { temp_drift_abs_c: 13, gyro_bias_magnitude: 0.01 }
-  expect: { status: 'WARNING', trust: 0.8 }
-- input: {}
-  expect: { status: 'PASS', trust: 1.0 }
+  - input:
+      temp_drift_abs_c: 0
+      gyro_bias_magnitude: 0.01
+    expect:
+      status: PASS
+      trust: 1
+  - input:
+      temp_drift_abs_c: 25
+      gyro_bias_magnitude: 0.01
+    expect:
+      status: FAIL
+      trust: 0.2
+  - input:
+      temp_drift_abs_c: 0
+      gyro_bias_magnitude: 0.1
+    expect:
+      status: DEGRADED
+      trust: 0.5
+  - input:
+      temp_drift_abs_c: 13
+      gyro_bias_magnitude: 0.01
+    expect:
+      status: WARNING
+      trust: 0.8
+  - input: {}
+    expect:
+      status: PASS
+      trust: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - trust
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,12 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: config-fda-safety-comm
-description: "Classify FDA safety communication urgency from search output"
 version: 0.1.0
+description: Classify FDA safety communication urgency from search output
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: comm_type
+    type: string
+    required: false
+    description: drug_safety_communication, medwatch_alert, labeling_change
+  - name: affects_boxed_warning
+    type: bool
+    required: false
+    description: ""
+  - name: is_new_risk
+    type: bool
+    required: false
+    description: ""
+  - name: drugs_affected
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: urgency
+    type: string
+  - name: action
+    type: string
+  - name: update_rsi
+    type: bool
 interface:
   inputs:
     comm_type:
       type: string
       required: false
-      description: "drug_safety_communication, medwatch_alert, labeling_change"
+      description: drug_safety_communication, medwatch_alert, labeling_change
     affects_boxed_warning:
       type: bool
       required: false
@@ -17,9 +51,49 @@ interface:
       type: int
       required: false
   outputs:
-    urgency: { type: string }
-    action: { type: string }
-    update_rsi: { type: bool }
+    urgency:
+      type: string
+    action:
+      type: string
+    update_rsi:
+      type: bool
+ui:
+  title: Config Fda Safety Comm
+  subtitle: Classify FDA safety communication urgency from search output
+  icon: circle
+  route: /vigilance/mg/config-fda-safety-comm
+  steps:
+    - field: comm_type
+      label: comm type
+      help: drug_safety_communication, medwatch_alert, labeling_change
+      widget: text
+      placeholder: null
+    - field: affects_boxed_warning
+      label: affects boxed warning
+      help: Enter affects_boxed_warning
+      widget: toggle
+      placeholder: null
+    - field: is_new_risk
+      label: is new risk
+      help: Enter is_new_risk
+      widget: toggle
+      placeholder: null
+    - field: drugs_affected
+      label: drugs affected
+      help: Enter drugs_affected
+      widget: text
+      placeholder: null
+  result:
+    template: "urgency: {{urgency}} — action: {{action}} — update_rsi: {{update_rsi}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/config-fda-safety-comm
+  cli: rsk mcg run config-fda-safety-comm
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_type
   nodes:
@@ -58,26 +132,108 @@ tree:
       false_next: standard_comm
     critical_comm:
       type: return
-      value: { urgency: critical, action: immediate_label_review, update_rsi: true }
+      value:
+        urgency: critical
+        action: immediate_label_review
+        update_rsi: true
     high_comm:
       type: return
-      value: { urgency: high, action: safety_profile_update, update_rsi: true }
+      value:
+        urgency: high
+        action: safety_profile_update
+        update_rsi: true
     standard_comm:
       type: return
-      value: { urgency: standard, action: document_and_track, update_rsi: false }
+      value:
+        urgency: standard
+        action: document_and_track
+        update_rsi: false
     no_comm:
       type: return
-      value: { urgency: none, action: no_action, update_rsi: false }
+      value:
+        urgency: none
+        action: no_action
+        update_rsi: false
 tests:
-  - input: { comm_type: "drug_safety_communication", affects_boxed_warning: true, is_new_risk: true }
-    expect: { urgency: critical, action: immediate_label_review, update_rsi: true }
-  - input: { comm_type: "medwatch_alert", affects_boxed_warning: false, is_new_risk: true }
-    expect: { urgency: high, action: safety_profile_update, update_rsi: true }
-  - input: { comm_type: "labeling_change", affects_boxed_warning: false, is_new_risk: false, drugs_affected: 5 }
-    expect: { urgency: high, action: safety_profile_update, update_rsi: true }
-  - input: { comm_type: "labeling_change", affects_boxed_warning: false, is_new_risk: false, drugs_affected: 1 }
-    expect: { urgency: standard, action: document_and_track, update_rsi: false }
-  - input: { comm_type: "drug_safety_communication", affects_boxed_warning: false, is_new_risk: false }
-    expect: { urgency: standard, action: document_and_track, update_rsi: false }
+  - input:
+      comm_type: drug_safety_communication
+      affects_boxed_warning: true
+      is_new_risk: true
+    expect:
+      urgency: critical
+      action: immediate_label_review
+      update_rsi: true
+  - input:
+      comm_type: medwatch_alert
+      affects_boxed_warning: false
+      is_new_risk: true
+    expect:
+      urgency: high
+      action: safety_profile_update
+      update_rsi: true
+  - input:
+      comm_type: labeling_change
+      affects_boxed_warning: false
+      is_new_risk: false
+      drugs_affected: 5
+    expect:
+      urgency: high
+      action: safety_profile_update
+      update_rsi: true
+  - input:
+      comm_type: labeling_change
+      affects_boxed_warning: false
+      is_new_risk: false
+      drugs_affected: 1
+    expect:
+      urgency: standard
+      action: document_and_track
+      update_rsi: false
+  - input:
+      comm_type: drug_safety_communication
+      affects_boxed_warning: false
+      is_new_risk: false
+    expect:
+      urgency: standard
+      action: document_and_track
+      update_rsi: false
   - input: {}
-    expect: { urgency: none, action: no_action, update_rsi: false }
+    expect:
+      urgency: none
+      action: no_action
+      update_rsi: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - urgency
+    - action
+    - update_rsi
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

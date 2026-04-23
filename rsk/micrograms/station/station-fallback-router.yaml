@@ -1,6 +1,78 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-fallback-router
-description: Route to fallback domain when primary is unavailable
 version: 0.1.0
+description: Route to fallback domain when primary is unavailable
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: primary_domain
+    type: string
+    required: false
+    description: ""
+  - name: question_type
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: degradation
+    type: string
+  - name: fallback_domain
+    type: string
+  - name: fallback_tool
+    type: string
+interface:
+  inputs:
+    primary_domain:
+      type: string
+      required: false
+    question_type:
+      type: string
+      required: false
+  outputs:
+    degradation:
+      type: string
+      required: false
+    fallback_domain:
+      type: string
+      required: false
+    fallback_tool:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Station Fallback Router
+  subtitle: Route to fallback domain when primary is unavailable
+  icon: circle
+  route: /vigilance/mg/station-fallback-router
+  steps:
+    - field: primary_domain
+      label: primary domain
+      help: Enter primary_domain
+      widget: text
+      placeholder: null
+    - field: question_type
+      label: question type
+      help: Enter question_type
+      widget: text
+      placeholder: null
+  result:
+    template: "degradation: {{degradation}} — fallback_domain: {{fallback_domain}} — fallback_tool: {{fallback_tool}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-fallback-router
+  cli: rsk mcg run station-fallback-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: classify_primary
   nodes:
@@ -154,111 +226,127 @@ tree:
       true_next: fallback_meddra
       false_next: check_drugbank
 tests:
-- input:
-    primary_domain: ''
-    question_type: ''
-  expect:
-    fallback_tool: unknown
-    fallback_domain: unknown
-    degradation: significant
-- input:
-    primary_domain: drugbank.com
-    question_type: ''
-  expect:
-    fallback_tool: pubmed_search_articles
-    degradation: significant
-    fallback_domain: pubmed.ncbi.nlm.nih.gov
-- input:
-    primary_domain: drugbank.com
-    question_type: drug_interaction
-  expect:
-    fallback_domain: rxnav.nlm.nih.gov
-    fallback_tool: rxnav_get_interactions
-    degradation: partial
-- input:
-    primary_domain: ema.europa.eu
-    question_type: ''
-  expect:
-    degradation: partial
-    fallback_domain: pubmed.ncbi.nlm.nih.gov
-    fallback_tool: pubmed_search_articles
-- input:
-    primary_domain: ema.europa.eu
-    question_type: regulatory
-  expect:
-    fallback_domain: accessdata.fda.gov
-    fallback_tool: fda_regulatory_search
-    degradation: partial
-- input:
-    primary_domain: eudravigilance.ema.europa.eu
-    question_type: ''
-  expect:
-    fallback_tool: vigiaccess_search
-    fallback_domain: vigiaccess.org
-    degradation: partial
-- input:
-    primary_domain: eudravigilance.ema.europa.eu
-    question_type: drug_safety
-  expect:
-    fallback_domain: api.fda.gov
-    fallback_tool: faers_search_reports
-    degradation: partial
-- input:
-    primary_domain: ich.org
-    question_type: ''
-  expect:
-    fallback_tool: ema_guidelines
-    degradation: significant
-    fallback_domain: ema.europa.eu
-- input:
-    primary_domain: meddra.org
-    question_type: ''
-  expect:
-    fallback_tool: pubmed_search_articles
-    fallback_domain: pubmed.ncbi.nlm.nih.gov
-    degradation: significant
-- input:
-    primary_domain: meddra.org
-    question_type: drug_safety
-  expect:
-    degradation: significant
-    fallback_domain: api.fda.gov
-    fallback_tool: faers_search_reports
-- input:
-    primary_domain: vigiaccess.org
-    question_type: ''
-  expect:
-    fallback_domain: eudravigilance.ema.europa.eu
-    fallback_tool: eudra_search
-    degradation: partial
-- input:
-    primary_domain: vigiaccess.org
-    question_type: drug_safety
-  expect:
-    fallback_domain: api.fda.gov
-    fallback_tool: faers_search_reports
-    degradation: none
-- input: {}
-  expect:
-    fallback_tool: unknown
-    fallback_domain: unknown
-    degradation: significant
-interface:
-  inputs:
-    primary_domain:
-      type: string
-      required: false
-    question_type:
-      type: string
-      required: false
-  outputs:
-    degradation:
-      type: string
-      required: false
-    fallback_domain:
-      type: string
-      required: false
-    fallback_tool:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      primary_domain: ""
+      question_type: ""
+    expect:
+      fallback_tool: unknown
+      fallback_domain: unknown
+      degradation: significant
+  - input:
+      primary_domain: drugbank.com
+      question_type: ""
+    expect:
+      fallback_tool: pubmed_search_articles
+      degradation: significant
+      fallback_domain: pubmed.ncbi.nlm.nih.gov
+  - input:
+      primary_domain: drugbank.com
+      question_type: drug_interaction
+    expect:
+      fallback_domain: rxnav.nlm.nih.gov
+      fallback_tool: rxnav_get_interactions
+      degradation: partial
+  - input:
+      primary_domain: ema.europa.eu
+      question_type: ""
+    expect:
+      degradation: partial
+      fallback_domain: pubmed.ncbi.nlm.nih.gov
+      fallback_tool: pubmed_search_articles
+  - input:
+      primary_domain: ema.europa.eu
+      question_type: regulatory
+    expect:
+      fallback_domain: accessdata.fda.gov
+      fallback_tool: fda_regulatory_search
+      degradation: partial
+  - input:
+      primary_domain: eudravigilance.ema.europa.eu
+      question_type: ""
+    expect:
+      fallback_tool: vigiaccess_search
+      fallback_domain: vigiaccess.org
+      degradation: partial
+  - input:
+      primary_domain: eudravigilance.ema.europa.eu
+      question_type: drug_safety
+    expect:
+      fallback_domain: api.fda.gov
+      fallback_tool: faers_search_reports
+      degradation: partial
+  - input:
+      primary_domain: ich.org
+      question_type: ""
+    expect:
+      fallback_tool: ema_guidelines
+      degradation: significant
+      fallback_domain: ema.europa.eu
+  - input:
+      primary_domain: meddra.org
+      question_type: ""
+    expect:
+      fallback_tool: pubmed_search_articles
+      fallback_domain: pubmed.ncbi.nlm.nih.gov
+      degradation: significant
+  - input:
+      primary_domain: meddra.org
+      question_type: drug_safety
+    expect:
+      degradation: significant
+      fallback_domain: api.fda.gov
+      fallback_tool: faers_search_reports
+  - input:
+      primary_domain: vigiaccess.org
+      question_type: ""
+    expect:
+      fallback_domain: eudravigilance.ema.europa.eu
+      fallback_tool: eudra_search
+      degradation: partial
+  - input:
+      primary_domain: vigiaccess.org
+      question_type: drug_safety
+    expect:
+      fallback_domain: api.fda.gov
+      fallback_tool: faers_search_reports
+      degradation: none
+  - input: {}
+    expect:
+      fallback_tool: unknown
+      fallback_domain: unknown
+      degradation: significant
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - degradation
+    - fallback_domain
+    - fallback_tool
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

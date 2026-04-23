@@ -1,20 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pilot-biometric-triage
-description: 'Triage pilot physiological state from biometric readings. Routes to NORMAL, WARNING, or CRITICAL with action guidance.'
 version: 0.1.0
+description: Triage pilot physiological state from biometric readings. Routes to NORMAL, WARNING, or CRITICAL with action guidance.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: heart_rate_bpm
+    type: number
+    required: true
+    description: Heart rate in beats per minute
+  - name: spo2_pct
+    type: number
+    required: true
+    description: Blood oxygen saturation percentage
+  - name: core_temp_c
+    type: number
+    required: true
+    description: Core body temperature in Celsius
+outputs:
+  - name: status
+    type: string
+  - name: priority
+    type: number
+  - name: action
+    type: string
 interface:
   inputs:
     heart_rate_bpm:
       type: number
       required: true
-      description: 'Heart rate in beats per minute'
+      description: Heart rate in beats per minute
     spo2_pct:
       type: number
       required: true
-      description: 'Blood oxygen saturation percentage'
+      description: Blood oxygen saturation percentage
     core_temp_c:
       type: number
       required: true
-      description: 'Core body temperature in Celsius'
+      description: Core body temperature in Celsius
   outputs:
     status:
       type: string
@@ -22,6 +52,38 @@ interface:
       type: number
     action:
       type: string
+ui:
+  title: Pilot Biometric Triage
+  subtitle: Triage pilot physiological state from biometric readings. Routes to NORMAL, WARNING, or CRITICAL with action guidance.
+  icon: circle
+  route: /vigilance/mg/pilot-biometric-triage
+  steps:
+    - field: heart_rate_bpm
+      label: heart rate bpm
+      help: Heart rate in beats per minute
+      widget: number
+      placeholder: null
+    - field: spo2_pct
+      label: spo2 pct
+      help: Blood oxygen saturation percentage
+      widget: number
+      placeholder: null
+    - field: core_temp_c
+      label: core temp c
+      help: Core body temperature in Celsius
+      widget: number
+      placeholder: null
+  result:
+    template: "status: {{status}} — priority: {{priority}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pilot-biometric-triage
+  cli: rsk mcg run pilot-biometric-triage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_spo2
   nodes:
@@ -43,7 +105,7 @@ tree:
       type: condition
       variable: core_temp_c
       operator: lt
-      value: 35.0
+      value: 35
       true_next: hypothermia_critical
       false_next: check_tachycardia
     check_tachycardia:
@@ -77,65 +139,140 @@ tree:
     hypoxia_critical:
       type: return
       value:
-        status: 'CRITICAL'
+        status: CRITICAL
         priority: 1
-        action: 'SpO2 < 90% — initiate supplemental oxygen, descend altitude'
+        action: SpO2 < 90% — initiate supplemental oxygen, descend altitude
     hyperthermia_critical:
       type: return
       value:
-        status: 'CRITICAL'
+        status: CRITICAL
         priority: 1
-        action: 'Core temp > 39.5°C — activate cooling, reduce exertion'
+        action: Core temp > 39.5°C — activate cooling, reduce exertion
     hypothermia_critical:
       type: return
       value:
-        status: 'CRITICAL'
+        status: CRITICAL
         priority: 1
-        action: 'Core temp < 35°C — activate heating, seek shelter'
+        action: Core temp < 35°C — activate heating, seek shelter
     tachycardia_critical:
       type: return
       value:
-        status: 'CRITICAL'
+        status: CRITICAL
         priority: 2
-        action: 'HR > 180 bpm — cease exertion, assess cardiac status'
+        action: HR > 180 bpm — cease exertion, assess cardiac status
     bradycardia_critical:
       type: return
       value:
-        status: 'CRITICAL'
+        status: CRITICAL
         priority: 2
-        action: 'HR < 40 bpm — assess consciousness, prepare for medical intervention'
+        action: HR < 40 bpm — assess consciousness, prepare for medical intervention
     elevated_hr:
       type: return
       value:
-        status: 'WARNING'
+        status: WARNING
         priority: 3
-        action: 'HR 160-180 bpm — reduce exertion, monitor trend'
+        action: HR 160-180 bpm — reduce exertion, monitor trend
     low_spo2_warning:
       type: return
       value:
-        status: 'WARNING'
+        status: WARNING
         priority: 3
-        action: 'SpO2 90-94% — monitor closely, consider altitude or ventilation'
+        action: SpO2 90-94% — monitor closely, consider altitude or ventilation
     normal:
       type: return
       value:
-        status: 'NORMAL'
+        status: NORMAL
         priority: 5
-        action: 'All vitals within normal range'
+        action: All vitals within normal range
 tests:
-- input: { heart_rate_bpm: 72, spo2_pct: 98, core_temp_c: 37.0 }
-  expect: { status: 'NORMAL', priority: 5 }
-- input: { heart_rate_bpm: 72, spo2_pct: 85, core_temp_c: 37.0 }
-  expect: { status: 'CRITICAL', priority: 1 }
-- input: { heart_rate_bpm: 72, spo2_pct: 98, core_temp_c: 40.0 }
-  expect: { status: 'CRITICAL', priority: 1 }
-- input: { heart_rate_bpm: 190, spo2_pct: 98, core_temp_c: 37.0 }
-  expect: { status: 'CRITICAL', priority: 2 }
-- input: { heart_rate_bpm: 170, spo2_pct: 98, core_temp_c: 37.0 }
-  expect: { status: 'WARNING', priority: 3 }
-- input: { heart_rate_bpm: 72, spo2_pct: 92, core_temp_c: 37.0 }
-  expect: { status: 'WARNING', priority: 3 }
-- input: { heart_rate_bpm: 35, spo2_pct: 98, core_temp_c: 37.0 }
-  expect: { status: 'CRITICAL', priority: 2 }
-- input: { heart_rate_bpm: 72, spo2_pct: 98, core_temp_c: 34.0 }
-  expect: { status: 'CRITICAL', priority: 1 }
+  - input:
+      heart_rate_bpm: 72
+      spo2_pct: 98
+      core_temp_c: 37
+    expect:
+      status: NORMAL
+      priority: 5
+  - input:
+      heart_rate_bpm: 72
+      spo2_pct: 85
+      core_temp_c: 37
+    expect:
+      status: CRITICAL
+      priority: 1
+  - input:
+      heart_rate_bpm: 72
+      spo2_pct: 98
+      core_temp_c: 40
+    expect:
+      status: CRITICAL
+      priority: 1
+  - input:
+      heart_rate_bpm: 190
+      spo2_pct: 98
+      core_temp_c: 37
+    expect:
+      status: CRITICAL
+      priority: 2
+  - input:
+      heart_rate_bpm: 170
+      spo2_pct: 98
+      core_temp_c: 37
+    expect:
+      status: WARNING
+      priority: 3
+  - input:
+      heart_rate_bpm: 72
+      spo2_pct: 92
+      core_temp_c: 37
+    expect:
+      status: WARNING
+      priority: 3
+  - input:
+      heart_rate_bpm: 35
+      spo2_pct: 98
+      core_temp_c: 37
+    expect:
+      status: CRITICAL
+      priority: 2
+  - input:
+      heart_rate_bpm: 72
+      spo2_pct: 98
+      core_temp_c: 34
+    expect:
+      status: CRITICAL
+      priority: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - priority
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

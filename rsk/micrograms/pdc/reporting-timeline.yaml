@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: reporting-timeline
-description: "Domain 4: Regulatory reporting timeline by jurisdiction and event type — FDA, EMA, PMDA, Health Canada deadlines."
 version: 0.1.0
+description: "Domain 4: Regulatory reporting timeline by jurisdiction and event type — FDA, EMA, PMDA, Health Canada deadlines."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_fatal_or_life_threatening
+    type: bool
+    required: false
+    description: ""
+  - name: is_serious_unexpected
+    type: bool
+    required: false
+    description: ""
+  - name: region
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: database
+    type: string
+  - name: deadline_calendar_days
+    type: int
+  - name: followup
+    type: string
+  - name: format
+    type: string
+  - name: note
+    type: string
+  - name: reference
+    type: string
+  - name: region
+    type: string
+  - name: report_type
+    type: string
+  - name: submission
+    type: string
 interface:
   inputs:
     is_fatal_or_life_threatening:
@@ -31,6 +73,38 @@ interface:
       type: string
     submission:
       type: string
+ui:
+  title: Reporting Timeline
+  subtitle: "Domain 4: Regulatory reporting timeline by jurisdiction and event type — FDA, EMA, PMDA, Health Canada deadlines."
+  icon: circle
+  route: /vigilance/mg/reporting-timeline
+  steps:
+    - field: is_fatal_or_life_threatening
+      label: is fatal or life threatening
+      help: Enter is_fatal_or_life_threatening
+      widget: toggle
+      placeholder: null
+    - field: is_serious_unexpected
+      label: is serious unexpected
+      help: Enter is_serious_unexpected
+      widget: toggle
+      placeholder: null
+    - field: region
+      label: region
+      help: Enter region
+      widget: text
+      placeholder: null
+  result:
+    template: "database: {{database}} — deadline_calendar_days: {{deadline_calendar_days}} — followup: {{followup}} — format: {{format}} — note: {{note}} — reference: {{reference}} — region: {{region}} — report_type: {{report_type}} — submission: {{submission}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/reporting-timeline
+  cli: rsk mcg run reporting-timeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_region
   nodes:
@@ -74,11 +148,11 @@ tree:
       value:
         region: FDA
         deadline_calendar_days: 7
-        report_type: "IND Safety Report / 15-day Alert (expedited)"
+        report_type: IND Safety Report / 15-day Alert (expedited)
         database: FAERS
-        format: "E2B(R3)"
-        submission: "FDA ESG or FAERS"
-        followup: "within 15 calendar days of initial report"
+        format: E2B(R3)
+        submission: FDA ESG or FAERS
+        followup: within 15 calendar days of initial report
     fda_15day_check:
       type: condition
       variable: is_serious_unexpected
@@ -91,18 +165,18 @@ tree:
       value:
         region: FDA
         deadline_calendar_days: 15
-        report_type: "15-day Alert Report"
+        report_type: 15-day Alert Report
         database: FAERS
-        format: "E2B(R3)"
-        submission: "FDA ESG"
+        format: E2B(R3)
+        submission: FDA ESG
     fda_periodic:
       type: return
       value:
         region: FDA
         deadline_calendar_days: 90
-        report_type: "Periodic (PSUR/PBRER equivalent)"
+        report_type: Periodic (PSUR/PBRER equivalent)
         database: FAERS
-        format: "E2B(R3)"
+        format: E2B(R3)
     ema_check:
       type: condition
       variable: is_serious_unexpected
@@ -115,18 +189,18 @@ tree:
       value:
         region: EMA
         deadline_calendar_days: 15
-        report_type: "Expedited ICSR"
+        report_type: Expedited ICSR
         database: EudraVigilance
-        format: "E2B(R3) via EVWEB or gateway"
-        reference: "EU GVP Module VI"
+        format: E2B(R3) via EVWEB or gateway
+        reference: EU GVP Module VI
     ema_90day:
       type: return
       value:
         region: EMA
         deadline_calendar_days: 90
-        report_type: "Non-expedited ICSR"
+        report_type: Non-expedited ICSR
         database: EudraVigilance
-        format: "E2B(R3)"
+        format: E2B(R3)
     pmda_check:
       type: condition
       variable: is_serious_unexpected
@@ -139,16 +213,16 @@ tree:
       value:
         region: PMDA
         deadline_calendar_days: 15
-        report_type: "Expedited Safety Report"
-        database: "J-PRISM (Japanese Pharmaceutical Regulatory Information System of Medicine)"
-        format: "E2B(R3) Japanese adaptation"
+        report_type: Expedited Safety Report
+        database: J-PRISM (Japanese Pharmaceutical Regulatory Information System of Medicine)
+        format: E2B(R3) Japanese adaptation
     pmda_periodic:
       type: return
       value:
         region: PMDA
         deadline_calendar_days: 90
-        report_type: "Periodic Safety Report"
-        database: "J-PRISM"
+        report_type: Periodic Safety Report
+        database: J-PRISM
     hc_check:
       type: condition
       variable: is_serious_unexpected
@@ -161,95 +235,133 @@ tree:
       value:
         region: HEALTH_CANADA
         deadline_calendar_days: 15
-        report_type: "Expedited ADR Report"
-        database: "Canada Vigilance"
-        format: "E2B(R3)"
+        report_type: Expedited ADR Report
+        database: Canada Vigilance
+        format: E2B(R3)
     hc_periodic:
       type: return
       value:
         region: HEALTH_CANADA
         deadline_calendar_days: 90
-        report_type: "Annual Drug Safety Report"
-        database: "Canada Vigilance"
+        report_type: Annual Drug Safety Report
+        database: Canada Vigilance
     ich_default:
       type: return
       value:
         region: ICH_DEFAULT
         deadline_calendar_days: 15
-        report_type: "ICH E2D default — serious unexpected"
-        reference: "ICH E2A, E2B(R3), E2D"
-        note: "check specific country requirements"
+        report_type: ICH E2D default — serious unexpected
+        reference: ICH E2A, E2B(R3), E2D
+        note: check specific country requirements
 tests:
-- input:
-    region: fda
-    is_fatal_or_life_threatening: true
-  expect:
-    region: FDA
-    deadline_calendar_days: 7
-- input:
-    region: fda
-    is_serious_unexpected: true
-    is_fatal_or_life_threatening: false
-  expect:
-    region: FDA
-    deadline_calendar_days: 15
-- input:
-    region: fda
-    is_serious_unexpected: false
-    is_fatal_or_life_threatening: false
-  expect:
-    deadline_calendar_days: 90
-- input:
-    region: ema
-    is_serious_unexpected: true
-  expect:
-    region: EMA
-    deadline_calendar_days: 15
-    database: EudraVigilance
-- input:
-    region: pmda
-    is_serious_unexpected: true
-  expect:
-    region: PMDA
-    deadline_calendar_days: 15
-- input:
-    region: health_canada
-    is_serious_unexpected: false
-  expect:
-    region: HEALTH_CANADA
-    deadline_calendar_days: 90
-- input:
-    region: unknown
-  expect:
-    region: ICH_DEFAULT
-    deadline_calendar_days: 15
-- input: {}
-  expect:
-    region: ICH_DEFAULT
-# -- covers ema_90day --
-- input:
-    region: ema
-    is_serious_unexpected: false
-  expect:
-    region: EMA
-    deadline_calendar_days: 90
-    report_type: "Non-expedited ICSR"
-    database: EudraVigilance
-# -- covers hc_15day --
-- input:
-    region: health_canada
-    is_serious_unexpected: true
-  expect:
-    region: HEALTH_CANADA
-    deadline_calendar_days: 15
-    report_type: "Expedited ADR Report"
-    database: "Canada Vigilance"
-# -- covers pmda_periodic --
-- input:
-    region: pmda
-    is_serious_unexpected: false
-  expect:
-    region: PMDA
-    deadline_calendar_days: 90
-    report_type: "Periodic Safety Report"
-    database: "J-PRISM"
+  - input:
+      region: fda
+      is_fatal_or_life_threatening: true
+    expect:
+      region: FDA
+      deadline_calendar_days: 7
+  - input:
+      region: fda
+      is_serious_unexpected: true
+      is_fatal_or_life_threatening: false
+    expect:
+      region: FDA
+      deadline_calendar_days: 15
+  - input:
+      region: fda
+      is_serious_unexpected: false
+      is_fatal_or_life_threatening: false
+    expect:
+      deadline_calendar_days: 90
+  - input:
+      region: ema
+      is_serious_unexpected: true
+    expect:
+      region: EMA
+      deadline_calendar_days: 15
+      database: EudraVigilance
+  - input:
+      region: pmda
+      is_serious_unexpected: true
+    expect:
+      region: PMDA
+      deadline_calendar_days: 15
+  - input:
+      region: health_canada
+      is_serious_unexpected: false
+    expect:
+      region: HEALTH_CANADA
+      deadline_calendar_days: 90
+  - input:
+      region: unknown
+    expect:
+      region: ICH_DEFAULT
+      deadline_calendar_days: 15
+  - input: {}
+    expect:
+      region: ICH_DEFAULT
+  - input:
+      region: ema
+      is_serious_unexpected: false
+    expect:
+      region: EMA
+      deadline_calendar_days: 90
+      report_type: Non-expedited ICSR
+      database: EudraVigilance
+  - input:
+      region: health_canada
+      is_serious_unexpected: true
+    expect:
+      region: HEALTH_CANADA
+      deadline_calendar_days: 15
+      report_type: Expedited ADR Report
+      database: Canada Vigilance
+  - input:
+      region: pmda
+      is_serious_unexpected: false
+    expect:
+      region: PMDA
+      deadline_calendar_days: 90
+      report_type: Periodic Safety Report
+      database: J-PRISM
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - database
+    - deadline_calendar_days
+    - followup
+    - format
+    - note
+    - reference
+    - region
+    - report_type
+    - submission
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

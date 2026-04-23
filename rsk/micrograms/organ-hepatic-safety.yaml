@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: organ-hepatic-safety
-description: "Hepatic (liver) safety assessment. Evaluates drug-induced liver injury (DILI) risk based on liver function tests."
 version: 0.1.0
+description: Hepatic (liver) safety assessment. Evaluates drug-induced liver injury (DILI) risk based on liver function tests.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Organ Hepatic Safety
+  subtitle: Hepatic (liver) safety assessment. Evaluates drug-induced liver injury (DILI) risk based on liver function tests.
+  icon: circle
+  route: /vigilance/mg/organ-hepatic-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/organ-hepatic-safety
+  cli: rsk mcg run organ-hepatic-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_baseline_alt
   nodes:
@@ -17,7 +46,7 @@ tree:
         organ: liver
         risk_level: high
         monitoring: required
-        message: "Elevated baseline ALT; hepatotoxic drug contraindicated"
+        message: Elevated baseline ALT; hepatotoxic drug contraindicated
     check_cirrhosis:
       type: condition
       variable: has_cirrhosis
@@ -31,7 +60,7 @@ tree:
         organ: liver
         risk_level: critical
         contraindication: true
-        message: "Cirrhosis present; hepatotoxic drugs contraindicated"
+        message: Cirrhosis present; hepatotoxic drugs contraindicated
     check_hepatic_clearance:
       type: condition
       variable: child_pugh_score
@@ -45,7 +74,7 @@ tree:
         organ: liver
         risk_level: moderate
         dose_adjustment: required
-        message: "Hepatic impairment; reduce dose or extend interval"
+        message: Hepatic impairment; reduce dose or extend interval
     standard_dosing:
       type: return
       value:
@@ -53,13 +82,68 @@ tree:
         risk_level: low
         monitoring: periodically
 tests:
-  - input: { baseline_alt_iu_l: 250, has_cirrhosis: false, child_pugh_score: 5 }
-    expect: { organ: liver, risk_level: high, monitoring: required }
-  - input: { baseline_alt_iu_l: 80, has_cirrhosis: true, child_pugh_score: 10 }
-    expect: { organ: liver, risk_level: critical, contraindication: true }
-  - input: { baseline_alt_iu_l: 80, has_cirrhosis: false, child_pugh_score: 8 }
-    expect: { organ: liver, risk_level: moderate, dose_adjustment: required }
-  - input: { baseline_alt_iu_l: 40, has_cirrhosis: false, child_pugh_score: 5 }
-    expect: { organ: liver, risk_level: low }
+  - input:
+      baseline_alt_iu_l: 250
+      has_cirrhosis: false
+      child_pugh_score: 5
+    expect:
+      organ: liver
+      risk_level: high
+      monitoring: required
+  - input:
+      baseline_alt_iu_l: 80
+      has_cirrhosis: true
+      child_pugh_score: 10
+    expect:
+      organ: liver
+      risk_level: critical
+      contraindication: true
+  - input:
+      baseline_alt_iu_l: 80
+      has_cirrhosis: false
+      child_pugh_score: 8
+    expect:
+      organ: liver
+      risk_level: moderate
+      dose_adjustment: required
+  - input:
+      baseline_alt_iu_l: 40
+      has_cirrhosis: false
+      child_pugh_score: 5
+    expect:
+      organ: liver
+      risk_level: low
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

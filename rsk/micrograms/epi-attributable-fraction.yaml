@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: epi-attributable-fraction
-description: "Calculate attributable fraction to estimate drug-attributable risk"
 version: 0.1.0
+description: Calculate attributable fraction to estimate drug-attributable risk
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Epi Attributable Fraction
+  subtitle: Calculate attributable fraction to estimate drug-attributable risk
+  icon: circle
+  route: /vigilance/mg/epi-attributable-fraction
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/epi-attributable-fraction
+  cli: rsk mcg run epi-attributable-fraction
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_epidemiologic_data
   nodes:
@@ -21,10 +50,10 @@ tree:
     calculate_fraction:
       type: return
       value:
-        attributable_fraction: "calculated_from_rr_and_prevalence"
-        interpretation: "proportion_of_disease_attributable_to_exposure"
-        epi_measure_type: "attributable_fraction"
-        population_impact: "estimated"
+        attributable_fraction: calculated_from_rr_and_prevalence
+        interpretation: proportion_of_disease_attributable_to_exposure
+        epi_measure_type: attributable_fraction
+        population_impact: estimated
         epi_compliant: true
     fraction_unknown:
       type: return
@@ -35,24 +64,56 @@ tree:
         population_impact: null
         epi_compliant: false
 tests:
-- input:
-    relative_risk: 2.5
-    exposed_population_percent: 40
-  expect:
-    attributable_fraction: "calculated_from_rr_and_prevalence"
-    epi_measure_type: "attributable_fraction"
-    epi_compliant: true
-- input:
-    relative_risk: 1.5
-    exposed_population_percent: 60
-  expect:
-    attributable_fraction: "calculated_from_rr_and_prevalence"
-- input:
-    relative_risk: null
-  expect:
-    attributable_fraction: null
-    epi_compliant: false
-- input: {}
-  expect:
-    attributable_fraction: null
-    epi_compliant: false
+  - input:
+      relative_risk: 2.5
+      exposed_population_percent: 40
+    expect:
+      attributable_fraction: calculated_from_rr_and_prevalence
+      epi_measure_type: attributable_fraction
+      epi_compliant: true
+  - input:
+      relative_risk: 1.5
+      exposed_population_percent: 60
+    expect:
+      attributable_fraction: calculated_from_rr_and_prevalence
+  - input:
+      relative_risk: null
+    expect:
+      attributable_fraction: null
+      epi_compliant: false
+  - input: {}
+    expect:
+      attributable_fraction: null
+      epi_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

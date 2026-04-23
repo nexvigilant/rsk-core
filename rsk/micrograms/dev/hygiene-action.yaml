@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: hygiene-action
-description: 'Code hygiene action router: takes file-size-gate and module-complexity-gate outputs and recommends action priority.'
 version: 0.1.0
+description: "Code hygiene action router: takes file-size-gate and module-complexity-gate outputs and recommends action priority."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: needs_split
+    type: bool
+    required: true
+    description: ""
+  - name: needs_decomposition
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: priority
+    type: string
+  - name: reason
+    type: string
 interface:
   inputs:
     needs_split:
@@ -16,6 +42,33 @@ interface:
       type: string
     reason:
       type: string
+ui:
+  title: Hygiene Action
+  subtitle: "Code hygiene action router: takes file-size-gate and module-complexity-gate outputs and recommends action priority."
+  icon: circle
+  route: /vigilance/mg/hygiene-action
+  steps:
+    - field: needs_split
+      label: needs split
+      help: Enter needs_split
+      widget: toggle
+      placeholder: null
+    - field: needs_decomposition
+      label: needs decomposition
+      help: Enter needs_decomposition
+      widget: toggle
+      placeholder: null
+  result:
+    template: "action: {{action}} — priority: {{priority}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/hygiene-action
+  cli: rsk mcg run hygiene-action
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_split
   nodes:
@@ -64,48 +117,78 @@ tree:
         action: NO_ACTION
         priority: P3
         reason: File is within size and complexity limits — no action needed
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-- input:
-    needs_split: true
-    needs_decomposition: true
-  expect:
-    action: SPLIT_AND_DECOMPOSE
-    priority: P0
-    reason: File is too large AND too complex — split into submodule directory with focused files
-- input:
-    needs_split: true
-    needs_decomposition: false
-  expect:
-    action: SPLIT_FILE
-    priority: P1
-    reason: File is too large but well-focused — split by section markers into submodules
-- input:
-    needs_split: false
-    needs_decomposition: true
-  expect:
-    action: DECOMPOSE_API
-    priority: P2
-    reason: File is small but API surface is too wide — extract cohesive function groups
-- input:
-    needs_split: false
-    needs_decomposition: false
-  expect:
-    action: NO_ACTION
-    priority: P3
-    reason: File is within size and complexity limits — no action needed
-- input:
-    needs_split: true
-  expect:
-    action: SPLIT_FILE
-    priority: P1
-    reason: File is too large but well-focused — split by section markers into submodules
-- input: {}
-  expect:
-    action: NO_ACTION
-    priority: P3
-    reason: File is within size and complexity limits — no action needed
+  - input:
+      needs_split: true
+      needs_decomposition: true
+    expect:
+      action: SPLIT_AND_DECOMPOSE
+      priority: P0
+      reason: File is too large AND too complex — split into submodule directory with focused files
+  - input:
+      needs_split: true
+      needs_decomposition: false
+    expect:
+      action: SPLIT_FILE
+      priority: P1
+      reason: File is too large but well-focused — split by section markers into submodules
+  - input:
+      needs_split: false
+      needs_decomposition: true
+    expect:
+      action: DECOMPOSE_API
+      priority: P2
+      reason: File is small but API surface is too wide — extract cohesive function groups
+  - input:
+      needs_split: false
+      needs_decomposition: false
+    expect:
+      action: NO_ACTION
+      priority: P3
+      reason: File is within size and complexity limits — no action needed
+  - input:
+      needs_split: true
+    expect:
+      action: SPLIT_FILE
+      priority: P1
+      reason: File is too large but well-focused — split by section markers into submodules
+  - input: {}
+    expect:
+      action: NO_ACTION
+      priority: P3
+      reason: File is within size and complexity limits — no action needed
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - priority
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

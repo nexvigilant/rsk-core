@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: test-verdict
-description: 'Classify test run: GREEN (0 failures), YELLOW (<=5% failure rate), RED (>5%)'
 version: 0.1.0
+description: "Classify test run: GREEN (0 failures), YELLOW (<=5% failure rate), RED (>5%)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: failure_rate
+    type: int
+    required: false
+    description: ""
+  - name: failures
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: block
+    type: bool
+  - name: deploy
+    type: bool
+  - name: verdict
+    type: string
 interface:
   inputs:
     failure_rate:
@@ -16,6 +42,33 @@ interface:
       type: bool
     verdict:
       type: string
+ui:
+  title: Test Verdict
+  subtitle: "Classify test run: GREEN (0 failures), YELLOW (<=5% failure rate), RED (>5%)"
+  icon: circle
+  route: /vigilance/mg/test-verdict
+  steps:
+    - field: failure_rate
+      label: failure rate
+      help: Enter failure_rate
+      widget: text
+      placeholder: null
+    - field: failures
+      label: failures
+      help: Enter failures
+      widget: text
+      placeholder: null
+  result:
+    template: "block: {{block}} — deploy: {{deploy}} — verdict: {{verdict}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/test-verdict
+  cli: rsk mcg run test-verdict
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -65,78 +118,113 @@ tree:
         verdict: RED
         block: true
 tests:
-- input:
-    failures: 0
-    failure_rate: 0
-  expect:
-    block: false
-    verdict: GREEN
-    deploy: true
-- input:
-    failures: 2
-    failure_rate: 3
-  expect:
-    verdict: YELLOW
-    block: false
-    deploy: false
-- input:
-    failures: 10
-    failure_rate: 15
-  expect:
-    verdict: RED
-    deploy: false
-    block: true
-- input:
-    failure_rate: 5
-    failures: 1
-  expect:
-    deploy: false
-    block: false
-    verdict: YELLOW
-- input:
-    failure_rate: 6
-    failures: 5
-  expect:
-    deploy: false
-    block: true
-    verdict: RED
-- input:
-    failures: -1
-  expect:
-    deploy: false
-    verdict: RED
-    block: true
-- input:
-    failures: -1
-  expect:
-    deploy: false
-    verdict: RED
-    block: true
-- input: {}
-  expect:
-    verdict: UNKNOWN
-    deploy: false
-    block: true
-- input:
-    failure_rate: -1
-  expect:
-    verdict: UNKNOWN
-    deploy: false
-    block: true
-- input:
-    failure_rate: 4
-  expect:
-    verdict: UNKNOWN
-    deploy: false
-    block: true
-- input:
-    failure_rate: 500
-  expect:
-    verdict: UNKNOWN
-    deploy: false
-    block: true
-- input: {}
-  expect:
-    verdict: UNKNOWN
-    deploy: false
-    block: true
+  - input:
+      failures: 0
+      failure_rate: 0
+    expect:
+      block: false
+      verdict: GREEN
+      deploy: true
+  - input:
+      failures: 2
+      failure_rate: 3
+    expect:
+      verdict: YELLOW
+      block: false
+      deploy: false
+  - input:
+      failures: 10
+      failure_rate: 15
+    expect:
+      verdict: RED
+      deploy: false
+      block: true
+  - input:
+      failure_rate: 5
+      failures: 1
+    expect:
+      deploy: false
+      block: false
+      verdict: YELLOW
+  - input:
+      failure_rate: 6
+      failures: 5
+    expect:
+      deploy: false
+      block: true
+      verdict: RED
+  - input:
+      failures: -1
+    expect:
+      deploy: false
+      verdict: RED
+      block: true
+  - input:
+      failures: -1
+    expect:
+      deploy: false
+      verdict: RED
+      block: true
+  - input: {}
+    expect:
+      verdict: UNKNOWN
+      deploy: false
+      block: true
+  - input:
+      failure_rate: -1
+    expect:
+      verdict: UNKNOWN
+      deploy: false
+      block: true
+  - input:
+      failure_rate: 4
+    expect:
+      verdict: UNKNOWN
+      deploy: false
+      block: true
+  - input:
+      failure_rate: 500
+    expect:
+      verdict: UNKNOWN
+      deploy: false
+      block: true
+  - input: {}
+    expect:
+      verdict: UNKNOWN
+      deploy: false
+      block: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - block
+    - deploy
+    - verdict
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

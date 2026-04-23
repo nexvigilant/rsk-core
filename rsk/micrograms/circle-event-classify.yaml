@@ -1,0 +1,314 @@
+# MICROGRAM++ (upgraded 2026-04-23)
+name: circle-event-classify
+version: 0.1.0
+description: Canonicalize Circle lifecycle actions into analytics events for backend capture — routes every action to a typed event with standardized dimensions for Firestore → Pub/Sub → BigQuery → internal analytics
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Circle Event Classify
+  subtitle: Canonicalize Circle lifecycle actions into analytics events for backend capture — routes every action to a typed event with standardized dimensions for Firestore → Pub/Sub → BigQuery → internal analytics
+  icon: circle
+  route: /vigilance/mg/circle-event-classify
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/circle-event-classify
+  cli: rsk mcg run circle-event-classify
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: route_action
+  nodes:
+    route_action:
+      type: condition
+      variable: action
+      operator: eq
+      value: create
+      true_next: emit_circle_created
+      false_next: check_gate_rejected
+    check_gate_rejected:
+      type: condition
+      variable: action
+      operator: eq
+      value: gate_rejected
+      true_next: emit_gate_rejected
+      false_next: check_phase_tick
+    check_phase_tick:
+      type: condition
+      variable: action
+      operator: eq
+      value: phase_tick
+      true_next: emit_phase_advanced
+      false_next: check_violation
+    check_violation:
+      type: condition
+      variable: action
+      operator: eq
+      value: violation_detected
+      true_next: emit_violation
+      false_next: check_closure_evaluated
+    check_closure_evaluated:
+      type: condition
+      variable: action
+      operator: eq
+      value: closure_evaluated
+      true_next: emit_closure
+      false_next: check_closed
+    check_closed:
+      type: condition
+      variable: action
+      operator: eq
+      value: closed
+      true_next: emit_closed
+      false_next: check_reopened
+    check_reopened:
+      type: condition
+      variable: action
+      operator: eq
+      value: reopened
+      true_next: emit_reopened
+      false_next: check_derived_spawned
+    check_derived_spawned:
+      type: condition
+      variable: action
+      operator: eq
+      value: derived_spawned
+      true_next: emit_divergence
+      false_next: unknown_action
+    emit_circle_created:
+      type: return
+      value:
+        event_type: circle.created
+        sink_collection: circle_events
+        bigquery_table: nexvigilant_analytics.circle_events
+        pubsub_topic: nv-community-events
+        meter_type: circle_create
+        dimensions:
+          - circle_id
+          - tenant_id
+          - user_id_hash
+          - w_word
+          - primitive
+          - domain
+          - smm_phase
+          - ts
+        billable: true
+    emit_gate_rejected:
+      type: return
+      value:
+        event_type: circle.gate_rejected
+        sink_collection: circle_events
+        bigquery_table: nexvigilant_analytics.circle_events
+        pubsub_topic: nv-community-events
+        meter_type: circle_gate_reject
+        dimensions:
+          - tenant_id
+          - user_id_hash
+          - rejection_reason
+          - attempted_first_word
+          - ts
+        billable: false
+    emit_phase_advanced:
+      type: return
+      value:
+        event_type: circle.phase_advanced
+        sink_collection: circle_events
+        bigquery_table: nexvigilant_analytics.circle_events
+        pubsub_topic: nv-community-events
+        meter_type: circle_phase_tick
+        dimensions:
+          - circle_id
+          - tenant_id
+          - user_id_hash
+          - phase_from
+          - phase_to
+          - credibility_before
+          - credibility_after
+          - credibility_delta
+          - ts
+        billable: true
+    emit_violation:
+      type: return
+      value:
+        event_type: circle.violation_detected
+        sink_collection: circle_events
+        bigquery_table: nexvigilant_analytics.circle_events
+        pubsub_topic: nv-community-events
+        meter_type: circle_violation
+        dimensions:
+          - circle_id
+          - tenant_id
+          - violation_class
+          - violation_phase
+          - credibility_impact
+          - ts
+        billable: false
+    emit_closure:
+      type: return
+      value:
+        event_type: circle.closure_evaluated
+        sink_collection: circle_events
+        bigquery_table: nexvigilant_analytics.circle_events
+        pubsub_topic: nv-community-events
+        meter_type: circle_closure_check
+        dimensions:
+          - circle_id
+          - tenant_id
+          - closure_status
+          - credibility_score
+          - derived_question_count
+          - fatal_phase
+          - ts
+        billable: false
+    emit_closed:
+      type: return
+      value:
+        event_type: circle.closed
+        sink_collection: circle_events
+        bigquery_table: nexvigilant_analytics.circle_events
+        pubsub_topic: nv-community-events
+        meter_type: circle_closed
+        dimensions:
+          - circle_id
+          - tenant_id
+          - user_id_hash
+          - final_credibility_score
+          - derived_question_count
+          - age_seconds
+          - participant_count
+          - ts
+        billable: true
+    emit_reopened:
+      type: return
+      value:
+        event_type: circle.reopened
+        sink_collection: circle_events
+        bigquery_table: nexvigilant_analytics.circle_events
+        pubsub_topic: nv-community-events
+        meter_type: circle_reopened
+        dimensions:
+          - circle_id
+          - tenant_id
+          - user_id_hash
+          - reopen_reason
+          - new_tangent_post_id
+          - ts
+        billable: true
+    emit_divergence:
+      type: return
+      value:
+        event_type: circle.derived_spawned
+        sink_collection: circle_events
+        bigquery_table: nexvigilant_analytics.circle_events
+        pubsub_topic: nv-community-events
+        meter_type: circle_divergence
+        dimensions:
+          - parent_circle_id
+          - child_circle_id
+          - tenant_id
+          - user_id_hash
+          - divergence_depth
+          - ts
+        billable: true
+    unknown_action:
+      type: return
+      value:
+        event_type: circle.unknown
+        sink_collection: circle_events_dlq
+        reason: "action must be one of: create|gate_rejected|phase_tick|violation_detected|closure_evaluated|closed|reopened|derived_spawned"
+        next_action: route_to_dead_letter_queue
+tests:
+  - input:
+      action: create
+    expect:
+      event_type: circle.created
+      meter_type: circle_create
+      billable: true
+  - input:
+      action: gate_rejected
+    expect:
+      event_type: circle.gate_rejected
+      billable: false
+  - input:
+      action: phase_tick
+    expect:
+      event_type: circle.phase_advanced
+      meter_type: circle_phase_tick
+  - input:
+      action: violation_detected
+    expect:
+      event_type: circle.violation_detected
+      billable: false
+  - input:
+      action: closure_evaluated
+    expect:
+      event_type: circle.closure_evaluated
+  - input:
+      action: closed
+    expect:
+      event_type: circle.closed
+      billable: true
+  - input:
+      action: reopened
+    expect:
+      event_type: circle.reopened
+      billable: true
+  - input:
+      action: derived_spawned
+    expect:
+      event_type: circle.derived_spawned
+      meter_type: circle_divergence
+  - input:
+      action: rage_quit
+    expect:
+      event_type: circle.unknown
+      sink_collection: circle_events_dlq
+  - input: {}
+    expect:
+      event_type: circle.unknown
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

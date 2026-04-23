@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tox-endocrine
-description: 'Endocrine toxicity gate: tsh_ratio thresholds for thyroid'
 version: 0.1.0
+description: "Endocrine toxicity gate: tsh_ratio thresholds for thyroid"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Tox Endocrine
+  subtitle: "Endocrine toxicity gate: tsh_ratio thresholds for thyroid"
+  icon: circle
+  route: /vigilance/mg/tox-endocrine
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tox-endocrine
+  cli: rsk mcg run tox-endocrine
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severe
   nodes:
@@ -8,7 +37,7 @@ tree:
       type: condition
       variable: tsh_ratio
       operator: gte
-      value: 2.0
+      value: 2
       true_next: mild
       false_next: normal
     normal:
@@ -29,7 +58,7 @@ tree:
       type: condition
       variable: tsh_ratio
       operator: gte
-      value: 5.0
+      value: 5
       true_next: severe
       false_next: check_mild
     mild:
@@ -40,52 +69,82 @@ tree:
         organ: endocrine
         action: monitor_closely
 tests:
-- input:
-    tsh_ratio: 6.0
-  expect:
-    organ: endocrine
-    severity: severe
-- input:
-    tsh_ratio: 2.0
-  expect:
-    severity: mild
-    organ: endocrine
-- input:
-    tsh_ratio: 0
-  expect:
-    severity: normal
-    organ: endocrine
-- input: {}
-  expect:
-    organ: endocrine
-    severity: normal
-- input:
-    tsh_ratio: 1.999
-  expect:
-    organ: endocrine
-    severity: normal
-    target: thyroid
-    action: continue
-- input:
-    tsh_ratio: 2.001
-  expect:
-    severity: mild
-    action: monitor_closely
-    organ: endocrine
-    target: thyroid
-- input:
-    tsh_ratio: 4.999
-  expect:
-    severity: mild
-    organ: endocrine
-    target: thyroid
-    action: monitor_closely
-- input:
-    tsh_ratio: 5.001
-  expect:
-    action: discontinue
-    target: thyroid
-    severity: severe
-    organ: endocrine
-interface: null
-primitive_signature: null
+  - input:
+      tsh_ratio: 6
+    expect:
+      organ: endocrine
+      severity: severe
+  - input:
+      tsh_ratio: 2
+    expect:
+      severity: mild
+      organ: endocrine
+  - input:
+      tsh_ratio: 0
+    expect:
+      severity: normal
+      organ: endocrine
+  - input: {}
+    expect:
+      organ: endocrine
+      severity: normal
+  - input:
+      tsh_ratio: 1.999
+    expect:
+      organ: endocrine
+      severity: normal
+      target: thyroid
+      action: continue
+  - input:
+      tsh_ratio: 2.001
+    expect:
+      severity: mild
+      action: monitor_closely
+      organ: endocrine
+      target: thyroid
+  - input:
+      tsh_ratio: 4.999
+    expect:
+      severity: mild
+      organ: endocrine
+      target: thyroid
+      action: monitor_closely
+  - input:
+      tsh_ratio: 5.001
+    expect:
+      action: discontinue
+      target: thyroid
+      severity: severe
+      organ: endocrine
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

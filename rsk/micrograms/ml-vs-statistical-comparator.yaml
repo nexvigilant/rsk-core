@@ -1,10 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ml-vs-statistical-comparator
-description: 'Classify ML vs PRR agreement for a drug-event pair. Returns BOTH_SIGNAL, BOTH_NOISE, ML_ONLY, or PRR_ONLY with action routing.'
 version: 0.1.0
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ(prr, ml_prob) at ∂(thresholds) → agreement_class'
-  primes: ['κ', '∂', '→']
+description: Classify ML vs PRR agreement for a drug-event pair. Returns BOTH_SIGNAL, BOTH_NOISE, ML_ONLY, or PRR_ONLY with action routing.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: prr
+    type: float
+    required: true
+    description: ""
+  - name: ml_probability
+    type: float
+    required: true
+    description: ""
+outputs:
+  - name: agreement
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     prr:
@@ -18,9 +38,33 @@ interface:
       type: string
     action:
       type: string
-defaults:
-  prr_threshold: 2.0
-  ml_threshold: 0.5
+ui:
+  title: Ml Vs Statistical Comparator
+  subtitle: Classify ML vs PRR agreement for a drug-event pair. Returns BOTH_SIGNAL, BOTH_NOISE, ML_ONLY, or PRR_ONLY with action routing.
+  icon: circle
+  route: /vigilance/mg/ml-vs-statistical-comparator
+  steps:
+    - field: prr
+      label: prr
+      help: Enter prr
+      widget: text
+      placeholder: null
+    - field: ml_probability
+      label: ml probability
+      help: Enter ml_probability
+      widget: text
+      placeholder: null
+  result:
+    template: "agreement: {{agreement}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ml-vs-statistical-comparator
+  cli: rsk mcg run ml-vs-statistical-comparator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_prr
   nodes:
@@ -28,7 +72,7 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: prr_positive
       false_next: prr_negative
     prr_positive:
@@ -71,14 +115,64 @@ tree:
         confidence: medium
 tests:
   - name: both signal — metformin lactic acidosis
-    input: { prr: 71.6, ml_probability: 0.96 }
-    expect: { agreement: BOTH_SIGNAL, action: escalate }
+    input:
+      prr: 71.6
+      ml_probability: 0.96
+    expect:
+      agreement: BOTH_SIGNAL
+      action: escalate
   - name: both noise — metformin nausea
-    input: { prr: 1.85, ml_probability: 0.07 }
-    expect: { agreement: BOTH_NOISE, action: archive }
+    input:
+      prr: 1.85
+      ml_probability: 0.07
+    expect:
+      agreement: BOTH_NOISE
+      action: archive
   - name: prr only — semaglutide nausea
-    input: { prr: 3.95, ml_probability: 0.43 }
-    expect: { agreement: PRR_ONLY, action: deprioritize }
+    input:
+      prr: 3.95
+      ml_probability: 0.43
+    expect:
+      agreement: PRR_ONLY
+      action: deprioritize
   - name: ml only — borderline case
-    input: { prr: 1.5, ml_probability: 0.72 }
-    expect: { agreement: ML_ONLY, action: review }
+    input:
+      prr: 1.5
+      ml_probability: 0.72
+    expect:
+      agreement: ML_ONLY
+      action: review
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - agreement
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

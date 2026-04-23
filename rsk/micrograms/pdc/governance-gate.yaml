@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: governance-gate
-description: "PDC: Gate governance authority by tier — validates decision-maker competency level meets tier requirements"
 version: 0.1.0
+description: "PDC: Gate governance authority by tier — validates decision-maker competency level meets tier requirements"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: actor_level
+    type: int
+    required: false
+    description: ""
+  - name: governance_tier
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: authorized
+    type: bool
+  - name: decision_scope
+    type: string
+  - name: error
+    type: string
+  - name: gap
+    type: string
+  - name: responsibilities
+    type: string
+  - name: tier_name
+    type: string
 interface:
   inputs:
     actor_level:
@@ -22,6 +54,33 @@ interface:
       type: string
     tier_name:
       type: string
+ui:
+  title: Governance Gate
+  subtitle: "PDC: Gate governance authority by tier — validates decision-maker competency level meets tier requirements"
+  icon: circle
+  route: /vigilance/mg/governance-gate
+  steps:
+    - field: actor_level
+      label: actor level
+      help: Enter actor_level
+      widget: text
+      placeholder: null
+    - field: governance_tier
+      label: governance tier
+      help: Enter governance_tier
+      widget: text
+      placeholder: null
+  result:
+    template: "authorized: {{authorized}} — decision_scope: {{decision_scope}} — error: {{error}} — gap: {{gap}} — responsibilities: {{responsibilities}} — tier_name: {{tier_name}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/governance-gate
+  cli: rsk mcg run governance-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_tier
   nodes:
@@ -73,113 +132,151 @@ tree:
         authorized: true
         tier_name: EXECUTIVE_OVERSIGHT
         decision_scope: strategic
-        responsibilities: "vision, resource authorization, global standardization, EPA10-CPA8 oversight"
+        responsibilities: vision, resource authorization, global standardization, EPA10-CPA8 oversight
     exec_denied:
       type: return
       value:
         authorized: false
         tier_name: EXECUTIVE_OVERSIGHT
         decision_scope: strategic
-        gap: "Requires L5+ (6) or L5++ (7) behavioral anchors"
+        gap: Requires L5+ (6) or L5++ (7) behavioral anchors
     ops_authorized:
       type: return
       value:
         authorized: true
         tier_name: PROGRAM_MANAGEMENT
         decision_scope: operational
-        responsibilities: "framework coordination, quality standards, EPA10 gateway management, performance monitoring"
+        responsibilities: framework coordination, quality standards, EPA10 gateway management, performance monitoring
     ops_denied:
       type: return
       value:
         authorized: false
         tier_name: PROGRAM_MANAGEMENT
         decision_scope: operational
-        gap: "Requires L4 (4) or L5 (5) behavioral anchors"
+        gap: Requires L4 (4) or L5 (5) behavioral anchors
     tech_authorized:
       type: return
       value:
         authorized: true
         tier_name: FUNCTIONAL_EXCELLENCE
         decision_scope: technical
-        responsibilities: "behavioral anchor refinements, EPA assessment tools, AI integration, regional adaptation"
+        responsibilities: behavioral anchor refinements, EPA assessment tools, AI integration, regional adaptation
     tech_denied:
       type: return
       value:
         authorized: false
         tier_name: FUNCTIONAL_EXCELLENCE
         decision_scope: technical
-        gap: "Requires L3 (3) or L4 (4) behavioral anchors"
+        gap: Requires L3 (3) or L4 (4) behavioral anchors
     invalid_tier:
       type: return
       value:
         authorized: false
         tier_name: INVALID
-        error: "Governance tier must be 1 (Executive), 2 (Program), or 3 (Functional)"
+        error: Governance tier must be 1 (Executive), 2 (Program), or 3 (Functional)
 tests:
-- input:
-    governance_tier: 1
-    actor_level: 7
-  expect:
-    authorized: true
-    tier_name: EXECUTIVE_OVERSIGHT
-    decision_scope: strategic
-- input:
-    governance_tier: 1
-    actor_level: 6
-  expect:
-    authorized: true
-    tier_name: EXECUTIVE_OVERSIGHT
-- input:
-    governance_tier: 1
-    actor_level: 5
-  expect:
-    authorized: false
-    tier_name: EXECUTIVE_OVERSIGHT
-- input:
-    governance_tier: 2
-    actor_level: 5
-  expect:
-    authorized: true
-    tier_name: PROGRAM_MANAGEMENT
-    decision_scope: operational
-- input:
-    governance_tier: 2
-    actor_level: 4
-  expect:
-    authorized: true
-    tier_name: PROGRAM_MANAGEMENT
-- input:
-    governance_tier: 2
-    actor_level: 3
-  expect:
-    authorized: false
-    tier_name: PROGRAM_MANAGEMENT
-- input:
-    governance_tier: 3
-    actor_level: 3
-  expect:
-    authorized: true
-    tier_name: FUNCTIONAL_EXCELLENCE
-    decision_scope: technical
-- input:
-    governance_tier: 3
-    actor_level: 4
-  expect:
-    authorized: true
-    tier_name: FUNCTIONAL_EXCELLENCE
-- input:
-    governance_tier: 3
-    actor_level: 2
-  expect:
-    authorized: false
-    tier_name: FUNCTIONAL_EXCELLENCE
-- input:
-    governance_tier: 4
-    actor_level: 7
-  expect:
-    authorized: false
-    tier_name: INVALID
-- input: {}
-  expect:
-    authorized: false
-    tier_name: INVALID
+  - input:
+      governance_tier: 1
+      actor_level: 7
+    expect:
+      authorized: true
+      tier_name: EXECUTIVE_OVERSIGHT
+      decision_scope: strategic
+  - input:
+      governance_tier: 1
+      actor_level: 6
+    expect:
+      authorized: true
+      tier_name: EXECUTIVE_OVERSIGHT
+  - input:
+      governance_tier: 1
+      actor_level: 5
+    expect:
+      authorized: false
+      tier_name: EXECUTIVE_OVERSIGHT
+  - input:
+      governance_tier: 2
+      actor_level: 5
+    expect:
+      authorized: true
+      tier_name: PROGRAM_MANAGEMENT
+      decision_scope: operational
+  - input:
+      governance_tier: 2
+      actor_level: 4
+    expect:
+      authorized: true
+      tier_name: PROGRAM_MANAGEMENT
+  - input:
+      governance_tier: 2
+      actor_level: 3
+    expect:
+      authorized: false
+      tier_name: PROGRAM_MANAGEMENT
+  - input:
+      governance_tier: 3
+      actor_level: 3
+    expect:
+      authorized: true
+      tier_name: FUNCTIONAL_EXCELLENCE
+      decision_scope: technical
+  - input:
+      governance_tier: 3
+      actor_level: 4
+    expect:
+      authorized: true
+      tier_name: FUNCTIONAL_EXCELLENCE
+  - input:
+      governance_tier: 3
+      actor_level: 2
+    expect:
+      authorized: false
+      tier_name: FUNCTIONAL_EXCELLENCE
+  - input:
+      governance_tier: 4
+      actor_level: 7
+    expect:
+      authorized: false
+      tier_name: INVALID
+  - input: {}
+    expect:
+      authorized: false
+      tier_name: INVALID
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - authorized
+    - decision_scope
+    - error
+    - gap
+    - responsibilities
+    - tier_name
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

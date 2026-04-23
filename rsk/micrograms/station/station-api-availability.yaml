@@ -1,23 +1,78 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-api-availability
-description: 'Classify API availability: live proxy vs stub vs unknown'
 version: 0.1.0
+description: "Classify API availability: live proxy vs stub vs unknown"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: domain
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: availability
+    type: string
+  - name: proxy_script
+    type: string
+interface:
+  inputs:
+    domain:
+      type: string
+      required: false
+  outputs:
+    availability:
+      type: string
+      required: false
+    proxy_script:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Station Api Availability
+  subtitle: "Classify API availability: live proxy vs stub vs unknown"
+  icon: circle
+  route: /vigilance/mg/station-api-availability
+  steps:
+    - field: domain
+      label: domain
+      help: Enter domain
+      widget: text
+      placeholder: null
+  result:
+    template: "availability: {{availability}} — proxy_script: {{proxy_script}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-api-availability
+  cli: rsk mcg run station-api-availability
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_live_fda
   nodes:
     return_stub_eudravigilance:
       type: return
       value:
-        proxy_script: ''
+        proxy_script: ""
         availability: stub
     return_stub_cioms:
       type: return
       value:
         availability: stub
-        proxy_script: ''
+        proxy_script: ""
     return_stub_meddra:
       type: return
       value:
-        proxy_script: ''
+        proxy_script: ""
         availability: stub
     check_stub_drugbank:
       type: condition
@@ -58,7 +113,7 @@ tree:
       type: return
       value:
         availability: stub
-        proxy_script: ''
+        proxy_script: ""
     return_live_fda:
       type: return
       value:
@@ -67,7 +122,7 @@ tree:
     return_stub_ema:
       type: return
       value:
-        proxy_script: ''
+        proxy_script: ""
         availability: stub
     check_stub_eudravigilance:
       type: condition
@@ -99,7 +154,7 @@ tree:
       type: return
       value:
         availability: stub
-        proxy_script: ''
+        proxy_script: ""
     check_live_rxnav:
       type: condition
       variable: domain
@@ -111,11 +166,11 @@ tree:
       type: return
       value:
         availability: stub
-        proxy_script: ''
+        proxy_script: ""
     return_stub_who_umc:
       type: return
       value:
-        proxy_script: ''
+        proxy_script: ""
         availability: stub
     check_live_fda:
       type: condition
@@ -128,7 +183,7 @@ tree:
       type: return
       value:
         availability: stub
-        proxy_script: ''
+        proxy_script: ""
     return_live_rxnav:
       type: return
       value:
@@ -137,7 +192,7 @@ tree:
     return_stub_openvigilfrance:
       type: return
       value:
-        proxy_script: ''
+        proxy_script: ""
         availability: stub
     check_stub_openvigilfrance:
       type: condition
@@ -150,7 +205,7 @@ tree:
       type: return
       value:
         availability: unknown
-        proxy_script: ''
+        proxy_script: ""
     return_live_dailymed:
       type: return
       value:
@@ -190,100 +245,121 @@ tree:
       true_next: return_stub_accessdata
       false_next: check_stub_who_umc
 tests:
-- input:
-    domain: ''
-  expect:
-    availability: unknown
-    proxy_script: ''
-- input:
-    domain: accessdata.fda.gov
-  expect:
-    availability: stub
-    proxy_script: ''
-- input:
-    domain: api.fda.gov
-  expect:
-    proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-fda.sh
-    availability: live
-- input:
-    domain: cioms.ch
-  expect:
-    availability: stub
-    proxy_script: ''
-- input:
-    domain: clinicaltrials.gov
-  expect:
-    availability: live
-    proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-clinicaltrials.sh
-- input:
-    domain: dailymed.nlm.nih.gov
-  expect:
-    proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-dailymed.sh
-    availability: live
-- input:
-    domain: drugbank.com
-  expect:
-    availability: stub
-    proxy_script: ''
-- input:
-    domain: ema.europa.eu
-  expect:
-    proxy_script: ''
-    availability: stub
-- input:
-    domain: eudravigilance.ema.europa.eu
-  expect:
-    proxy_script: ''
-    availability: stub
-- input:
-    domain: ich.org
-  expect:
-    availability: stub
-    proxy_script: ''
-- input:
-    domain: meddra.org
-  expect:
-    proxy_script: ''
-    availability: stub
-- input:
-    domain: openvigilfrance.fr
-  expect:
-    proxy_script: ''
-    availability: stub
-- input:
-    domain: pubmed.ncbi.nlm.nih.gov
-  expect:
-    availability: live
-    proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-pubmed.sh
-- input:
-    domain: rxnav.nlm.nih.gov
-  expect:
-    availability: live
-    proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-rxnav.sh
-- input:
-    domain: vigiaccess.org
-  expect:
-    availability: stub
-    proxy_script: ''
-- input:
-    domain: who-umc.org
-  expect:
-    proxy_script: ''
-    availability: stub
-- input: {}
-  expect:
-    availability: unknown
-    proxy_script: ''
-interface:
-  inputs:
-    domain:
-      type: string
-      required: false
-  outputs:
-    availability:
-      type: string
-      required: false
-    proxy_script:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      domain: ""
+    expect:
+      availability: unknown
+      proxy_script: ""
+  - input:
+      domain: accessdata.fda.gov
+    expect:
+      availability: stub
+      proxy_script: ""
+  - input:
+      domain: api.fda.gov
+    expect:
+      proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-fda.sh
+      availability: live
+  - input:
+      domain: cioms.ch
+    expect:
+      availability: stub
+      proxy_script: ""
+  - input:
+      domain: clinicaltrials.gov
+    expect:
+      availability: live
+      proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-clinicaltrials.sh
+  - input:
+      domain: dailymed.nlm.nih.gov
+    expect:
+      proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-dailymed.sh
+      availability: live
+  - input:
+      domain: drugbank.com
+    expect:
+      availability: stub
+      proxy_script: ""
+  - input:
+      domain: ema.europa.eu
+    expect:
+      proxy_script: ""
+      availability: stub
+  - input:
+      domain: eudravigilance.ema.europa.eu
+    expect:
+      proxy_script: ""
+      availability: stub
+  - input:
+      domain: ich.org
+    expect:
+      availability: stub
+      proxy_script: ""
+  - input:
+      domain: meddra.org
+    expect:
+      proxy_script: ""
+      availability: stub
+  - input:
+      domain: openvigilfrance.fr
+    expect:
+      proxy_script: ""
+      availability: stub
+  - input:
+      domain: pubmed.ncbi.nlm.nih.gov
+    expect:
+      availability: live
+      proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-pubmed.sh
+  - input:
+      domain: rxnav.nlm.nih.gov
+    expect:
+      availability: live
+      proxy_script: ~/Projects/nexcore-wksp/nexcore-api/proxy-rxnav.sh
+  - input:
+      domain: vigiaccess.org
+    expect:
+      availability: stub
+      proxy_script: ""
+  - input:
+      domain: who-umc.org
+    expect:
+      proxy_script: ""
+      availability: stub
+  - input: {}
+    expect:
+      availability: unknown
+      proxy_script: ""
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - availability
+    - proxy_script
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

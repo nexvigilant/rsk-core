@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: community-vitals
-description: 'Loop 1 FlywheelVitals: Community value network health. Produces the force_ratio input for rim-integrity. tensile_strength = switching_cost + identity_score + value_density. centrifugal_force = churn_rate * alternatives_count. force_ratio = tensile/centrifugal. Spec §3.1: binary failure mode — holds perfectly until it does not.'
 version: 0.1.0
+description: "Loop 1 FlywheelVitals: Community value network health. Produces the force_ratio input for rim-integrity. tensile_strength = switching_cost + identity_score + value_density. centrifugal_force = churn_rate * alternatives_count. force_ratio = tensile/centrifugal. Spec §3.1: binary failure mode — holds perfectly until it does not."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: switching_cost
+    type: float
+    required: true
+    description: ""
+  - name: identity_score
+    type: float
+    required: true
+    description: ""
+  - name: value_density
+    type: float
+    required: true
+    description: ""
+  - name: churn_rate
+    type: float
+    required: true
+    description: ""
+  - name: alternatives_count
+    type: int
+    required: true
+    description: ""
+  - name: force_ratio
+    type: float
+    required: true
+    description: ""
+outputs:
+  - name: rim_health
+    type: string
+  - name: tensile_class
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
     switching_cost:
@@ -28,6 +70,53 @@ interface:
       type: string
     action:
       type: string
+ui:
+  title: Community Vitals
+  subtitle: "Loop 1 FlywheelVitals: Community value network health. Produces the force_ratio input for rim-integrity. tensile_strength = switching_cost + identity_score + value_density. centrifugal_force = churn_rate * alternatives_count. force_ratio = tensile/centrifugal. Spec §3.1: binary failure mode — holds perfectly until it does not."
+  icon: circle
+  route: /vigilance/mg/community-vitals
+  steps:
+    - field: switching_cost
+      label: switching cost
+      help: Enter switching_cost
+      widget: text
+      placeholder: null
+    - field: identity_score
+      label: identity score
+      help: Enter identity_score
+      widget: text
+      placeholder: null
+    - field: value_density
+      label: value density
+      help: Enter value_density
+      widget: text
+      placeholder: null
+    - field: churn_rate
+      label: churn rate
+      help: Enter churn_rate
+      widget: text
+      placeholder: null
+    - field: alternatives_count
+      label: alternatives count
+      help: Enter alternatives_count
+      widget: text
+      placeholder: null
+    - field: force_ratio
+      label: force ratio
+      help: Enter force_ratio
+      widget: text
+      placeholder: null
+  result:
+    template: "rim_health: {{rim_health}} — tensile_class: {{tensile_class}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/community-vitals
+  cli: rsk mcg run community-vitals
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_force_ratio_high
   nodes:
@@ -35,7 +124,7 @@ tree:
       type: condition
       variable: force_ratio
       operator: gte
-      value: 2.0
+      value: 2
       true_next: strong
       false_next: check_force_ratio_healthy
     check_force_ratio_healthy:
@@ -90,114 +179,142 @@ tree:
         tensile_class: no_moat
         action: rebuild_from_core
 tests:
-# STRONG: deep moat
-- input:
-    switching_cost: 80.0
-    identity_score: 60.0
-    value_density: 70.0
-    churn_rate: 5.0
-    alternatives_count: 3
-    force_ratio: 3.5
-  expect:
-    rim_health: STRONG
-    tensile_class: high_moat
-    action: expand_radius
-# HEALTHY: comfortable margin
-- input:
-    switching_cost: 50.0
-    identity_score: 30.0
-    value_density: 40.0
-    churn_rate: 10.0
-    alternatives_count: 5
-    force_ratio: 1.5
-  expect:
-    rim_health: HEALTHY
-    tensile_class: adequate
-    action: maintain_density
-# AT_RISK: at the yield zone boundary
-- input:
-    switching_cost: 30.0
-    identity_score: 20.0
-    value_density: 25.0
-    churn_rate: 15.0
-    alternatives_count: 5
-    force_ratio: 1.0
-  expect:
-    rim_health: AT_RISK
-    tensile_class: yield_zone
-    action: increase_switching_cost
-# ERODING: below yield but some value remains
-- input:
-    switching_cost: 10.0
-    identity_score: 10.0
-    value_density: 0.5
-    churn_rate: 20.0
-    alternatives_count: 8
-    force_ratio: 0.5
-  expect:
-    rim_health: ERODING
-    tensile_class: below_yield
-    action: urgent_value_injection
-# HOLLOW: no moat, no value
-- input:
-    switching_cost: 5.0
-    identity_score: 2.0
-    value_density: 0.1
-    churn_rate: 30.0
-    alternatives_count: 10
-    force_ratio: 0.3
-  expect:
-    rim_health: HOLLOW
-    tensile_class: no_moat
-    action: rebuild_from_core
-# Edge: force_ratio exactly at boundaries
-- input:
-    switching_cost: 40.0
-    identity_score: 30.0
-    value_density: 30.0
-    churn_rate: 10.0
-    alternatives_count: 5
-    force_ratio: 2.0
-  expect:
-    rim_health: STRONG
-    tensile_class: high_moat
-    action: expand_radius
-- input:
-    switching_cost: 30.0
-    identity_score: 20.0
-    value_density: 25.0
-    churn_rate: 15.0
-    alternatives_count: 5
-    force_ratio: 1.1
-  expect:
-    rim_health: HEALTHY
-    tensile_class: adequate
-    action: maintain_density
-- input:
-    switching_cost: 20.0
-    identity_score: 15.0
-    value_density: 15.0
-    churn_rate: 20.0
-    alternatives_count: 5
-    force_ratio: 0.9
-  expect:
-    rim_health: AT_RISK
-    tensile_class: yield_zone
-    action: increase_switching_cost
-# Edge: zero alternatives (no competition)
-- input:
-    switching_cost: 10.0
-    identity_score: 10.0
-    value_density: 10.0
-    churn_rate: 0.0
-    alternatives_count: 0
-    force_ratio: 10.0
-  expect:
-    rim_health: STRONG
-    tensile_class: high_moat
-    action: expand_radius
-- input: {}
-  expect:
-    action: rebuild_from_core
-    rim_health: HOLLOW
-    tensile_class: no_moat
+  - input:
+      switching_cost: 80
+      identity_score: 60
+      value_density: 70
+      churn_rate: 5
+      alternatives_count: 3
+      force_ratio: 3.5
+    expect:
+      rim_health: STRONG
+      tensile_class: high_moat
+      action: expand_radius
+  - input:
+      switching_cost: 50
+      identity_score: 30
+      value_density: 40
+      churn_rate: 10
+      alternatives_count: 5
+      force_ratio: 1.5
+    expect:
+      rim_health: HEALTHY
+      tensile_class: adequate
+      action: maintain_density
+  - input:
+      switching_cost: 30
+      identity_score: 20
+      value_density: 25
+      churn_rate: 15
+      alternatives_count: 5
+      force_ratio: 1
+    expect:
+      rim_health: AT_RISK
+      tensile_class: yield_zone
+      action: increase_switching_cost
+  - input:
+      switching_cost: 10
+      identity_score: 10
+      value_density: 0.5
+      churn_rate: 20
+      alternatives_count: 8
+      force_ratio: 0.5
+    expect:
+      rim_health: ERODING
+      tensile_class: below_yield
+      action: urgent_value_injection
+  - input:
+      switching_cost: 5
+      identity_score: 2
+      value_density: 0.1
+      churn_rate: 30
+      alternatives_count: 10
+      force_ratio: 0.3
+    expect:
+      rim_health: HOLLOW
+      tensile_class: no_moat
+      action: rebuild_from_core
+  - input:
+      switching_cost: 40
+      identity_score: 30
+      value_density: 30
+      churn_rate: 10
+      alternatives_count: 5
+      force_ratio: 2
+    expect:
+      rim_health: STRONG
+      tensile_class: high_moat
+      action: expand_radius
+  - input:
+      switching_cost: 30
+      identity_score: 20
+      value_density: 25
+      churn_rate: 15
+      alternatives_count: 5
+      force_ratio: 1.1
+    expect:
+      rim_health: HEALTHY
+      tensile_class: adequate
+      action: maintain_density
+  - input:
+      switching_cost: 20
+      identity_score: 15
+      value_density: 15
+      churn_rate: 20
+      alternatives_count: 5
+      force_ratio: 0.9
+    expect:
+      rim_health: AT_RISK
+      tensile_class: yield_zone
+      action: increase_switching_cost
+  - input:
+      switching_cost: 10
+      identity_score: 10
+      value_density: 10
+      churn_rate: 0
+      alternatives_count: 0
+      force_ratio: 10
+    expect:
+      rim_health: STRONG
+      tensile_class: high_moat
+      action: expand_radius
+  - input: {}
+    expect:
+      action: rebuild_from_core
+      rim_health: HOLLOW
+      tensile_class: no_moat
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - rim_health
+    - tensile_class
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

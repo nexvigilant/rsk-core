@@ -1,6 +1,60 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: br-framework
-description: "Domain 10: Route to benefit-risk assessment framework by complexity, stakeholder needs, and quantitative requirement."
 version: 0.1.0
+description: "Domain 10: Route to benefit-risk assessment framework by complexity, stakeholder needs, and quantitative requirement."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: complexity
+    type: string
+    required: false
+    description: ""
+  - name: is_regulatory_submission
+    type: bool
+    required: false
+    description: ""
+  - name: multiple_criteria
+    type: bool
+    required: false
+    description: ""
+  - name: needs_economic
+    type: bool
+    required: false
+    description: ""
+  - name: needs_quantitative
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: ai_assist
+    type: string
+  - name: approach
+    type: string
+  - name: best_for
+    type: string
+  - name: framework
+    type: string
+  - name: limitations
+    type: string
+  - name: method
+    type: string
+  - name: metrics
+    type: string
+  - name: name
+    type: string
+  - name: nexcore_tool
+    type: string
+  - name: steps
+    type: string
+  - name: strengths
+    type: string
 interface:
   inputs:
     complexity:
@@ -41,6 +95,48 @@ interface:
       type: string
     strengths:
       type: string
+ui:
+  title: Br Framework
+  subtitle: "Domain 10: Route to benefit-risk assessment framework by complexity, stakeholder needs, and quantitative requirement."
+  icon: circle
+  route: /vigilance/mg/br-framework
+  steps:
+    - field: complexity
+      label: complexity
+      help: Enter complexity
+      widget: text
+      placeholder: null
+    - field: is_regulatory_submission
+      label: is regulatory submission
+      help: Enter is_regulatory_submission
+      widget: toggle
+      placeholder: null
+    - field: multiple_criteria
+      label: multiple criteria
+      help: Enter multiple_criteria
+      widget: toggle
+      placeholder: null
+    - field: needs_economic
+      label: needs economic
+      help: Enter needs_economic
+      widget: toggle
+      placeholder: null
+    - field: needs_quantitative
+      label: needs quantitative
+      help: Enter needs_quantitative
+      widget: toggle
+      placeholder: null
+  result:
+    template: "ai_assist: {{ai_assist}} — approach: {{approach}} — best_for: {{best_for}} — framework: {{framework}} — limitations: {{limitations}} — method: {{method}} — metrics: {{metrics}} — name: {{name}} — nexcore_tool: {{nexcore_tool}} — steps: {{steps}} — strengths: {{strengths}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/br-framework
+  cli: rsk mcg run br-framework
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_quantitative
   nodes:
@@ -83,104 +179,147 @@ tree:
       type: return
       value:
         framework: MCDA
-        name: "Multi-Criteria Decision Analysis"
+        name: Multi-Criteria Decision Analysis
         approach: quantitative
-        method: "weight criteria, score options, calculate weighted sums, sensitivity analysis"
-        strengths: "transparent weighting, stakeholder preferences explicit, handles multiple outcomes"
-        best_for: "complex decisions with multiple benefits and risks, diverse stakeholder priorities"
-        ai_assist: "preference elicitation optimization, sensitivity analysis automation, visualization"
-        nexcore_tool: "nexcore-qbr MCDA module"
+        method: weight criteria, score options, calculate weighted sums, sensitivity analysis
+        strengths: transparent weighting, stakeholder preferences explicit, handles multiple outcomes
+        best_for: complex decisions with multiple benefits and risks, diverse stakeholder priorities
+        ai_assist: preference elicitation optimization, sensitivity analysis automation, visualization
+        nexcore_tool: nexcore-qbr MCDA module
     health_economic:
       type: return
       value:
         framework: HEALTH_ECONOMIC
-        name: "Health Economic Assessment (QALY/DALY/ICER)"
+        name: Health Economic Assessment (QALY/DALY/ICER)
         approach: quantitative
-        method: "calculate QALYs gained vs lost, determine ICER, compare to willingness-to-pay threshold"
-        metrics: "QALY, DALY, NNT, NNH, ICER"
-        strengths: "standardized metrics, policy-relevant, comparability across interventions"
-        best_for: "formulary decisions, HTA submissions, payer negotiations"
-        ai_assist: "Markov modeling, Monte Carlo simulation, budget impact automation"
+        method: calculate QALYs gained vs lost, determine ICER, compare to willingness-to-pay threshold
+        metrics: QALY, DALY, NNT, NNH, ICER
+        strengths: standardized metrics, policy-relevant, comparability across interventions
+        best_for: formulary decisions, HTA submissions, payer negotiations
+        ai_assist: Markov modeling, Monte Carlo simulation, budget impact automation
     nnt_nnh:
       type: return
       value:
         framework: NNT_NNH
-        name: "Number Needed to Treat / Number Needed to Harm"
+        name: Number Needed to Treat / Number Needed to Harm
         approach: quantitative
-        method: "NNT = 1/ARR, NNH = 1/ARI — simple ratio of benefit vs harm probability"
-        strengths: "intuitive, clinician-friendly, directly interpretable"
-        limitations: "single outcome only, doesn't weight severity, time-dependent"
-        best_for: "clinical communication, single benefit vs single risk comparison"
-        ai_assist: "automated calculation from trial data, confidence interval computation"
-        nexcore_tool: "epi_nnt_nnh"
+        method: NNT = 1/ARR, NNH = 1/ARI — simple ratio of benefit vs harm probability
+        strengths: intuitive, clinician-friendly, directly interpretable
+        limitations: single outcome only, doesn't weight severity, time-dependent
+        best_for: clinical communication, single benefit vs single risk comparison
+        ai_assist: automated calculation from trial data, confidence interval computation
+        nexcore_tool: epi_nnt_nnh
     brat:
       type: return
       value:
         framework: BRAT
-        name: "Benefit-Risk Action Team Framework"
+        name: Benefit-Risk Action Team Framework
         approach: structured_qualitative
-        steps: "define decision context -> identify outcomes -> source data -> customize framework -> assess trade-offs -> interpret and communicate"
-        strengths: "comprehensive, systematic, regulatory-accepted, visual outputs"
-        best_for: "complex regulatory assessments, product lifecycle decisions"
-        ai_assist: "evidence synthesis, outcome identification, forest plot generation"
+        steps: define decision context -> identify outcomes -> source data -> customize framework -> assess trade-offs -> interpret and communicate
+        strengths: comprehensive, systematic, regulatory-accepted, visual outputs
+        best_for: complex regulatory assessments, product lifecycle decisions
+        ai_assist: evidence synthesis, outcome identification, forest plot generation
     proact_url:
       type: return
       value:
         framework: PROACT_URL
-        name: "PrOACT-URL Decision Analysis"
+        name: PrOACT-URL Decision Analysis
         approach: structured_qualitative
-        steps: "Problem -> Objectives -> Alternatives -> Consequences -> Trade-offs -> Uncertainty -> Risk tolerance -> Linked decisions"
-        strengths: "systematic, handles uncertainty explicitly, links related decisions"
-        best_for: "regulatory submissions, complex therapeutic decisions with uncertainty"
-        ai_assist: "decision tree construction, scenario modeling, sensitivity analysis"
+        steps: Problem -> Objectives -> Alternatives -> Consequences -> Trade-offs -> Uncertainty -> Risk tolerance -> Linked decisions
+        strengths: systematic, handles uncertainty explicitly, links related decisions
+        best_for: regulatory submissions, complex therapeutic decisions with uncertainty
+        ai_assist: decision tree construction, scenario modeling, sensitivity analysis
     simple_framework:
       type: return
       value:
         framework: SIMPLE_BR
-        name: "Descriptive Benefit-Risk Summary"
+        name: Descriptive Benefit-Risk Summary
         approach: qualitative
-        method: "tabulate benefits vs risks, clinical judgment, narrative assessment"
-        strengths: "quick, low resource, appropriate for clear decisions"
-        best_for: "routine assessments, PSUR/PBRER sections, clear benefit-risk balance"
+        method: tabulate benefits vs risks, clinical judgment, narrative assessment
+        strengths: quick, low resource, appropriate for clear decisions
+        best_for: routine assessments, PSUR/PBRER sections, clear benefit-risk balance
 tests:
-- input:
-    needs_quantitative: true
-    multiple_criteria: true
-  expect:
-    framework: MCDA
-    approach: quantitative
-- input:
-    needs_quantitative: true
-    multiple_criteria: false
-    needs_economic: true
-  expect:
-    framework: HEALTH_ECONOMIC
-    approach: quantitative
-- input:
-    needs_quantitative: true
-    multiple_criteria: false
-    needs_economic: false
-  expect:
-    framework: NNT_NNH
-- input:
-    needs_quantitative: false
-    complexity: high
-  expect:
-    framework: BRAT
-    approach: structured_qualitative
-- input:
-    needs_quantitative: false
-    complexity: low
-    is_regulatory_submission: true
-  expect:
-    framework: PROACT_URL
-- input:
-    needs_quantitative: false
-    complexity: low
-    is_regulatory_submission: false
-  expect:
-    framework: SIMPLE_BR
-    approach: qualitative
-- input: {}
-  expect:
-    framework: SIMPLE_BR
+  - input:
+      needs_quantitative: true
+      multiple_criteria: true
+    expect:
+      framework: MCDA
+      approach: quantitative
+  - input:
+      needs_quantitative: true
+      multiple_criteria: false
+      needs_economic: true
+    expect:
+      framework: HEALTH_ECONOMIC
+      approach: quantitative
+  - input:
+      needs_quantitative: true
+      multiple_criteria: false
+      needs_economic: false
+    expect:
+      framework: NNT_NNH
+  - input:
+      needs_quantitative: false
+      complexity: high
+    expect:
+      framework: BRAT
+      approach: structured_qualitative
+  - input:
+      needs_quantitative: false
+      complexity: low
+      is_regulatory_submission: true
+    expect:
+      framework: PROACT_URL
+  - input:
+      needs_quantitative: false
+      complexity: low
+      is_regulatory_submission: false
+    expect:
+      framework: SIMPLE_BR
+      approach: qualitative
+  - input: {}
+    expect:
+      framework: SIMPLE_BR
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_assist
+    - approach
+    - best_for
+    - framework
+    - limitations
+    - method
+    - metrics
+    - name
+    - nexcore_tool
+    - steps
+    - strengths
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

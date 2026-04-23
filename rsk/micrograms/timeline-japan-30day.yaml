@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: timeline-japan-30day
-description: Japan 30-day report
 version: 0.1.0
+description: Japan 30-day report
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Timeline Japan 30day
+  subtitle: Japan 30-day report
+  icon: circle
+  route: /vigilance/mg/timeline-japan-30day
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/timeline-japan-30day
+  cli: rsk mcg run timeline-japan-30day
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -26,49 +55,79 @@ tree:
         due: true
         report_type: standard
 tests:
-- input:
-    days_to_deadline: 30
-  expect:
-    due: true
-    jurisdiction: JP
-- input: {}
-  expect:
-    jurisdiction: JP
-    due: false
-- input:
-    days_to_deadline: 0
-  expect:
-    jurisdiction: JP
-    report_type: standard
-    action: submit
-    due: true
-- input:
-    days_to_deadline: -1
-  expect:
-    report_type: standard
-    due: true
-    action: submit
-    jurisdiction: JP
-- input:
-    days_to_deadline: 29
-  expect:
-    report_type: standard
-    jurisdiction: JP
-    action: submit
-    due: true
-- input:
-    days_to_deadline: 31
-  expect:
-    jurisdiction: JP
-    action: schedule
-    report_type: standard
-    due: false
-- input:
-    days_to_deadline: 3000
-  expect:
-    jurisdiction: JP
-    due: false
-    action: schedule
-    report_type: standard
-interface: null
-primitive_signature: null
+  - input:
+      days_to_deadline: 30
+    expect:
+      due: true
+      jurisdiction: JP
+  - input: {}
+    expect:
+      jurisdiction: JP
+      due: false
+  - input:
+      days_to_deadline: 0
+    expect:
+      jurisdiction: JP
+      report_type: standard
+      action: submit
+      due: true
+  - input:
+      days_to_deadline: -1
+    expect:
+      report_type: standard
+      due: true
+      action: submit
+      jurisdiction: JP
+  - input:
+      days_to_deadline: 29
+    expect:
+      report_type: standard
+      jurisdiction: JP
+      action: submit
+      due: true
+  - input:
+      days_to_deadline: 31
+    expect:
+      jurisdiction: JP
+      action: schedule
+      report_type: standard
+      due: false
+  - input:
+      days_to_deadline: 3000
+    expect:
+      jurisdiction: JP
+      due: false
+      action: schedule
+      report_type: standard
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

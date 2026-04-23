@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: organ-immunological-safety
-description: "Immunological safety assessment. Evaluates immunosuppression, infection risk, and hypersensitivity reactions."
 version: 0.1.0
+description: Immunological safety assessment. Evaluates immunosuppression, infection risk, and hypersensitivity reactions.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Organ Immunological Safety
+  subtitle: Immunological safety assessment. Evaluates immunosuppression, infection risk, and hypersensitivity reactions.
+  icon: circle
+  route: /vigilance/mg/organ-immunological-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/organ-immunological-safety
+  cli: rsk mcg run organ-immunological-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_immunocompromised
   nodes:
@@ -18,7 +47,7 @@ tree:
         risk_level: high
         infection_risk: true
         monitoring: required
-        message: "Severely immunocompromised; additional immunosuppression contraindicated"
+        message: Severely immunocompromised; additional immunosuppression contraindicated
     check_active_infection:
       type: condition
       variable: has_active_infection
@@ -32,7 +61,7 @@ tree:
         organ: immune_system
         risk_level: critical
         contraindication: true
-        message: "Active infection; defer immunosuppressive drugs"
+        message: Active infection; defer immunosuppressive drugs
     check_hypersensitivity:
       type: condition
       variable: prior_hypersensitivity_reaction
@@ -46,7 +75,7 @@ tree:
         organ: immune_system
         risk_level: high
         anaphylaxis_risk: true
-        message: "Prior hypersensitivity; same-class drugs contraindicated"
+        message: Prior hypersensitivity; same-class drugs contraindicated
     standard_dosing:
       type: return
       value:
@@ -54,13 +83,68 @@ tree:
         risk_level: low
         baseline_immunity_assessment: recommended
 tests:
-  - input: { is_severely_immunocompromised: true, has_active_infection: false, prior_hypersensitivity_reaction: false }
-    expect: { organ: immune_system, risk_level: high, infection_risk: true }
-  - input: { is_severely_immunocompromised: false, has_active_infection: true, prior_hypersensitivity_reaction: false }
-    expect: { organ: immune_system, risk_level: critical, contraindication: true }
-  - input: { is_severely_immunocompromised: false, has_active_infection: false, prior_hypersensitivity_reaction: true }
-    expect: { organ: immune_system, risk_level: high, anaphylaxis_risk: true }
-  - input: { is_severely_immunocompromised: false, has_active_infection: false, prior_hypersensitivity_reaction: false }
-    expect: { organ: immune_system, risk_level: low }
+  - input:
+      is_severely_immunocompromised: true
+      has_active_infection: false
+      prior_hypersensitivity_reaction: false
+    expect:
+      organ: immune_system
+      risk_level: high
+      infection_risk: true
+  - input:
+      is_severely_immunocompromised: false
+      has_active_infection: true
+      prior_hypersensitivity_reaction: false
+    expect:
+      organ: immune_system
+      risk_level: critical
+      contraindication: true
+  - input:
+      is_severely_immunocompromised: false
+      has_active_infection: false
+      prior_hypersensitivity_reaction: true
+    expect:
+      organ: immune_system
+      risk_level: high
+      anaphylaxis_risk: true
+  - input:
+      is_severely_immunocompromised: false
+      has_active_infection: false
+      prior_hypersensitivity_reaction: false
+    expect:
+      organ: immune_system
+      risk_level: low
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

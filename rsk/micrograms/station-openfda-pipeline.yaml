@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-openfda-pipeline
-description: 'Triage openFDA FAERS results: classify by report count, outcome severity, and reporter type'
 version: 0.1.0
+description: "Triage openFDA FAERS results: classify by report count, outcome severity, and reporter type"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Openfda Pipeline
+  subtitle: "Triage openFDA FAERS results: classify by report count, outcome severity, and reporter type"
+  icon: circle
+  route: /vigilance/mg/station-openfda-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-openfda-pipeline
+  cli: rsk mcg run station-openfda-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_count
   nodes:
@@ -54,153 +83,183 @@ tree:
       true_next: check_death
       false_next: moderate_serious
 tests:
-- input:
-    report_count: 50
-    serious_pct: 10
-    death_count: 0
-  expect:
-    action: monitor
-    route: periodic_review
-    priority: low
-- input:
-    serious_pct: 15
-    report_count: 200
-    death_count: 1
-  expect:
-    priority: moderate
-    route: signal_validation
-    action: validate
-- input:
-    report_count: 500
-    serious_pct: 40
-    death_count: 10
-  expect:
-    priority: critical
-    action: escalate
-    route: causality_assessment
-- input:
-    serious_pct: 35
-    report_count: 300
-    death_count: 2
-  expect:
-    priority: high
-    action: investigate
-    route: signal_detection
-- input:
-    death_count: -1
-  expect:
-    action: monitor
-    priority: low
-    route: periodic_review
-    reason: Fewer than 100 FAERS reports — below detection threshold
-- input:
-    death_count: 4
-  expect:
-    priority: low
-    action: monitor
-    route: periodic_review
-    reason: Fewer than 100 FAERS reports — below detection threshold
-- input:
-    death_count: 6
-  expect:
-    action: monitor
-    priority: low
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    route: periodic_review
-- input:
-    death_count: 500
-  expect:
-    route: periodic_review
-    priority: low
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    action: monitor
-- input: {}
-  expect:
-    priority: low
-    route: periodic_review
-    action: monitor
-    reason: Fewer than 100 FAERS reports — below detection threshold
-- input:
-    report_count: 0
-  expect:
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    action: monitor
-    priority: low
-    route: periodic_review
-- input:
-    report_count: -1
-  expect:
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    action: monitor
-    priority: low
-    route: periodic_review
-- input:
-    report_count: 99
-  expect:
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    action: monitor
-    priority: low
-    route: periodic_review
-- input:
-    report_count: 101
-  expect:
-    route: signal_validation
-    action: validate
-    priority: moderate
-    reason: 100+ reports with <30% serious — monitor for trend
-- input:
-    report_count: 10000
-  expect:
-    route: signal_validation
-    reason: 100+ reports with <30% serious — monitor for trend
-    action: validate
-    priority: moderate
-- input: {}
-  expect:
-    priority: low
-    route: periodic_review
-    action: monitor
-    reason: Fewer than 100 FAERS reports — below detection threshold
-- input:
-    serious_pct: 0
-  expect:
-    action: monitor
-    priority: low
-    route: periodic_review
-    reason: Fewer than 100 FAERS reports — below detection threshold
-- input:
-    serious_pct: -1
-  expect:
-    action: monitor
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    route: periodic_review
-    priority: low
-- input:
-    serious_pct: 29
-  expect:
-    action: monitor
-    route: periodic_review
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    priority: low
-- input:
-    serious_pct: 31
-  expect:
-    priority: low
-    route: periodic_review
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    action: monitor
-- input:
-    serious_pct: 3000
-  expect:
-    action: monitor
-    priority: low
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    route: periodic_review
-- input: {}
-  expect:
-    priority: low
-    reason: Fewer than 100 FAERS reports — below detection threshold
-    action: monitor
-    route: periodic_review
-interface: null
-primitive_signature: null
+  - input:
+      report_count: 50
+      serious_pct: 10
+      death_count: 0
+    expect:
+      action: monitor
+      route: periodic_review
+      priority: low
+  - input:
+      serious_pct: 15
+      report_count: 200
+      death_count: 1
+    expect:
+      priority: moderate
+      route: signal_validation
+      action: validate
+  - input:
+      report_count: 500
+      serious_pct: 40
+      death_count: 10
+    expect:
+      priority: critical
+      action: escalate
+      route: causality_assessment
+  - input:
+      serious_pct: 35
+      report_count: 300
+      death_count: 2
+    expect:
+      priority: high
+      action: investigate
+      route: signal_detection
+  - input:
+      death_count: -1
+    expect:
+      action: monitor
+      priority: low
+      route: periodic_review
+      reason: Fewer than 100 FAERS reports — below detection threshold
+  - input:
+      death_count: 4
+    expect:
+      priority: low
+      action: monitor
+      route: periodic_review
+      reason: Fewer than 100 FAERS reports — below detection threshold
+  - input:
+      death_count: 6
+    expect:
+      action: monitor
+      priority: low
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      route: periodic_review
+  - input:
+      death_count: 500
+    expect:
+      route: periodic_review
+      priority: low
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      action: monitor
+  - input: {}
+    expect:
+      priority: low
+      route: periodic_review
+      action: monitor
+      reason: Fewer than 100 FAERS reports — below detection threshold
+  - input:
+      report_count: 0
+    expect:
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      action: monitor
+      priority: low
+      route: periodic_review
+  - input:
+      report_count: -1
+    expect:
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      action: monitor
+      priority: low
+      route: periodic_review
+  - input:
+      report_count: 99
+    expect:
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      action: monitor
+      priority: low
+      route: periodic_review
+  - input:
+      report_count: 101
+    expect:
+      route: signal_validation
+      action: validate
+      priority: moderate
+      reason: 100+ reports with <30% serious — monitor for trend
+  - input:
+      report_count: 10000
+    expect:
+      route: signal_validation
+      reason: 100+ reports with <30% serious — monitor for trend
+      action: validate
+      priority: moderate
+  - input: {}
+    expect:
+      priority: low
+      route: periodic_review
+      action: monitor
+      reason: Fewer than 100 FAERS reports — below detection threshold
+  - input:
+      serious_pct: 0
+    expect:
+      action: monitor
+      priority: low
+      route: periodic_review
+      reason: Fewer than 100 FAERS reports — below detection threshold
+  - input:
+      serious_pct: -1
+    expect:
+      action: monitor
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      route: periodic_review
+      priority: low
+  - input:
+      serious_pct: 29
+    expect:
+      action: monitor
+      route: periodic_review
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      priority: low
+  - input:
+      serious_pct: 31
+    expect:
+      priority: low
+      route: periodic_review
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      action: monitor
+  - input:
+      serious_pct: 3000
+    expect:
+      action: monitor
+      priority: low
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      route: periodic_review
+  - input: {}
+    expect:
+      priority: low
+      reason: Fewer than 100 FAERS reports — below detection threshold
+      action: monitor
+      route: periodic_review
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

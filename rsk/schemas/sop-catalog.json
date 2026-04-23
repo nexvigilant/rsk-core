@@ -1,0 +1,41 @@
+{
+  "$description": "Family → governance mapping. Consumed by mg-upgrade.mjs to populate governance.sop_ref and regulatory_ref without per-file hand-wiring.",
+  "version": "1.0.0",
+  "families": {
+    "antibody.chemistry": {
+      "sop_ref": "SOP-CHEM-001",
+      "regulatory_ref": [],
+      "harm_types": ["F"],
+      "tov_axioms": ["conservation", "decomposition"],
+      "icon": "shield"
+    },
+    "pv.signal": {
+      "sop_ref": "SOP-PV-001",
+      "regulatory_ref": ["ICH-E2E", "21CFR314.80"],
+      "harm_types": ["A", "F"],
+      "tov_axioms": ["decomposition", "conservation", "safety_manifold"],
+      "icon": "activity"
+    },
+    "pv.causality": {
+      "sop_ref": "SOP-PV-002",
+      "regulatory_ref": ["ICH-E2A", "WHO-UMC"],
+      "harm_types": ["A", "B"],
+      "tov_axioms": ["decomposition", "hierarchy"],
+      "icon": "git-branch"
+    },
+    "pv.case": {
+      "sop_ref": "SOP-PV-003",
+      "regulatory_ref": ["ICH-E2B", "ICH-E2D"],
+      "harm_types": ["A"],
+      "tov_axioms": ["conservation"],
+      "icon": "file-text"
+    },
+    "microgram.generic": {
+      "sop_ref": null,
+      "regulatory_ref": [],
+      "harm_types": [],
+      "tov_axioms": ["decomposition"],
+      "icon": "circle"
+    }
+  }
+}

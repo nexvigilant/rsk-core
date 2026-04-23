@@ -1,37 +1,68 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: kcl-field-balance
-description: "Kirchhoff's Current Law analog for chain steps — verify field conservation at each node. Fields into a step should equal fields out (in accumulate mode) or be explicitly declared as consumed. Detects silent field creation (collision) and silent field loss."
 version: 0.1.0
-primitive_signature:
-  dominant: boundary
-  expression: "N(fields_in) + N(declared_outputs) - N(collisions) = N(fields_out)"
-  primes: [boundary, quantity, state]
-  arguments:
-    - fields_in
-    - fields_out
-    - declared_outputs
-    - collisions
+description: Kirchhoff's Current Law analog for chain steps — verify field conservation at each node. Fields into a step should equal fields out (in accumulate mode) or be explicitly declared as consumed. Detects silent field creation (collision) and silent field loss.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: fields_in
+    type: int
+    required: true
+    description: Number of fields entering this step
+  - name: fields_out
+    type: int
+    required: true
+    description: Number of fields leaving this step
+  - name: declared_outputs
+    type: int
+    required: false
+    description: Number of outputs declared in this step's interface
+  - name: collisions
+    type: int
+    required: false
+    description: Number of output fields that overwrite existing fields
+  - name: accumulate_mode
+    type: bool
+    required: false
+    description: Whether the chain uses accumulate semantics
+outputs:
+  - name: kcl_valid
+    type: bool
+  - name: balance
+    type: string
+  - name: field_delta
+    type: int
+  - name: recommendation
+    type: string
 interface:
   inputs:
     fields_in:
       type: int
       required: true
-      description: "Number of fields entering this step"
+      description: Number of fields entering this step
     fields_out:
       type: int
       required: true
-      description: "Number of fields leaving this step"
+      description: Number of fields leaving this step
     declared_outputs:
       type: int
       required: false
-      description: "Number of outputs declared in this step's interface"
+      description: Number of outputs declared in this step's interface
     collisions:
       type: int
       required: false
-      description: "Number of output fields that overwrite existing fields"
+      description: Number of output fields that overwrite existing fields
     accumulate_mode:
       type: bool
       required: false
-      description: "Whether the chain uses accumulate semantics"
+      description: Whether the chain uses accumulate semantics
   outputs:
     kcl_valid:
       type: bool
@@ -41,6 +72,48 @@ interface:
       type: int
     recommendation:
       type: string
+ui:
+  title: Kcl Field Balance
+  subtitle: Kirchhoff's Current Law analog for chain steps — verify field conservation at each node. Fields into a step should equal fields out (in accumulate mode) or be explicitly declared as consumed. Detects silent field creation (collision) and silent field loss.
+  icon: circle
+  route: /vigilance/mg/kcl-field-balance
+  steps:
+    - field: fields_in
+      label: fields in
+      help: Number of fields entering this step
+      widget: text
+      placeholder: null
+    - field: fields_out
+      label: fields out
+      help: Number of fields leaving this step
+      widget: text
+      placeholder: null
+    - field: declared_outputs
+      label: declared outputs
+      help: Number of outputs declared in this step's interface
+      widget: text
+      placeholder: null
+    - field: collisions
+      label: collisions
+      help: Number of output fields that overwrite existing fields
+      widget: text
+      placeholder: null
+    - field: accumulate_mode
+      label: accumulate mode
+      help: Whether the chain uses accumulate semantics
+      widget: toggle
+      placeholder: null
+  result:
+    template: "kcl_valid: {{kcl_valid}} — balance: {{balance}} — field_delta: {{field_delta}} — recommendation: {{recommendation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/kcl-field-balance
+  cli: rsk mcg run kcl-field-balance
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_accumulate
   nodes:
@@ -51,15 +124,13 @@ tree:
       value: true
       true_next: non_accumulate
       false_next: check_loss
-
     non_accumulate:
       type: return
       value:
         kcl_valid: true
         balance: REPLACED
         field_delta: 0
-        recommendation: "Non-accumulate mode — output replaces input entirely. KCL not applicable (series circuit, not parallel)."
-
+        recommendation: Non-accumulate mode — output replaces input entirely. KCL not applicable (series circuit, not parallel).
     check_loss:
       type: condition
       variable: fields_out
@@ -67,7 +138,6 @@ tree:
       value: 1
       true_next: total_loss
       false_next: check_collision_count
-
     total_loss:
       type: return
       value:
@@ -75,7 +145,6 @@ tree:
         balance: OPEN_CIRCUIT
         field_delta: 0
         recommendation: "KCL VIOLATION — zero fields output. Open circuit: current has nowhere to go. Check step for empty return nodes."
-
     check_collision_count:
       type: condition
       variable: collisions
@@ -83,68 +152,97 @@ tree:
       value: 0
       true_next: has_collisions
       false_next: balanced
-
     has_collisions:
       type: return
       value:
         kcl_valid: false
         balance: SHORT_CIRCUIT
         recommendation: "KCL VIOLATION — field collisions detected. Short circuit: two sources driving the same node. Namespace output fields to prevent silent overwrite."
-
     balanced:
       type: return
       value:
         kcl_valid: true
         balance: BALANCED
-        recommendation: "KCL satisfied — fields conserved at this node"
-
+        recommendation: KCL satisfied — fields conserved at this node
 tests:
-- name: balanced accumulate step
-  input:
-    fields_in: 5
-    fields_out: 8
-    declared_outputs: 3
-    collisions: 0
-    accumulate_mode: true
-  expect:
-    kcl_valid: true
-    balance: BALANCED
-
-- name: collision detected — short circuit
-  input:
-    fields_in: 5
-    fields_out: 7
-    declared_outputs: 3
-    collisions: 1
-    accumulate_mode: true
-  expect:
-    kcl_valid: false
-    balance: SHORT_CIRCUIT
-
-- name: zero output — open circuit
-  input:
-    fields_in: 5
-    fields_out: 0
-    declared_outputs: 3
-    collisions: 0
-    accumulate_mode: true
-  expect:
-    kcl_valid: false
-    balance: OPEN_CIRCUIT
-
-- name: non-accumulate — KCL not applicable
-  input:
-    fields_in: 5
-    fields_out: 2
-    declared_outputs: 2
-    collisions: 0
-    accumulate_mode: false
-  expect:
-    kcl_valid: true
-    balance: REPLACED
-
-- name: null safety
-  input: {}
-  expect:
-    kcl_valid: true
-    balance: REPLACED
+  - name: balanced accumulate step
+    input:
+      fields_in: 5
+      fields_out: 8
+      declared_outputs: 3
+      collisions: 0
+      accumulate_mode: true
+    expect:
+      kcl_valid: true
+      balance: BALANCED
+  - name: collision detected — short circuit
+    input:
+      fields_in: 5
+      fields_out: 7
+      declared_outputs: 3
+      collisions: 1
+      accumulate_mode: true
+    expect:
+      kcl_valid: false
+      balance: SHORT_CIRCUIT
+  - name: zero output — open circuit
+    input:
+      fields_in: 5
+      fields_out: 0
+      declared_outputs: 3
+      collisions: 0
+      accumulate_mode: true
+    expect:
+      kcl_valid: false
+      balance: OPEN_CIRCUIT
+  - name: non-accumulate — KCL not applicable
+    input:
+      fields_in: 5
+      fields_out: 2
+      declared_outputs: 2
+      collisions: 0
+      accumulate_mode: false
+    expect:
+      kcl_valid: true
+      balance: REPLACED
+  - name: null safety
+    input: {}
+    expect:
+      kcl_valid: true
+      balance: REPLACED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - kcl_valid
+    - balance
+    - field_delta
+    - recommendation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

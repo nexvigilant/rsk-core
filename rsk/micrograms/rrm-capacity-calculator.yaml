@@ -1,6 +1,56 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: rrm-capacity-calculator
-description: "Railway Reference Model capacity calculator. Computes system throughput from headway components using the railway capacity formula: capacity = 3600 / headway_seconds. Headway decomposes into braking distance, sighting distance, safety margin, and block length. Maps to PV throughput: cases processed per hour given review constraints."
 version: 0.1.0
+description: "Railway Reference Model capacity calculator. Computes system throughput from headway components using the railway capacity formula: capacity = 3600 / headway_seconds. Headway decomposes into braking distance, sighting distance, safety margin, and block length. Maps to PV throughput: cases processed per hour given review constraints."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: headway_seconds
+    type: float
+    required: false
+    description: ""
+  - name: braking_distance_seconds
+    type: float
+    required: false
+    description: ""
+  - name: sighting_distance_seconds
+    type: float
+    required: false
+    description: ""
+  - name: safety_margin_seconds
+    type: float
+    required: false
+    description: ""
+  - name: block_length_seconds
+    type: float
+    required: false
+    description: ""
+  - name: monitoring_level
+    type: int
+    required: false
+    description: ""
+  - name: etcs_level
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: headway_seconds
+    type: float
+  - name: trains_per_hour
+    type: float
+  - name: capacity_class
+    type: string
+  - name: bottleneck
+    type: string
+  - name: pv_interpretation
+    type: string
 interface:
   inputs:
     headway_seconds:
@@ -36,6 +86,58 @@ interface:
     pv_interpretation:
       type: string
   aliases: {}
+ui:
+  title: Rrm Capacity Calculator
+  subtitle: "Railway Reference Model capacity calculator. Computes system throughput from headway components using the railway capacity formula: capacity = 3600 / headway_seconds. Headway decomposes into braking distance, sighting distance, safety margin, and block length. Maps to PV throughput: cases processed per hour given review constraints."
+  icon: circle
+  route: /vigilance/mg/rrm-capacity-calculator
+  steps:
+    - field: headway_seconds
+      label: headway seconds
+      help: Enter headway_seconds
+      widget: text
+      placeholder: null
+    - field: braking_distance_seconds
+      label: braking distance seconds
+      help: Enter braking_distance_seconds
+      widget: text
+      placeholder: null
+    - field: sighting_distance_seconds
+      label: sighting distance seconds
+      help: Enter sighting_distance_seconds
+      widget: text
+      placeholder: null
+    - field: safety_margin_seconds
+      label: safety margin seconds
+      help: Enter safety_margin_seconds
+      widget: text
+      placeholder: null
+    - field: block_length_seconds
+      label: block length seconds
+      help: Enter block_length_seconds
+      widget: text
+      placeholder: null
+    - field: monitoring_level
+      label: monitoring level
+      help: Enter monitoring_level
+      widget: text
+      placeholder: null
+    - field: etcs_level
+      label: etcs level
+      help: Enter etcs_level
+      widget: text
+      placeholder: null
+  result:
+    template: "headway_seconds: {{headway_seconds}} — trains_per_hour: {{trains_per_hour}} — capacity_class: {{capacity_class}} — bottleneck: {{bottleneck}} — pv_interpretation: {{pv_interpretation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/rrm-capacity-calculator
+  cli: rsk mcg run rrm-capacity-calculator
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_direct_headway
   nodes:
@@ -155,160 +257,192 @@ tree:
       type: return
       value:
         headway_seconds: 360
-        trains_per_hour: 10.0
-        capacity_class: "Very Low"
-        bottleneck: "Excessive headway — time-interval operation"
-        pv_interpretation: "Less than 10 cases/hour — manual review with no automation, spontaneous reporting only"
+        trains_per_hour: 10
+        capacity_class: Very Low
+        bottleneck: Excessive headway — time-interval operation
+        pv_interpretation: Less than 10 cases/hour — manual review with no automation, spontaneous reporting only
     low_capacity_direct:
       type: return
       value:
         headway_seconds: 240
-        trains_per_hour: 15.0
-        capacity_class: "Low"
-        bottleneck: "Long headway — limited by sighting or safety margin"
-        pv_interpretation: "15 cases/hour — periodic batch review with basic triage"
+        trains_per_hour: 15
+        capacity_class: Low
+        bottleneck: Long headway — limited by sighting or safety margin
+        pv_interpretation: 15 cases/hour — periodic batch review with basic triage
     moderate_capacity_direct:
       type: return
       value:
         headway_seconds: 120
-        trains_per_hour: 30.0
-        capacity_class: "Moderate"
-        bottleneck: "Standard headway — balanced braking and block length"
-        pv_interpretation: "30 cases/hour — structured ICSR processing with automated pre-screening"
+        trains_per_hour: 30
+        capacity_class: Moderate
+        bottleneck: Standard headway — balanced braking and block length
+        pv_interpretation: 30 cases/hour — structured ICSR processing with automated pre-screening
     high_capacity_direct:
       type: return
       value:
         headway_seconds: 90
-        trains_per_hour: 40.0
-        capacity_class: "High"
-        bottleneck: "Short headway — requires continuous supervision"
-        pv_interpretation: "40+ cases/hour — real-time streaming with automated signal detection"
+        trains_per_hour: 40
+        capacity_class: High
+        bottleneck: Short headway — requires continuous supervision
+        pv_interpretation: 40+ cases/hour — real-time streaming with automated signal detection
     high_headway:
       type: return
       value:
         headway_seconds: 300
-        trains_per_hour: 12.0
-        capacity_class: "Low"
-        bottleneck: "Braking distance dominates — heavy trains or steep gradients"
-        pv_interpretation: "12 cases/hour — complex cases requiring extended causality assessment (Naranjo full)"
+        trains_per_hour: 12
+        capacity_class: Low
+        bottleneck: Braking distance dominates — heavy trains or steep gradients
+        pv_interpretation: 12 cases/hour — complex cases requiring extended causality assessment (Naranjo full)
     moderate_headway:
       type: return
       value:
         headway_seconds: 150
-        trains_per_hour: 24.0
-        capacity_class: "Moderate"
-        bottleneck: "Braking distance significant but manageable"
-        pv_interpretation: "24 cases/hour — standard ICSR processing with automated seriousness classification"
+        trains_per_hour: 24
+        capacity_class: Moderate
+        bottleneck: Braking distance significant but manageable
+        pv_interpretation: 24 cases/hour — standard ICSR processing with automated seriousness classification
     low_headway:
       type: return
       value:
         headway_seconds: 90
-        trains_per_hour: 40.0
-        capacity_class: "High"
-        bottleneck: "Short braking distance — light vehicles or flat terrain"
-        pv_interpretation: "40 cases/hour — rapid triage with ML-assisted coding"
+        trains_per_hour: 40
+        capacity_class: High
+        bottleneck: Short braking distance — light vehicles or flat terrain
+        pv_interpretation: 40 cases/hour — rapid triage with ML-assisted coding
     level_3_capacity:
       type: return
       value:
         headway_seconds: 60
-        trains_per_hour: 60.0
-        capacity_class: "Maximum"
-        bottleneck: "Moving block — headway shrinks to braking distance"
-        pv_interpretation: "60+ cases/hour — predictive PV with dynamic thresholds, no fixed review intervals"
+        trains_per_hour: 60
+        capacity_class: Maximum
+        bottleneck: Moving block — headway shrinks to braking distance
+        pv_interpretation: 60+ cases/hour — predictive PV with dynamic thresholds, no fixed review intervals
     level_2_capacity:
       type: return
       value:
         headway_seconds: 90
-        trains_per_hour: 40.0
-        capacity_class: "High"
-        bottleneck: "Continuous supervision — fixed blocks with real-time updates"
-        pv_interpretation: "40 cases/hour — real-time FAERS monitoring with continuous signal detection"
+        trains_per_hour: 40
+        capacity_class: High
+        bottleneck: Continuous supervision — fixed blocks with real-time updates
+        pv_interpretation: 40 cases/hour — real-time FAERS monitoring with continuous signal detection
     level_1_capacity:
       type: return
       value:
         headway_seconds: 180
-        trains_per_hour: 20.0
-        capacity_class: "Moderate"
-        bottleneck: "Spot transmission — state updates only at discrete points"
-        pv_interpretation: "20 cases/hour — periodic PSUR/PBRER review at regulatory intervals"
+        trains_per_hour: 20
+        capacity_class: Moderate
+        bottleneck: Spot transmission — state updates only at discrete points
+        pv_interpretation: 20 cases/hour — periodic PSUR/PBRER review at regulatory intervals
     level_0_capacity:
       type: return
       value:
         headway_seconds: 360
-        trains_per_hour: 10.0
-        capacity_class: "Very Low"
-        bottleneck: "Time interval — no track state knowledge"
-        pv_interpretation: "10 cases/hour — spontaneous reporting only, no systematic monitoring"
+        trains_per_hour: 10
+        capacity_class: Very Low
+        bottleneck: Time interval — no track state knowledge
+        pv_interpretation: 10 cases/hour — spontaneous reporting only, no systematic monitoring
     no_input:
       type: return
       value:
         headway_seconds: 0
         trains_per_hour: 0
-        capacity_class: "Unknown"
-        bottleneck: "Insufficient input — provide headway_seconds, braking components, or monitoring_level"
-        pv_interpretation: "Cannot compute — need headway data or monitoring level"
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
+        capacity_class: Unknown
+        bottleneck: Insufficient input — provide headway_seconds, braking components, or monitoring_level
+        pv_interpretation: Cannot compute — need headway data or monitoring level
 tests:
-- input:
-    headway_seconds: 120
-  expect:
-    capacity_class: "Moderate"
-    trains_per_hour: 30.0
-- input:
-    headway_seconds: 60
-  expect:
-    capacity_class: "High"
-    trains_per_hour: 40.0
-- input:
-    headway_seconds: 400
-  expect:
-    capacity_class: "Very Low"
-    trains_per_hour: 10.0
-- input:
-    headway_seconds: 200
-  expect:
-    capacity_class: "Low"
-    trains_per_hour: 15.0
-- input:
-    braking_distance_seconds: 150
-  expect:
-    capacity_class: "Low"
-    bottleneck: "Braking distance dominates — heavy trains or steep gradients"
-- input:
-    braking_distance_seconds: 80
-  expect:
-    capacity_class: "Moderate"
-    trains_per_hour: 24.0
-- input:
-    braking_distance_seconds: 30
-  expect:
-    capacity_class: "High"
-    trains_per_hour: 40.0
-- input:
-    monitoring_level: 3
-  expect:
-    capacity_class: "Maximum"
-    trains_per_hour: 60.0
-- input:
-    monitoring_level: 2
-  expect:
-    capacity_class: "High"
-    trains_per_hour: 40.0
-- input:
-    monitoring_level: 1
-  expect:
-    capacity_class: "Moderate"
-    trains_per_hour: 20.0
-- input:
-    monitoring_level: 0
-  expect:
-    capacity_class: "Very Low"
-    trains_per_hour: 10.0
-- input: {}
-  expect:
-    capacity_class: "Unknown"
-    trains_per_hour: 0
+  - input:
+      headway_seconds: 120
+    expect:
+      capacity_class: Moderate
+      trains_per_hour: 30
+  - input:
+      headway_seconds: 60
+    expect:
+      capacity_class: High
+      trains_per_hour: 40
+  - input:
+      headway_seconds: 400
+    expect:
+      capacity_class: Very Low
+      trains_per_hour: 10
+  - input:
+      headway_seconds: 200
+    expect:
+      capacity_class: Low
+      trains_per_hour: 15
+  - input:
+      braking_distance_seconds: 150
+    expect:
+      capacity_class: Low
+      bottleneck: Braking distance dominates — heavy trains or steep gradients
+  - input:
+      braking_distance_seconds: 80
+    expect:
+      capacity_class: Moderate
+      trains_per_hour: 24
+  - input:
+      braking_distance_seconds: 30
+    expect:
+      capacity_class: High
+      trains_per_hour: 40
+  - input:
+      monitoring_level: 3
+    expect:
+      capacity_class: Maximum
+      trains_per_hour: 60
+  - input:
+      monitoring_level: 2
+    expect:
+      capacity_class: High
+      trains_per_hour: 40
+  - input:
+      monitoring_level: 1
+    expect:
+      capacity_class: Moderate
+      trains_per_hour: 20
+  - input:
+      monitoring_level: 0
+    expect:
+      capacity_class: Very Low
+      trains_per_hour: 10
+  - input: {}
+    expect:
+      capacity_class: Unknown
+      trains_per_hour: 0
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - headway_seconds
+    - trains_per_hour
+    - capacity_class
+    - bottleneck
+    - pv_interpretation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

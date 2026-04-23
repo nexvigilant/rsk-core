@@ -1,34 +1,103 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: config-rxnav-interaction-severity
-description: "Classify drug interaction severity from RxNav get-interactions output. Routes by interaction count and severity indicators."
 version: 0.1.0
-
+description: Classify drug interaction severity from RxNav get-interactions output. Routes by interaction count and severity indicators.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: interaction_count
+    type: int
+    required: false
+    description: Number of interactions found
+  - name: has_contraindication
+    type: bool
+    required: false
+    description: At least one interaction is a contraindication
+  - name: has_serious
+    type: bool
+    required: false
+    description: At least one interaction marked serious/major
+  - name: has_moderate
+    type: bool
+    required: false
+    description: At least one interaction marked moderate
+outputs:
+  - name: severity
+    type: string
+  - name: action
+    type: string
+  - name: requires_review
+    type: bool
 interface:
   inputs:
     interaction_count:
       type: int
       required: false
-      description: "Number of interactions found"
+      description: Number of interactions found
     has_contraindication:
       type: bool
       required: false
-      description: "At least one interaction is a contraindication"
+      description: At least one interaction is a contraindication
     has_serious:
       type: bool
       required: false
-      description: "At least one interaction marked serious/major"
+      description: At least one interaction marked serious/major
     has_moderate:
       type: bool
       required: false
-      description: "At least one interaction marked moderate"
+      description: At least one interaction marked moderate
   outputs:
     severity:
       type: string
-      description: "contraindicated, major, moderate, minor, none"
+      description: contraindicated, major, moderate, minor, none
     action:
       type: string
     requires_review:
       type: bool
-
+ui:
+  title: Config Rxnav Interaction Severity
+  subtitle: Classify drug interaction severity from RxNav get-interactions output. Routes by interaction count and severity indicators.
+  icon: circle
+  route: /vigilance/mg/config-rxnav-interaction-severity
+  steps:
+    - field: interaction_count
+      label: interaction count
+      help: Number of interactions found
+      widget: text
+      placeholder: null
+    - field: has_contraindication
+      label: has contraindication
+      help: At least one interaction is a contraindication
+      widget: toggle
+      placeholder: null
+    - field: has_serious
+      label: has serious
+      help: At least one interaction marked serious/major
+      widget: toggle
+      placeholder: null
+    - field: has_moderate
+      label: has moderate
+      help: At least one interaction marked moderate
+      widget: toggle
+      placeholder: null
+  result:
+    template: "severity: {{severity}} — action: {{action}} — requires_review: {{requires_review}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/config-rxnav-interaction-severity
+  cli: rsk mcg run config-rxnav-interaction-severity
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_any_interactions
   nodes:
@@ -38,7 +107,6 @@ tree:
       operator: is_null
       true_next: no_interactions
       false_next: check_count_zero
-
     check_count_zero:
       type: condition
       variable: interaction_count
@@ -46,7 +114,6 @@ tree:
       value: 0
       true_next: no_interactions
       false_next: check_contraindication
-
     check_contraindication:
       type: condition
       variable: has_contraindication
@@ -54,7 +121,6 @@ tree:
       value: true
       true_next: contraindicated
       false_next: check_serious
-
     check_serious:
       type: condition
       variable: has_serious
@@ -62,7 +128,6 @@ tree:
       value: true
       true_next: major_interaction
       false_next: check_moderate
-
     check_moderate:
       type: condition
       variable: has_moderate
@@ -70,47 +135,36 @@ tree:
       value: true
       true_next: moderate_interaction
       false_next: minor_interaction
-
     contraindicated:
       type: return
       value:
         severity: contraindicated
         action: do_not_combine
         requires_review: true
-
     major_interaction:
       type: return
       value:
         severity: major
         action: clinical_review_required
         requires_review: true
-
     moderate_interaction:
       type: return
       value:
         severity: moderate
         action: monitor_therapy
         requires_review: false
-
     minor_interaction:
       type: return
       value:
         severity: minor
         action: be_aware
         requires_review: false
-
     no_interactions:
       type: return
       value:
         severity: none
         action: no_action_needed
         requires_review: false
-
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
   - input:
       interaction_count: 3
@@ -121,7 +175,6 @@ tests:
       severity: contraindicated
       action: do_not_combine
       requires_review: true
-
   - input:
       interaction_count: 5
       has_contraindication: false
@@ -131,7 +184,6 @@ tests:
       severity: major
       action: clinical_review_required
       requires_review: true
-
   - input:
       interaction_count: 2
       has_contraindication: false
@@ -141,7 +193,6 @@ tests:
       severity: moderate
       action: monitor_therapy
       requires_review: false
-
   - input:
       interaction_count: 1
       has_contraindication: false
@@ -151,16 +202,49 @@ tests:
       severity: minor
       action: be_aware
       requires_review: false
-
   - input:
       interaction_count: 0
     expect:
       severity: none
       action: no_action_needed
       requires_review: false
-
   - input: {}
     expect:
       severity: none
       action: no_action_needed
       requires_review: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - severity
+    - action
+    - requires_review
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

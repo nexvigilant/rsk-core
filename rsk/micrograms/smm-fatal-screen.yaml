@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: smm-fatal-screen
-description: "First gate in SMM chain. Detects fatal violations and applies study-type-specific multipliers. Empirical fatal = FATAL_ZERO band (0.0 multiplier). Pre-empirical fatal = FATAL_FLOOR band (0.30 multiplier). No fatal = CLEAN. If study_type is null with fatal, defaults to pre-empirical path (conservative)."
 version: 0.1.0
+description: First gate in SMM chain. Detects fatal violations and applies study-type-specific multipliers. Empirical fatal = FATAL_ZERO band (0.0 multiplier). Pre-empirical fatal = FATAL_FLOOR band (0.30 multiplier). No fatal = CLEAN. If study_type is null with fatal, defaults to pre-empirical path (conservative).
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: study_type
+    type: string
+    required: false
+    description: ""
+  - name: has_fatal_violation
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: fatal_detected
+    type: bool
+  - name: score_band
+    type: string
+  - name: proceed_to_scoring
+    type: bool
+  - name: fatal_multiplier
+    type: string
+  - name: disposition_note
+    type: string
 interface:
   inputs:
     study_type:
@@ -20,6 +50,33 @@ interface:
       type: string
     disposition_note:
       type: string
+ui:
+  title: Smm Fatal Screen
+  subtitle: First gate in SMM chain. Detects fatal violations and applies study-type-specific multipliers. Empirical fatal = FATAL_ZERO band (0.0 multiplier). Pre-empirical fatal = FATAL_FLOOR band (0.30 multiplier). No fatal = CLEAN. If study_type is null with fatal, defaults to pre-empirical path (conservative).
+  icon: circle
+  route: /vigilance/mg/smm-fatal-screen
+  steps:
+    - field: study_type
+      label: study type
+      help: Enter study_type
+      widget: text
+      placeholder: null
+    - field: has_fatal_violation
+      label: has fatal violation
+      help: Enter has_fatal_violation
+      widget: toggle
+      placeholder: null
+  result:
+    template: "fatal_detected: {{fatal_detected}} — score_band: {{score_band}} — proceed_to_scoring: {{proceed_to_scoring}} — fatal_multiplier: {{fatal_multiplier}} — disposition_note: {{disposition_note}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/smm-fatal-screen
+  cli: rsk mcg run smm-fatal-screen
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fatal
   nodes:
@@ -44,7 +101,7 @@ tree:
         score_band: FATAL_ZERO
         proceed_to_scoring: false
         fatal_multiplier: "0.00"
-        disposition_note: "Fatal violation in empirical work — CS SUSPENDED. Evidence excluded pending qualified review."
+        disposition_note: Fatal violation in empirical work — CS SUSPENDED. Evidence excluded pending qualified review.
     fatal_pre_empirical:
       type: return
       value:
@@ -52,7 +109,7 @@ tree:
         score_band: FATAL_FLOOR
         proceed_to_scoring: false
         fatal_multiplier: "0.30"
-        disposition_note: "Fatal violation in pre-empirical framework — MS IMMATURE. Return to workshop for maturation."
+        disposition_note: Fatal violation in pre-empirical framework — MS IMMATURE. Return to workshop for maturation.
     clean_pass:
       type: return
       value:
@@ -60,71 +117,95 @@ tree:
         score_band: CLEAN
         proceed_to_scoring: true
         fatal_multiplier: "1.00"
-        disposition_note: "No fatal violations detected. Proceed to severity scoring."
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
+        disposition_note: No fatal violations detected. Proceed to severity scoring.
 tests:
-# Fatal + empirical = FATAL_ZERO
-- input:
-    study_type: empirical
-    has_fatal_violation: true
-  expect:
-    fatal_detected: true
-    score_band: FATAL_ZERO
-    proceed_to_scoring: false
-    fatal_multiplier: "0.00"
-# Fatal + pre-empirical = FATAL_FLOOR
-- input:
-    study_type: pre_empirical
-    has_fatal_violation: true
-  expect:
-    fatal_detected: true
-    score_band: FATAL_FLOOR
-    proceed_to_scoring: false
-    fatal_multiplier: "0.30"
-# No fatal + empirical = CLEAN
-- input:
-    study_type: empirical
-    has_fatal_violation: false
-  expect:
-    fatal_detected: false
-    score_band: CLEAN
-    proceed_to_scoring: true
-    fatal_multiplier: "1.00"
-# No fatal + pre-empirical = CLEAN with full disposition note
-- input:
-    study_type: pre_empirical
-    has_fatal_violation: false
-  expect:
-    fatal_detected: false
-    score_band: CLEAN
-    proceed_to_scoring: true
-    disposition_note: "No fatal violations detected. Proceed to severity scoring."
-# Empty input = CLEAN (no fatal detected when not specified)
-- input: {}
-  expect:
-    fatal_detected: false
-    score_band: CLEAN
-    proceed_to_scoring: true
-# Missing study_type with fatal = defaults to pre-empirical path (conservative)
-- input:
-    has_fatal_violation: true
-  expect:
-    fatal_detected: true
-    score_band: FATAL_FLOOR
-    proceed_to_scoring: false
-# Second empirical fatal (different assertion scope)
-- input:
-    study_type: empirical
-    has_fatal_violation: true
-  expect:
-    disposition_note: "Fatal violation in empirical work — CS SUSPENDED. Evidence excluded pending qualified review."
-# Second pre-empirical fatal (different assertion scope)
-- input:
-    study_type: pre_empirical
-    has_fatal_violation: true
-  expect:
-    disposition_note: "Fatal violation in pre-empirical framework — MS IMMATURE. Return to workshop for maturation."
+  - input:
+      study_type: empirical
+      has_fatal_violation: true
+    expect:
+      fatal_detected: true
+      score_band: FATAL_ZERO
+      proceed_to_scoring: false
+      fatal_multiplier: "0.00"
+  - input:
+      study_type: pre_empirical
+      has_fatal_violation: true
+    expect:
+      fatal_detected: true
+      score_band: FATAL_FLOOR
+      proceed_to_scoring: false
+      fatal_multiplier: "0.30"
+  - input:
+      study_type: empirical
+      has_fatal_violation: false
+    expect:
+      fatal_detected: false
+      score_band: CLEAN
+      proceed_to_scoring: true
+      fatal_multiplier: "1.00"
+  - input:
+      study_type: pre_empirical
+      has_fatal_violation: false
+    expect:
+      fatal_detected: false
+      score_band: CLEAN
+      proceed_to_scoring: true
+      disposition_note: No fatal violations detected. Proceed to severity scoring.
+  - input: {}
+    expect:
+      fatal_detected: false
+      score_band: CLEAN
+      proceed_to_scoring: true
+  - input:
+      has_fatal_violation: true
+    expect:
+      fatal_detected: true
+      score_band: FATAL_FLOOR
+      proceed_to_scoring: false
+  - input:
+      study_type: empirical
+      has_fatal_violation: true
+    expect:
+      disposition_note: Fatal violation in empirical work — CS SUSPENDED. Evidence excluded pending qualified review.
+  - input:
+      study_type: pre_empirical
+      has_fatal_violation: true
+    expect:
+      disposition_note: Fatal violation in pre-empirical framework — MS IMMATURE. Return to workshop for maturation.
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - fatal_detected
+    - score_band
+    - proceed_to_scoring
+    - fatal_multiplier
+    - disposition_note
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,26 +1,52 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: sota-frontier-check
-description: 'SOTA Tracker: evaluates whether a finding represents frontier movement in a PV domain based on evidence level and authority weight'
 version: 0.1.0
-primitive_signature:
-  dominant: boundary
-  expression: "∂(comparison(finding, frontier))"
-  primes: [boundary, comparison, state, threshold]
-  arguments: [domain, evidence_level, authority_weight]
-
+description: "SOTA Tracker: evaluates whether a finding represents frontier movement in a PV domain based on evidence level and authority weight"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: evidence_level
+    type: int
+    required: true
+    description: Strength of evidence (1=opinion, 2=case series, 3=observational, 4=RCT, 5=systematic review/meta-analysis)
+  - name: authority_weight
+    type: int
+    required: true
+    description: Threshold authority recognition (1=preprint, 2=peer-reviewed, 3=guideline-cited, 4=regulatory-adopted, 5=ICH/WHO standard)
+  - name: novelty_score
+    type: int
+    required: false
+    description: How novel vs current frontier (0=known, 25=incremental, 50=significant, 75=paradigm-adjacent, 100=paradigm-shift)
+outputs:
+  - name: frontier_movement
+    type: string
+  - name: severity
+    type: string
+  - name: action
+    type: string
+  - name: combined_score
+    type: int
 interface:
   inputs:
     evidence_level:
       type: int
       required: true
-      description: "Strength of evidence (1=opinion, 2=case series, 3=observational, 4=RCT, 5=systematic review/meta-analysis)"
+      description: Strength of evidence (1=opinion, 2=case series, 3=observational, 4=RCT, 5=systematic review/meta-analysis)
     authority_weight:
       type: int
       required: true
-      description: "Threshold authority recognition (1=preprint, 2=peer-reviewed, 3=guideline-cited, 4=regulatory-adopted, 5=ICH/WHO standard)"
+      description: Threshold authority recognition (1=preprint, 2=peer-reviewed, 3=guideline-cited, 4=regulatory-adopted, 5=ICH/WHO standard)
     novelty_score:
       type: int
       required: false
-      description: "How novel vs current frontier (0=known, 25=incremental, 50=significant, 75=paradigm-adjacent, 100=paradigm-shift)"
+      description: How novel vs current frontier (0=known, 25=incremental, 50=significant, 75=paradigm-adjacent, 100=paradigm-shift)
   outputs:
     frontier_movement:
       type: string
@@ -30,11 +56,41 @@ interface:
       type: string
     combined_score:
       type: int
-
+ui:
+  title: Sota Frontier Check
+  subtitle: "SOTA Tracker: evaluates whether a finding represents frontier movement in a PV domain based on evidence level and authority weight"
+  icon: circle
+  route: /vigilance/mg/sota-frontier-check
+  steps:
+    - field: evidence_level
+      label: evidence level
+      help: Strength of evidence (1=opinion, 2=case series, 3=observational, 4=RCT, 5=systematic review/meta-analysis)
+      widget: text
+      placeholder: null
+    - field: authority_weight
+      label: authority weight
+      help: Threshold authority recognition (1=preprint, 2=peer-reviewed, 3=guideline-cited, 4=regulatory-adopted, 5=ICH/WHO standard)
+      widget: text
+      placeholder: null
+    - field: novelty_score
+      label: novelty score
+      help: How novel vs current frontier (0=known, 25=incremental, 50=significant, 75=paradigm-adjacent, 100=paradigm-shift)
+      widget: text
+      placeholder: null
+  result:
+    template: "frontier_movement: {{frontier_movement}} — severity: {{severity}} — action: {{action}} — combined_score: {{combined_score}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/sota-frontier-check
+  cli: rsk mcg run sota-frontier-check
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_evidence
   nodes:
-    # Gate 1: Evidence must be at least observational (level 3+)
     check_evidence:
       type: condition
       variable: evidence_level
@@ -42,8 +98,6 @@ tree:
       value: 3
       true_next: check_authority
       false_next: insufficient_evidence
-
-    # Gate 2: Authority must be at least peer-reviewed (weight 2+)
     check_authority:
       type: condition
       variable: authority_weight
@@ -51,8 +105,6 @@ tree:
       value: 2
       true_next: check_paradigm_shift
       false_next: unrecognized_authority
-
-    # Branch: Paradigm shift detection (novelty >= 75 AND evidence >= 4 AND authority >= 4)
     check_paradigm_shift:
       type: condition
       variable: novelty_score
@@ -60,7 +112,6 @@ tree:
       value: 75
       true_next: check_paradigm_evidence
       false_next: check_significant
-
     check_paradigm_evidence:
       type: condition
       variable: evidence_level
@@ -68,7 +119,6 @@ tree:
       value: 4
       true_next: check_paradigm_authority
       false_next: check_significant
-
     check_paradigm_authority:
       type: condition
       variable: authority_weight
@@ -76,8 +126,6 @@ tree:
       value: 4
       true_next: paradigm_shift
       false_next: check_significant
-
-    # Branch: Significant frontier movement (novelty >= 50 AND evidence >= 3 AND authority >= 3)
     check_significant:
       type: condition
       variable: novelty_score
@@ -85,7 +133,6 @@ tree:
       value: 50
       true_next: check_sig_authority
       false_next: check_incremental
-
     check_sig_authority:
       type: condition
       variable: authority_weight
@@ -93,8 +140,6 @@ tree:
       value: 3
       true_next: significant_movement
       false_next: check_incremental
-
-    # Branch: Incremental advance (novelty >= 25)
     check_incremental:
       type: condition
       variable: novelty_score
@@ -102,40 +147,34 @@ tree:
       value: 25
       true_next: incremental_advance
       false_next: no_movement
-
-    # Return nodes
     paradigm_shift:
       type: return
       value:
         frontier_movement: PARADIGM_SHIFT
         severity: P0
-        action: "Immediate review — domain frontier has fundamentally moved. Update all dependent standards, retrain affected modules, notify stakeholders."
+        action: Immediate review — domain frontier has fundamentally moved. Update all dependent standards, retrain affected modules, notify stakeholders.
         combined_score: 100
-
     significant_movement:
       type: return
       value:
         frontier_movement: SIGNIFICANT
         severity: P1
-        action: "Schedule frontier review within 30 days. Evaluate whether current tools/methods need updating against new standard."
+        action: Schedule frontier review within 30 days. Evaluate whether current tools/methods need updating against new standard.
         combined_score: 75
-
     incremental_advance:
       type: return
       value:
         frontier_movement: INCREMENTAL
         severity: P2
-        action: "Log frontier advance. No immediate action required. Include in next periodic SOTA review."
+        action: Log frontier advance. No immediate action required. Include in next periodic SOTA review.
         combined_score: 40
-
     no_movement:
       type: return
       value:
         frontier_movement: NONE
         severity: NONE
-        action: "Finding is within current frontier. No SOTA drift detected."
+        action: Finding is within current frontier. No SOTA drift detected.
         combined_score: 0
-
     insufficient_evidence:
       type: return
       value:
@@ -143,17 +182,14 @@ tree:
         severity: NONE
         action: "Evidence level too low to assess frontier movement. Minimum: observational study (level 3)."
         combined_score: 0
-
     unrecognized_authority:
       type: return
       value:
         frontier_movement: UNQUALIFIED
         severity: NONE
-        action: "Finding not yet recognized by threshold authority. Monitor for peer-review acceptance."
+        action: Finding not yet recognized by threshold authority. Monitor for peer-review acceptance.
         combined_score: 0
-
 tests:
-  # Paradigm shift: systematic review + ICH standard + paradigm-level novelty
   - input:
       evidence_level: 5
       authority_weight: 5
@@ -162,8 +198,6 @@ tests:
       frontier_movement: PARADIGM_SHIFT
       severity: P0
       combined_score: 100
-
-  # Significant: observational + guideline-cited + significant novelty
   - input:
       evidence_level: 3
       authority_weight: 3
@@ -172,8 +206,6 @@ tests:
       frontier_movement: SIGNIFICANT
       severity: P1
       combined_score: 75
-
-  # Incremental: RCT + peer-reviewed + modest novelty
   - input:
       evidence_level: 4
       authority_weight: 2
@@ -182,8 +214,6 @@ tests:
       frontier_movement: INCREMENTAL
       severity: P2
       combined_score: 40
-
-  # No movement: high evidence but no novelty
   - input:
       evidence_level: 5
       authority_weight: 5
@@ -192,8 +222,6 @@ tests:
       frontier_movement: NONE
       severity: NONE
       combined_score: 0
-
-  # Insufficient evidence: opinion piece
   - input:
       evidence_level: 1
       authority_weight: 3
@@ -202,8 +230,6 @@ tests:
       frontier_movement: UNQUALIFIED
       severity: NONE
       combined_score: 0
-
-  # Unrecognized authority: preprint with high novelty
   - input:
       evidence_level: 4
       authority_weight: 1
@@ -212,15 +238,11 @@ tests:
       frontier_movement: UNQUALIFIED
       severity: NONE
       combined_score: 0
-
-  # Null safety
   - input: {}
     expect:
       frontier_movement: UNQUALIFIED
       severity: NONE
       combined_score: 0
-
-  # High novelty but low authority — blocks at gate 2
   - input:
       evidence_level: 5
       authority_weight: 1
@@ -229,8 +251,6 @@ tests:
       frontier_movement: UNQUALIFIED
       severity: NONE
       combined_score: 0
-
-  # Edge: exactly at paradigm thresholds
   - input:
       evidence_level: 4
       authority_weight: 4
@@ -239,8 +259,6 @@ tests:
       frontier_movement: PARADIGM_SHIFT
       severity: P0
       combined_score: 100
-
-  # Edge: novelty 50 but authority only 2 — falls to incremental
   - input:
       evidence_level: 3
       authority_weight: 2
@@ -249,3 +267,39 @@ tests:
       frontier_movement: INCREMENTAL
       severity: P2
       combined_score: 40
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - frontier_movement
+    - severity
+    - action
+    - combined_score
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

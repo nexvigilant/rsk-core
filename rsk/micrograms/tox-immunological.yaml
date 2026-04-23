@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: tox-immunological
-description: "Immunological toxicity: lymphocyte threshold"
 version: 0.1.0
-
+description: "Immunological toxicity: lymphocyte threshold"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Tox Immunological
+  subtitle: "Immunological toxicity: lymphocyte threshold"
+  icon: circle
+  route: /vigilance/mg/tox-immunological
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/tox-immunological
+  cli: rsk mcg run tox-immunological
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_severe
   nodes:
@@ -22,28 +50,70 @@ tree:
     severe:
       type: return
       value:
-        organ: "immunological"
-        severity: "severe"
-        action: "discontinue"
+        organ: immunological
+        severity: severe
+        action: discontinue
     mild:
       type: return
       value:
-        organ: "immunological"
-        severity: "mild"
-        action: "monitor_closely"
+        organ: immunological
+        severity: mild
+        action: monitor_closely
     normal:
       type: return
       value:
-        organ: "immunological"
-        severity: "normal"
-        action: "continue"
-
+        organ: immunological
+        severity: normal
+        action: continue
 tests:
-  - input: {lymphocyte_pct: -80}
-    expect: {severity: "severe", action: "discontinue"}
-  - input: {lymphocyte_pct: 50}
-    expect: {severity: "mild", action: "monitor_closely"}
-  - input: {lymphocyte_pct: 1050}
-    expect: {severity: "normal", action: "continue"}
+  - input:
+      lymphocyte_pct: -80
+    expect:
+      severity: severe
+      action: discontinue
+  - input:
+      lymphocyte_pct: 50
+    expect:
+      severity: mild
+      action: monitor_closely
+  - input:
+      lymphocyte_pct: 1050
+    expect:
+      severity: normal
+      action: continue
   - input: {}
-    expect: {severity: "normal", action: "continue"}
+    expect:
+      severity: normal
+      action: continue
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,66 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: dd-go-nogo-gate
-description: 'PV DD GO/NO-GO decision gate. Thresholds: ≤25 GO, ≤50 CONDITIONAL, ≤75 CAUTION, >75 NO-GO. Source: Youssef & Hammad, Drug Safety (Dec 2025)'
 version: 0.1.0
+description: "PV DD GO/NO-GO decision gate. Thresholds: ≤25 GO, ≤50 CONDITIONAL, ≤75 CAUTION, >75 NO-GO. Source: Youssef & Hammad, Drug Safety (Dec 2025)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: final_score
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: recommendation
+    type: string
+  - name: monitoring_level
+    type: string
+  - name: decision
+    type: string
+interface:
+  inputs:
+    final_score:
+      type: float
+      required: false
+  outputs:
+    recommendation:
+      type: string
+      required: false
+    monitoring_level:
+      type: string
+      required: false
+    decision:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Dd Go Nogo Gate
+  subtitle: "PV DD GO/NO-GO decision gate. Thresholds: ≤25 GO, ≤50 CONDITIONAL, ≤75 CAUTION, >75 NO-GO. Source: Youssef & Hammad, Drug Safety (Dec 2025)"
+  icon: circle
+  route: /vigilance/mg/dd-go-nogo-gate
+  steps:
+    - field: final_score
+      label: final score
+      help: Enter final_score
+      widget: text
+      placeholder: null
+  result:
+    template: "recommendation: {{recommendation}} — monitoring_level: {{monitoring_level}} — decision: {{decision}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/dd-go-nogo-gate
+  cli: rsk mcg run dd-go-nogo-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_null
   nodes:
@@ -8,7 +68,7 @@ tree:
       type: condition
       variable: final_score
       operator: lte
-      value: 25.0
+      value: 25
       true_next: go
       false_next: check_conditional
     no_go:
@@ -46,115 +106,134 @@ tree:
       type: condition
       variable: final_score
       operator: lte
-      value: 75.0
+      value: 75
       true_next: caution
       false_next: no_go
     check_conditional:
       type: condition
       variable: final_score
       operator: lte
-      value: 50.0
+      value: 50
       true_next: conditional
       false_next: check_caution
 tests:
-- input:
-    final_score: 15.0
-  expect:
-    decision: GO
-    monitoring_level: standard
-- input:
-    final_score: 25.0
-  expect:
-    decision: GO
-    monitoring_level: standard
-- input:
-    final_score: 40.0
-  expect:
-    decision: CONDITIONAL_GO
-    monitoring_level: enhanced
-- input:
-    final_score: 60.0
-  expect:
-    monitoring_level: intensive
-    decision: CAUTION
-- input:
-    final_score: 85.0
-  expect:
-    decision: NO_GO
-    monitoring_level: blocked
-- input:
-    final_score: 50.0
-  expect:
-    monitoring_level: enhanced
-    decision: CONDITIONAL_GO
-- input:
-    final_score: 75.0
-  expect:
-    decision: CAUTION
-    monitoring_level: intensive
-- input:
-    final_score: 100.0
-  expect:
-    monitoring_level: blocked
-    decision: NO_GO
-- input:
-    final_score: 0.0
-  expect:
-    monitoring_level: standard
-    decision: GO
-- input: {}
-  expect:
-    monitoring_level: standard
-    decision: GO
-- input:
-    final_score: 24.999
-  expect:
-    decision: GO
-    recommendation: Proceed with standard post-acquisition monitoring and integration
-    monitoring_level: standard
-- input:
-    final_score: 25.001
-  expect:
-    recommendation: Proceed with enhanced monitoring. Implement mitigation plans for findings within 90 days
-    monitoring_level: enhanced
-    decision: CONDITIONAL_GO
-- input:
-    final_score: 74.999
-  expect:
-    monitoring_level: intensive
-    decision: CAUTION
-    recommendation: Significant safety/compliance concerns. Detailed mitigation plan required before proceeding. Consider price adjustment
-- input:
-    final_score: 75.001
-  expect:
-    decision: NO_GO
-    monitoring_level: blocked
-    recommendation: Critical issues identified. Recommend against proceeding unless fundamental issues resolved pre-close
-- input:
-    final_score: 49.999
-  expect:
-    decision: CONDITIONAL_GO
-    monitoring_level: enhanced
-    recommendation: Proceed with enhanced monitoring. Implement mitigation plans for findings within 90 days
-- input:
-    final_score: 50.001
-  expect:
-    monitoring_level: intensive
-    recommendation: Significant safety/compliance concerns. Detailed mitigation plan required before proceeding. Consider price adjustment
-    decision: CAUTION
-interface:
-  inputs:
-    final_score:
-      type: float
-      required: false
-  outputs:
-    recommendation:
-      type: string
-      required: false
-    monitoring_level:
-      type: string
-      required: false
-    decision:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      final_score: 15
+    expect:
+      decision: GO
+      monitoring_level: standard
+  - input:
+      final_score: 25
+    expect:
+      decision: GO
+      monitoring_level: standard
+  - input:
+      final_score: 40
+    expect:
+      decision: CONDITIONAL_GO
+      monitoring_level: enhanced
+  - input:
+      final_score: 60
+    expect:
+      monitoring_level: intensive
+      decision: CAUTION
+  - input:
+      final_score: 85
+    expect:
+      decision: NO_GO
+      monitoring_level: blocked
+  - input:
+      final_score: 50
+    expect:
+      monitoring_level: enhanced
+      decision: CONDITIONAL_GO
+  - input:
+      final_score: 75
+    expect:
+      decision: CAUTION
+      monitoring_level: intensive
+  - input:
+      final_score: 100
+    expect:
+      monitoring_level: blocked
+      decision: NO_GO
+  - input:
+      final_score: 0
+    expect:
+      monitoring_level: standard
+      decision: GO
+  - input: {}
+    expect:
+      monitoring_level: standard
+      decision: GO
+  - input:
+      final_score: 24.999
+    expect:
+      decision: GO
+      recommendation: Proceed with standard post-acquisition monitoring and integration
+      monitoring_level: standard
+  - input:
+      final_score: 25.001
+    expect:
+      recommendation: Proceed with enhanced monitoring. Implement mitigation plans for findings within 90 days
+      monitoring_level: enhanced
+      decision: CONDITIONAL_GO
+  - input:
+      final_score: 74.999
+    expect:
+      monitoring_level: intensive
+      decision: CAUTION
+      recommendation: Significant safety/compliance concerns. Detailed mitigation plan required before proceeding. Consider price adjustment
+  - input:
+      final_score: 75.001
+    expect:
+      decision: NO_GO
+      monitoring_level: blocked
+      recommendation: Critical issues identified. Recommend against proceeding unless fundamental issues resolved pre-close
+  - input:
+      final_score: 49.999
+    expect:
+      decision: CONDITIONAL_GO
+      monitoring_level: enhanced
+      recommendation: Proceed with enhanced monitoring. Implement mitigation plans for findings within 90 days
+  - input:
+      final_score: 50.001
+    expect:
+      monitoring_level: intensive
+      recommendation: Significant safety/compliance concerns. Detailed mitigation plan required before proceeding. Consider price adjustment
+      decision: CAUTION
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - recommendation
+    - monitoring_level
+    - decision
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,24 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: score-normalizer
-description: Normalize score to pass/fail
 version: 0.1.0
+description: Normalize score to pass/fail
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: score
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: passed
+    type: bool
 interface:
   inputs:
     score:
@@ -9,6 +27,28 @@ interface:
   outputs:
     passed:
       type: bool
+ui:
+  title: Score Normalizer
+  subtitle: Normalize score to pass/fail
+  icon: circle
+  route: /vigilance/mg/score-normalizer
+  steps:
+    - field: score
+      label: score
+      help: Enter score
+      widget: text
+      placeholder: null
+  result:
+    template: "passed: {{passed}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/score-normalizer
+  cli: rsk mcg run score-normalizer
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -28,30 +68,63 @@ tree:
       value:
         passed: true
 tests:
-- input:
-    score: 50
-  expect:
-    passed: true
-- input:
-    score: 51
-  expect:
-    passed: true
-- input:
-    score: 49
-  expect:
-    passed: false
-- input:
-    score: 0
-  expect:
-    passed: false
-- input:
-    score: -1
-  expect:
-    passed: false
-- input:
-    score: 5000
-  expect:
-    passed: true
-- input: {}
-  expect:
-    passed: false
+  - input:
+      score: 50
+    expect:
+      passed: true
+  - input:
+      score: 51
+    expect:
+      passed: true
+  - input:
+      score: 49
+    expect:
+      passed: false
+  - input:
+      score: 0
+    expect:
+      passed: false
+  - input:
+      score: -1
+    expect:
+      passed: false
+  - input:
+      score: 5000
+    expect:
+      passed: true
+  - input: {}
+    expect:
+      passed: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - passed
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

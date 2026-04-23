@@ -1,8 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: meddra-severity-classifier
-description: Classifies adverse event severity based on MedDRA SOC, fatality status,
-  seriousness criteria (hospitalization, fatality). Assigns both clinical severity
-  and regulatory priority.
 version: 0.1.0
+description: Classifies adverse event severity based on MedDRA SOC, fatality status, seriousness criteria (hospitalization, fatality). Assigns both clinical severity and regulatory priority.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: soc
+    type: string
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_fatal
+    type: bool
+    required: false
+    description: ""
+  - name: is_hospitalization
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: severity
+    type: string
+  - name: priority
+    type: string
 interface:
   inputs:
     soc:
@@ -22,6 +52,43 @@ interface:
       type: string
     priority:
       type: string
+ui:
+  title: Meddra Severity Classifier
+  subtitle: Classifies adverse event severity based on MedDRA SOC, fatality status, seriousness criteria (hospitalization, fatality). Assigns both clinical severity and regulatory priority.
+  icon: circle
+  route: /vigilance/mg/meddra-severity-classifier
+  steps:
+    - field: soc
+      label: soc
+      help: Enter soc
+      widget: text
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_fatal
+      label: is fatal
+      help: Enter is_fatal
+      widget: toggle
+      placeholder: null
+    - field: is_hospitalization
+      label: is hospitalization
+      help: Enter is_hospitalization
+      widget: toggle
+      placeholder: null
+  result:
+    template: "severity: {{severity}} — priority: {{priority}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/meddra-severity-classifier
+  cli: rsk mcg run meddra-severity-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fatal
   nodes:
@@ -91,55 +158,89 @@ tree:
         severity: mild
         priority: P3
 tests:
-- input:
-    is_fatal: false
-    is_hospitalization: false
-    is_serious: false
-    soc: Cardiac
-  expect:
-    severity: mild
-    priority: P3
-- input:
-    is_fatal: false
-    is_hospitalization: false
-    is_serious: true
-    soc: Cardiac
-  expect:
-    severity: severe
-    priority: P1
-- input:
-    is_fatal: false
-    is_hospitalization: false
-    is_serious: true
-    soc: ZZZZZ_NO_MATCH
-  expect:
-    severity: moderate
-    priority: P2
-- input:
-    is_fatal: false
-    is_hospitalization: true
-    is_serious: false
-    soc: Cardiac
-  expect:
-    severity: severe
-    priority: P1
-- input:
-    is_fatal: false
-    is_hospitalization: true
-    is_serious: false
-    soc: ZZZZZ_NO_MATCH
-  expect:
-    severity: moderate
-    priority: P2
-- input:
-    is_fatal: true
-    is_hospitalization: false
-    is_serious: false
-    soc: Cardiac
-  expect:
-    severity: fatal
-    priority: P0
-- input: {}
-  expect:
-    severity: mild
-    priority: P3
+  - input:
+      is_fatal: false
+      is_hospitalization: false
+      is_serious: false
+      soc: Cardiac
+    expect:
+      severity: mild
+      priority: P3
+  - input:
+      is_fatal: false
+      is_hospitalization: false
+      is_serious: true
+      soc: Cardiac
+    expect:
+      severity: severe
+      priority: P1
+  - input:
+      is_fatal: false
+      is_hospitalization: false
+      is_serious: true
+      soc: ZZZZZ_NO_MATCH
+    expect:
+      severity: moderate
+      priority: P2
+  - input:
+      is_fatal: false
+      is_hospitalization: true
+      is_serious: false
+      soc: Cardiac
+    expect:
+      severity: severe
+      priority: P1
+  - input:
+      is_fatal: false
+      is_hospitalization: true
+      is_serious: false
+      soc: ZZZZZ_NO_MATCH
+    expect:
+      severity: moderate
+      priority: P2
+  - input:
+      is_fatal: true
+      is_hospitalization: false
+      is_serious: false
+      soc: Cardiac
+    expect:
+      severity: fatal
+      priority: P0
+  - input: {}
+    expect:
+      severity: mild
+      priority: P3
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - severity
+    - priority
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

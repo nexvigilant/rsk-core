@@ -1,6 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ab-hormone-out-of-range
-description: 'Antibody: detects hormone level outside [0,1] range (stem-bio invariant). All hormone levels are normalized floats.'
 version: 0.1.0
+description: "Antibody: detects hormone level outside [0,1] range (stem-bio invariant). All hormone levels are normalized floats."
+family: antibody.chemistry
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - antibody
+inputs:
+  - name: hormone_level
+    type: number
+    required: true
+    description: ""
+outputs:
+  - name: threat
+    type: boolean
+  - name: response
+    type: string
 interface:
   inputs:
     hormone_level:
@@ -11,6 +31,28 @@ interface:
       type: boolean
     response:
       type: string
+ui:
+  title: Hormone Out Of Range
+  subtitle: "Antibody: detects hormone level outside [0,1] range (stem-bio invariant). All hormone levels are normalized floats."
+  icon: shield
+  route: /vigilance/mg/ab-hormone-out-of-range
+  steps:
+    - field: hormone_level
+      label: hormone level
+      help: Enter hormone_level
+      widget: number
+      placeholder: null
+  result:
+    template: "threat: {{threat}} — response: {{response}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ab-hormone-out-of-range
+  cli: rsk mcg run ab-hormone-out-of-range
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_high
   nodes:
@@ -18,7 +60,7 @@ tree:
       type: condition
       variable: hormone_level
       operator: gt
-      value: 1.0
+      value: 1
       true_next: violation_high
       false_next: check_low
     check_low:
@@ -32,29 +74,75 @@ tree:
       type: return
       value:
         threat: true
-        response: 'BLOCK: hormone level > 1.0 — clamp to 1.0'
+        response: "BLOCK: hormone level > 1.0 — clamp to 1.0"
     violation_low:
       type: return
       value:
         threat: true
-        response: 'BLOCK: hormone level < 0 — clamp to 0.0'
+        response: "BLOCK: hormone level < 0 — clamp to 0.0"
     clean:
       type: return
       value:
         threat: false
-        response: 'PASS'
+        response: PASS
 tests:
-- input: { hormone_level: 0.5 }
-  expect: { threat: false }
-- input: { hormone_level: 0 }
-  expect: { threat: false }
-- input: { hormone_level: 1.0 }
-  expect: { threat: false }
-- input: { hormone_level: 1.5 }
-  expect: { threat: true }
-- input: { hormone_level: -0.1 }
-  expect: { threat: true }
-- input: {}
-  expect:
-    response: PASS
-    threat: false
+  - input:
+      hormone_level: 0.5
+    expect:
+      threat: false
+  - input:
+      hormone_level: 0
+    expect:
+      threat: false
+  - input:
+      hormone_level: 1
+    expect:
+      threat: false
+  - input:
+      hormone_level: 1.5
+    expect:
+      threat: true
+  - input:
+      hormone_level: -0.1
+    expect:
+      threat: true
+  - input: {}
+    expect:
+      response: PASS
+      threat: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - threat
+    - response
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: antibody.chemistry
+  log_level: info
+governance:
+  sop_ref: SOP-CHEM-001
+  regulatory_ref: []
+  harm_types:
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - conservation
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

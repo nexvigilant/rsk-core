@@ -1,6 +1,38 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: assessment-router
-description: "PDC: Route to assessment method based on competency type and level"
 version: 0.1.0
+description: "PDC: Route to assessment method based on competency type and level"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: competency_type
+    type: string
+    required: false
+    description: ""
+  - name: level
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: assessor
+    type: string
+  - name: behavioral_anchors
+    type: string
+  - name: entrustment_focus
+    type: string
+  - name: frequency
+    type: string
+  - name: primary_method
+    type: string
+  - name: secondary_method
+    type: string
 interface:
   inputs:
     competency_type:
@@ -22,6 +54,33 @@ interface:
       type: string
     secondary_method:
       type: string
+ui:
+  title: Assessment Router
+  subtitle: "PDC: Route to assessment method based on competency type and level"
+  icon: circle
+  route: /vigilance/mg/assessment-router
+  steps:
+    - field: competency_type
+      label: competency type
+      help: Enter competency_type
+      widget: text
+      placeholder: null
+    - field: level
+      label: level
+      help: Enter level
+      widget: text
+      placeholder: null
+  result:
+    template: "assessor: {{assessor}} — behavioral_anchors: {{behavioral_anchors}} — entrustment_focus: {{entrustment_focus}} — frequency: {{frequency}} — primary_method: {{primary_method}} — secondary_method: {{secondary_method}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/assessment-router
+  cli: rsk mcg run assessment-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_level_high
   nodes:
@@ -53,8 +112,8 @@ tree:
         secondary_method: PORTFOLIO
         frequency: weekly
         assessor: supervisor
-        behavioral_anchors: "observable_basics"
-        entrustment_focus: "Can perform with direct supervision"
+        behavioral_anchors: observable_basics
+        entrustment_focus: Can perform with direct supervision
     independent_assessment:
       type: return
       value:
@@ -62,8 +121,8 @@ tree:
         secondary_method: THREE_SIXTY_FEEDBACK
         frequency: monthly
         assessor: multi_source
-        behavioral_anchors: "comprehensive_independent"
-        entrustment_focus: "Can perform with available consultation"
+        behavioral_anchors: comprehensive_independent
+        entrustment_focus: Can perform with available consultation
     advanced_assessment:
       type: return
       value:
@@ -71,8 +130,8 @@ tree:
         secondary_method: PERFORMANCE_ANALYTICS
         frequency: quarterly
         assessor: peer_review
-        behavioral_anchors: "innovation_development"
-        entrustment_focus: "Can supervise others performing this activity"
+        behavioral_anchors: innovation_development
+        entrustment_focus: Can supervise others performing this activity
     ai_assessment:
       type: return
       value:
@@ -80,50 +139,88 @@ tree:
         secondary_method: PORTFOLIO
         frequency: quarterly
         assessor: ai_validation_panel
-        behavioral_anchors: "ai_innovation_leadership"
-        entrustment_focus: "Can design and validate AI solutions independently"
+        behavioral_anchors: ai_innovation_leadership
+        entrustment_focus: Can design and validate AI solutions independently
 tests:
-- input:
-    level: 1
-    competency_type: clinical
-  expect:
-    primary_method: DIRECT_OBSERVATION
-    frequency: weekly
-- input:
-    level: 2
-    competency_type: regulatory
-  expect:
-    primary_method: DIRECT_OBSERVATION
-    assessor: supervisor
-- input:
-    level: 3
-    competency_type: signal_detection
-  expect:
-    primary_method: PORTFOLIO
-    secondary_method: THREE_SIXTY_FEEDBACK
-    frequency: monthly
-- input:
-    level: 4
-    competency_type: risk_management
-  expect:
-    primary_method: THREE_SIXTY_FEEDBACK
-    frequency: quarterly
-- input:
-    level: 4
-    competency_type: ai_technology
-  expect:
-    primary_method: PERFORMANCE_ANALYTICS
-    assessor: ai_validation_panel
-- input:
-    level: 5
-    competency_type: ai_technology
-  expect:
-    primary_method: PERFORMANCE_ANALYTICS
-- input:
-    level: 5
-    competency_type: leadership
-  expect:
-    primary_method: THREE_SIXTY_FEEDBACK
-- input: {}
-  expect:
-    primary_method: DIRECT_OBSERVATION
+  - input:
+      level: 1
+      competency_type: clinical
+    expect:
+      primary_method: DIRECT_OBSERVATION
+      frequency: weekly
+  - input:
+      level: 2
+      competency_type: regulatory
+    expect:
+      primary_method: DIRECT_OBSERVATION
+      assessor: supervisor
+  - input:
+      level: 3
+      competency_type: signal_detection
+    expect:
+      primary_method: PORTFOLIO
+      secondary_method: THREE_SIXTY_FEEDBACK
+      frequency: monthly
+  - input:
+      level: 4
+      competency_type: risk_management
+    expect:
+      primary_method: THREE_SIXTY_FEEDBACK
+      frequency: quarterly
+  - input:
+      level: 4
+      competency_type: ai_technology
+    expect:
+      primary_method: PERFORMANCE_ANALYTICS
+      assessor: ai_validation_panel
+  - input:
+      level: 5
+      competency_type: ai_technology
+    expect:
+      primary_method: PERFORMANCE_ANALYTICS
+  - input:
+      level: 5
+      competency_type: leadership
+    expect:
+      primary_method: THREE_SIXTY_FEEDBACK
+  - input: {}
+    expect:
+      primary_method: DIRECT_OBSERVATION
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - assessor
+    - behavioral_anchors
+    - entrustment_focus
+    - frequency
+    - primary_method
+    - secondary_method
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

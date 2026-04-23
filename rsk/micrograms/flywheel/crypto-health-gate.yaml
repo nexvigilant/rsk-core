@@ -1,20 +1,98 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: crypto-health-gate
-description: 'Crypto infrastructure health for flywheel homeostasis: GREEN (all ok), YELLOW (degraded), RED (keys missing)'
 version: 1.0.0
-primitive_signature:
-  dominant: boundary
-  expression: "d(key_exists × config_match × backup_fresh × sigs_valid)"
-  primes: [boundary, state, existence]
+description: "Crypto infrastructure health for flywheel homeostasis: GREEN (all ok), YELLOW (degraded), RED (keys missing)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: keys_ok
+    type: bool
+    required: false
+    description: ""
+  - name: configs_ok
+    type: bool
+    required: false
+    description: ""
+  - name: backups_ok
+    type: bool
+    required: false
+    description: ""
+  - name: sigs_ok
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: status
+    type: string
+  - name: level
+    type: string
+  - name: action
+    type: string
 interface:
   inputs:
-    keys_ok: { type: bool, required: false }
-    configs_ok: { type: bool, required: false }
-    backups_ok: { type: bool, required: false }
-    sigs_ok: { type: bool, required: false }
+    keys_ok:
+      type: bool
+      required: false
+    configs_ok:
+      type: bool
+      required: false
+    backups_ok:
+      type: bool
+      required: false
+    sigs_ok:
+      type: bool
+      required: false
   outputs:
-    status: { type: string }
-    level: { type: string }
-    action: { type: string }
+    status:
+      type: string
+    level:
+      type: string
+    action:
+      type: string
+ui:
+  title: Crypto Health Gate
+  subtitle: "Crypto infrastructure health for flywheel homeostasis: GREEN (all ok), YELLOW (degraded), RED (keys missing)"
+  icon: circle
+  route: /vigilance/mg/crypto-health-gate
+  steps:
+    - field: keys_ok
+      label: keys ok
+      help: Enter keys_ok
+      widget: toggle
+      placeholder: null
+    - field: configs_ok
+      label: configs ok
+      help: Enter configs_ok
+      widget: toggle
+      placeholder: null
+    - field: backups_ok
+      label: backups ok
+      help: Enter backups_ok
+      widget: toggle
+      placeholder: null
+    - field: sigs_ok
+      label: sigs ok
+      help: Enter sigs_ok
+      widget: toggle
+      placeholder: null
+  result:
+    template: "status: {{status}} — level: {{level}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/crypto-health-gate
+  cli: rsk mcg run crypto-health-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_keys
   nodes:
@@ -77,13 +155,79 @@ tree:
         level: red
         action: run_nv_keygen
 tests:
-- input: { keys_ok: true, configs_ok: true, backups_ok: true, sigs_ok: true }
-  expect: { status: healthy, level: green, action: none }
-- input: { keys_ok: false, configs_ok: true, backups_ok: true, sigs_ok: true }
-  expect: { status: critical, level: red, action: run_nv_keygen }
-- input: { keys_ok: true, configs_ok: true, backups_ok: false, sigs_ok: true }
-  expect: { status: degraded, level: yellow, action: run_nv_vault_backup }
-- input: { keys_ok: true, configs_ok: true, backups_ok: true, sigs_ok: false }
-  expect: { status: degraded, level: yellow, action: run_nv_sign_chain }
-- input: {}
-  expect: { status: critical, level: red, action: run_nv_keygen }
+  - input:
+      keys_ok: true
+      configs_ok: true
+      backups_ok: true
+      sigs_ok: true
+    expect:
+      status: healthy
+      level: green
+      action: none
+  - input:
+      keys_ok: false
+      configs_ok: true
+      backups_ok: true
+      sigs_ok: true
+    expect:
+      status: critical
+      level: red
+      action: run_nv_keygen
+  - input:
+      keys_ok: true
+      configs_ok: true
+      backups_ok: false
+      sigs_ok: true
+    expect:
+      status: degraded
+      level: yellow
+      action: run_nv_vault_backup
+  - input:
+      keys_ok: true
+      configs_ok: true
+      backups_ok: true
+      sigs_ok: false
+    expect:
+      status: degraded
+      level: yellow
+      action: run_nv_sign_chain
+  - input: {}
+    expect:
+      status: critical
+      level: red
+      action: run_nv_keygen
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - level
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

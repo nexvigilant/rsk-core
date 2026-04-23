@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: adr-classifier
-description: "Domain 2: Classify adverse drug reaction by type (A-F) — mechanism, predictability, dose-dependence, clinical approach."
 version: 0.1.0
+description: "Domain 2: Classify adverse drug reaction by type (A-F) — mechanism, predictability, dose-dependence, clinical approach."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: adr_type
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: ai_detect
+    type: string
+  - name: classification
+    type: string
+  - name: dose_dependent
+    type: bool
+  - name: incidence
+    type: string
+  - name: management
+    type: string
+  - name: mechanism
+    type: string
+  - name: message
+    type: string
+  - name: mortality
+    type: string
+  - name: name
+    type: string
+  - name: predictable
+    type: bool
 interface:
   inputs:
     adr_type:
@@ -27,6 +63,28 @@ interface:
       type: string
     predictable:
       type: bool
+ui:
+  title: Adr Classifier
+  subtitle: "Domain 2: Classify adverse drug reaction by type (A-F) — mechanism, predictability, dose-dependence, clinical approach."
+  icon: circle
+  route: /vigilance/mg/adr-classifier
+  steps:
+    - field: adr_type
+      label: adr type
+      help: Enter adr_type
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_detect: {{ai_detect}} — classification: {{classification}} — dose_dependent: {{dose_dependent}} — incidence: {{incidence}} — management: {{management}} — mechanism: {{mechanism}} — message: {{message}} — mortality: {{mortality}} — name: {{name}} — predictable: {{predictable}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/adr-classifier
+  cli: rsk mcg run adr-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_type
   nodes:
@@ -76,114 +134,156 @@ tree:
       type: return
       value:
         classification: TYPE_A
-        name: "Augmented (pharmacological)"
+        name: Augmented (pharmacological)
         dose_dependent: true
         predictable: true
-        mechanism: "exaggerated pharmacological effect at target or related receptors"
+        mechanism: exaggerated pharmacological effect at target or related receptors
         incidence: high
         mortality: low
-        management: "dose reduction, drug withdrawal, consider alternative"
-        ai_detect: "dose-response modeling, population PK analysis"
+        management: dose reduction, drug withdrawal, consider alternative
+        ai_detect: dose-response modeling, population PK analysis
     type_b:
       type: return
       value:
         classification: TYPE_B
-        name: "Bizarre (idiosyncratic)"
+        name: Bizarre (idiosyncratic)
         dose_dependent: false
         predictable: false
-        mechanism: "immunological or genetic susceptibility, not related to pharmacology"
+        mechanism: immunological or genetic susceptibility, not related to pharmacology
         incidence: low
         mortality: high
-        management: "immediate drug withdrawal, supportive care, avoid re-exposure"
-        ai_detect: "pharmacogenomic screening, pattern recognition across populations"
+        management: immediate drug withdrawal, supportive care, avoid re-exposure
+        ai_detect: pharmacogenomic screening, pattern recognition across populations
     type_c:
       type: return
       value:
         classification: TYPE_C
-        name: "Chronic (cumulative)"
+        name: Chronic (cumulative)
         dose_dependent: true
         predictable: false
-        mechanism: "cumulative dose-related effect from prolonged exposure"
+        mechanism: cumulative dose-related effect from prolonged exposure
         incidence: low
         mortality: low
-        management: "dose reduction, drug holiday, monitoring for early signs"
-        ai_detect: "long-term exposure modeling, cumulative dose tracking"
+        management: dose reduction, drug holiday, monitoring for early signs
+        ai_detect: long-term exposure modeling, cumulative dose tracking
     type_d:
       type: return
       value:
         classification: TYPE_D
-        name: "Delayed"
+        name: Delayed
         dose_dependent: false
         predictable: false
-        mechanism: "effects appearing after treatment discontinuation (teratogenicity, carcinogenicity)"
+        mechanism: effects appearing after treatment discontinuation (teratogenicity, carcinogenicity)
         incidence: low
         mortality: variable
-        management: "pre-treatment screening, long-term follow-up, pregnancy prevention programs"
-        ai_detect: "latency period analysis, long-term outcome tracking"
+        management: pre-treatment screening, long-term follow-up, pregnancy prevention programs
+        ai_detect: latency period analysis, long-term outcome tracking
     type_e:
       type: return
       value:
         classification: TYPE_E
-        name: "End-of-treatment (withdrawal)"
+        name: End-of-treatment (withdrawal)
         dose_dependent: false
         predictable: true
-        mechanism: "physiological adaptation and rebound after abrupt discontinuation"
+        mechanism: physiological adaptation and rebound after abrupt discontinuation
         incidence: low
         mortality: low
-        management: "gradual dose tapering, patient education on discontinuation"
-        ai_detect: "discontinuation pattern monitoring, taper protocol optimization"
+        management: gradual dose tapering, patient education on discontinuation
+        ai_detect: discontinuation pattern monitoring, taper protocol optimization
     type_f:
       type: return
       value:
         classification: TYPE_F
-        name: "Failure of therapy"
+        name: Failure of therapy
         dose_dependent: true
         predictable: true
-        mechanism: "drug interactions, resistance, pharmacokinetic variability"
+        mechanism: drug interactions, resistance, pharmacokinetic variability
         incidence: variable
         mortality: variable
-        management: "drug interaction review, therapeutic drug monitoring, alternative therapy"
-        ai_detect: "interaction databases, resistance pattern analysis, PK modeling"
+        management: drug interaction review, therapeutic drug monitoring, alternative therapy
+        ai_detect: interaction databases, resistance pattern analysis, PK modeling
     unknown:
       type: return
       value:
         classification: UNKNOWN
-        message: "ADR type must be A, B, C, D, E, or F"
+        message: ADR type must be A, B, C, D, E, or F
 tests:
-- input:
-    adr_type: A
-  expect:
-    classification: TYPE_A
-    dose_dependent: true
-    predictable: true
-    mortality: low
-- input:
-    adr_type: B
-  expect:
-    classification: TYPE_B
-    dose_dependent: false
-    predictable: false
-    mortality: high
-- input:
-    adr_type: C
-  expect:
-    classification: TYPE_C
-    name: "Chronic (cumulative)"
-- input:
-    adr_type: D
-  expect:
-    classification: TYPE_D
-    name: "Delayed"
-- input:
-    adr_type: E
-  expect:
-    classification: TYPE_E
-    predictable: true
-- input:
-    adr_type: F
-  expect:
-    classification: TYPE_F
-    name: "Failure of therapy"
-- input: {}
-  expect:
-    classification: UNKNOWN
+  - input:
+      adr_type: A
+    expect:
+      classification: TYPE_A
+      dose_dependent: true
+      predictable: true
+      mortality: low
+  - input:
+      adr_type: B
+    expect:
+      classification: TYPE_B
+      dose_dependent: false
+      predictable: false
+      mortality: high
+  - input:
+      adr_type: C
+    expect:
+      classification: TYPE_C
+      name: Chronic (cumulative)
+  - input:
+      adr_type: D
+    expect:
+      classification: TYPE_D
+      name: Delayed
+  - input:
+      adr_type: E
+    expect:
+      classification: TYPE_E
+      predictable: true
+  - input:
+      adr_type: F
+    expect:
+      classification: TYPE_F
+      name: Failure of therapy
+  - input: {}
+    expect:
+      classification: UNKNOWN
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_detect
+    - classification
+    - dose_dependent
+    - incidence
+    - management
+    - mechanism
+    - message
+    - mortality
+    - name
+    - predictable
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: lifecycle-status-classifier
-description: 'PVOS entity lifecycle: classifies current lifecycle state and routes to appropriate action for new/active/suspended/archived entities'
 version: 0.1.0
+description: "PVOS entity lifecycle: classifies current lifecycle state and routes to appropriate action for new/active/suspended/archived entities"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: current_state
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: description
+    type: string
 interface:
   inputs:
     current_state:
@@ -11,6 +31,28 @@ interface:
       type: string
     description:
       type: string
+ui:
+  title: Lifecycle Status Classifier
+  subtitle: "PVOS entity lifecycle: classifies current lifecycle state and routes to appropriate action for new/active/suspended/archived entities"
+  icon: circle
+  route: /vigilance/mg/lifecycle-status-classifier
+  steps:
+    - field: current_state
+      label: current state
+      help: Enter current_state
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — description: {{description}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/lifecycle-status-classifier
+  cli: rsk mcg run lifecycle-status-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_new
   nodes:
@@ -68,32 +110,66 @@ tree:
         action: ERROR
         description: Unknown lifecycle state - manual intervention required
 tests:
-- input:
-    current_state: new
-  expect:
-    action: INITIALIZE
-    description: New entity - run initialization and validation before activating
-- input:
-    current_state: active
-  expect:
-    action: PROCESS
-    description: Active entity - process normally through standard workflow
-- input:
-    current_state: suspended
-  expect:
-    action: REVIEW
-    description: Suspended entity - requires manual review before reactivation or archiving
-- input:
-    current_state: archived
-  expect:
-    action: AUDIT_ONLY
-    description: Archived entity - read-only access for audit and compliance purposes
-- input:
-    current_state: bogus
-  expect:
-    action: ERROR
-    description: Unknown lifecycle state - manual intervention required
-- input: {}
-  expect:
-    action: ERROR
-    description: Unknown lifecycle state - manual intervention required
+  - input:
+      current_state: new
+    expect:
+      action: INITIALIZE
+      description: New entity - run initialization and validation before activating
+  - input:
+      current_state: active
+    expect:
+      action: PROCESS
+      description: Active entity - process normally through standard workflow
+  - input:
+      current_state: suspended
+    expect:
+      action: REVIEW
+      description: Suspended entity - requires manual review before reactivation or archiving
+  - input:
+      current_state: archived
+    expect:
+      action: AUDIT_ONLY
+      description: Archived entity - read-only access for audit and compliance purposes
+  - input:
+      current_state: bogus
+    expect:
+      action: ERROR
+      description: Unknown lifecycle state - manual intervention required
+  - input: {}
+    expect:
+      action: ERROR
+      description: Unknown lifecycle state - manual intervention required
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - description
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: error-classifier
-description: "Domain 6: Classify medication error by type and stage in the medication use process — prescribing through monitoring."
 version: 0.1.0
+description: "Domain 6: Classify medication error by type and stage in the medication use process — prescribing through monitoring."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: error_stage
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: ai_detect
+    type: string
+  - name: examples
+    type: string
+  - name: human_factors
+    type: string
+  - name: investigation
+    type: string
+  - name: message
+    type: string
+  - name: prevention
+    type: string
+  - name: stage
+    type: string
 interface:
   inputs:
     error_stage:
@@ -21,6 +51,28 @@ interface:
       type: string
     stage:
       type: string
+ui:
+  title: Error Classifier
+  subtitle: "Domain 6: Classify medication error by type and stage in the medication use process — prescribing through monitoring."
+  icon: circle
+  route: /vigilance/mg/error-classifier
+  steps:
+    - field: error_stage
+      label: error stage
+      help: Enter error_stage
+      widget: text
+      placeholder: null
+  result:
+    template: "ai_detect: {{ai_detect}} — examples: {{examples}} — human_factors: {{human_factors}} — investigation: {{investigation}} — message: {{message}} — prevention: {{prevention}} — stage: {{stage}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/error-classifier
+  cli: rsk mcg run error-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_stage
   nodes:
@@ -63,77 +115,116 @@ tree:
       type: return
       value:
         stage: PRESCRIBING
-        examples: "wrong drug, wrong dose, missed interaction, contraindication oversight"
-        human_factors: "cognitive overload, knowledge deficit, interruptions, look-alike confusion"
-        prevention: "CPOE with CDS, interaction databases, dosing calculators, standardized protocols"
-        ai_detect: "prescribing pattern analysis, interaction prediction, dose optimization"
-        investigation: "prescriber interview, order review, system analysis, formulary check"
+        examples: wrong drug, wrong dose, missed interaction, contraindication oversight
+        human_factors: cognitive overload, knowledge deficit, interruptions, look-alike confusion
+        prevention: CPOE with CDS, interaction databases, dosing calculators, standardized protocols
+        ai_detect: prescribing pattern analysis, interaction prediction, dose optimization
+        investigation: prescriber interview, order review, system analysis, formulary check
     transcription:
       type: return
       value:
         stage: TRANSCRIPTION
-        examples: "handwriting misread, verbal order confusion, electronic system entry error"
-        human_factors: "illegible handwriting, accent/dialect, noise, system complexity"
-        prevention: "CPOE elimination of handwriting, read-back protocols, electronic verification"
-        ai_detect: "NLP for order interpretation, voice recognition validation"
-        investigation: "original order review, communication chain analysis, system log review"
+        examples: handwriting misread, verbal order confusion, electronic system entry error
+        human_factors: illegible handwriting, accent/dialect, noise, system complexity
+        prevention: CPOE elimination of handwriting, read-back protocols, electronic verification
+        ai_detect: NLP for order interpretation, voice recognition validation
+        investigation: original order review, communication chain analysis, system log review
     dispensing:
       type: return
       value:
         stage: DISPENSING
-        examples: "wrong drug dispensed, incorrect label, wrong strength, packaging confusion"
-        human_factors: "look-alike packaging, interruptions, workload pressure, automation reliance"
-        prevention: "barcode verification, automated dispensing, tall-man lettering, independent double-check"
-        ai_detect: "image recognition for drug identification, barcode validation, LASA detection"
-        investigation: "dispensing record review, workflow observation, packaging assessment"
+        examples: wrong drug dispensed, incorrect label, wrong strength, packaging confusion
+        human_factors: look-alike packaging, interruptions, workload pressure, automation reliance
+        prevention: barcode verification, automated dispensing, tall-man lettering, independent double-check
+        ai_detect: image recognition for drug identification, barcode validation, LASA detection
+        investigation: dispensing record review, workflow observation, packaging assessment
     administration:
       type: return
       value:
         stage: ADMINISTRATION
-        examples: "wrong patient, wrong route, wrong time, wrong dose, omitted dose"
-        human_factors: "patient identification failure, interruptions, fatigue, workaround behaviors"
-        prevention: "barcode MAR scanning, independent double-check, smart pump limits, 5 Rights"
-        ai_detect: "real-time monitoring, smart pump integration, patient ID verification"
-        investigation: "MAR review, nurse interview, workflow analysis, timing assessment"
+        examples: wrong patient, wrong route, wrong time, wrong dose, omitted dose
+        human_factors: patient identification failure, interruptions, fatigue, workaround behaviors
+        prevention: barcode MAR scanning, independent double-check, smart pump limits, 5 Rights
+        ai_detect: real-time monitoring, smart pump integration, patient ID verification
+        investigation: MAR review, nurse interview, workflow analysis, timing assessment
     monitoring:
       type: return
       value:
         stage: MONITORING
-        examples: "missed lab follow-up, inadequate therapeutic monitoring, ADR detection failure"
-        human_factors: "information overload, alert fatigue, handoff failures, system gaps"
-        prevention: "automated lab alerts, clinical surveillance dashboards, structured handoffs"
-        ai_detect: "predictive monitoring, trend analysis, alert optimization, gap detection"
-        investigation: "monitoring protocol review, alert log analysis, handoff documentation review"
+        examples: missed lab follow-up, inadequate therapeutic monitoring, ADR detection failure
+        human_factors: information overload, alert fatigue, handoff failures, system gaps
+        prevention: automated lab alerts, clinical surveillance dashboards, structured handoffs
+        ai_detect: predictive monitoring, trend analysis, alert optimization, gap detection
+        investigation: monitoring protocol review, alert log analysis, handoff documentation review
     unclassified:
       type: return
       value:
         stage: UNCLASSIFIED
         message: "Stage must be: prescribing, transcription, dispensing, administration, monitoring"
 tests:
-- input:
-    error_stage: prescribing
-  expect:
-    stage: PRESCRIBING
-- input:
-    error_stage: transcription
-  expect:
-    stage: TRANSCRIPTION
-- input:
-    error_stage: dispensing
-  expect:
-    stage: DISPENSING
-- input:
-    error_stage: administration
-  expect:
-    stage: ADMINISTRATION
-- input:
-    error_stage: monitoring
-  expect:
-    stage: MONITORING
-- input:
-    error_stage: other
-  expect:
-    stage: UNCLASSIFIED
-- input: {}
-  expect:
-    stage: UNCLASSIFIED
+  - input:
+      error_stage: prescribing
+    expect:
+      stage: PRESCRIBING
+  - input:
+      error_stage: transcription
+    expect:
+      stage: TRANSCRIPTION
+  - input:
+      error_stage: dispensing
+    expect:
+      stage: DISPENSING
+  - input:
+      error_stage: administration
+    expect:
+      stage: ADMINISTRATION
+  - input:
+      error_stage: monitoring
+    expect:
+      stage: MONITORING
+  - input:
+      error_stage: other
+    expect:
+      stage: UNCLASSIFIED
+  - input: {}
+    expect:
+      stage: UNCLASSIFIED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_detect
+    - examples
+    - human_factors
+    - investigation
+    - message
+    - prevention
+    - stage
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

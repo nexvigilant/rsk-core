@@ -1,7 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: reporter-distribution-analyzer
-description: "Analyze VigiAccess reporter distribution and adjust weighting for signal quality"
 version: 0.1.0
-
+description: Analyze VigiAccess reporter distribution and adjust weighting for signal quality
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Reporter Distribution Analyzer
+  subtitle: Analyze VigiAccess reporter distribution and adjust weighting for signal quality
+  icon: circle
+  route: /vigilance/mg/reporter-distribution-analyzer
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/reporter-distribution-analyzer
+  cli: rsk mcg run reporter-distribution-analyzer
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_hcp_percent
   nodes:
@@ -12,7 +40,6 @@ tree:
       value: 0
       true_next: validate_consumer_percent
       false_next: invalid_input
-
     validate_consumer_percent:
       type: condition
       variable: consumer_percent
@@ -20,7 +47,6 @@ tree:
       value: 0
       true_next: classify_quality
       false_next: invalid_input
-
     classify_quality:
       type: condition
       variable: hcp_percent
@@ -28,7 +54,6 @@ tree:
       value: 70
       true_next: high_quality
       false_next: check_medium
-
     check_medium:
       type: condition
       variable: hcp_percent
@@ -36,52 +61,100 @@ tree:
       value: 40
       true_next: medium_quality
       false_next: low_quality
-
     high_quality:
       type: return
       value:
-        reporter_quality: "high"
+        reporter_quality: high
         weight_adjustment: 1.2
-        rationale: "Reports from healthcare professionals carry higher credibility"
-
+        rationale: Reports from healthcare professionals carry higher credibility
     medium_quality:
       type: return
       value:
-        reporter_quality: "medium"
+        reporter_quality: medium
         weight_adjustment: 0.9
-        rationale: "Mixed reporter distribution provides moderate confidence"
-
+        rationale: Mixed reporter distribution provides moderate confidence
     low_quality:
       type: return
       value:
-        reporter_quality: "low"
+        reporter_quality: low
         weight_adjustment: 0.6
-        rationale: "Consumer-dominated reports require additional validation"
-
+        rationale: Consumer-dominated reports require additional validation
     invalid_input:
       type: return
       value:
-        reporter_quality: "unknown"
+        reporter_quality: unknown
         weight_adjustment: 0.5
         rationale: null
-
 tests:
-  - input: { hcp_percent: 85, consumer_percent: 15 }
-    expect: { reporter_quality: "high", weight_adjustment: 1.2, rationale: "Reports from healthcare professionals carry higher credibility" }
-
-  - input: { hcp_percent: 50, consumer_percent: 50 }
-    expect: { reporter_quality: "medium", weight_adjustment: 0.9, rationale: "Mixed reporter distribution provides moderate confidence" }
-
-  - input: { hcp_percent: 25, consumer_percent: 75 }
-    expect: { reporter_quality: "low", weight_adjustment: 0.6, rationale: "Consumer-dominated reports require additional validation" }
-
-  - input: { hcp_percent: 40, consumer_percent: 60 }
-    expect: { reporter_quality: "medium", weight_adjustment: 0.9, rationale: "Mixed reporter distribution provides moderate confidence" }
-
-  - input: { hcp_percent: -10, consumer_percent: 110 }
-    expect: { reporter_quality: "unknown", weight_adjustment: 0.5, rationale: null }
+  - input:
+      hcp_percent: 85
+      consumer_percent: 15
+    expect:
+      reporter_quality: high
+      weight_adjustment: 1.2
+      rationale: Reports from healthcare professionals carry higher credibility
+  - input:
+      hcp_percent: 50
+      consumer_percent: 50
+    expect:
+      reporter_quality: medium
+      weight_adjustment: 0.9
+      rationale: Mixed reporter distribution provides moderate confidence
+  - input:
+      hcp_percent: 25
+      consumer_percent: 75
+    expect:
+      reporter_quality: low
+      weight_adjustment: 0.6
+      rationale: Consumer-dominated reports require additional validation
+  - input:
+      hcp_percent: 40
+      consumer_percent: 60
+    expect:
+      reporter_quality: medium
+      weight_adjustment: 0.9
+      rationale: Mixed reporter distribution provides moderate confidence
+  - input:
+      hcp_percent: -10
+      consumer_percent: 110
+    expect:
+      reporter_quality: unknown
+      weight_adjustment: 0.5
+      rationale: null
   - input: {}
     expect:
       rationale: null
       reporter_quality: unknown
       weight_adjustment: 0.5
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

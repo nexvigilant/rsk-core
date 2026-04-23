@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: gyroscopic-stability
-description: 'Flywheel gyroscopic stability classifier. STABLE (ratio > 2.0), PRECESSING (ratio 1.0-2.0), GIMBAL_LOCK (ratio <= 1.0), NO_STABILITY (|L| < critical). Requires pre-computed momentum_below_critical (1=below, 0=at-or-above) and stability_ratio = |L|/|perturbation| (use 999.0 for zero perturbation).'
 version: 0.1.0
+description: Flywheel gyroscopic stability classifier. STABLE (ratio > 2.0), PRECESSING (ratio 1.0-2.0), GIMBAL_LOCK (ratio <= 1.0), NO_STABILITY (|L| < critical). Requires pre-computed momentum_below_critical (1=below, 0=at-or-above) and stability_ratio = |L|/|perturbation| (use 999.0 for zero perturbation).
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: momentum_L
+    type: float
+    required: false
+    description: ""
+  - name: perturbation_torque
+    type: float
+    required: false
+    description: ""
+  - name: critical_momentum
+    type: float
+    required: false
+    description: ""
+  - name: momentum_below_critical
+    type: int
+    required: false
+    description: ""
+  - name: stability_ratio
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: state
+    type: string
+  - name: score
+    type: float
 interface:
   inputs:
     momentum_L:
@@ -23,6 +59,48 @@ interface:
       type: string
     score:
       type: float
+ui:
+  title: Gyroscopic Stability
+  subtitle: Flywheel gyroscopic stability classifier. STABLE (ratio > 2.0), PRECESSING (ratio 1.0-2.0), GIMBAL_LOCK (ratio <= 1.0), NO_STABILITY (|L| < critical). Requires pre-computed momentum_below_critical (1=below, 0=at-or-above) and stability_ratio = |L|/|perturbation| (use 999.0 for zero perturbation).
+  icon: circle
+  route: /vigilance/mg/gyroscopic-stability
+  steps:
+    - field: momentum_L
+      label: momentum L
+      help: Enter momentum_L
+      widget: text
+      placeholder: null
+    - field: perturbation_torque
+      label: perturbation torque
+      help: Enter perturbation_torque
+      widget: text
+      placeholder: null
+    - field: critical_momentum
+      label: critical momentum
+      help: Enter critical_momentum
+      widget: text
+      placeholder: null
+    - field: momentum_below_critical
+      label: momentum below critical
+      help: Enter momentum_below_critical
+      widget: text
+      placeholder: null
+    - field: stability_ratio
+      label: stability ratio
+      help: Enter stability_ratio
+      widget: text
+      placeholder: null
+  result:
+    template: "state: {{state}} — score: {{score}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/gyroscopic-stability
+  cli: rsk mcg run gyroscopic-stability
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_below_critical
   nodes:
@@ -37,21 +115,21 @@ tree:
       type: condition
       variable: stability_ratio
       operator: gt
-      value: 2.0
+      value: 2
       true_next: stable
       false_next: check_precessing
     check_precessing:
       type: condition
       variable: stability_ratio
       operator: gt
-      value: 1.0
+      value: 1
       true_next: precessing
       false_next: gimbal_lock
     no_stability:
       type: return
       value:
         state: no_stability
-        score: 0.0
+        score: 0
     stable:
       type: return
       value:
@@ -66,65 +144,99 @@ tree:
       type: return
       value:
         state: gimbal_lock
-        score: 0.0
+        score: 0
 tests:
-- input:
-    momentum_L: 100.0
-    perturbation_torque: 10.0
-    critical_momentum: 50.0
-    momentum_below_critical: 0
-    stability_ratio: 10.0
-  expect:
-    state: stable
-- input:
-    momentum_L: 10.0
-    perturbation_torque: 5.0
-    critical_momentum: 50.0
-    momentum_below_critical: 1
-    stability_ratio: 2.0
-  expect:
-    state: no_stability
-- input:
-    momentum_L: 50.0
-    perturbation_torque: 100.0
-    critical_momentum: 20.0
-    momentum_below_critical: 0
-    stability_ratio: 0.5
-  expect:
-    state: gimbal_lock
-- input:
-    momentum_L: 100.0
-    perturbation_torque: 0.0
-    critical_momentum: 50.0
-    momentum_below_critical: 0
-    stability_ratio: 999.0
-  expect:
-    state: stable
-- input:
-    momentum_L: 100.0
-    perturbation_torque: 60.0
-    critical_momentum: 50.0
-    momentum_below_critical: 0
-    stability_ratio: 1.67
-  expect:
-    state: precessing
-- input:
-    momentum_L: 50.0
-    perturbation_torque: 20.0
-    critical_momentum: 50.0
-    momentum_below_critical: 0
-    stability_ratio: 2.5
-  expect:
-    state: stable
-- input:
-    momentum_L: 30.0
-    perturbation_torque: 25.0
-    critical_momentum: 20.0
-    momentum_below_critical: 0
-    stability_ratio: 1.2
-  expect:
-    state: precessing
-- input: {}
-  expect:
-    score: 0.0
-    state: gimbal_lock
+  - input:
+      momentum_L: 100
+      perturbation_torque: 10
+      critical_momentum: 50
+      momentum_below_critical: 0
+      stability_ratio: 10
+    expect:
+      state: stable
+  - input:
+      momentum_L: 10
+      perturbation_torque: 5
+      critical_momentum: 50
+      momentum_below_critical: 1
+      stability_ratio: 2
+    expect:
+      state: no_stability
+  - input:
+      momentum_L: 50
+      perturbation_torque: 100
+      critical_momentum: 20
+      momentum_below_critical: 0
+      stability_ratio: 0.5
+    expect:
+      state: gimbal_lock
+  - input:
+      momentum_L: 100
+      perturbation_torque: 0
+      critical_momentum: 50
+      momentum_below_critical: 0
+      stability_ratio: 999
+    expect:
+      state: stable
+  - input:
+      momentum_L: 100
+      perturbation_torque: 60
+      critical_momentum: 50
+      momentum_below_critical: 0
+      stability_ratio: 1.67
+    expect:
+      state: precessing
+  - input:
+      momentum_L: 50
+      perturbation_torque: 20
+      critical_momentum: 50
+      momentum_below_critical: 0
+      stability_ratio: 2.5
+    expect:
+      state: stable
+  - input:
+      momentum_L: 30
+      perturbation_torque: 25
+      critical_momentum: 20
+      momentum_below_critical: 0
+      stability_ratio: 1.2
+    expect:
+      state: precessing
+  - input: {}
+    expect:
+      score: 0
+      state: gimbal_lock
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - state
+    - score
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-data-collection-priority
-description: 'ICH E2A Section IV.A: Data collection priority scorer — determines urgency and priority of follow-up data collection based on case characteristics. Scores HIGH/MEDIUM/LOW priority with specific data domains needed.'
 version: 1.0.0
+description: "ICH E2A Section IV.A: Data collection priority scorer — determines urgency and priority of follow-up data collection based on case characteristics. Scores HIGH/MEDIUM/LOW priority with specific data domains needed."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_minimum_criteria
+    type: bool
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+  - name: outcome_fatal
+    type: bool
+    required: false
+    description: ""
+  - name: report_deadline_days
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: collection_priority
+    type: string
+  - name: data_domains_needed
+    type: string
+  - name: days_to_collect
+    type: int
+  - name: rationale
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     has_minimum_criteria:
@@ -29,6 +71,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2a Data Collection Priority
+  subtitle: "ICH E2A Section IV.A: Data collection priority scorer — determines urgency and priority of follow-up data collection based on case characteristics. Scores HIGH/MEDIUM/LOW priority with specific data domains needed."
+  icon: circle
+  route: /vigilance/mg/e2a-data-collection-priority
+  steps:
+    - field: has_minimum_criteria
+      label: has minimum criteria
+      help: Enter has_minimum_criteria
+      widget: toggle
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+    - field: outcome_fatal
+      label: outcome fatal
+      help: Enter outcome_fatal
+      widget: toggle
+      placeholder: null
+    - field: report_deadline_days
+      label: report deadline days
+      help: Enter report_deadline_days
+      widget: text
+      placeholder: null
+  result:
+    template: "collection_priority: {{collection_priority}} — data_domains_needed: {{data_domains_needed}} — days_to_collect: {{days_to_collect}} — rationale: {{rationale}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-data-collection-priority
+  cli: rsk mcg run e2a-data-collection-priority
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_minimum_criteria
   nodes:
@@ -115,82 +199,106 @@ tree:
         data_domains_needed: event_description
         rationale: Non-serious expected event — routine data collection for aggregate reporting
         regulatory_reference: ICH E2A Section IV.A - Expected non-serious events documented in routine periodic reports
-primitive_signature:
-  dominant: '∝'
-  expression: '∝ — irreversibility weighting: fatal/SUSAR cases prioritized for collection before deadline'
-  primes: ['∝', 'N', 'κ']
-  arguments: ['has_minimum_criteria', 'outcome_fatal', 'is_serious', 'is_unexpected']
-  chain_prediction: 'Receives from e2a-minimum-criteria (has_minimum_criteria) and case-seriousness (is_serious). Feeds collection_priority into case-lifecycle-router for task assignment.'
 tests:
-# Minimum criteria not met = urgent collection
-- input:
-    has_minimum_criteria: false
-    outcome_fatal: false
-    is_serious: true
-    is_unexpected: true
-    report_deadline_days: 7
-  expect:
-    collection_priority: URGENT
-    days_to_collect: 2
-    regulatory_reference: ICH E2A Section III.A / IV.A - Minimum criteria collection required before processing
-# Fatal case = high priority
-- input:
-    has_minimum_criteria: true
-    outcome_fatal: true
-    is_serious: true
-    is_unexpected: true
-    report_deadline_days: 7
-  expect:
-    collection_priority: HIGH
-    days_to_collect: 3
-    regulatory_reference: ICH E2A Section IV.A - Fatal cases require complete data collection for 7-day report
-# Serious + unexpected (SUSAR) = high priority
-- input:
-    has_minimum_criteria: true
-    outcome_fatal: false
-    is_serious: true
-    is_unexpected: true
-    report_deadline_days: 15
-  expect:
-    collection_priority: HIGH
-    days_to_collect: 5
-    regulatory_reference: ICH E2A Section IV.A - SUSARs require complete data collection for expedited reporting
-# Serious + expected = medium priority
-- input:
-    has_minimum_criteria: true
-    outcome_fatal: false
-    is_serious: true
-    is_unexpected: false
-    report_deadline_days: 90
-  expect:
-    collection_priority: MEDIUM
-    days_to_collect: 30
-    regulatory_reference: ICH E2A Section IV.A - Serious expected reactions collected for periodic reporting
-# Non-serious + unexpected = low priority
-- input:
-    has_minimum_criteria: true
-    outcome_fatal: false
-    is_serious: false
-    is_unexpected: true
-    report_deadline_days: 90
-  expect:
-    collection_priority: LOW
-    days_to_collect: 60
-    regulatory_reference: ICH E2A Section IV.A - Non-serious events collected for periodic safety updates
-# Non-serious + expected = routine
-- input:
-    has_minimum_criteria: true
-    outcome_fatal: false
-    is_serious: false
-    is_unexpected: false
-    report_deadline_days: 90
-  expect:
-    collection_priority: ROUTINE
-    days_to_collect: 90
-    regulatory_reference: ICH E2A Section IV.A - Expected non-serious events documented in routine periodic reports
-# Empty input = urgent (no minimum criteria)
-- input: {}
-  expect:
-    collection_priority: URGENT
-    days_to_collect: 2
-    regulatory_reference: ICH E2A Section III.A / IV.A - Minimum criteria collection required before processing
+  - input:
+      has_minimum_criteria: false
+      outcome_fatal: false
+      is_serious: true
+      is_unexpected: true
+      report_deadline_days: 7
+    expect:
+      collection_priority: URGENT
+      days_to_collect: 2
+      regulatory_reference: ICH E2A Section III.A / IV.A - Minimum criteria collection required before processing
+  - input:
+      has_minimum_criteria: true
+      outcome_fatal: true
+      is_serious: true
+      is_unexpected: true
+      report_deadline_days: 7
+    expect:
+      collection_priority: HIGH
+      days_to_collect: 3
+      regulatory_reference: ICH E2A Section IV.A - Fatal cases require complete data collection for 7-day report
+  - input:
+      has_minimum_criteria: true
+      outcome_fatal: false
+      is_serious: true
+      is_unexpected: true
+      report_deadline_days: 15
+    expect:
+      collection_priority: HIGH
+      days_to_collect: 5
+      regulatory_reference: ICH E2A Section IV.A - SUSARs require complete data collection for expedited reporting
+  - input:
+      has_minimum_criteria: true
+      outcome_fatal: false
+      is_serious: true
+      is_unexpected: false
+      report_deadline_days: 90
+    expect:
+      collection_priority: MEDIUM
+      days_to_collect: 30
+      regulatory_reference: ICH E2A Section IV.A - Serious expected reactions collected for periodic reporting
+  - input:
+      has_minimum_criteria: true
+      outcome_fatal: false
+      is_serious: false
+      is_unexpected: true
+      report_deadline_days: 90
+    expect:
+      collection_priority: LOW
+      days_to_collect: 60
+      regulatory_reference: ICH E2A Section IV.A - Non-serious events collected for periodic safety updates
+  - input:
+      has_minimum_criteria: true
+      outcome_fatal: false
+      is_serious: false
+      is_unexpected: false
+      report_deadline_days: 90
+    expect:
+      collection_priority: ROUTINE
+      days_to_collect: 90
+      regulatory_reference: ICH E2A Section IV.A - Expected non-serious events documented in routine periodic reports
+  - input: {}
+    expect:
+      collection_priority: URGENT
+      days_to_collect: 2
+      regulatory_reference: ICH E2A Section III.A / IV.A - Minimum criteria collection required before processing
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - collection_priority
+    - data_domains_needed
+    - days_to_collect
+    - rationale
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: bloom-verb-tier
-description: "PDC: Map observed behavioral verb category to Bloom taxonomy tier (1-7) for anchor validation"
 version: 0.1.0
+description: "PDC: Map observed behavioral verb category to Bloom taxonomy tier (1-7) for anchor validation"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: verb_category
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: bloom_level
+    type: string
+  - name: pdc_level
+    type: string
+  - name: verb_tier
+    type: int
+  - name: verbs
+    type: string
 interface:
   inputs:
     verb_category:
@@ -15,6 +39,28 @@ interface:
       type: int
     verbs:
       type: string
+ui:
+  title: Bloom Verb Tier
+  subtitle: "PDC: Map observed behavioral verb category to Bloom taxonomy tier (1-7) for anchor validation"
+  icon: circle
+  route: /vigilance/mg/bloom-verb-tier
+  steps:
+    - field: verb_category
+      label: verb category
+      help: Enter verb_category
+      widget: text
+      placeholder: null
+  result:
+    template: "bloom_level: {{bloom_level}} — pdc_level: {{pdc_level}} — verb_tier: {{verb_tier}} — verbs: {{verbs}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/bloom-verb-tier
+  cli: rsk mcg run bloom-verb-tier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_recall
   nodes:
@@ -72,88 +118,124 @@ tree:
       value:
         verb_tier: 1
         bloom_level: REMEMBER
-        pdc_level: "L1"
-        verbs: "uses, identifies, recognizes, lists, names, defines"
+        pdc_level: L1
+        verbs: uses, identifies, recognizes, lists, names, defines
     tier_2:
       type: return
       value:
         verb_tier: 2
         bloom_level: UNDERSTAND
-        pdc_level: "L2"
-        verbs: "explains, applies consistently, adapts, describes, interprets"
+        pdc_level: L2
+        verbs: explains, applies consistently, adapts, describes, interprets
     tier_3:
       type: return
       value:
         verb_tier: 3
         bloom_level: APPLY
-        pdc_level: "L3"
-        verbs: "integrates, conducts independently, develops strategies, implements"
+        pdc_level: L3
+        verbs: integrates, conducts independently, develops strategies, implements
     tier_4:
       type: return
       value:
         verb_tier: 4
         bloom_level: ANALYZE_CREATE
-        pdc_level: "L4"
-        verbs: "influences, develops new approaches, creates innovative, designs"
+        pdc_level: L4
+        verbs: influences, develops new approaches, creates innovative, designs
     tier_5:
       type: return
       value:
         verb_tier: 5
         bloom_level: EVALUATE_SYNTHESIZE
-        pdc_level: "L5"
-        verbs: "shapes, creates frameworks, pioneers, establishes standards"
+        pdc_level: L5
+        verbs: shapes, creates frameworks, pioneers, establishes standards
     tier_6:
       type: return
       value:
         verb_tier: 6
         bloom_level: TRANSFORM
-        pdc_level: "L5+"
-        verbs: "transforms organizational, establishes paradigms, influences culture"
+        pdc_level: L5+
+        verbs: transforms organizational, establishes paradigms, influences culture
     tier_7:
       type: return
       value:
         verb_tier: 7
         bloom_level: REVOLUTIONIZE
-        pdc_level: "L5++"
-        verbs: "transforms global, revolutionizes, influences international policy"
+        pdc_level: L5++
+        verbs: transforms global, revolutionizes, influences international policy
 tests:
-- input:
-    verb_category: recall
-  expect:
-    verb_tier: 1
-    bloom_level: REMEMBER
-    pdc_level: "L1"
-- input:
-    verb_category: comprehension
-  expect:
-    verb_tier: 2
-    bloom_level: UNDERSTAND
-- input:
-    verb_category: application
-  expect:
-    verb_tier: 3
-    pdc_level: "L3"
-- input:
-    verb_category: creation
-  expect:
-    verb_tier: 4
-    bloom_level: ANALYZE_CREATE
-- input:
-    verb_category: synthesis
-  expect:
-    verb_tier: 5
-    pdc_level: "L5"
-- input:
-    verb_category: institutional
-  expect:
-    verb_tier: 6
-    pdc_level: "L5+"
-- input:
-    verb_category: global
-  expect:
-    verb_tier: 7
-    pdc_level: "L5++"
-- input: {}
-  expect:
-    verb_tier: 1
-    bloom_level: REMEMBER
+  - input:
+      verb_category: recall
+    expect:
+      verb_tier: 1
+      bloom_level: REMEMBER
+      pdc_level: L1
+  - input:
+      verb_category: comprehension
+    expect:
+      verb_tier: 2
+      bloom_level: UNDERSTAND
+  - input:
+      verb_category: application
+    expect:
+      verb_tier: 3
+      pdc_level: L3
+  - input:
+      verb_category: creation
+    expect:
+      verb_tier: 4
+      bloom_level: ANALYZE_CREATE
+  - input:
+      verb_category: synthesis
+    expect:
+      verb_tier: 5
+      pdc_level: L5
+  - input:
+      verb_category: institutional
+    expect:
+      verb_tier: 6
+      pdc_level: L5+
+  - input:
+      verb_category: global
+    expect:
+      verb_tier: 7
+      pdc_level: L5++
+  - input: {}
+    expect:
+      verb_tier: 1
+      bloom_level: REMEMBER
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - bloom_level
+    - pdc_level
+    - verb_tier
+    - verbs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

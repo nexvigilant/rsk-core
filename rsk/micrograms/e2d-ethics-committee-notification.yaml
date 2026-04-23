@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2d-ethics-committee-notification
-description: 'ICH E2D Section 4.2: Determines whether a post-approval serious unexpected ADR requires notification to ethics committees and investigators'
 version: 0.1.0
+description: "ICH E2D Section 4.2: Determines whether a post-approval serious unexpected ADR requires notification to ethics committees and investigators"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+  - name: ongoing_study_involvement
+    type: bool
+    required: false
+    description: ""
+  - name: is_fatal
+    type: bool
+    required: false
+    description: ""
+  - name: is_life_threatening
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: notify_ethics_committee
+    type: bool
+  - name: notify_investigators
+    type: bool
+  - name: notification_type
+    type: string
+  - name: notification_deadline_days
+    type: int
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     is_serious:
@@ -29,6 +71,48 @@ interface:
       type: int
     regulatory_reference:
       type: string
+ui:
+  title: E2d Ethics Committee Notification
+  subtitle: "ICH E2D Section 4.2: Determines whether a post-approval serious unexpected ADR requires notification to ethics committees and investigators"
+  icon: circle
+  route: /vigilance/mg/e2d-ethics-committee-notification
+  steps:
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+    - field: ongoing_study_involvement
+      label: ongoing study involvement
+      help: Enter ongoing_study_involvement
+      widget: toggle
+      placeholder: null
+    - field: is_fatal
+      label: is fatal
+      help: Enter is_fatal
+      widget: toggle
+      placeholder: null
+    - field: is_life_threatening
+      label: is life threatening
+      help: Enter is_life_threatening
+      widget: toggle
+      placeholder: null
+  result:
+    template: "notify_ethics_committee: {{notify_ethics_committee}} — notify_investigators: {{notify_investigators}} — notification_type: {{notification_type}} — notification_deadline_days: {{notification_deadline_days}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2d-ethics-committee-notification
+  cli: rsk mcg run e2d-ethics-committee-notification
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_serious
   nodes:
@@ -107,88 +191,120 @@ tree:
         notification_type: NO_NOTIFICATION_EXPECTED_REACTION
         notification_deadline_days: 0
         regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — ethics committee and investigator notification trigger per ICH E2D Section 4.2'
-  primes: ['σ', '∂', 'κ']
-  arguments: ['is_serious', 'is_unexpected', 'ongoing_study_involvement', 'is_fatal', 'is_life_threatening']
 tests:
-- input:
-    is_serious: true
-    is_unexpected: true
-    ongoing_study_involvement: true
-    is_fatal: true
-    is_life_threatening: false
-  expect:
-    notify_ethics_committee: true
-    notify_investigators: true
-    notification_type: URGENT_SAFETY_INFORMATION
-    notification_deadline_days: 7
-    regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
-- input:
-    is_serious: true
-    is_unexpected: true
-    ongoing_study_involvement: true
-    is_fatal: false
-    is_life_threatening: true
-  expect:
-    notify_ethics_committee: true
-    notify_investigators: true
-    notification_type: URGENT_SAFETY_INFORMATION
-    notification_deadline_days: 7
-    regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
-- input:
-    is_serious: true
-    is_unexpected: true
-    ongoing_study_involvement: true
-    is_fatal: false
-    is_life_threatening: false
-  expect:
-    notify_ethics_committee: true
-    notify_investigators: true
-    notification_type: EXPEDITED_SAFETY_REPORT
-    notification_deadline_days: 15
-    regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
-- input:
-    is_serious: true
-    is_unexpected: true
-    ongoing_study_involvement: false
-    is_fatal: true
-    is_life_threatening: false
-  expect:
-    notify_ethics_committee: false
-    notify_investigators: false
-    notification_type: NO_NOTIFICATION_NO_STUDY
-    notification_deadline_days: 0
-    regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
-- input:
-    is_serious: false
-    is_unexpected: true
-    ongoing_study_involvement: true
-    is_fatal: false
-    is_life_threatening: false
-  expect:
-    notify_ethics_committee: false
-    notify_investigators: false
-    notification_type: NO_NOTIFICATION_NON_SERIOUS
-    notification_deadline_days: 0
-    regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
-- input:
-    is_serious: true
-    is_unexpected: false
-    ongoing_study_involvement: true
-    is_fatal: true
-    is_life_threatening: false
-  expect:
-    notify_ethics_committee: false
-    notify_investigators: false
-    notification_type: NO_NOTIFICATION_EXPECTED_REACTION
-    notification_deadline_days: 0
-    regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
-- input: {}
-  expect:
-    notify_ethics_committee: false
-    notify_investigators: false
-    notification_type: NO_NOTIFICATION_NON_SERIOUS
-    notification_deadline_days: 0
-    regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+  - input:
+      is_serious: true
+      is_unexpected: true
+      ongoing_study_involvement: true
+      is_fatal: true
+      is_life_threatening: false
+    expect:
+      notify_ethics_committee: true
+      notify_investigators: true
+      notification_type: URGENT_SAFETY_INFORMATION
+      notification_deadline_days: 7
+      regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+  - input:
+      is_serious: true
+      is_unexpected: true
+      ongoing_study_involvement: true
+      is_fatal: false
+      is_life_threatening: true
+    expect:
+      notify_ethics_committee: true
+      notify_investigators: true
+      notification_type: URGENT_SAFETY_INFORMATION
+      notification_deadline_days: 7
+      regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+  - input:
+      is_serious: true
+      is_unexpected: true
+      ongoing_study_involvement: true
+      is_fatal: false
+      is_life_threatening: false
+    expect:
+      notify_ethics_committee: true
+      notify_investigators: true
+      notification_type: EXPEDITED_SAFETY_REPORT
+      notification_deadline_days: 15
+      regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+  - input:
+      is_serious: true
+      is_unexpected: true
+      ongoing_study_involvement: false
+      is_fatal: true
+      is_life_threatening: false
+    expect:
+      notify_ethics_committee: false
+      notify_investigators: false
+      notification_type: NO_NOTIFICATION_NO_STUDY
+      notification_deadline_days: 0
+      regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+  - input:
+      is_serious: false
+      is_unexpected: true
+      ongoing_study_involvement: true
+      is_fatal: false
+      is_life_threatening: false
+    expect:
+      notify_ethics_committee: false
+      notify_investigators: false
+      notification_type: NO_NOTIFICATION_NON_SERIOUS
+      notification_deadline_days: 0
+      regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+  - input:
+      is_serious: true
+      is_unexpected: false
+      ongoing_study_involvement: true
+      is_fatal: true
+      is_life_threatening: false
+    expect:
+      notify_ethics_committee: false
+      notify_investigators: false
+      notification_type: NO_NOTIFICATION_EXPECTED_REACTION
+      notification_deadline_days: 0
+      regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+  - input: {}
+    expect:
+      notify_ethics_committee: false
+      notify_investigators: false
+      notification_type: NO_NOTIFICATION_NON_SERIOUS
+      notification_deadline_days: 0
+      regulatory_reference: ICH E2D Section 4.2 - Reporting to Ethics Committees and Investigators
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - notify_ethics_committee
+    - notify_investigators
+    - notification_type
+    - notification_deadline_days
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

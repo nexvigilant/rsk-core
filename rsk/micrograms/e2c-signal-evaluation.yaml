@@ -1,6 +1,52 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2c-signal-evaluation
-description: 'ICH E2C(R2) Section 5: Evaluates whether a signal warrants inclusion in PBRER based on source, strength, and validation status'
 version: 0.1.0
+description: "ICH E2C(R2) Section 5: Evaluates whether a signal warrants inclusion in PBRER based on source, strength, and validation status"
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: signal_source
+    type: string
+    required: true
+    description: ""
+  - name: signal_validated
+    type: bool
+    required: true
+    description: ""
+  - name: prr
+    type: number
+    required: false
+    description: ""
+  - name: case_count
+    type: number
+    required: false
+    description: ""
+  - name: temporal_pattern
+    type: bool
+    required: false
+    description: ""
+  - name: peer_reviewed
+    type: bool
+    required: false
+    description: ""
+  - name: signal_already_in_rmp
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: include_in_pbrer
+    type: bool
+  - name: section
+    type: string
+  - name: reason
+    type: string
 interface:
   inputs:
     signal_source:
@@ -31,6 +77,58 @@ interface:
       type: string
     reason:
       type: string
+ui:
+  title: E2c Signal Evaluation
+  subtitle: "ICH E2C(R2) Section 5: Evaluates whether a signal warrants inclusion in PBRER based on source, strength, and validation status"
+  icon: activity
+  route: /vigilance/mg/e2c-signal-evaluation
+  steps:
+    - field: signal_source
+      label: signal source
+      help: Enter signal_source
+      widget: text
+      placeholder: null
+    - field: signal_validated
+      label: signal validated
+      help: Enter signal_validated
+      widget: toggle
+      placeholder: null
+    - field: prr
+      label: prr
+      help: Enter prr
+      widget: number
+      placeholder: null
+    - field: case_count
+      label: case count
+      help: Enter case_count
+      widget: number
+      placeholder: null
+    - field: temporal_pattern
+      label: temporal pattern
+      help: Enter temporal_pattern
+      widget: toggle
+      placeholder: null
+    - field: peer_reviewed
+      label: peer reviewed
+      help: Enter peer_reviewed
+      widget: toggle
+      placeholder: null
+    - field: signal_already_in_rmp
+      label: signal already in rmp
+      help: Enter signal_already_in_rmp
+      widget: toggle
+      placeholder: null
+  result:
+    template: "include_in_pbrer: {{include_in_pbrer}} — section: {{section}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2c-signal-evaluation
+  cli: rsk mcg run e2c-signal-evaluation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_validated
   nodes:
@@ -59,7 +157,7 @@ tree:
       type: condition
       variable: prr
       operator: gte
-      value: 2.0
+      value: 2
       true_next: check_case_count
       false_next: return_below_threshold
     check_case_count:
@@ -140,93 +238,125 @@ tree:
         section: none
         reason: unknown_signal_source
 tests:
-# Disproportionality signal meets threshold
-- input:
-    signal_source: disproportionality
-    signal_validated: true
-    prr: 3.5
-    case_count: 10
-    signal_already_in_rmp: false
-  expect:
-    include_in_pbrer: true
-    section: signal_evaluation
-    reason: meets_inclusion_criteria
-# Disproportionality below PRR threshold
-- input:
-    signal_source: disproportionality
-    signal_validated: true
-    prr: 1.2
-    case_count: 10
-    signal_already_in_rmp: false
-  expect:
-    include_in_pbrer: false
-    section: none
-    reason: below_disproportionality_threshold
-# Disproportionality PRR met but insufficient cases
-- input:
-    signal_source: disproportionality
-    signal_validated: true
-    prr: 2.5
-    case_count: 1
-    signal_already_in_rmp: false
-  expect:
-    include_in_pbrer: false
-    section: none
-    reason: below_disproportionality_threshold
-# Cluster with temporal pattern
-- input:
-    signal_source: cluster
-    signal_validated: true
-    temporal_pattern: true
-    signal_already_in_rmp: false
-  expect:
-    include_in_pbrer: true
-    section: signal_evaluation
-    reason: meets_inclusion_criteria
-# Literature peer-reviewed
-- input:
-    signal_source: literature
-    signal_validated: true
-    peer_reviewed: true
-    signal_already_in_rmp: false
-  expect:
-    include_in_pbrer: true
-    section: signal_evaluation
-    reason: meets_inclusion_criteria
-# Signal not validated
-- input:
-    signal_source: disproportionality
-    signal_validated: false
-    prr: 5.0
-    case_count: 20
-  expect:
-    include_in_pbrer: false
-    section: none
-    reason: signal_not_validated
-# Signal already in RMP
-- input:
-    signal_source: disproportionality
-    signal_validated: true
-    prr: 3.0
-    case_count: 5
-    signal_already_in_rmp: true
-  expect:
-    include_in_pbrer: true
-    section: known_risks
-    reason: signal_in_rmp
-# Literature not peer-reviewed
-- input:
-    signal_source: literature
-    signal_validated: true
-    peer_reviewed: false
-    signal_already_in_rmp: false
-  expect:
-    include_in_pbrer: false
-    section: none
-    reason: not_peer_reviewed
-# Null safety
-- input: {}
-  expect:
-    include_in_pbrer: false
-    section: none
-    reason: signal_not_validated
+  - input:
+      signal_source: disproportionality
+      signal_validated: true
+      prr: 3.5
+      case_count: 10
+      signal_already_in_rmp: false
+    expect:
+      include_in_pbrer: true
+      section: signal_evaluation
+      reason: meets_inclusion_criteria
+  - input:
+      signal_source: disproportionality
+      signal_validated: true
+      prr: 1.2
+      case_count: 10
+      signal_already_in_rmp: false
+    expect:
+      include_in_pbrer: false
+      section: none
+      reason: below_disproportionality_threshold
+  - input:
+      signal_source: disproportionality
+      signal_validated: true
+      prr: 2.5
+      case_count: 1
+      signal_already_in_rmp: false
+    expect:
+      include_in_pbrer: false
+      section: none
+      reason: below_disproportionality_threshold
+  - input:
+      signal_source: cluster
+      signal_validated: true
+      temporal_pattern: true
+      signal_already_in_rmp: false
+    expect:
+      include_in_pbrer: true
+      section: signal_evaluation
+      reason: meets_inclusion_criteria
+  - input:
+      signal_source: literature
+      signal_validated: true
+      peer_reviewed: true
+      signal_already_in_rmp: false
+    expect:
+      include_in_pbrer: true
+      section: signal_evaluation
+      reason: meets_inclusion_criteria
+  - input:
+      signal_source: disproportionality
+      signal_validated: false
+      prr: 5
+      case_count: 20
+    expect:
+      include_in_pbrer: false
+      section: none
+      reason: signal_not_validated
+  - input:
+      signal_source: disproportionality
+      signal_validated: true
+      prr: 3
+      case_count: 5
+      signal_already_in_rmp: true
+    expect:
+      include_in_pbrer: true
+      section: known_risks
+      reason: signal_in_rmp
+  - input:
+      signal_source: literature
+      signal_validated: true
+      peer_reviewed: false
+      signal_already_in_rmp: false
+    expect:
+      include_in_pbrer: false
+      section: none
+      reason: not_peer_reviewed
+  - input: {}
+    expect:
+      include_in_pbrer: false
+      section: none
+      reason: signal_not_validated
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - include_in_pbrer
+    - section
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

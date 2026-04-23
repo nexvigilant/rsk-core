@@ -1,6 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: compliance-evidence-mapper
-description: 'Maps case processing outputs to ICH control evidence. Takes chain results (report_type, timeline, signal_detected, causality) and produces structured compliance evidence linking to specific ICH E2A-E2E controls.'
 version: 0.1.0
+description: Maps case processing outputs to ICH control evidence. Takes chain results (report_type, timeline, signal_detected, causality) and produces structured compliance evidence linking to specific ICH E2A-E2E controls.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: benefit_risk_assessed
+    type: bool
+    required: false
+    description: ""
+  - name: causality
+    type: string
+    required: false
+    description: ""
+  - name: report_type
+    type: string
+    required: false
+    description: ""
+  - name: signal_detected
+    type: bool
+    required: false
+    description: ""
+  - name: timeline
+    type: string
+    required: false
+    description: ""
+  - name: valid_icsr
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: compliance_status
+    type: string
+  - name: control_id
+    type: string
+  - name: evidence_description
+    type: string
+  - name: evidence_type
+    type: string
 interface:
   inputs:
     benefit_risk_assessed:
@@ -30,6 +74,53 @@ interface:
       type: string
     evidence_type:
       type: string
+ui:
+  title: Compliance Evidence Mapper
+  subtitle: Maps case processing outputs to ICH control evidence. Takes chain results (report_type, timeline, signal_detected, causality) and produces structured compliance evidence linking to specific ICH E2A-E2E controls.
+  icon: circle
+  route: /vigilance/mg/compliance-evidence-mapper
+  steps:
+    - field: benefit_risk_assessed
+      label: benefit risk assessed
+      help: Enter benefit_risk_assessed
+      widget: toggle
+      placeholder: null
+    - field: causality
+      label: causality
+      help: Enter causality
+      widget: text
+      placeholder: null
+    - field: report_type
+      label: report type
+      help: Enter report_type
+      widget: text
+      placeholder: null
+    - field: signal_detected
+      label: signal detected
+      help: Enter signal_detected
+      widget: toggle
+      placeholder: null
+    - field: timeline
+      label: timeline
+      help: Enter timeline
+      widget: text
+      placeholder: null
+    - field: valid_icsr
+      label: valid icsr
+      help: Enter valid_icsr
+      widget: toggle
+      placeholder: null
+  result:
+    template: "compliance_status: {{compliance_status}} — control_id: {{control_id}} — evidence_description: {{evidence_description}} — evidence_type: {{evidence_type}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/compliance-evidence-mapper
+  cli: rsk mcg run compliance-evidence-mapper
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_signal
   nodes:
@@ -88,120 +179,151 @@ tree:
         control_id: ICH-E2C-2
         evidence_type: signal_detection
         compliance_status: implemented
-        evidence_description: "Signal detected via PRR/ROR/IC/EBGM convergent analysis against FAERS database"
+        evidence_description: Signal detected via PRR/ROR/IC/EBGM convergent analysis against FAERS database
     expedited_ind_evidence:
       type: return
       value:
         control_id: ICH-E2A-2
         evidence_type: expedited_reporting
         compliance_status: implemented
-        evidence_description: "IND safety report classified per 21 CFR 312.32 with correct timeline"
+        evidence_description: IND safety report classified per 21 CFR 312.32 with correct timeline
     expedited_postmarket_evidence:
       type: return
       value:
         control_id: ICH-E2A-2
         evidence_type: expedited_reporting
         compliance_status: implemented
-        evidence_description: "Field alert classified per 21 CFR 314.80 with 15-day timeline"
+        evidence_description: Field alert classified per 21 CFR 314.80 with 15-day timeline
     periodic_evidence:
       type: return
       value:
         control_id: ICH-E2A-3
         evidence_type: periodic_reporting
         compliance_status: partial
-        evidence_description: "Case classified for PSUR/DSUR periodic reporting per ICH E2C(R2). Report generation not implemented."
+        evidence_description: Case classified for PSUR/DSUR periodic reporting per ICH E2C(R2). Report generation not implemented.
     line_listing_evidence:
       type: return
       value:
         control_id: ICH-E2A-3
         evidence_type: periodic_reporting
         compliance_status: partial
-        evidence_description: "Non-serious case classified for line listing periodic report per ICH E2C(R2)."
+        evidence_description: Non-serious case classified for line listing periodic report per ICH E2C(R2).
     icsr_evidence:
       type: return
       value:
         control_id: ICH-E2A-1
         evidence_type: icsr_validation
         compliance_status: partial
-        evidence_description: "ICSR validated with 4 minimum criteria per ICH E2A Section III.A. Collection system not implemented."
+        evidence_description: ICSR validated with 4 minimum criteria per ICH E2A Section III.A. Collection system not implemented.
     br_evidence:
       type: return
       value:
         control_id: ICH-E2C-3
         evidence_type: benefit_risk
         compliance_status: partial
-        evidence_description: "Benefit-risk classification completed. Full quantitative B/R framework not implemented."
+        evidence_description: Benefit-risk classification completed. Full quantitative B/R framework not implemented.
     no_evidence:
       type: return
       value:
         control_id: ICH-E2A-1
         evidence_type: none
         compliance_status: not_implemented
-        evidence_description: "No compliance evidence generated - case not yet processed"
-primitive_signature:
-  dominant: '→'
-  expression: '→ — causality assessment or causal inference'
-  primes: ['→']
-  arguments: []
+        evidence_description: No compliance evidence generated - case not yet processed
 tests:
-- name: signal detected maps to E2C-2 implemented
-  input:
-    signal_detected: true
-  expect:
-    control_id: ICH-E2C-2
-    evidence_type: signal_detection
-    compliance_status: implemented
-- name: IND safety report maps to E2A-2 implemented
-  input:
-    report_type: IND_SAFETY
-    signal_detected: false
-  expect:
-    control_id: ICH-E2A-2
-    evidence_type: expedited_reporting
-    compliance_status: implemented
-- name: field alert maps to E2A-2 implemented
-  input:
-    report_type: FIELD_ALERT
-    signal_detected: false
-  expect:
-    control_id: ICH-E2A-2
-    evidence_type: expedited_reporting
-    compliance_status: implemented
-- name: periodic report maps to E2A-3 partial
-  input:
-    report_type: PSUR_DSUR
-    signal_detected: false
-  expect:
-    control_id: ICH-E2A-3
-    evidence_type: periodic_reporting
-    compliance_status: partial
-- name: line listing maps to E2A-3 partial
-  input:
-    report_type: LINE_LISTING
-    signal_detected: false
-  expect:
-    control_id: ICH-E2A-3
-    evidence_type: periodic_reporting
-    compliance_status: partial
-- name: valid ICSR maps to E2A-1 partial
-  input:
-    valid_icsr: true
-    signal_detected: false
-  expect:
-    control_id: ICH-E2A-1
-    evidence_type: icsr_validation
-    compliance_status: partial
-- name: benefit risk assessed maps to E2C-3 partial
-  input:
-    benefit_risk_assessed: true
-    signal_detected: false
-  expect:
-    control_id: ICH-E2C-3
-    evidence_type: benefit_risk
-    compliance_status: partial
-- name: null input produces no evidence
-  input: {}
-  expect:
-    control_id: ICH-E2A-1
-    evidence_type: none
-    compliance_status: not_implemented
+  - name: signal detected maps to E2C-2 implemented
+    input:
+      signal_detected: true
+    expect:
+      control_id: ICH-E2C-2
+      evidence_type: signal_detection
+      compliance_status: implemented
+  - name: IND safety report maps to E2A-2 implemented
+    input:
+      report_type: IND_SAFETY
+      signal_detected: false
+    expect:
+      control_id: ICH-E2A-2
+      evidence_type: expedited_reporting
+      compliance_status: implemented
+  - name: field alert maps to E2A-2 implemented
+    input:
+      report_type: FIELD_ALERT
+      signal_detected: false
+    expect:
+      control_id: ICH-E2A-2
+      evidence_type: expedited_reporting
+      compliance_status: implemented
+  - name: periodic report maps to E2A-3 partial
+    input:
+      report_type: PSUR_DSUR
+      signal_detected: false
+    expect:
+      control_id: ICH-E2A-3
+      evidence_type: periodic_reporting
+      compliance_status: partial
+  - name: line listing maps to E2A-3 partial
+    input:
+      report_type: LINE_LISTING
+      signal_detected: false
+    expect:
+      control_id: ICH-E2A-3
+      evidence_type: periodic_reporting
+      compliance_status: partial
+  - name: valid ICSR maps to E2A-1 partial
+    input:
+      valid_icsr: true
+      signal_detected: false
+    expect:
+      control_id: ICH-E2A-1
+      evidence_type: icsr_validation
+      compliance_status: partial
+  - name: benefit risk assessed maps to E2C-3 partial
+    input:
+      benefit_risk_assessed: true
+      signal_detected: false
+    expect:
+      control_id: ICH-E2C-3
+      evidence_type: benefit_risk
+      compliance_status: partial
+  - name: null input produces no evidence
+    input: {}
+    expect:
+      control_id: ICH-E2A-1
+      evidence_type: none
+      compliance_status: not_implemented
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - compliance_status
+    - control_id
+    - evidence_description
+    - evidence_type
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

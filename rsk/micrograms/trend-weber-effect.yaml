@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: trend-weber-effect
-description: Weber effect (new drug)
 version: 0.1.0
+description: Weber effect (new drug)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Trend Weber Effect
+  subtitle: Weber effect (new drug)
+  icon: circle
+  route: /vigilance/mg/trend-weber-effect
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/trend-weber-effect
+  cli: rsk mcg run trend-weber-effect
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -24,44 +53,74 @@ tree:
       true_next: detected
       false_next: not_detected
 tests:
-- input:
-    months_since_launch: 24
-  expect:
-    detected: true
-    pattern: weber_peak
-- input: {}
-  expect:
-    pattern: weber_peak
-    detected: false
-- input:
-    months_since_launch: 0
-  expect:
-    pattern: weber_peak
-    detected: true
-    action: investigate
-- input:
-    months_since_launch: -1
-  expect:
-    action: investigate
-    detected: true
-    pattern: weber_peak
-- input:
-    months_since_launch: 23
-  expect:
-    detected: true
-    pattern: weber_peak
-    action: investigate
-- input:
-    months_since_launch: 25
-  expect:
-    detected: false
-    action: continue_monitoring
-    pattern: weber_peak
-- input:
-    months_since_launch: 2400
-  expect:
-    detected: false
-    action: continue_monitoring
-    pattern: weber_peak
-interface: null
-primitive_signature: null
+  - input:
+      months_since_launch: 24
+    expect:
+      detected: true
+      pattern: weber_peak
+  - input: {}
+    expect:
+      pattern: weber_peak
+      detected: false
+  - input:
+      months_since_launch: 0
+    expect:
+      pattern: weber_peak
+      detected: true
+      action: investigate
+  - input:
+      months_since_launch: -1
+    expect:
+      action: investigate
+      detected: true
+      pattern: weber_peak
+  - input:
+      months_since_launch: 23
+    expect:
+      detected: true
+      pattern: weber_peak
+      action: investigate
+  - input:
+      months_since_launch: 25
+    expect:
+      detected: false
+      action: continue_monitoring
+      pattern: weber_peak
+  - input:
+      months_since_launch: 2400
+    expect:
+      detected: false
+      action: continue_monitoring
+      pattern: weber_peak
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

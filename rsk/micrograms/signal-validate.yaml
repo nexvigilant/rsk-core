@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: signal-validate
-description: "Validate pharmacovigilance signal strength and statistical significance"
 version: 0.1.0
+description: Validate pharmacovigilance signal strength and statistical significance
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Signal Validate
+  subtitle: Validate pharmacovigilance signal strength and statistical significance
+  icon: activity
+  route: /vigilance/mg/signal-validate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/signal-validate
+  cli: rsk mcg run signal-validate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_signal_data
   nodes:
@@ -35,46 +64,84 @@ tree:
     signal_validated:
       type: return
       value:
-        validation_status: "valid_signal"
-        signal_strength: "confirmed"
+        validation_status: valid_signal
+        signal_strength: confirmed
         requires_further_investigation: true
         validation_compliant: true
     validation_failed:
       type: return
       value:
-        validation_status: "signal_not_validated"
-        signal_strength: "weak"
+        validation_status: signal_not_validated
+        signal_strength: weak
         requires_further_investigation: false
         validation_compliant: true
     validation_unknown:
       type: return
       value:
-        validation_status: "validation_inconclusive"
+        validation_status: validation_inconclusive
         signal_strength: null
         requires_further_investigation: null
         validation_compliant: false
 tests:
-- input:
-    prr_value: 3.5
-    case_count: 5
-    lower_ci_95: 1.2
-  expect:
-    validation_status: "valid_signal"
-    signal_strength: "confirmed"
-    requires_further_investigation: true
-- input:
-    prr_value: 1.5
-    case_count: 5
-    lower_ci_95: 1.2
-  expect:
-    validation_status: "signal_not_validated"
-    signal_strength: "weak"
-- input:
-    prr_value: 3.5
-    case_count: 2
-  expect:
-    validation_status: "signal_not_validated"
-- input: {}
-  expect:
-    validation_status: "validation_inconclusive"
-    validation_compliant: false
+  - input:
+      prr_value: 3.5
+      case_count: 5
+      lower_ci_95: 1.2
+    expect:
+      validation_status: valid_signal
+      signal_strength: confirmed
+      requires_further_investigation: true
+  - input:
+      prr_value: 1.5
+      case_count: 5
+      lower_ci_95: 1.2
+    expect:
+      validation_status: signal_not_validated
+      signal_strength: weak
+  - input:
+      prr_value: 3.5
+      case_count: 2
+    expect:
+      validation_status: signal_not_validated
+  - input: {}
+    expect:
+      validation_status: validation_inconclusive
+      validation_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

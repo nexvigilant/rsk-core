@@ -1,6 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: immunity-promote
-description: Evaluate whether a pending immunity proposal should be promoted to antibody, dismissed as stale, or deferred for more evidence
 version: 0.1.0
+description: Evaluate whether a pending immunity proposal should be promoted to antibody, dismissed as stale, or deferred for more evidence
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: age_days
+    type: int
+    required: true
+    description: ""
+  - name: severity
+    type: string
+    required: true
+    description: ""
+  - name: occurrences
+    type: int
+    required: true
+    description: ""
+  - name: has_fix
+    type: bool
+    required: true
+    description: ""
+outputs:
+  - name: decision
+    type: string
+  - name: reason
+    type: string
+  - name: confidence
+    type: int
 interface:
   inputs:
     age_days:
@@ -22,10 +56,46 @@ interface:
       type: string
     confidence:
       type: int
+ui:
+  title: Immunity Promote
+  subtitle: Evaluate whether a pending immunity proposal should be promoted to antibody, dismissed as stale, or deferred for more evidence
+  icon: circle
+  route: /vigilance/mg/immunity-promote
+  steps:
+    - field: age_days
+      label: age days
+      help: Enter age_days
+      widget: text
+      placeholder: null
+    - field: severity
+      label: severity
+      help: Enter severity
+      widget: text
+      placeholder: null
+    - field: occurrences
+      label: occurrences
+      help: Enter occurrences
+      widget: text
+      placeholder: null
+    - field: has_fix
+      label: has fix
+      help: Enter has_fix
+      widget: toggle
+      placeholder: null
+  result:
+    template: "decision: {{decision}} — reason: {{reason}} — confidence: {{confidence}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/immunity-promote
+  cli: rsk mcg run immunity-promote
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_age
   nodes:
-    # --- Validation ---
     validate_age:
       type: condition
       variable: age_days
@@ -33,15 +103,12 @@ tree:
       value: 0
       true_next: reject_invalid
       false_next: check_is_critical
-
     reject_invalid:
       type: return
       value:
         decision: REJECTED
-        reason: "age_days must be non-negative"
+        reason: age_days must be non-negative
         confidence: 0
-
-    # --- Severity routing (replaces 'in' operator) ---
     check_is_critical:
       type: condition
       variable: severity
@@ -49,7 +116,6 @@ tree:
       value: critical
       true_next: check_critical_age
       false_next: check_is_high
-
     check_is_high:
       type: condition
       variable: severity
@@ -57,7 +123,6 @@ tree:
       value: high
       true_next: check_stale_high
       false_next: check_is_medium
-
     check_is_medium:
       type: condition
       variable: severity
@@ -65,7 +130,6 @@ tree:
       value: medium
       true_next: check_stale_medium
       false_next: check_is_low
-
     check_is_low:
       type: condition
       variable: severity
@@ -73,15 +137,12 @@ tree:
       value: low
       true_next: defer_low
       false_next: reject_bad_severity
-
     reject_bad_severity:
       type: return
       value:
         decision: REJECTED
         reason: "severity must be one of: critical, high, medium, low"
         confidence: 0
-
-    # --- Critical path: 7+ days with fix → PROMOTE ---
     check_critical_age:
       type: condition
       variable: age_days
@@ -89,7 +150,6 @@ tree:
       value: 7
       true_next: check_critical_fix
       false_next: defer_too_young
-
     check_critical_fix:
       type: condition
       variable: has_fix
@@ -97,15 +157,12 @@ tree:
       value: true
       true_next: promote_critical
       false_next: defer_needs_fix
-
     promote_critical:
       type: return
       value:
         decision: PROMOTE
-        reason: "Critical severity with fix, aged 7+ days"
+        reason: Critical severity with fix, aged 7+ days
         confidence: 90
-
-    # --- High path: staleness → 14+ days, 3+ occurrences, fix → PROMOTE ---
     check_stale_high:
       type: condition
       variable: age_days
@@ -113,7 +170,6 @@ tree:
       value: 45
       true_next: dismiss_stale
       false_next: check_high_age
-
     check_high_age:
       type: condition
       variable: age_days
@@ -121,7 +177,6 @@ tree:
       value: 14
       true_next: check_high_occurrences
       false_next: defer_too_young
-
     check_high_occurrences:
       type: condition
       variable: occurrences
@@ -129,7 +184,6 @@ tree:
       value: 3
       true_next: check_high_fix
       false_next: defer_low_evidence
-
     check_high_fix:
       type: condition
       variable: has_fix
@@ -137,15 +191,12 @@ tree:
       value: true
       true_next: promote_high
       false_next: defer_needs_fix
-
     promote_high:
       type: return
       value:
         decision: PROMOTE
-        reason: "High severity, 14+ days, 3+ occurrences, fix available"
+        reason: High severity, 14+ days, 3+ occurrences, fix available
         confidence: 80
-
-    # --- Medium path: staleness → 21+ days, 5+ occurrences, fix → PROMOTE ---
     check_stale_medium:
       type: condition
       variable: age_days
@@ -153,7 +204,6 @@ tree:
       value: 45
       true_next: dismiss_stale
       false_next: check_medium_age
-
     check_medium_age:
       type: condition
       variable: age_days
@@ -161,7 +211,6 @@ tree:
       value: 21
       true_next: check_medium_occurrences
       false_next: defer_too_young
-
     check_medium_occurrences:
       type: condition
       variable: occurrences
@@ -169,7 +218,6 @@ tree:
       value: 5
       true_next: check_medium_fix
       false_next: defer_low_evidence
-
     check_medium_fix:
       type: condition
       variable: has_fix
@@ -177,52 +225,43 @@ tree:
       value: true
       true_next: promote_medium
       false_next: defer_needs_fix
-
     promote_medium:
       type: return
       value:
         decision: PROMOTE
-        reason: "Medium severity, 21+ days, 5+ occurrences, fix available"
+        reason: Medium severity, 21+ days, 5+ occurrences, fix available
         confidence: 70
-
-    # --- Terminal nodes ---
     dismiss_stale:
       type: return
       value:
         decision: DISMISS
-        reason: "Pending 45+ days without meeting promotion criteria — stale"
+        reason: Pending 45+ days without meeting promotion criteria — stale
         confidence: 75
-
     defer_low:
       type: return
       value:
         decision: DEFER
-        reason: "Low severity proposals require manual promotion"
+        reason: Low severity proposals require manual promotion
         confidence: 85
-
     defer_too_young:
       type: return
       value:
         decision: DEFER
-        reason: "Proposal too recent — needs more observation time"
+        reason: Proposal too recent — needs more observation time
         confidence: 80
-
     defer_low_evidence:
       type: return
       value:
         decision: DEFER
-        reason: "Insufficient occurrences — needs more evidence"
+        reason: Insufficient occurrences — needs more evidence
         confidence: 75
-
     defer_needs_fix:
       type: return
       value:
         decision: DEFER
-        reason: "No fix template available — cannot promote without remediation"
+        reason: No fix template available — cannot promote without remediation
         confidence: 80
-
 tests:
-  # Critical with fix, aged 7 days → PROMOTE
   - name: critical_with_fix_promotes
     input:
       age_days: 10
@@ -232,8 +271,6 @@ tests:
     expect:
       decision: PROMOTE
       confidence: 90
-
-  # Critical without fix → DEFER
   - name: critical_without_fix_defers
     input:
       age_days: 10
@@ -243,8 +280,6 @@ tests:
     expect:
       decision: DEFER
       confidence: 80
-
-  # Critical too young → DEFER
   - name: critical_too_young
     input:
       age_days: 3
@@ -254,8 +289,6 @@ tests:
     expect:
       decision: DEFER
       confidence: 80
-
-  # High severity mature with evidence → PROMOTE
   - name: high_mature_promotes
     input:
       age_days: 20
@@ -265,8 +298,6 @@ tests:
     expect:
       decision: PROMOTE
       confidence: 80
-
-  # High severity low evidence → DEFER
   - name: high_low_evidence
     input:
       age_days: 20
@@ -276,8 +307,6 @@ tests:
     expect:
       decision: DEFER
       confidence: 75
-
-  # Medium mature with evidence → PROMOTE
   - name: medium_mature_promotes
     input:
       age_days: 25
@@ -287,8 +316,6 @@ tests:
     expect:
       decision: PROMOTE
       confidence: 70
-
-  # Medium too young → DEFER
   - name: medium_too_young
     input:
       age_days: 10
@@ -298,8 +325,6 @@ tests:
     expect:
       decision: DEFER
       confidence: 80
-
-  # Anything stale (45+ days) → DISMISS
   - name: stale_dismissed
     input:
       age_days: 50
@@ -309,8 +334,6 @@ tests:
     expect:
       decision: DISMISS
       confidence: 75
-
-  # Low severity → always DEFER
   - name: low_always_defers
     input:
       age_days: 30
@@ -320,8 +343,6 @@ tests:
     expect:
       decision: DEFER
       confidence: 85
-
-  # Invalid severity → REJECTED
   - name: invalid_severity
     input:
       age_days: 10
@@ -331,8 +352,6 @@ tests:
     expect:
       decision: REJECTED
       confidence: 0
-
-  # Negative age → REJECTED
   - name: negative_age
     input:
       age_days: -1
@@ -342,8 +361,6 @@ tests:
     expect:
       decision: REJECTED
       confidence: 0
-
-  # Boundary: exactly 7 days, critical → PROMOTE
   - name: critical_boundary_exact
     input:
       age_days: 7
@@ -353,8 +370,6 @@ tests:
     expect:
       decision: PROMOTE
       confidence: 90
-
-  # Boundary: exactly 14 days, high, 3 occurrences → PROMOTE
   - name: high_boundary_exact
     input:
       age_days: 14
@@ -364,8 +379,6 @@ tests:
     expect:
       decision: PROMOTE
       confidence: 80
-
-  # Boundary: exactly 45 days, non-critical → DISMISS
   - name: stale_boundary_exact
     input:
       age_days: 45
@@ -375,8 +388,6 @@ tests:
     expect:
       decision: DISMISS
       confidence: 75
-
-  # Real proposal: AUTO-20260305175026 (critical, ~3 days, has fix)
   - name: real_implicit_schema_guard
     input:
       age_days: 3
@@ -386,8 +397,6 @@ tests:
     expect:
       decision: DEFER
       confidence: 80
-
-  # Real proposal: AUTO-20260217001328 (medium, ~19 days, 102 occurrences)
   - name: real_sqlite3_pattern
     input:
       age_days: 19
@@ -397,9 +406,42 @@ tests:
     expect:
       decision: DEFER
       confidence: 80
-
-  # Null safety: empty input
   - name: null_safety
     input: {}
     expect:
       decision: REJECTED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - decision
+    - reason
+    - confidence
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

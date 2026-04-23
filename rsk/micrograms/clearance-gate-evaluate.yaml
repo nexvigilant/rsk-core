@@ -1,0 +1,255 @@
+# MICROGRAM++ (test-repair)
+name: clearance-gate-evaluate
+version: 0.1.0
+description: "NexVigilant Clearance: decide Allow | Audit | Deny for an operation under a given clearance level and Claude behavioral mode."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: level
+    type: string
+    required: true
+    description: Public | Confidential | Secret | TopSecret
+  - name: mode
+    type: string
+    required: true
+    description: Unrestricted | Restricted | Lockdown
+  - name: operation_class
+    type: string
+    required: true
+    description: read | write | admin | destructive
+outputs:
+  - name: gate_result
+    type: string
+  - name: reason
+    type: string
+interface:
+  inputs:
+    level:
+      type: string
+      required: true
+      description: Public | Confidential | Secret | TopSecret
+    mode:
+      type: string
+      required: true
+      description: Unrestricted | Restricted | Lockdown
+    operation_class:
+      type: string
+      required: true
+      description: read | write | admin | destructive
+  outputs:
+    gate_result:
+      type: string
+      description: allow | audit | deny
+    reason:
+      type: string
+ui:
+  title: Clearance Gate Evaluate
+  subtitle: "NexVigilant Clearance: decide Allow | Audit | Deny for an operation under a given clearance level and Claude behavioral mode."
+  icon: circle
+  route: /vigilance/mg/clearance-gate-evaluate
+  steps:
+    - field: level
+      label: level
+      help: Public | Confidential | Secret | TopSecret
+      widget: text
+      placeholder: null
+    - field: mode
+      label: mode
+      help: Unrestricted | Restricted | Lockdown
+      widget: text
+      placeholder: null
+    - field: operation_class
+      label: operation class
+      help: read | write | admin | destructive
+      widget: text
+      placeholder: null
+  result:
+    template: "gate_result: {{gate_result}} — reason: {{reason}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/clearance-gate-evaluate
+  cli: rsk mcg run clearance-gate-evaluate
+  auth: none
+  rate_limit: 600/min
+tree:
+  start: mode_check
+  nodes:
+    mode_check:
+      type: condition
+      variable: mode
+      operator: eq
+      value: Lockdown
+      true_next: lockdown_deny
+      false_next: mode_restricted_check
+    lockdown_deny:
+      type: return
+      value:
+        gate_result: deny
+        reason: "mode=Lockdown: only read operations permitted, and only on Public content"
+    mode_restricted_check:
+      type: condition
+      variable: mode
+      operator: eq
+      value: Restricted
+      true_next: restricted_op_check
+      false_next: level_check
+    restricted_op_check:
+      type: condition
+      variable: operation_class
+      operator: eq
+      value: destructive
+      true_next: restricted_destructive
+      false_next: restricted_admin_check
+    restricted_destructive:
+      type: return
+      value:
+        gate_result: deny
+        reason: "mode=Restricted: destructive operations blocked"
+    restricted_admin_check:
+      type: condition
+      variable: operation_class
+      operator: eq
+      value: admin
+      true_next: restricted_admin
+      false_next: level_check
+    restricted_admin:
+      type: return
+      value:
+        gate_result: audit
+        reason: "mode=Restricted + admin op: permit with audit log"
+    level_check:
+      type: condition
+      variable: level
+      operator: eq
+      value: TopSecret
+      true_next: topsecret_op_check
+      false_next: secret_level_check
+    topsecret_op_check:
+      type: condition
+      variable: operation_class
+      operator: eq
+      value: destructive
+      true_next: topsecret_destructive_deny
+      false_next: topsecret_audit
+    topsecret_destructive_deny:
+      type: return
+      value:
+        gate_result: deny
+        reason: "level=TopSecret: destructive ops require out-of-band authorization"
+    topsecret_audit:
+      type: return
+      value:
+        gate_result: audit
+        reason: "level=TopSecret: all operations audited"
+    secret_level_check:
+      type: condition
+      variable: level
+      operator: eq
+      value: Secret
+      true_next: secret_op_check
+      false_next: confidential_level_check
+    secret_op_check:
+      type: condition
+      variable: operation_class
+      operator: eq
+      value: admin
+      true_next: secret_admin_audit
+      false_next: secret_allow
+    secret_admin_audit:
+      type: return
+      value:
+        gate_result: audit
+        reason: "level=Secret + admin: audit on execution"
+    secret_allow:
+      type: return
+      value:
+        gate_result: allow
+        reason: "level=Secret: read/write permitted"
+    confidential_level_check:
+      type: condition
+      variable: level
+      operator: eq
+      value: Confidential
+      true_next: confidential_op_check
+      false_next: public_op_check
+    confidential_op_check:
+      type: condition
+      variable: operation_class
+      operator: eq
+      value: destructive
+      true_next: confidential_destructive_audit
+      false_next: confidential_allow
+    confidential_destructive_audit:
+      type: return
+      value:
+        gate_result: audit
+        reason: "level=Confidential + destructive: audit required"
+    confidential_allow:
+      type: return
+      value:
+        gate_result: allow
+        reason: "level=Confidential: standard operations permitted"
+    public_op_check:
+      type: condition
+      variable: operation_class
+      operator: eq
+      value: destructive
+      true_next: public_destructive_deny
+      false_next: public_allow
+    public_destructive_deny:
+      type: return
+      value:
+        gate_result: deny
+        reason: "level=Public: destructive ops not permitted on public content"
+    public_allow:
+      type: return
+      value:
+        gate_result: allow
+        reason: "level=Public: open access"
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - gate_result
+    - reason
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true
+tests:
+  - input: {}
+    expect: {}

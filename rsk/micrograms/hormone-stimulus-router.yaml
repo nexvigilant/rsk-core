@@ -1,20 +1,52 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: hormone-stimulus-router
-description: 'Endocrine stimulus-response router: maps stimulus category and intensity to hormone response and behavioral modulation using stem-bio SCIENCE model'
 version: 0.1.0
+description: "Endocrine stimulus-response router: maps stimulus category and intensity to hormone response and behavioral modulation using stem-bio SCIENCE model"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: stimulus_category
+    type: string
+    required: true
+    description: "One of: stress, reward, social, temporal, urgency"
+  - name: intensity
+    type: number
+    required: true
+    description: Signal intensity 0.0 to 1.0
+  - name: current_cortisol
+    type: number
+    required: true
+    description: Current cortisol level 0.0 to 1.0
+outputs:
+  - name: primary_hormone
+    type: string
+  - name: hormone_delta
+    type: number
+  - name: behavioral_shift
+    type: string
+  - name: risk_tolerance_direction
+    type: string
 interface:
   inputs:
     stimulus_category:
       type: string
       required: true
-      description: 'One of: stress, reward, social, temporal, urgency'
+      description: "One of: stress, reward, social, temporal, urgency"
     intensity:
       type: number
       required: true
-      description: 'Signal intensity 0.0 to 1.0'
+      description: Signal intensity 0.0 to 1.0
     current_cortisol:
       type: number
       required: true
-      description: 'Current cortisol level 0.0 to 1.0'
+      description: Current cortisol level 0.0 to 1.0
   outputs:
     primary_hormone:
       type: string
@@ -24,6 +56,38 @@ interface:
       type: string
     risk_tolerance_direction:
       type: string
+ui:
+  title: Hormone Stimulus Router
+  subtitle: "Endocrine stimulus-response router: maps stimulus category and intensity to hormone response and behavioral modulation using stem-bio SCIENCE model"
+  icon: circle
+  route: /vigilance/mg/hormone-stimulus-router
+  steps:
+    - field: stimulus_category
+      label: stimulus category
+      help: "One of: stress, reward, social, temporal, urgency"
+      widget: text
+      placeholder: null
+    - field: intensity
+      label: intensity
+      help: Signal intensity 0.0 to 1.0
+      widget: number
+      placeholder: null
+    - field: current_cortisol
+      label: current cortisol
+      help: Current cortisol level 0.0 to 1.0
+      widget: number
+      placeholder: null
+  result:
+    template: "primary_hormone: {{primary_hormone}} — hormone_delta: {{hormone_delta}} — behavioral_shift: {{behavioral_shift}} — risk_tolerance_direction: {{risk_tolerance_direction}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/hormone-stimulus-router
+  cli: rsk mcg run hormone-stimulus-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: route_stimulus
   nodes:
@@ -203,113 +267,149 @@ tree:
         behavioral_shift: focused
         risk_tolerance_direction: stable
 tests:
-- input:
-    stimulus_category: stress
-    intensity: 0.9
-    current_cortisol: 0.3
-  expect:
-    primary_hormone: cortisol
-    hormone_delta: 0.3
-    behavioral_shift: conservative
-- input:
-    stimulus_category: stress
-    intensity: 0.4
-    current_cortisol: 0.8
-  expect:
-    primary_hormone: cortisol
-    hormone_delta: 0.1
-    behavioral_shift: protective
-- input:
-    stimulus_category: stress
-    intensity: 0.4
-    current_cortisol: 0.3
-  expect:
-    primary_hormone: adrenaline
-    hormone_delta: 0.2
-    behavioral_shift: alert
-- input:
-    stimulus_category: reward
-    intensity: 0.8
-    current_cortisol: 0.3
-  expect:
-    primary_hormone: dopamine
-    hormone_delta: 0.2
-    behavioral_shift: explorative
-- input:
-    stimulus_category: reward
-    intensity: 0.3
-    current_cortisol: 0.3
-  expect:
-    primary_hormone: serotonin
-    hormone_delta: 0.1
-    behavioral_shift: satisfied
-- input:
-    stimulus_category: social
-    intensity: 0.8
-    current_cortisol: 0.3
-  expect:
-    primary_hormone: oxytocin
-    hormone_delta: 0.35
-    behavioral_shift: collaborative
-- input:
-    stimulus_category: social
-    intensity: 0.3
-    current_cortisol: 0.7
-  expect:
-    primary_hormone: serotonin
-    hormone_delta: 0.15
-    behavioral_shift: satisfied
-- input:
-    stimulus_category: social
-    intensity: 0.3
-    current_cortisol: 0.3
-  expect:
-    primary_hormone: oxytocin
-    hormone_delta: 0.1
-    behavioral_shift: collaborative
-- input:
-    stimulus_category: urgency
-    intensity: 0.9
-    current_cortisol: 0.4
-  expect:
-    primary_hormone: adrenaline
-    hormone_delta: 0.4
-    behavioral_shift: fight_or_flight
-- input:
-    stimulus_category: urgency
-    intensity: 0.5
-    current_cortisol: 0.4
-  expect:
-    primary_hormone: adrenaline
-    hormone_delta: 0.2
-    behavioral_shift: focused
-- input:
-    stimulus_category: temporal
-    intensity: 0.8
-    current_cortisol: 0.3
-  expect:
-    primary_hormone: melatonin
-    hormone_delta: 0.3
-    behavioral_shift: decay
-- input:
-    stimulus_category: temporal
-    intensity: 0.3
-    current_cortisol: 0.8
-  expect:
-    primary_hormone: cortisol
-    hormone_delta: 0.2
-    behavioral_shift: protective
-- input:
-    stimulus_category: temporal
-    intensity: 0.3
-    current_cortisol: 0.3
-  expect:
-    primary_hormone: melatonin
-    hormone_delta: 0.1
-    behavioral_shift: focused
-- input: {}
-  expect:
-    behavioral_shift: focused
-    hormone_delta: 0.1
-    primary_hormone: melatonin
-    risk_tolerance_direction: stable
+  - input:
+      stimulus_category: stress
+      intensity: 0.9
+      current_cortisol: 0.3
+    expect:
+      primary_hormone: cortisol
+      hormone_delta: 0.3
+      behavioral_shift: conservative
+  - input:
+      stimulus_category: stress
+      intensity: 0.4
+      current_cortisol: 0.8
+    expect:
+      primary_hormone: cortisol
+      hormone_delta: 0.1
+      behavioral_shift: protective
+  - input:
+      stimulus_category: stress
+      intensity: 0.4
+      current_cortisol: 0.3
+    expect:
+      primary_hormone: adrenaline
+      hormone_delta: 0.2
+      behavioral_shift: alert
+  - input:
+      stimulus_category: reward
+      intensity: 0.8
+      current_cortisol: 0.3
+    expect:
+      primary_hormone: dopamine
+      hormone_delta: 0.2
+      behavioral_shift: explorative
+  - input:
+      stimulus_category: reward
+      intensity: 0.3
+      current_cortisol: 0.3
+    expect:
+      primary_hormone: serotonin
+      hormone_delta: 0.1
+      behavioral_shift: satisfied
+  - input:
+      stimulus_category: social
+      intensity: 0.8
+      current_cortisol: 0.3
+    expect:
+      primary_hormone: oxytocin
+      hormone_delta: 0.35
+      behavioral_shift: collaborative
+  - input:
+      stimulus_category: social
+      intensity: 0.3
+      current_cortisol: 0.7
+    expect:
+      primary_hormone: serotonin
+      hormone_delta: 0.15
+      behavioral_shift: satisfied
+  - input:
+      stimulus_category: social
+      intensity: 0.3
+      current_cortisol: 0.3
+    expect:
+      primary_hormone: oxytocin
+      hormone_delta: 0.1
+      behavioral_shift: collaborative
+  - input:
+      stimulus_category: urgency
+      intensity: 0.9
+      current_cortisol: 0.4
+    expect:
+      primary_hormone: adrenaline
+      hormone_delta: 0.4
+      behavioral_shift: fight_or_flight
+  - input:
+      stimulus_category: urgency
+      intensity: 0.5
+      current_cortisol: 0.4
+    expect:
+      primary_hormone: adrenaline
+      hormone_delta: 0.2
+      behavioral_shift: focused
+  - input:
+      stimulus_category: temporal
+      intensity: 0.8
+      current_cortisol: 0.3
+    expect:
+      primary_hormone: melatonin
+      hormone_delta: 0.3
+      behavioral_shift: decay
+  - input:
+      stimulus_category: temporal
+      intensity: 0.3
+      current_cortisol: 0.8
+    expect:
+      primary_hormone: cortisol
+      hormone_delta: 0.2
+      behavioral_shift: protective
+  - input:
+      stimulus_category: temporal
+      intensity: 0.3
+      current_cortisol: 0.3
+    expect:
+      primary_hormone: melatonin
+      hormone_delta: 0.1
+      behavioral_shift: focused
+  - input: {}
+    expect:
+      behavioral_shift: focused
+      hormone_delta: 0.1
+      primary_hormone: melatonin
+      risk_tolerance_direction: stable
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - primary_hormone
+    - hormone_delta
+    - behavioral_shift
+    - risk_tolerance_direction
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

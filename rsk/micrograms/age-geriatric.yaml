@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: age-geriatric
-description: "Geriatric age classifier. Identifies subjects aged 80+ years (very elderly)."
 version: 0.1.0
+description: Geriatric age classifier. Identifies subjects aged 80+ years (very elderly).
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Age Geriatric
+  subtitle: Geriatric age classifier. Identifies subjects aged 80+ years (very elderly).
+  icon: circle
+  route: /vigilance/mg/age-geriatric
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/age-geriatric
+  cli: rsk mcg run age-geriatric
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_age_threshold
   nodes:
@@ -15,7 +44,7 @@ tree:
       type: return
       value:
         age_group: geriatric
-        age_range: "80+ years"
+        age_range: 80+ years
         frailty_assessment: required
         polypharmacy_risk: high
         fall_risk: high
@@ -25,13 +54,55 @@ tree:
         age_group: other
         is_geriatric: false
 tests:
-  - input: { age_years: 85 }
-    expect: { age_group: geriatric, frailty_assessment: required }
-  - input: { age_years: 80 }
-    expect: { age_group: geriatric }
-  - input: { age_years: 100 }
-    expect: { age_group: geriatric }
-  - input: { age_years: 79 }
-    expect: { age_group: other, is_geriatric: false }
+  - input:
+      age_years: 85
+    expect:
+      age_group: geriatric
+      frailty_assessment: required
+  - input:
+      age_years: 80
+    expect:
+      age_group: geriatric
+  - input:
+      age_years: 100
+    expect:
+      age_group: geriatric
+  - input:
+      age_years: 79
+    expect:
+      age_group: other
+      is_geriatric: false
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

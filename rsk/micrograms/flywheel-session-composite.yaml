@@ -1,6 +1,90 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: flywheel-session-composite
-description: Combines session velocity, reality gate verdict, and momentum classification into unified flywheel health assessment. Bridges session-velocity, reality-gate, and momentum-conservation outputs into health-traffic-classifier and friction-dissipation inputs.
 version: 0.1.0
+description: Combines session velocity, reality gate verdict, and momentum classification into unified flywheel health assessment. Bridges session-velocity, reality-gate, and momentum-conservation outputs into health-traffic-classifier and friction-dissipation inputs.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: verdict
+    type: string
+    required: false
+    description: ""
+  - name: session_band
+    type: string
+    required: false
+    description: ""
+  - name: above_critical
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: velocity
+    type: string
+  - name: flywheel_assessment
+    type: string
+  - name: status
+    type: string
+interface:
+  inputs:
+    verdict:
+      type: string
+      required: false
+    session_band:
+      type: string
+      required: false
+    above_critical:
+      type: bool
+      required: false
+  outputs:
+    velocity:
+      type: string
+      required: true
+    flywheel_assessment:
+      type: string
+      required: true
+    status:
+      type: string
+      required: true
+  aliases: {}
+ui:
+  title: Flywheel Session Composite
+  subtitle: Combines session velocity, reality gate verdict, and momentum classification into unified flywheel health assessment. Bridges session-velocity, reality-gate, and momentum-conservation outputs into health-traffic-classifier and friction-dissipation inputs.
+  icon: circle
+  route: /vigilance/mg/flywheel-session-composite
+  steps:
+    - field: verdict
+      label: verdict
+      help: Enter verdict
+      widget: text
+      placeholder: null
+    - field: session_band
+      label: session band
+      help: Enter session_band
+      widget: text
+      placeholder: null
+    - field: above_critical
+      label: above critical
+      help: Enter above_critical
+      widget: toggle
+      placeholder: null
+  result:
+    template: "velocity: {{velocity}} — flywheel_assessment: {{flywheel_assessment}} — status: {{status}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/flywheel-session-composite
+  cli: rsk mcg run flywheel-session-composite
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_verdict
   nodes:
@@ -102,116 +186,129 @@ tree:
       true_next: check_band_warn
       false_next: check_band_high
 tests:
-- input:
-    session_band: HIGH
-    above_critical: true
-    verdict: BLOCKED
-  expect:
-    status: RED
-    velocity: STALLED
-- input:
-    verdict: APPROVED
-    session_band: HIGH
-    above_critical: true
-  expect:
-    velocity: FAST
-    status: GREEN
-- input:
-    verdict: APPROVED
-    session_band: HIGH
-    above_critical: false
-  expect:
-    status: GREEN
-    velocity: FAST
-- input:
-    verdict: APPROVED
-    session_band: MODERATE
-    above_critical: true
-  expect:
-    velocity: MODERATE
-    status: GREEN
-- input:
-    above_critical: true
-    verdict: APPROVED
-    session_band: LOW
-  expect:
-    status: YELLOW
-    velocity: SLOW
-- input:
-    above_critical: false
-    verdict: APPROVED
-    session_band: LOW
-  expect:
-    velocity: STALLED
-    status: RED
-- input:
-    verdict: WARN
-    session_band: HIGH
-    above_critical: true
-  expect:
-    velocity: MODERATE
-    status: YELLOW
-- input:
-    verdict: WARN
-    above_critical: false
-    session_band: LOW
-  expect:
-    velocity: SLOW
-    status: YELLOW
-- input: {}
-  expect:
-    velocity: STALLED
-    flywheel_assessment: Low output and momentum below critical — flywheel stalling
-    status: RED
-- input: {}
-  expect:
-    velocity: STALLED
-    flywheel_assessment: Low output and momentum below critical — flywheel stalling
-    status: RED
-- input: {}
-  expect:
-    velocity: STALLED
-    flywheel_assessment: Low output and momentum below critical — flywheel stalling
-    status: RED
-- input: {}
-  expect:
-    flywheel_assessment: Low output and momentum below critical — flywheel stalling
-    status: RED
-    velocity: STALLED
-- input: {}
-  expect:
-    flywheel_assessment: Low output and momentum below critical — flywheel stalling
-    status: RED
-    velocity: STALLED
-- input: {}
-  expect:
-    flywheel_assessment: Low output and momentum below critical — flywheel stalling
-    velocity: STALLED
-    status: RED
-- input: {}
-  expect:
-    status: RED
-    velocity: STALLED
-    flywheel_assessment: Low output and momentum below critical — flywheel stalling
-interface:
-  inputs:
-    verdict:
-      type: string
-      required: false
-    session_band:
-      type: string
-      required: false
-    above_critical:
-      type: bool
-      required: false
-  outputs:
-    velocity:
-      type: string
-      required: true
-    flywheel_assessment:
-      type: string
-      required: true
-    status:
-      type: string
-      required: true
-  aliases: {}
+  - input:
+      session_band: HIGH
+      above_critical: true
+      verdict: BLOCKED
+    expect:
+      status: RED
+      velocity: STALLED
+  - input:
+      verdict: APPROVED
+      session_band: HIGH
+      above_critical: true
+    expect:
+      velocity: FAST
+      status: GREEN
+  - input:
+      verdict: APPROVED
+      session_band: HIGH
+      above_critical: false
+    expect:
+      status: GREEN
+      velocity: FAST
+  - input:
+      verdict: APPROVED
+      session_band: MODERATE
+      above_critical: true
+    expect:
+      velocity: MODERATE
+      status: GREEN
+  - input:
+      above_critical: true
+      verdict: APPROVED
+      session_band: LOW
+    expect:
+      status: YELLOW
+      velocity: SLOW
+  - input:
+      above_critical: false
+      verdict: APPROVED
+      session_band: LOW
+    expect:
+      velocity: STALLED
+      status: RED
+  - input:
+      verdict: WARN
+      session_band: HIGH
+      above_critical: true
+    expect:
+      velocity: MODERATE
+      status: YELLOW
+  - input:
+      verdict: WARN
+      above_critical: false
+      session_band: LOW
+    expect:
+      velocity: SLOW
+      status: YELLOW
+  - input: {}
+    expect:
+      velocity: STALLED
+      flywheel_assessment: Low output and momentum below critical — flywheel stalling
+      status: RED
+  - input: {}
+    expect:
+      velocity: STALLED
+      flywheel_assessment: Low output and momentum below critical — flywheel stalling
+      status: RED
+  - input: {}
+    expect:
+      velocity: STALLED
+      flywheel_assessment: Low output and momentum below critical — flywheel stalling
+      status: RED
+  - input: {}
+    expect:
+      flywheel_assessment: Low output and momentum below critical — flywheel stalling
+      status: RED
+      velocity: STALLED
+  - input: {}
+    expect:
+      flywheel_assessment: Low output and momentum below critical — flywheel stalling
+      status: RED
+      velocity: STALLED
+  - input: {}
+    expect:
+      flywheel_assessment: Low output and momentum below critical — flywheel stalling
+      velocity: STALLED
+      status: RED
+  - input: {}
+    expect:
+      status: RED
+      velocity: STALLED
+      flywheel_assessment: Low output and momentum below critical — flywheel stalling
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - velocity
+    - flywheel_assessment
+    - status
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

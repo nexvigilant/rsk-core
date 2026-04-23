@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: convergence-class-effect
-description: Signal in drug class
 version: 0.1.0
+description: Signal in drug class
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Convergence Class Effect
+  subtitle: Signal in drug class
+  icon: circle
+  route: /vigilance/mg/convergence-class-effect
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/convergence-class-effect
+  cli: rsk mcg run convergence-class-effect
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -24,44 +53,74 @@ tree:
       true_next: converged
       false_next: divergent
 tests:
-- input:
-    class_drugs_positive: 2
-  expect:
-    convergence: class_effect
-    met: true
-- input: {}
-  expect:
-    convergence: class_effect
-    met: false
-- input:
-    class_drugs_positive: 0
-  expect:
-    convergence: class_effect
-    met: false
-    action: investigate_discrepancy
-- input:
-    class_drugs_positive: -1
-  expect:
-    convergence: class_effect
-    met: false
-    action: investigate_discrepancy
-- input:
-    class_drugs_positive: 1
-  expect:
-    met: false
-    convergence: class_effect
-    action: investigate_discrepancy
-- input:
-    class_drugs_positive: 3
-  expect:
-    convergence: class_effect
-    action: escalate
-    met: true
-- input:
-    class_drugs_positive: 200
-  expect:
-    convergence: class_effect
-    met: true
-    action: escalate
-interface: null
-primitive_signature: null
+  - input:
+      class_drugs_positive: 2
+    expect:
+      convergence: class_effect
+      met: true
+  - input: {}
+    expect:
+      convergence: class_effect
+      met: false
+  - input:
+      class_drugs_positive: 0
+    expect:
+      convergence: class_effect
+      met: false
+      action: investigate_discrepancy
+  - input:
+      class_drugs_positive: -1
+    expect:
+      convergence: class_effect
+      met: false
+      action: investigate_discrepancy
+  - input:
+      class_drugs_positive: 1
+    expect:
+      met: false
+      convergence: class_effect
+      action: investigate_discrepancy
+  - input:
+      class_drugs_positive: 3
+    expect:
+      convergence: class_effect
+      action: escalate
+      met: true
+  - input:
+      class_drugs_positive: 200
+    expect:
+      convergence: class_effect
+      met: true
+      action: escalate
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

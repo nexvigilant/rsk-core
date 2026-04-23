@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: psur-signal-summary
-description: "Summarize identified safety signals for PSUR reporting"
 version: 0.1.0
+description: Summarize identified safety signals for PSUR reporting
+family: pv.signal
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs: []
+outputs: []
+ui:
+  title: Psur Signal Summary
+  subtitle: Summarize identified safety signals for PSUR reporting
+  icon: activity
+  route: /vigilance/mg/psur-signal-summary
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/psur-signal-summary
+  cli: rsk mcg run psur-signal-summary
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_signals
   nodes:
@@ -22,7 +51,7 @@ tree:
       type: return
       value:
         signal_summary_required: true
-        summary_content: "signal_list,causality_assessment,recommendations"
+        summary_content: signal_list,causality_assessment,recommendations
         escalation_required: true
         label_update_indicated: true
         psur_signal_compliant: true
@@ -30,23 +59,61 @@ tree:
       type: return
       value:
         signal_summary_required: false
-        summary_content: "statement_no_new_signals"
+        summary_content: statement_no_new_signals
         escalation_required: false
         label_update_indicated: false
         psur_signal_compliant: true
 tests:
-- input:
-    signals_identified: true
-    signal_count: 2
-  expect:
-    signal_summary_required: true
-    escalation_required: true
-- input:
-    signals_identified: false
-  expect:
-    signal_summary_required: false
-    escalation_required: false
-- input: {}
-  expect:
-    signal_summary_required: false
-    psur_signal_compliant: true
+  - input:
+      signals_identified: true
+      signal_count: 2
+    expect:
+      signal_summary_required: true
+      escalation_required: true
+  - input:
+      signals_identified: false
+    expect:
+      signal_summary_required: false
+      escalation_required: false
+  - input: {}
+    expect:
+      signal_summary_required: false
+      psur_signal_compliant: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.signal
+  log_level: info
+governance:
+  sop_ref: SOP-PV-001
+  regulatory_ref:
+    - ICH-E2E
+    - 21CFR314.80
+  harm_types:
+    - A
+    - F
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - conservation
+    - safety_manifold
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

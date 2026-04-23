@@ -1,25 +1,66 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: algo-locate-root-cause
-description: "Algorithm 10 (LOCATE): Boundary contraction search. Takes a failure and systematically narrows the search space through successive comparisons (\u03ba) at each location (\u03bb), halving the boundary (\u2202) until root cause is located."
 version: 0.1.0
+description: "Algorithm 10 (LOCATE): Boundary contraction search. Takes a failure and systematically narrows the search space through successive comparisons (κ) at each location (λ), halving the boundary (∂) until root cause is located."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: failure_layer
+    type: string
+    required: true
+    description: Which architectural layer failed
+  - name: error_reproducible
+    type: boolean
+    required: true
+    description: κ(run1, run2) = same error? Reproducibility narrows ∂
+  - name: error_in_tests
+    type: boolean
+    required: true
+    description: Does the error appear in unit tests? Narrows to code vs config
+  - name: recent_change
+    type: boolean
+    required: true
+    description: Was there a recent change to this area? λ(recent_commit)
+outputs:
+  - name: root_cause_location
+    type: string
+  - name: search_boundary
+    type: string
+  - name: contractions
+    type: integer
+  - name: algorithm
+    type: string
 interface:
   inputs:
     failure_layer:
       type: string
       required: true
-      description: "Which architectural layer failed"
-      enum: [transport, orchestration, domain, foundation, unknown]
+      description: Which architectural layer failed
+      enum:
+        - transport
+        - orchestration
+        - domain
+        - foundation
+        - unknown
     error_reproducible:
       type: boolean
       required: true
-      description: "\u03ba(run1, run2) = same error? Reproducibility narrows \u2202"
+      description: κ(run1, run2) = same error? Reproducibility narrows ∂
     error_in_tests:
       type: boolean
       required: true
-      description: "Does the error appear in unit tests? Narrows to code vs config"
+      description: Does the error appear in unit tests? Narrows to code vs config
     recent_change:
       type: boolean
       required: true
-      description: "Was there a recent change to this area? \u03bb(recent_commit)"
+      description: Was there a recent change to this area? λ(recent_commit)
   outputs:
     root_cause_location:
       type: string
@@ -29,6 +70,43 @@ interface:
       type: integer
     algorithm:
       type: string
+ui:
+  title: Algo Locate Root Cause
+  subtitle: "Algorithm 10 (LOCATE): Boundary contraction search. Takes a failure and systematically narrows the search space through successive comparisons (κ) at each location (λ), halving the boundary (∂) until root cause is located."
+  icon: circle
+  route: /vigilance/mg/algo-locate-root-cause
+  steps:
+    - field: failure_layer
+      label: failure layer
+      help: Which architectural layer failed
+      widget: text
+      placeholder: null
+    - field: error_reproducible
+      label: error reproducible
+      help: κ(run1, run2) = same error? Reproducibility narrows ∂
+      widget: toggle
+      placeholder: null
+    - field: error_in_tests
+      label: error in tests
+      help: Does the error appear in unit tests? Narrows to code vs config
+      widget: toggle
+      placeholder: null
+    - field: recent_change
+      label: recent change
+      help: Was there a recent change to this area? λ(recent_commit)
+      widget: toggle
+      placeholder: null
+  result:
+    template: "root_cause_location: {{root_cause_location}} — search_boundary: {{search_boundary}} — contractions: {{contractions}} — algorithm: {{algorithm}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/algo-locate-root-cause
+  cli: rsk mcg run algo-locate-root-cause
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_layer
   nodes:
@@ -45,7 +123,7 @@ tree:
         root_cause_location: undetermined
         search_boundary: full_system
         contractions: 0
-        algorithm: "LOCATE: \u2202_search = full system \u2014 layer unknown, cannot contract. Run DECOMPOSE first."
+        algorithm: "LOCATE: ∂_search = full system — layer unknown, cannot contract. Run DECOMPOSE first."
     check_reproducible:
       type: condition
       variable: error_reproducible
@@ -59,7 +137,7 @@ tree:
         root_cause_location: timing_or_environment
         search_boundary: runtime_conditions
         contractions: 1
-        algorithm: "LOCATE: \u03ba(run1, run2) \u2260 equal \u2192 non-deterministic \u2014 \u2202 contracts to runtime conditions (race, env, timing)"
+        algorithm: "LOCATE: κ(run1, run2) ≠ equal → non-deterministic — ∂ contracts to runtime conditions (race, env, timing)"
     check_in_tests:
       type: condition
       variable: error_in_tests
@@ -87,99 +165,130 @@ tree:
         root_cause_location: recent_code_change
         search_boundary: last_commit_in_layer
         contractions: 3
-        algorithm: "LOCATE: \u03c1(\u03ba \u2192 \u2202/N) converged \u2014 reproducible + in tests + recent change = check last commit in {failure_layer}"
+        algorithm: "LOCATE: ρ(κ → ∂/N) converged — reproducible + in tests + recent change = check last commit in {failure_layer}"
     located_existing_code:
       type: return
       value:
         root_cause_location: existing_code_bug
         search_boundary: layer_source_code
         contractions: 3
-        algorithm: "LOCATE: \u03c1(\u03ba \u2192 \u2202/N) \u2014 reproducible + in tests + no recent change = latent bug in {failure_layer} source"
+        algorithm: "LOCATE: ρ(κ → ∂/N) — reproducible + in tests + no recent change = latent bug in {failure_layer} source"
     located_recent_config:
       type: return
       value:
         root_cause_location: recent_config_change
         search_boundary: recent_config_diff
         contractions: 3
-        algorithm: "LOCATE: \u03c1(\u03ba \u2192 \u2202/N) \u2014 reproducible + NOT in tests + recent change = config/env change in {failure_layer}"
+        algorithm: "LOCATE: ρ(κ → ∂/N) — reproducible + NOT in tests + recent change = config/env change in {failure_layer}"
     located_existing_config:
       type: return
       value:
         root_cause_location: existing_config_or_env
         search_boundary: layer_config_and_env
         contractions: 3
-        algorithm: "LOCATE: \u03c1(\u03ba \u2192 \u2202/N) \u2014 reproducible + NOT in tests + no recent change = environment or config drift in {failure_layer}"
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
+        algorithm: "LOCATE: ρ(κ → ∂/N) — reproducible + NOT in tests + no recent change = environment or config drift in {failure_layer}"
 tests:
-- name: recent_code_bug
-  input:
-    failure_layer: domain
-    error_reproducible: true
-    error_in_tests: true
-    recent_change: true
-  expect:
-    root_cause_location: recent_code_change
-    contractions: 3
-- name: latent_code_bug
-  input:
-    failure_layer: foundation
-    error_reproducible: true
-    error_in_tests: true
-    recent_change: false
-  expect:
-    root_cause_location: existing_code_bug
-    contractions: 3
-- name: config_drift
-  input:
-    failure_layer: transport
-    error_reproducible: true
-    error_in_tests: false
-    recent_change: false
-  expect:
-    root_cause_location: existing_config_or_env
-    contractions: 3
-- name: recent_config_change
-  input:
-    failure_layer: orchestration
-    error_reproducible: true
-    error_in_tests: false
-    recent_change: true
-  expect:
-    root_cause_location: recent_config_change
-    contractions: 3
-- name: flaky_test
-  input:
-    failure_layer: domain
-    error_reproducible: false
-    error_in_tests: true
-    recent_change: true
-  expect:
-    root_cause_location: timing_or_environment
-    contractions: 1
-- name: unknown_layer
-  input:
-    failure_layer: unknown
-    error_reproducible: true
-    error_in_tests: true
-    recent_change: true
-  expect:
-    root_cause_location: undetermined
-    contractions: 0
-- name: flaky_no_tests
-  input:
-    failure_layer: foundation
-    error_reproducible: false
-    error_in_tests: false
-    recent_change: false
-  expect:
-    root_cause_location: timing_or_environment
-    contractions: 1
-- name: null_safety
-  input: {}
-  expect:
-    root_cause_location: timing_or_environment
-    contractions: 1
+  - name: recent_code_bug
+    input:
+      failure_layer: domain
+      error_reproducible: true
+      error_in_tests: true
+      recent_change: true
+    expect:
+      root_cause_location: recent_code_change
+      contractions: 3
+  - name: latent_code_bug
+    input:
+      failure_layer: foundation
+      error_reproducible: true
+      error_in_tests: true
+      recent_change: false
+    expect:
+      root_cause_location: existing_code_bug
+      contractions: 3
+  - name: config_drift
+    input:
+      failure_layer: transport
+      error_reproducible: true
+      error_in_tests: false
+      recent_change: false
+    expect:
+      root_cause_location: existing_config_or_env
+      contractions: 3
+  - name: recent_config_change
+    input:
+      failure_layer: orchestration
+      error_reproducible: true
+      error_in_tests: false
+      recent_change: true
+    expect:
+      root_cause_location: recent_config_change
+      contractions: 3
+  - name: flaky_test
+    input:
+      failure_layer: domain
+      error_reproducible: false
+      error_in_tests: true
+      recent_change: true
+    expect:
+      root_cause_location: timing_or_environment
+      contractions: 1
+  - name: unknown_layer
+    input:
+      failure_layer: unknown
+      error_reproducible: true
+      error_in_tests: true
+      recent_change: true
+    expect:
+      root_cause_location: undetermined
+      contractions: 0
+  - name: flaky_no_tests
+    input:
+      failure_layer: foundation
+      error_reproducible: false
+      error_in_tests: false
+      recent_change: false
+    expect:
+      root_cause_location: timing_or_environment
+      contractions: 1
+  - name: null_safety
+    input: {}
+    expect:
+      root_cause_location: timing_or_environment
+      contractions: 1
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - root_cause_location
+    - search_boundary
+    - contractions
+    - algorithm
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

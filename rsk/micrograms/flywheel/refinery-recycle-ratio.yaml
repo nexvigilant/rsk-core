@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: refinery-recycle-ratio
-description: "Compute recycle ratio (recycled/(recycled+products)). Lower is better — high recycle means signals need reprocessing."
 version: 0.1.0
+description: Compute recycle ratio (recycled/(recycled+products)). Lower is better — high recycle means signals need reprocessing.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Refinery Recycle Ratio
+  subtitle: Compute recycle ratio (recycled/(recycled+products)). Lower is better — high recycle means signals need reprocessing.
+  icon: circle
+  route: /vigilance/mg/refinery-recycle-ratio
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/refinery-recycle-ratio
+  cli: rsk mcg run refinery-recycle-ratio
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_total
   nodes:
@@ -29,37 +58,81 @@ tree:
       type: return
       value:
         recycle_class: MINIMAL
-        action: "Low reprocessing; unit processes converting efficiently"
-        refinery_analog: "Single-pass conversion; recycle stream negligible"
+        action: Low reprocessing; unit processes converting efficiently
+        refinery_analog: Single-pass conversion; recycle stream negligible
     return_moderate_recycle:
       type: return
       value:
         recycle_class: MODERATE
-        action: "Acceptable recycle; some signals need second pass"
-        refinery_analog: "Normal recycle ratio; unconverted material returns to reactor"
+        action: Acceptable recycle; some signals need second pass
+        refinery_analog: Normal recycle ratio; unconverted material returns to reactor
     return_excessive_recycle:
       type: return
       value:
         recycle_class: EXCESSIVE
-        action: "High reprocessing load; unit processes underperforming"
-        refinery_analog: "Excessive recycle; catalyst deactivation or wrong operating conditions"
+        action: High reprocessing load; unit processes underperforming
+        refinery_analog: Excessive recycle; catalyst deactivation or wrong operating conditions
     return_no_output:
       type: return
       value:
         recycle_class: NO_OUTPUT
-        action: "No output to evaluate"
-        refinery_analog: "No reaction products or recycle"
+        action: No output to evaluate
+        refinery_analog: No reaction products or recycle
 tests:
-  - input: { total_output: 100, recycle_pct: 5 }
-    expect: { recycle_class: MINIMAL }
-  - input: { total_output: 100, recycle_pct: 20 }
-    expect: { recycle_class: MODERATE }
-  - input: { total_output: 100, recycle_pct: 50 }
-    expect: { recycle_class: EXCESSIVE }
-  - input: { total_output: 0, recycle_pct: 0 }
-    expect: { recycle_class: NO_OUTPUT }
+  - input:
+      total_output: 100
+      recycle_pct: 5
+    expect:
+      recycle_class: MINIMAL
+  - input:
+      total_output: 100
+      recycle_pct: 20
+    expect:
+      recycle_class: MODERATE
+  - input:
+      total_output: 100
+      recycle_pct: 50
+    expect:
+      recycle_class: EXCESSIVE
+  - input:
+      total_output: 0
+      recycle_pct: 0
+    expect:
+      recycle_class: NO_OUTPUT
   - input: {}
     expect:
       action: No output to evaluate
       recycle_class: NO_OUTPUT
       refinery_analog: No reaction products or recycle
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

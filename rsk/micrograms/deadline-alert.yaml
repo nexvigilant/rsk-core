@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: deadline-alert
-description: 'Bridge: regulatory deadline + confidence actionability → alert routing. Chains from report-deadline and confidence-gate.'
 version: 0.1.0
+description: "Bridge: regulatory deadline + confidence actionability → alert routing. Chains from report-deadline and confidence-gate."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: actionable
+    type: bool
+    required: false
+    description: ""
+  - name: deadline_days
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: alert_level
+    type: string
+  - name: days_remaining_label
+    type: string
+  - name: response
+    type: string
 interface:
   inputs:
     actionable:
@@ -16,6 +42,33 @@ interface:
       type: string
     response:
       type: string
+ui:
+  title: Deadline Alert
+  subtitle: "Bridge: regulatory deadline + confidence actionability → alert routing. Chains from report-deadline and confidence-gate."
+  icon: circle
+  route: /vigilance/mg/deadline-alert
+  steps:
+    - field: actionable
+      label: actionable
+      help: Enter actionable
+      widget: toggle
+      placeholder: null
+    - field: deadline_days
+      label: deadline days
+      help: Enter deadline_days
+      widget: text
+      placeholder: null
+  result:
+    template: "alert_level: {{alert_level}} — days_remaining_label: {{days_remaining_label}} — response: {{response}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/deadline-alert
+  cli: rsk mcg run deadline-alert
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -31,13 +84,13 @@ tree:
       value:
         alert_level: UNKNOWN
         days_remaining_label: unknown
-        response: "Deadline data missing \u2014 cannot assess urgency"
+        response: Deadline data missing — cannot assess urgency
     routine:
       type: return
       value:
         response: Within normal timeline
         alert_level: ROUTINE
-        days_remaining_label: '>15'
+        days_remaining_label: ">15"
     check_actionable_soon:
       type: condition
       variable: actionable
@@ -90,139 +143,169 @@ tree:
         response: Approaching deadline — review data completeness
         days_remaining_label: 8-15
         alert_level: REVIEW
-primitive_signature:
-  dominant: 'π'
-  expression: 'π — persistence, regulatory action, or alerting'
-  primes: ['π']
-  arguments: []
 tests:
-- input:
-    deadline_days: 3
-    actionable: true
-  expect:
-    days_remaining_label: <=7
-    alert_level: CRITICAL
-    response: Immediate submission required
-- input:
-    actionable: false
-    deadline_days: 5
-  expect:
-    days_remaining_label: <=7
-    response: Deadline imminent but data insufficient — escalate for decision
-    alert_level: ESCALATE
-- input:
-    actionable: true
-    deadline_days: 10
-  expect:
-    alert_level: ACTION
-    days_remaining_label: 8-15
-    response: Prepare submission with available data
-- input:
-    deadline_days: 12
-    actionable: false
-  expect:
-    response: Approaching deadline — review data completeness
-    alert_level: REVIEW
-    days_remaining_label: 8-15
-- input:
-    deadline_days: 30
-    actionable: true
-  expect:
-    alert_level: ROUTINE
-    days_remaining_label: '>15'
-    response: Within normal timeline
-- input:
-    deadline_days: 7
-    actionable: true
-  expect:
-    alert_level: CRITICAL
-    days_remaining_label: <=7
-    response: Immediate submission required
-- input:
-    deadline_days: 15
-    actionable: true
-  expect:
-    days_remaining_label: 8-15
-    alert_level: ACTION
-    response: Prepare submission with available data
-- input:
-    deadline_days: 16
-    actionable: false
-  expect:
-    response: Within normal timeline
-    alert_level: ROUTINE
-    days_remaining_label: '>15'
-- input: {}
-  expect:
-    alert_level: UNKNOWN
-    days_remaining_label: unknown
-    response: "Deadline data missing \u2014 cannot assess urgency"
-- input:
-    deadline_days: 0
-  expect:
-    alert_level: ESCALATE
-    response: Deadline imminent but data insufficient — escalate for decision
-    days_remaining_label: <=7
-- input:
-    deadline_days: -1
-  expect:
-    days_remaining_label: <=7
-    alert_level: ESCALATE
-    response: Deadline imminent but data insufficient — escalate for decision
-- input:
-    deadline_days: 6
-  expect:
-    response: Deadline imminent but data insufficient — escalate for decision
-    days_remaining_label: <=7
-    alert_level: ESCALATE
-- input:
-    deadline_days: 8
-  expect:
-    alert_level: REVIEW
-    days_remaining_label: 8-15
-    response: Approaching deadline — review data completeness
-- input:
-    deadline_days: 700
-  expect:
-    alert_level: ROUTINE
-    response: Within normal timeline
-    days_remaining_label: '>15'
-- input: {}
-  expect:
-    alert_level: UNKNOWN
-    days_remaining_label: unknown
-    response: "Deadline data missing \u2014 cannot assess urgency"
-- input:
-    deadline_days: 0
-  expect:
-    days_remaining_label: <=7
-    alert_level: ESCALATE
-    response: Deadline imminent but data insufficient — escalate for decision
-- input:
-    deadline_days: -1
-  expect:
-    days_remaining_label: <=7
-    alert_level: ESCALATE
-    response: Deadline imminent but data insufficient — escalate for decision
-- input:
-    deadline_days: 14
-  expect:
-    response: Approaching deadline — review data completeness
-    alert_level: REVIEW
-    days_remaining_label: 8-15
-- input:
-    deadline_days: 1500
-  expect:
-    days_remaining_label: '>15'
-    alert_level: ROUTINE
-    response: Within normal timeline
-- input: {}
-  expect:
-    alert_level: UNKNOWN
-    days_remaining_label: unknown
-    response: "Deadline data missing \u2014 cannot assess urgency"
-- input: {}
-  expect:
-    alert_level: UNKNOWN
-    days_remaining_label: unknown
-    response: "Deadline data missing \u2014 cannot assess urgency"
+  - input:
+      deadline_days: 3
+      actionable: true
+    expect:
+      days_remaining_label: <=7
+      alert_level: CRITICAL
+      response: Immediate submission required
+  - input:
+      actionable: false
+      deadline_days: 5
+    expect:
+      days_remaining_label: <=7
+      response: Deadline imminent but data insufficient — escalate for decision
+      alert_level: ESCALATE
+  - input:
+      actionable: true
+      deadline_days: 10
+    expect:
+      alert_level: ACTION
+      days_remaining_label: 8-15
+      response: Prepare submission with available data
+  - input:
+      deadline_days: 12
+      actionable: false
+    expect:
+      response: Approaching deadline — review data completeness
+      alert_level: REVIEW
+      days_remaining_label: 8-15
+  - input:
+      deadline_days: 30
+      actionable: true
+    expect:
+      alert_level: ROUTINE
+      days_remaining_label: ">15"
+      response: Within normal timeline
+  - input:
+      deadline_days: 7
+      actionable: true
+    expect:
+      alert_level: CRITICAL
+      days_remaining_label: <=7
+      response: Immediate submission required
+  - input:
+      deadline_days: 15
+      actionable: true
+    expect:
+      days_remaining_label: 8-15
+      alert_level: ACTION
+      response: Prepare submission with available data
+  - input:
+      deadline_days: 16
+      actionable: false
+    expect:
+      response: Within normal timeline
+      alert_level: ROUTINE
+      days_remaining_label: ">15"
+  - input: {}
+    expect:
+      alert_level: UNKNOWN
+      days_remaining_label: unknown
+      response: Deadline data missing — cannot assess urgency
+  - input:
+      deadline_days: 0
+    expect:
+      alert_level: ESCALATE
+      response: Deadline imminent but data insufficient — escalate for decision
+      days_remaining_label: <=7
+  - input:
+      deadline_days: -1
+    expect:
+      days_remaining_label: <=7
+      alert_level: ESCALATE
+      response: Deadline imminent but data insufficient — escalate for decision
+  - input:
+      deadline_days: 6
+    expect:
+      response: Deadline imminent but data insufficient — escalate for decision
+      days_remaining_label: <=7
+      alert_level: ESCALATE
+  - input:
+      deadline_days: 8
+    expect:
+      alert_level: REVIEW
+      days_remaining_label: 8-15
+      response: Approaching deadline — review data completeness
+  - input:
+      deadline_days: 700
+    expect:
+      alert_level: ROUTINE
+      response: Within normal timeline
+      days_remaining_label: ">15"
+  - input: {}
+    expect:
+      alert_level: UNKNOWN
+      days_remaining_label: unknown
+      response: Deadline data missing — cannot assess urgency
+  - input:
+      deadline_days: 0
+    expect:
+      days_remaining_label: <=7
+      alert_level: ESCALATE
+      response: Deadline imminent but data insufficient — escalate for decision
+  - input:
+      deadline_days: -1
+    expect:
+      days_remaining_label: <=7
+      alert_level: ESCALATE
+      response: Deadline imminent but data insufficient — escalate for decision
+  - input:
+      deadline_days: 14
+    expect:
+      response: Approaching deadline — review data completeness
+      alert_level: REVIEW
+      days_remaining_label: 8-15
+  - input:
+      deadline_days: 1500
+    expect:
+      days_remaining_label: ">15"
+      alert_level: ROUTINE
+      response: Within normal timeline
+  - input: {}
+    expect:
+      alert_level: UNKNOWN
+      days_remaining_label: unknown
+      response: Deadline data missing — cannot assess urgency
+  - input: {}
+    expect:
+      alert_level: UNKNOWN
+      days_remaining_label: unknown
+      response: Deadline data missing — cannot assess urgency
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - alert_level
+    - days_remaining_label
+    - response
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

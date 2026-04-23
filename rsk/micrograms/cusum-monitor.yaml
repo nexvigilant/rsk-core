@@ -1,12 +1,40 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: cusum-monitor
-description: 'CUSUM (cumulative sum) control chart for sequential signal surveillance. Classifies monitoring state based on cumulative deviation from baseline and threshold breach.'
 version: 0.1.0
-primitive_signature:
-  dominant: 'N'
-  expression: 'N(ς₁ < ς₂) at ∂(threshold_h) — temporal accumulation with shift detection'
-  primes: ['N', '∂', 'κ']
-  arguments: ['previous_cusum', 'threshold_h', 'current_value', 'baseline_mean']
-  chain_prediction: 'N (temporal ordering of cumulative sums). CUSUM tracks sequential deviations, making it inherently temporal. Requires MaxSPRT or causality gate to confirm whether accumulated shift is a true signal.'
+description: CUSUM (cumulative sum) control chart for sequential signal surveillance. Classifies monitoring state based on cumulative deviation from baseline and threshold breach.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: previous_cusum
+    type: int
+    required: false
+    description: Cumulative sum from previous observation (scaled x100 for integer math)
+  - name: threshold_h
+    type: int
+    required: false
+    description: Decision threshold for shift detection (scaled x100)
+  - name: current_value
+    type: int
+    required: false
+    description: Current observed value (scaled x100)
+  - name: baseline_mean
+    type: int
+    required: false
+    description: Expected baseline mean (scaled x100)
+outputs:
+  - name: status
+    type: string
+  - name: action
+    type: string
+  - name: cusum_breached
+    type: bool
 interface:
   inputs:
     previous_cusum:
@@ -32,6 +60,43 @@ interface:
       type: string
     cusum_breached:
       type: bool
+ui:
+  title: Cusum Monitor
+  subtitle: CUSUM (cumulative sum) control chart for sequential signal surveillance. Classifies monitoring state based on cumulative deviation from baseline and threshold breach.
+  icon: circle
+  route: /vigilance/mg/cusum-monitor
+  steps:
+    - field: previous_cusum
+      label: previous cusum
+      help: Cumulative sum from previous observation (scaled x100 for integer math)
+      widget: text
+      placeholder: null
+    - field: threshold_h
+      label: threshold h
+      help: Decision threshold for shift detection (scaled x100)
+      widget: text
+      placeholder: null
+    - field: current_value
+      label: current value
+      help: Current observed value (scaled x100)
+      widget: text
+      placeholder: null
+    - field: baseline_mean
+      label: baseline mean
+      help: Expected baseline mean (scaled x100)
+      widget: text
+      placeholder: null
+  result:
+    template: "status: {{status}} — action: {{action}} — cusum_breached: {{cusum_breached}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/cusum-monitor
+  cli: rsk mcg run cusum-monitor
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_breach
   nodes:
@@ -75,89 +140,124 @@ tree:
         action: No deviation detected. Routine monitoring continues.
         cusum_breached: false
 tests:
-- name: CUSUM above threshold — ALERT
-  input:
-    previous_cusum: 550
-    threshold_h: 500
-    current_value: 200
-    baseline_mean: 100
-  expect:
-    status: ALERT
-    action: Shift detected — cumulative deviation exceeds threshold. Initiate signal review.
-    cusum_breached: true
-- name: CUSUM at exact threshold — ALERT
-  input:
-    previous_cusum: 500
-    threshold_h: 500
-    current_value: 180
-    baseline_mean: 100
-  expect:
-    status: ALERT
-    action: Shift detected — cumulative deviation exceeds threshold. Initiate signal review.
-    cusum_breached: true
-- name: CUSUM accumulating but below threshold with elevated value
-  input:
-    previous_cusum: 300
-    threshold_h: 500
-    current_value: 200
-    baseline_mean: 100
-  expect:
-    status: ACCUMULATING
-    action: Current value elevated above baseline. Continue monitoring and update cumulative sum.
-    cusum_breached: false
-- name: CUSUM accumulating below threshold with normal value
-  input:
-    previous_cusum: 200
-    threshold_h: 500
-    current_value: 120
-    baseline_mean: 100
-  expect:
-    status: NORMAL
-    action: No deviation detected. Routine monitoring continues.
-    cusum_breached: false
-- name: Zero CUSUM with elevated current value
-  input:
-    previous_cusum: 0
-    threshold_h: 500
-    current_value: 250
-    baseline_mean: 100
-  expect:
-    status: ACCUMULATING
-    action: Current value elevated above baseline. Continue monitoring and update cumulative sum.
-    cusum_breached: false
-- name: Zero CUSUM with normal current value
-  input:
-    previous_cusum: 0
-    threshold_h: 500
-    current_value: 100
-    baseline_mean: 100
-  expect:
-    status: NORMAL
-    action: No deviation detected. Routine monitoring continues.
-    cusum_breached: false
-- name: Very high CUSUM — well above threshold
-  input:
-    previous_cusum: 1200
-    threshold_h: 500
-    current_value: 300
-    baseline_mean: 100
-  expect:
-    status: ALERT
-    action: Shift detected — cumulative deviation exceeds threshold. Initiate signal review.
-    cusum_breached: true
-- name: Negative current value — normal
-  input:
-    previous_cusum: 0
-    threshold_h: 500
-    current_value: -50
-    baseline_mean: 100
-  expect:
-    status: NORMAL
-    action: No deviation detected. Routine monitoring continues.
-    cusum_breached: false
-- name: Null safety — empty input
-  input: {}
-  expect:
-    status: NORMAL
-    action: No deviation detected. Routine monitoring continues.
-    cusum_breached: false
+  - name: CUSUM above threshold — ALERT
+    input:
+      previous_cusum: 550
+      threshold_h: 500
+      current_value: 200
+      baseline_mean: 100
+    expect:
+      status: ALERT
+      action: Shift detected — cumulative deviation exceeds threshold. Initiate signal review.
+      cusum_breached: true
+  - name: CUSUM at exact threshold — ALERT
+    input:
+      previous_cusum: 500
+      threshold_h: 500
+      current_value: 180
+      baseline_mean: 100
+    expect:
+      status: ALERT
+      action: Shift detected — cumulative deviation exceeds threshold. Initiate signal review.
+      cusum_breached: true
+  - name: CUSUM accumulating but below threshold with elevated value
+    input:
+      previous_cusum: 300
+      threshold_h: 500
+      current_value: 200
+      baseline_mean: 100
+    expect:
+      status: ACCUMULATING
+      action: Current value elevated above baseline. Continue monitoring and update cumulative sum.
+      cusum_breached: false
+  - name: CUSUM accumulating below threshold with normal value
+    input:
+      previous_cusum: 200
+      threshold_h: 500
+      current_value: 120
+      baseline_mean: 100
+    expect:
+      status: NORMAL
+      action: No deviation detected. Routine monitoring continues.
+      cusum_breached: false
+  - name: Zero CUSUM with elevated current value
+    input:
+      previous_cusum: 0
+      threshold_h: 500
+      current_value: 250
+      baseline_mean: 100
+    expect:
+      status: ACCUMULATING
+      action: Current value elevated above baseline. Continue monitoring and update cumulative sum.
+      cusum_breached: false
+  - name: Zero CUSUM with normal current value
+    input:
+      previous_cusum: 0
+      threshold_h: 500
+      current_value: 100
+      baseline_mean: 100
+    expect:
+      status: NORMAL
+      action: No deviation detected. Routine monitoring continues.
+      cusum_breached: false
+  - name: Very high CUSUM — well above threshold
+    input:
+      previous_cusum: 1200
+      threshold_h: 500
+      current_value: 300
+      baseline_mean: 100
+    expect:
+      status: ALERT
+      action: Shift detected — cumulative deviation exceeds threshold. Initiate signal review.
+      cusum_breached: true
+  - name: Negative current value — normal
+    input:
+      previous_cusum: 0
+      threshold_h: 500
+      current_value: -50
+      baseline_mean: 100
+    expect:
+      status: NORMAL
+      action: No deviation detected. Routine monitoring continues.
+      cusum_breached: false
+  - name: Null safety — empty input
+    input: {}
+    expect:
+      status: NORMAL
+      action: No deviation detected. Routine monitoring continues.
+      cusum_breached: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - action
+    - cusum_breached
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

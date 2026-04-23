@@ -1,6 +1,54 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: algo-void-scan
-description: "Algorithm 9 (VOID): Detect what's missing. Compares expected data elements against what's present, returns gap count and verdict. κ(ς, ∅) at ∂ → Σ."
 version: 0.1.0
+description: "Algorithm 9 (VOID): Detect what's missing. Compares expected data elements against what's present, returns gap count and verdict. κ(ς, ∅) at ∂ → Σ."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_disproportionality
+    type: boolean
+    required: true
+    description: ""
+  - name: has_clinical_trial_data
+    type: boolean
+    required: true
+    description: ""
+  - name: has_labeling_acknowledgment
+    type: boolean
+    required: true
+    description: ""
+  - name: has_rechallenge_data
+    type: boolean
+    required: true
+    description: ""
+  - name: has_dose_response
+    type: boolean
+    required: true
+    description: ""
+  - name: has_time_to_onset
+    type: boolean
+    required: true
+    description: ""
+  - name: has_class_comparison
+    type: boolean
+    required: true
+    description: ""
+outputs:
+  - name: gap_count
+    type: integer
+  - name: completeness
+    type: string
+  - name: highest_value_gap
+    type: string
+  - name: algorithm
+    type: string
 interface:
   inputs:
     has_disproportionality:
@@ -33,6 +81,58 @@ interface:
       type: string
     algorithm:
       type: string
+ui:
+  title: Algo Void Scan
+  subtitle: "Algorithm 9 (VOID): Detect what's missing. Compares expected data elements against what's present, returns gap count and verdict. κ(ς, ∅) at ∂ → Σ."
+  icon: circle
+  route: /vigilance/mg/algo-void-scan
+  steps:
+    - field: has_disproportionality
+      label: has disproportionality
+      help: Enter has_disproportionality
+      widget: toggle
+      placeholder: null
+    - field: has_clinical_trial_data
+      label: has clinical trial data
+      help: Enter has_clinical_trial_data
+      widget: toggle
+      placeholder: null
+    - field: has_labeling_acknowledgment
+      label: has labeling acknowledgment
+      help: Enter has_labeling_acknowledgment
+      widget: toggle
+      placeholder: null
+    - field: has_rechallenge_data
+      label: has rechallenge data
+      help: Enter has_rechallenge_data
+      widget: toggle
+      placeholder: null
+    - field: has_dose_response
+      label: has dose response
+      help: Enter has_dose_response
+      widget: toggle
+      placeholder: null
+    - field: has_time_to_onset
+      label: has time to onset
+      help: Enter has_time_to_onset
+      widget: toggle
+      placeholder: null
+    - field: has_class_comparison
+      label: has class comparison
+      help: Enter has_class_comparison
+      widget: toggle
+      placeholder: null
+  result:
+    template: "gap_count: {{gap_count}} — completeness: {{completeness}} — highest_value_gap: {{highest_value_gap}} — algorithm: {{algorithm}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/algo-void-scan
+  cli: rsk mcg run algo-void-scan
+  auth: none
+  rate_limit: 600/min
 tree:
   start: count_rechallenge
   nodes:
@@ -155,132 +255,163 @@ tree:
         completeness: complete
         highest_value_gap: none
         algorithm: "VOID: 0 gaps — all 7 data elements present. Assessment fully evidenced."
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — measurement, comparison, or classification'
-  primes: ['κ']
-  arguments: []
 tests:
-- name: semaglutide_case_4_gaps
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: false
-    has_dose_response: false
-    has_time_to_onset: false
-    has_class_comparison: false
-  expect:
-    gap_count: 4
-    completeness: incomplete
-    highest_value_gap: rechallenge_data
-- name: fully_evidenced
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: true
-    has_dose_response: true
-    has_time_to_onset: true
-    has_class_comparison: true
-  expect:
-    gap_count: 0
-    completeness: complete
-    highest_value_gap: none
-- name: rechallenge_only_gap
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: false
-    has_dose_response: true
-    has_time_to_onset: true
-    has_class_comparison: true
-  expect:
-    gap_count: 1
-    completeness: near_complete
-    highest_value_gap: rechallenge_data
-- name: null_safety
-  input: {}
-  expect:
-    gap_count: 0
-    completeness: complete
-    highest_value_gap: none
-- name: dose_response_only_gap
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: true
-    has_dose_response: false
-    has_time_to_onset: true
-    has_class_comparison: true
-  expect:
-    gap_count: 1
-    completeness: near_complete
-    highest_value_gap: dose_response
-- name: rechallenge_plus_onset_gap
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: false
-    has_dose_response: true
-    has_time_to_onset: false
-    has_class_comparison: true
-  expect:
-    gap_count: 2
-    completeness: partial
-    highest_value_gap: rechallenge_data
-- name: two_critical_gaps
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: false
-    has_dose_response: false
-    has_time_to_onset: true
-    has_class_comparison: true
-  expect:
-    gap_count: 2
-    completeness: partial
-    highest_value_gap: rechallenge_data
-- name: three_gaps
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: false
-    has_dose_response: false
-    has_time_to_onset: false
-    has_class_comparison: true
-  expect:
-    gap_count: 3
-    completeness: incomplete
-    highest_value_gap: rechallenge_data
-- name: minor_gap_onset_absent
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: true
-    has_dose_response: true
-    has_time_to_onset: false
-    has_class_comparison: true
-  expect:
-    gap_count: 1
-    completeness: near_complete
-    highest_value_gap: time_to_onset
-- name: minor_gap_class_absent
-  input:
-    has_disproportionality: true
-    has_clinical_trial_data: true
-    has_labeling_acknowledgment: true
-    has_rechallenge_data: true
-    has_dose_response: true
-    has_time_to_onset: true
-    has_class_comparison: false
-  expect:
-    gap_count: 1
-    completeness: near_complete
-    highest_value_gap: class_comparison
+  - name: semaglutide_case_4_gaps
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: false
+      has_dose_response: false
+      has_time_to_onset: false
+      has_class_comparison: false
+    expect:
+      gap_count: 4
+      completeness: incomplete
+      highest_value_gap: rechallenge_data
+  - name: fully_evidenced
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: true
+      has_dose_response: true
+      has_time_to_onset: true
+      has_class_comparison: true
+    expect:
+      gap_count: 0
+      completeness: complete
+      highest_value_gap: none
+  - name: rechallenge_only_gap
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: false
+      has_dose_response: true
+      has_time_to_onset: true
+      has_class_comparison: true
+    expect:
+      gap_count: 1
+      completeness: near_complete
+      highest_value_gap: rechallenge_data
+  - name: null_safety
+    input: {}
+    expect:
+      gap_count: 0
+      completeness: complete
+      highest_value_gap: none
+  - name: dose_response_only_gap
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: true
+      has_dose_response: false
+      has_time_to_onset: true
+      has_class_comparison: true
+    expect:
+      gap_count: 1
+      completeness: near_complete
+      highest_value_gap: dose_response
+  - name: rechallenge_plus_onset_gap
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: false
+      has_dose_response: true
+      has_time_to_onset: false
+      has_class_comparison: true
+    expect:
+      gap_count: 2
+      completeness: partial
+      highest_value_gap: rechallenge_data
+  - name: two_critical_gaps
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: false
+      has_dose_response: false
+      has_time_to_onset: true
+      has_class_comparison: true
+    expect:
+      gap_count: 2
+      completeness: partial
+      highest_value_gap: rechallenge_data
+  - name: three_gaps
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: false
+      has_dose_response: false
+      has_time_to_onset: false
+      has_class_comparison: true
+    expect:
+      gap_count: 3
+      completeness: incomplete
+      highest_value_gap: rechallenge_data
+  - name: minor_gap_onset_absent
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: true
+      has_dose_response: true
+      has_time_to_onset: false
+      has_class_comparison: true
+    expect:
+      gap_count: 1
+      completeness: near_complete
+      highest_value_gap: time_to_onset
+  - name: minor_gap_class_absent
+    input:
+      has_disproportionality: true
+      has_clinical_trial_data: true
+      has_labeling_acknowledgment: true
+      has_rechallenge_data: true
+      has_dose_response: true
+      has_time_to_onset: true
+      has_class_comparison: false
+    expect:
+      gap_count: 1
+      completeness: near_complete
+      highest_value_gap: class_comparison
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - gap_count
+    - completeness
+    - highest_value_gap
+    - algorithm
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

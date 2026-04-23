@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2d-minimum-case-criteria
-description: 'ICH E2D Section 3.1: Validates minimum four-element criteria for any post-approval ICSR — identifiable reporter, identifiable patient, suspect drug, adverse event. Applies to all source types.'
 version: 0.1.0
+description: "ICH E2D Section 3.1: Validates minimum four-element criteria for any post-approval ICSR — identifiable reporter, identifiable patient, suspect drug, adverse event. Applies to all source types."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: identifiable_reporter
+    type: bool
+    required: false
+    description: ""
+  - name: identifiable_patient
+    type: bool
+    required: false
+    description: ""
+  - name: suspect_drug
+    type: bool
+    required: false
+    description: ""
+  - name: adverse_event
+    type: bool
+    required: false
+    description: ""
+  - name: reporter_type
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: minimum_criteria_met
+    type: bool
+  - name: missing_element
+    type: string
+  - name: case_priority
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     identifiable_reporter:
@@ -27,6 +67,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2d Minimum Case Criteria
+  subtitle: "ICH E2D Section 3.1: Validates minimum four-element criteria for any post-approval ICSR — identifiable reporter, identifiable patient, suspect drug, adverse event. Applies to all source types."
+  icon: circle
+  route: /vigilance/mg/e2d-minimum-case-criteria
+  steps:
+    - field: identifiable_reporter
+      label: identifiable reporter
+      help: Enter identifiable_reporter
+      widget: toggle
+      placeholder: null
+    - field: identifiable_patient
+      label: identifiable patient
+      help: Enter identifiable_patient
+      widget: toggle
+      placeholder: null
+    - field: suspect_drug
+      label: suspect drug
+      help: Enter suspect_drug
+      widget: toggle
+      placeholder: null
+    - field: adverse_event
+      label: adverse event
+      help: Enter adverse_event
+      widget: toggle
+      placeholder: null
+    - field: reporter_type
+      label: reporter type
+      help: Enter reporter_type
+      widget: text
+      placeholder: null
+  result:
+    template: "minimum_criteria_met: {{minimum_criteria_met}} — missing_element: {{missing_element}} — case_priority: {{case_priority}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2d-minimum-case-criteria
+  cli: rsk mcg run e2d-minimum-case-criteria
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_reporter
   nodes:
@@ -107,88 +189,119 @@ tree:
         missing_element: ADVERSE_EVENT
         case_priority: INSUFFICIENT
         regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — ICH E2D four-element minimum criteria gate for post-approval ICSR validity'
-  primes: ['σ', '∂']
-  arguments: ['identifiable_reporter', 'identifiable_patient', 'suspect_drug', 'adverse_event', 'reporter_type']
 tests:
-- input:
-    identifiable_reporter: true
-    identifiable_patient: true
-    suspect_drug: true
-    adverse_event: true
-    reporter_type: healthcare_professional
-  expect:
-    minimum_criteria_met: true
-    missing_element: NONE
-    case_priority: HIGH
-    regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
-- input:
-    identifiable_reporter: true
-    identifiable_patient: true
-    suspect_drug: true
-    adverse_event: true
-    reporter_type: patient
-  expect:
-    minimum_criteria_met: true
-    missing_element: NONE
-    case_priority: STANDARD
-    regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
-- input:
-    identifiable_reporter: false
-    identifiable_patient: true
-    suspect_drug: true
-    adverse_event: true
-  expect:
-    minimum_criteria_met: false
-    missing_element: IDENTIFIABLE_REPORTER
-    case_priority: INSUFFICIENT
-    regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
-- input:
-    identifiable_reporter: true
-    identifiable_patient: false
-    suspect_drug: true
-    adverse_event: true
-  expect:
-    minimum_criteria_met: false
-    missing_element: IDENTIFIABLE_PATIENT
-    case_priority: INSUFFICIENT
-    regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
-- input:
-    identifiable_reporter: true
-    identifiable_patient: true
-    suspect_drug: false
-    adverse_event: true
-  expect:
-    minimum_criteria_met: false
-    missing_element: SUSPECT_DRUG
-    case_priority: INSUFFICIENT
-    regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
-- input:
-    identifiable_reporter: true
-    identifiable_patient: true
-    suspect_drug: true
-    adverse_event: false
-  expect:
-    minimum_criteria_met: false
-    missing_element: ADVERSE_EVENT
-    case_priority: INSUFFICIENT
-    regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
-- input: {}
-  expect:
-    minimum_criteria_met: false
-    missing_element: IDENTIFIABLE_REPORTER
-    case_priority: INSUFFICIENT
-    regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
-- input:
-    identifiable_reporter: true
-    identifiable_patient: true
-    suspect_drug: true
-    adverse_event: true
-    reporter_type: consumer
-  expect:
-    minimum_criteria_met: true
-    missing_element: NONE
-    case_priority: STANDARD
-    regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+  - input:
+      identifiable_reporter: true
+      identifiable_patient: true
+      suspect_drug: true
+      adverse_event: true
+      reporter_type: healthcare_professional
+    expect:
+      minimum_criteria_met: true
+      missing_element: NONE
+      case_priority: HIGH
+      regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+  - input:
+      identifiable_reporter: true
+      identifiable_patient: true
+      suspect_drug: true
+      adverse_event: true
+      reporter_type: patient
+    expect:
+      minimum_criteria_met: true
+      missing_element: NONE
+      case_priority: STANDARD
+      regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+  - input:
+      identifiable_reporter: false
+      identifiable_patient: true
+      suspect_drug: true
+      adverse_event: true
+    expect:
+      minimum_criteria_met: false
+      missing_element: IDENTIFIABLE_REPORTER
+      case_priority: INSUFFICIENT
+      regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+  - input:
+      identifiable_reporter: true
+      identifiable_patient: false
+      suspect_drug: true
+      adverse_event: true
+    expect:
+      minimum_criteria_met: false
+      missing_element: IDENTIFIABLE_PATIENT
+      case_priority: INSUFFICIENT
+      regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+  - input:
+      identifiable_reporter: true
+      identifiable_patient: true
+      suspect_drug: false
+      adverse_event: true
+    expect:
+      minimum_criteria_met: false
+      missing_element: SUSPECT_DRUG
+      case_priority: INSUFFICIENT
+      regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+  - input:
+      identifiable_reporter: true
+      identifiable_patient: true
+      suspect_drug: true
+      adverse_event: false
+    expect:
+      minimum_criteria_met: false
+      missing_element: ADVERSE_EVENT
+      case_priority: INSUFFICIENT
+      regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+  - input: {}
+    expect:
+      minimum_criteria_met: false
+      missing_element: IDENTIFIABLE_REPORTER
+      case_priority: INSUFFICIENT
+      regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+  - input:
+      identifiable_reporter: true
+      identifiable_patient: true
+      suspect_drug: true
+      adverse_event: true
+      reporter_type: consumer
+    expect:
+      minimum_criteria_met: true
+      missing_element: NONE
+      case_priority: STANDARD
+      regulatory_reference: ICH E2D Section 3.1 - Minimum Criteria for Case Validity
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - minimum_criteria_met
+    - missing_element
+    - case_priority
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

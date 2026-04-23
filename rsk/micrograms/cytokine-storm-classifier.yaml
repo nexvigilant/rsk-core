@@ -1,7 +1,119 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: cytokine-storm-classifier
-description: 'Cytokine release syndrome classifier: grades CRS severity per ASTCT
-  2019 consensus grading'
 version: 0.1.0
+description: "Cytokine release syndrome classifier: grades CRS severity per ASTCT 2019 consensus grading"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: fever_celsius
+    type: float
+    required: false
+    description: ""
+  - name: hypotension
+    type: bool
+    required: false
+    description: ""
+  - name: reaction_pt
+    type: string
+    required: true
+    description: ""
+  - name: vasopressors_required
+    type: bool
+    required: false
+    description: ""
+  - name: hypoxia
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: severity
+    type: string
+  - name: crs_grade
+    type: int
+  - name: soc
+    type: string
+  - name: action
+    type: string
+interface:
+  inputs:
+    fever_celsius:
+      type: float
+      required: false
+    hypotension:
+      type: bool
+      required: false
+    reaction_pt:
+      type: string
+      required: true
+    vasopressors_required:
+      type: bool
+      required: false
+    hypoxia:
+      type: bool
+      required: false
+  outputs:
+    severity:
+      type: string
+      required: false
+    crs_grade:
+      type: int
+      required: false
+    soc:
+      type: string
+      required: false
+    action:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Cytokine Storm Classifier
+  subtitle: "Cytokine release syndrome classifier: grades CRS severity per ASTCT 2019 consensus grading"
+  icon: circle
+  route: /vigilance/mg/cytokine-storm-classifier
+  steps:
+    - field: fever_celsius
+      label: fever celsius
+      help: Enter fever_celsius
+      widget: text
+      placeholder: null
+    - field: hypotension
+      label: hypotension
+      help: Enter hypotension
+      widget: toggle
+      placeholder: null
+    - field: reaction_pt
+      label: reaction pt
+      help: Enter reaction_pt
+      widget: text
+      placeholder: null
+    - field: vasopressors_required
+      label: vasopressors required
+      help: Enter vasopressors_required
+      widget: toggle
+      placeholder: null
+    - field: hypoxia
+      label: hypoxia
+      help: Enter hypoxia
+      widget: toggle
+      placeholder: null
+  result:
+    template: "severity: {{severity}} — crs_grade: {{crs_grade}} — soc: {{soc}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/cytokine-storm-classifier
+  cli: rsk mcg run cytokine-storm-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_crs
   nodes:
@@ -97,110 +209,115 @@ tree:
       true_next: moderate_crs
       false_next: mild_crs
 tests:
-- input:
-    fever_celsius: 0
-    hypotension: false
-    reaction_pt: ''
-    vasopressors_required: false
-  expect:
-    crs_grade: 0
-    action: routine_surveillance
-    severity: mild
-    soc: Immune system disorders
-- input:
-    fever_celsius: 0
-    hypotension: false
-    reaction_pt: ANAPHYLAC
-    vasopressors_required: false
-  expect:
-    crs_grade: 0
-    soc: Immune system disorders
-    severity: critical
-    action: immediate_expedited_report
-- input:
-    fever_celsius: 0
-    hypotension: false
-    reaction_pt: CYTOKINE
-    vasopressors_required: false
-  expect:
-    severity: mild
-    crs_grade: 1
-    soc: Immune system disorders
-    action: routine_surveillance
-- input:
-    fever_celsius: 0
-    hypotension: false
-    reaction_pt: CYTOKINE
-    vasopressors_required: true
-  expect:
-    soc: Immune system disorders
-    severity: critical
-    action: immediate_expedited_report
-    crs_grade: 4
-- input:
-    fever_celsius: 0
-    hypotension: false
-    reaction_pt: IMMUNE
-    vasopressors_required: false
-  expect:
-    soc: Immune system disorders
-    action: monitor_and_assess
-    severity: moderate
-    crs_grade: 0
-- input:
-    fever_celsius: 0
-    hypotension: true
-    reaction_pt: CYTOKINE
-    vasopressors_required: false
-  expect:
-    action: expedited_report
-    crs_grade: 3
-    severity: serious
-    soc: Immune system disorders
-- input:
-    fever_celsius: 39
-    hypotension: false
-    reaction_pt: CYTOKINE
-    vasopressors_required: false
-  expect:
-    crs_grade: 2
-    soc: Immune system disorders
-    severity: moderate
-    action: monitor_and_assess
-- input: {}
-  expect:
-    crs_grade: 0
-    action: routine_surveillance
-    severity: mild
-    soc: Immune system disorders
-interface:
-  inputs:
-    fever_celsius:
-      type: float
-      required: false
-    hypotension:
-      type: bool
-      required: false
-    reaction_pt:
-      type: string
-      required: true
-    vasopressors_required:
-      type: bool
-      required: false
-    hypoxia:
-      type: bool
-      required: false
-  outputs:
-    severity:
-      type: string
-      required: false
-    crs_grade:
-      type: int
-      required: false
-    soc:
-      type: string
-      required: false
-    action:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      fever_celsius: 0
+      hypotension: false
+      reaction_pt: ""
+      vasopressors_required: false
+    expect:
+      crs_grade: 0
+      action: routine_surveillance
+      severity: mild
+      soc: Immune system disorders
+  - input:
+      fever_celsius: 0
+      hypotension: false
+      reaction_pt: ANAPHYLAC
+      vasopressors_required: false
+    expect:
+      crs_grade: 0
+      soc: Immune system disorders
+      severity: critical
+      action: immediate_expedited_report
+  - input:
+      fever_celsius: 0
+      hypotension: false
+      reaction_pt: CYTOKINE
+      vasopressors_required: false
+    expect:
+      severity: mild
+      crs_grade: 1
+      soc: Immune system disorders
+      action: routine_surveillance
+  - input:
+      fever_celsius: 0
+      hypotension: false
+      reaction_pt: CYTOKINE
+      vasopressors_required: true
+    expect:
+      soc: Immune system disorders
+      severity: critical
+      action: immediate_expedited_report
+      crs_grade: 4
+  - input:
+      fever_celsius: 0
+      hypotension: false
+      reaction_pt: IMMUNE
+      vasopressors_required: false
+    expect:
+      soc: Immune system disorders
+      action: monitor_and_assess
+      severity: moderate
+      crs_grade: 0
+  - input:
+      fever_celsius: 0
+      hypotension: true
+      reaction_pt: CYTOKINE
+      vasopressors_required: false
+    expect:
+      action: expedited_report
+      crs_grade: 3
+      severity: serious
+      soc: Immune system disorders
+  - input:
+      fever_celsius: 39
+      hypotension: false
+      reaction_pt: CYTOKINE
+      vasopressors_required: false
+    expect:
+      crs_grade: 2
+      soc: Immune system disorders
+      severity: moderate
+      action: monitor_and_assess
+  - input: {}
+    expect:
+      crs_grade: 0
+      action: routine_surveillance
+      severity: mild
+      soc: Immune system disorders
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - severity
+    - crs_grade
+    - soc
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

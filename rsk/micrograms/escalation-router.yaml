@@ -1,6 +1,32 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: escalation-router
-description: 'Route by escalation flag and priority: IMMEDIATE (escalate+P1), URGENT (escalate+P2), QUEUE (no escalate)'
 version: 0.1.0
+description: "Route by escalation flag and priority: IMMEDIATE (escalate+P1), URGENT (escalate+P2), QUEUE (no escalate)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: escalate
+    type: bool
+    required: false
+    description: ""
+  - name: priority
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: channel
+    type: string
+  - name: route
+    type: string
+  - name: sla_minutes
+    type: int
 interface:
   inputs:
     escalate:
@@ -16,6 +42,33 @@ interface:
       type: string
     sla_minutes:
       type: int
+ui:
+  title: Escalation Router
+  subtitle: "Route by escalation flag and priority: IMMEDIATE (escalate+P1), URGENT (escalate+P2), QUEUE (no escalate)"
+  icon: circle
+  route: /vigilance/mg/escalation-router
+  steps:
+    - field: escalate
+      label: escalate
+      help: Enter escalate
+      widget: toggle
+      placeholder: null
+    - field: priority
+      label: priority
+      help: Enter priority
+      widget: text
+      placeholder: null
+  result:
+    template: "channel: {{channel}} — route: {{route}} — sla_minutes: {{sla_minutes}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/escalation-router
+  cli: rsk mcg run escalation-router
+  auth: none
+  rate_limit: 600/min
 tree:
   start: escalate_check
   nodes:
@@ -51,78 +104,108 @@ tree:
       value: true
       true_next: priority_check
       false_next: queue
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — sequence routing or workflow dispatch'
-  primes: ['σ']
-  arguments: []
 tests:
-- input:
-    escalate: true
-    priority: 1
-  expect:
-    sla_minutes: 15
-    route: IMMEDIATE
-    channel: pager
-- input:
-    escalate: true
-    priority: 2
-  expect:
-    channel: slack
-    sla_minutes: 60
-    route: URGENT
-- input:
-    escalate: false
-    priority: 1
-  expect:
-    route: QUEUE
-    channel: backlog
-    sla_minutes: 1440
-- input:
-    priority: 4
-    escalate: false
-  expect:
-    sla_minutes: 1440
-    channel: backlog
-    route: QUEUE
-- input:
-    escalate: true
-    priority: 3
-  expect:
-    channel: slack
-    sla_minutes: 60
-    route: URGENT
-- input:
-    priority: 0
-  expect:
-    sla_minutes: 1440
-    channel: backlog
-    route: QUEUE
-- input:
-    priority: -1
-  expect:
-    route: QUEUE
-    channel: backlog
-    sla_minutes: 1440
-- input:
-    priority: 0
-  expect:
-    route: QUEUE
-    channel: backlog
-    sla_minutes: 1440
-- input:
-    priority: 100
-  expect:
-    sla_minutes: 1440
-    channel: backlog
-    route: QUEUE
-- input: {}
-  expect:
-    sla_minutes: 1440
-    channel: backlog
-    route: QUEUE
-- input: {}
-  expect:
-    channel: backlog
-    route: QUEUE
-    sla_minutes: 1440
+  - input:
+      escalate: true
+      priority: 1
+    expect:
+      sla_minutes: 15
+      route: IMMEDIATE
+      channel: pager
+  - input:
+      escalate: true
+      priority: 2
+    expect:
+      channel: slack
+      sla_minutes: 60
+      route: URGENT
+  - input:
+      escalate: false
+      priority: 1
+    expect:
+      route: QUEUE
+      channel: backlog
+      sla_minutes: 1440
+  - input:
+      priority: 4
+      escalate: false
+    expect:
+      sla_minutes: 1440
+      channel: backlog
+      route: QUEUE
+  - input:
+      escalate: true
+      priority: 3
+    expect:
+      channel: slack
+      sla_minutes: 60
+      route: URGENT
+  - input:
+      priority: 0
+    expect:
+      sla_minutes: 1440
+      channel: backlog
+      route: QUEUE
+  - input:
+      priority: -1
+    expect:
+      route: QUEUE
+      channel: backlog
+      sla_minutes: 1440
+  - input:
+      priority: 0
+    expect:
+      route: QUEUE
+      channel: backlog
+      sla_minutes: 1440
+  - input:
+      priority: 100
+    expect:
+      sla_minutes: 1440
+      channel: backlog
+      route: QUEUE
+  - input: {}
+    expect:
+      sla_minutes: 1440
+      channel: backlog
+      route: QUEUE
+  - input: {}
+    expect:
+      channel: backlog
+      route: QUEUE
+      sla_minutes: 1440
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - channel
+    - route
+    - sla_minutes
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

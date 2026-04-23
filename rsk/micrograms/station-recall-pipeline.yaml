@@ -1,6 +1,107 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-recall-pipeline
-description: 'Routes FDA recall and safety data through urgency classification: evaluates recall class, recall count, MedWatch alerts, and REMS requirements to determine safety status'
 version: 0.1.0
+description: "Routes FDA recall and safety data through urgency classification: evaluates recall class, recall count, MedWatch alerts, and REMS requirements to determine safety status"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: recall_class
+    type: string
+    required: false
+    description: ""
+  - name: rems_required
+    type: bool
+    required: false
+    description: ""
+  - name: medwatch_alert_count
+    type: int
+    required: false
+    description: ""
+  - name: recall_count
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: recommended_action
+    type: string
+  - name: next_step
+    type: string
+  - name: safety_status
+    type: string
+  - name: risk_factors
+    type: string
+interface:
+  inputs:
+    recall_class:
+      type: string
+      required: false
+    rems_required:
+      type: bool
+      required: false
+    medwatch_alert_count:
+      type: int
+      required: false
+    recall_count:
+      type: int
+      required: false
+  outputs:
+    recommended_action:
+      type: string
+      required: false
+    next_step:
+      type: string
+      required: false
+    safety_status:
+      type: string
+      required: false
+    risk_factors:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Station Recall Pipeline
+  subtitle: "Routes FDA recall and safety data through urgency classification: evaluates recall class, recall count, MedWatch alerts, and REMS requirements to determine safety status"
+  icon: circle
+  route: /vigilance/mg/station-recall-pipeline
+  steps:
+    - field: recall_class
+      label: recall class
+      help: Enter recall_class
+      widget: text
+      placeholder: null
+    - field: rems_required
+      label: rems required
+      help: Enter rems_required
+      widget: toggle
+      placeholder: null
+    - field: medwatch_alert_count
+      label: medwatch alert count
+      help: Enter medwatch_alert_count
+      widget: text
+      placeholder: null
+    - field: recall_count
+      label: recall count
+      help: Enter recall_count
+      widget: text
+      placeholder: null
+  result:
+    template: "recommended_action: {{recommended_action}} — next_step: {{next_step}} — safety_status: {{safety_status}} — risk_factors: {{risk_factors}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-recall-pipeline
+  cli: rsk mcg run station-recall-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_class_one
   nodes:
@@ -96,121 +197,128 @@ tree:
       true_next: urgent_class_one
       false_next: check_rems
 tests:
-- input:
-    rems_required: false
-    medwatch_alert_count: 3
-    recall_count: 1
-    recall_class: I
-  expect:
-    next_step: urgent_safety_action
-    safety_status: urgent
-- input:
-    recall_class: II
-    recall_count: 1
-    rems_required: true
-  expect:
-    safety_status: urgent
-    next_step: rems_compliance_review
-- input:
-    medwatch_alert_count: 1
-    recall_count: 2
-    recall_class: II
-    rems_required: false
-  expect:
-    safety_status: elevated
-    next_step: recall_scope_review
-- input:
-    medwatch_alert_count: 3
-    rems_required: false
-    recall_class: none
-  expect:
-    next_step: safety_alert_review
-    safety_status: elevated
-- input:
-    recall_class: III
-    recall_count: 1
-    rems_required: false
-  expect:
-    safety_status: standard
-    next_step: routine_monitoring
-- input:
-    rems_required: false
-    medwatch_alert_count: 0
-    recall_count: 2
-  expect:
-    next_step: routine_monitoring
-    safety_status: standard
-- input:
-    recall_count: 0
-    rems_required: false
-    medwatch_alert_count: 0
-  expect:
-    safety_status: clear
-    next_step: no_action
-- input: {}
-  expect:
-    safety_status: clear
-    next_step: no_action
-- input:
-    recall_class: I
-    rems_required: true
-  expect:
-    safety_status: urgent
-    next_step: urgent_safety_action
-- input:
-    recall_count: -1
-  expect:
-    risk_factors: No active recalls or safety alerts
-    safety_status: clear
-    next_step: no_action
-    recommended_action: Standard post-market surveillance
-- input:
-    recall_count: 100
-  expect:
-    next_step: routine_monitoring
-    recommended_action: Review recall details and assess current relevance
-    safety_status: standard
-    risk_factors: Active recall on record
-- input:
-    medwatch_alert_count: -1
-  expect:
-    recommended_action: Standard post-market surveillance
-    safety_status: clear
-    next_step: no_action
-    risk_factors: No active recalls or safety alerts
-- input:
-    medwatch_alert_count: 200
-  expect:
-    risk_factors: Multiple MedWatch safety alerts issued
-    safety_status: elevated
-    next_step: safety_alert_review
-    recommended_action: Review MedWatch alerts and assess cumulative safety signal
-interface:
-  inputs:
-    recall_class:
-      type: string
-      required: false
-    rems_required:
-      type: bool
-      required: false
-    medwatch_alert_count:
-      type: int
-      required: false
-    recall_count:
-      type: int
-      required: false
-  outputs:
-    recommended_action:
-      type: string
-      required: false
-    next_step:
-      type: string
-      required: false
-    safety_status:
-      type: string
-      required: false
-    risk_factors:
-      type: string
-      required: false
-  aliases: {}
-primitive_signature: null
+  - input:
+      rems_required: false
+      medwatch_alert_count: 3
+      recall_count: 1
+      recall_class: I
+    expect:
+      next_step: urgent_safety_action
+      safety_status: urgent
+  - input:
+      recall_class: II
+      recall_count: 1
+      rems_required: true
+    expect:
+      safety_status: urgent
+      next_step: rems_compliance_review
+  - input:
+      medwatch_alert_count: 1
+      recall_count: 2
+      recall_class: II
+      rems_required: false
+    expect:
+      safety_status: elevated
+      next_step: recall_scope_review
+  - input:
+      medwatch_alert_count: 3
+      rems_required: false
+      recall_class: none
+    expect:
+      next_step: safety_alert_review
+      safety_status: elevated
+  - input:
+      recall_class: III
+      recall_count: 1
+      rems_required: false
+    expect:
+      safety_status: standard
+      next_step: routine_monitoring
+  - input:
+      rems_required: false
+      medwatch_alert_count: 0
+      recall_count: 2
+    expect:
+      next_step: routine_monitoring
+      safety_status: standard
+  - input:
+      recall_count: 0
+      rems_required: false
+      medwatch_alert_count: 0
+    expect:
+      safety_status: clear
+      next_step: no_action
+  - input: {}
+    expect:
+      safety_status: clear
+      next_step: no_action
+  - input:
+      recall_class: I
+      rems_required: true
+    expect:
+      safety_status: urgent
+      next_step: urgent_safety_action
+  - input:
+      recall_count: -1
+    expect:
+      risk_factors: No active recalls or safety alerts
+      safety_status: clear
+      next_step: no_action
+      recommended_action: Standard post-market surveillance
+  - input:
+      recall_count: 100
+    expect:
+      next_step: routine_monitoring
+      recommended_action: Review recall details and assess current relevance
+      safety_status: standard
+      risk_factors: Active recall on record
+  - input:
+      medwatch_alert_count: -1
+    expect:
+      recommended_action: Standard post-market surveillance
+      safety_status: clear
+      next_step: no_action
+      risk_factors: No active recalls or safety alerts
+  - input:
+      medwatch_alert_count: 200
+    expect:
+      risk_factors: Multiple MedWatch safety alerts issued
+      safety_status: elevated
+      next_step: safety_alert_review
+      recommended_action: Review MedWatch alerts and assess cumulative safety signal
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - recommended_action
+    - next_step
+    - safety_status
+    - risk_factors
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

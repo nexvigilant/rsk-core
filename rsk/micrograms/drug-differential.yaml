@@ -1,6 +1,26 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-differential
-description: 'Classify whether one drug adverse event rate is meaningfully higher than another using a 1.2x threshold on pre-computed ratio'
 version: 0.1.0
+description: Classify whether one drug adverse event rate is meaningfully higher than another using a 1.2x threshold on pre-computed ratio
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: ratio
+    type: float
+    required: true
+    description: ""
+outputs:
+  - name: differential
+    type: string
+  - name: label
+    type: string
 interface:
   inputs:
     ratio:
@@ -11,6 +31,28 @@ interface:
       type: string
     label:
       type: string
+ui:
+  title: Drug Differential
+  subtitle: Classify whether one drug adverse event rate is meaningfully higher than another using a 1.2x threshold on pre-computed ratio
+  icon: circle
+  route: /vigilance/mg/drug-differential
+  steps:
+    - field: ratio
+      label: ratio
+      help: Enter ratio
+      widget: text
+      placeholder: null
+  result:
+    template: "differential: {{differential}} — label: {{label}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-differential
+  cli: rsk mcg run drug-differential
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_a_higher
   nodes:
@@ -44,37 +86,71 @@ tree:
         differential: equal
         label: Rates are comparable
 tests:
-- input:
-    ratio: 1.5
-  expect:
-    differential: A
-    label: Drug A has higher rate
-- input:
-    ratio: 1.2
-  expect:
-    differential: equal
-    label: Rates are comparable
-- input:
-    ratio: 1.0
-  expect:
-    differential: equal
-    label: Rates are comparable
-- input:
-    ratio: 0.8
-  expect:
-    differential: B
-    label: Drug B has higher rate
-- input:
-    ratio: 0.5
-  expect:
-    differential: B
-    label: Drug B has higher rate
-- input:
-    ratio: 0.833
-  expect:
-    differential: equal
-    label: Rates are comparable
-- input: {}
-  expect:
-    differential: equal
-    label: Rates are comparable
+  - input:
+      ratio: 1.5
+    expect:
+      differential: A
+      label: Drug A has higher rate
+  - input:
+      ratio: 1.2
+    expect:
+      differential: equal
+      label: Rates are comparable
+  - input:
+      ratio: 1
+    expect:
+      differential: equal
+      label: Rates are comparable
+  - input:
+      ratio: 0.8
+    expect:
+      differential: B
+      label: Drug B has higher rate
+  - input:
+      ratio: 0.5
+    expect:
+      differential: B
+      label: Drug B has higher rate
+  - input:
+      ratio: 0.833
+    expect:
+      differential: equal
+      label: Rates are comparable
+  - input: {}
+    expect:
+      differential: equal
+      label: Rates are comparable
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - differential
+    - label
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

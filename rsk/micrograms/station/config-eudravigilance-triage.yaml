@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: config-eudravigilance-triage
-description: "Triage EudraVigilance ICSR volume and ROR signal data"
 version: 0.1.0
+description: Triage EudraVigilance ICSR volume and ROR signal data
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: total_icsrs
+    type: int
+    required: false
+    description: ""
+  - name: serious_pct
+    type: int
+    required: false
+    description: ""
+  - name: fatal_count
+    type: int
+    required: false
+    description: ""
+  - name: ror
+    type: float
+    required: false
+    description: ""
+  - name: ror_ci_lower
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: eu_signal
+    type: string
+  - name: action
+    type: string
+  - name: priority
+    type: int
 interface:
   inputs:
     total_icsrs:
@@ -19,9 +57,54 @@ interface:
       type: float
       required: false
   outputs:
-    eu_signal: { type: string }
-    action: { type: string }
-    priority: { type: int }
+    eu_signal:
+      type: string
+    action:
+      type: string
+    priority:
+      type: int
+ui:
+  title: Config Eudravigilance Triage
+  subtitle: Triage EudraVigilance ICSR volume and ROR signal data
+  icon: circle
+  route: /vigilance/mg/config-eudravigilance-triage
+  steps:
+    - field: total_icsrs
+      label: total icsrs
+      help: Enter total_icsrs
+      widget: text
+      placeholder: null
+    - field: serious_pct
+      label: serious pct
+      help: Enter serious_pct
+      widget: text
+      placeholder: null
+    - field: fatal_count
+      label: fatal count
+      help: Enter fatal_count
+      widget: text
+      placeholder: null
+    - field: ror
+      label: ror
+      help: Enter ror
+      widget: text
+      placeholder: null
+    - field: ror_ci_lower
+      label: ror ci lower
+      help: Enter ror_ci_lower
+      widget: text
+      placeholder: null
+  result:
+    template: "eu_signal: {{eu_signal}} — action: {{action}} — priority: {{priority}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/config-eudravigilance-triage
+  cli: rsk mcg run config-eudravigilance-triage
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_fatal
   nodes:
@@ -48,7 +131,7 @@ tree:
       type: condition
       variable: ror_ci_lower
       operator: gte
-      value: 1.0
+      value: 1
       true_next: confirmed
       false_next: check_volume
     check_volume:
@@ -66,24 +149,99 @@ tree:
       false_next: insufficient
     critical:
       type: return
-      value: { eu_signal: critical, action: prac_referral, priority: 1 }
+      value:
+        eu_signal: critical
+        action: prac_referral
+        priority: 1
     confirmed:
       type: return
-      value: { eu_signal: confirmed, action: signal_assessment, priority: 2 }
+      value:
+        eu_signal: confirmed
+        action: signal_assessment
+        priority: 2
     monitor:
       type: return
-      value: { eu_signal: monitor, action: periodic_review, priority: 3 }
+      value:
+        eu_signal: monitor
+        action: periodic_review
+        priority: 3
     insufficient:
       type: return
-      value: { eu_signal: none, action: accumulate, priority: 4 }
+      value:
+        eu_signal: none
+        action: accumulate
+        priority: 4
 tests:
-  - input: { fatal_count: 3, total_icsrs: 200, ror: 2.5, ror_ci_lower: 1.8 }
-    expect: { eu_signal: critical, action: prac_referral, priority: 1 }
-  - input: { fatal_count: 0, ror: 3.1, ror_ci_lower: 1.5, total_icsrs: 100 }
-    expect: { eu_signal: confirmed, action: signal_assessment, priority: 2 }
-  - input: { fatal_count: 0, ror: 1.2, ror_ci_lower: 0.7, total_icsrs: 80 }
-    expect: { eu_signal: monitor, action: periodic_review, priority: 3 }
-  - input: { total_icsrs: 10 }
-    expect: { eu_signal: none, action: accumulate, priority: 4 }
+  - input:
+      fatal_count: 3
+      total_icsrs: 200
+      ror: 2.5
+      ror_ci_lower: 1.8
+    expect:
+      eu_signal: critical
+      action: prac_referral
+      priority: 1
+  - input:
+      fatal_count: 0
+      ror: 3.1
+      ror_ci_lower: 1.5
+      total_icsrs: 100
+    expect:
+      eu_signal: confirmed
+      action: signal_assessment
+      priority: 2
+  - input:
+      fatal_count: 0
+      ror: 1.2
+      ror_ci_lower: 0.7
+      total_icsrs: 80
+    expect:
+      eu_signal: monitor
+      action: periodic_review
+      priority: 3
+  - input:
+      total_icsrs: 10
+    expect:
+      eu_signal: none
+      action: accumulate
+      priority: 4
   - input: {}
-    expect: { eu_signal: none, action: accumulate, priority: 4 }
+    expect:
+      eu_signal: none
+      action: accumulate
+      priority: 4
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - eu_signal
+    - action
+    - priority
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

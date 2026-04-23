@@ -1,6 +1,85 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: evidence-hierarchy-classifier
-description: Classifies evidence level based on study type and design characteristics
 version: 0.1.0
+description: Classifies evidence level based on study type and design characteristics
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: is_controlled
+    type: boolean
+    required: false
+    description: ""
+  - name: sample_size
+    type: integer
+    required: false
+    description: ""
+  - name: source_type
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: weight
+    type: string
+  - name: evidence_level
+    type: string
+interface:
+  inputs:
+    is_controlled:
+      type: boolean
+      required: false
+    sample_size:
+      type: integer
+      required: false
+    source_type:
+      type: string
+      required: false
+  outputs:
+    weight:
+      type: string
+      required: false
+    evidence_level:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: Evidence Hierarchy Classifier
+  subtitle: Classifies evidence level based on study type and design characteristics
+  icon: circle
+  route: /vigilance/mg/evidence-hierarchy-classifier
+  steps:
+    - field: is_controlled
+      label: is controlled
+      help: Enter is_controlled
+      widget: toggle
+      placeholder: null
+    - field: sample_size
+      label: sample size
+      help: Enter sample_size
+      widget: number
+      placeholder: null
+    - field: source_type
+      label: source type
+      help: Enter source_type
+      widget: text
+      placeholder: null
+  result:
+    template: "weight: {{weight}} — evidence_level: {{evidence_level}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/evidence-hierarchy-classifier
+  cli: rsk mcg run evidence-hierarchy-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: classify_by_source
   nodes:
@@ -96,131 +175,146 @@ tree:
         evidence_level: V
         weight: medium
 tests:
-- input:
-    sample_size: 500
-    source_type: rct
-    is_controlled: true
-  expect:
-    evidence_level: I
-    weight: high
-- input:
-    source_type: rct
-    sample_size: 50
-    is_controlled: true
-  expect:
-    evidence_level: II
-    weight: high
-- input:
-    sample_size: 200
-    is_controlled: false
-    source_type: cohort
-  expect:
-    evidence_level: II
-    weight: medium
-- input:
-    is_controlled: false
-    source_type: case_report
-    sample_size: 1
-  expect:
-    evidence_level: IV
-    weight: low
-- input:
-    source_type: spontaneous
-    sample_size: 1000
-    is_controlled: true
-  expect:
-    weight: medium
-    evidence_level: III
-- input:
-    source_type: label
-    is_controlled: false
-    sample_size: 0
-  expect:
-    evidence_level: V
-    weight: medium
-- input:
-    sample_size: -1
-  expect:
-    evidence_level: V
-    weight: low
-- input:
-    sample_size: 99
-  expect:
-    evidence_level: V
-    weight: low
-- input:
-    sample_size: 101
-  expect:
-    weight: low
-    evidence_level: V
-- input:
-    sample_size: 10000
-  expect:
-    weight: low
-    evidence_level: V
-- input: {}
-  expect:
-    evidence_level: V
-    weight: low
-- input: {}
-  expect:
-    weight: low
-    evidence_level: V
-- input: {}
-  expect:
-    weight: low
-    evidence_level: V
-- input:
-    sample_size: -1
-  expect:
-    evidence_level: V
-    weight: low
-- input:
-    sample_size: 49
-  expect:
-    evidence_level: V
-    weight: low
-- input:
-    sample_size: 51
-  expect:
-    evidence_level: V
-    weight: low
-- input: {}
-  expect:
-    evidence_level: V
-    weight: low
-- input: {}
-  expect:
-    weight: low
-    evidence_level: V
-- input: {}
-  expect:
-    weight: low
-    evidence_level: V
-- input: {}
-  expect:
-    weight: low
-    evidence_level: V
-- input: {}
-  expect:
-    weight: low
-    evidence_level: V
-interface:
-  inputs:
-    is_controlled:
-      type: boolean
-      required: false
-    sample_size:
-      type: integer
-      required: false
-    source_type:
-      type: string
-      required: false
-  outputs:
-    weight:
-      type: string
-      required: false
-    evidence_level:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      sample_size: 500
+      source_type: rct
+      is_controlled: true
+    expect:
+      evidence_level: I
+      weight: high
+  - input:
+      source_type: rct
+      sample_size: 50
+      is_controlled: true
+    expect:
+      evidence_level: II
+      weight: high
+  - input:
+      sample_size: 200
+      is_controlled: false
+      source_type: cohort
+    expect:
+      evidence_level: II
+      weight: medium
+  - input:
+      is_controlled: false
+      source_type: case_report
+      sample_size: 1
+    expect:
+      evidence_level: IV
+      weight: low
+  - input:
+      source_type: spontaneous
+      sample_size: 1000
+      is_controlled: true
+    expect:
+      weight: medium
+      evidence_level: III
+  - input:
+      source_type: label
+      is_controlled: false
+      sample_size: 0
+    expect:
+      evidence_level: V
+      weight: medium
+  - input:
+      sample_size: -1
+    expect:
+      evidence_level: V
+      weight: low
+  - input:
+      sample_size: 99
+    expect:
+      evidence_level: V
+      weight: low
+  - input:
+      sample_size: 101
+    expect:
+      weight: low
+      evidence_level: V
+  - input:
+      sample_size: 10000
+    expect:
+      weight: low
+      evidence_level: V
+  - input: {}
+    expect:
+      evidence_level: V
+      weight: low
+  - input: {}
+    expect:
+      weight: low
+      evidence_level: V
+  - input: {}
+    expect:
+      weight: low
+      evidence_level: V
+  - input:
+      sample_size: -1
+    expect:
+      evidence_level: V
+      weight: low
+  - input:
+      sample_size: 49
+    expect:
+      evidence_level: V
+      weight: low
+  - input:
+      sample_size: 51
+    expect:
+      evidence_level: V
+      weight: low
+  - input: {}
+    expect:
+      evidence_level: V
+      weight: low
+  - input: {}
+    expect:
+      weight: low
+      evidence_level: V
+  - input: {}
+    expect:
+      weight: low
+      evidence_level: V
+  - input: {}
+    expect:
+      weight: low
+      evidence_level: V
+  - input: {}
+    expect:
+      weight: low
+      evidence_level: V
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - weight
+    - evidence_level
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

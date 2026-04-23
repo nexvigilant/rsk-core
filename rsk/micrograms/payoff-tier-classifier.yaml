@@ -1,15 +1,55 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: payoff-tier-classifier
-description: 'Nash payoff tier: classifies game theory payoff value into display tier for war-game dashboard'
 version: 0.1.0
+description: "Nash payoff tier: classifies game theory payoff value into display tier for war-game dashboard"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: value
+    type: number
+    required: true
+    description: Nash equilibrium payoff value (0-100 scale)
+outputs:
+  - name: tier
+    type: string
 interface:
   inputs:
     value:
       type: number
       required: true
-      description: 'Nash equilibrium payoff value (0-100 scale)'
+      description: Nash equilibrium payoff value (0-100 scale)
   outputs:
     tier:
       type: string
+ui:
+  title: Payoff Tier Classifier
+  subtitle: "Nash payoff tier: classifies game theory payoff value into display tier for war-game dashboard"
+  icon: circle
+  route: /vigilance/mg/payoff-tier-classifier
+  steps:
+    - field: value
+      label: value
+      help: Nash equilibrium payoff value (0-100 scale)
+      widget: number
+      placeholder: null
+  result:
+    template: "tier: {{tier}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/payoff-tier-classifier
+  cli: rsk mcg run payoff-tier-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_high
   nodes:
@@ -40,41 +80,67 @@ tree:
       value:
         tier: low
 tests:
-# Zero payoff = low
-- input:
-    value: 0
-  expect:
-    tier: low
-# Below medium threshold
-- input:
-    value: 39
-  expect:
-    tier: low
-# At medium boundary
-- input:
-    value: 40
-  expect:
-    tier: medium
-# Mid medium range
-- input:
-    value: 55
-  expect:
-    tier: medium
-# Just below high
-- input:
-    value: 69
-  expect:
-    tier: medium
-# At high boundary
-- input:
-    value: 70
-  expect:
-    tier: high
-# Maximum payoff
-- input:
-    value: 100
-  expect:
-    tier: high
-- input: {}
-  expect:
-    tier: low
+  - input:
+      value: 0
+    expect:
+      tier: low
+  - input:
+      value: 39
+    expect:
+      tier: low
+  - input:
+      value: 40
+    expect:
+      tier: medium
+  - input:
+      value: 55
+    expect:
+      tier: medium
+  - input:
+      value: 69
+    expect:
+      tier: medium
+  - input:
+      value: 70
+    expect:
+      tier: high
+  - input:
+      value: 100
+    expect:
+      tier: high
+  - input: {}
+    expect:
+      tier: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - tier
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

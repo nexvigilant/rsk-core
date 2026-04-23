@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: meddra-smq-narrow
-description: "Determine if adverse event matches narrow MedDRA Standardized MedDRA Query (SMQ)"
 version: 0.1.0
+description: Determine if adverse event matches narrow MedDRA Standardized MedDRA Query (SMQ)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Meddra Smq Narrow
+  subtitle: Determine if adverse event matches narrow MedDRA Standardized MedDRA Query (SMQ)
+  icon: circle
+  route: /vigilance/mg/meddra-smq-narrow
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/meddra-smq-narrow
+  cli: rsk mcg run meddra-smq-narrow
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_pt
   nodes:
@@ -22,17 +51,17 @@ tree:
       type: return
       value:
         smq_code: "20000001"
-        smq_name: "Cardiac arrhythmias"
-        smq_scope: "narrow"
+        smq_name: Cardiac arrhythmias
+        smq_scope: narrow
         included_pt: true
-        hierarchical_level: "hlt"
+        hierarchical_level: hlt
         smq_compliant: true
     smq_no_match:
       type: return
       value:
         smq_code: null
         smq_name: null
-        smq_scope: "narrow"
+        smq_scope: narrow
         included_pt: false
         hierarchical_level: null
         smq_compliant: true
@@ -41,25 +70,57 @@ tree:
       value:
         smq_code: null
         smq_name: null
-        smq_scope: "narrow"
+        smq_scope: narrow
         included_pt: null
         hierarchical_level: null
         smq_compliant: false
 tests:
-- input:
-    meddra_pt_code: "10007585"
-    is_smq_included_narrow: true
-  expect:
-    smq_code: "20000001"
-    smq_name: "Cardiac arrhythmias"
-    included_pt: true
-- input:
-    meddra_pt_code: "10033633"
-    is_smq_included_narrow: false
-  expect:
-    smq_code: null
-    included_pt: false
-- input: {}
-  expect:
-    smq_code: null
-    smq_compliant: false
+  - input:
+      meddra_pt_code: "10007585"
+      is_smq_included_narrow: true
+    expect:
+      smq_code: "20000001"
+      smq_name: Cardiac arrhythmias
+      included_pt: true
+  - input:
+      meddra_pt_code: "10033633"
+      is_smq_included_narrow: false
+    expect:
+      smq_code: null
+      included_pt: false
+  - input: {}
+    expect:
+      smq_code: null
+      smq_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

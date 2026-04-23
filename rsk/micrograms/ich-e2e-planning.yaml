@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ich-e2e-planning
-description: "ICH E2E: Pharmacovigilance planning requirements for clinical development"
 version: 0.1.0
+description: "ICH E2E: Pharmacovigilance planning requirements for clinical development"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Ich E2e Planning
+  subtitle: "ICH E2E: Pharmacovigilance planning requirements for clinical development"
+  icon: circle
+  route: /vigilance/mg/ich-e2e-planning
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ich-e2e-planning
+  cli: rsk mcg run ich-e2e-planning
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_development_phase
   nodes:
@@ -15,54 +44,54 @@ tree:
       type: condition
       variable: development_phase
       operator: eq
-      value: "phase1"
+      value: phase1
       true_next: phase1_plan
       false_next: check_phase2
     check_phase2:
       type: condition
       variable: development_phase
       operator: eq
-      value: "phase2"
+      value: phase2
       true_next: phase2_plan
       false_next: check_phase3
     check_phase3:
       type: condition
       variable: development_phase
       operator: eq
-      value: "phase3"
+      value: phase3
       true_next: phase3_plan
       false_next: post_approval_plan
     phase1_plan:
       type: return
       value:
-        pv_plan_type: "phase1_safety_summary"
-        adverse_event_monitoring: "intensive"
-        serious_event_reporting: "within_24_hours"
-        pharmacovigilance_system: "minimized"
+        pv_plan_type: phase1_safety_summary
+        adverse_event_monitoring: intensive
+        serious_event_reporting: within_24_hours
+        pharmacovigilance_system: minimized
         ich_e2e_compliant: true
     phase2_plan:
       type: return
       value:
-        pv_plan_type: "phase2_safety_update"
-        adverse_event_monitoring: "comprehensive"
-        serious_event_reporting: "within_7_days"
-        pharmacovigilance_system: "established"
+        pv_plan_type: phase2_safety_update
+        adverse_event_monitoring: comprehensive
+        serious_event_reporting: within_7_days
+        pharmacovigilance_system: established
         ich_e2e_compliant: true
     phase3_plan:
       type: return
       value:
-        pv_plan_type: "phase3_development_safety_update"
-        adverse_event_monitoring: "intensive"
-        serious_event_reporting: "within_15_days"
-        pharmacovigilance_system: "full"
+        pv_plan_type: phase3_development_safety_update
+        adverse_event_monitoring: intensive
+        serious_event_reporting: within_15_days
+        pharmacovigilance_system: full
         ich_e2e_compliant: true
     post_approval_plan:
       type: return
       value:
-        pv_plan_type: "approved_product_safety_summary"
-        adverse_event_monitoring: "ongoing"
-        serious_event_reporting: "expedited"
-        pharmacovigilance_system: "regulatory_compliant"
+        pv_plan_type: approved_product_safety_summary
+        adverse_event_monitoring: ongoing
+        serious_event_reporting: expedited
+        pharmacovigilance_system: regulatory_compliant
         ich_e2e_compliant: true
     plan_unknown:
       type: return
@@ -73,23 +102,55 @@ tree:
         pharmacovigilance_system: null
         ich_e2e_compliant: false
 tests:
-- input:
-    development_phase: "phase1"
-  expect:
-    pv_plan_type: "phase1_safety_summary"
-    adverse_event_monitoring: "intensive"
-    serious_event_reporting: "within_24_hours"
-- input:
-    development_phase: "phase2"
-  expect:
-    pv_plan_type: "phase2_safety_update"
-    serious_event_reporting: "within_7_days"
-- input:
-    development_phase: "phase3"
-  expect:
-    pv_plan_type: "phase3_development_safety_update"
-    serious_event_reporting: "within_15_days"
-- input: {}
-  expect:
-    pv_plan_type: null
-    ich_e2e_compliant: false
+  - input:
+      development_phase: phase1
+    expect:
+      pv_plan_type: phase1_safety_summary
+      adverse_event_monitoring: intensive
+      serious_event_reporting: within_24_hours
+  - input:
+      development_phase: phase2
+    expect:
+      pv_plan_type: phase2_safety_update
+      serious_event_reporting: within_7_days
+  - input:
+      development_phase: phase3
+    expect:
+      pv_plan_type: phase3_development_safety_update
+      serious_event_reporting: within_15_days
+  - input: {}
+    expect:
+      pv_plan_type: null
+      ich_e2e_compliant: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

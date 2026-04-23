@@ -1,6 +1,48 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-disability-classifier
-description: 'ICH E2A Section II.B: Disability/incapacity sub-classification — distinguishes significant persistent disability (seriousness criterion) from temporary impairment (not a criterion)'
 version: 1.0.0
+description: "ICH E2A Section II.B: Disability/incapacity sub-classification — distinguishes significant persistent disability (seriousness criterion) from temporary impairment (not a criterion)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: daily_activities_impaired
+    type: bool
+    required: false
+    description: ""
+  - name: disability_duration
+    type: string
+    required: false
+    description: ""
+  - name: disability_present
+    type: bool
+    required: false
+    description: ""
+  - name: pre_existing_disability
+    type: bool
+    required: false
+    description: ""
+  - name: significant_disruption
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: disability_criterion_met
+    type: bool
+  - name: disability_type
+    type: string
+  - name: rationale
+    type: string
+  - name: regulatory_reference
+    type: string
+  - name: seriousness_basis
+    type: string
 interface:
   inputs:
     daily_activities_impaired:
@@ -29,6 +71,48 @@ interface:
       type: string
     seriousness_basis:
       type: string
+ui:
+  title: E2a Disability Classifier
+  subtitle: "ICH E2A Section II.B: Disability/incapacity sub-classification — distinguishes significant persistent disability (seriousness criterion) from temporary impairment (not a criterion)"
+  icon: circle
+  route: /vigilance/mg/e2a-disability-classifier
+  steps:
+    - field: daily_activities_impaired
+      label: daily activities impaired
+      help: Enter daily_activities_impaired
+      widget: toggle
+      placeholder: null
+    - field: disability_duration
+      label: disability duration
+      help: Enter disability_duration
+      widget: text
+      placeholder: null
+    - field: disability_present
+      label: disability present
+      help: Enter disability_present
+      widget: toggle
+      placeholder: null
+    - field: pre_existing_disability
+      label: pre existing disability
+      help: Enter pre_existing_disability
+      widget: toggle
+      placeholder: null
+    - field: significant_disruption
+      label: significant disruption
+      help: Enter significant_disruption
+      widget: toggle
+      placeholder: null
+  result:
+    template: "disability_criterion_met: {{disability_criterion_met}} — disability_type: {{disability_type}} — rationale: {{rationale}} — regulatory_reference: {{regulatory_reference}} — seriousness_basis: {{seriousness_basis}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-disability-classifier
+  cli: rsk mcg run e2a-disability-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_disability_present
   nodes:
@@ -129,101 +213,124 @@ tree:
         seriousness_basis: NONE
         rationale: No disability or incapacity reported — criterion not applicable
         regulatory_reference: ICH E2A Section II.B - Disability criterion not applicable
-primitive_signature:
-  dominant: 'κ'
-  expression: 'κ — disability sub-classification: significant/persistent vs temporary/minor'
-  primes: ['κ', '∂']
-  arguments: ['disability_present', 'pre_existing_disability', 'significant_disruption', 'daily_activities_impaired', 'disability_duration']
-  chain_prediction: 'Feeds disability_criterion_met into case-seriousness as sub-gate for disability criterion. Distinguishes reportable from non-reportable disability.'
 tests:
-# Permanent disability = criterion met
-- input:
-    disability_present: true
-    pre_existing_disability: false
-    significant_disruption: true
-    daily_activities_impaired: true
-    disability_duration: permanent
-  expect:
-    disability_criterion_met: true
-    disability_type: PERMANENT_SIGNIFICANT
-    seriousness_basis: DISABILITY
-    regulatory_reference: ICH E2A Section II.B - Significant, persistent or permanent incapacity/disability
-# Prolonged significant disability = criterion met
-- input:
-    disability_present: true
-    pre_existing_disability: false
-    significant_disruption: true
-    daily_activities_impaired: true
-    disability_duration: prolonged
-  expect:
-    disability_criterion_met: true
-    disability_type: SIGNIFICANT_PROLONGED
-    seriousness_basis: DISABILITY
-    regulatory_reference: ICH E2A Section II.B - Significant, persistent or permanent incapacity/disability
-# Temporary impairment = criterion NOT met
-- input:
-    disability_present: true
-    pre_existing_disability: false
-    significant_disruption: false
-    daily_activities_impaired: true
-    disability_duration: temporary
-  expect:
-    disability_criterion_met: false
-    disability_type: TEMPORARY_IMPAIRMENT
-    seriousness_basis: NONE
-    regulatory_reference: "ICH E2A Section II.B - Note: temporary impairment without significant disruption is not a seriousness criterion"
-# Minor impairment = criterion NOT met
-- input:
-    disability_present: true
-    pre_existing_disability: false
-    significant_disruption: false
-    daily_activities_impaired: false
-    disability_duration: temporary
-  expect:
-    disability_criterion_met: false
-    disability_type: MINOR_IMPAIRMENT
-    seriousness_basis: NONE
-    regulatory_reference: "ICH E2A Section II.B - Note: minor impairment without significant disruption is not a seriousness criterion"
-# Pre-existing disability = not attributable, criterion NOT met
-- input:
-    disability_present: true
-    pre_existing_disability: true
-    significant_disruption: true
-    daily_activities_impaired: true
-    disability_duration: permanent
-  expect:
-    disability_criterion_met: false
-    disability_type: PRE_EXISTING
-    seriousness_basis: NONE
-    regulatory_reference: ICH E2A Section II.B - Pre-existing disability not attributable to the adverse event
-# No disability = not applicable
-- input:
-    disability_present: false
-    pre_existing_disability: false
-    significant_disruption: false
-    daily_activities_impaired: false
-    disability_duration: none
-  expect:
-    disability_criterion_met: false
-    disability_type: NONE
-    seriousness_basis: NONE
-    regulatory_reference: ICH E2A Section II.B - Disability criterion not applicable
-# Empty input = not applicable
-- input: {}
-  expect:
-    disability_criterion_met: false
-    disability_type: NONE
-    seriousness_basis: NONE
-    regulatory_reference: ICH E2A Section II.B - Disability criterion not applicable
-# Daily activities impaired + unknown duration = significant prolonged
-- input:
-    disability_present: true
-    pre_existing_disability: false
-    significant_disruption: false
-    daily_activities_impaired: true
-    disability_duration: unknown
-  expect:
-    disability_criterion_met: true
-    disability_type: SIGNIFICANT_PROLONGED
-    seriousness_basis: DISABILITY
-    regulatory_reference: ICH E2A Section II.B - Significant, persistent or permanent incapacity/disability
+  - input:
+      disability_present: true
+      pre_existing_disability: false
+      significant_disruption: true
+      daily_activities_impaired: true
+      disability_duration: permanent
+    expect:
+      disability_criterion_met: true
+      disability_type: PERMANENT_SIGNIFICANT
+      seriousness_basis: DISABILITY
+      regulatory_reference: ICH E2A Section II.B - Significant, persistent or permanent incapacity/disability
+  - input:
+      disability_present: true
+      pre_existing_disability: false
+      significant_disruption: true
+      daily_activities_impaired: true
+      disability_duration: prolonged
+    expect:
+      disability_criterion_met: true
+      disability_type: SIGNIFICANT_PROLONGED
+      seriousness_basis: DISABILITY
+      regulatory_reference: ICH E2A Section II.B - Significant, persistent or permanent incapacity/disability
+  - input:
+      disability_present: true
+      pre_existing_disability: false
+      significant_disruption: false
+      daily_activities_impaired: true
+      disability_duration: temporary
+    expect:
+      disability_criterion_met: false
+      disability_type: TEMPORARY_IMPAIRMENT
+      seriousness_basis: NONE
+      regulatory_reference: "ICH E2A Section II.B - Note: temporary impairment without significant disruption is not a seriousness criterion"
+  - input:
+      disability_present: true
+      pre_existing_disability: false
+      significant_disruption: false
+      daily_activities_impaired: false
+      disability_duration: temporary
+    expect:
+      disability_criterion_met: false
+      disability_type: MINOR_IMPAIRMENT
+      seriousness_basis: NONE
+      regulatory_reference: "ICH E2A Section II.B - Note: minor impairment without significant disruption is not a seriousness criterion"
+  - input:
+      disability_present: true
+      pre_existing_disability: true
+      significant_disruption: true
+      daily_activities_impaired: true
+      disability_duration: permanent
+    expect:
+      disability_criterion_met: false
+      disability_type: PRE_EXISTING
+      seriousness_basis: NONE
+      regulatory_reference: ICH E2A Section II.B - Pre-existing disability not attributable to the adverse event
+  - input:
+      disability_present: false
+      pre_existing_disability: false
+      significant_disruption: false
+      daily_activities_impaired: false
+      disability_duration: none
+    expect:
+      disability_criterion_met: false
+      disability_type: NONE
+      seriousness_basis: NONE
+      regulatory_reference: ICH E2A Section II.B - Disability criterion not applicable
+  - input: {}
+    expect:
+      disability_criterion_met: false
+      disability_type: NONE
+      seriousness_basis: NONE
+      regulatory_reference: ICH E2A Section II.B - Disability criterion not applicable
+  - input:
+      disability_present: true
+      pre_existing_disability: false
+      significant_disruption: false
+      daily_activities_impaired: true
+      disability_duration: unknown
+    expect:
+      disability_criterion_met: true
+      disability_type: SIGNIFICANT_PROLONGED
+      seriousness_basis: DISABILITY
+      regulatory_reference: ICH E2A Section II.B - Significant, persistent or permanent incapacity/disability
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - disability_criterion_met
+    - disability_type
+    - rationale
+    - regulatory_reference
+    - seriousness_basis
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

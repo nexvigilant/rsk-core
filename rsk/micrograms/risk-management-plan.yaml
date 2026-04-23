@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: risk-management-plan
-description: "Create or update Risk Management Plan (RMP) based on identified risks"
 version: 0.1.0
+description: Create or update Risk Management Plan (RMP) based on identified risks
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Risk Management Plan
+  subtitle: Create or update Risk Management Plan (RMP) based on identified risks
+  icon: circle
+  route: /vigilance/mg/risk-management-plan
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/risk-management-plan
+  cli: rsk mcg run risk-management-plan
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_risks
   nodes:
@@ -21,46 +50,78 @@ tree:
     rmp_new:
       type: return
       value:
-        rmp_action: "create_new_rmp"
-        rmp_content: "safety_summary,pharmacovigilance_plan,risk_minimization_plan"
+        rmp_action: create_new_rmp
+        rmp_content: safety_summary,pharmacovigilance_plan,risk_minimization_plan
         submission_timeline_days: 30
         requires_regulatory_approval: true
         rmp_compliant: true
     rmp_update:
       type: return
       value:
-        rmp_action: "update_existing_rmp"
-        rmp_content: "add_identified_risks,update_mitigation_strategies"
+        rmp_action: update_existing_rmp
+        rmp_content: add_identified_risks,update_mitigation_strategies
         submission_timeline_days: 60
         requires_regulatory_approval: false
         rmp_compliant: true
     rmp_not_required:
       type: return
       value:
-        rmp_action: "no_rmp_required"
+        rmp_action: no_rmp_required
         rmp_content: null
         submission_timeline_days: 0
         requires_regulatory_approval: false
         rmp_compliant: true
 tests:
-- input:
-    safety_concerns_identified: true
-    rmp_previously_submitted: false
-  expect:
-    rmp_action: "create_new_rmp"
-    submission_timeline_days: 30
-    requires_regulatory_approval: true
-- input:
-    safety_concerns_identified: true
-    rmp_previously_submitted: true
-  expect:
-    rmp_action: "update_existing_rmp"
-    submission_timeline_days: 60
-- input:
-    safety_concerns_identified: false
-  expect:
-    rmp_action: "no_rmp_required"
-- input: {}
-  expect:
-    rmp_action: "no_rmp_required"
-    rmp_compliant: true
+  - input:
+      safety_concerns_identified: true
+      rmp_previously_submitted: false
+    expect:
+      rmp_action: create_new_rmp
+      submission_timeline_days: 30
+      requires_regulatory_approval: true
+  - input:
+      safety_concerns_identified: true
+      rmp_previously_submitted: true
+    expect:
+      rmp_action: update_existing_rmp
+      submission_timeline_days: 60
+  - input:
+      safety_concerns_identified: false
+    expect:
+      rmp_action: no_rmp_required
+  - input: {}
+    expect:
+      rmp_action: no_rmp_required
+      rmp_compliant: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

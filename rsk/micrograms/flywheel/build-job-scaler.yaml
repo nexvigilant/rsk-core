@@ -1,6 +1,34 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: build-job-scaler
-description: 'Adaptive build parallelism scaler. Reads available_mb and cpu_cores, outputs optimal CARGO_BUILD_JOBS. Scales down under memory pressure, scales up when headroom exists. Closed-loop with build-memory-gate: gate decides GO/WARN/BLOCK, scaler decides HOW FAST.'
 version: 0.1.0
+description: "Adaptive build parallelism scaler. Reads available_mb and cpu_cores, outputs optimal CARGO_BUILD_JOBS. Scales down under memory pressure, scales up when headroom exists. Closed-loop with build-memory-gate: gate decides GO/WARN/BLOCK, scaler decides HOW FAST."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: available_mb
+    type: int
+    required: true
+    description: ""
+  - name: cpu_cores
+    type: int
+    required: true
+    description: ""
+  - name: crate_tier
+    type: string
+    required: false
+    description: ""
+outputs:
+  - name: jobs
+    type: int
+  - name: strategy
+    type: string
 interface:
   inputs:
     available_mb:
@@ -17,6 +45,38 @@ interface:
       type: int
     strategy:
       type: string
+ui:
+  title: Build Job Scaler
+  subtitle: "Adaptive build parallelism scaler. Reads available_mb and cpu_cores, outputs optimal CARGO_BUILD_JOBS. Scales down under memory pressure, scales up when headroom exists. Closed-loop with build-memory-gate: gate decides GO/WARN/BLOCK, scaler decides HOW FAST."
+  icon: circle
+  route: /vigilance/mg/build-job-scaler
+  steps:
+    - field: available_mb
+      label: available mb
+      help: Enter available_mb
+      widget: text
+      placeholder: null
+    - field: cpu_cores
+      label: cpu cores
+      help: Enter cpu_cores
+      widget: text
+      placeholder: null
+    - field: crate_tier
+      label: crate tier
+      help: Enter crate_tier
+      widget: text
+      placeholder: null
+  result:
+    template: "jobs: {{jobs}} — strategy: {{strategy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/build-job-scaler
+  cli: rsk mcg run build-job-scaler
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_tier
   nodes:
@@ -98,53 +158,87 @@ tree:
         jobs: 2
         strategy: minimal_parallel
 tests:
-- input:
-    available_mb: 10000
-    cpu_cores: 20
-    crate_tier: heavy
-  expect:
-    jobs: 8
-    strategy: full_parallel
-- input:
-    available_mb: 5000
-    cpu_cores: 20
-    crate_tier: heavy
-  expect:
-    jobs: 4
-    strategy: half_parallel
-- input:
-    available_mb: 3000
-    cpu_cores: 20
-    crate_tier: heavy
-  expect:
-    jobs: 2
-    strategy: minimal_parallel
-- input:
-    available_mb: 1500
-    cpu_cores: 20
-    crate_tier: heavy
-  expect:
-    jobs: 1
-    strategy: serial
-- input:
-    available_mb: 8000
-    cpu_cores: 20
-  expect:
-    jobs: 12
-    strategy: full_parallel
-- input:
-    available_mb: 3000
-    cpu_cores: 20
-  expect:
-    jobs: 6
-    strategy: half_parallel
-- input:
-    available_mb: 1000
-    cpu_cores: 20
-  expect:
-    jobs: 2
-    strategy: minimal_parallel
-- input: {}
-  expect:
-    jobs: 2
-    strategy: minimal_parallel
+  - input:
+      available_mb: 10000
+      cpu_cores: 20
+      crate_tier: heavy
+    expect:
+      jobs: 8
+      strategy: full_parallel
+  - input:
+      available_mb: 5000
+      cpu_cores: 20
+      crate_tier: heavy
+    expect:
+      jobs: 4
+      strategy: half_parallel
+  - input:
+      available_mb: 3000
+      cpu_cores: 20
+      crate_tier: heavy
+    expect:
+      jobs: 2
+      strategy: minimal_parallel
+  - input:
+      available_mb: 1500
+      cpu_cores: 20
+      crate_tier: heavy
+    expect:
+      jobs: 1
+      strategy: serial
+  - input:
+      available_mb: 8000
+      cpu_cores: 20
+    expect:
+      jobs: 12
+      strategy: full_parallel
+  - input:
+      available_mb: 3000
+      cpu_cores: 20
+    expect:
+      jobs: 6
+      strategy: half_parallel
+  - input:
+      available_mb: 1000
+      cpu_cores: 20
+    expect:
+      jobs: 2
+      strategy: minimal_parallel
+  - input: {}
+    expect:
+      jobs: 2
+      strategy: minimal_parallel
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - jobs
+    - strategy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

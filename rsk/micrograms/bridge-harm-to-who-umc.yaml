@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: bridge-harm-to-who-umc
-description: 'Bridge: converts harm taxonomy classification into WHO-UMC causality input'
 version: 0.1.0
+description: "Bridge: converts harm taxonomy classification into WHO-UMC causality input"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Bridge Harm To Who Umc
+  subtitle: "Bridge: converts harm taxonomy classification into WHO-UMC causality input"
+  icon: circle
+  route: /vigilance/mg/bridge-harm-to-who-umc
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/bridge-harm-to-who-umc
+  cli: rsk mcg run bridge-harm-to-who-umc
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_action
   nodes:
@@ -34,31 +63,61 @@ tree:
         causality_category: certain
         bridge: harm-to-who-umc
 tests:
-- input:
-    priority: critical
-    action: escalate
-  expect:
-    bridge: harm-to-who-umc
-    causality_category: certain
-- input:
-    action: investigate
-    priority: high
-  expect:
-    bridge: harm-to-who-umc
-    causality_category: probable
-- input:
-    action: monitor
-    priority: moderate
-  expect:
-    causality_category: possible
-    bridge: harm-to-who-umc
-- input: {}
-  expect:
-    causality_category: possible
-    bridge: harm-to-who-umc
-- input: {}
-  expect:
-    causality_category: possible
-    bridge: harm-to-who-umc
-interface: null
-primitive_signature: null
+  - input:
+      priority: critical
+      action: escalate
+    expect:
+      bridge: harm-to-who-umc
+      causality_category: certain
+  - input:
+      action: investigate
+      priority: high
+    expect:
+      bridge: harm-to-who-umc
+      causality_category: probable
+  - input:
+      action: monitor
+      priority: moderate
+    expect:
+      causality_category: possible
+      bridge: harm-to-who-umc
+  - input: {}
+    expect:
+      causality_category: possible
+      bridge: harm-to-who-umc
+  - input: {}
+    expect:
+      causality_category: possible
+      bridge: harm-to-who-umc
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: patient-lack-of-efficacy
-description: "Classify lack of drug efficacy reports for patient safety assessment"
 version: 0.1.0
+description: Classify lack of drug efficacy reports for patient safety assessment
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Patient Lack Of Efficacy
+  subtitle: Classify lack of drug efficacy reports for patient safety assessment
+  icon: circle
+  route: /vigilance/mg/patient-lack-of-efficacy
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/patient-lack-of-efficacy
+  cli: rsk mcg run patient-lack-of-efficacy
+  auth: none
+  rate_limit: 600/min
 tree:
   start: validate_efficacy_report
   nodes:
@@ -28,58 +57,90 @@ tree:
     confirmed_lack_of_efficacy:
       type: return
       value:
-        efficacy_status: "confirmed_lack_of_efficacy"
-        patient_safety_concern: "treatment_failure"
+        efficacy_status: confirmed_lack_of_efficacy
+        patient_safety_concern: treatment_failure
         alternative_therapy_needed: true
         monitoring_required: true
         efficacy_compliant: true
     early_lack_of_efficacy:
       type: return
       value:
-        efficacy_status: "early_report"
-        patient_safety_concern: "possible_non_response"
+        efficacy_status: early_report
+        patient_safety_concern: possible_non_response
         alternative_therapy_needed: false
         monitoring_required: true
         efficacy_compliant: true
     inadequate_treatment_period:
       type: return
       value:
-        efficacy_status: "insufficient_observation_period"
-        patient_safety_concern: "premature_evaluation"
+        efficacy_status: insufficient_observation_period
+        patient_safety_concern: premature_evaluation
         alternative_therapy_needed: false
         monitoring_required: false
         efficacy_compliant: false
     efficacy_normal:
       type: return
       value:
-        efficacy_status: "expected_response"
-        patient_safety_concern: "none"
+        efficacy_status: expected_response
+        patient_safety_concern: none
         alternative_therapy_needed: false
         monitoring_required: false
         efficacy_compliant: true
 tests:
-- input:
-    lack_of_efficacy_reported: true
-    treatment_duration_weeks: 8
-    is_within_expected_timeframe: true
-  expect:
-    efficacy_status: "confirmed_lack_of_efficacy"
-    alternative_therapy_needed: true
-    monitoring_required: true
-- input:
-    lack_of_efficacy_reported: true
-    treatment_duration_weeks: 8
-    is_within_expected_timeframe: false
-  expect:
-    efficacy_status: "early_report"
-    alternative_therapy_needed: false
-- input:
-    lack_of_efficacy_reported: true
-    treatment_duration_weeks: 2
-  expect:
-    efficacy_status: "insufficient_observation_period"
-    efficacy_compliant: false
-- input: {}
-  expect:
-    efficacy_status: "expected_response"
-    monitoring_required: false
+  - input:
+      lack_of_efficacy_reported: true
+      treatment_duration_weeks: 8
+      is_within_expected_timeframe: true
+    expect:
+      efficacy_status: confirmed_lack_of_efficacy
+      alternative_therapy_needed: true
+      monitoring_required: true
+  - input:
+      lack_of_efficacy_reported: true
+      treatment_duration_weeks: 8
+      is_within_expected_timeframe: false
+    expect:
+      efficacy_status: early_report
+      alternative_therapy_needed: false
+  - input:
+      lack_of_efficacy_reported: true
+      treatment_duration_weeks: 2
+    expect:
+      efficacy_status: insufficient_observation_period
+      efficacy_compliant: false
+  - input: {}
+    expect:
+      efficacy_status: expected_response
+      monitoring_required: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

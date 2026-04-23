@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: action-irreversibility-gate
-description: Gates irreversible regulatory actions against evidence strength. Fills the ∝ (Irreversibility) primitive gap. Evaluates whether proposed actions can be undone, and if not, requires either imminent patient safety risk or strong evidence before proceeding.
 version: 0.1.0
+description: Gates irreversible regulatory actions against evidence strength. Fills the ∝ (Irreversibility) primitive gap. Evaluates whether proposed actions can be undone, and if not, requires either imminent patient safety risk or strong evidence before proceeding.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Action Irreversibility Gate
+  subtitle: Gates irreversible regulatory actions against evidence strength. Fills the ∝ (Irreversibility) primitive gap. Evaluates whether proposed actions can be undone, and if not, requires either imminent patient safety risk or strong evidence before proceeding.
+  icon: circle
+  route: /vigilance/mg/action-irreversibility-gate
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/action-irreversibility-gate
+  cli: rsk mcg run action-irreversibility-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_reversibility
   nodes:
@@ -58,81 +87,112 @@ tree:
         chemistry_analog: denaturation prevented — protein integrity preserved pending better data
         requires_expert_review: true
 tests:
-- input:
-    evidence_strong: true
-    patient_risk_imminent: false
-    action_reversible: true
-  expect:
-    gate_decision: PROCEED
-    requires_expert_review: false
-- input:
-    action_reversible: true
-    patient_risk_imminent: false
-    evidence_strong: false
-  expect:
-    requires_expert_review: false
-    gate_decision: PROCEED
-- input:
-    patient_risk_imminent: true
-    evidence_strong: false
-    action_reversible: true
-  expect:
-    requires_expert_review: false
-    gate_decision: PROCEED
-- input:
-    patient_risk_imminent: true
-    action_reversible: false
-    evidence_strong: false
-  expect:
-    gate_decision: PROCEED_URGENT
-    requires_expert_review: true
-- input:
-    evidence_strong: true
-    action_reversible: false
-    patient_risk_imminent: true
-  expect:
-    requires_expert_review: true
-    gate_decision: PROCEED_URGENT
-- input:
-    patient_risk_imminent: false
-    evidence_strong: true
-    action_reversible: false
-  expect:
-    gate_decision: PROCEED_WITH_REVIEW
-    requires_expert_review: true
-- input:
-    evidence_strong: false
-    patient_risk_imminent: false
-    action_reversible: false
-  expect:
-    requires_expert_review: true
-    gate_decision: BLOCK_ESCALATE
-- input:
-    patient_risk_imminent: false
-    evidence_strong: false
-    action_reversible: false
-  expect:
-    gate_decision: BLOCK_ESCALATE
-    requires_expert_review: true
-- input: {}
-  expect:
-    irreversibility_primitive: ∝ — irreversible action blocked without strong evidence
-    chemistry_analog: denaturation prevented — protein integrity preserved pending better data
-    requires_expert_review: true
-    gate_decision: BLOCK_ESCALATE
-    action: Block irreversible action — no imminent risk and evidence insufficient. Escalate to expert review.
-- input: {}
-  expect:
-    chemistry_analog: denaturation prevented — protein integrity preserved pending better data
-    irreversibility_primitive: ∝ — irreversible action blocked without strong evidence
-    action: Block irreversible action — no imminent risk and evidence insufficient. Escalate to expert review.
-    requires_expert_review: true
-    gate_decision: BLOCK_ESCALATE
-- input: {}
-  expect:
-    action: Block irreversible action — no imminent risk and evidence insufficient. Escalate to expert review.
-    gate_decision: BLOCK_ESCALATE
-    irreversibility_primitive: ∝ — irreversible action blocked without strong evidence
-    chemistry_analog: denaturation prevented — protein integrity preserved pending better data
-    requires_expert_review: true
-interface: null
+  - input:
+      evidence_strong: true
+      patient_risk_imminent: false
+      action_reversible: true
+    expect:
+      gate_decision: PROCEED
+      requires_expert_review: false
+  - input:
+      action_reversible: true
+      patient_risk_imminent: false
+      evidence_strong: false
+    expect:
+      requires_expert_review: false
+      gate_decision: PROCEED
+  - input:
+      patient_risk_imminent: true
+      evidence_strong: false
+      action_reversible: true
+    expect:
+      requires_expert_review: false
+      gate_decision: PROCEED
+  - input:
+      patient_risk_imminent: true
+      action_reversible: false
+      evidence_strong: false
+    expect:
+      gate_decision: PROCEED_URGENT
+      requires_expert_review: true
+  - input:
+      evidence_strong: true
+      action_reversible: false
+      patient_risk_imminent: true
+    expect:
+      requires_expert_review: true
+      gate_decision: PROCEED_URGENT
+  - input:
+      patient_risk_imminent: false
+      evidence_strong: true
+      action_reversible: false
+    expect:
+      gate_decision: PROCEED_WITH_REVIEW
+      requires_expert_review: true
+  - input:
+      evidence_strong: false
+      patient_risk_imminent: false
+      action_reversible: false
+    expect:
+      requires_expert_review: true
+      gate_decision: BLOCK_ESCALATE
+  - input:
+      patient_risk_imminent: false
+      evidence_strong: false
+      action_reversible: false
+    expect:
+      gate_decision: BLOCK_ESCALATE
+      requires_expert_review: true
+  - input: {}
+    expect:
+      irreversibility_primitive: ∝ — irreversible action blocked without strong evidence
+      chemistry_analog: denaturation prevented — protein integrity preserved pending better data
+      requires_expert_review: true
+      gate_decision: BLOCK_ESCALATE
+      action: Block irreversible action — no imminent risk and evidence insufficient. Escalate to expert review.
+  - input: {}
+    expect:
+      chemistry_analog: denaturation prevented — protein integrity preserved pending better data
+      irreversibility_primitive: ∝ — irreversible action blocked without strong evidence
+      action: Block irreversible action — no imminent risk and evidence insufficient. Escalate to expert review.
+      requires_expert_review: true
+      gate_decision: BLOCK_ESCALATE
+  - input: {}
+    expect:
+      action: Block irreversible action — no imminent risk and evidence insufficient. Escalate to expert review.
+      gate_decision: BLOCK_ESCALATE
+      irreversibility_primitive: ∝ — irreversible action blocked without strong evidence
+      chemistry_analog: denaturation prevented — protein integrity preserved pending better data
+      requires_expert_review: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

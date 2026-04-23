@@ -1,6 +1,44 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: system-vitals
-description: 'System resource health classifier: RAM, swap, disk, cache. GREEN (all healthy), YELLOW (1 metric stressed), RED (2+ stressed or any critical). Feeds Guardian homeostasis for automated resource management.'
 version: 0.1.0
+description: "System resource health classifier: RAM, swap, disk, cache. GREEN (all healthy), YELLOW (1 metric stressed), RED (2+ stressed or any critical). Feeds Guardian homeostasis for automated resource management."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: ram_available_mb
+    type: int
+    required: true
+    description: ""
+  - name: swap_free_mb
+    type: int
+    required: true
+    description: ""
+  - name: disk_free_gb
+    type: int
+    required: true
+    description: ""
+  - name: cache_gb
+    type: int
+    required: true
+    description: ""
+  - name: active_rustc
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: state
+    type: string
+  - name: stressed_count
+    type: int
+  - name: action
+    type: string
 interface:
   inputs:
     ram_available_mb:
@@ -25,6 +63,48 @@ interface:
       type: int
     action:
       type: string
+ui:
+  title: System Vitals
+  subtitle: "System resource health classifier: RAM, swap, disk, cache. GREEN (all healthy), YELLOW (1 metric stressed), RED (2+ stressed or any critical). Feeds Guardian homeostasis for automated resource management."
+  icon: circle
+  route: /vigilance/mg/system-vitals
+  steps:
+    - field: ram_available_mb
+      label: ram available mb
+      help: Enter ram_available_mb
+      widget: text
+      placeholder: null
+    - field: swap_free_mb
+      label: swap free mb
+      help: Enter swap_free_mb
+      widget: text
+      placeholder: null
+    - field: disk_free_gb
+      label: disk free gb
+      help: Enter disk_free_gb
+      widget: text
+      placeholder: null
+    - field: cache_gb
+      label: cache gb
+      help: Enter cache_gb
+      widget: text
+      placeholder: null
+    - field: active_rustc
+      label: active rustc
+      help: Enter active_rustc
+      widget: text
+      placeholder: null
+  result:
+    template: "state: {{state}} — stressed_count: {{stressed_count}} — action: {{action}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/system-vitals
+  cli: rsk mcg run system-vitals
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_ram
   nodes:
@@ -126,80 +206,115 @@ tree:
         stressed_count: 3
         action: emergency_stop
 tests:
-- input:
-    ram_available_mb: 4000
-    swap_free_mb: 8000
-    disk_free_gb: 200
-    cache_gb: 6
-  expect:
-    state: green
-    stressed_count: 0
-    action: none
-- input:
-    ram_available_mb: 1500
-    swap_free_mb: 8000
-    disk_free_gb: 200
-    cache_gb: 6
-  expect:
-    state: yellow
-    stressed_count: 1
-    action: reduce_build_jobs
-- input:
-    ram_available_mb: 4000
-    swap_free_mb: 2000
-    disk_free_gb: 200
-    cache_gb: 6
-  expect:
-    state: yellow
-    stressed_count: 1
-    action: close_sessions
-- input:
-    ram_available_mb: 4000
-    swap_free_mb: 8000
-    disk_free_gb: 200
-    cache_gb: 20
-  expect:
-    state: yellow
-    stressed_count: 1
-    action: prune_cache
-- input:
-    ram_available_mb: 1000
-    swap_free_mb: 1000
-    disk_free_gb: 200
-    cache_gb: 6
-  expect:
-    state: red
-    stressed_count: 2
-    action: pause_builds
-- input:
-    ram_available_mb: 300
-    swap_free_mb: 100
-    disk_free_gb: 200
-    cache_gb: 6
-  expect:
-    state: red
-    stressed_count: 3
-    action: emergency_stop
-- input:
-    ram_available_mb: 4000
-    swap_free_mb: 2000
-    disk_free_gb: 30
-    cache_gb: 6
-  expect:
-    state: red
-    stressed_count: 2
-    action: emergency_prune
-- input:
-    ram_available_mb: 4000
-    swap_free_mb: 8000
-    disk_free_gb: 30
-    cache_gb: 6
-  expect:
-    state: yellow
-    stressed_count: 1
-    action: prune_target
-- input: {}
-  expect:
-    action: emergency_stop
-    state: red
-    stressed_count: 3
+  - input:
+      ram_available_mb: 4000
+      swap_free_mb: 8000
+      disk_free_gb: 200
+      cache_gb: 6
+    expect:
+      state: green
+      stressed_count: 0
+      action: none
+  - input:
+      ram_available_mb: 1500
+      swap_free_mb: 8000
+      disk_free_gb: 200
+      cache_gb: 6
+    expect:
+      state: yellow
+      stressed_count: 1
+      action: reduce_build_jobs
+  - input:
+      ram_available_mb: 4000
+      swap_free_mb: 2000
+      disk_free_gb: 200
+      cache_gb: 6
+    expect:
+      state: yellow
+      stressed_count: 1
+      action: close_sessions
+  - input:
+      ram_available_mb: 4000
+      swap_free_mb: 8000
+      disk_free_gb: 200
+      cache_gb: 20
+    expect:
+      state: yellow
+      stressed_count: 1
+      action: prune_cache
+  - input:
+      ram_available_mb: 1000
+      swap_free_mb: 1000
+      disk_free_gb: 200
+      cache_gb: 6
+    expect:
+      state: red
+      stressed_count: 2
+      action: pause_builds
+  - input:
+      ram_available_mb: 300
+      swap_free_mb: 100
+      disk_free_gb: 200
+      cache_gb: 6
+    expect:
+      state: red
+      stressed_count: 3
+      action: emergency_stop
+  - input:
+      ram_available_mb: 4000
+      swap_free_mb: 2000
+      disk_free_gb: 30
+      cache_gb: 6
+    expect:
+      state: red
+      stressed_count: 2
+      action: emergency_prune
+  - input:
+      ram_available_mb: 4000
+      swap_free_mb: 8000
+      disk_free_gb: 30
+      cache_gb: 6
+    expect:
+      state: yellow
+      stressed_count: 1
+      action: prune_target
+  - input: {}
+    expect:
+      action: emergency_stop
+      state: red
+      stressed_count: 3
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - state
+    - stressed_count
+    - action
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

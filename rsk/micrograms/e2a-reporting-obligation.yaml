@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2a-reporting-obligation
-description: 'ICH E2A Section III.A: Sponsor reporting obligation gate — determines whether a case must be reported as an expedited SUSAR, combining seriousness + unexpectedness + causality in a clinical trial context'
 version: 1.0.0
+description: "ICH E2A Section III.A: Sponsor reporting obligation gate — determines whether a case must be reported as an expedited SUSAR, combining seriousness + unexpectedness + causality in a clinical trial context"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: causality_excluded
+    type: bool
+    required: false
+    description: ""
+  - name: is_serious
+    type: bool
+    required: false
+    description: ""
+  - name: is_unexpected
+    type: bool
+    required: false
+    description: ""
+  - name: study_drug_related
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: obligation
+    type: string
+  - name: rationale
+    type: string
+  - name: regulatory_reference
+    type: string
+  - name: report_as_susar
+    type: bool
 interface:
   inputs:
     causality_excluded:
@@ -24,6 +60,43 @@ interface:
       type: string
     report_as_susar:
       type: bool
+ui:
+  title: E2a Reporting Obligation
+  subtitle: "ICH E2A Section III.A: Sponsor reporting obligation gate — determines whether a case must be reported as an expedited SUSAR, combining seriousness + unexpectedness + causality in a clinical trial context"
+  icon: circle
+  route: /vigilance/mg/e2a-reporting-obligation
+  steps:
+    - field: causality_excluded
+      label: causality excluded
+      help: Enter causality_excluded
+      widget: toggle
+      placeholder: null
+    - field: is_serious
+      label: is serious
+      help: Enter is_serious
+      widget: toggle
+      placeholder: null
+    - field: is_unexpected
+      label: is unexpected
+      help: Enter is_unexpected
+      widget: toggle
+      placeholder: null
+    - field: study_drug_related
+      label: study drug related
+      help: Enter study_drug_related
+      widget: toggle
+      placeholder: null
+  result:
+    template: "obligation: {{obligation}} — rationale: {{rationale}} — regulatory_reference: {{regulatory_reference}} — report_as_susar: {{report_as_susar}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2a-reporting-obligation
+  cli: rsk mcg run e2a-reporting-obligation
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_serious
   nodes:
@@ -90,76 +163,99 @@ tree:
         obligation: NO_EXPEDITED_REPORTING
         rationale: Causality to study drug definitively excluded — no SUSAR reporting obligation
         regulatory_reference: ICH E2A Section III.A - Events with excluded causality do not require SUSAR reporting
-primitive_signature:
-  dominant: '→'
-  expression: '→ — causal obligation gate: serious × unexpected × related → SUSAR'
-  primes: ['→', 'κ', '∂']
-  arguments: ['is_serious', 'is_unexpected', 'study_drug_related', 'causality_excluded']
-  chain_prediction: 'Receives from case-seriousness (is_serious) + e2a-expectedness-check (is_unexpected). Feeds into e2a-reporting-timeline for deadline assignment.'
 tests:
-# All three criteria met = mandatory SUSAR
-- input:
-    is_serious: true
-    is_unexpected: true
-    study_drug_related: true
-    causality_excluded: false
-  expect:
-    report_as_susar: true
-    obligation: MANDATORY_EXPEDITED
-    regulatory_reference: ICH E2A Section III.A - Sponsor obligation to report SUSARs expeditiously
-# Serious + unexpected + causality not confirmed = pending review SUSAR
-- input:
-    is_serious: true
-    is_unexpected: true
-    study_drug_related: false
-    causality_excluded: false
-  expect:
-    report_as_susar: true
-    obligation: EXPEDITED_PENDING_REVIEW
-    regulatory_reference: ICH E2A Section III.A - When causality cannot be excluded, assume related for reporting purposes
-# Serious + expected = periodic only
-- input:
-    is_serious: true
-    is_unexpected: false
-    study_drug_related: true
-    causality_excluded: false
-  expect:
-    report_as_susar: false
-    obligation: PERIODIC_REPORTING
-    regulatory_reference: ICH E2A Section III.A - Expected serious reactions do not require expedited reporting
-# Non-serious = no expedited reporting
-- input:
-    is_serious: false
-    is_unexpected: true
-    study_drug_related: true
-    causality_excluded: false
-  expect:
-    report_as_susar: false
-    obligation: NO_EXPEDITED_REPORTING
-    regulatory_reference: ICH E2A Section III.A - Non-serious events do not require expedited reporting
-# Causality excluded = no SUSAR even if serious + unexpected
-- input:
-    is_serious: true
-    is_unexpected: true
-    study_drug_related: false
-    causality_excluded: true
-  expect:
-    report_as_susar: false
-    obligation: NO_EXPEDITED_REPORTING
-    regulatory_reference: ICH E2A Section III.A - Events with excluded causality do not require SUSAR reporting
-# Empty input = not serious, no reporting
-- input: {}
-  expect:
-    report_as_susar: false
-    obligation: NO_EXPEDITED_REPORTING
-    regulatory_reference: ICH E2A Section III.A - Non-serious events do not require expedited reporting
-# Serious + unexpected + related + causality_excluded = no SUSAR (exclusion overrides)
-- input:
-    is_serious: true
-    is_unexpected: true
-    study_drug_related: true
-    causality_excluded: true
-  expect:
-    report_as_susar: false
-    obligation: NO_EXPEDITED_REPORTING
-    regulatory_reference: ICH E2A Section III.A - Events with excluded causality do not require SUSAR reporting
+  - input:
+      is_serious: true
+      is_unexpected: true
+      study_drug_related: true
+      causality_excluded: false
+    expect:
+      report_as_susar: true
+      obligation: MANDATORY_EXPEDITED
+      regulatory_reference: ICH E2A Section III.A - Sponsor obligation to report SUSARs expeditiously
+  - input:
+      is_serious: true
+      is_unexpected: true
+      study_drug_related: false
+      causality_excluded: false
+    expect:
+      report_as_susar: true
+      obligation: EXPEDITED_PENDING_REVIEW
+      regulatory_reference: ICH E2A Section III.A - When causality cannot be excluded, assume related for reporting purposes
+  - input:
+      is_serious: true
+      is_unexpected: false
+      study_drug_related: true
+      causality_excluded: false
+    expect:
+      report_as_susar: false
+      obligation: PERIODIC_REPORTING
+      regulatory_reference: ICH E2A Section III.A - Expected serious reactions do not require expedited reporting
+  - input:
+      is_serious: false
+      is_unexpected: true
+      study_drug_related: true
+      causality_excluded: false
+    expect:
+      report_as_susar: false
+      obligation: NO_EXPEDITED_REPORTING
+      regulatory_reference: ICH E2A Section III.A - Non-serious events do not require expedited reporting
+  - input:
+      is_serious: true
+      is_unexpected: true
+      study_drug_related: false
+      causality_excluded: true
+    expect:
+      report_as_susar: false
+      obligation: NO_EXPEDITED_REPORTING
+      regulatory_reference: ICH E2A Section III.A - Events with excluded causality do not require SUSAR reporting
+  - input: {}
+    expect:
+      report_as_susar: false
+      obligation: NO_EXPEDITED_REPORTING
+      regulatory_reference: ICH E2A Section III.A - Non-serious events do not require expedited reporting
+  - input:
+      is_serious: true
+      is_unexpected: true
+      study_drug_related: true
+      causality_excluded: true
+    expect:
+      report_as_susar: false
+      obligation: NO_EXPEDITED_REPORTING
+      regulatory_reference: ICH E2A Section III.A - Events with excluded causality do not require SUSAR reporting
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - obligation
+    - rationale
+    - regulatory_reference
+    - report_as_susar
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

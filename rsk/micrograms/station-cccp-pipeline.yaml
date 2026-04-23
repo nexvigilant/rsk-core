@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: station-cccp-pipeline
-description: Route competency assessment results through EPA readiness gates
 version: 0.1.0
+description: Route competency assessment results through EPA readiness gates
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Station Cccp Pipeline
+  subtitle: Route competency assessment results through EPA readiness gates
+  icon: circle
+  route: /vigilance/mg/station-cccp-pipeline
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/station-cccp-pipeline
+  cli: rsk mcg run station-cccp-pipeline
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_level
   nodes:
@@ -40,94 +69,124 @@ tree:
         priority: high
         action: remediate
 tests:
-- input:
-    entrustment_level: 4
-    gap_count: 0
-  expect:
-    route: certification
-    priority: low
-    action: certify
-- input:
-    entrustment_level: 2
-    gap_count: 8
-  expect:
-    priority: high
-    action: remediate
-    route: learning_plan
-- input:
-    gap_count: 2
-    entrustment_level: 3
-  expect:
-    priority: moderate
-    action: continue
-    route: periodic_review
-- input:
-    gap_count: -1
-  expect:
-    action: continue
-    priority: moderate
-    reason: Progressing with minor gaps — continue current pathway
-    route: periodic_review
-- input:
-    gap_count: 4
-  expect:
-    route: periodic_review
-    reason: Progressing with minor gaps — continue current pathway
-    action: continue
-    priority: moderate
-- input:
-    gap_count: 6
-  expect:
-    reason: 5+ competency gaps — structured development plan needed
-    route: learning_plan
-    priority: high
-    action: remediate
-- input:
-    gap_count: 500
-  expect:
-    route: learning_plan
-    action: remediate
-    reason: 5+ competency gaps — structured development plan needed
-    priority: high
-- input: {}
-  expect:
-    priority: moderate
-    route: periodic_review
-    reason: Progressing with minor gaps — continue current pathway
-    action: continue
-- input:
-    entrustment_level: 0
-  expect:
-    priority: moderate
-    route: periodic_review
-    action: continue
-    reason: Progressing with minor gaps — continue current pathway
-- input:
-    entrustment_level: -1
-  expect:
-    route: periodic_review
-    action: continue
-    reason: Progressing with minor gaps — continue current pathway
-    priority: moderate
-- input:
-    entrustment_level: 5
-  expect:
-    action: certify
-    route: certification
-    priority: low
-    reason: Entrustment L4+ — independent practice level achieved
-- input:
-    entrustment_level: 400
-  expect:
-    action: certify
-    route: certification
-    priority: low
-    reason: Entrustment L4+ — independent practice level achieved
-- input: {}
-  expect:
-    action: continue
-    priority: moderate
-    route: periodic_review
-    reason: Progressing with minor gaps — continue current pathway
-interface: null
-primitive_signature: null
+  - input:
+      entrustment_level: 4
+      gap_count: 0
+    expect:
+      route: certification
+      priority: low
+      action: certify
+  - input:
+      entrustment_level: 2
+      gap_count: 8
+    expect:
+      priority: high
+      action: remediate
+      route: learning_plan
+  - input:
+      gap_count: 2
+      entrustment_level: 3
+    expect:
+      priority: moderate
+      action: continue
+      route: periodic_review
+  - input:
+      gap_count: -1
+    expect:
+      action: continue
+      priority: moderate
+      reason: Progressing with minor gaps — continue current pathway
+      route: periodic_review
+  - input:
+      gap_count: 4
+    expect:
+      route: periodic_review
+      reason: Progressing with minor gaps — continue current pathway
+      action: continue
+      priority: moderate
+  - input:
+      gap_count: 6
+    expect:
+      reason: 5+ competency gaps — structured development plan needed
+      route: learning_plan
+      priority: high
+      action: remediate
+  - input:
+      gap_count: 500
+    expect:
+      route: learning_plan
+      action: remediate
+      reason: 5+ competency gaps — structured development plan needed
+      priority: high
+  - input: {}
+    expect:
+      priority: moderate
+      route: periodic_review
+      reason: Progressing with minor gaps — continue current pathway
+      action: continue
+  - input:
+      entrustment_level: 0
+    expect:
+      priority: moderate
+      route: periodic_review
+      action: continue
+      reason: Progressing with minor gaps — continue current pathway
+  - input:
+      entrustment_level: -1
+    expect:
+      route: periodic_review
+      action: continue
+      reason: Progressing with minor gaps — continue current pathway
+      priority: moderate
+  - input:
+      entrustment_level: 5
+    expect:
+      action: certify
+      route: certification
+      priority: low
+      reason: Entrustment L4+ — independent practice level achieved
+  - input:
+      entrustment_level: 400
+    expect:
+      action: certify
+      route: certification
+      priority: low
+      reason: Entrustment L4+ — independent practice level achieved
+  - input: {}
+    expect:
+      action: continue
+      priority: moderate
+      route: periodic_review
+      reason: Progressing with minor gaps — continue current pathway
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

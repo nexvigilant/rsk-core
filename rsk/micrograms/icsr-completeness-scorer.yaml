@@ -1,6 +1,60 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: icsr-completeness-scorer
-description: "Score ICSR case completeness against ICH E2B(R3) minimum criteria. Requires: identifiable reporter, identifiable patient, suspect drug, adverse event. Optional fields add quality points."
 version: 0.1.0
+description: "Score ICSR case completeness against ICH E2B(R3) minimum criteria. Requires: identifiable reporter, identifiable patient, suspect drug, adverse event. Optional fields add quality points."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: has_reporter
+    type: bool
+    required: false
+    description: ""
+  - name: has_patient
+    type: bool
+    required: false
+    description: ""
+  - name: has_suspect_drug
+    type: bool
+    required: false
+    description: ""
+  - name: has_adverse_event
+    type: bool
+    required: false
+    description: ""
+  - name: has_onset_date
+    type: bool
+    required: false
+    description: ""
+  - name: has_outcome
+    type: bool
+    required: false
+    description: ""
+  - name: has_dose_info
+    type: bool
+    required: false
+    description: ""
+  - name: has_indication
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: completeness_score
+    type: int
+  - name: meets_minimum
+    type: bool
+  - name: quality_tier
+    type: string
+  - name: missing_required
+    type: string
+  - name: recommendation
+    type: string
 interface:
   inputs:
     has_reporter:
@@ -38,6 +92,63 @@ interface:
       type: string
     recommendation:
       type: string
+ui:
+  title: Icsr Completeness Scorer
+  subtitle: "Score ICSR case completeness against ICH E2B(R3) minimum criteria. Requires: identifiable reporter, identifiable patient, suspect drug, adverse event. Optional fields add quality points."
+  icon: circle
+  route: /vigilance/mg/icsr-completeness-scorer
+  steps:
+    - field: has_reporter
+      label: has reporter
+      help: Enter has_reporter
+      widget: toggle
+      placeholder: null
+    - field: has_patient
+      label: has patient
+      help: Enter has_patient
+      widget: toggle
+      placeholder: null
+    - field: has_suspect_drug
+      label: has suspect drug
+      help: Enter has_suspect_drug
+      widget: toggle
+      placeholder: null
+    - field: has_adverse_event
+      label: has adverse event
+      help: Enter has_adverse_event
+      widget: toggle
+      placeholder: null
+    - field: has_onset_date
+      label: has onset date
+      help: Enter has_onset_date
+      widget: toggle
+      placeholder: null
+    - field: has_outcome
+      label: has outcome
+      help: Enter has_outcome
+      widget: toggle
+      placeholder: null
+    - field: has_dose_info
+      label: has dose info
+      help: Enter has_dose_info
+      widget: toggle
+      placeholder: null
+    - field: has_indication
+      label: has indication
+      help: Enter has_indication
+      widget: toggle
+      placeholder: null
+  result:
+    template: "completeness_score: {{completeness_score}} — meets_minimum: {{meets_minimum}} — quality_tier: {{quality_tier}} — missing_required: {{missing_required}} — recommendation: {{recommendation}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/icsr-completeness-scorer
+  cli: rsk mcg run icsr-completeness-scorer
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_reporter
   nodes:
@@ -104,7 +215,7 @@ tree:
         meets_minimum: false
         quality_tier: INVALID
         missing_required: reporter
-        recommendation: "Cannot process — identifiable reporter required per ICH E2B(R3)"
+        recommendation: Cannot process — identifiable reporter required per ICH E2B(R3)
     fail_patient:
       type: return
       value:
@@ -112,7 +223,7 @@ tree:
         meets_minimum: false
         quality_tier: INVALID
         missing_required: patient
-        recommendation: "Cannot process — identifiable patient required per ICH E2B(R3)"
+        recommendation: Cannot process — identifiable patient required per ICH E2B(R3)
     fail_drug:
       type: return
       value:
@@ -120,7 +231,7 @@ tree:
         meets_minimum: false
         quality_tier: INVALID
         missing_required: suspect_drug
-        recommendation: "Cannot process — suspect drug required per ICH E2B(R3)"
+        recommendation: Cannot process — suspect drug required per ICH E2B(R3)
     fail_event:
       type: return
       value:
@@ -128,7 +239,7 @@ tree:
         meets_minimum: false
         quality_tier: INVALID
         missing_required: adverse_event
-        recommendation: "Cannot process — adverse event description required per ICH E2B(R3)"
+        recommendation: Cannot process — adverse event description required per ICH E2B(R3)
     minimum_met:
       type: return
       value:
@@ -136,7 +247,7 @@ tree:
         meets_minimum: true
         quality_tier: MINIMUM
         missing_required: none
-        recommendation: "Valid ICSR — request onset date and outcome for quality improvement"
+        recommendation: Valid ICSR — request onset date and outcome for quality improvement
     good_quality:
       type: return
       value:
@@ -144,7 +255,7 @@ tree:
         meets_minimum: true
         quality_tier: GOOD
         missing_required: none
-        recommendation: "Valid ICSR with onset date — request outcome for enhanced analysis"
+        recommendation: Valid ICSR with onset date — request outcome for enhanced analysis
     good_quality_with_outcome:
       type: return
       value:
@@ -152,7 +263,7 @@ tree:
         meets_minimum: true
         quality_tier: GOOD
         missing_required: none
-        recommendation: "Valid ICSR with good data — request dose info for complete picture"
+        recommendation: Valid ICSR with good data — request dose info for complete picture
     high_quality:
       type: return
       value:
@@ -160,7 +271,7 @@ tree:
         meets_minimum: true
         quality_tier: HIGH
         missing_required: none
-        recommendation: "High quality ICSR — request indication for maximum completeness"
+        recommendation: High quality ICSR — request indication for maximum completeness
     excellent_quality:
       type: return
       value:
@@ -168,93 +279,130 @@ tree:
         meets_minimum: true
         quality_tier: EXCELLENT
         missing_required: none
-        recommendation: "Fully complete ICSR per ICH E2B(R3) standards"
+        recommendation: Fully complete ICSR per ICH E2B(R3) standards
 tests:
-- input:
-    has_reporter: true
-    has_patient: true
-    has_suspect_drug: true
-    has_adverse_event: true
-    has_onset_date: true
-    has_outcome: true
-    has_dose_info: true
-    has_indication: true
-  expect:
-    completeness_score: 100
-    meets_minimum: true
-    quality_tier: EXCELLENT
-- input:
-    has_reporter: true
-    has_patient: true
-    has_suspect_drug: true
-    has_adverse_event: true
-  expect:
-    completeness_score: 60
-    meets_minimum: true
-    quality_tier: MINIMUM
-- input:
-    has_reporter: false
-  expect:
-    completeness_score: 0
-    meets_minimum: false
-    quality_tier: INVALID
-    missing_required: reporter
-- input:
-    has_reporter: true
-    has_patient: false
-  expect:
-    meets_minimum: false
-    quality_tier: INVALID
-    missing_required: patient
-- input:
-    has_reporter: true
-    has_patient: true
-    has_suspect_drug: false
-  expect:
-    meets_minimum: false
-    missing_required: suspect_drug
-- input:
-    has_reporter: true
-    has_patient: true
-    has_suspect_drug: true
-    has_adverse_event: false
-  expect:
-    meets_minimum: false
-    missing_required: adverse_event
-- input:
-    has_reporter: true
-    has_patient: true
-    has_suspect_drug: true
-    has_adverse_event: true
-    has_onset_date: true
-    has_outcome: true
-    has_dose_info: true
-  expect:
-    completeness_score: 90
-    quality_tier: HIGH
-- input:
-    has_reporter: true
-    has_patient: true
-    has_suspect_drug: true
-    has_adverse_event: true
-    has_onset_date: true
-  expect:
-    completeness_score: 70
-    quality_tier: GOOD
-- input: {}
-  expect:
-    meets_minimum: false
-    quality_tier: INVALID
-- input:
-    has_reporter: true
-    has_patient: true
-    has_suspect_drug: true
-    has_adverse_event: true
-    has_onset_date: true
-    has_outcome: true
-    has_dose_info: false
-  expect:
-    completeness_score: 80
-    meets_minimum: true
-    quality_tier: GOOD
-    recommendation: "Valid ICSR with good data — request dose info for complete picture"
+  - input:
+      has_reporter: true
+      has_patient: true
+      has_suspect_drug: true
+      has_adverse_event: true
+      has_onset_date: true
+      has_outcome: true
+      has_dose_info: true
+      has_indication: true
+    expect:
+      completeness_score: 100
+      meets_minimum: true
+      quality_tier: EXCELLENT
+  - input:
+      has_reporter: true
+      has_patient: true
+      has_suspect_drug: true
+      has_adverse_event: true
+    expect:
+      completeness_score: 60
+      meets_minimum: true
+      quality_tier: MINIMUM
+  - input:
+      has_reporter: false
+    expect:
+      completeness_score: 0
+      meets_minimum: false
+      quality_tier: INVALID
+      missing_required: reporter
+  - input:
+      has_reporter: true
+      has_patient: false
+    expect:
+      meets_minimum: false
+      quality_tier: INVALID
+      missing_required: patient
+  - input:
+      has_reporter: true
+      has_patient: true
+      has_suspect_drug: false
+    expect:
+      meets_minimum: false
+      missing_required: suspect_drug
+  - input:
+      has_reporter: true
+      has_patient: true
+      has_suspect_drug: true
+      has_adverse_event: false
+    expect:
+      meets_minimum: false
+      missing_required: adverse_event
+  - input:
+      has_reporter: true
+      has_patient: true
+      has_suspect_drug: true
+      has_adverse_event: true
+      has_onset_date: true
+      has_outcome: true
+      has_dose_info: true
+    expect:
+      completeness_score: 90
+      quality_tier: HIGH
+  - input:
+      has_reporter: true
+      has_patient: true
+      has_suspect_drug: true
+      has_adverse_event: true
+      has_onset_date: true
+    expect:
+      completeness_score: 70
+      quality_tier: GOOD
+  - input: {}
+    expect:
+      meets_minimum: false
+      quality_tier: INVALID
+  - input:
+      has_reporter: true
+      has_patient: true
+      has_suspect_drug: true
+      has_adverse_event: true
+      has_onset_date: true
+      has_outcome: true
+      has_dose_info: false
+    expect:
+      completeness_score: 80
+      meets_minimum: true
+      quality_tier: GOOD
+      recommendation: Valid ICSR with good data — request dose info for complete picture
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - completeness_score
+    - meets_minimum
+    - quality_tier
+    - missing_required
+    - recommendation
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

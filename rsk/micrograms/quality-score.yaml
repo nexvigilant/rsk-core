@@ -1,6 +1,28 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: quality-score
-description: 'Classify code quality score: PASS (>=80), WARN (>=60), FAIL (<60)'
 version: 0.1.0
+description: "Classify code quality score: PASS (>=80), WARN (>=60), FAIL (<60)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: score
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: review_required
+    type: bool
+  - name: ship
+    type: bool
+  - name: verdict
+    type: string
 interface:
   inputs:
     score:
@@ -13,6 +35,28 @@ interface:
       type: bool
     verdict:
       type: string
+ui:
+  title: Quality Score
+  subtitle: "Classify code quality score: PASS (>=80), WARN (>=60), FAIL (<60)"
+  icon: circle
+  route: /vigilance/mg/quality-score
+  steps:
+    - field: score
+      label: score
+      help: Enter score
+      widget: text
+      placeholder: null
+  result:
+    template: "review_required: {{review_required}} — ship: {{ship}} — verdict: {{verdict}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/quality-score
+  cli: rsk mcg run quality-score
+  auth: none
+  rate_limit: 600/min
 tree:
   start: pass_check
   nodes:
@@ -49,103 +93,138 @@ tree:
         verdict: FAIL
         review_required: true
 tests:
-- input:
-    score: 95
-  expect:
-    verdict: PASS
-    ship: true
-    review_required: false
-- input:
-    score: 75
-  expect:
-    ship: false
-    verdict: WARN
-    review_required: true
-- input:
-    score: 45
-  expect:
-    verdict: FAIL
-    ship: false
-    review_required: true
-- input:
-    score: 80
-  expect:
-    verdict: PASS
-    ship: true
-    review_required: false
-- input:
-    score: 60
-  expect:
-    verdict: WARN
-    ship: false
-    review_required: true
-- input:
-    score: 59
-  expect:
-    verdict: FAIL
-    review_required: true
-    ship: false
-- input:
-    score: 0
-  expect:
-    ship: false
-    review_required: true
-    verdict: FAIL
-- input:
-    score: -1
-  expect:
-    ship: false
-    verdict: FAIL
-    review_required: true
-- input:
-    score: 79
-  expect:
-    review_required: true
-    verdict: WARN
-    ship: false
-- input:
-    score: 81
-  expect:
-    verdict: PASS
-    review_required: false
-    ship: true
-- input:
-    score: 8000
-  expect:
-    verdict: PASS
-    review_required: false
-    ship: true
-- input: {}
-  expect:
-    ship: false
-    verdict: FAIL
-    review_required: true
-- input:
-    score: 0
-  expect:
-    verdict: FAIL
-    review_required: true
-    ship: false
-- input:
-    score: -1
-  expect:
-    ship: false
-    verdict: FAIL
-    review_required: true
-- input:
-    score: 61
-  expect:
-    ship: false
-    verdict: WARN
-    review_required: true
-- input:
-    score: 6000
-  expect:
-    review_required: false
-    ship: true
-    verdict: PASS
-- input: {}
-  expect:
-    verdict: FAIL
-    ship: false
-    review_required: true
+  - input:
+      score: 95
+    expect:
+      verdict: PASS
+      ship: true
+      review_required: false
+  - input:
+      score: 75
+    expect:
+      ship: false
+      verdict: WARN
+      review_required: true
+  - input:
+      score: 45
+    expect:
+      verdict: FAIL
+      ship: false
+      review_required: true
+  - input:
+      score: 80
+    expect:
+      verdict: PASS
+      ship: true
+      review_required: false
+  - input:
+      score: 60
+    expect:
+      verdict: WARN
+      ship: false
+      review_required: true
+  - input:
+      score: 59
+    expect:
+      verdict: FAIL
+      review_required: true
+      ship: false
+  - input:
+      score: 0
+    expect:
+      ship: false
+      review_required: true
+      verdict: FAIL
+  - input:
+      score: -1
+    expect:
+      ship: false
+      verdict: FAIL
+      review_required: true
+  - input:
+      score: 79
+    expect:
+      review_required: true
+      verdict: WARN
+      ship: false
+  - input:
+      score: 81
+    expect:
+      verdict: PASS
+      review_required: false
+      ship: true
+  - input:
+      score: 8000
+    expect:
+      verdict: PASS
+      review_required: false
+      ship: true
+  - input: {}
+    expect:
+      ship: false
+      verdict: FAIL
+      review_required: true
+  - input:
+      score: 0
+    expect:
+      verdict: FAIL
+      review_required: true
+      ship: false
+  - input:
+      score: -1
+    expect:
+      ship: false
+      verdict: FAIL
+      review_required: true
+  - input:
+      score: 61
+    expect:
+      ship: false
+      verdict: WARN
+      review_required: true
+  - input:
+      score: 6000
+    expect:
+      review_required: false
+      ship: true
+      verdict: PASS
+  - input: {}
+    expect:
+      verdict: FAIL
+      ship: false
+      review_required: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - review_required
+    - ship
+    - verdict
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

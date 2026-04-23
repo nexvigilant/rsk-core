@@ -1,7 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: session-7baa8d07-dag
-version: "1.0.0"
-description: "Auto-generated DAG from session 7baa8d07 fast-food prompts (3 nodes)"
-
+version: 1.0.0
+description: Auto-generated DAG from session 7baa8d07 fast-food prompts (3 nodes)
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: step_0_done
+    type: bool
+    required: false
+    description: ""
+  - name: step_1_done
+    type: bool
+    required: false
+    description: ""
+  - name: step_2_done
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: task
+    type: string
+  - name: prompt
+    type: string
+  - name: priority
+    type: int
 interface:
   inputs:
     step_0_done:
@@ -20,7 +49,38 @@ interface:
       type: string
     priority:
       type: int
-
+ui:
+  title: Session 7baa8d07 Dag
+  subtitle: Auto-generated DAG from session 7baa8d07 fast-food prompts (3 nodes)
+  icon: circle
+  route: /vigilance/mg/session-7baa8d07-dag
+  steps:
+    - field: step_0_done
+      label: step 0 done
+      help: Enter step_0_done
+      widget: toggle
+      placeholder: null
+    - field: step_1_done
+      label: step 1 done
+      help: Enter step_1_done
+      widget: toggle
+      placeholder: null
+    - field: step_2_done
+      label: step 2 done
+      help: Enter step_2_done
+      widget: toggle
+      placeholder: null
+  result:
+    template: "task: {{task}} — prompt: {{prompt}} — priority: {{priority}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/session-7baa8d07-dag
+  cli: rsk mcg run session-7baa8d07-dag
+  auth: none
+  rate_limit: 600/min
 tree:
   start: gate_0
   nodes:
@@ -34,8 +94,8 @@ tree:
     node_0:
       type: return
       value:
-        task: "step-0"
-        prompt: "Test NUCLEUS.md by spawning nucleus-pv-dev from home directory"
+        task: step-0
+        prompt: Test NUCLEUS.md by spawning nucleus-pv-dev from home directory
         priority: 1
     gate_1:
       type: condition
@@ -47,8 +107,8 @@ tree:
     node_1:
       type: return
       value:
-        task: "step-1"
-        prompt: "Wire session-prompt-dag into loop-grappler for auto-DAG generation"
+        task: step-1
+        prompt: Wire session-prompt-dag into loop-grappler for auto-DAG generation
         priority: 2
     gate_2:
       type: condition
@@ -60,19 +120,53 @@ tree:
     node_2:
       type: return
       value:
-        task: "step-2"
-        prompt: "Run Causality Lab via moltbrowser-mcp for end-to-end browser validation"
+        task: step-2
+        prompt: Run Causality Lab via moltbrowser-mcp for end-to-end browser validation
         priority: 3
-
 tests:
-  - name: "empty input routes to first prompt"
+  - name: empty input routes to first prompt
     input: {}
     expect:
-      task: "step-0"
+      task: step-0
       priority: 1
-  - name: "first done routes to second"
+  - name: first done routes to second
     input:
       step_0_done: true
     expect:
-      task: "step-1"
+      task: step-1
       priority: 2
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - task
+    - prompt
+    - priority
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

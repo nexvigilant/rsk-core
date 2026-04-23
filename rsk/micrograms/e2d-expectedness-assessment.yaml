@@ -1,6 +1,46 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: e2d-expectedness-assessment
-description: 'ICH E2D Section 2.2: Determines expectedness of a post-approval adverse drug reaction against the reference safety information (SmPC or CCDS)'
 version: 0.1.0
+description: "ICH E2D Section 2.2: Determines expectedness of a post-approval adverse drug reaction against the reference safety information (SmPC or CCDS)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: in_reference_text
+    type: bool
+    required: false
+    description: ""
+  - name: reference_document
+    type: string
+    required: false
+    description: ""
+  - name: severity_matches
+    type: bool
+    required: false
+    description: ""
+  - name: specificity_matches
+    type: bool
+    required: false
+    description: ""
+  - name: class_effect_only
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: expectedness
+    type: string
+  - name: expected
+    type: bool
+  - name: reference_used
+    type: string
+  - name: regulatory_reference
+    type: string
 interface:
   inputs:
     in_reference_text:
@@ -27,6 +67,48 @@ interface:
       type: string
     regulatory_reference:
       type: string
+ui:
+  title: E2d Expectedness Assessment
+  subtitle: "ICH E2D Section 2.2: Determines expectedness of a post-approval adverse drug reaction against the reference safety information (SmPC or CCDS)"
+  icon: circle
+  route: /vigilance/mg/e2d-expectedness-assessment
+  steps:
+    - field: in_reference_text
+      label: in reference text
+      help: Enter in_reference_text
+      widget: toggle
+      placeholder: null
+    - field: reference_document
+      label: reference document
+      help: Enter reference_document
+      widget: text
+      placeholder: null
+    - field: severity_matches
+      label: severity matches
+      help: Enter severity_matches
+      widget: toggle
+      placeholder: null
+    - field: specificity_matches
+      label: specificity matches
+      help: Enter specificity_matches
+      widget: toggle
+      placeholder: null
+    - field: class_effect_only
+      label: class effect only
+      help: Enter class_effect_only
+      widget: toggle
+      placeholder: null
+  result:
+    template: "expectedness: {{expectedness}} — expected: {{expected}} — reference_used: {{reference_used}} — regulatory_reference: {{regulatory_reference}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/e2d-expectedness-assessment
+  cli: rsk mcg run e2d-expectedness-assessment
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_in_reference
   nodes:
@@ -93,71 +175,102 @@ tree:
         expected: false
         reference_used: SmPC_CCDS
         regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
-primitive_signature:
-  dominant: 'σ'
-  expression: 'σ — post-approval expectedness gate against reference safety information per ICH E2D Section 2.2'
-  primes: ['σ', '∂', 'κ']
-  arguments: ['in_reference_text', 'severity_matches', 'specificity_matches', 'class_effect_only', 'reference_document']
 tests:
-- input:
-    in_reference_text: true
-    severity_matches: true
-    specificity_matches: true
-    reference_document: SmPC
-  expect:
-    expectedness: EXPECTED
-    expected: true
-    reference_used: SmPC_CCDS
-    regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
-- input:
-    in_reference_text: true
-    severity_matches: false
-    specificity_matches: true
-    reference_document: CCDS
-  expect:
-    expectedness: UNEXPECTED_SEVERITY
-    expected: false
-    reference_used: SmPC_CCDS
-    regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
-- input:
-    in_reference_text: true
-    severity_matches: true
-    specificity_matches: false
-    reference_document: SmPC
-  expect:
-    expectedness: UNEXPECTED_SPECIFICITY
-    expected: false
-    reference_used: SmPC_CCDS
-    regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
-- input:
-    in_reference_text: false
-    class_effect_only: false
-    reference_document: SmPC
-  expect:
-    expectedness: UNEXPECTED
-    expected: false
-    reference_used: SmPC_CCDS
-    regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
-- input:
-    in_reference_text: false
-    class_effect_only: true
-    reference_document: SmPC
-  expect:
-    expectedness: UNEXPECTED_CLASS_EFFECT_ONLY
-    expected: false
-    reference_used: SmPC_CCDS
-    regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
-- input: {}
-  expect:
-    expectedness: UNEXPECTED
-    expected: false
-    reference_used: SmPC_CCDS
-    regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
-- input:
-    in_reference_text: false
-    class_effect_only: false
-  expect:
-    expectedness: UNEXPECTED
-    expected: false
-    reference_used: SmPC_CCDS
-    regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
+  - input:
+      in_reference_text: true
+      severity_matches: true
+      specificity_matches: true
+      reference_document: SmPC
+    expect:
+      expectedness: EXPECTED
+      expected: true
+      reference_used: SmPC_CCDS
+      regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
+  - input:
+      in_reference_text: true
+      severity_matches: false
+      specificity_matches: true
+      reference_document: CCDS
+    expect:
+      expectedness: UNEXPECTED_SEVERITY
+      expected: false
+      reference_used: SmPC_CCDS
+      regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
+  - input:
+      in_reference_text: true
+      severity_matches: true
+      specificity_matches: false
+      reference_document: SmPC
+    expect:
+      expectedness: UNEXPECTED_SPECIFICITY
+      expected: false
+      reference_used: SmPC_CCDS
+      regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
+  - input:
+      in_reference_text: false
+      class_effect_only: false
+      reference_document: SmPC
+    expect:
+      expectedness: UNEXPECTED
+      expected: false
+      reference_used: SmPC_CCDS
+      regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
+  - input:
+      in_reference_text: false
+      class_effect_only: true
+      reference_document: SmPC
+    expect:
+      expectedness: UNEXPECTED_CLASS_EFFECT_ONLY
+      expected: false
+      reference_used: SmPC_CCDS
+      regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
+  - input: {}
+    expect:
+      expectedness: UNEXPECTED
+      expected: false
+      reference_used: SmPC_CCDS
+      regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
+  - input:
+      in_reference_text: false
+      class_effect_only: false
+    expect:
+      expectedness: UNEXPECTED
+      expected: false
+      reference_used: SmPC_CCDS
+      regulatory_reference: ICH E2D Section 2.2 - Expectedness of Adverse Drug Reactions
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - expectedness
+    - expected
+    - reference_used
+    - regulatory_reference
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

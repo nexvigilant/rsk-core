@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pop-pediatric-child
-description: Child safety — weight-based dosing
 version: 0.1.0
+description: Child safety — weight-based dosing
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Pop Pediatric Child
+  subtitle: Child safety — weight-based dosing
+  icon: circle
+  route: /vigilance/mg/pop-pediatric-child
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pop-pediatric-child
+  cli: rsk mcg run pop-pediatric-child
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -25,47 +54,77 @@ tree:
         action: special_monitoring
         reason: Child safety — weight-based dosing
 tests:
-- input:
-    age_years: 11
-  expect:
-    at_risk: true
-    population: pediatric-child
-- input: {}
-  expect:
-    at_risk: false
-    population: pediatric-child
-- input:
-    age_years: 0
-  expect:
-    population: pediatric-child
-    reason: Child safety — weight-based dosing
-    at_risk: true
-    action: special_monitoring
-- input:
-    age_years: -1
-  expect:
-    reason: Child safety — weight-based dosing
-    population: pediatric-child
-    at_risk: true
-    action: special_monitoring
-- input:
-    age_years: 10
-  expect:
-    at_risk: true
-    reason: Child safety — weight-based dosing
-    population: pediatric-child
-    action: special_monitoring
-- input:
-    age_years: 12
-  expect:
-    at_risk: false
-    action: standard_care
-    population: pediatric-child
-- input:
-    age_years: 1100
-  expect:
-    population: pediatric-child
-    at_risk: false
-    action: standard_care
-interface: null
-primitive_signature: null
+  - input:
+      age_years: 11
+    expect:
+      at_risk: true
+      population: pediatric-child
+  - input: {}
+    expect:
+      at_risk: false
+      population: pediatric-child
+  - input:
+      age_years: 0
+    expect:
+      population: pediatric-child
+      reason: Child safety — weight-based dosing
+      at_risk: true
+      action: special_monitoring
+  - input:
+      age_years: -1
+    expect:
+      reason: Child safety — weight-based dosing
+      population: pediatric-child
+      at_risk: true
+      action: special_monitoring
+  - input:
+      age_years: 10
+    expect:
+      at_risk: true
+      reason: Child safety — weight-based dosing
+      population: pediatric-child
+      action: special_monitoring
+  - input:
+      age_years: 12
+    expect:
+      at_risk: false
+      action: standard_care
+      population: pediatric-child
+  - input:
+      age_years: 1100
+    expect:
+      population: pediatric-child
+      at_risk: false
+      action: standard_care
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

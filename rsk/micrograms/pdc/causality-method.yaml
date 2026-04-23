@@ -1,6 +1,50 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: causality-method
-description: "Domain 2: Route to appropriate causality assessment method based on case complexity, data availability, and context."
 version: 0.1.0
+description: "Domain 2: Route to appropriate causality assessment method based on case complexity, data availability, and context."
+family: pv.causality
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - pv
+inputs:
+  - name: case_complexity
+    type: string
+    required: false
+    description: ""
+  - name: has_rechallenge_data
+    type: bool
+    required: false
+    description: ""
+  - name: is_regulatory_submission
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: ai_assist
+    type: string
+  - name: best_for
+    type: string
+  - name: categories
+    type: string
+  - name: criteria
+    type: string
+  - name: limitations
+    type: string
+  - name: method
+    type: string
+  - name: name
+    type: string
+  - name: scoring
+    type: string
+  - name: strengths
+    type: string
+  - name: type
+    type: string
 interface:
   inputs:
     case_complexity:
@@ -33,6 +77,38 @@ interface:
       type: string
     type:
       type: string
+ui:
+  title: Causality Method
+  subtitle: "Domain 2: Route to appropriate causality assessment method based on case complexity, data availability, and context."
+  icon: git-branch
+  route: /vigilance/mg/causality-method
+  steps:
+    - field: case_complexity
+      label: case complexity
+      help: Enter case_complexity
+      widget: text
+      placeholder: null
+    - field: has_rechallenge_data
+      label: has rechallenge data
+      help: Enter has_rechallenge_data
+      widget: toggle
+      placeholder: null
+    - field: is_regulatory_submission
+      label: is regulatory submission
+      help: Enter is_regulatory_submission
+      widget: toggle
+      placeholder: null
+  result:
+    template: "ai_assist: {{ai_assist}} — best_for: {{best_for}} — categories: {{categories}} — criteria: {{criteria}} — limitations: {{limitations}} — method: {{method}} — name: {{name}} — scoring: {{scoring}} — strengths: {{strengths}} — type: {{type}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/causality-method
+  cli: rsk mcg run causality-method
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_complexity
   nodes:
@@ -68,58 +144,105 @@ tree:
       type: return
       value:
         method: NARANJO
-        name: "Naranjo Algorithm"
+        name: Naranjo Algorithm
         type: algorithmic
-        scoring: "0-13 point scale"
-        categories: "definite (>=9), probable (5-8), possible (1-4), doubtful (<=0)"
-        strengths: "structured, reproducible, includes rechallenge"
-        limitations: "less nuanced for complex cases, binary questions"
-        ai_assist: "auto-scoring from case data, consistency checking"
-        best_for: "routine cases with rechallenge data available"
+        scoring: 0-13 point scale
+        categories: definite (>=9), probable (5-8), possible (1-4), doubtful (<=0)
+        strengths: structured, reproducible, includes rechallenge
+        limitations: less nuanced for complex cases, binary questions
+        ai_assist: auto-scoring from case data, consistency checking
+        best_for: routine cases with rechallenge data available
     who_umc:
       type: return
       value:
         method: WHO_UMC
-        name: "WHO-UMC System"
+        name: WHO-UMC System
         type: clinical_judgment
-        categories: "certain, probable/likely, possible, unlikely, conditional, unassessable"
-        strengths: "global standard, flexible, clinical judgment centered"
-        limitations: "subjective, inter-rater variability"
-        ai_assist: "consistency analysis, pattern matching across global reports"
-        best_for: "regulatory submissions, global standardization, routine assessment"
+        categories: certain, probable/likely, possible, unlikely, conditional, unassessable
+        strengths: global standard, flexible, clinical judgment centered
+        limitations: subjective, inter-rater variability
+        ai_assist: consistency analysis, pattern matching across global reports
+        best_for: regulatory submissions, global standardization, routine assessment
     bradford_hill:
       type: return
       value:
         method: BRADFORD_HILL
-        name: "Bradford Hill Criteria"
+        name: Bradford Hill Criteria
         type: epidemiological
-        criteria: "strength, consistency, specificity, temporality, biological gradient, plausibility, coherence, experiment, analogy"
-        strengths: "comprehensive, considers multiple evidence types, gold standard for complex cases"
-        limitations: "requires significant evidence base, time-intensive"
-        ai_assist: "evidence synthesis, literature mining, statistical analysis"
-        best_for: "complex cases, signal validation, regulatory investigations"
+        criteria: strength, consistency, specificity, temporality, biological gradient, plausibility, coherence, experiment, analogy
+        strengths: comprehensive, considers multiple evidence types, gold standard for complex cases
+        limitations: requires significant evidence base, time-intensive
+        ai_assist: evidence synthesis, literature mining, statistical analysis
+        best_for: complex cases, signal validation, regulatory investigations
 tests:
-- input:
-    case_complexity: simple
-    has_rechallenge_data: true
-  expect:
-    method: NARANJO
-    type: algorithmic
-- input:
-    case_complexity: simple
-    has_rechallenge_data: false
-  expect:
-    method: WHO_UMC
-    type: clinical_judgment
-- input:
-    case_complexity: complex
-  expect:
-    method: BRADFORD_HILL
-    type: epidemiological
-- input:
-    is_regulatory_submission: true
-  expect:
-    method: WHO_UMC
-- input: {}
-  expect:
-    method: BRADFORD_HILL
+  - input:
+      case_complexity: simple
+      has_rechallenge_data: true
+    expect:
+      method: NARANJO
+      type: algorithmic
+  - input:
+      case_complexity: simple
+      has_rechallenge_data: false
+    expect:
+      method: WHO_UMC
+      type: clinical_judgment
+  - input:
+      case_complexity: complex
+    expect:
+      method: BRADFORD_HILL
+      type: epidemiological
+  - input:
+      is_regulatory_submission: true
+    expect:
+      method: WHO_UMC
+  - input: {}
+    expect:
+      method: BRADFORD_HILL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - ai_assist
+    - best_for
+    - categories
+    - criteria
+    - limitations
+    - method
+    - name
+    - scoring
+    - strengths
+    - type
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: pv.causality
+  log_level: info
+governance:
+  sop_ref: SOP-PV-002
+  regulatory_ref:
+    - ICH-E2A
+    - WHO-UMC
+  harm_types:
+    - A
+    - B
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+    - hierarchy
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

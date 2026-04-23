@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: class-antipsychotic
-description: 'Antipsychotics class safety: Metabolic syndrome monitoring'
 version: 0.1.0
+description: "Antipsychotics class safety: Metabolic syndrome monitoring"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Class Antipsychotic
+  subtitle: "Antipsychotics class safety: Metabolic syndrome monitoring"
+  icon: circle
+  route: /vigilance/mg/class-antipsychotic
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/class-antipsychotic
+  cli: rsk mcg run class-antipsychotic
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check
   nodes:
@@ -26,49 +55,79 @@ tree:
       true_next: alert
       false_next: safe
 tests:
-- input:
-    metabolic_syndrome_risk: 2
-  expect:
-    drug_class: Antipsychotics
-    alert: true
-- input: {}
-  expect:
-    drug_class: Antipsychotics
-    alert: false
-- input:
-    metabolic_syndrome_risk: 0
-  expect:
-    action: continue
-    alert: false
-    concern: Metabolic syndrome
-    drug_class: Antipsychotics
-- input:
-    metabolic_syndrome_risk: -1
-  expect:
-    alert: false
-    drug_class: Antipsychotics
-    concern: Metabolic syndrome
-    action: continue
-- input:
-    metabolic_syndrome_risk: 1
-  expect:
-    concern: Metabolic syndrome
-    action: continue
-    alert: false
-    drug_class: Antipsychotics
-- input:
-    metabolic_syndrome_risk: 3
-  expect:
-    concern: Metabolic syndrome
-    action: class_effect_investigation
-    drug_class: Antipsychotics
-    alert: true
-- input:
-    metabolic_syndrome_risk: 200
-  expect:
-    concern: Metabolic syndrome
-    action: class_effect_investigation
-    drug_class: Antipsychotics
-    alert: true
-interface: null
-primitive_signature: null
+  - input:
+      metabolic_syndrome_risk: 2
+    expect:
+      drug_class: Antipsychotics
+      alert: true
+  - input: {}
+    expect:
+      drug_class: Antipsychotics
+      alert: false
+  - input:
+      metabolic_syndrome_risk: 0
+    expect:
+      action: continue
+      alert: false
+      concern: Metabolic syndrome
+      drug_class: Antipsychotics
+  - input:
+      metabolic_syndrome_risk: -1
+    expect:
+      alert: false
+      drug_class: Antipsychotics
+      concern: Metabolic syndrome
+      action: continue
+  - input:
+      metabolic_syndrome_risk: 1
+    expect:
+      concern: Metabolic syndrome
+      action: continue
+      alert: false
+      drug_class: Antipsychotics
+  - input:
+      metabolic_syndrome_risk: 3
+    expect:
+      concern: Metabolic syndrome
+      action: class_effect_investigation
+      drug_class: Antipsychotics
+      alert: true
+  - input:
+      metabolic_syndrome_risk: 200
+    expect:
+      concern: Metabolic syndrome
+      action: class_effect_investigation
+      drug_class: Antipsychotics
+      alert: true
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

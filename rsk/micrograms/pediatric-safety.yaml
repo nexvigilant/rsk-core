@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pediatric-safety
-description: 'Pediatric age-based safety routing per ICH E11: classifies developmental stage, dose check requirement, and escalation for serious adverse events in minors'
 version: 0.1.0
+description: "Pediatric age-based safety routing per ICH E11: classifies developmental stage, dose check requirement, and escalation for serious adverse events in minors"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: age_years
+    type: float
+    required: false
+    description: ""
+  - name: off_label
+    type: bool
+    required: false
+    description: ""
+  - name: serious_ae
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: category
+    type: string
+  - name: dose_check
+    type: string
+  - name: escalation
+    type: string
+  - name: off_label_flag
+    type: bool
+  - name: regulatory_reference
+    type: string
+  - name: risk_modifier
+    type: string
 interface:
   inputs:
     age_years:
@@ -25,6 +61,38 @@ interface:
       type: string
     risk_modifier:
       type: string
+ui:
+  title: Pediatric Safety
+  subtitle: "Pediatric age-based safety routing per ICH E11: classifies developmental stage, dose check requirement, and escalation for serious adverse events in minors"
+  icon: circle
+  route: /vigilance/mg/pediatric-safety
+  steps:
+    - field: age_years
+      label: age years
+      help: Enter age_years
+      widget: text
+      placeholder: null
+    - field: off_label
+      label: off label
+      help: Enter off_label
+      widget: toggle
+      placeholder: null
+    - field: serious_ae
+      label: serious ae
+      help: Enter serious_ae
+      widget: toggle
+      placeholder: null
+  result:
+    template: "category: {{category}} — dose_check: {{dose_check}} — escalation: {{escalation}} — off_label_flag: {{off_label_flag}} — regulatory_reference: {{regulatory_reference}} — risk_modifier: {{risk_modifier}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pediatric-safety
+  cli: rsk mcg run pediatric-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: null_guard
   nodes:
@@ -275,152 +343,187 @@ tree:
         escalation: none
         regulatory_reference: ICH E11
 tests:
-- input:
-    age_years: 0.05
-    weight_kg: 2.5
-    off_label: false
-    serious_ae: false
-  expect:
-    category: PRETERM_NEONATE
-    risk_modifier: HIGHEST
-    dose_check: mandatory_per_kg
-    escalation: none
-- input:
-    age_years: 0.05
-    weight_kg: 2.5
-    off_label: false
-    serious_ae: true
-  expect:
-    category: PRETERM_NEONATE
-    risk_modifier: HIGHEST
-    escalation: immediate_pediatric_review
-- input:
-    age_years: 0.05
-    weight_kg: 2.5
-    off_label: true
-    serious_ae: true
-  expect:
-    category: PRETERM_NEONATE
-    off_label_flag: true
-    escalation: immediate_pediatric_review
-    regulatory_reference: ICH E11
-- input:
-    age_years: 1.0
-    weight_kg: 10
-    off_label: false
-    serious_ae: false
-  expect:
-    category: INFANT_TODDLER
-    risk_modifier: HIGH
-    dose_check: mandatory_per_kg
-    escalation: none
-- input:
-    age_years: 1.5
-    weight_kg: 11
-    off_label: false
-    serious_ae: true
-  expect:
-    category: INFANT_TODDLER
-    risk_modifier: HIGH
-    escalation: immediate_pediatric_review
-- input:
-    age_years: 1.0
-    weight_kg: 10
-    off_label: true
-    serious_ae: false
-  expect:
-    category: INFANT_TODDLER
-    off_label_flag: true
-    escalation: none
-- input:
-    age_years: 4.0
-    weight_kg: 18
-    off_label: false
-    serious_ae: false
-  expect:
-    category: PRESCHOOL
-    risk_modifier: ELEVATED
-    dose_check: recommended_per_kg
-    off_label_flag: false
-- input:
-    age_years: 4.0
-    weight_kg: 18
-    off_label: true
-    serious_ae: false
-  expect:
-    category: PRESCHOOL
-    off_label_flag: true
-    dose_check: recommended_per_kg
-- input:
-    age_years: 8.0
-    weight_kg: 28
-    off_label: false
-    serious_ae: false
-  expect:
-    category: CHILD
-    risk_modifier: MODERATE
-    dose_check: standard
-    off_label_flag: false
-- input:
-    age_years: 10.0
-    weight_kg: 35
-    off_label: true
-    serious_ae: false
-  expect:
-    category: CHILD
-    off_label_flag: true
-    dose_check: standard
-- input:
-    age_years: 15.0
-    weight_kg: 55
-    off_label: false
-    serious_ae: false
-  expect:
-    category: ADOLESCENT
-    risk_modifier: STANDARD
-    dose_check: adult_adjusted
-    off_label_flag: false
-- input:
-    age_years: 16.0
-    weight_kg: 60
-    off_label: true
-    serious_ae: false
-  expect:
-    category: ADOLESCENT
-    off_label_flag: true
-    dose_check: adult_adjusted
-- input: {}
-  expect:
-    category: AGE_UNKNOWN
-    risk_modifier: REQUIRES_REVIEW
-    dose_check: cannot_assess_without_age
-# infant_ol_serious: infant, off-label, serious AE
-- input:
-    age_years: 1.0
-    off_label: true
-    serious_ae: true
-  expect:
-    category: INFANT_TODDLER
-    risk_modifier: HIGH
-    off_label_flag: true
-    escalation: immediate_pediatric_review
-# preterm_ol: preterm neonate, off-label, non-serious
-- input:
-    age_years: 0.05
-    off_label: true
-    serious_ae: false
-  expect:
-    category: PRETERM_NEONATE
-    risk_modifier: HIGHEST
-    off_label_flag: true
-    escalation: none
-# adult_range: age >= 18
-- input:
-    age_years: 25.0
-    off_label: false
-    serious_ae: false
-  expect:
-    category: ADULT
-    risk_modifier: STANDARD
-    dose_check: adult_adjusted
-    escalation: none
+  - input:
+      age_years: 0.05
+      weight_kg: 2.5
+      off_label: false
+      serious_ae: false
+    expect:
+      category: PRETERM_NEONATE
+      risk_modifier: HIGHEST
+      dose_check: mandatory_per_kg
+      escalation: none
+  - input:
+      age_years: 0.05
+      weight_kg: 2.5
+      off_label: false
+      serious_ae: true
+    expect:
+      category: PRETERM_NEONATE
+      risk_modifier: HIGHEST
+      escalation: immediate_pediatric_review
+  - input:
+      age_years: 0.05
+      weight_kg: 2.5
+      off_label: true
+      serious_ae: true
+    expect:
+      category: PRETERM_NEONATE
+      off_label_flag: true
+      escalation: immediate_pediatric_review
+      regulatory_reference: ICH E11
+  - input:
+      age_years: 1
+      weight_kg: 10
+      off_label: false
+      serious_ae: false
+    expect:
+      category: INFANT_TODDLER
+      risk_modifier: HIGH
+      dose_check: mandatory_per_kg
+      escalation: none
+  - input:
+      age_years: 1.5
+      weight_kg: 11
+      off_label: false
+      serious_ae: true
+    expect:
+      category: INFANT_TODDLER
+      risk_modifier: HIGH
+      escalation: immediate_pediatric_review
+  - input:
+      age_years: 1
+      weight_kg: 10
+      off_label: true
+      serious_ae: false
+    expect:
+      category: INFANT_TODDLER
+      off_label_flag: true
+      escalation: none
+  - input:
+      age_years: 4
+      weight_kg: 18
+      off_label: false
+      serious_ae: false
+    expect:
+      category: PRESCHOOL
+      risk_modifier: ELEVATED
+      dose_check: recommended_per_kg
+      off_label_flag: false
+  - input:
+      age_years: 4
+      weight_kg: 18
+      off_label: true
+      serious_ae: false
+    expect:
+      category: PRESCHOOL
+      off_label_flag: true
+      dose_check: recommended_per_kg
+  - input:
+      age_years: 8
+      weight_kg: 28
+      off_label: false
+      serious_ae: false
+    expect:
+      category: CHILD
+      risk_modifier: MODERATE
+      dose_check: standard
+      off_label_flag: false
+  - input:
+      age_years: 10
+      weight_kg: 35
+      off_label: true
+      serious_ae: false
+    expect:
+      category: CHILD
+      off_label_flag: true
+      dose_check: standard
+  - input:
+      age_years: 15
+      weight_kg: 55
+      off_label: false
+      serious_ae: false
+    expect:
+      category: ADOLESCENT
+      risk_modifier: STANDARD
+      dose_check: adult_adjusted
+      off_label_flag: false
+  - input:
+      age_years: 16
+      weight_kg: 60
+      off_label: true
+      serious_ae: false
+    expect:
+      category: ADOLESCENT
+      off_label_flag: true
+      dose_check: adult_adjusted
+  - input: {}
+    expect:
+      category: AGE_UNKNOWN
+      risk_modifier: REQUIRES_REVIEW
+      dose_check: cannot_assess_without_age
+  - input:
+      age_years: 1
+      off_label: true
+      serious_ae: true
+    expect:
+      category: INFANT_TODDLER
+      risk_modifier: HIGH
+      off_label_flag: true
+      escalation: immediate_pediatric_review
+  - input:
+      age_years: 0.05
+      off_label: true
+      serious_ae: false
+    expect:
+      category: PRETERM_NEONATE
+      risk_modifier: HIGHEST
+      off_label_flag: true
+      escalation: none
+  - input:
+      age_years: 25
+      off_label: false
+      serious_ae: false
+    expect:
+      category: ADULT
+      risk_modifier: STANDARD
+      dose_check: adult_adjusted
+      escalation: none
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - category
+    - dose_check
+    - escalation
+    - off_label_flag
+    - regulatory_reference
+    - risk_modifier
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: flywheel-composite-health
-description: Classify flywheel composite health score into healthy/degraded/critical
 version: 0.1.0
+description: Classify flywheel composite health score into healthy/degraded/critical
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Flywheel Composite Health
+  subtitle: Classify flywheel composite health score into healthy/degraded/critical
+  icon: circle
+  route: /vigilance/mg/flywheel-composite-health
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/flywheel-composite-health
+  cli: rsk mcg run flywheel-composite-health
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_healthy
   nodes:
@@ -34,67 +63,98 @@ tree:
         action: Immediate attention — composite below degraded threshold
         classification: critical
 tests:
-- input:
-    composite: 0.9
-  expect:
-    action: Continue normal operations
-    classification: healthy
-- input:
-    composite: 0.7
-  expect:
-    action: Continue normal operations
-    classification: healthy
-- input:
-    composite: 0.5
-  expect:
-    classification: degraded
-    action: Investigate — composite below healthy threshold
-- input:
-    composite: 0.4
-  expect:
-    action: Investigate — composite below healthy threshold
-    classification: degraded
-- input:
-    composite: 0.3
-  expect:
-    action: Immediate attention — composite below degraded threshold
-    classification: critical
-- input:
-    composite: 0.0
-  expect:
-    action: Immediate attention — composite below degraded threshold
-    classification: critical
-- input:
-    composite: 1.0
-  expect:
-    classification: healthy
-    action: Continue normal operations
-- input:
-    composite: 0.399
-  expect:
-    classification: critical
-    action: Immediate attention — composite below degraded threshold
-- input:
-    composite: 0.401
-  expect:
-    classification: degraded
-    action: Investigate — composite below healthy threshold
-- input: {}
-  expect:
-    action: Immediate attention — composite below degraded threshold
-    classification: critical
-- input:
-    composite: 0.699
-  expect:
-    action: Investigate — composite below healthy threshold
-    classification: degraded
-- input:
-    composite: 0.701
-  expect:
-    action: Continue normal operations
-    classification: healthy
-- input: {}
-  expect:
-    action: Immediate attention — composite below degraded threshold
-    classification: critical
-interface: null
+  - input:
+      composite: 0.9
+    expect:
+      action: Continue normal operations
+      classification: healthy
+  - input:
+      composite: 0.7
+    expect:
+      action: Continue normal operations
+      classification: healthy
+  - input:
+      composite: 0.5
+    expect:
+      classification: degraded
+      action: Investigate — composite below healthy threshold
+  - input:
+      composite: 0.4
+    expect:
+      action: Investigate — composite below healthy threshold
+      classification: degraded
+  - input:
+      composite: 0.3
+    expect:
+      action: Immediate attention — composite below degraded threshold
+      classification: critical
+  - input:
+      composite: 0
+    expect:
+      action: Immediate attention — composite below degraded threshold
+      classification: critical
+  - input:
+      composite: 1
+    expect:
+      classification: healthy
+      action: Continue normal operations
+  - input:
+      composite: 0.399
+    expect:
+      classification: critical
+      action: Immediate attention — composite below degraded threshold
+  - input:
+      composite: 0.401
+    expect:
+      classification: degraded
+      action: Investigate — composite below healthy threshold
+  - input: {}
+    expect:
+      action: Immediate attention — composite below degraded threshold
+      classification: critical
+  - input:
+      composite: 0.699
+    expect:
+      action: Investigate — composite below healthy threshold
+      classification: degraded
+  - input:
+      composite: 0.701
+    expect:
+      action: Continue normal operations
+      classification: healthy
+  - input: {}
+    expect:
+      action: Immediate attention — composite below degraded threshold
+      classification: critical
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

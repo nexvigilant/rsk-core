@@ -1,6 +1,42 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: pbrer-section-gate
-description: 'PBRER section completeness gate: evaluates whether an ICH E2C(R2) section has sufficient data to be considered complete, partial, or missing'
 version: 0.1.0
+description: "PBRER section completeness gate: evaluates whether an ICH E2C(R2) section has sufficient data to be considered complete, partial, or missing"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: section_id
+    type: string
+    required: true
+    description: ""
+  - name: has_faers_data
+    type: bool
+    required: true
+    description: ""
+  - name: signal_count
+    type: number
+    required: true
+    description: ""
+  - name: has_benefit_risk
+    type: bool
+    required: false
+    description: ""
+  - name: has_guidelines
+    type: bool
+    required: false
+    description: ""
+outputs:
+  - name: status
+    type: string
+  - name: missing_elements
+    type: string
 interface:
   inputs:
     section_id:
@@ -23,6 +59,48 @@ interface:
       type: string
     missing_elements:
       type: string
+ui:
+  title: Pbrer Section Gate
+  subtitle: "PBRER section completeness gate: evaluates whether an ICH E2C(R2) section has sufficient data to be considered complete, partial, or missing"
+  icon: circle
+  route: /vigilance/mg/pbrer-section-gate
+  steps:
+    - field: section_id
+      label: section id
+      help: Enter section_id
+      widget: text
+      placeholder: null
+    - field: has_faers_data
+      label: has faers data
+      help: Enter has_faers_data
+      widget: toggle
+      placeholder: null
+    - field: signal_count
+      label: signal count
+      help: Enter signal_count
+      widget: number
+      placeholder: null
+    - field: has_benefit_risk
+      label: has benefit risk
+      help: Enter has_benefit_risk
+      widget: toggle
+      placeholder: null
+    - field: has_guidelines
+      label: has guidelines
+      help: Enter has_guidelines
+      widget: toggle
+      placeholder: null
+  result:
+    template: "status: {{status}} — missing_elements: {{missing_elements}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/pbrer-section-gate
+  cli: rsk mcg run pbrer-section-gate
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_section_intro
   nodes:
@@ -171,109 +249,131 @@ tree:
         status: missing
         missing_elements: All prerequisite sections incomplete
 tests:
-# Intro with FAERS data
-- input:
-    section_id: intro
-    has_faers_data: true
-    signal_count: 0
-  expect:
-    status: complete
-    missing_elements: none
-# Intro without FAERS
-- input:
-    section_id: intro
-    has_faers_data: false
-    signal_count: 0
-  expect:
-    status: partial
-    missing_elements: FAERS exposure data
-# Safety with FAERS
-- input:
-    section_id: safety
-    has_faers_data: true
-    signal_count: 3
-  expect:
-    status: complete
-    missing_elements: none
-# Safety without FAERS
-- input:
-    section_id: safety
-    has_faers_data: false
-    signal_count: 0
-  expect:
-    status: missing
-    missing_elements: FAERS safety data required
-# Signals with data
-- input:
-    section_id: signals
-    has_faers_data: true
-    signal_count: 5
-  expect:
-    status: complete
-    missing_elements: none
-# Signals without data
-- input:
-    section_id: signals
-    has_faers_data: false
-    signal_count: 0
-  expect:
-    status: missing
-    missing_elements: FAERS signal detection data required
-# Benefit-risk fully complete
-- input:
-    section_id: benefit-risk
-    has_faers_data: true
-    signal_count: 2
-    has_benefit_risk: true
-  expect:
-    status: complete
-    missing_elements: none
-# Benefit-risk partial (no assessment)
-- input:
-    section_id: benefit-risk
-    has_faers_data: true
-    signal_count: 2
-    has_benefit_risk: false
-  expect:
-    status: partial
-    missing_elements: benefit-risk assessment
-# Benefit-risk missing (no FAERS)
-- input:
-    section_id: benefit-risk
-    has_faers_data: false
-    signal_count: 0
-    has_benefit_risk: false
-  expect:
-    status: missing
-    missing_elements: FAERS data and benefit-risk assessment
-# Conclusions fully complete
-- input:
-    section_id: conclusions
-    has_faers_data: true
-    signal_count: 3
-    has_benefit_risk: true
-  expect:
-    status: complete
-    missing_elements: none
-# Conclusions partial
-- input:
-    section_id: conclusions
-    has_faers_data: true
-    signal_count: 1
-    has_benefit_risk: false
-  expect:
-    status: partial
-    missing_elements: benefit-risk assessment for final conclusions
-# Conclusions no data
-- input:
-    section_id: conclusions
-    has_faers_data: false
-    signal_count: 0
-    has_benefit_risk: false
-  expect:
-    status: missing
-    missing_elements: All prerequisite sections incomplete
-- input: {}
-  expect:
-    missing_elements: All prerequisite sections incomplete
-    status: missing
+  - input:
+      section_id: intro
+      has_faers_data: true
+      signal_count: 0
+    expect:
+      status: complete
+      missing_elements: none
+  - input:
+      section_id: intro
+      has_faers_data: false
+      signal_count: 0
+    expect:
+      status: partial
+      missing_elements: FAERS exposure data
+  - input:
+      section_id: safety
+      has_faers_data: true
+      signal_count: 3
+    expect:
+      status: complete
+      missing_elements: none
+  - input:
+      section_id: safety
+      has_faers_data: false
+      signal_count: 0
+    expect:
+      status: missing
+      missing_elements: FAERS safety data required
+  - input:
+      section_id: signals
+      has_faers_data: true
+      signal_count: 5
+    expect:
+      status: complete
+      missing_elements: none
+  - input:
+      section_id: signals
+      has_faers_data: false
+      signal_count: 0
+    expect:
+      status: missing
+      missing_elements: FAERS signal detection data required
+  - input:
+      section_id: benefit-risk
+      has_faers_data: true
+      signal_count: 2
+      has_benefit_risk: true
+    expect:
+      status: complete
+      missing_elements: none
+  - input:
+      section_id: benefit-risk
+      has_faers_data: true
+      signal_count: 2
+      has_benefit_risk: false
+    expect:
+      status: partial
+      missing_elements: benefit-risk assessment
+  - input:
+      section_id: benefit-risk
+      has_faers_data: false
+      signal_count: 0
+      has_benefit_risk: false
+    expect:
+      status: missing
+      missing_elements: FAERS data and benefit-risk assessment
+  - input:
+      section_id: conclusions
+      has_faers_data: true
+      signal_count: 3
+      has_benefit_risk: true
+    expect:
+      status: complete
+      missing_elements: none
+  - input:
+      section_id: conclusions
+      has_faers_data: true
+      signal_count: 1
+      has_benefit_risk: false
+    expect:
+      status: partial
+      missing_elements: benefit-risk assessment for final conclusions
+  - input:
+      section_id: conclusions
+      has_faers_data: false
+      signal_count: 0
+      has_benefit_risk: false
+    expect:
+      status: missing
+      missing_elements: All prerequisite sections incomplete
+  - input: {}
+    expect:
+      missing_elements: All prerequisite sections incomplete
+      status: missing
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - missing_elements
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

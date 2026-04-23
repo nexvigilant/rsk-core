@@ -1,13 +1,70 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: ci-04-cpa
-description: 'CPA Integration CI-04 metric PDC-01'
 version: 0.1.0
+description: CPA Integration CI-04 metric PDC-01
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: achievement_pct
+    type: int
+    required: false
+    description: ""
+  - name: target_pct
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: status
+    type: string
+  - name: gap
+    type: string
 interface:
   inputs:
-    achievement_pct: {type: int, required: false}
-    target_pct: {type: int, required: false}
+    achievement_pct:
+      type: int
+      required: false
+    target_pct:
+      type: int
+      required: false
   outputs:
-    status: {type: string}
-    gap: {type: string}
+    status:
+      type: string
+    gap:
+      type: string
+ui:
+  title: Ci 04 Cpa
+  subtitle: CPA Integration CI-04 metric PDC-01
+  icon: circle
+  route: /vigilance/mg/ci-04-cpa
+  steps:
+    - field: achievement_pct
+      label: achievement pct
+      help: Enter achievement_pct
+      widget: text
+      placeholder: null
+    - field: target_pct
+      label: target pct
+      help: Enter target_pct
+      widget: text
+      placeholder: null
+  result:
+    template: "status: {{status}} — gap: {{gap}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/ci-04-cpa
+  cli: rsk mcg run ci-04-cpa
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_exceeds
   nodes:
@@ -34,24 +91,86 @@ tree:
       false_next: critical
     exceeds:
       type: return
-      value: {status: EXCEEDS, gap: none}
+      value:
+        status: EXCEEDS
+        gap: none
     meets:
       type: return
-      value: {status: MEETS, gap: minor}
+      value:
+        status: MEETS
+        gap: minor
     below:
       type: return
-      value: {status: BELOW, gap: significant}
+      value:
+        status: BELOW
+        gap: significant
     critical:
       type: return
-      value: {status: CRITICAL, gap: urgent}
+      value:
+        status: CRITICAL
+        gap: urgent
 tests:
-- input: {achievement_pct: 98, target_pct: 85}
-  expect: {status: EXCEEDS, gap: none}
-- input: {achievement_pct: 85, target_pct: 85}
-  expect: {status: MEETS, gap: minor}
-- input: {achievement_pct: 60, target_pct: 85}
-  expect: {status: BELOW, gap: significant}
-- input: {achievement_pct: 30, target_pct: 85}
-  expect: {status: CRITICAL, gap: urgent}
-- input: {achievement_pct: 0, target_pct: 0}
-  expect: {status: CRITICAL, gap: urgent}
+  - input:
+      achievement_pct: 98
+      target_pct: 85
+    expect:
+      status: EXCEEDS
+      gap: none
+  - input:
+      achievement_pct: 85
+      target_pct: 85
+    expect:
+      status: MEETS
+      gap: minor
+  - input:
+      achievement_pct: 60
+      target_pct: 85
+    expect:
+      status: BELOW
+      gap: significant
+  - input:
+      achievement_pct: 30
+      target_pct: 85
+    expect:
+      status: CRITICAL
+      gap: urgent
+  - input:
+      achievement_pct: 0
+      target_pct: 0
+    expect:
+      status: CRITICAL
+      gap: urgent
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - status
+    - gap
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

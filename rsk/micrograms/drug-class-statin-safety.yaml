@@ -1,6 +1,35 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: drug-class-statin-safety
-description: "Statin safety assessment. Monitors myopathy risk, liver function, and drug-drug interactions."
 version: 0.1.0
+description: Statin safety assessment. Monitors myopathy risk, liver function, and drug-drug interactions.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Drug Class Statin Safety
+  subtitle: Statin safety assessment. Monitors myopathy risk, liver function, and drug-drug interactions.
+  icon: circle
+  route: /vigilance/mg/drug-class-statin-safety
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/drug-class-statin-safety
+  cli: rsk mcg run drug-class-statin-safety
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_muscle_symptoms
   nodes:
@@ -17,7 +46,7 @@ tree:
         risk_level: high
         monitoring_required: true
         creatine_kinase_check: required
-        message: "Unexplained muscle pain; check CK level immediately"
+        message: Unexplained muscle pain; check CK level immediately
     check_liver_function:
       type: condition
       variable: alt_iu_l
@@ -30,7 +59,7 @@ tree:
       value:
         risk_level: high
         dose_adjustment: required
-        message: "Elevated ALT; reduce statin dose or consider discontinuation"
+        message: Elevated ALT; reduce statin dose or consider discontinuation
     check_drug_interactions:
       type: condition
       variable: concurrent_cyp3a4_inhibitor
@@ -43,20 +72,71 @@ tree:
       value:
         risk_level: moderate
         dose_reduction: required
-        message: "CYP3A4 inhibitor present; reduce statin dose to avoid myopathy"
+        message: CYP3A4 inhibitor present; reduce statin dose to avoid myopathy
     standard_dosing:
       type: return
       value:
         risk_level: low
-        message: "Standard statin dosing appropriate"
+        message: Standard statin dosing appropriate
 tests:
-  - input: { has_unexplained_myalgia: true, alt_iu_l: 150, concurrent_cyp3a4_inhibitor: false }
-    expect: { risk_level: high, creatine_kinase_check: required }
-  - input: { has_unexplained_myalgia: false, alt_iu_l: 220, concurrent_cyp3a4_inhibitor: false }
-    expect: { risk_level: high, dose_adjustment: required }
-  - input: { has_unexplained_myalgia: false, alt_iu_l: 80, concurrent_cyp3a4_inhibitor: true }
-    expect: { risk_level: moderate, dose_reduction: required }
-  - input: { has_unexplained_myalgia: false, alt_iu_l: 80, concurrent_cyp3a4_inhibitor: false }
-    expect: { risk_level: low }
+  - input:
+      has_unexplained_myalgia: true
+      alt_iu_l: 150
+      concurrent_cyp3a4_inhibitor: false
+    expect:
+      risk_level: high
+      creatine_kinase_check: required
+  - input:
+      has_unexplained_myalgia: false
+      alt_iu_l: 220
+      concurrent_cyp3a4_inhibitor: false
+    expect:
+      risk_level: high
+      dose_adjustment: required
+  - input:
+      has_unexplained_myalgia: false
+      alt_iu_l: 80
+      concurrent_cyp3a4_inhibitor: true
+    expect:
+      risk_level: moderate
+      dose_reduction: required
+  - input:
+      has_unexplained_myalgia: false
+      alt_iu_l: 80
+      concurrent_cyp3a4_inhibitor: false
+    expect:
+      risk_level: low
   - input: {}
     expect: {}
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

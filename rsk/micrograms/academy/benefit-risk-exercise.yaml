@@ -1,7 +1,36 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: benefit-risk-exercise
-description: "Academy L2: Given QBRI score and component weights, classify benefit-risk balance and provide regulatory learning feedback."
 version: 0.1.0
-
+description: "Academy L2: Given QBRI score and component weights, classify benefit-risk balance and provide regulatory learning feedback."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: qbri_score
+    type: float
+    required: true
+    description: ""
+  - name: benefit_weight
+    type: float
+    required: false
+    description: ""
+  - name: risk_weight
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: zone
+    type: string
+  - name: action
+    type: string
+  - name: learning_note
+    type: string
 interface:
   inputs:
     qbri_score:
@@ -20,7 +49,38 @@ interface:
       type: string
     learning_note:
       type: string
-
+ui:
+  title: Benefit Risk Exercise
+  subtitle: "Academy L2: Given QBRI score and component weights, classify benefit-risk balance and provide regulatory learning feedback."
+  icon: circle
+  route: /vigilance/mg/benefit-risk-exercise
+  steps:
+    - field: qbri_score
+      label: qbri score
+      help: Enter qbri_score
+      widget: text
+      placeholder: null
+    - field: benefit_weight
+      label: benefit weight
+      help: Enter benefit_weight
+      widget: text
+      placeholder: null
+    - field: risk_weight
+      label: risk weight
+      help: Enter risk_weight
+      widget: text
+      placeholder: null
+  result:
+    template: "zone: {{zone}} — action: {{action}} — learning_note: {{learning_note}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/benefit-risk-exercise
+  cli: rsk mcg run benefit-risk-exercise
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_score
   nodes:
@@ -31,14 +91,12 @@ tree:
       value: null
       true_next: reject
       false_next: check_favorable
-
     reject:
       type: return
       value:
         zone: REJECTED
-        action: "Provide a QBRI score"
-        learning_note: "QBRI score is required for benefit-risk classification."
-
+        action: Provide a QBRI score
+        learning_note: QBRI score is required for benefit-risk classification.
     check_favorable:
       type: condition
       variable: qbri_score
@@ -46,29 +104,25 @@ tree:
       value: 1.5
       true_next: favorable
       false_next: check_acceptable
-
     favorable:
       type: return
       value:
         zone: Favorable
-        action: "Benefits clearly outweigh risks — supports approval or continued marketing"
-        learning_note: "QBRI >= 1.5 indicates strong benefit-risk balance. In regulatory submissions, this supports a positive benefit-risk conclusion in Module 2.5 (Clinical Overview) and PSUR/PBRER Section 16."
-
+        action: Benefits clearly outweigh risks — supports approval or continued marketing
+        learning_note: QBRI >= 1.5 indicates strong benefit-risk balance. In regulatory submissions, this supports a positive benefit-risk conclusion in Module 2.5 (Clinical Overview) and PSUR/PBRER Section 16.
     check_acceptable:
       type: condition
       variable: qbri_score
       operator: gte
-      value: 1.0
+      value: 1
       true_next: acceptable
       false_next: check_borderline
-
     acceptable:
       type: return
       value:
         zone: Acceptable
-        action: "Benefits outweigh risks with monitoring — consider risk minimization measures"
+        action: Benefits outweigh risks with monitoring — consider risk minimization measures
         learning_note: "QBRI 1.0-1.5 is acceptable but warrants risk management. Common measures: Dear Healthcare Professional Communications, Medication Guides, restricted distribution programs."
-
     check_borderline:
       type: condition
       variable: qbri_score
@@ -76,40 +130,85 @@ tree:
       value: 0.5
       true_next: borderline
       false_next: unfavorable
-
     borderline:
       type: return
       value:
         zone: Borderline
-        action: "Benefits may not outweigh risks — requires additional data or risk minimization"
-        learning_note: "QBRI 0.5-1.0 is concerning. Regulators may require a Risk Management Plan (RMP) with additional pharmacovigilance activities, or request post-marketing studies. The EMA and FDA may differ in their threshold for action."
-
+        action: Benefits may not outweigh risks — requires additional data or risk minimization
+        learning_note: QBRI 0.5-1.0 is concerning. Regulators may require a Risk Management Plan (RMP) with additional pharmacovigilance activities, or request post-marketing studies. The EMA and FDA may differ in their threshold for action.
     unfavorable:
       type: return
       value:
         zone: Unfavorable
-        action: "Risks outweigh benefits — consider withdrawal, restriction, or reformulation"
+        action: Risks outweigh benefits — consider withdrawal, restriction, or reformulation
         learning_note: "QBRI < 0.5 indicates the drug's risks exceed its benefits for the indicated population. Historical examples: rofecoxib (Vioxx) withdrawal, rosiglitazone (Avandia) restrictions. Regulatory options include market withdrawal, black box warning, or REMS."
-
 tests:
-  - name: "Strongly favorable"
-    input: { qbri_score: 2.3 }
-    expect: { zone: Favorable }
-  - name: "Acceptable with monitoring"
-    input: { qbri_score: 1.2 }
-    expect: { zone: Acceptable }
-  - name: "Borderline"
-    input: { qbri_score: 0.7 }
-    expect: { zone: Borderline }
-  - name: "Unfavorable"
-    input: { qbri_score: 0.3 }
-    expect: { zone: Unfavorable }
-  - name: "Exactly favorable threshold"
-    input: { qbri_score: 1.5 }
-    expect: { zone: Favorable }
-  - name: "Exactly acceptable threshold"
-    input: { qbri_score: 1.0 }
-    expect: { zone: Acceptable }
-  - name: "Missing input"
+  - name: Strongly favorable
+    input:
+      qbri_score: 2.3
+    expect:
+      zone: Favorable
+  - name: Acceptable with monitoring
+    input:
+      qbri_score: 1.2
+    expect:
+      zone: Acceptable
+  - name: Borderline
+    input:
+      qbri_score: 0.7
+    expect:
+      zone: Borderline
+  - name: Unfavorable
+    input:
+      qbri_score: 0.3
+    expect:
+      zone: Unfavorable
+  - name: Exactly favorable threshold
+    input:
+      qbri_score: 1.5
+    expect:
+      zone: Favorable
+  - name: Exactly acceptable threshold
+    input:
+      qbri_score: 1
+    expect:
+      zone: Acceptable
+  - name: Missing input
     input: {}
-    expect: { zone: REJECTED }
+    expect:
+      zone: REJECTED
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - zone
+    - action
+    - learning_note
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

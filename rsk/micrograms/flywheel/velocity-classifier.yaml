@@ -1,6 +1,28 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: velocity-classifier
-description: 'Classify flywheel velocity from avg_fix_time_ms matching MCP foundation_flywheel_velocity bands: EXCEPTIONAL (<=1h), TARGET (<=24h), ACCEPTABLE (<=168h/7d), SLOW (>168h)'
 version: 0.2.0
+description: "Classify flywheel velocity from avg_fix_time_ms matching MCP foundation_flywheel_velocity bands: EXCEPTIONAL (<=1h), TARGET (<=24h), ACCEPTABLE (<=168h/7d), SLOW (>168h)"
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: avg_fix_time_ms
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: action
+    type: string
+  - name: band
+    type: string
+  - name: velocity_inverse
+    type: string
 interface:
   inputs:
     avg_fix_time_ms:
@@ -13,6 +35,28 @@ interface:
       type: string
     velocity_inverse:
       type: string
+ui:
+  title: Velocity Classifier
+  subtitle: "Classify flywheel velocity from avg_fix_time_ms matching MCP foundation_flywheel_velocity bands: EXCEPTIONAL (<=1h), TARGET (<=24h), ACCEPTABLE (<=168h/7d), SLOW (>168h)"
+  icon: circle
+  route: /vigilance/mg/velocity-classifier
+  steps:
+    - field: avg_fix_time_ms
+      label: avg fix time ms
+      help: Enter avg_fix_time_ms
+      widget: text
+      placeholder: null
+  result:
+    template: "action: {{action}} — band: {{band}} — velocity_inverse: {{velocity_inverse}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/velocity-classifier
+  cli: rsk mcg run velocity-classifier
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_exceptional
   nodes:
@@ -62,73 +106,103 @@ tree:
         velocity_inverse: low
         action: escalate_blockers
 tests:
-# Exceptional: <= 1 hour (3,600,000 ms)
-- input:
-    avg_fix_time_ms: 1800000
-  expect:
-    band: EXCEPTIONAL
-    velocity_inverse: very_high
-    action: maintain_pace
-- input:
-    avg_fix_time_ms: 3600000
-  expect:
-    band: EXCEPTIONAL
-    velocity_inverse: very_high
-    action: maintain_pace
-# Target: <= 24 hours (86,400,000 ms)
-- input:
-    avg_fix_time_ms: 3600001
-  expect:
-    band: TARGET
-    velocity_inverse: high
-    action: maintain_pace
-- input:
-    avg_fix_time_ms: 19200000
-  expect:
-    band: TARGET
-    velocity_inverse: high
-    action: maintain_pace
-- input:
-    avg_fix_time_ms: 86400000
-  expect:
-    band: TARGET
-    velocity_inverse: high
-    action: maintain_pace
-# Acceptable: <= 168 hours (604,800,000 ms)
-- input:
-    avg_fix_time_ms: 86400001
-  expect:
-    band: ACCEPTABLE
-    velocity_inverse: moderate
-    action: investigate_bottlenecks
-- input:
-    avg_fix_time_ms: 604800000
-  expect:
-    band: ACCEPTABLE
-    velocity_inverse: moderate
-    action: investigate_bottlenecks
-# Slow: > 168 hours
-- input:
-    avg_fix_time_ms: 604800001
-  expect:
-    band: SLOW
-    velocity_inverse: low
-    action: escalate_blockers
-- input:
-    avg_fix_time_ms: 1209600000
-  expect:
-    band: SLOW
-    velocity_inverse: low
-    action: escalate_blockers
-# Edge: zero (instantaneous fix)
-- input:
-    avg_fix_time_ms: 0
-  expect:
-    band: EXCEPTIONAL
-    velocity_inverse: very_high
-    action: maintain_pace
-- input: {}
-  expect:
-    action: escalate_blockers
-    band: SLOW
-    velocity_inverse: low
+  - input:
+      avg_fix_time_ms: 1800000
+    expect:
+      band: EXCEPTIONAL
+      velocity_inverse: very_high
+      action: maintain_pace
+  - input:
+      avg_fix_time_ms: 3600000
+    expect:
+      band: EXCEPTIONAL
+      velocity_inverse: very_high
+      action: maintain_pace
+  - input:
+      avg_fix_time_ms: 3600001
+    expect:
+      band: TARGET
+      velocity_inverse: high
+      action: maintain_pace
+  - input:
+      avg_fix_time_ms: 19200000
+    expect:
+      band: TARGET
+      velocity_inverse: high
+      action: maintain_pace
+  - input:
+      avg_fix_time_ms: 86400000
+    expect:
+      band: TARGET
+      velocity_inverse: high
+      action: maintain_pace
+  - input:
+      avg_fix_time_ms: 86400001
+    expect:
+      band: ACCEPTABLE
+      velocity_inverse: moderate
+      action: investigate_bottlenecks
+  - input:
+      avg_fix_time_ms: 604800000
+    expect:
+      band: ACCEPTABLE
+      velocity_inverse: moderate
+      action: investigate_bottlenecks
+  - input:
+      avg_fix_time_ms: 604800001
+    expect:
+      band: SLOW
+      velocity_inverse: low
+      action: escalate_blockers
+  - input:
+      avg_fix_time_ms: 1209600000
+    expect:
+      band: SLOW
+      velocity_inverse: low
+      action: escalate_blockers
+  - input:
+      avg_fix_time_ms: 0
+    expect:
+      band: EXCEPTIONAL
+      velocity_inverse: very_high
+      action: maintain_pace
+  - input: {}
+    expect:
+      action: escalate_blockers
+      band: SLOW
+      velocity_inverse: low
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - action
+    - band
+    - velocity_inverse
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

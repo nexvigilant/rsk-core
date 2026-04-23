@@ -1,6 +1,30 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: integration-d12
-description: "Domain 12 cross-domain integration — regulatory connects to quality/research, risk management, communication, and global PV."
 version: 0.1.0
+description: Domain 12 cross-domain integration — regulatory connects to quality/research, risk management, communication, and global PV.
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: target_domain
+    type: int
+    required: false
+    description: ""
+outputs:
+  - name: epas
+    type: string
+  - name: integration_type
+    type: string
+  - name: module
+    type: string
+  - name: synergy
+    type: string
 interface:
   inputs:
     target_domain:
@@ -15,6 +39,28 @@ interface:
       type: string
     synergy:
       type: string
+ui:
+  title: Integration D12
+  subtitle: Domain 12 cross-domain integration — regulatory connects to quality/research, risk management, communication, and global PV.
+  icon: circle
+  route: /vigilance/mg/integration-d12
+  steps:
+    - field: target_domain
+      label: target domain
+      help: Enter target_domain
+      widget: text
+      placeholder: null
+  result:
+    template: "epas: {{epas}} — integration_type: {{integration_type}} — module: {{module}} — synergy: {{synergy}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/integration-d12
+  cli: rsk mcg run integration-d12
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_target
   nodes:
@@ -64,81 +110,117 @@ tree:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Regulatory-Research Integration"
-        synergy: "regulatory requirements shape research design, research evidence supports submissions"
-        epas: "EPA6, EPA9"
+        module: Regulatory-Research Integration
+        synergy: regulatory requirements shape research design, research evidence supports submissions
+        epas: EPA6, EPA9
     d12_d11:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Regulatory-Risk Management"
-        synergy: "regulatory compliance + risk management = REMS/RMP excellence"
-        epas: "EPA7, EPA9"
+        module: Regulatory-Risk Management
+        synergy: regulatory compliance + risk management = REMS/RMP excellence
+        epas: EPA7, EPA9
     d12_d10:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Regulatory-Assessment"
-        synergy: "assessment methodology supports regulatory submissions through evidence synthesis"
+        module: Regulatory-Assessment
+        synergy: assessment methodology supports regulatory submissions through evidence synthesis
     d12_d6:
       type: return
       value:
         integration_type: SUPPORTING
-        module: "Regulatory-Error Management"
-        synergy: "error management supports regulatory compliance through quality improvement"
+        module: Regulatory-Error Management
+        synergy: error management supports regulatory compliance through quality improvement
     d12_d14:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Regulatory-Communication"
-        synergy: "communication skills critical for authority engagement and stakeholder management"
-        epas: "EPA6, EPA14"
+        module: Regulatory-Communication
+        synergy: communication skills critical for authority engagement and stakeholder management
+        epas: EPA6, EPA14
     d12_d13:
       type: return
       value:
         integration_type: PRIMARY
-        module: "Regulatory-Global"
-        synergy: "global perspective essential for multi-jurisdictional coordination"
-        epas: "EPA11, EPA14"
+        module: Regulatory-Global
+        synergy: global perspective essential for multi-jurisdictional coordination
+        epas: EPA11, EPA14
     general:
       type: return
       value:
         integration_type: GENERAL
-        module: "Universal Regulatory Foundation"
-        synergy: "regulatory knowledge underpins all PV activities requiring compliance awareness"
+        module: Universal Regulatory Foundation
+        synergy: regulatory knowledge underpins all PV activities requiring compliance awareness
 tests:
-- input:
-    target_domain: 9
-  expect:
-    integration_type: PRIMARY
-    module: "Regulatory-Research Integration"
-- input:
-    target_domain: 11
-  expect:
-    integration_type: PRIMARY
-    module: "Regulatory-Risk Management"
-- input:
-    target_domain: 14
-  expect:
-    integration_type: PRIMARY
-    module: "Regulatory-Communication"
-- input:
-    target_domain: 13
-  expect:
-    integration_type: PRIMARY
-    module: "Regulatory-Global"
-- input:
-    target_domain: 10
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 6
-  expect:
-    integration_type: SUPPORTING
-- input:
-    target_domain: 1
-  expect:
-    integration_type: GENERAL
-- input: {}
-  expect:
-    integration_type: GENERAL
+  - input:
+      target_domain: 9
+    expect:
+      integration_type: PRIMARY
+      module: Regulatory-Research Integration
+  - input:
+      target_domain: 11
+    expect:
+      integration_type: PRIMARY
+      module: Regulatory-Risk Management
+  - input:
+      target_domain: 14
+    expect:
+      integration_type: PRIMARY
+      module: Regulatory-Communication
+  - input:
+      target_domain: 13
+    expect:
+      integration_type: PRIMARY
+      module: Regulatory-Global
+  - input:
+      target_domain: 10
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 6
+    expect:
+      integration_type: SUPPORTING
+  - input:
+      target_domain: 1
+    expect:
+      integration_type: GENERAL
+  - input: {}
+    expect:
+      integration_type: GENERAL
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - epas
+    - integration_type
+    - module
+    - synergy
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

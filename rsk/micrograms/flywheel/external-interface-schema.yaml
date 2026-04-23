@@ -1,8 +1,114 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: external-interface-schema
-description: 'Component: Shaft (External API) — Spec §2.4. Schema validator for external
-  interface data completeness. Validates that API health, auth, and rate limit metrics
-  exist before attempting classification.'
 version: 0.1.0
+description: "Component: Shaft (External API) — Spec §2.4. Schema validator for external interface data completeness. Validates that API health, auth, and rate limit metrics exist before attempting classification."
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs:
+  - name: rate_limit_hits_30d
+    type: int
+    required: false
+    description: ""
+  - name: auth_success_rate_pct
+    type: float
+    required: false
+    description: ""
+  - name: api_endpoints_active
+    type: int
+    required: false
+    description: ""
+  - name: requests_30d
+    type: int
+    required: false
+    description: ""
+  - name: error_rate_pct
+    type: float
+    required: false
+    description: ""
+outputs:
+  - name: can_compute_shaft
+    type: bool
+  - name: data_complete
+    type: bool
+  - name: missing_fields
+    type: string
+interface:
+  inputs:
+    rate_limit_hits_30d:
+      type: int
+      required: false
+    auth_success_rate_pct:
+      type: float
+      required: false
+    api_endpoints_active:
+      type: int
+      required: false
+    requests_30d:
+      type: int
+      required: false
+    error_rate_pct:
+      type: float
+      required: false
+  outputs:
+    can_compute_shaft:
+      type: bool
+      required: false
+    data_complete:
+      type: bool
+      required: false
+    missing_fields:
+      type: string
+      required: false
+  aliases: {}
+ui:
+  title: External Interface Schema
+  subtitle: "Component: Shaft (External API) — Spec §2.4. Schema validator for external interface data completeness. Validates that API health, auth, and rate limit metrics exist before attempting classification."
+  icon: circle
+  route: /vigilance/mg/external-interface-schema
+  steps:
+    - field: rate_limit_hits_30d
+      label: rate limit hits 30d
+      help: Enter rate_limit_hits_30d
+      widget: text
+      placeholder: null
+    - field: auth_success_rate_pct
+      label: auth success rate pct
+      help: Enter auth_success_rate_pct
+      widget: text
+      placeholder: null
+    - field: api_endpoints_active
+      label: api endpoints active
+      help: Enter api_endpoints_active
+      widget: text
+      placeholder: null
+    - field: requests_30d
+      label: requests 30d
+      help: Enter requests_30d
+      widget: text
+      placeholder: null
+    - field: error_rate_pct
+      label: error rate pct
+      help: Enter error_rate_pct
+      widget: text
+      placeholder: null
+  result:
+    template: "can_compute_shaft: {{can_compute_shaft}} — data_complete: {{data_complete}} — missing_fields: {{missing_fields}}"
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/external-interface-schema
+  cli: rsk mcg run external-interface-schema
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_endpoints
   nodes:
@@ -74,98 +180,105 @@ tree:
       type: condition
       variable: auth_success_rate_pct
       operator: gt
-      value: 0.0
+      value: 0
       true_next: check_rate_limits
       false_next: missing_auth
 tests:
-- input:
-    api_endpoints_active: -0.5
-    auth_success_rate_pct: -0.5
-    error_rate_pct: false
-    rate_limit_hits_30d: false
-    requests_30d: -0.5
-  expect:
-    missing_fields: api_endpoints_active
-    data_complete: false
-    can_compute_shaft: false
-- input:
-    api_endpoints_active: 0.5
-    auth_success_rate_pct: -0.5
-    error_rate_pct: false
-    rate_limit_hits_30d: false
-    requests_30d: -0.5
-  expect:
-    data_complete: false
-    missing_fields: requests_30d
-    can_compute_shaft: false
-- input:
-    api_endpoints_active: 0.5
-    auth_success_rate_pct: -0.5
-    error_rate_pct: false
-    rate_limit_hits_30d: false
-    requests_30d: 0.5
-  expect:
-    can_compute_shaft: false
-    missing_fields: auth_success_rate_pct
-    data_complete: false
-- input:
-    api_endpoints_active: 0.5
-    auth_success_rate_pct: -0.5
-    rate_limit_hits_30d: false
-    requests_30d: 0.5
-  expect:
-    data_complete: false
-    missing_fields: error_rate_pct
-    can_compute_shaft: false
-- input:
-    api_endpoints_active: 0.5
-    auth_success_rate_pct: 0.5
-    error_rate_pct: false
-    rate_limit_hits_30d: false
-    requests_30d: 0.5
-  expect:
-    missing_fields: none
-    can_compute_shaft: true
-    data_complete: true
-- input:
-    api_endpoints_active: 0.5
-    auth_success_rate_pct: 0.5
-    error_rate_pct: false
-    requests_30d: 0.5
-  expect:
-    can_compute_shaft: false
-    missing_fields: rate_limit_hits_30d
-    data_complete: false
-- input: {}
-  expect:
-    missing_fields: api_endpoints_active
-    data_complete: false
-    can_compute_shaft: false
-interface:
-  inputs:
-    rate_limit_hits_30d:
-      type: int
-      required: false
-    auth_success_rate_pct:
-      type: float
-      required: false
-    api_endpoints_active:
-      type: int
-      required: false
-    requests_30d:
-      type: int
-      required: false
-    error_rate_pct:
-      type: float
-      required: false
-  outputs:
-    can_compute_shaft:
-      type: bool
-      required: false
-    data_complete:
-      type: bool
-      required: false
-    missing_fields:
-      type: string
-      required: false
-  aliases: {}
+  - input:
+      api_endpoints_active: -0.5
+      auth_success_rate_pct: -0.5
+      error_rate_pct: false
+      rate_limit_hits_30d: false
+      requests_30d: -0.5
+    expect:
+      missing_fields: api_endpoints_active
+      data_complete: false
+      can_compute_shaft: false
+  - input:
+      api_endpoints_active: 0.5
+      auth_success_rate_pct: -0.5
+      error_rate_pct: false
+      rate_limit_hits_30d: false
+      requests_30d: -0.5
+    expect:
+      data_complete: false
+      missing_fields: requests_30d
+      can_compute_shaft: false
+  - input:
+      api_endpoints_active: 0.5
+      auth_success_rate_pct: -0.5
+      error_rate_pct: false
+      rate_limit_hits_30d: false
+      requests_30d: 0.5
+    expect:
+      can_compute_shaft: false
+      missing_fields: auth_success_rate_pct
+      data_complete: false
+  - input:
+      api_endpoints_active: 0.5
+      auth_success_rate_pct: -0.5
+      rate_limit_hits_30d: false
+      requests_30d: 0.5
+    expect:
+      data_complete: false
+      missing_fields: error_rate_pct
+      can_compute_shaft: false
+  - input:
+      api_endpoints_active: 0.5
+      auth_success_rate_pct: 0.5
+      error_rate_pct: false
+      rate_limit_hits_30d: false
+      requests_30d: 0.5
+    expect:
+      missing_fields: none
+      can_compute_shaft: true
+      data_complete: true
+  - input:
+      api_endpoints_active: 0.5
+      auth_success_rate_pct: 0.5
+      error_rate_pct: false
+      requests_30d: 0.5
+    expect:
+      can_compute_shaft: false
+      missing_fields: rate_limit_hits_30d
+      data_complete: false
+  - input: {}
+    expect:
+      missing_fields: api_endpoints_active
+      data_complete: false
+      can_compute_shaft: false
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - can_compute_shaft
+    - data_complete
+    - missing_fields
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true

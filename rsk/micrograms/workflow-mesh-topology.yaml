@@ -1,50 +1,121 @@
+# MICROGRAM++ (upgraded 2026-04-23)
 name: workflow-mesh-topology
-description: "Select mesh topology pattern based on signal density and geographic spread"
 version: 0.1.0
-
+description: Select mesh topology pattern based on signal density and geographic spread
+family: microgram.generic
+author: matthew@camp-corp.com
+created_at: 2026-04-23
+primitives:
+  - →
+  - ∂
+  - ς
+tags:
+  - microgram
+inputs: []
+outputs: []
+ui:
+  title: Workflow Mesh Topology
+  subtitle: Select mesh topology pattern based on signal density and geographic spread
+  icon: circle
+  route: /vigilance/mg/workflow-mesh-topology
+  steps: []
+  result:
+    template: ""
+    show_explanation: true
+    show_tree_path: true
+    next_actions: []
+transport:
+  mcp_tool: mcg_run
+  http_route: POST /api/mg/workflow-mesh-topology
+  cli: rsk mcg run workflow-mesh-topology
+  auth: none
+  rate_limit: 600/min
 tree:
   start: check_density
   nodes:
     check_density:
-      type: "condition"
-      variable: "signal_count"
-      operator: "gte"
+      type: condition
+      variable: signal_count
+      operator: gte
       value: 5
-      true_next: "check_spread"
-      false_next: "star"
+      true_next: check_spread
+      false_next: star
     star:
-      type: "return"
+      type: return
       value:
-        topology: "star"
-        center: "collector"
-        reason: "Low signal count \u2014 single collector hub"
+        topology: star
+        center: collector
+        reason: Low signal count — single collector hub
         max_hops: 1
     check_spread:
-      type: "condition"
-      variable: "region_count"
-      operator: "gte"
+      type: condition
+      variable: region_count
+      operator: gte
       value: 3
-      true_next: "mesh"
-      false_next: "ring"
+      true_next: mesh
+      false_next: ring
     mesh:
-      type: "return"
+      type: return
       value:
-        topology: "full_mesh"
-        center: "distributed"
-        reason: "High density + multi-region \u2014 full mesh for gossip"
+        topology: full_mesh
+        center: distributed
+        reason: High density + multi-region — full mesh for gossip
         max_hops: 3
     ring:
-      type: "return"
+      type: return
       value:
-        topology: "ring"
-        center: "relay"
-        reason: "High density, few regions \u2014 ring with relay"
+        topology: ring
+        center: relay
+        reason: High density, few regions — ring with relay
         max_hops: 2
-
 tests:
-  - input: {"signal_count": 2, "region_count": 1}
-    expect: {"topology": "star", "max_hops": 1}
-  - input: {"signal_count": 8, "region_count": 5}
-    expect: {"topology": "full_mesh", "max_hops": 3}
-  - input: {"signal_count": 6, "region_count": 2}
-    expect: {"topology": "ring", "max_hops": 2}
+  - input:
+      signal_count: 2
+      region_count: 1
+    expect:
+      topology: star
+      max_hops: 1
+  - input:
+      signal_count: 8
+      region_count: 5
+    expect:
+      topology: full_mesh
+      max_hops: 3
+  - input:
+      signal_count: 6
+      region_count: 2
+    expect:
+      topology: ring
+      max_hops: 2
+persistence:
+  save_to: brain.artifacts
+  artifact_type: microgram_run
+  retention_days: 90
+  pii_scrub: true
+  fields_persisted:
+    - inputs
+    - latency_ms
+telemetry:
+  emit:
+    - invocation
+    - verdict
+    - latency_ms
+    - error
+  guardian_signal_on:
+    - error
+  cytokine_family: microgram.generic
+  log_level: info
+governance:
+  sop_ref: null
+  regulatory_ref: []
+  harm_types: []
+  review_cadence: quarterly
+  tov_axioms:
+    - decomposition
+  approved_by: null
+  approved_at: null
+chain:
+  upstream: []
+  downstream: []
+  parallel_safe: true
+  idempotent: true
