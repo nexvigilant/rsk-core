@@ -1,0 +1,96 @@
+name: nvnc-workload-router
+description: 'NVNC workload → element router. Given a customer workload profile, returns the concrete SILVER-graded NVNC element plan. Proof that the substrate composes — typed contracts, not bundled services like GCP.'
+version: 0.1.0
+interface:
+  inputs:
+    needs_encrypted_storage:
+      type: bool
+      required: true
+    needs_regulated_compute:
+      type: bool
+      required: true
+    needs_identity_issuance:
+      type: bool
+      required: false
+    is_biopharma_regulated:
+      type: bool
+      required: true
+  outputs:
+    verdict:
+      type: string
+    plan:
+      type: string
+    gold_required_next:
+      type: string
+tree:
+  start: check_storage
+  nodes:
+    check_storage:
+      type: condition
+      variable: needs_encrypted_storage
+      operator: eq
+      value: false
+      true_next: refuse_no_storage
+      false_next: check_compute
+    check_compute:
+      type: condition
+      variable: needs_regulated_compute
+      operator: eq
+      value: false
+      true_next: plan_storage_only
+      false_next: check_identity
+    check_identity:
+      type: condition
+      variable: needs_identity_issuance
+      operator: eq
+      value: false
+      true_next: plan_storage_compute
+      false_next: check_regulated
+    check_regulated:
+      type: condition
+      variable: is_biopharma_regulated
+      operator: eq
+      value: true
+      true_next: plan_full_gxp
+      false_next: plan_no_regulation
+    plan_full_gxp:
+      type: return
+      value:
+        verdict: PROVISION
+        plan: 'nexcore-vault (Storage) + nexcore-process (ProcessRuntime) + nexcore-trust (Issuer) + nexcore-integrity (Gate) + nexcore-synapse (Observer) + nexcore-measure (Meter). Full GxP-traceable stack.'
+        gold_required_next: 'Promote Storage + ProcessRuntime to GOLD: host workload 30 days + p99 latency SLO + rollback drill. This is the paying-tenant bar.'
+    plan_no_regulation:
+      type: return
+      value:
+        verdict: PROVISION
+        plan: 'nexcore-vault (Storage) + nexcore-process (ProcessRuntime) + nexcore-trust (Issuer). Standard tenant stack.'
+        gold_required_next: 'Storage + ProcessRuntime GOLD path same as GxP tier.'
+    plan_storage_compute:
+      type: return
+      value:
+        verdict: PROVISION
+        plan: 'nexcore-vault (Storage) + nexcore-process (ProcessRuntime). No auth — anonymous or shared-secret tenant.'
+        gold_required_next: 'Add Issuer before onboarding identified customers.'
+    plan_storage_only:
+      type: return
+      value:
+        verdict: PROVISION
+        plan: 'nexcore-vault (Storage). Read-heavy / static-content tenant.'
+        gold_required_next: 'Add ProcessRuntime when dynamic workloads requested.'
+    refuse_no_storage:
+      type: return
+      value:
+        verdict: REFUSE
+        plan: 'No workload runs without storage — even stateless compute needs config/secret/cache. Add Storage requirement before routing.'
+        gold_required_next: 'N/A — workload profile incoherent.'
+tests:
+- input: { needs_encrypted_storage: true, needs_regulated_compute: true, needs_identity_issuance: true, is_biopharma_regulated: true }
+  expect: { verdict: PROVISION }
+- input: { needs_encrypted_storage: true, needs_regulated_compute: true, needs_identity_issuance: true, is_biopharma_regulated: false }
+  expect: { verdict: PROVISION }
+- input: { needs_encrypted_storage: true, needs_regulated_compute: true, needs_identity_issuance: false, is_biopharma_regulated: false }
+  expect: { verdict: PROVISION }
+- input: { needs_encrypted_storage: true, needs_regulated_compute: false, needs_identity_issuance: false, is_biopharma_regulated: false }
+  expect: { verdict: PROVISION }
+- input: { needs_encrypted_storage: false, needs_regulated_compute: true, needs_identity_issuance: true, is_biopharma_regulated: true }
+  expect: { verdict: REFUSE }
